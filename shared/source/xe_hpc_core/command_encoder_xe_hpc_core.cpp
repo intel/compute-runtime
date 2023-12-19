@@ -310,10 +310,10 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptor
     uint32_t slmSize = 0u;
 
     switch (slmPolicy) {
-    case SlmPolicy::SlmPolicyLargeData:
+    case SlmPolicy::slmPolicyLargeData:
         slmSize = workgroupSlmSize;
         break;
-    case SlmPolicy::SlmPolicyLargeSlm:
+    case SlmPolicy::slmPolicyLargeSlm:
     default:
         slmSize = workgroupSlmSize * workGroupCountPerDss;
         break;

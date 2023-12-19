@@ -3255,7 +3255,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventWithPayloadWhenHandlingEventThenReadEven
 
     handler->returnUuid = &readUuidElf;
 
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[2] = {"ELF", static_cast<uint32_t>(NEO::DrmResourceClass::Elf)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[2] = {"ELF", static_cast<uint32_t>(NEO::DrmResourceClass::elf)};
 
     session->handleEvent(&uuidElf.base);
 
@@ -3334,7 +3334,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventForL0ZebinModuleWhenHandlingEventThenKer
 
     handler->returnUuid = &readUuidElf;
 
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[2] = {"L0_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[2] = {"L0_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::l0ZebinModule)};
 
     session->handleEvent(&l0ModuleUuid.base);
 
@@ -3418,7 +3418,7 @@ TEST_F(DebugApiLinuxTest, GivenVmBindEventWithUnknownUUIDWhenHandlingEventThenEv
     DebugSessionLinuxi915::UuidData sbaUuidData = {
         .handle = sbaHandle,
         .classHandle = sbaClassHandle,
-        .classIndex = NEO::DrmResourceClass::SbaTrackingBuffer};
+        .classIndex = NEO::DrmResourceClass::sbaTrackingBuffer};
 
     uint64_t vmBindSbaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindSba = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindSbaData);
@@ -3461,7 +3461,7 @@ TEST_F(DebugApiLinuxTest, GivenVmBindEventWithUuidOfUnknownClassWhenHandlingEven
     DebugSessionLinuxi915::UuidData sbaUuidData = {
         .handle = sbaHandle,
         .classHandle = sbaClassHandle,
-        .classIndex = NEO::DrmResourceClass::SbaTrackingBuffer};
+        .classIndex = NEO::DrmResourceClass::sbaTrackingBuffer};
 
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(sbaHandle, std::move(sbaUuidData));
 
@@ -3506,9 +3506,9 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventOfKnownClassWhenHandlingEventThenGpuAddr
     uint64_t sbaAddress = 0x1234000;
     uint64_t moduleDebugAddress = 0x34567000;
     uint64_t contextSaveAddress = 0x56789000;
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[sbaClassHandle] = {"SBA AREA", static_cast<uint32_t>(NEO::DrmResourceClass::SbaTrackingBuffer)};
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[moduleDebugClassHandle] = {"DEBUG AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ModuleHeapDebugArea)};
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[contextSaveClassHandle] = {"CONTEXT SAVE AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ContextSaveArea)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[sbaClassHandle] = {"SBA AREA", static_cast<uint32_t>(NEO::DrmResourceClass::sbaTrackingBuffer)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[moduleDebugClassHandle] = {"DEBUG AREA", static_cast<uint32_t>(NEO::DrmResourceClass::moduleHeapDebugArea)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[contextSaveClassHandle] = {"CONTEXT SAVE AREA", static_cast<uint32_t>(NEO::DrmResourceClass::contextSaveArea)};
 
     prelim_drm_i915_debug_event_uuid uuidSba = {};
     uuidSba.base.type = PRELIM_DRM_I915_DEBUG_EVENT_UUID;
@@ -3969,7 +3969,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenNoIsaUUIDAndZebinModuleForDataSegmentWhenHa
     DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
         .handle = zebinModuleUUID,
         .classHandle = zebinModuleClassHandle,
-        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .classIndex = NEO::DrmResourceClass::l0ZebinModule,
         .data = std::make_unique<char[]>(sizeof(1)),
         .dataSize = sizeof(1)};
 
@@ -4482,13 +4482,13 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithL0ZebinModuleWhenHandlingEventThen
     DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
         .handle = zebinModuleUUID,
         .classHandle = zebinModuleClassHandle,
-        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .classIndex = NEO::DrmResourceClass::l0ZebinModule,
         .data = std::make_unique<char[]>(sizeof(kernelCount)),
         .dataSize = sizeof(kernelCount)};
 
     memcpy(zebinModuleUuidData.data.get(), &kernelCount, sizeof(kernelCount));
 
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::l0ZebinModule)};
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = 2;
 
@@ -4605,13 +4605,13 @@ TEST_F(DebugApiLinuxVmBindTest, GivenAttachAfterModuleCreateWhenHandlingEventWit
     DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
         .handle = zebinModuleUUID,
         .classHandle = zebinModuleClassHandle,
-        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .classIndex = NEO::DrmResourceClass::l0ZebinModule,
         .data = std::make_unique<char[]>(sizeof(kernelCount)),
         .dataSize = sizeof(kernelCount)};
 
     memcpy(zebinModuleUuidData.data.get(), &kernelCount, sizeof(kernelCount));
 
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::l0ZebinModule)};
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = 2;
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[elfUUID].ptr = 0x1000;
@@ -4721,13 +4721,13 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleSegmentsInL0ZebinModuleWhenLoadAddr
     DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
         .handle = zebinModuleUUID,
         .classHandle = zebinModuleClassHandle,
-        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .classIndex = NEO::DrmResourceClass::l0ZebinModule,
         .data = std::make_unique<char[]>(sizeof(segmentCount)),
         .dataSize = sizeof(segmentCount)};
 
     memcpy(zebinModuleUuidData.data.get(), &segmentCount, sizeof(segmentCount));
 
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::l0ZebinModule)};
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = segmentCount;
 
@@ -4776,13 +4776,13 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleSegmentsInL0ZebinModuleWhenLoadAddr
     DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
         .handle = zebinModuleUUID,
         .classHandle = zebinModuleClassHandle,
-        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .classIndex = NEO::DrmResourceClass::l0ZebinModule,
         .data = std::make_unique<char[]>(sizeof(segmentCount)),
         .dataSize = sizeof(segmentCount)};
 
     memcpy(zebinModuleUuidData.data.get(), &segmentCount, sizeof(segmentCount));
 
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::l0ZebinModule)};
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = segmentCount;
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[elfUUID].ptr = 0x1000;
@@ -4829,13 +4829,13 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandli
     DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
         .handle = zebinModuleUUID,
         .classHandle = zebinModuleClassHandle,
-        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .classIndex = NEO::DrmResourceClass::l0ZebinModule,
         .data = std::make_unique<char[]>(sizeof(kernelCount)),
         .dataSize = sizeof(kernelCount)};
 
     memcpy(zebinModuleUuidData.data.get(), &kernelCount, sizeof(kernelCount));
 
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::l0ZebinModule)};
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = 1;
 
@@ -6861,13 +6861,13 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenOutOfOrderEventsForIsaWithoutAckNeeded
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
     memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
-    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[isaClassHandle] = {"ISA", static_cast<uint32_t>(NEO::DrmResourceClass::Isa)};
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[isaClassHandle] = {"ISA", static_cast<uint32_t>(NEO::DrmResourceClass::isa)};
 
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
@@ -7939,7 +7939,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
         DebugSessionLinuxi915::UuidData isaUuidData = {
             .handle = isaUUID,
             .classHandle = isaClassHandle,
-            .classIndex = NEO::DrmResourceClass::Isa,
+            .classIndex = NEO::DrmResourceClass::isa,
             .data = std::make_unique<char[]>(sizeof(devices)),
             .dataSize = sizeof(devices)};
 
@@ -8002,7 +8002,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBi
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8038,7 +8038,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBi
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8084,7 +8084,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWh
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8137,7 +8137,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8184,7 +8184,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8228,7 +8228,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8269,7 +8269,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenZebinModuleForTileWitho
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8304,7 +8304,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndRe
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8345,7 +8345,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingMemor
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8377,7 +8377,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleIsaWithInvalidVmWhenReadin
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8432,7 +8432,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndSingleInstanc
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8479,7 +8479,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenIsaWhenGettingIsaInfoForWrongAdd
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8516,7 +8516,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndRe
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8554,7 +8554,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleMemoryIsaWhenWritingAndRea
     DebugSessionLinuxi915::UuidData isaUuidData = {
         .handle = isaUUID,
         .classHandle = isaClassHandle,
-        .classIndex = NEO::DrmResourceClass::Isa,
+        .classIndex = NEO::DrmResourceClass::isa,
         .data = std::make_unique<char[]>(sizeof(devices)),
         .dataSize = sizeof(devices)};
 
@@ -8646,7 +8646,7 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotW
 
     typeOfUUID uuidsTemp[1];
     uuidsTemp[0] = static_cast<typeOfUUID>(6);
-    debugSession->clientHandleToConnection[debugSession->clientHandle]->uuidMap[6].classIndex = NEO::DrmResourceClass::Isa;
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->uuidMap[6].classIndex = NEO::DrmResourceClass::isa;
     debugSession->clientHandleToConnection[debugSession->clientHandle]->vmToTile[vmBindIsa->vm_handle] = 2;
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 

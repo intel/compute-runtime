@@ -3909,7 +3909,7 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
 TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeShouldBeRegisteredThenBoHasBindExtHandleAdded) {
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         drm.classHandles.push_back(i);
     }
 
@@ -3919,9 +3919,9 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
-        EXPECT_EQ(DrmResourceClass::ContextSaveArea, drm.registeredClass);
+        EXPECT_EQ(DrmResourceClass::contextSaveArea, drm.registeredClass);
     }
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -3929,9 +3929,9 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
-        EXPECT_EQ(DrmResourceClass::SbaTrackingBuffer, drm.registeredClass);
+        EXPECT_EQ(DrmResourceClass::sbaTrackingBuffer, drm.registeredClass);
     }
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -3939,9 +3939,9 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
-        EXPECT_EQ(DrmResourceClass::Isa, drm.registeredClass);
+        EXPECT_EQ(DrmResourceClass::isa, drm.registeredClass);
     }
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -3949,10 +3949,10 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
-        EXPECT_EQ(DrmResourceClass::ModuleHeapDebugArea, drm.registeredClass);
+        EXPECT_EQ(DrmResourceClass::moduleHeapDebugArea, drm.registeredClass);
     }
 
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -3960,7 +3960,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
         allocation.bufferObjects[0] = &bo;
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(0u, bo.bindExtHandles.size());
-        EXPECT_EQ(DrmResourceClass::MaxSize, drm.registeredClass);
+        EXPECT_EQ(DrmResourceClass::maxSize, drm.registeredClass);
     }
 }
 
@@ -3968,9 +3968,9 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         drm.classHandles.push_back(i);
     }
 
@@ -3981,7 +3981,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
         allocation.registerBOBindExtHandle(&drm);
         EXPECT_EQ(0u, bo.bindExtHandles.size());
     }
-    EXPECT_EQ(DrmResourceClass::MaxSize, drm.registeredClass);
+    EXPECT_EQ(DrmResourceClass::maxSize, drm.registeredClass);
 }
 
 TEST_F(DrmAllocationTests, givenResourceRegistrationNotEnabledWhenRegisteringBindExtHandleThenHandleIsNotAddedToBo) {
@@ -3994,7 +3994,7 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationNotEnabledWhenRegisteringBin
     allocation.bufferObjects[0] = &bo;
     allocation.registerBOBindExtHandle(&drm);
     EXPECT_EQ(0u, bo.bindExtHandles.size());
-    EXPECT_EQ(DrmResourceClass::MaxSize, drm.registeredClass);
+    EXPECT_EQ(DrmResourceClass::maxSize, drm.registeredClass);
 }
 
 TEST(DrmMemoryManager, givenTrackedAllocationTypeAndDisabledRegistrationInDrmWhenAllocatingThenRegisterBoBindExtHandleIsNotCalled) {
@@ -4016,7 +4016,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeAndDisabledRegistrationInDrmWhe
     memoryManager->registerAllocationInOs(&allocation);
 
     EXPECT_FALSE(allocation.registerBOBindExtHandleCalled);
-    EXPECT_EQ(DrmResourceClass::MaxSize, mockDrm->registeredClass);
+    EXPECT_EQ(DrmResourceClass::maxSize, mockDrm->registeredClass);
 }
 
 TEST(DrmMemoryManager, givenResourceRegistrationEnabledAndAllocTypeToCaptureWhenRegisteringAllocationInOsThenItIsMarkedForCapture) {
@@ -4056,7 +4056,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenAllocatingThenAllocationIsR
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         mockDrm->classHandles.push_back(i);
     }
 
@@ -4068,7 +4068,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenAllocatingThenAllocationIsR
 
     properties.gpuAddress = 0x20000;
     auto sbaAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
-    EXPECT_EQ(DrmResourceClass::SbaTrackingBuffer, mockDrm->registeredClass);
+    EXPECT_EQ(DrmResourceClass::sbaTrackingBuffer, mockDrm->registeredClass);
 
     EXPECT_EQ(sizeof(uint64_t), mockDrm->registeredDataSize);
     uint64_t *data = reinterpret_cast<uint64_t *>(mockDrm->registeredData);
@@ -4086,7 +4086,7 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenFreeingThenRegisteredHandle
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         mockDrm->classHandles.push_back(i);
     }
 
@@ -4117,7 +4117,7 @@ TEST(DrmMemoryManager, givenEnabledResourceRegistrationWhenSshIsAllocatedThenItI
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mockDrm, 0u, false);
     executionEnvironment->memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         mockDrm->classHandles.push_back(i);
     }
     EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
@@ -4141,7 +4141,7 @@ TEST(DrmMemoryManager, givenNullBoWhenRegisteringBindExtHandleThenEarlyReturn) {
 
     auto mockDrm = std::make_unique<DrmMockResources>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         mockDrm->classHandles.push_back(i);
     }
 
@@ -4173,11 +4173,11 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndTileInstancedIsaWh
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         drm.classHandles.push_back(i);
     }
 
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
@@ -4197,11 +4197,11 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSingleInstanceIsaW
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         drm.classHandles.push_back(i);
     }
 
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
@@ -4219,11 +4219,11 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenIsaIsRegisteredTh
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         drm.classHandles.push_back(i);
     }
 
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
@@ -4243,11 +4243,11 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldS
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         drm.classHandles.push_back(i);
     }
 
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);
@@ -4281,11 +4281,11 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldN
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         drm.classHandles.push_back(i);
     }
 
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);
@@ -4318,11 +4318,11 @@ TEST_F(DrmAllocationTests, givenTwoBufferObjectsAndTileInstancedSbaAndSubDeviceB
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         drm.classHandles.push_back(i);
     }
 
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo0(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockBufferObject bo1(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -4361,11 +4361,11 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenSbaTrackingBuffer
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
         drm.classHandles.push_back(i);
     }
 
-    drm.registeredClass = DrmResourceClass::MaxSize;
+    drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::localMemory);

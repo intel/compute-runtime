@@ -230,7 +230,7 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenBuildingThenNotifyModuleCreat
     memcpy_s(mockCompilerInterface->output.intermediateRepresentation.mem.get(), mockCompilerInterface->output.intermediateRepresentation.size,
              zebin.storage.data(), zebin.storage.size());
 
-    program->createdFrom = Program::CreatedFrom::BINARY;
+    program->createdFrom = Program::CreatedFrom::binary;
     program->irBinary = std::make_unique<char[]>(16);
     program->irBinarySize = 16;
 
@@ -256,7 +256,7 @@ HWTEST_F(DebuggerZebinProgramTest, GivenProgramWhenLinkingThenNotifyModuleCreate
     memcpy_s(mockCompilerInterface->output.intermediateRepresentation.mem.get(), mockCompilerInterface->output.intermediateRepresentation.size,
              zebin.storage.data(), zebin.storage.size());
 
-    program->createdFrom = Program::CreatedFrom::BINARY;
+    program->createdFrom = Program::CreatedFrom::binary;
     program->irBinary = std::make_unique<char[]>(16);
     program->irBinarySize = 16;
 

@@ -355,8 +355,8 @@ ze_result_t Event::destroy() {
 }
 
 void Event::enableCounterBasedMode(bool apiRequest) {
-    if (counterBasedMode == CounterBasedMode::InitiallyDisabled) {
-        counterBasedMode = apiRequest ? CounterBasedMode::ExplicitlyEnabled : CounterBasedMode::ImplicitlyEnabled;
+    if (counterBasedMode == CounterBasedMode::initiallyDisabled) {
+        counterBasedMode = apiRequest ? CounterBasedMode::explicitlyEnabled : CounterBasedMode::implicitlyEnabled;
     }
 }
 
@@ -365,8 +365,8 @@ void Event::disableImplicitCounterBasedMode() {
         return;
     }
 
-    if (counterBasedMode == CounterBasedMode::ImplicitlyEnabled || counterBasedMode == CounterBasedMode::InitiallyDisabled) {
-        counterBasedMode = CounterBasedMode::ImplicitlyDisabled;
+    if (counterBasedMode == CounterBasedMode::implicitlyEnabled || counterBasedMode == CounterBasedMode::initiallyDisabled) {
+        counterBasedMode = CounterBasedMode::implicitlyDisabled;
         unsetInOrderExecInfo();
     }
 }

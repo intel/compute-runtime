@@ -825,7 +825,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_NE(0u, sourceSize);
     EXPECT_NE(nullptr, pSourceBuffer);
     p3->sourceCode = pSourceBuffer.get();
-    p3->createdFrom = Program::CreatedFrom::SOURCE;
+    p3->createdFrom = Program::CreatedFrom::source;
     retVal = p3->build(p3->getDevices(), nullptr);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
     p3.reset(nullptr);
@@ -875,7 +875,7 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
 
     // fail build - code to be build does not exist
     pMockProgram->sourceCode = ""; // set source code as non-existent (invalid)
-    pMockProgram->createdFrom = Program::CreatedFrom::SOURCE;
+    pMockProgram->createdFrom = Program::CreatedFrom::source;
     pMockProgram->setBuildStatus(CL_BUILD_NONE);
     pMockProgram->setCreatedFromBinary(false);
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
@@ -940,7 +940,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC20ThenExtraExtension
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
     pProgram->sourceCode = "__kernel mock() {}";
-    pProgram->createdFrom = Program::CreatedFrom::SOURCE;
+    pProgram->createdFrom = Program::CreatedFrom::source;
 
     MockProgram::getInternalOptionsCalled = 0;
 
@@ -960,7 +960,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
     pProgram->sourceCode = "__kernel mock() {}";
-    pProgram->createdFrom = Program::CreatedFrom::SOURCE;
+    pProgram->createdFrom = Program::CreatedFrom::source;
 
     MockProgram::getInternalOptionsCalled = 0;
 
@@ -982,7 +982,7 @@ TEST_F(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesAreAdd
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
     pProgram->sourceCode = "__kernel mock() {}";
-    pProgram->createdFrom = Program::CreatedFrom::SOURCE;
+    pProgram->createdFrom = Program::CreatedFrom::source;
 
     retVal = pProgram->build(pProgram->getDevices(), "-cl-std=CL3.0");
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1057,7 +1057,7 @@ TEST_F(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesAreAd
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
     auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
     pProgram->sourceCode = "__kernel mock() {}";
-    pProgram->createdFrom = Program::CreatedFrom::SOURCE;
+    pProgram->createdFrom = Program::CreatedFrom::source;
 
     auto extensionsOption = pClDevice->peekCompilerExtensions();
     auto extensionsWithFeaturesOption = pClDevice->peekCompilerExtensionsWithFeatures();
@@ -1135,7 +1135,7 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::unwatch(kernel2);
     Callback::watch(kernel3);
 
-    pProgram->createdFrom = NEO::Program::CreatedFrom::BINARY;
+    pProgram->createdFrom = NEO::Program::CreatedFrom::binary;
     pProgram->setIrBinary(new char[16], true);
     pProgram->setIrBinarySize(16, true);
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
@@ -1147,7 +1147,7 @@ TEST_F(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::unwatch(kernel3);
     Callback::watch(kernel4);
 
-    pProgram->createdFrom = NEO::Program::CreatedFrom::SOURCE;
+    pProgram->createdFrom = NEO::Program::CreatedFrom::source;
     retVal = pProgram->build(pProgram->getDevices(), nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash5 = pProgram->getCachedFileName();
@@ -1290,7 +1290,7 @@ TEST_F(ProgramTests, GivenFlagsWhenLinkingProgramThenBuildOptionsHaveBeenApplied
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pProgram = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pClDevice));
     pProgram->sourceCode = "__kernel mock() {}";
-    pProgram->createdFrom = Program::CreatedFrom::SOURCE;
+    pProgram->createdFrom = Program::CreatedFrom::source;
     MockProgram::getInternalOptionsCalled = 0;
 
     cl_program program = pProgram.get();
@@ -1953,7 +1953,7 @@ TEST_F(ProgramTests, givenStatefulAndStatelessAccessesWhenProgramBuildIsCalledTh
         MyMockProgram program(pContext, false, toClDeviceVector(*pClDevice));
         program.isBuiltIn = false;
         program.sourceCode = "test_kernel";
-        program.createdFrom = Program::CreatedFrom::SOURCE;
+        program.createdFrom = Program::CreatedFrom::source;
         program.isGeneratedByIgc = isIgcGenerated;
         program.setAddressingMode(isStatefulAccess);
         debugManager.flags.FailBuildProgramWithStatefulAccess.set(debuyKey);
@@ -2255,7 +2255,7 @@ TEST_F(ProgramTests, GivenGtpinReraFlagWhenBuildingProgramThenCorrectOptionsAreS
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
     program->sourceCode = "__kernel mock() {}";
-    program->createdFrom = Program::CreatedFrom::SOURCE;
+    program->createdFrom = Program::CreatedFrom::source;
 
     // Ask to build created program without NEO::CompilerOptions::gtpinRera flag.
     cl_int retVal = program->build(program->getDevices(), CompilerOptions::fastRelaxedMath.data());
@@ -2281,7 +2281,7 @@ TEST_F(ProgramTests, GivenFailureDuringProcessGenBinaryWhenProcessGenBinariesIsC
     auto program = std::make_unique<FailingGenBinaryProgram>(toClDeviceVector(*pClDevice));
 
     std::unordered_map<uint32_t, Program::BuildPhase> phaseReached;
-    phaseReached[0] = Program::BuildPhase::BinaryCreation;
+    phaseReached[0] = Program::BuildPhase::binaryCreation;
     cl_int retVal = program->processGenBinaries(toClDeviceVector(*pClDevice), phaseReached);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
@@ -2705,7 +2705,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenBuildingProgramThenInter
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
     program->sourceCode = "__kernel mock() {}";
-    program->createdFrom = Program::CreatedFrom::SOURCE;
+    program->createdFrom = Program::CreatedFrom::source;
 
     cl_int retVal = program->build(program->getDevices(), "");
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -2722,7 +2722,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenBuildingBuiltInProgramTh
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
     program->sourceCode = "__kernel mock() {}";
-    program->createdFrom = Program::CreatedFrom::SOURCE;
+    program->createdFrom = Program::CreatedFrom::source;
     program->isBuiltIn = true;
 
     cl_int retVal = program->build(program->getDevices(), "");
@@ -2740,7 +2740,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingProgramThenInte
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
     program->sourceCode = "__kernel mock() {}";
-    program->createdFrom = Program::CreatedFrom::SOURCE;
+    program->createdFrom = Program::CreatedFrom::source;
 
     cl_int retVal = program->compile(program->getDevices(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -2757,7 +2757,7 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingBuiltInProgramT
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
     auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
     program->sourceCode = "__kernel mock() {}";
-    program->createdFrom = Program::CreatedFrom::SOURCE;
+    program->createdFrom = Program::CreatedFrom::source;
     program->isBuiltIn = true;
 
     cl_int retVal = program->compile(program->getDevices(), nullptr, 0, nullptr, nullptr);

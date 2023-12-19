@@ -50,7 +50,7 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenSmallSlmTotalSizesWhenSetAdditionalIn
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = revisionToTest.revisionId;
             INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-            EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, rootDeviceEnvironment, threadsCount, slmTotalSize, SlmPolicy::SlmPolicyNone);
+            EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, rootDeviceEnvironment, threadsCount, slmTotalSize, SlmPolicy::slmPolicyNone);
             if (revisionToTest.isWaRequired) {
                 EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K, idd.getPreferredSlmAllocationSize());
             } else {

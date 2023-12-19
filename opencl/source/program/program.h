@@ -68,18 +68,18 @@ class Program : public BaseObject<_cl_program> {
     static const cl_ulong objectMagic = 0x5651C89100AAACFELL;
 
     enum class BuildPhase {
-        Init,
-        SourceCodeNotification,
-        BinaryCreation,
-        BinaryProcessing,
-        DebugDataNotification
+        init,
+        sourceCodeNotification,
+        binaryCreation,
+        binaryProcessing,
+        debugDataNotification
     };
 
     enum class CreatedFrom {
-        SOURCE,
-        IL,
-        BINARY,
-        UNKNOWN
+        source,
+        il,
+        binary,
+        unknown
     };
 
     // Create program from binary
@@ -309,7 +309,7 @@ class Program : public BaseObject<_cl_program> {
     std::unique_ptr<char[]> irBinary;
     size_t irBinarySize = 0U;
 
-    CreatedFrom createdFrom = CreatedFrom::UNKNOWN;
+    CreatedFrom createdFrom = CreatedFrom::unknown;
 
     struct DeviceBuildInfo {
         StackVec<ClDevice *, 2> associatedSubDevices;

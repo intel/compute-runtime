@@ -294,12 +294,12 @@ TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAlloc
     kernelAllocs.push_back(&isaAllocation2);
 
     drmMock->registeredDataSize = 0;
-    drmMock->registeredClass = NEO::DrmResourceClass::MaxSize;
+    drmMock->registeredClass = NEO::DrmResourceClass::maxSize;
 
     EXPECT_TRUE(device->getL0Debugger()->attachZebinModuleToSegmentAllocations(kernelAllocs, handle, elfHandle));
 
     EXPECT_EQ(sizeof(uint32_t), drmMock->registeredDataSize);
-    EXPECT_EQ(NEO::DrmResourceClass::L0ZebinModule, drmMock->registeredClass);
+    EXPECT_EQ(NEO::DrmResourceClass::l0ZebinModule, drmMock->registeredClass);
 
     const auto containsModuleHandle = [handle](const auto &bufferObject) {
         const auto &bindExtHandles = bufferObject.getBindExtHandles();
@@ -334,7 +334,7 @@ TEST_F(L0DebuggerLinuxTest, givenModuleAllocationsWhenAttachingZebinModuleThenBo
     kernelAllocs.push_back(&isaAllocation2);
 
     drmMock->registeredDataSize = 0;
-    drmMock->registeredClass = NEO::DrmResourceClass::MaxSize;
+    drmMock->registeredClass = NEO::DrmResourceClass::maxSize;
 
     EXPECT_TRUE(device->getL0Debugger()->attachZebinModuleToSegmentAllocations(kernelAllocs, handle, elfHandle));
 

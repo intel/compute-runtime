@@ -14,9 +14,9 @@ struct ImplicitArgs;
 struct KernelDescriptor;
 
 enum class SlmPolicy {
-    SlmPolicyNone,
-    SlmPolicyLargeSlm,
-    SlmPolicyLargeData
+    slmPolicyNone,
+    slmPolicyLargeSlm,
+    slmPolicyLargeData
 };
 
 struct DispatchKernelEncoderI {

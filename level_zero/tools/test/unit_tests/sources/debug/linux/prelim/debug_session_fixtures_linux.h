@@ -698,16 +698,16 @@ struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo 
 struct MockDebugSessionLinuxi915Helper {
 
     void setupSessionClassHandlesAndUuidMap(MockDebugSessionLinuxi915 *session) {
-        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[sbaClassHandle] = {"SBA AREA", static_cast<uint32_t>(NEO::DrmResourceClass::SbaTrackingBuffer)};
-        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[moduleDebugClassHandle] = {"DEBUG AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ModuleHeapDebugArea)};
-        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[contextSaveClassHandle] = {"CONTEXT SAVE AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ContextSaveArea)};
-        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[isaClassHandle] = {"ISA", static_cast<uint32_t>(NEO::DrmResourceClass::Isa)};
-        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[elfClassHandle] = {"ELF", static_cast<uint32_t>(NEO::DrmResourceClass::Elf)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[sbaClassHandle] = {"SBA AREA", static_cast<uint32_t>(NEO::DrmResourceClass::sbaTrackingBuffer)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[moduleDebugClassHandle] = {"DEBUG AREA", static_cast<uint32_t>(NEO::DrmResourceClass::moduleHeapDebugArea)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[contextSaveClassHandle] = {"CONTEXT SAVE AREA", static_cast<uint32_t>(NEO::DrmResourceClass::contextSaveArea)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[isaClassHandle] = {"ISA", static_cast<uint32_t>(NEO::DrmResourceClass::isa)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[elfClassHandle] = {"ELF", static_cast<uint32_t>(NEO::DrmResourceClass::elf)};
 
         DebugSessionLinuxi915::UuidData isaUuidData = {
             .handle = isaUUID,
             .classHandle = isaClassHandle,
-            .classIndex = NEO::DrmResourceClass::Isa,
+            .classIndex = NEO::DrmResourceClass::isa,
             .data = std::make_unique<char[]>(4),
             .dataSize = 4};
         DeviceBitfield bitfield;
@@ -717,7 +717,7 @@ struct MockDebugSessionLinuxi915Helper {
         DebugSessionLinuxi915::UuidData elfUuidData = {
             .handle = elfUUID,
             .classHandle = elfClassHandle,
-            .classIndex = NEO::DrmResourceClass::Elf,
+            .classIndex = NEO::DrmResourceClass::elf,
             .data = std::make_unique<char[]>(elfSize),
             .dataSize = elfSize};
         memcpy(elfUuidData.data.get(), "ELF", sizeof("ELF"));
@@ -725,26 +725,26 @@ struct MockDebugSessionLinuxi915Helper {
         DebugSessionLinuxi915::UuidData cookieUuidData = {
             .handle = cookieUUID,
             .classHandle = isaUUID,
-            .classIndex = NEO::DrmResourceClass::MaxSize,
+            .classIndex = NEO::DrmResourceClass::maxSize,
         };
         DebugSessionLinuxi915::UuidData sbaUuidData = {
             .handle = sbaUUID,
             .classHandle = sbaClassHandle,
-            .classIndex = NEO::DrmResourceClass::SbaTrackingBuffer,
+            .classIndex = NEO::DrmResourceClass::sbaTrackingBuffer,
             .data = nullptr,
             .dataSize = 0};
 
         DebugSessionLinuxi915::UuidData debugAreaUuidData = {
             .handle = debugAreaUUID,
             .classHandle = moduleDebugClassHandle,
-            .classIndex = NEO::DrmResourceClass::ModuleHeapDebugArea,
+            .classIndex = NEO::DrmResourceClass::moduleHeapDebugArea,
             .data = nullptr,
             .dataSize = 0};
 
         DebugSessionLinuxi915::UuidData stateSaveUuidData = {
             .handle = stateSaveUUID,
             .classHandle = contextSaveClassHandle,
-            .classIndex = NEO::DrmResourceClass::ContextSaveArea,
+            .classIndex = NEO::DrmResourceClass::contextSaveArea,
             .data = nullptr,
             .dataSize = 0};
 
@@ -758,12 +758,12 @@ struct MockDebugSessionLinuxi915Helper {
         DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
             .handle = zebinModuleUUID,
             .classHandle = zebinModuleClassHandle,
-            .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+            .classIndex = NEO::DrmResourceClass::l0ZebinModule,
             .data = std::make_unique<char[]>(sizeof(kernelCount)),
             .dataSize = sizeof(kernelCount)};
 
         memcpy(zebinModuleUuidData.data.get(), &kernelCount, sizeof(kernelCount));
-        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+        session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::l0ZebinModule)};
         session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
         session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = 2;
         session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[elfUUID].ptr = elfVa;
@@ -834,7 +834,7 @@ struct MockDebugSessionLinuxi915Helper {
             DebugSessionLinuxi915::UuidData zebinModuleUuidData = {
                 .handle = zebinModuleUUID1,
                 .classHandle = zebinModuleClassHandle,
-                .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+                .classIndex = NEO::DrmResourceClass::l0ZebinModule,
                 .data = std::make_unique<char[]>(sizeof(kernelCount)),
                 .dataSize = sizeof(kernelCount)};
 

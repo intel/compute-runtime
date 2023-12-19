@@ -502,7 +502,7 @@ TEST(DrmBufferObjectTestPrelim, givenProvidedCtxIdWhenCallingWaitUserFenceThenEx
 
     uint64_t gpuAddress = 0x1020304000ull;
     uint64_t value = 0x98765ull;
-    drm.waitUserFence(10u, gpuAddress, value, Drm::ValueWidth::U8, -1, 0u);
+    drm.waitUserFence(10u, gpuAddress, value, Drm::ValueWidth::u8, -1, 0u);
 
     EXPECT_EQ(1u, drm.context.waitUserFenceCalled);
     const auto &waitUserFence = drm.context.receivedWaitUserFence;
@@ -523,7 +523,7 @@ TEST(DrmBufferObjectTestPrelim, givenProvidedNoCtxIdWhenCallingWaitUserFenceThen
 
     uint64_t gpuAddress = 0x1020304000ull;
     uint64_t value = 0x98765ull;
-    drm.waitUserFence(0u, gpuAddress, value, Drm::ValueWidth::U16, 2, 3u);
+    drm.waitUserFence(0u, gpuAddress, value, Drm::ValueWidth::u16, 2, 3u);
 
     EXPECT_EQ(1u, drm.context.waitUserFenceCalled);
     const auto &waitUserFence = drm.context.receivedWaitUserFence;

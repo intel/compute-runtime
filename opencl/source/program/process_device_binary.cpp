@@ -160,7 +160,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
 cl_int Program::processGenBinaries(const ClDeviceVector &clDevices, std::unordered_map<uint32_t, BuildPhase> &phaseReached) {
     cl_int retVal = CL_SUCCESS;
     for (auto &clDevice : clDevices) {
-        if (BuildPhase::BinaryProcessing == phaseReached[clDevice->getRootDeviceIndex()]) {
+        if (BuildPhase::binaryProcessing == phaseReached[clDevice->getRootDeviceIndex()]) {
             continue;
         }
         if (debugManager.flags.PrintProgramBinaryProcessingTime.get()) {
@@ -172,7 +172,7 @@ cl_int Program::processGenBinaries(const ClDeviceVector &clDevices, std::unorder
         if (retVal != CL_SUCCESS) {
             break;
         }
-        phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::BinaryProcessing;
+        phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::binaryProcessing;
     }
     return retVal;
 }

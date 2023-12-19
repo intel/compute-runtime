@@ -32,11 +32,11 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         using EventImp<uint32_t>::signalScope;
 
         void makeCounterBasedInitiallyDisabled() {
-            counterBasedMode = CounterBasedMode::InitiallyDisabled;
+            counterBasedMode = CounterBasedMode::initiallyDisabled;
         }
 
         void makeCounterBasedImplicitlyDisabled() {
-            counterBasedMode = CounterBasedMode::ImplicitlyDisabled;
+            counterBasedMode = CounterBasedMode::implicitlyDisabled;
         }
     };
 
@@ -76,7 +76,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         for (uint32_t i = 0; i < numEvents; i++) {
             eventDesc.index = i;
             events.emplace_back(DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device))));
-            EXPECT_EQ(Event::CounterBasedMode::ExplicitlyEnabled, events.back()->counterBasedMode);
+            EXPECT_EQ(Event::CounterBasedMode::explicitlyEnabled, events.back()->counterBasedMode);
             EXPECT_TRUE(events.back()->isCounterBased());
         }
 

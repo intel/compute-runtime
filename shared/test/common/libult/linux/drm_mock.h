@@ -406,7 +406,7 @@ class DrmMockResources : public DrmMock {
 
     uint32_t unregisteredHandle = 0;
     uint32_t unregisterCalledCount = 0;
-    DrmResourceClass registeredClass = DrmResourceClass::MaxSize;
+    DrmResourceClass registeredClass = DrmResourceClass::maxSize;
     bool registerClassesCalled = false;
     uint64_t registeredData[128];
     size_t registeredDataSize;

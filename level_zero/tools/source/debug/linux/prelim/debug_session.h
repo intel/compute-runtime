@@ -81,7 +81,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     struct UuidData {
         uint64_t handle = 0;
         uint64_t classHandle = 0;
-        NEO::DrmResourceClass classIndex = NEO::DrmResourceClass::MaxSize;
+        NEO::DrmResourceClass classIndex = NEO::DrmResourceClass::maxSize;
         std::unique_ptr<char[]> data;
         size_t dataSize = 0;
 

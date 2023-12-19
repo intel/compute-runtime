@@ -319,28 +319,28 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
         return;
     }
 
-    DrmResourceClass resourceClass = DrmResourceClass::MaxSize;
+    DrmResourceClass resourceClass = DrmResourceClass::maxSize;
 
     switch (this->allocationType) {
     case AllocationType::debugContextSaveArea:
-        resourceClass = DrmResourceClass::ContextSaveArea;
+        resourceClass = DrmResourceClass::contextSaveArea;
         break;
     case AllocationType::debugSbaTrackingBuffer:
-        resourceClass = DrmResourceClass::SbaTrackingBuffer;
+        resourceClass = DrmResourceClass::sbaTrackingBuffer;
         break;
     case AllocationType::kernelIsa:
-        resourceClass = DrmResourceClass::Isa;
+        resourceClass = DrmResourceClass::isa;
         break;
     case AllocationType::debugModuleArea:
-        resourceClass = DrmResourceClass::ModuleHeapDebugArea;
+        resourceClass = DrmResourceClass::moduleHeapDebugArea;
         break;
     default:
         break;
     }
 
-    if (resourceClass != DrmResourceClass::MaxSize) {
+    if (resourceClass != DrmResourceClass::maxSize) {
         auto handle = 0;
-        if (resourceClass == DrmResourceClass::Isa) {
+        if (resourceClass == DrmResourceClass::isa) {
             auto deviceBitfiled = static_cast<uint32_t>(this->storageInfo.subDeviceBitfield.to_ulong());
             handle = drm->registerResource(resourceClass, &deviceBitfiled, sizeof(deviceBitfiled));
         } else {
@@ -357,13 +357,13 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
             if (bo) {
                 bo->addBindExtHandle(handle);
                 bo->markForCapture();
-                if (resourceClass == DrmResourceClass::Isa && storageInfo.tileInstanced == true) {
+                if (resourceClass == DrmResourceClass::isa && storageInfo.tileInstanced == true) {
                     auto cookieHandle = drm->registerIsaCookie(handle);
                     bo->addBindExtHandle(cookieHandle);
                     registeredBoBindHandles.push_back(cookieHandle);
                 }
 
-                if (resourceClass == DrmResourceClass::SbaTrackingBuffer && getOsContext()) {
+                if (resourceClass == DrmResourceClass::sbaTrackingBuffer && getOsContext()) {
                     auto deviceIndex = [=]() -> uint32_t {
                         if (storageInfo.tileInstanced == true) {
                             return boIndex;

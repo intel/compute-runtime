@@ -149,7 +149,7 @@ TYPED_TEST_P(D3DTests, givenNV12FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     ASSERT_NE(nullptr, image.get());
     EXPECT_EQ(GMM_PLANE_Y, image->getPlane());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, ImagePlane::PLANE_Y, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, ImagePlane::planeY, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(2u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -235,7 +235,7 @@ TYPED_TEST_P(D3DTests, givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     ASSERT_NE(nullptr, image.get());
     EXPECT_EQ(GMM_PLANE_U, image->getPlane());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, ImagePlane::PLANE_UV, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, ImagePlane::planeUV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(3u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -252,7 +252,7 @@ TYPED_TEST_P(D3DTests, givenP010FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, ImagePlane::PLANE_Y, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, ImagePlane::planeY, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(2u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -269,7 +269,7 @@ TYPED_TEST_P(D3DTests, givenP010FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, ImagePlane::PLANE_UV, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, ImagePlane::planeUV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(3u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -286,7 +286,7 @@ TYPED_TEST_P(D3DTests, givenP016FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, ImagePlane::PLANE_Y, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, ImagePlane::planeY, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(2u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -303,7 +303,7 @@ TYPED_TEST_P(D3DTests, givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<typename TestFixture::D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, ImagePlane::PLANE_UV, CL_MEM_READ_WRITE);
+    auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, ImagePlane::planeUV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
     EXPECT_EQ(1u, this->mockGmmResInfo->getOffsetCalled);
     EXPECT_EQ(3u, this->mockGmmResInfo->arrayIndexPassedToGetOffset);
@@ -820,7 +820,7 @@ TEST(D3DSurfaceTest, givenD3DSurfaceWhenInvalidMemObjectIsPassedToValidateUpdate
     };
     MockContext context;
     cl_dx9_surface_info_khr surfaceInfo = {};
-    ImagePlane imagePlane = ImagePlane::NO_PLANE;
+    ImagePlane imagePlane = ImagePlane::noPlane;
     std::unique_ptr<D3DSurface> surface(new MockD3DSurface(&context, &surfaceInfo, nullptr, 0, imagePlane, 0, false, false));
 
     MockBuffer buffer;

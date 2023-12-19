@@ -388,7 +388,7 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue,
     }
 
     for (uint32_t i = 0; i < this->activePartitions; i++) {
-        ret |= this->drm->waitUserFence(useContextForUserFenceWait ? ctxIds[i] : 0, hostAddress, waitValue, Drm::ValueWidth::U64, timeout, 0u);
+        ret |= this->drm->waitUserFence(useContextForUserFenceWait ? ctxIds[i] : 0, hostAddress, waitValue, Drm::ValueWidth::u64, timeout, 0u);
         if (ret != 0) {
             break;
         }

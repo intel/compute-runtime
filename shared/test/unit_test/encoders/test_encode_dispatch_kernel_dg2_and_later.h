@@ -32,15 +32,15 @@ void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> va
     EXPECT_EQ(0u, idd.getPreferredSlmAllocationSize());
 
     const std::array<NEO::SlmPolicy, 3> slmPolicies = {
-        NEO::SlmPolicy::SlmPolicyNone,
-        NEO::SlmPolicy::SlmPolicyLargeSlm,
-        NEO::SlmPolicy::SlmPolicyLargeData};
+        NEO::SlmPolicy::slmPolicyNone,
+        NEO::SlmPolicy::slmPolicyLargeSlm,
+        NEO::SlmPolicy::slmPolicyLargeData};
 
     for (auto localWorkGroupsPerDssCount : localWorkGroupsPerDssCounts) {
         for (auto &valueToTest : valuesToTest) {
             for (auto slmPolicy : slmPolicies) {
                 auto threadsPerThreadGroup = threadsPerDssCount / localWorkGroupsPerDssCount;
-                auto slmTotalSize = (slmPolicy == NEO::SlmPolicy::SlmPolicyLargeData)
+                auto slmTotalSize = (slmPolicy == NEO::SlmPolicy::slmPolicyLargeData)
                                         ? valueToTest.preferredSlmAllocationSizePerDss
                                         : valueToTest.preferredSlmAllocationSizePerDss / localWorkGroupsPerDssCount;
 

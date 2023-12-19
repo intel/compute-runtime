@@ -1063,7 +1063,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo,
                            createStorageInfoFromProperties(properties), properties.flags.preferCompressed);
 
-        gmm->updateImgInfoAndDesc(*properties.imgInfo, 0, NEO::ImagePlane::NO_PLANE);
+        gmm->updateImgInfoAndDesc(*properties.imgInfo, 0, NEO::ImagePlane::noPlane);
         drmAllocation->setDefaultGmm(gmm);
 
         bo->setPatIndex(drm.getPatIndex(gmm, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool)));

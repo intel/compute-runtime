@@ -629,13 +629,13 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
     xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x\n", __FUNCTION__, address, value, dataWidth, timeout, flags);
     uint64_t mask;
     switch (dataWidth) {
-    case static_cast<uint32_t>(Drm::ValueWidth::U64):
+    case static_cast<uint32_t>(Drm::ValueWidth::u64):
         mask = DRM_XE_UFENCE_WAIT_MASK_U64;
         break;
-    case static_cast<uint32_t>(Drm::ValueWidth::U32):
+    case static_cast<uint32_t>(Drm::ValueWidth::u32):
         mask = DRM_XE_UFENCE_WAIT_MASK_U32;
         break;
-    case static_cast<uint32_t>(Drm::ValueWidth::U16):
+    case static_cast<uint32_t>(Drm::ValueWidth::u16):
         mask = DRM_XE_UFENCE_WAIT_MASK_U16;
         break;
     default:

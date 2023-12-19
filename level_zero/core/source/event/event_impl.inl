@@ -540,7 +540,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::reset() {
-    if (this->counterBasedMode == CounterBasedMode::ExplicitlyEnabled) {
+    if (this->counterBasedMode == CounterBasedMode::explicitlyEnabled) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 

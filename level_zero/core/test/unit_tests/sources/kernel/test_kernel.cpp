@@ -1878,17 +1878,17 @@ TEST_F(KernelPropertiesTests, givenValidKernelAndNollocateStatelessPrivateSurfac
 }
 
 TEST_F(KernelPropertiesTests, givenValidKernelAndLargeSlmIsSetThenForceLargeSlmIsTrue) {
-    EXPECT_EQ(NEO::SlmPolicy::SlmPolicyNone, kernel->getSlmPolicy());
+    EXPECT_EQ(NEO::SlmPolicy::slmPolicyNone, kernel->getSlmPolicy());
     ze_result_t res = kernel->setCacheConfig(ZE_CACHE_CONFIG_FLAG_LARGE_SLM);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(NEO::SlmPolicy::SlmPolicyLargeSlm, kernel->getSlmPolicy());
+    EXPECT_EQ(NEO::SlmPolicy::slmPolicyLargeSlm, kernel->getSlmPolicy());
 }
 
 TEST_F(KernelPropertiesTests, givenValidKernelAndLargeDataIsSetThenForceLargeDataIsTrue) {
-    EXPECT_EQ(NEO::SlmPolicy::SlmPolicyNone, kernel->getSlmPolicy());
+    EXPECT_EQ(NEO::SlmPolicy::slmPolicyNone, kernel->getSlmPolicy());
     ze_result_t res = kernel->setCacheConfig(ZE_CACHE_CONFIG_FLAG_LARGE_DATA);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(NEO::SlmPolicy::SlmPolicyLargeData, kernel->getSlmPolicy());
+    EXPECT_EQ(NEO::SlmPolicy::slmPolicyLargeData, kernel->getSlmPolicy());
 }
 
 TEST_F(KernelPropertiesTests, WhenGetExtensionIsCalledWithUnknownExtensionTypeThenReturnNullptr) {

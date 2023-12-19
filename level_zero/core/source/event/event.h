@@ -85,11 +85,11 @@ struct Event : _ze_event_handle_t {
 
     enum class CounterBasedMode : uint32_t {
         // For default flow (API)
-        InitiallyDisabled,
-        ExplicitlyEnabled,
+        initiallyDisabled,
+        explicitlyEnabled,
         // For internal convertion (Immediate CL)
-        ImplicitlyEnabled,
-        ImplicitlyDisabled
+        implicitlyEnabled,
+        implicitlyDisabled
     };
 
     template <typename TagSizeT>
@@ -239,8 +239,8 @@ struct Event : _ze_event_handle_t {
         this->metricNotification = metricNotification;
     }
     void updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
-    bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::ExplicitlyEnabled) || (counterBasedMode == CounterBasedMode::ImplicitlyEnabled)); }
-    bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::ExplicitlyEnabled); }
+    bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::explicitlyEnabled) || (counterBasedMode == CounterBasedMode::implicitlyEnabled)); }
+    bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::explicitlyEnabled); }
     void enableCounterBasedMode(bool apiRequest);
     void disableImplicitCounterBasedMode();
     NEO::GraphicsAllocation *getInOrderExecDataAllocation() const;
@@ -305,7 +305,7 @@ struct Event : _ze_event_handle_t {
     uint32_t kernelCount = 1u;
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
-    CounterBasedMode counterBasedMode = CounterBasedMode::InitiallyDisabled;
+    CounterBasedMode counterBasedMode = CounterBasedMode::initiallyDisabled;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;

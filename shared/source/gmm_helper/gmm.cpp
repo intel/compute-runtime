@@ -281,10 +281,10 @@ void Gmm::updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex, ImagePla
         imgInfo.imgDesc.imageRowPitch = width * (gmmResourceInfo->getBitsPerPixel() >> 3);
     }
     imgInfo.imgDesc.imageHeight = gmmResourceInfo->getBaseHeight();
-    if ((yuvPlaneType != ImagePlane::NO_PLANE) && (yuvPlaneType != ImagePlane::PLANE_Y)) {
+    if ((yuvPlaneType != ImagePlane::noPlane) && (yuvPlaneType != ImagePlane::planeY)) {
         imgInfo.imgDesc.imageWidth /= 2;
         imgInfo.imgDesc.imageHeight /= 2;
-        if (yuvPlaneType != ImagePlane::PLANE_UV) {
+        if (yuvPlaneType != ImagePlane::planeUV) {
             imgInfo.imgDesc.imageRowPitch /= 2;
         }
     }
@@ -320,13 +320,13 @@ void Gmm::updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex) {
 uint8_t Gmm::resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, ImagePlane plane) {
     GMM_RES_COPY_BLT gmmResourceCopyBLT = {};
 
-    if (plane == ImagePlane::PLANE_V) {
+    if (plane == ImagePlane::planeV) {
         sys = ptrOffset(sys, height * pitch * 2);
         pitch /= 2;
-    } else if (plane == ImagePlane::PLANE_U) {
+    } else if (plane == ImagePlane::planeU) {
         sys = ptrOffset(sys, height * pitch * 2 + height * pitch / 2);
         pitch /= 2;
-    } else if (plane == ImagePlane::PLANE_UV) {
+    } else if (plane == ImagePlane::planeUV) {
         sys = ptrOffset(sys, height * pitch * 2);
     }
     uint32_t size = pitch * height;

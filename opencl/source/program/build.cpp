@@ -41,7 +41,7 @@ cl_int Program::build(
 
     std::unordered_map<uint32_t, BuildPhase> phaseReached;
     for (const auto &clDevice : deviceVector) {
-        phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::Init;
+        phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::init;
     }
     do {
         // check to see if a previous build request is in progress
@@ -58,7 +58,7 @@ cl_int Program::build(
             if (false == requiresRebuild) {
                 if (nullptr != buildOptions) {
                     options = buildOptions;
-                } else if (this->createdFrom != CreatedFrom::BINARY) {
+                } else if (this->createdFrom != CreatedFrom::binary) {
                     options = "";
                 }
             }
@@ -77,7 +77,7 @@ cl_int Program::build(
             disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
 
             TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
-            if (createdFrom != CreatedFrom::SOURCE) {
+            if (createdFrom != CreatedFrom::source) {
                 inputArgs.srcType = isSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc;
                 inputArgs.src = ArrayRef<const char>(irBinary.get(), irBinarySize);
             } else {
@@ -133,11 +133,11 @@ cl_int Program::build(
                 }
                 this->buildInfos[clDevice->getRootDeviceIndex()].debugData = std::move(compilerOuput.debugData.mem);
                 this->buildInfos[clDevice->getRootDeviceIndex()].debugDataSize = compilerOuput.debugData.size;
-                if (BuildPhase::BinaryCreation == phaseReached[clDevice->getRootDeviceIndex()]) {
+                if (BuildPhase::binaryCreation == phaseReached[clDevice->getRootDeviceIndex()]) {
                     continue;
                 }
                 this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size, clDevice->getRootDeviceIndex());
-                phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::BinaryCreation;
+                phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::binaryCreation;
             }
             if (retVal != CL_SUCCESS) {
                 break;
@@ -220,11 +220,11 @@ void Program::extractInternalOptions(const std::string &options, std::string &in
 void Program::debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached) {
     for (auto &clDevice : deviceVector) {
         auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-        if (BuildPhase::DebugDataNotification == phasesReached[rootDeviceIndex]) {
+        if (BuildPhase::debugDataNotification == phasesReached[rootDeviceIndex]) {
             continue;
         }
         createDebugData(clDevice);
-        phasesReached[rootDeviceIndex] = BuildPhase::DebugDataNotification;
+        phasesReached[rootDeviceIndex] = BuildPhase::debugDataNotification;
     }
 }
 

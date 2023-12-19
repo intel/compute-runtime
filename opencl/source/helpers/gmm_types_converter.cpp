@@ -42,11 +42,11 @@ uint32_t GmmTypesConverter::getRenderMultisamplesCount(uint32_t numSamples) {
 }
 
 GMM_YUV_PLANE GmmTypesConverter::convertPlane(ImagePlane imagePlane) {
-    if (imagePlane == ImagePlane::PLANE_Y) {
+    if (imagePlane == ImagePlane::planeY) {
         return GMM_PLANE_Y;
-    } else if (imagePlane == ImagePlane::PLANE_U || imagePlane == ImagePlane::PLANE_UV) {
+    } else if (imagePlane == ImagePlane::planeU || imagePlane == ImagePlane::planeUV) {
         return GMM_PLANE_U;
-    } else if (imagePlane == ImagePlane::PLANE_V) {
+    } else if (imagePlane == ImagePlane::planeV) {
         return GMM_PLANE_V;
     }
 

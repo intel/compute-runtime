@@ -185,11 +185,11 @@ enum GFX3DSTATE_SURFACEFORMAT : unsigned short {
 };
 
 enum class ImagePlane {
-    NO_PLANE = 0,
-    PLANE_Y,
-    PLANE_U,
-    PLANE_V,
-    PLANE_UV
+    noPlane = 0,
+    planeY,
+    planeU,
+    planeV,
+    planeUV
 };
 
 struct SurfaceFormatInfo {

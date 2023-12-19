@@ -110,7 +110,7 @@ class DrmMockCustom : public Drm {
         uint64_t address = 0u;
         uint64_t value = 0u;
         uint32_t ctxId = 0u;
-        ValueWidth dataWidth = ValueWidth::U8;
+        ValueWidth dataWidth = ValueWidth::u8;
         int64_t timeout = 0;
         uint16_t flags = 0;
 

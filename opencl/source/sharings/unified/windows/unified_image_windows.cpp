@@ -20,7 +20,7 @@ void *UnifiedImage::swapGmm(GraphicsAllocation *graphicsAllocation, Context *con
     if (graphicsAllocation->getDefaultGmm()->gmmResourceInfo->getResourceType() == RESOURCE_BUFFER) {
         auto gmmHelper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
         auto gmm = std::make_unique<Gmm>(gmmHelper, *imgInfo, StorageInfo{}, false);
-        gmm->updateImgInfoAndDesc(*imgInfo, 0, NEO::ImagePlane::NO_PLANE);
+        gmm->updateImgInfoAndDesc(*imgInfo, 0, NEO::ImagePlane::noPlane);
         delete graphicsAllocation->getDefaultGmm();
         graphicsAllocation->setDefaultGmm(gmm.release());
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ TEST_F(DrmDebugTest, whenRegisterResourceCalledThenImplementationIsEmpty) {
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     drmMock.ioctlCallsCount = 0;
-    auto handle = drmMock.registerResource(DrmResourceClass::MaxSize, nullptr, 0);
+    auto handle = drmMock.registerResource(DrmResourceClass::maxSize, nullptr, 0);
     EXPECT_EQ(0u, handle);
     drmMock.unregisterResource(handle);
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);

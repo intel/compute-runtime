@@ -29,7 +29,7 @@ template <typename D3D>
 Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_mem_flags flags, cl_uint subresource, cl_int *retCode) {
     ErrorCodeHelper err(retCode, CL_SUCCESS);
     auto sharingFcns = context->getSharing<D3DSharingFunctions<D3D>>();
-    ImagePlane imagePlane = ImagePlane::NO_PLANE;
+    ImagePlane imagePlane = ImagePlane::noPlane;
     void *sharedHandle = nullptr;
     cl_uint arrayIndex = 0u;
     McsSurfaceInfo mcsSurfaceInfo = {};
@@ -47,9 +47,9 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
 
     if (D3DSharing<D3D>::isFormatWithPlane1(textureDesc.Format)) {
         if ((subresource % 2) == 0) {
-            imagePlane = ImagePlane::PLANE_Y;
+            imagePlane = ImagePlane::planeY;
         } else {
-            imagePlane = ImagePlane::PLANE_UV;
+            imagePlane = ImagePlane::planeUV;
         }
         imgInfo.plane = GmmTypesConverter::convertPlane(imagePlane);
         arrayIndex = subresource / 2u;
@@ -198,7 +198,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
         return nullptr;
     }
 
-    D3DSharing<D3D>::updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, ImagePlane::NO_PLANE, 0u);
+    D3DSharing<D3D>::updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, ImagePlane::noPlane, 0u);
 
     auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
@@ -226,7 +226,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
 template <typename D3D>
 const ClSurfaceFormatInfo *D3DTexture<D3D>::findYuvSurfaceFormatInfo(DXGI_FORMAT dxgiFormat, ImagePlane imagePlane, cl_mem_flags flags) {
     cl_image_format imgFormat = {};
-    if (imagePlane == ImagePlane::PLANE_Y) {
+    if (imagePlane == ImagePlane::planeY) {
         imgFormat.image_channel_order = CL_R;
     } else {
         imgFormat.image_channel_order = CL_RG;

@@ -40,7 +40,7 @@ uint32_t Drm::registerResource(DrmResourceClass classType, const void *data, siz
     }
 
     std::string uuid;
-    if (classType == NEO::DrmResourceClass::Elf) {
+    if (classType == NEO::DrmResourceClass::elf) {
         uuid = generateElfUUID(data);
     } else {
         uuid = generateUUID();
@@ -89,7 +89,7 @@ std::string Drm::generateUUID() {
 }
 
 std::string Drm::generateElfUUID(const void *data) {
-    std::string elfClassUuid = classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::Elf)].second;
+    std::string elfClassUuid = classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::elf)].second;
     std::string uuiD1st = elfClassUuid.substr(0, 18);
 
     const char uuidString[] = "%s-%04" SCNx64 "-%012" SCNx64;

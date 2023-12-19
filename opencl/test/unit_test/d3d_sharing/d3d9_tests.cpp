@@ -176,7 +176,7 @@ TEST_F(D3D9Tests, WhenGetDeviceIdThenOneCorrectDeviceIsReturned) {
 TEST_F(D3D9Tests, WhenCreatingSurfaceThenImagePropertiesAreSetCorrectly) {
     cl_int retVal;
     cl_image_format expectedImgFormat = {};
-    ImagePlane imagePlane = ImagePlane::NO_PLANE;
+    ImagePlane imagePlane = ImagePlane::noPlane;
     D3DSurface::findImgFormat(mockSharingFcns->mockTexture2dDesc.Format, expectedImgFormat, 0, imagePlane);
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -208,7 +208,7 @@ TEST_F(D3D9Tests, WhenCreatingSurfaceThenImagePropertiesAreSetCorrectly) {
 
 TEST(D3D9SimpleTests, givenWrongFormatWhenFindIsCalledThenErrorIsReturned) {
     cl_image_format expectedImgFormat = {};
-    ImagePlane imagePlane = ImagePlane::NO_PLANE;
+    ImagePlane imagePlane = ImagePlane::noPlane;
     auto status = D3DSurface::findImgFormat(D3DFMT_FORCE_DWORD, expectedImgFormat, 0, imagePlane);
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, status);
 }
@@ -216,7 +216,7 @@ TEST(D3D9SimpleTests, givenWrongFormatWhenFindIsCalledThenErrorIsReturned) {
 TEST_F(D3D9Tests, WhenCreatingSurfaceIntelThenImagePropertiesAreSetCorrectly) {
     cl_int retVal;
     cl_image_format expectedImgFormat = {};
-    ImagePlane imagePlane = ImagePlane::NO_PLANE;
+    ImagePlane imagePlane = ImagePlane::noPlane;
     D3DSurface::findImgFormat(mockSharingFcns->mockTexture2dDesc.Format, expectedImgFormat, 0, imagePlane);
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -1249,34 +1249,34 @@ TEST_F(D3D9Tests, givenImproperCommandQueueWhenD3D11ObjectsAreReleasedThenReturn
 namespace D3D9Formats {
 static const std::tuple<uint32_t /*d3dFormat*/, uint32_t /*plane*/, uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, ImagePlane> allImageFormats[] = {
     // input, input, output, output
-    std::make_tuple(D3DFMT_R32F, 0, CL_R, CL_FLOAT, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_R16F, 0, CL_R, CL_HALF_FLOAT, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_L16, 0, CL_R, CL_UNORM_INT16, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_A8, 0, CL_A, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_L8, 0, CL_R, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_G32R32F, 0, CL_RG, CL_FLOAT, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_G16R16F, 0, CL_RG, CL_HALF_FLOAT, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_G16R16, 0, CL_RG, CL_UNORM_INT16, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_A8L8, 0, CL_RG, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_A32B32G32R32F, 0, CL_RGBA, CL_FLOAT, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_A16B16G16R16F, 0, CL_RGBA, CL_HALF_FLOAT, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_A16B16G16R16, 0, CL_RGBA, CL_UNORM_INT16, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_A8B8G8R8, 0, CL_RGBA, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_X8B8G8R8, 0, CL_RGBA, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_A8R8G8B8, 0, CL_BGRA, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_X8R8G8B8, 0, CL_BGRA, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(MAKEFOURCC('N', 'V', '1', '2'), 0, CL_R, CL_UNORM_INT8, ImagePlane::PLANE_Y),
-    std::make_tuple(MAKEFOURCC('N', 'V', '1', '2'), 1, CL_RG, CL_UNORM_INT8, ImagePlane::PLANE_UV),
-    std::make_tuple(MAKEFOURCC('N', 'V', '1', '2'), 2, 0, 0, ImagePlane::NO_PLANE),
-    std::make_tuple(MAKEFOURCC('Y', 'V', '1', '2'), 0, CL_R, CL_UNORM_INT8, ImagePlane::PLANE_Y),
-    std::make_tuple(MAKEFOURCC('Y', 'V', '1', '2'), 1, CL_R, CL_UNORM_INT8, ImagePlane::PLANE_V),
-    std::make_tuple(MAKEFOURCC('Y', 'V', '1', '2'), 2, CL_R, CL_UNORM_INT8, ImagePlane::PLANE_U),
-    std::make_tuple(MAKEFOURCC('Y', 'V', '1', '2'), 3, 0, 0, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_YUY2, 0, CL_YUYV_INTEL, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_UYVY, 0, CL_UYVY_INTEL, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(MAKEFOURCC('Y', 'V', 'Y', 'U'), 0, CL_YVYU_INTEL, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(MAKEFOURCC('V', 'Y', 'U', 'Y'), 0, CL_VYUY_INTEL, CL_UNORM_INT8, ImagePlane::NO_PLANE),
-    std::make_tuple(D3DFMT_UNKNOWN, 0, 0, 0, ImagePlane::NO_PLANE)};
+    std::make_tuple(D3DFMT_R32F, 0, CL_R, CL_FLOAT, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_R16F, 0, CL_R, CL_HALF_FLOAT, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_L16, 0, CL_R, CL_UNORM_INT16, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_A8, 0, CL_A, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_L8, 0, CL_R, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_G32R32F, 0, CL_RG, CL_FLOAT, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_G16R16F, 0, CL_RG, CL_HALF_FLOAT, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_G16R16, 0, CL_RG, CL_UNORM_INT16, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_A8L8, 0, CL_RG, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_A32B32G32R32F, 0, CL_RGBA, CL_FLOAT, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_A16B16G16R16F, 0, CL_RGBA, CL_HALF_FLOAT, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_A16B16G16R16, 0, CL_RGBA, CL_UNORM_INT16, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_A8B8G8R8, 0, CL_RGBA, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_X8B8G8R8, 0, CL_RGBA, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_A8R8G8B8, 0, CL_BGRA, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_X8R8G8B8, 0, CL_BGRA, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(MAKEFOURCC('N', 'V', '1', '2'), 0, CL_R, CL_UNORM_INT8, ImagePlane::planeY),
+    std::make_tuple(MAKEFOURCC('N', 'V', '1', '2'), 1, CL_RG, CL_UNORM_INT8, ImagePlane::planeUV),
+    std::make_tuple(MAKEFOURCC('N', 'V', '1', '2'), 2, 0, 0, ImagePlane::noPlane),
+    std::make_tuple(MAKEFOURCC('Y', 'V', '1', '2'), 0, CL_R, CL_UNORM_INT8, ImagePlane::planeY),
+    std::make_tuple(MAKEFOURCC('Y', 'V', '1', '2'), 1, CL_R, CL_UNORM_INT8, ImagePlane::planeV),
+    std::make_tuple(MAKEFOURCC('Y', 'V', '1', '2'), 2, CL_R, CL_UNORM_INT8, ImagePlane::planeU),
+    std::make_tuple(MAKEFOURCC('Y', 'V', '1', '2'), 3, 0, 0, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_YUY2, 0, CL_YUYV_INTEL, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_UYVY, 0, CL_UYVY_INTEL, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(MAKEFOURCC('Y', 'V', 'Y', 'U'), 0, CL_YVYU_INTEL, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(MAKEFOURCC('V', 'Y', 'U', 'Y'), 0, CL_VYUY_INTEL, CL_UNORM_INT8, ImagePlane::noPlane),
+    std::make_tuple(D3DFMT_UNKNOWN, 0, 0, 0, ImagePlane::noPlane)};
 }
 
 struct D3D9ImageFormatTests
@@ -1293,7 +1293,7 @@ TEST_P(D3D9ImageFormatTests, WhenGettingImageFormatThenValidFormatDetailsAreRetu
     cl_image_format imgFormat = {};
     auto format = std::get<0>(GetParam());
     auto plane = std::get<1>(GetParam());
-    ImagePlane imagePlane = ImagePlane::NO_PLANE;
+    ImagePlane imagePlane = ImagePlane::noPlane;
     auto expectedImagePlane = std::get<4>(GetParam());
     auto expectedClChannelType = static_cast<cl_channel_type>(std::get<3>(GetParam()));
     auto expectedClChannelOrder = static_cast<cl_channel_order>(std::get<2>(GetParam()));

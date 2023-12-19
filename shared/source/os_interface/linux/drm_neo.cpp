@@ -1150,7 +1150,7 @@ void Drm::waitForBind(uint32_t vmHandleId) {
     auto fenceValue = this->fenceVal[vmHandleId];
     lock.unlock();
 
-    waitUserFence(0u, fenceAddress, fenceValue, ValueWidth::U64, -1, ioctlHelper->getWaitUserFenceSoftFlag());
+    waitUserFence(0u, fenceAddress, fenceValue, ValueWidth::u64, -1, ioctlHelper->getWaitUserFenceSoftFlag());
 }
 
 bool Drm::isSetPairAvailable() {
@@ -1535,7 +1535,7 @@ void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, ui
     for (auto drmIterator = 0u; drmIterator < numActiveTiles; drmIterator++) {
         if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < value) {
             static constexpr uint16_t flags = 0;
-            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::U64, selectedTimeout, flags);
+            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::u64, selectedTimeout, flags);
             if (debugManager.flags.PrintCompletionFenceUsage.get()) {
                 std::cout << "Completion fence waited."
                           << " Status: " << retVal

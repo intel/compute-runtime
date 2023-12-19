@@ -67,7 +67,7 @@ TEST_F(DrmDebugPrelimTest, GivenUnsupportedUUIDRegisterIoctlWhenRegisteringClass
 TEST_F(DrmDebugPrelimTest, GivenNoClassesRegisteredWhenRegisteringResourceThenRegisterUUIDIoctlIsNotCalledAndZeroHandleReturned) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    auto registeredHandle = drm.registerResource(DrmResourceClass::Isa, nullptr, 0);
+    auto registeredHandle = drm.registerResource(DrmResourceClass::isa, nullptr, 0);
     EXPECT_EQ(0u, registeredHandle);
     EXPECT_EQ(0u, drm.ioctlCallsCount);
 }
@@ -79,7 +79,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegiste
     EXPECT_TRUE(result);
 
     const auto handle = drm.context.uuidHandle;
-    auto registeredHandle = drm.registerResource(DrmResourceClass::Isa, nullptr, 0);
+    auto registeredHandle = drm.registerResource(DrmResourceClass::isa, nullptr, 0);
 
     EXPECT_EQ(handle + 1, drm.context.uuidHandle);
     EXPECT_EQ(handle, registeredHandle);
@@ -90,7 +90,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegiste
     EXPECT_EQ(nullptr, receivedUuid->ptr);
     EXPECT_EQ(0u, receivedUuid->size);
     EXPECT_TRUE(hasSubstr(std::string(receivedUuid->uuid), std::string("00000000-0000-0000")));
-    EXPECT_EQ(drm.classHandles[static_cast<uint32_t>(DrmResourceClass::Isa)], receivedUuid->uuidClass);
+    EXPECT_EQ(drm.classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
 }
 
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUUIDIoctlIsCalledWithCorrectData) {
@@ -102,7 +102,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUU
     auto handle = drm.context.uuidHandle;
     uint64_t data = 0x12345678;
 
-    auto registeredHandle = drm.registerResource(DrmResourceClass::Isa, &data, sizeof(uint64_t));
+    auto registeredHandle = drm.registerResource(DrmResourceClass::isa, &data, sizeof(uint64_t));
 
     EXPECT_EQ(handle + 1, drm.context.uuidHandle);
     EXPECT_EQ(handle, registeredHandle);
@@ -113,7 +113,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUU
     EXPECT_EQ(&data, receivedUuid->ptr);
     EXPECT_EQ(sizeof(uint64_t), receivedUuid->size);
     EXPECT_TRUE(hasSubstr(std::string(receivedUuid->uuid), std::string("00000000-0000-0000")));
-    EXPECT_EQ(drm.classHandles[static_cast<uint32_t>(DrmResourceClass::Isa)], receivedUuid->uuidClass);
+    EXPECT_EQ(drm.classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
     EXPECT_EQ(0u, receivedUuid->flags);
     EXPECT_EQ(0u, receivedUuid->extensions);
 }
@@ -125,7 +125,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenUnregisteringResourceThenUnregisterUUIDIo
     EXPECT_TRUE(result);
 
     uint64_t data = 0x12345678;
-    auto registeredHandle = drm.registerResource(DrmResourceClass::Isa, &data, sizeof(uint64_t));
+    auto registeredHandle = drm.registerResource(DrmResourceClass::isa, &data, sizeof(uint64_t));
 
     drm.unregisterResource(registeredHandle);
 
@@ -184,7 +184,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringElfResourceWithoutDataThenRegi
     EXPECT_TRUE(result);
 
     auto handle = drm.context.uuidHandle;
-    auto registeredHandle = drm.registerResource(DrmResourceClass::Elf, nullptr, 0);
+    auto registeredHandle = drm.registerResource(DrmResourceClass::elf, nullptr, 0);
 
     EXPECT_EQ(handle + 1, drm.context.uuidHandle);
     EXPECT_EQ(handle, registeredHandle);

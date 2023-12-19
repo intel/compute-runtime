@@ -466,7 +466,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
         bool destroy = event->flags & PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
         bool create = event->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
 
-        if (destroy && clientHandleToConnection[uuid->client_handle]->uuidMap[uuid->handle].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
+        if (destroy && clientHandleToConnection[uuid->client_handle]->uuidMap[uuid->handle].classIndex == NEO::DrmResourceClass::l0ZebinModule) {
             DEBUG_BREAK_IF(clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].segmentVmBindCounter[0] != 0 ||
                            clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].loadAddresses[0].size() > 0);
 
@@ -510,7 +510,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
 
                 if (ret == 0) {
                     std::string uuidString = std::string(readUuid.uuid, 36);
-                    uint32_t classIndex = static_cast<uint32_t>(NEO::DrmResourceClass::MaxSize);
+                    uint32_t classIndex = static_cast<uint32_t>(NEO::DrmResourceClass::maxSize);
                     auto validClassUuid = NEO::DrmUuid::getClassUuidIndex(uuidString, classIndex);
 
                     if (uuidString == NEO::uuidL0CommandQueueHash) {
@@ -551,19 +551,19 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
                         uuidData.handle = uuid->handle;
                         uuidData.data = std::move(payload);
                         uuidData.dataSize = uuid->payload_size;
-                        uuidData.classIndex = NEO::DrmResourceClass::MaxSize;
+                        uuidData.classIndex = NEO::DrmResourceClass::maxSize;
 
                         const auto indexIt = connection->classHandleToIndex.find(uuid->class_handle);
                         if (indexIt != connection->classHandleToIndex.end()) {
                             uuidData.classIndex = static_cast<NEO::DrmResourceClass>(indexIt->second.second);
                         }
 
-                        if (uuidData.classIndex == NEO::DrmResourceClass::Elf) {
+                        if (uuidData.classIndex == NEO::DrmResourceClass::elf) {
                             auto cpuVa = extractVaFromUuidString(uuidString);
                             uuidData.ptr = cpuVa;
                         }
 
-                        if (uuidData.classIndex == NEO::DrmResourceClass::L0ZebinModule) {
+                        if (uuidData.classIndex == NEO::DrmResourceClass::l0ZebinModule) {
                             uint64_t handle = uuid->handle;
 
                             auto &newModule = connection->uuidToModule[handle];
@@ -772,7 +772,7 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
 
         if (connection->vmToTile.find(vmHandle) == connection->vmToTile.end()) {
             DEBUG_BREAK_IF(connection->vmToTile.find(vmHandle) == connection->vmToTile.end() && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) &&
-                           (connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa || connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::ModuleHeapDebugArea));
+                           (connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::isa || connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::moduleHeapDebugArea));
             return false;
         }
 
@@ -787,24 +787,24 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
             std::lock_guard<std::mutex> lock(asyncThreadMutex);
 
             if (connection->classHandleToIndex[classUuid].second ==
-                static_cast<uint32_t>(NEO::DrmResourceClass::SbaTrackingBuffer)) {
+                static_cast<uint32_t>(NEO::DrmResourceClass::sbaTrackingBuffer)) {
                 connection->vmToStateBaseAreaBindInfo[vmHandle] = {vmBind->va_start, vmBind->va_length};
             }
 
             if (connection->classHandleToIndex[classUuid].second ==
-                static_cast<uint32_t>(NEO::DrmResourceClass::ModuleHeapDebugArea)) {
+                static_cast<uint32_t>(NEO::DrmResourceClass::moduleHeapDebugArea)) {
                 connection->vmToModuleDebugAreaBindInfo[vmHandle] = {vmBind->va_start, vmBind->va_length};
             }
 
             if (connection->classHandleToIndex[classUuid].second ==
-                static_cast<uint32_t>(NEO::DrmResourceClass::ContextSaveArea)) {
+                static_cast<uint32_t>(NEO::DrmResourceClass::contextSaveArea)) {
                 connection->vmToContextStateSaveAreaBindInfo[vmHandle] = {vmBind->va_start, vmBind->va_length};
             }
         }
 
         bool handleEvent = isTileWithinDeviceBitfield(tileIndex);
 
-        if (handleEvent && connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa) {
+        if (handleEvent && connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::isa) {
 
             uint32_t deviceBitfield = 0;
             memcpy_s(&deviceBitfield, sizeof(uint32_t), connection->uuidMap[uuid].data.get(), connection->uuidMap[uuid].dataSize);
@@ -819,7 +819,7 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
             bool allInstancesEventsReceived = true;
 
             for (uint32_t uuidIter = 1; uuidIter < vmBind->num_uuids; uuidIter++) {
-                if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
+                if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::l0ZebinModule) {
                     perKernelModules = false;
                     moduleUUIDindex = static_cast<int>(uuidIter);
                     PRINT_DEBUGGER_INFO_LOG("Zebin module uuid = %ull", (uint64_t)vmBind->uuids[uuidIter]);
@@ -846,7 +846,7 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                 isa->deviceBitfield = devices;
 
                 for (index = 1; index < vmBind->num_uuids; index++) {
-                    if (connection->uuidMap[vmBind->uuids[index]].classIndex == NEO::DrmResourceClass::Elf) {
+                    if (connection->uuidMap[vmBind->uuids[index]].classIndex == NEO::DrmResourceClass::elf) {
                         isa->elfUuidHandle = vmBind->uuids[index];
 
                         if (!perKernelModules) {
@@ -980,7 +980,7 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
         if (handleEvent) {
 
             for (uint32_t uuidIter = 0; uuidIter < vmBind->num_uuids; uuidIter++) {
-                if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
+                if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::l0ZebinModule) {
                     uint64_t loadAddress = 0;
                     auto &module = connection->uuidToModule[vmBind->uuids[uuidIter]];
                     auto moduleUsedOnTile = module.deviceBitfield.test(tileIndex) || module.deviceBitfield.count() == 0;
@@ -1398,27 +1398,27 @@ void DebugSessionLinuxi915::handleEnginesEvent(prelim_drm_i915_debug_event_engin
 }
 
 void DebugSessionLinuxi915::extractUuidData(uint64_t client, const UuidData &uuidData) {
-    if (uuidData.classIndex == NEO::DrmResourceClass::SbaTrackingBuffer ||
-        uuidData.classIndex == NEO::DrmResourceClass::ModuleHeapDebugArea ||
-        uuidData.classIndex == NEO::DrmResourceClass::ContextSaveArea) {
+    if (uuidData.classIndex == NEO::DrmResourceClass::sbaTrackingBuffer ||
+        uuidData.classIndex == NEO::DrmResourceClass::moduleHeapDebugArea ||
+        uuidData.classIndex == NEO::DrmResourceClass::contextSaveArea) {
         UNRECOVERABLE_IF(uuidData.dataSize != 8);
         uint64_t *data = (uint64_t *)uuidData.data.get();
 
-        if (uuidData.classIndex == NEO::DrmResourceClass::SbaTrackingBuffer) {
+        if (uuidData.classIndex == NEO::DrmResourceClass::sbaTrackingBuffer) {
             clientHandleToConnection[client]->stateBaseAreaGpuVa = *data;
             PRINT_DEBUGGER_INFO_LOG("SbaTrackingBuffer GPU VA = %p", (void *)clientHandleToConnection[clientHandle]->stateBaseAreaGpuVa);
         }
-        if (uuidData.classIndex == NEO::DrmResourceClass::ModuleHeapDebugArea) {
+        if (uuidData.classIndex == NEO::DrmResourceClass::moduleHeapDebugArea) {
             clientHandleToConnection[client]->moduleDebugAreaGpuVa = *data;
             PRINT_DEBUGGER_INFO_LOG("ModuleHeapDebugArea GPU VA = %p", (void *)clientHandleToConnection[clientHandle]->moduleDebugAreaGpuVa);
         }
-        if (uuidData.classIndex == NEO::DrmResourceClass::ContextSaveArea) {
+        if (uuidData.classIndex == NEO::DrmResourceClass::contextSaveArea) {
             clientHandleToConnection[client]->contextStateSaveAreaGpuVa = *data;
             PRINT_DEBUGGER_INFO_LOG("ContextSaveArea GPU VA = %p", (void *)clientHandleToConnection[clientHandle]->contextStateSaveAreaGpuVa);
         }
     }
 
-    if (uuidData.classIndex == NEO::DrmResourceClass::L0ZebinModule) {
+    if (uuidData.classIndex == NEO::DrmResourceClass::l0ZebinModule) {
         uint32_t segmentCount = 0;
         memcpy_s(&segmentCount, sizeof(uint32_t), uuidData.data.get(), uuidData.dataSize);
         clientHandleToConnection[client]->uuidToModule[uuidData.handle].segmentCount = segmentCount;

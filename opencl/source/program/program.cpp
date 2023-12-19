@@ -157,7 +157,7 @@ cl_int Program::createProgramFromBinary(
     this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = 0U;
     this->buildInfos[rootDeviceIndex].packedDeviceBinary.reset();
     this->buildInfos[rootDeviceIndex].packedDeviceBinarySize = 0U;
-    this->createdFrom = CreatedFrom::BINARY;
+    this->createdFrom = CreatedFrom::binary;
 
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(pBinary), binarySize);
     bool isSpirV = NEO::isSpirVBitcode(archive);

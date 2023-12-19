@@ -139,11 +139,11 @@ struct KernelImp : Kernel {
 
     NEO::SlmPolicy getSlmPolicy() const override {
         if (cacheConfigFlags & ZE_CACHE_CONFIG_FLAG_LARGE_SLM) {
-            return NEO::SlmPolicy::SlmPolicyLargeSlm;
+            return NEO::SlmPolicy::slmPolicyLargeSlm;
         } else if (cacheConfigFlags & ZE_CACHE_CONFIG_FLAG_LARGE_DATA) {
-            return NEO::SlmPolicy::SlmPolicyLargeData;
+            return NEO::SlmPolicy::slmPolicyLargeData;
         } else {
-            return NEO::SlmPolicy::SlmPolicyNone;
+            return NEO::SlmPolicy::slmPolicyNone;
         }
     }
 

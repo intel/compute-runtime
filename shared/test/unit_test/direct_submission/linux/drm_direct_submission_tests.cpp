@@ -350,7 +350,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndHangingContextWh
     EXPECT_EQ(osContext->getDrmContextIds().size(), drm->waitUserFenceParams.size());
     EXPECT_EQ(1, drm->waitUserFenceParams[0].timeout);
     EXPECT_EQ(10u, drm->waitUserFenceParams[0].value);
-    EXPECT_EQ(Drm::ValueWidth::U64, drm->waitUserFenceParams[0].dataWidth);
+    EXPECT_EQ(Drm::ValueWidth::u64, drm->waitUserFenceParams[0].dataWidth);
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotCompletedWhenWaitOnSpecificAddressesPerOsContext) {

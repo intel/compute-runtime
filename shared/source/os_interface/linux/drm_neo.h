@@ -218,10 +218,10 @@ class Drm : public DriverModel {
 
     int waitHandle(uint32_t waitHandle, int64_t timeout);
     enum class ValueWidth : uint32_t {
-        U8,
-        U16,
-        U32,
-        U64
+        u8,
+        u16,
+        u32,
+        u64
     };
     MOCKABLE_VIRTUAL int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags);
 
@@ -316,7 +316,7 @@ class Drm : public DriverModel {
     std::mutex bindFenceMutex;
     std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;
     std::array<uint64_t, EngineLimits::maxHandleCount> fenceVal;
-    StackVec<uint32_t, size_t(DrmResourceClass::MaxSize)> classHandles;
+    StackVec<uint32_t, size_t(DrmResourceClass::maxSize)> classHandles;
     std::vector<uint32_t> virtualMemoryIds;
 
     std::unique_ptr<HwDeviceIdDrm> hwDeviceId;

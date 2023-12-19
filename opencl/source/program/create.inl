@@ -36,7 +36,7 @@ T *Program::create(
             break;
         }
     }
-    program->createdFrom = CreatedFrom::BINARY;
+    program->createdFrom = CreatedFrom::binary;
 
     if (binaryStatus) {
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
@@ -84,7 +84,7 @@ T *Program::create(
             }
         }
         program->sourceCode.swap(combinedString);
-        program->createdFrom = CreatedFrom::SOURCE;
+        program->createdFrom = CreatedFrom::source;
     }
 
     errcodeRet = retVal;
@@ -107,7 +107,7 @@ T *Program::createBuiltInFromSource(
     if (retVal == CL_SUCCESS) {
         program = new T(context, true, deviceVector);
         program->sourceCode = nullTerminatedString;
-        program->createdFrom = CreatedFrom::SOURCE;
+        program->createdFrom = CreatedFrom::source;
     }
 
     if (errcodeRet) {
@@ -141,7 +141,7 @@ T *Program::createBuiltInFromGenBinary(
         }
         program->setBuildStatusSuccess(deviceVector, CL_PROGRAM_BINARY_TYPE_EXECUTABLE);
         program->isCreatedFromBinary = true;
-        program->createdFrom = CreatedFrom::BINARY;
+        program->createdFrom = CreatedFrom::binary;
     }
 
     if (errcodeRet) {
@@ -171,7 +171,7 @@ T *Program::createFromIL(Context *context,
             break;
         }
     }
-    program->createdFrom = CreatedFrom::IL;
+    program->createdFrom = CreatedFrom::il;
 
     if (errcodeRet != CL_SUCCESS) {
         delete program;

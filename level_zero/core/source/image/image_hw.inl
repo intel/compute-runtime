@@ -108,11 +108,11 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     auto gmmHelper = static_cast<const NEO::RootDeviceEnvironment &>(device->getNEODevice()->getRootDeviceEnvironment()).getGmmHelper();
 
     if (gmm != nullptr) {
-        NEO::ImagePlane yuvPlaneType = NEO::ImagePlane::NO_PLANE;
+        NEO::ImagePlane yuvPlaneType = NEO::ImagePlane::noPlane;
         if (isImageView() && (sourceImageFormatDesc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12)) {
-            yuvPlaneType = NEO::ImagePlane::PLANE_Y;
+            yuvPlaneType = NEO::ImagePlane::planeY;
             if (imgInfo.plane == GMM_PLANE_U) {
-                yuvPlaneType = NEO::ImagePlane::PLANE_UV;
+                yuvPlaneType = NEO::ImagePlane::planeUV;
             }
         }
         gmm->updateImgInfoAndDesc(imgInfo, 0u, yuvPlaneType);

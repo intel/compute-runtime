@@ -117,7 +117,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_SOURCE:
-        if (createdFrom == CreatedFrom::SOURCE) {
+        if (createdFrom == CreatedFrom::source) {
             pSrc = sourceCode.c_str();
             retSize = srcSize = strlen(sourceCode.c_str()) + 1;
         } else {
@@ -129,7 +129,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_IL:
-        if (createdFrom != CreatedFrom::IL) {
+        if (createdFrom != CreatedFrom::il) {
             if (paramValueSizeRet) {
                 *paramValueSizeRet = 0;
             }

@@ -1142,7 +1142,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 
     EXPECT_NE(0u, mock->waitUserFenceCall.ctxId);
     EXPECT_EQ(-1, mock->waitUserFenceCall.timeout);
-    EXPECT_EQ(Drm::ValueWidth::U64, mock->waitUserFenceCall.dataWidth);
+    EXPECT_EQ(Drm::ValueWidth::u64, mock->waitUserFenceCall.dataWidth);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
@@ -1236,7 +1236,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 
     EXPECT_EQ(0u, mock->waitUserFenceCall.ctxId);
     EXPECT_EQ(1000, mock->waitUserFenceCall.timeout);
-    EXPECT_EQ(Drm::ValueWidth::U64, mock->waitUserFenceCall.dataWidth);
+    EXPECT_EQ(Drm::ValueWidth::u64, mock->waitUserFenceCall.dataWidth);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,

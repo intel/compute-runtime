@@ -41,7 +41,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     ImageInfo imgInfo = {};
     cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
-    ImagePlane imagePlane = ImagePlane::NO_PLANE;
+    ImagePlane imagePlane = ImagePlane::noPlane;
 
     if (!context || !context->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D9>>() || !context->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D9>>()->getDevice()) {
         err.set(CL_INVALID_CONTEXT);
@@ -93,11 +93,11 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
                                                                                       false, false, true, nullptr);
         updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imagePlane, 0u);
     } else {
-        lockable = !(surfaceDesc.Usage & D3DResourceFlags::USAGE_RENDERTARGET) || imagePlane != ImagePlane::NO_PLANE;
+        lockable = !(surfaceDesc.Usage & D3DResourceFlags::USAGE_RENDERTARGET) || imagePlane != ImagePlane::noPlane;
         if (!lockable) {
             sharingFcns->createTexture2d(&surfaceStaging, &surfaceDesc, 0u);
         }
-        if (imagePlane == ImagePlane::PLANE_U || imagePlane == ImagePlane::PLANE_V || imagePlane == ImagePlane::PLANE_UV) {
+        if (imagePlane == ImagePlane::planeU || imagePlane == ImagePlane::planeV || imagePlane == ImagePlane::planeUV) {
             imgInfo.imgDesc.imageWidth /= 2;
             imgInfo.imgDesc.imageHeight /= 2;
         }
@@ -227,7 +227,7 @@ const std::vector<D3DFORMAT> D3DSurface::D3DPlane2Formats =
     {static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2'))};
 
 cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat, cl_uint plane, ImagePlane &imagePlane) {
-    imagePlane = ImagePlane::NO_PLANE;
+    imagePlane = ImagePlane::noPlane;
     static const cl_image_format unknownFormat = {0, 0};
 
     auto element = D3DtoClFormatConversions.find(d3dFormat);
@@ -243,11 +243,11 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
         switch (plane) {
         case 0:
             imgFormat.image_channel_order = CL_R;
-            imagePlane = ImagePlane::PLANE_Y;
+            imagePlane = ImagePlane::planeY;
             return CL_SUCCESS;
         case 1:
             imgFormat.image_channel_order = CL_RG;
-            imagePlane = ImagePlane::PLANE_UV;
+            imagePlane = ImagePlane::planeUV;
             return CL_SUCCESS;
         default:
             imgFormat = unknownFormat;
@@ -257,15 +257,15 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
     case MAKEFOURCC('Y', 'V', '1', '2'):
         switch (plane) {
         case 0:
-            imagePlane = ImagePlane::PLANE_Y;
+            imagePlane = ImagePlane::planeY;
             return CL_SUCCESS;
 
         case 1:
-            imagePlane = ImagePlane::PLANE_V;
+            imagePlane = ImagePlane::planeV;
             return CL_SUCCESS;
 
         case 2:
-            imagePlane = ImagePlane::PLANE_U;
+            imagePlane = ImagePlane::planeU;
             return CL_SUCCESS;
 
         default:

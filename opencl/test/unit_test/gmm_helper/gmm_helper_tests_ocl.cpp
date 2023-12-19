@@ -129,11 +129,11 @@ static const cl_mem_object_type imgTypes[6] = {
 } // namespace GmmTestConst
 
 TEST_F(GmmTests, WhenConvertingPlanesThenCorrectPlaneIsReturned) {
-    std::vector<std::pair<ImagePlane, GMM_YUV_PLANE>> v = {{ImagePlane::NO_PLANE, GMM_YUV_PLANE::GMM_NO_PLANE},
-                                                           {ImagePlane::PLANE_Y, GMM_YUV_PLANE::GMM_PLANE_Y},
-                                                           {ImagePlane::PLANE_U, GMM_YUV_PLANE::GMM_PLANE_U},
-                                                           {ImagePlane::PLANE_UV, GMM_YUV_PLANE::GMM_PLANE_U},
-                                                           {ImagePlane::PLANE_V, GMM_YUV_PLANE::GMM_PLANE_V}};
+    std::vector<std::pair<ImagePlane, GMM_YUV_PLANE>> v = {{ImagePlane::noPlane, GMM_YUV_PLANE::GMM_NO_PLANE},
+                                                           {ImagePlane::planeY, GMM_YUV_PLANE::GMM_PLANE_Y},
+                                                           {ImagePlane::planeU, GMM_YUV_PLANE::GMM_PLANE_U},
+                                                           {ImagePlane::planeUV, GMM_YUV_PLANE::GMM_PLANE_U},
+                                                           {ImagePlane::planeV, GMM_YUV_PLANE::GMM_PLANE_V}};
 
     for (auto p : v) {
         EXPECT_TRUE(p.second == GmmTypesConverter::convertPlane(p.first));
@@ -162,10 +162,10 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     };
 
     ImageInfo updateImgInfo = {};
-    NEO::ImagePlane yuvPlane = NEO::ImagePlane::NO_PLANE;
+    NEO::ImagePlane yuvPlane = NEO::ImagePlane::noPlane;
     if (Image::convertType(GetParam()) == ImageType::image2D) {
         updateImgInfo.plane = GMM_YUV_PLANE::GMM_PLANE_U;
-        yuvPlane = NEO::ImagePlane::PLANE_UV;
+        yuvPlane = NEO::ImagePlane::planeUV;
     }
 
     uint32_t expectCalls = 1u;
@@ -209,7 +209,7 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
     queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex, yuvPlane);
     EXPECT_EQ(expectCalls, mockResInfo->getOffsetCalled);
 
-    if (yuvPlane == NEO::ImagePlane::PLANE_UV) {
+    if (yuvPlane == NEO::ImagePlane::planeUV) {
         EXPECT_EQ(imgDesc.imageWidth / 2, updateImgInfo.imgDesc.imageWidth);
         EXPECT_EQ(imgDesc.imageHeight / 2, updateImgInfo.imgDesc.imageHeight);
     } else {
@@ -230,8 +230,8 @@ TEST_P(GmmImgTest, WhenUpdatingImgInfoAndDescThenInformationIsCorrect) {
         EXPECT_TRUE(false);
     }
 
-    if (yuvPlane == NEO::ImagePlane::PLANE_UV) {
-        yuvPlane = NEO::ImagePlane::PLANE_V;
+    if (yuvPlane == NEO::ImagePlane::planeUV) {
+        yuvPlane = NEO::ImagePlane::planeV;
         auto uvRowPitch = updateImgInfo.imgDesc.imageRowPitch;
         queryGmm->updateImgInfoAndDesc(updateImgInfo, arrayIndex, yuvPlane);
         EXPECT_EQ(imgDesc.imageWidth / 2, updateImgInfo.imgDesc.imageWidth);
