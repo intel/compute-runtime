@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include "level_zero/sysman/source/sysman_const.h"
 #include <level_zero/zes_api.h>
 
@@ -31,7 +33,7 @@ enum class RasInterfaceType {
     NONE,
 };
 
-class RasUtil {
+class RasUtil : public NEO::NonCopyableOrMovableClass {
   public:
     RasUtil() = default;
     static std::unique_ptr<RasUtil> create(RasInterfaceType rasInterface, LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);
