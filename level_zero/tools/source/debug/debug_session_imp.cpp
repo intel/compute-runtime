@@ -502,7 +502,7 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
     } else // >= 2u
     {
         SIP::sip_command resumeCommand = {0};
-        resumeCommand.command = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
+        resumeCommand.command = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
 
         for (auto &threadID : threadIds) {
             ze_result_t result = cmdRegisterAccessHelper(threadID, resumeCommand, true);
@@ -1441,13 +1441,13 @@ ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16
             return status;
         }
 
-        if (sipCommand.command == static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {
+        if (sipCommand.command == static_cast<uint32_t>(NEO::SipKernel::Command::ready)) {
             break;
         }
         NEO::sleep(std::chrono::microseconds(100));
     }
 
-    if (sipCommand.command != static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {
+    if (sipCommand.command != static_cast<uint32_t>(NEO::SipKernel::Command::ready)) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 

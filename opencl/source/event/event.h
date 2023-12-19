@@ -39,12 +39,12 @@ struct OpenCLObjectMapper<_cl_event> {
 class Event : public BaseObject<_cl_event>, public IDNode<Event> {
   public:
     enum class ECallbackTarget : uint32_t {
-        Queued = 0,
-        Submitted,
-        Running,
-        Completed,
-        MAX,
-        Invalid
+        queued = 0,
+        submitted,
+        running,
+        completed,
+        max,
+        invalid
     };
 
     struct Callback : public IFNode<Callback> {
@@ -166,7 +166,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     bool peekHasCallbacks(ECallbackTarget target) {
-        if (target >= ECallbackTarget::MAX) {
+        if (target >= ECallbackTarget::max) {
             DEBUG_BREAK_IF(true);
             return false;
         }
@@ -174,7 +174,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     bool peekHasCallbacks() {
-        for (uint32_t i = 0; i < (uint32_t)ECallbackTarget::MAX; ++i) {
+        for (uint32_t i = 0; i < (uint32_t)ECallbackTarget::max; ++i) {
             if (peekHasCallbacks((ECallbackTarget)i)) {
                 return true;
             }
@@ -320,17 +320,17 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         switch (execStatus) {
         default: {
             DEBUG_BREAK_IF(true);
-            return ECallbackTarget::Invalid;
+            return ECallbackTarget::invalid;
         }
 
         case CL_QUEUED:
-            return ECallbackTarget::Queued;
+            return ECallbackTarget::queued;
         case CL_SUBMITTED:
-            return ECallbackTarget::Submitted;
+            return ECallbackTarget::submitted;
         case CL_RUNNING:
-            return ECallbackTarget::Running;
+            return ECallbackTarget::running;
         case CL_COMPLETE:
-            return ECallbackTarget::Completed;
+            return ECallbackTarget::completed;
         }
     }
 
@@ -370,7 +370,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     cl_command_type cmdType{};
 
     // callbacks to be executed when this event changes its execution state
-    IFList<Callback, true, true> callbacks[(uint32_t)ECallbackTarget::MAX];
+    IFList<Callback, true, true> callbacks[(uint32_t)ECallbackTarget::max];
 
     // can be accessed only with transitionExecutionState
     // this is to ensure state consitency event when doning lock-free multithreading

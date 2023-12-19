@@ -15,7 +15,7 @@ namespace NEO {
 static EnableAIL<IGFX_ICELAKE_LP> enableAILICLLP;
 
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMapICLLP = {
-    {"resolve", {AILEnumeration::DISABLE_HOST_PTR_TRACKING}} // Disable hostPtrTracking for DaVinci Resolve
+    {"resolve", {AILEnumeration::disableHostPtrTracking}} // Disable hostPtrTracking for DaVinci Resolve
 };
 
 template <>
@@ -24,7 +24,7 @@ inline void AILConfigurationHw<IGFX_ICELAKE_LP>::applyExt(RuntimeCapabilityTable
     if (search != applicationMapICLLP.end()) {
         for (size_t i = 0; i < search->second.size(); ++i) {
             switch (search->second[i]) {
-            case AILEnumeration::DISABLE_HOST_PTR_TRACKING:
+            case AILEnumeration::disableHostPtrTracking:
                 runtimeCapabilityTable.hostPtrTrackingEnabled = false;
                 break;
             default:

@@ -384,43 +384,43 @@ struct MockDebugSession : public L0::DebugSessionImp {
             uint32_t size = command.size * slmSendBytesSize;
 
             // initial wait for ready
-            if (!write && slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME)) {
+            if (!write && slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::resume)) {
                 if (!memcmp(slmMemory, "FailWaiting", strlen("FailWaiting"))) {
                     return ZE_RESULT_FORCE_UINT32;
                 }
-                command.command = static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY);
+                command.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
                 status = ZE_RESULT_SUCCESS;
             } else {
                 if (write) { // writing to CMD register
                     if (forceCmdAccessFail) {
                         return ZE_RESULT_FORCE_UINT32;
-                    } else if (command.command == static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_WRITE)) {
+                    } else if (command.command == static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite)) {
                         memcpy_s(slmMemory + command.offset, size, command.buffer, size);
                     }
                     slmCmdRegisterCmdvalue = command.command;
                 }
 
-                if (slmCmdRegisterCmdvalue != static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME)) {
+                if (slmCmdRegisterCmdvalue != static_cast<uint32_t>(NEO::SipKernel::Command::resume)) {
                     slmCmdRegisterAccessCount++;
                 }
 
                 if (slmCmdRegisterAccessCount == slmCmdRegisterAccessReadyCount) { // SIP restores cmd to READY
 
-                    command.command = static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY);
+                    command.command = static_cast<uint32_t>(NEO::SipKernel::Command::ready);
 
-                    if (slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_WRITE)) {
+                    if (slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite)) {
                         slmCmdRegisterAccessCount = 0;
-                        slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
+                        slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
                     }
                 } else if (slmCmdRegisterAccessCount == slmCmdRegisterAccessReadyCount + 1) { // Reading the data does an extra call to retrieve the data
                     if (!memcmp(slmMemory, "FailReadingData", strlen("FailReadingData"))) {
                         status = ZE_RESULT_FORCE_UINT32;
-                    } else if (slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_READ)) {
+                    } else if (slmCmdRegisterCmdvalue == static_cast<uint32_t>(NEO::SipKernel::Command::slmRead)) {
                         memcpy_s(command.buffer, size, slmMemory + command.offset, size);
                     }
 
                     slmCmdRegisterAccessCount = 0;
-                    slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
+                    slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
                 }
             }
             return status;
@@ -540,7 +540,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     std::vector<uint32_t> cleanRootSessionDeviceIndices;
 
     int slmCmdRegisterAccessCount = 0;
-    uint32_t slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
+    uint32_t slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
     bool forceCmdAccessFail = false;
     int slmCmdRegisterAccessReadyCount = 2;
     bool slmTesting = false;

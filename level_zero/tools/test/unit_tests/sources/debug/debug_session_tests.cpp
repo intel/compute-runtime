@@ -3023,7 +3023,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmReadFa
     sessionMock->resumeImpResult = ZE_RESULT_SUCCESS;
 
     sessionMock->slmCmdRegisterAccessCount = 0;
-    sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
+    sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
 
     sessionMock->forceCmdAccessFail = true;
     retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
@@ -3040,7 +3040,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmReadFa
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
     sessionMock->slmCmdRegisterAccessReadyCount = 2;
     sessionMock->slmCmdRegisterAccessCount = 0;
-    sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
+    sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
 
     memcpy_s(sessionMock->slmMemory, strlen("FailWaiting"), "FailWaiting", strlen("FailWaiting"));
     retVal = sessionMock->slmMemoryAccess<void *, false>(threadId, &desc, readSize, output);
@@ -3200,7 +3200,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteF
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 
     sessionMock->slmCmdRegisterAccessCount = 0;
-    sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
+    sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
 
     retVal = sessionMock->slmMemoryAccess<const void *, true>(threadId, &desc, writeSize, input);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
@@ -3210,7 +3210,7 @@ TEST(DebugSessionTest, GivenStoppedThreadWhenUnderInvalidConditionsThenSlmWriteF
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
     sessionMock->slmCmdRegisterAccessReadyCount = 2;
     sessionMock->slmCmdRegisterAccessCount = 0;
-    sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
+    sessionMock->slmCmdRegisterCmdvalue = static_cast<uint32_t>(NEO::SipKernel::Command::resume);
 
     desc.address = 0x10000000;
     memcpy_s(sessionMock->slmMemory, strlen("FailWaiting"), "FailWaiting", strlen("FailWaiting"));

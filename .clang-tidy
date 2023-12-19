@@ -92,6 +92,8 @@ CheckOptions:
     value:           camelBack
   - key:             readability-identifier-naming.ValueTemplateParameterCase
     value:           camelBack
+  - key:             readability-identifier-naming.ScopedEnumConstantCase
+    value:           camelBack
   - key:             modernize-loop-convert.MaxCopySize
     value:           '16'
   - key:             modernize-loop-convert.MinConfidence

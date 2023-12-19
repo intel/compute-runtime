@@ -15,7 +15,7 @@ constexpr static auto gfxProduct = IGFX_DG2;
 
 template <>
 RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
-    return RasInterfaceType::PMU;
+    return RasInterfaceType::pmu;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

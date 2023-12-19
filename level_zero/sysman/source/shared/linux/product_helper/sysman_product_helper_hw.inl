@@ -108,12 +108,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(PlatformM
 
 template <PRODUCT_FAMILY gfxProduct>
 RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
-    return RasInterfaceType::NONE;
+    return RasInterfaceType::none;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
-    return RasInterfaceType::NONE;
+    return RasInterfaceType::none;
 }
 
 } // namespace Sysman

@@ -21,9 +21,9 @@ namespace L0 {
 class EuThread {
   public:
     enum class State {
-        Running,
-        Stopped,
-        Unavailable
+        running,
+        stopped,
+        unavailable
     };
 
     struct ThreadId {
@@ -68,10 +68,10 @@ class EuThread {
 
     bool stopThread(uint64_t memHandle) {
         memoryHandle = memHandle;
-        if (state == State::Stopped) {
+        if (state == State::stopped) {
             return false;
         }
-        state = State::Stopped;
+        state = State::stopped;
         PRINT_DEBUGGER_THREAD_LOG("Stopped thread: %s", toString().c_str());
         return true;
     }
@@ -82,17 +82,17 @@ class EuThread {
 
         if (newCounter == systemRoutineCounter) {
             if (newCounter % 2 != 0) {
-                if (state == State::Running) {
+                if (state == State::running) {
                     PRINT_DEBUGGER_ERROR_LOG("Thread: %s state RUNNING when thread is stopped. Switching to STOPPED", toString().c_str());
                     DEBUG_BREAK_IF(true);
                 }
-                state = State::Stopped;
+                state = State::stopped;
                 return true;
             }
         }
 
         if (newCounter == (systemRoutineCounter + 2)) {
-            state = State::Stopped;
+            state = State::stopped;
             systemRoutineCounter = newCounter;
             return true;
         } else if (newCounter > systemRoutineCounter + 2) {
@@ -101,39 +101,39 @@ class EuThread {
         }
 
         if (newCounter % 2 == 0) {
-            if (state == State::Stopped) {
+            if (state == State::stopped) {
                 PRINT_DEBUGGER_ERROR_LOG("Thread: %s state STOPPED when thread is running. Switching to RUNNING", toString().c_str());
                 DEBUG_BREAK_IF(true);
             }
-            state = State::Running;
+            state = State::running;
             systemRoutineCounter = newCounter;
 
             return false;
         }
 
-        state = State::Stopped;
+        state = State::stopped;
         systemRoutineCounter = newCounter;
         return true;
     }
 
     bool resumeThread() {
-        if (state != State::Stopped) {
+        if (state != State::stopped) {
             PRINT_DEBUGGER_THREAD_LOG("Resuming already RUNNING thread: %s", toString().c_str());
             return false;
         }
         PRINT_DEBUGGER_THREAD_LOG("Resumed thread: %s", toString().c_str());
         reportedAsStopped = false;
-        state = State::Running;
+        state = State::running;
         memoryHandle = invalidHandle;
         return true;
     }
 
     bool isStopped() const {
-        return state == State::Stopped;
+        return state == State::stopped;
     }
 
     bool isRunning() const {
-        return state != State::Stopped;
+        return state != State::stopped;
     }
 
     static std::string toString(ThreadId threadId) {
@@ -160,7 +160,7 @@ class EuThread {
         reportedAsStopped = true;
     }
     bool isReportedAsStopped() {
-        DEBUG_BREAK_IF(reportedAsStopped && state != State::Stopped);
+        DEBUG_BREAK_IF(reportedAsStopped && state != State::stopped);
         return reportedAsStopped;
     }
     void setPageFault(bool value) {
@@ -176,7 +176,7 @@ class EuThread {
 
   protected:
     ThreadId threadId;
-    std::atomic<State> state = State::Unavailable;
+    std::atomic<State> state = State::unavailable;
     uint8_t systemRoutineCounter = 0;
     std::atomic<uint64_t> memoryHandle = invalidHandle;
     std::atomic<bool> reportedAsStopped = false;

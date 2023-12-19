@@ -23,7 +23,7 @@ void LinuxRasSourceHbm::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t>
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     auto rasUtilInterface = pSysmanProductHelper->getHbmRasUtilInterface();
     switch (rasUtilInterface) {
-    case RasInterfaceType::GSC:
+    case RasInterfaceType::gsc:
         GscRasUtil::getSupportedRasErrorTypes(errorType, pLinuxSysmanImp, isSubDevice, subDeviceId);
         break;
     default:

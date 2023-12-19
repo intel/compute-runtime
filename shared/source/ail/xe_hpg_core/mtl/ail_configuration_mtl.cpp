@@ -29,7 +29,7 @@ void AILConfigurationHw<IGFX_METEORLAKE>::applyExt(RuntimeCapabilityTable &runti
     if (search != applicationMapMTL.end()) {
         for (size_t i = 0; i < search->second.size(); ++i) {
             switch (search->second[i]) {
-            case AILEnumeration::DISABLE_DIRECT_SUBMISSION:
+            case AILEnumeration::disableDirectSubmission:
                 runtimeCapabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported = false;
             default:
                 break;

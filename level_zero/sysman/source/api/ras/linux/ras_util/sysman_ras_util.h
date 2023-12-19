@@ -27,10 +27,10 @@ class SysFsAccessInterface;
 class FirmwareUtil;
 
 enum class RasInterfaceType {
-    PMU = 0,
-    PMT,
-    GSC,
-    NONE,
+    pmu = 0,
+    pmt,
+    gsc,
+    none,
 };
 
 class RasUtil : public NEO::NonCopyableOrMovableClass {

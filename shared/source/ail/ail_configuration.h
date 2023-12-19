@@ -35,13 +35,11 @@ extern const char legacyPlatformName[];
 struct RuntimeCapabilityTable;
 
 enum class AILEnumeration : uint32_t {
-    DISABLE_BLITTER,
-    DISABLE_COMPRESSION,
-    ENABLE_FP64,
-    DISABLE_HOST_PTR_TRACKING,
-    ENABLE_LEGACY_PLATFORM_NAME,
-    DISABLE_DIRECT_SUBMISSION,
-    AIL_MAX_OPTIONS_COUNT
+    disableCompression,
+    enableFp64,
+    disableHostPtrTracking,
+    enableLegacyPlatformName,
+    disableDirectSubmission,
 };
 
 class AILConfiguration;

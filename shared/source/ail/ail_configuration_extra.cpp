@@ -20,11 +20,11 @@ namespace NEO {
  *
  */
 
-std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blender", {AILEnumeration::ENABLE_FP64}},
+std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blender", {AILEnumeration::enableFp64}},
                                                                           // Modify reported platform name to ensure older versions of Adobe Premiere Pro are able to recognize the GPU device
-                                                                          {"Adobe Premiere Pro", {AILEnumeration::ENABLE_LEGACY_PLATFORM_NAME}}};
+                                                                          {"Adobe Premiere Pro", {AILEnumeration::enableLegacyPlatformName}}};
 
-std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL = {{"svchost", {AILEnumeration::DISABLE_DIRECT_SUBMISSION}}};
+std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL = {{"svchost", {AILEnumeration::disableDirectSubmission}}};
 
 const std::set<std::string_view> applicationsContextSyncFlag = {};
 
@@ -36,10 +36,10 @@ void AILConfiguration::apply(RuntimeCapabilityTable &runtimeCapabilityTable) {
     if (search != applicationMap.end()) {
         for (size_t i = 0; i < search->second.size(); ++i) {
             switch (search->second[i]) {
-            case AILEnumeration::ENABLE_FP64:
+            case AILEnumeration::enableFp64:
                 runtimeCapabilityTable.ftrSupportsFP64 = true;
                 break;
-            case AILEnumeration::ENABLE_LEGACY_PLATFORM_NAME:
+            case AILEnumeration::enableLegacyPlatformName:
                 runtimeCapabilityTable.preferredPlatformName = legacyPlatformName;
                 break;
             default:

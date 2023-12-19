@@ -61,11 +61,11 @@ class SipKernel {
     static SipKernelType getSipKernelType(Device &device, bool debuggingEnable);
     static SipClassType classType;
 
-    enum class COMMAND : uint32_t {
-        RESUME,
-        READY,
-        SLM_READ,
-        SLM_WRITE
+    enum class Command : uint32_t {
+        resume,
+        ready,
+        slmRead,
+        slmWrite
     };
 
   protected:

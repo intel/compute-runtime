@@ -816,7 +816,7 @@ bool Event::isReadyForSubmission() {
 
 void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
     ECallbackTarget target = translateToCallbackTarget(type);
-    if (target == ECallbackTarget::Invalid) {
+    if (target == ECallbackTarget::invalid) {
         DEBUG_BREAK_IF(true);
         return;
     }
@@ -849,10 +849,10 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
     bool terminated = isStatusCompletedByTermination(execStatus);
     ECallbackTarget target;
     if (terminated) {
-        target = ECallbackTarget::Completed;
+        target = ECallbackTarget::completed;
     } else {
         target = translateToCallbackTarget(execStatus);
-        if (target == ECallbackTarget::Invalid) {
+        if (target == ECallbackTarget::invalid) {
             DEBUG_BREAK_IF(true);
             return;
         }

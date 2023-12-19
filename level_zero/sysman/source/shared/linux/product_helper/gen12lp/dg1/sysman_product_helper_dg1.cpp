@@ -103,7 +103,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(PlatformMoni
 
 template <>
 RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
-    return RasInterfaceType::PMU;
+    return RasInterfaceType::pmu;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

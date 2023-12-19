@@ -26,7 +26,7 @@ void LinuxRasSourceGt::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> 
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     auto rasUtilInterface = pSysmanProductHelper->getGtRasUtilInterface();
     switch (rasUtilInterface) {
-    case RasInterfaceType::PMU:
+    case RasInterfaceType::pmu:
         PmuRasUtil::getSupportedRasErrorTypes(errorType, pLinuxSysmanImp, isSubDevice, subDeviceId);
         break;
     default:

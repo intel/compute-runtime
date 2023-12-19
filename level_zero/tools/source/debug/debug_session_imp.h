@@ -243,11 +243,11 @@ ze_result_t DebugSessionImp::slmMemoryAccess(EuThread::ThreadId threadId, const 
         }
 
         if constexpr (write) {
-            sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_WRITE);
+            sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmWrite);
             sipCommand.size = static_cast<uint32_t>(accessUnits);
             memcpy_s(sipCommand.buffer, accessUnits * slmSendBytesSize, tmpBuffer.get() + countReadyBytes, accessUnits * slmSendBytesSize);
         } else {
-            sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::COMMAND::SLM_READ);
+            sipCommand.command = static_cast<uint32_t>(NEO::SipKernel::Command::slmRead);
             sipCommand.size = static_cast<uint32_t>(accessUnits);
         }
 
