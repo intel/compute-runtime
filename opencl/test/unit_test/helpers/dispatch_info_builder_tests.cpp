@@ -84,7 +84,7 @@ class DispatchInfoBuilderMock : DispatchInfoBuilder<dim, mode> {
 TEST_F(DispatchInfoBuilderTest, Given1dWhenSplittingMultiDispatchInfoThenMultiDispatchInfo) {
     MultiDispatchInfo multiDispatchInfo;
 
-    auto diBuilder = new DispatchInfoBuilderMock<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    auto diBuilder = new DispatchInfoBuilderMock<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     DispatchInfo dispatchInfo;
@@ -97,13 +97,13 @@ TEST_F(DispatchInfoBuilderTest, Given1dWhenSplittingMultiDispatchInfoThenMultiDi
 TEST_F(DispatchInfoBuilderTest, WhenGettingDimensionThenCorrectDimensionIsReturned) {
     MultiDispatchInfo mdi1D, mdi2D, mdi3D;
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder1D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::NoSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::noSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder2D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder3D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     diBuilder1D->setDispatchGeometry(Vec3<size_t>(1, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
@@ -130,7 +130,7 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingDimensionThenCorrectDimensionIsReturn
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenGettingGwsThenCorrectValuesAreReturned) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     MultiDispatchInfo mdi0, mdi1, mdi2, mdi3;
@@ -176,7 +176,7 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingGwsThenCorrectValuesAreReturned) {
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenGettingElwsThenCorrectValuesAreReturned) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     MultiDispatchInfo mdi0, mdi1, mdi2, mdi3;
@@ -222,7 +222,7 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingElwsThenCorrectValuesAreReturned) {
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenGettingLwsThenCorrectValuesAreReturned) {
-    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>>(*pClDevice);
+    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder);
 
     MultiDispatchInfo mdi0, mdi1, mdi2, mdi3;
@@ -261,7 +261,7 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingLwsThenCorrectValuesAreReturned) {
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenCheckingIfBuiltinThenReturnTrue) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     diBuilder->setKernel(pKernel);
@@ -278,18 +278,18 @@ TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenCheckingIfBuiltinThenReturnTrue)
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder1D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::KernelSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::KernelSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::kernelSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::kernelSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder2D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::KernelSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::KernelSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::kernelSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::kernelSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder3D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     // 1D
-    diBuilder1D->setKernel(RegionCoordX::Left, pKernel);
-    diBuilder1D->setDispatchGeometry(RegionCoordX::Left, Vec3<size_t>(256, 0, 0), Vec3<size_t>(16, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder1D->setKernel(RegionCoordX::left, pKernel);
+    diBuilder1D->setDispatchGeometry(RegionCoordX::left, Vec3<size_t>(256, 0, 0), Vec3<size_t>(16, 0, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi1D;
     diBuilder1D->bake(mdi1D);
 
@@ -299,8 +299,8 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
     }
 
     // 2D
-    diBuilder2D->setKernel(RegionCoordX::Left, RegionCoordY::Bottom, pKernel);
-    diBuilder2D->setDispatchGeometry(RegionCoordX::Left, RegionCoordY::Bottom, Vec3<size_t>(256, 256, 0), Vec3<size_t>(16, 16, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder2D->setKernel(RegionCoordX::left, RegionCoordY::bottom, pKernel);
+    diBuilder2D->setDispatchGeometry(RegionCoordX::left, RegionCoordY::bottom, Vec3<size_t>(256, 256, 0), Vec3<size_t>(16, 16, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi2D;
     diBuilder2D->bake(mdi2D);
     for (auto &dispatchInfo : mdi2D) {
@@ -309,8 +309,8 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
     }
 
     // 3D
-    diBuilder3D->setKernel(RegionCoordX::Right, RegionCoordY::Bottom, RegionCoordZ::Back, pKernel);
-    diBuilder3D->setDispatchGeometry(RegionCoordX::Right, RegionCoordY::Bottom, RegionCoordZ::Back, Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
+    diBuilder3D->setKernel(RegionCoordX::right, RegionCoordY::bottom, RegionCoordZ::back, pKernel);
+    diBuilder3D->setDispatchGeometry(RegionCoordX::right, RegionCoordY::bottom, RegionCoordZ::back, Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi3D;
     diBuilder3D->bake(mdi3D);
 
@@ -325,13 +325,13 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenGettingWalkerInfoThenCorrectValuesAreReturned) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder1D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::WalkerSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder2D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder3D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     // 1D
@@ -436,13 +436,13 @@ TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenGettingWalkerInfoThenCorrectValu
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplitWhenGettingWalkerInfoThenCorrectValuesAreReturned) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder1D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::WalkerSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder2D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder3D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     // 1D
@@ -727,7 +727,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenGettingWalkerInfoThenCorrectValues
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplit1dWhenSettingDispatchGeometryThenMdiSizeIsCorrect) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     diBuilder->setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(2, 0, 0), Vec3<size_t>(0, 0, 0));
@@ -749,7 +749,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplit1dWhenSettingDispatchGeometryThenMdiSi
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplit2dWhenSettingDispatchGeometryThenMdiSizeIsCorrect) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::WalkerSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     diBuilder->setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
@@ -781,7 +781,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplit2dWhenSettingDispatchGeometryThenMdiSi
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplit3dWhenSettingDispatchGeometryThenMdiSizeIsCorrect) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     diBuilder->setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
@@ -842,7 +842,7 @@ TEST_F(DispatchInfoBuilderTest, WhenSettingKernelArgThenAddressesAreCorrect) {
     auto val = (cl_mem)buffer;
     auto pVal = &val;
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     diBuilder->setKernel(pKernel);
@@ -873,9 +873,9 @@ TEST_F(DispatchInfoBuilderTest, WhenSettingKernelArgThenAddressesAreCorrect) {
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCorrect) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> builder1D(*pClDevice);
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::KernelSplit> builder2D(*pClDevice);
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::KernelSplit> builder3D(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> builder1D(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::kernelSplit> builder2D(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::kernelSplit> builder3D(*pClDevice);
 
     Buffer *buffer = new MockBuffer();
     auto val = (cl_mem)buffer;
@@ -892,9 +892,9 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCo
     Vec3<size_t> elws(16, 16, 16);
     Vec3<size_t> offset(0, 0, 0);
 
-    builder1D.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, gws, elws, offset);
-    builder2D.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, gws, elws, offset);
-    builder3D.setDispatchGeometry(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, SplitDispatch::RegionCoordZ::Front, gws, elws, offset);
+    builder1D.setDispatchGeometry(SplitDispatch::RegionCoordX::left, gws, elws, offset);
+    builder2D.setDispatchGeometry(SplitDispatch::RegionCoordX::left, SplitDispatch::RegionCoordY::top, gws, elws, offset);
+    builder3D.setDispatchGeometry(SplitDispatch::RegionCoordX::left, SplitDispatch::RegionCoordY::top, SplitDispatch::RegionCoordZ::front, gws, elws, offset);
     MultiDispatchInfo mdi1D;
     MultiDispatchInfo mdi2D;
     MultiDispatchInfo mdi3D;
@@ -905,34 +905,34 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCo
 
     // Set arg
     clearCrossThreadData();
-    builder1D.setArg(SplitDispatch::RegionCoordX::Left, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
+    builder1D.setArg(SplitDispatch::RegionCoordX::left, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi1D) {
         EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
     clearCrossThreadData();
-    builder2D.setArg(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
+    builder2D.setArg(SplitDispatch::RegionCoordX::left, SplitDispatch::RegionCoordY::top, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi2D) {
         EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
     clearCrossThreadData();
-    builder3D.setArg(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, SplitDispatch::RegionCoordZ::Front, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
+    builder3D.setArg(SplitDispatch::RegionCoordX::left, SplitDispatch::RegionCoordY::top, SplitDispatch::RegionCoordZ::front, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi3D) {
         EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
 
     // Set arg SVM
     clearCrossThreadData();
-    builder1D.setArgSvm(SplitDispatch::RegionCoordX::Left, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
+    builder1D.setArgSvm(SplitDispatch::RegionCoordX::left, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi1D) {
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
     clearCrossThreadData();
-    builder2D.setArgSvm(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
+    builder2D.setArgSvm(SplitDispatch::RegionCoordX::left, SplitDispatch::RegionCoordY::top, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi2D) {
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
     clearCrossThreadData();
-    builder3D.setArgSvm(SplitDispatch::RegionCoordX::Left, SplitDispatch::RegionCoordY::Top, SplitDispatch::RegionCoordZ::Front, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
+    builder3D.setArgSvm(SplitDispatch::RegionCoordX::left, SplitDispatch::RegionCoordY::top, SplitDispatch::RegionCoordZ::front, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi3D) {
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
@@ -946,7 +946,7 @@ TEST_F(DispatchInfoBuilderTest, GivenInvalidInputWhenSettingKernelArgThenInvalid
     auto val = (cl_mem)buffer;
     auto pVal = &val;
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     diBuilder->setKernel(pKernel);
@@ -974,7 +974,7 @@ TEST_F(DispatchInfoBuilderTest, GivenNullKernelWhenSettingKernelArgThenSuccessIs
     void *svmPtr = &data;
     MockGraphicsAllocation svmAlloc(svmPtr, 128);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>(*pClDevice);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     diBuilder->setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
@@ -992,7 +992,7 @@ TEST_F(DispatchInfoBuilderTest, GivenNullKernelWhenSettingKernelArgThenSuccessIs
 TEST_F(DispatchInfoBuilderTest, WhenDimensionIsNotSetThenProperDimensionIsReturned) {
     MultiDispatchInfo mdi;
 
-    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>>(*pClDevice);
+    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder);
 
     diBuilder->setDispatchGeometry(0u, Vec3<size_t>(128, 4, 1), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
@@ -1005,7 +1005,7 @@ TEST_F(DispatchInfoBuilderTest, WhenDimensionIsNotSetThenProperDimensionIsReturn
 TEST_F(DispatchInfoBuilderTest, WhengDimensionIsNotMatchingGWSThenDimensionPassedAsArgumentIsReturned) {
     MultiDispatchInfo mdi;
 
-    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>>(*pClDevice);
+    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>>(*pClDevice);
     ASSERT_NE(nullptr, diBuilder);
 
     diBuilder->setDispatchGeometry(2u, Vec3<size_t>(128, 1, 1), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));

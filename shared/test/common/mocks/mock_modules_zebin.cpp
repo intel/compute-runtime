@@ -201,16 +201,16 @@ ZebinWithL0TestCommonModule::ZebinWithL0TestCommonModule(const NEO::HardwareInfo
     const uint8_t testAdditionalSectionsData[0x10] = {0u};
     for (const auto &s : additionalSections) {
         switch (s) {
-        case appendElfAdditionalSection::SPIRV:
+        case appendElfAdditionalSection::spirv:
             elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, testAdditionalSectionsData);
             break;
-        case appendElfAdditionalSection::GLOBAL:
+        case appendElfAdditionalSection::global:
             elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, testAdditionalSectionsData);
             break;
-        case appendElfAdditionalSection::CONSTANT:
+        case appendElfAdditionalSection::constant:
             elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, testAdditionalSectionsData);
             break;
-        case appendElfAdditionalSection::CONSTANT_STRING:
+        case appendElfAdditionalSection::constantString:
             elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConstString.str(), testAdditionalSectionsData);
             break;
         default:

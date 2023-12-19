@@ -141,7 +141,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
-    if (LocalMemoryAccessMode::CpuAccessDisallowed == productHelper.getLocalMemoryAccessMode(hwInfo)) {
+    if (LocalMemoryAccessMode::cpuAccessDisallowed == productHelper.getLocalMemoryAccessMode(hwInfo)) {
         if (properties.allocationType == AllocationType::linearStream ||
             properties.allocationType == AllocationType::internalHeap ||
             properties.allocationType == AllocationType::printfSurface ||

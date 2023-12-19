@@ -418,7 +418,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchK
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
 
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::KernelName) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::kernelName) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -434,7 +434,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchK
     tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -450,7 +450,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchK
     tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -505,7 +505,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendEventRe
     bool tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -521,7 +521,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendEventRe
     tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -579,7 +579,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendSignalE
     bool tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -595,7 +595,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendSignalE
     tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -653,7 +653,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
     bool tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -669,7 +669,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
     tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -713,7 +713,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     bool tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -729,7 +729,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -774,7 +774,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     bool tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameBegin) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameBegin) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 
@@ -790,7 +790,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     tagFound = false;
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::CallNameEnd) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::callNameEnd) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 

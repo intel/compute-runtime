@@ -208,7 +208,7 @@ bool inline copyHostPointer(Buffer *buffer,
         bool copyOnCpuAllowed = implicitScalingEnabled == false &&
                                 size <= Buffer::maxBufferSizeForCopyOnCpu &&
                                 isCompressionEnabled == false &&
-                                productHelper.getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed &&
+                                productHelper.getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::cpuAccessDisallowed &&
                                 isLockable;
         if (debugManager.flags.CopyHostPtrOnCpu.get() != -1) {
             copyOnCpuAllowed = debugManager.flags.CopyHostPtrOnCpu.get() == 1;

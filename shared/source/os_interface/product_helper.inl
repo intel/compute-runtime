@@ -269,15 +269,15 @@ bool ProductHelperHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) c
 
 template <PRODUCT_FAMILY gfxProduct>
 LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    return LocalMemoryAccessMode::Default;
+    return LocalMemoryAccessMode::defaultMode;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     switch (static_cast<LocalMemoryAccessMode>(debugManager.flags.ForceLocalMemoryAccessMode.get())) {
-    case LocalMemoryAccessMode::Default:
-    case LocalMemoryAccessMode::CpuAccessAllowed:
-    case LocalMemoryAccessMode::CpuAccessDisallowed:
+    case LocalMemoryAccessMode::defaultMode:
+    case LocalMemoryAccessMode::cpuAccessAllowed:
+    case LocalMemoryAccessMode::cpuAccessDisallowed:
         return static_cast<LocalMemoryAccessMode>(debugManager.flags.ForceLocalMemoryAccessMode.get());
     }
     return getDefaultLocalMemoryAccessMode(hwInfo);
@@ -509,7 +509,7 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return allocation.isAllocatedInLocalMemoryPool() &&
-           (productHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
+           (productHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::cpuAccessDisallowed ||
             !allocation.isAllocationLockable());
 }
 

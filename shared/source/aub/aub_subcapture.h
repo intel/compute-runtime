@@ -20,10 +20,10 @@ class SettingsReader;
 class AubSubCaptureCommon {
   public:
     enum class SubCaptureMode {
-        Off = 0, // subcapture off
-        Filter,  // subcapture kernel specified by filter (static regkey)
-        Toggle   // toggle subcapture on/off (dynamic regkey)
-    } subCaptureMode = SubCaptureMode::Off;
+        off = 0, // subcapture off
+        filter,  // subcapture kernel specified by filter (static regkey)
+        toggle   // toggle subcapture on/off (dynamic regkey)
+    } subCaptureMode = SubCaptureMode::off;
 
     struct SubCaptureFilter {
         std::string dumpKernelName = "";
@@ -47,7 +47,7 @@ class AubSubCaptureManager {
     using SubCaptureFilter = AubSubCaptureCommon::SubCaptureFilter;
 
     inline bool isSubCaptureMode() const {
-        return subCaptureCommon.subCaptureMode > SubCaptureMode::Off;
+        return subCaptureCommon.subCaptureMode > SubCaptureMode::off;
     }
 
     bool isSubCaptureEnabled() const;

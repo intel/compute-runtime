@@ -102,7 +102,7 @@ void KernelNameTag::bxml(std::ostream &os) {
     os << "<Instruction Name=\"KernelName\" Source=\"Driver\" Project=\"All\" LengthBias=\"2\">\n";
     os << "  <Description>Name of the kernel.</Description>\n";
 
-    BaseTag::bxml(os, OpCode::KernelName, sizeof(KernelNameTag), "KERNEL_NAME");
+    BaseTag::bxml(os, OpCode::kernelName, sizeof(KernelNameTag), "KERNEL_NAME");
 
     unsigned int stringDWORDSize = kenelNameStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
@@ -118,7 +118,7 @@ void ArbitraryStringTag::bxml(std::ostream &os) {
     os << "<Instruction Name=\"ArbitraryString\" Source=\"Driver\" Project=\"All\" LengthBias=\"2\">\n";
     os << "  <Description>Name of the arbitrary string.</Description>\n";
 
-    BaseTag::bxml(os, OpCode::ArbitraryString, sizeof(ArbitraryStringTag), "ARBITRARY_STRING");
+    BaseTag::bxml(os, OpCode::arbitraryString, sizeof(ArbitraryStringTag), "ARBITRARY_STRING");
 
     constexpr unsigned int stringDWORDSize = tagStringLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
@@ -134,7 +134,7 @@ void PipeControlReasonTag::bxml(std::ostream &os) {
     os << "<Instruction Name=\"PipeControlReason\" Source=\"Driver\" Project=\"All\" LengthBias=\"2\">\n";
     os << "  <Description>Reason for why the PIPE_CONTROL was inserted.</Description>\n";
 
-    BaseTag::bxml(os, OpCode::PipeControlReason, sizeof(PipeControlReasonTag), "PIPE_CONTROL_REASON");
+    BaseTag::bxml(os, OpCode::pipeControlReason, sizeof(PipeControlReasonTag), "PIPE_CONTROL_REASON");
 
     unsigned int stringDWORDSize = reasonStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
@@ -150,7 +150,7 @@ void CallNameBeginTag::bxml(std::ostream &os) {
     os << "<Instruction Name=\"CallNameBegin\" Source=\"Driver\" Project=\"All\" LengthBias=\"2\">\n";
     os << "  <Description>ZE Call where the GPU originated from.</Description>\n";
 
-    BaseTag::bxml(os, OpCode::CallNameBegin, sizeof(CallNameBeginTag), "ZE_CALL_NAME_BEGIN");
+    BaseTag::bxml(os, OpCode::callNameBegin, sizeof(CallNameBeginTag), "ZE_CALL_NAME_BEGIN");
 
     unsigned int stringDWORDSize = zeCallNameStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";
@@ -171,7 +171,7 @@ void CallNameEndTag::bxml(std::ostream &os) {
     os << "<Instruction Name=\"CallNameEnd\" Source=\"Driver\" Project=\"All\" LengthBias=\"2\">\n";
     os << "  <Description>ZE Call where the GPU originated from.</Description>\n";
 
-    BaseTag::bxml(os, OpCode::CallNameEnd, sizeof(CallNameEndTag), "ZE_CALL_NAME_END");
+    BaseTag::bxml(os, OpCode::callNameEnd, sizeof(CallNameEndTag), "ZE_CALL_NAME_END");
 
     unsigned int stringDWORDSize = zeCallNameStrLength / sizeof(uint32_t);
     os << "  <Dword Name=\"2.." << 2 + stringDWORDSize - 1 << "\">\n";

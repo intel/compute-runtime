@@ -28,11 +28,11 @@ inline std::string versionToString(NEO::Zebin::ZeInfo::Types::Version version) {
 namespace ZebinTestData {
 
 enum class appendElfAdditionalSection {
-    NONE,
-    SPIRV,
-    GLOBAL,
-    CONSTANT,
-    CONSTANT_STRING
+    none,
+    spirv,
+    global,
+    constant,
+    constantString
 };
 
 template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits = NEO::Elf::EI_CLASS_64>

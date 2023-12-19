@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,9 @@
 namespace NEO {
 
 enum class LocalMemoryAccessMode {
-    Default = 0,
-    CpuAccessAllowed = 1,
-    CpuAccessDisallowed = 3
+    defaultMode = 0,
+    cpuAccessAllowed = 1,
+    cpuAccessDisallowed = 3
 };
 
 } // namespace NEO

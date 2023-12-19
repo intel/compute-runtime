@@ -200,7 +200,7 @@ HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueue
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     DebugManagerStateRestore restore;
-    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessDisallowed));
     debugManager.flags.EnableLocalMemory.set(1);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
@@ -351,9 +351,9 @@ TEST_F(PrintfHandlerTests, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenP
         &BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation};
 
     LocalMemoryAccessMode localMemoryAccessModes[] = {
-        LocalMemoryAccessMode::Default,
-        LocalMemoryAccessMode::CpuAccessAllowed,
-        LocalMemoryAccessMode::CpuAccessDisallowed};
+        LocalMemoryAccessMode::defaultMode,
+        LocalMemoryAccessMode::cpuAccessAllowed,
+        LocalMemoryAccessMode::cpuAccessDisallowed};
 
     for (auto localMemoryAccessMode : localMemoryAccessModes) {
         debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(localMemoryAccessMode));
@@ -375,7 +375,7 @@ TEST_F(PrintfHandlerTests, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenP
             printfHandler->prepareDispatch(multiDispatchInfo);
 
             if (printfHandler->getSurface()->isAllocatedInLocalMemoryPool() &&
-                (localMemoryAccessMode == LocalMemoryAccessMode::CpuAccessDisallowed)) {
+                (localMemoryAccessMode == LocalMemoryAccessMode::cpuAccessDisallowed)) {
                 expectedBlitsCount++;
             }
             EXPECT_EQ(expectedBlitsCount, blitsCounter);

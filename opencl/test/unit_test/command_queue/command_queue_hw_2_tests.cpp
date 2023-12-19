@@ -49,7 +49,7 @@ struct MockBuilder : BuiltinDispatchInfoBuilder {
         paramsReceived.offset = offset;
         wasBuildDispatchInfosWithKernelParamsCalled = true;
 
-        DispatchInfoBuilder<NEO::SplitDispatch::Dim::d3D, NEO::SplitDispatch::SplitMode::NoSplit> dispatchInfoBuilder(clDevice);
+        DispatchInfoBuilder<NEO::SplitDispatch::Dim::d3D, NEO::SplitDispatch::SplitMode::noSplit> dispatchInfoBuilder(clDevice);
         dispatchInfoBuilder.setKernel(paramsToUse.kernel);
         dispatchInfoBuilder.setDispatchGeometry(dim, paramsToUse.gws, paramsToUse.elws, paramsToUse.offset);
         dispatchInfoBuilder.bake(d);

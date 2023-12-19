@@ -118,7 +118,7 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
     }
 
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    if (getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) {
+    if (getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::cpuAccessDisallowed) {
         // Regular L3 WA
         return true;
     }

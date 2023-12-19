@@ -133,7 +133,7 @@ bool Wddm::init() {
     rootDeviceEnvironment.initGmm();
     this->rootDeviceEnvironment.getGmmClientContext()->setHandleAllocator(this->hwDeviceId->getUmKmDataTranslator()->createGmmHandleAllocator());
 
-    if (WddmVersion::WDDM_2_3 == getWddmVersion()) {
+    if (WddmVersion::wddm23 == getWddmVersion()) {
         wddmInterface = std::make_unique<WddmInterface23>(*this);
     } else {
         wddmInterface = std::make_unique<WddmInterface20>(*this);
@@ -1310,9 +1310,9 @@ void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {
 
 WddmVersion Wddm::getWddmVersion() {
     if (featureTable->flags.ftrWddmHwQueues) {
-        return WddmVersion::WDDM_2_3;
+        return WddmVersion::wddm23;
     } else {
-        return WddmVersion::WDDM_2_0;
+        return WddmVersion::wddm20;
     }
 }
 

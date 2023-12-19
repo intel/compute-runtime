@@ -211,9 +211,9 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
         &BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation};
 
     LocalMemoryAccessMode localMemoryAccessModes[] = {
-        LocalMemoryAccessMode::Default,
-        LocalMemoryAccessMode::CpuAccessAllowed,
-        LocalMemoryAccessMode::CpuAccessDisallowed};
+        LocalMemoryAccessMode::defaultMode,
+        LocalMemoryAccessMode::cpuAccessAllowed,
+        LocalMemoryAccessMode::cpuAccessDisallowed};
 
     std::vector<uint8_t> initData;
     initData.resize(64, 7U);
@@ -232,7 +232,7 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
             EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(pAllocation->getGpuAddress()))));
             EXPECT_EQ(AllocationType::constantSurface, pAllocation->getAllocationType());
 
-            if (pAllocation->isAllocatedInLocalMemoryPool() && (localMemoryAccessMode == LocalMemoryAccessMode::CpuAccessDisallowed)) {
+            if (pAllocation->isAllocatedInLocalMemoryPool() && (localMemoryAccessMode == LocalMemoryAccessMode::cpuAccessDisallowed)) {
                 expectedBlitsCount++;
             }
             EXPECT_EQ(expectedBlitsCount, blitsCounter);

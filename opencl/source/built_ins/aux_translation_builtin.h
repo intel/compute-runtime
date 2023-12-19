@@ -32,7 +32,7 @@ class BuiltInOp<EBuiltInOps::auxTranslation> : public BuiltinDispatchInfoBuilder
         multiDispatchInfo.setBuiltinOpParams(operationParams);
 
         for (auto &kernelObj : *multiDispatchInfo.getKernelObjsForAuxTranslation()) {
-            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder(clDevice);
+            DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> builder(clDevice);
 
             UNRECOVERABLE_IF(builder.getMaxNumDispatches() != 1);
 

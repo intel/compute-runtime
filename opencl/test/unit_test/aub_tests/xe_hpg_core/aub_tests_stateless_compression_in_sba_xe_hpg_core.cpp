@@ -487,7 +487,7 @@ struct XeHpgCoreStatelessCompressionInSBAWithBCS : public MulticontextAubFixture
         debugManager.flags.EnableStatelessCompression.set(1);
         debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::blit));
         debugManager.flags.EnableBlitterOperationsSupport.set(true);
-        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
+        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::single, true);
         StatelessCopyKernelFixture::setUp(tileDevices[0], context.get());
         if (!tileDevices[0]->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();

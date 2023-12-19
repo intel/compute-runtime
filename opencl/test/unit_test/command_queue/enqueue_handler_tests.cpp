@@ -135,7 +135,7 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCapt
     pDevice->resetCommandStreamReceiver(aubCsr);
 
     AubSubCaptureCommon subCaptureCommon;
-    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::filter;
     subCaptureCommon.subCaptureFilter.dumpKernelName = "invalid_kernel_name";
     auto subCaptureManagerMock = new AubSubCaptureManagerMock("file_name.aub", subCaptureCommon);
     aubCsr->subCaptureManager.reset(subCaptureManagerMock);
@@ -156,7 +156,7 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueMarkerWithAubSubCaptu
     pDevice->resetCommandStreamReceiver(aubCsr);
 
     AubSubCaptureCommon subCaptureCommon;
-    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::filter;
     subCaptureCommon.subCaptureFilter.dumpKernelName = "invalid_kernel_name";
     auto subCaptureManagerMock = new AubSubCaptureManagerMock("file_name.aub", subCaptureCommon);
     aubCsr->subCaptureManager.reset(subCaptureManagerMock);
@@ -176,7 +176,7 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCapt
     pDevice->resetCommandStreamReceiver(aubCsr);
 
     AubSubCaptureCommon subCaptureCommon;
-    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::filter;
     subCaptureCommon.subCaptureFilter.dumpKernelName = "";
     subCaptureCommon.subCaptureFilter.dumpKernelStartIdx = 0;
     subCaptureCommon.subCaptureFilter.dumpKernelEndIdx = 1;
@@ -219,7 +219,7 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenInputEventsWhenDispatchingEn
     pDevice->resetCommandStreamReceiver(aubCsr);
 
     AubSubCaptureCommon subCaptureCommon;
-    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
+    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::filter;
     subCaptureCommon.subCaptureFilter.dumpKernelName = "";
     subCaptureCommon.subCaptureFilter.dumpKernelStartIdx = 0;
     subCaptureCommon.subCaptureFilter.dumpKernelEndIdx = 1;
@@ -550,7 +550,7 @@ HWTEST_F(EnqueueHandlerTest, givenExternallySynchronizedParentEventWhenRequestin
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOffThenActivateSubCaptureIsNotCalled) {
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Off));
+    debugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::off));
 
     MockKernelWithInternals kernelInternals(*pClDevice, context);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -573,7 +573,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOffThenActivateS
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSubCaptureIsCalled) {
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
+    debugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::filter));
 
     MockKernelWithInternals kernelInternals(*pClDevice, context);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -601,7 +601,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySe
         GTEST_SKIP();
     }
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
+    debugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::filter));
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
     pDevice->getUltCommandStreamReceiver<FamilyType>().streamProperties.initSupport(pClDevice->getRootDeviceEnvironment());
 
@@ -639,7 +639,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenNotSupportedPolicyChangeThen
         GTEST_SKIP();
     }
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
+    debugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::filter));
 
     MockKernelWithInternals kernelInternals(*pClDevice, context);
     Kernel *kernel = kernelInternals.mockKernel;

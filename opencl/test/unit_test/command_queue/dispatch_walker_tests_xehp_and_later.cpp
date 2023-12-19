@@ -643,7 +643,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocal
     size_t globalOffsets[] = {0, 0, 0};
 
     MultiDispatchInfo multiDispatchInfo(kernel->mockKernel);
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder(*device);
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> builder(*device);
     builder.setDispatchGeometry(1, gws, lws, globalOffsets);
     builder.setKernel(kernel->mockKernel);
     builder.bake(multiDispatchInfo);
@@ -705,7 +705,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     size_t globalOffsets[] = {0, 0, 0};
 
     MultiDispatchInfo multiDispatchInfo(kernel->mockKernel);
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder(*device);
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> builder(*device);
     builder.setDispatchGeometry(1, gws, lws, globalOffsets);
     builder.setKernel(kernel->mockKernel);
     builder.bake(multiDispatchInfo);
@@ -807,7 +807,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     size_t globalOffsets[] = {0, 0, 0};
 
     MultiDispatchInfo multiDispatchInfo(kernel->mockKernel);
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> builder(*device);
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> builder(*device);
     builder.setDispatchGeometry(1, gws, lws, globalOffsets);
     builder.setKernel(kernel->mockKernel);
     builder.bake(multiDispatchInfo);

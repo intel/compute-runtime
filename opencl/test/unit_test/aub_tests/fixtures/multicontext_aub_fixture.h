@@ -24,9 +24,9 @@ class MockDevice;
 
 struct MulticontextAubFixture {
     enum class EnabledCommandStreamers {
-        Single, // default only
-        Dual,   // RCS + CCS0
-        All,    // RCS + CCS0-3
+        single, // default only
+        dual,   // RCS + CCS0
+        all,    // RCS + CCS0-3
     };
 
     void setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression);

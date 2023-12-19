@@ -46,10 +46,10 @@ AubSubCaptureStatus AubSubCaptureManager::checkAndActivateSubCapture(const std::
     subCaptureIsActive = false;
 
     switch (subCaptureCommon.subCaptureMode) {
-    case SubCaptureMode::Toggle:
+    case SubCaptureMode::toggle:
         subCaptureIsActive = isSubCaptureToggleActive();
         break;
-    case SubCaptureMode::Filter:
+    case SubCaptureMode::filter:
         subCaptureIsActive = isSubCaptureFilterActive(kernelName);
         break;
     default:
@@ -79,13 +79,13 @@ const std::string &AubSubCaptureManager::getSubCaptureFileName(const std::string
     }
 
     switch (subCaptureCommon.subCaptureMode) {
-    case SubCaptureMode::Filter:
+    case SubCaptureMode::filter:
         if (currentFileName.empty()) {
             currentFileName = generateFilterFileName();
             useToggleFileName = false;
         }
         break;
-    case SubCaptureMode::Toggle:
+    case SubCaptureMode::toggle:
         if (currentFileName.empty()) {
             currentFileName = generateToggleFileName(kernelName);
             useToggleFileName = false;

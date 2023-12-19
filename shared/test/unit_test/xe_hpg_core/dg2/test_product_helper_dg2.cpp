@@ -47,10 +47,10 @@ DG2TEST_F(Dg2ProductHelper, givenDG2WithBSteppingThenMaxThreadsForWorkgroupWAIsN
 DG2TEST_F(Dg2ProductHelper, givenSteppingWhenAskingForLocalMemoryAccessModeThenDisallowOnA0) {
     pInHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
     pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, pInHwInfo);
-    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::cpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
     pInHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, pInHwInfo);
-    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::defaultMode, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
 
 DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
@@ -85,23 +85,23 @@ DG2TEST_F(Dg2ProductHelper, givenDG2WhenGettingLocalMemoryAccessModeThenCorrectV
 
     pInHwInfo.platform.usRevId = revIdA0;
     pInHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
-    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::cpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
     pInHwInfo.platform.usDeviceID = dg2G11DeviceIds[0];
-    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::defaultMode, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
     pInHwInfo.platform.usDeviceID = dg2G12DeviceIds[0];
-    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::defaultMode, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
     pInHwInfo.platform.usRevId = revIdB0;
     pInHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
-    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::defaultMode, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
     pInHwInfo.platform.usDeviceID = dg2G11DeviceIds[0];
-    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::defaultMode, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 
     pInHwInfo.platform.usDeviceID = dg2G12DeviceIds[0];
-    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::defaultMode, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
 
 DG2TEST_F(Dg2ProductHelper, whenConfiguringHardwareInfoThenWa15010089951IsSet) {

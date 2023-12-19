@@ -122,7 +122,7 @@ class SystemMemFenceWithBlitter : public MulticontextAubFixture,
         debugManager.flags.EnableBlitterOperationsSupport.set(1);
         debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
+        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::single, true);
     }
     void TearDown() override {
         MulticontextAubFixture::tearDown();
@@ -171,7 +171,7 @@ class SystemMemFenceViaKernel : public ProgramFixture,
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
 
         ProgramFixture::setUp();
-        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
+        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::single, true);
     }
     void TearDown() override {
         MulticontextAubFixture::tearDown();

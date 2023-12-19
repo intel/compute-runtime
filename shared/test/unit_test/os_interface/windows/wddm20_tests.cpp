@@ -1317,12 +1317,12 @@ TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndFilterDeviceIdIsTheSameAsTheE
 
 TEST_F(WddmTest, WhenFeatureFlagHwQueueIsDisabledThenReturnWddm20Version) {
     wddm->featureTable->flags.ftrWddmHwQueues = 0;
-    EXPECT_EQ(WddmVersion::WDDM_2_0, wddm->getWddmVersion());
+    EXPECT_EQ(WddmVersion::wddm20, wddm->getWddmVersion());
 }
 
 TEST_F(WddmTest, WhenFeatureFlagHwQueueIsEnabledThenReturnWddm23Version) {
     wddm->featureTable->flags.ftrWddmHwQueues = 1;
-    EXPECT_EQ(WddmVersion::WDDM_2_3, wddm->getWddmVersion());
+    EXPECT_EQ(WddmVersion::wddm23, wddm->getWddmVersion());
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenCreationSucceedWhenCreatingSeparateMonitorFenceThenReturnFilledStructure) {

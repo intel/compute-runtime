@@ -1842,7 +1842,7 @@ using BufferCreateTests = testing::Test;
 
 HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolAndCopyOnCpuEnabledThenAllocationIsWrittenUsingLockedPointerIfAllowed) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessAllowed));
 
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
     auto memoryManager = new MockMemoryManager(true, *executionEnvironment);
@@ -1930,7 +1930,7 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
     {
         // local memory cpu access disallowed -> cpu copy disallowed
         DebugManagerStateRestore subTestRestorer;
-        debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+        debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessDisallowed));
         cl_int retVal;
         cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
         auto writeBufferCounter = commandQueue->writeBufferCounter;

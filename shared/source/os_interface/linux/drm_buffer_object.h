@@ -40,8 +40,8 @@ class BufferObjectHandleWrapper {
     };
 
     enum class Ownership : std::uint8_t {
-        Weak = 0,
-        Strong = 1,
+        weak = 0,
+        strong = 1,
     };
 
   public:
@@ -75,7 +75,7 @@ class BufferObjectHandleWrapper {
         : boHandle{boHandle}, ownership{ownership}, controlBlock{controlBlock} {}
 
     int boHandle{};
-    Ownership ownership{Ownership::Strong};
+    Ownership ownership{Ownership::strong};
     ControlBlock *controlBlock{};
 };
 

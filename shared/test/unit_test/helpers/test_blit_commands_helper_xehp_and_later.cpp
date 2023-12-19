@@ -179,14 +179,14 @@ HWTEST2_F(BlitTests, GivenCpuAccessToLocalMemoryWhenGettingMaxBlitSizeThenValues
     DebugManagerStateRestore restore{};
 
     UltDeviceFactory deviceFactory{1, 2};
-    int32_t testedLocalMemoryAccessModes[] = {static_cast<int32_t>(LocalMemoryAccessMode::Default),
-                                              static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed),
-                                              static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed)};
+    int32_t testedLocalMemoryAccessModes[] = {static_cast<int32_t>(LocalMemoryAccessMode::defaultMode),
+                                              static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessAllowed),
+                                              static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessDisallowed)};
 
     for (auto localMemoryAccessModeOverride : testedLocalMemoryAccessModes) {
         debugManager.flags.ForceLocalMemoryAccessMode.set(localMemoryAccessModeOverride);
 
-        bool isBlitSizeOverridden = (localMemoryAccessModeOverride == static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
+        bool isBlitSizeOverridden = (localMemoryAccessModeOverride == static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessAllowed));
 
         if (isBlitSizeOverridden) {
             EXPECT_EQ(1024u, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(deviceFactory.rootDevices[0]->getRootDeviceEnvironment()));

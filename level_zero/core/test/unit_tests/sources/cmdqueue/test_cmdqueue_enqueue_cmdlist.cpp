@@ -1047,7 +1047,7 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandL
     for (auto it = noops.begin(); it != noops.end() && !tagFound; ++it) {
 
         auto noop = genCmdCast<MI_NOOP *>(*(*it));
-        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::PipeControlReason) == noop->getIdentificationNumber() &&
+        if (NEO::SWTags::BaseTag::getMarkerNoopID(SWTags::OpCode::pipeControlReason) == noop->getIdentificationNumber() &&
             noop->getIdentificationNumberRegisterWriteEnable() == true &&
             ++it != noops.end()) {
 

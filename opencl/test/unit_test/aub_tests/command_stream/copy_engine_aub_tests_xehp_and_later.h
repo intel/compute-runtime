@@ -53,7 +53,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
         debugManager.flags.RenderCompressedImagesEnabled.set(true);
         debugManager.flags.EnableFreeMemory.set(false);
 
-        MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::Single, true);
+        MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::single, true);
 
         defaultCommandQueue = commandQueues[0][0].get();
         bcsCsr = tileDevices[0]->getNearestGenericSubDevice(0)->getEngine(bcsEngineType, EngineUsage::regular).commandStreamReceiver;

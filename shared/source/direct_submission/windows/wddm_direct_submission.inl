@@ -86,7 +86,7 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
     // for now only WDDM2.0
-    UNRECOVERABLE_IF(wddm->getWddmVersion() != WddmVersion::WDDM_2_0);
+    UNRECOVERABLE_IF(wddm->getWddmVersion() != WddmVersion::wddm20);
 
     bool ret = wddm->getWddmInterface()->createMonitoredFence(ringFence);
     ringFence.currentFenceValue = 1;

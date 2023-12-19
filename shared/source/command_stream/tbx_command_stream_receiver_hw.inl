@@ -187,7 +187,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         auto subCaptureCommon = aubCenter->getSubCaptureCommon();
         UNRECOVERABLE_IF(nullptr == subCaptureCommon);
 
-        if (subCaptureCommon->subCaptureMode > AubSubCaptureManager::SubCaptureMode::Off) {
+        if (subCaptureCommon->subCaptureMode > AubSubCaptureManager::SubCaptureMode::off) {
             csr->subCaptureManager = std::make_unique<AubSubCaptureManager>(fullName, *subCaptureCommon, ApiSpecificConfig::getRegistryPath());
         }
 

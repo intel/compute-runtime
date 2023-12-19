@@ -14,22 +14,22 @@ namespace NEO {
 namespace SWTags {
 
 enum class OpCode : uint32_t {
-    Unknown,
-    KernelName,
-    PipeControlReason,
-    CallNameBegin,
-    CallNameEnd,
-    ArbitraryString,
+    unknown,
+    kernelName,
+    pipeControlReason,
+    callNameBegin,
+    callNameEnd,
+    arbitraryString,
 };
 
 enum class Component : uint32_t {
-    COMMON = 1
+    common = 1
 };
 
 struct BXMLHeapInfo {
     const uint32_t magicNumber = 0xDEB06D0C;
     const uint32_t heapSize;
-    const uint32_t component = static_cast<uint32_t>(Component::COMMON);
+    const uint32_t component = static_cast<uint32_t>(Component::common);
 
     BXMLHeapInfo(size_t size) : heapSize(static_cast<uint32_t>(size)) {}
 
@@ -39,7 +39,7 @@ struct BXMLHeapInfo {
 struct SWTagHeapInfo {
     const uint32_t magicNumber = 0xDEB06DD1;
     const uint32_t heapSize;
-    const uint32_t component = static_cast<uint32_t>(Component::COMMON);
+    const uint32_t component = static_cast<uint32_t>(Component::common);
 
     SWTagHeapInfo(size_t size) : heapSize(static_cast<uint32_t>(size)) {}
 
@@ -50,7 +50,7 @@ struct BaseTag {
   public:
     BaseTag(OpCode code, size_t size) : opcode(static_cast<uint32_t>(code)),
                                         reserved(0),
-                                        component(static_cast<uint32_t>(Component::COMMON)),
+                                        component(static_cast<uint32_t>(Component::common)),
                                         driverDebug(1),
                                         dwordCount(static_cast<uint32_t>(size / sizeof(uint32_t) - 2)) {}
 
@@ -87,7 +87,7 @@ struct BaseTag {
 struct KernelNameTag : public BaseTag {
   public:
     KernelNameTag(const char *name, uint32_t callId)
-        : BaseTag(OpCode::KernelName, sizeof(KernelNameTag)) {
+        : BaseTag(OpCode::kernelName, sizeof(KernelNameTag)) {
         strcpy_s(kernelName, kenelNameStrLength, name);
     }
 
@@ -101,7 +101,7 @@ struct KernelNameTag : public BaseTag {
 struct ArbitraryStringTag : public BaseTag {
   public:
     ArbitraryStringTag(const char *name)
-        : BaseTag(OpCode::ArbitraryString, sizeof(ArbitraryStringTag)) {
+        : BaseTag(OpCode::arbitraryString, sizeof(ArbitraryStringTag)) {
         strcpy_s(arbitraryString, tagStringLength, name);
     }
 
@@ -115,7 +115,7 @@ struct ArbitraryStringTag : public BaseTag {
 struct PipeControlReasonTag : public BaseTag {
   public:
     PipeControlReasonTag(const char *reason, uint32_t callId)
-        : BaseTag(OpCode::PipeControlReason, sizeof(PipeControlReasonTag)) {
+        : BaseTag(OpCode::pipeControlReason, sizeof(PipeControlReasonTag)) {
         strcpy_s(reasonString, reasonStrLength, reason);
     }
 
@@ -129,7 +129,7 @@ struct PipeControlReasonTag : public BaseTag {
 struct CallNameBeginTag : public BaseTag {
   public:
     CallNameBeginTag(const char *name, uint32_t callId)
-        : BaseTag(OpCode::CallNameBegin, sizeof(CallNameBeginTag)) {
+        : BaseTag(OpCode::callNameBegin, sizeof(CallNameBeginTag)) {
         strcpy_s(zeCallName, zeCallNameStrLength, name);
         snprintf(zeCallId, sizeof(uint32_t), "%x", callId);
     }
@@ -145,7 +145,7 @@ struct CallNameBeginTag : public BaseTag {
 struct CallNameEndTag : public BaseTag {
   public:
     CallNameEndTag(const char *name, uint32_t callId)
-        : BaseTag(OpCode::CallNameEnd, sizeof(CallNameEndTag)) {
+        : BaseTag(OpCode::callNameEnd, sizeof(CallNameEndTag)) {
         strcpy_s(zeCallName, zeCallNameStrLength, name);
         snprintf(zeCallId, sizeof(uint32_t), "%x", callId);
     }

@@ -39,7 +39,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
 
     HardwareInfo localHwInfo = *defaultHwInfo;
-    if (EnabledCommandStreamers::All == enabledCommandStreamers) {
+    if (EnabledCommandStreamers::all == enabledCommandStreamers) {
         overridePlatformConfigForAllEnginesSupport(localHwInfo);
     }
 
@@ -73,11 +73,11 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     std::stringstream strfilename;
     strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_";
-    if (EnabledCommandStreamers::Single == enabledCommandStreamers) {
+    if (EnabledCommandStreamers::single == enabledCommandStreamers) {
         strfilename << renderEngineName;
-    } else if (EnabledCommandStreamers::Dual == enabledCommandStreamers) {
+    } else if (EnabledCommandStreamers::dual == enabledCommandStreamers) {
         strfilename << renderEngineName << "_CCS0";
-    } else if (EnabledCommandStreamers::All == enabledCommandStreamers) {
+    } else if (EnabledCommandStreamers::all == enabledCommandStreamers) {
         strfilename << renderEngineName << "_CCS0_3"; // xehp_config_name_RCS_CCS0_3.aub
     }
 
@@ -123,7 +123,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     for (uint32_t tile = 0; tile < numberOfTiles; tile++) {
         tileDevices.push_back(rootDevice->getNearestGenericSubDevice(tile));
         EXPECT_NE(nullptr, tileDevices[tile]);
-        if (EnabledCommandStreamers::Single == enabledCommandStreamers) {
+        if (EnabledCommandStreamers::single == enabledCommandStreamers) {
             if (EngineHelpers::isCcs(engineType)) {
                 auto familyQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
                 commandQueues[tile].push_back(createCommandQueueForEngine(tile, familyQueue, 0));
@@ -131,12 +131,12 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
                 auto familyQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
                 commandQueues[tile].push_back(createCommandQueueForEngine(tile, familyQueue, 0));
             }
-        } else if (EnabledCommandStreamers::Dual == enabledCommandStreamers) {
+        } else if (EnabledCommandStreamers::dual == enabledCommandStreamers) {
             auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
             auto ccsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, rcsQueue, 0));
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
-        } else if (EnabledCommandStreamers::All == enabledCommandStreamers) {
+        } else if (EnabledCommandStreamers::all == enabledCommandStreamers) {
             auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
             auto ccsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, rcsQueue, 0));

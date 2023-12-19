@@ -83,7 +83,7 @@ class UmStatelessCompressionWithBlitter : public MulticontextAubFixture,
         debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         compareCompressedMemory = GetParam();
 
-        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
+        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::single, true);
     }
     void TearDown() override {
         MulticontextAubFixture::tearDown();
@@ -144,7 +144,7 @@ class UmStatelessCompressionWithStatefulAccess : public ProgramFixture,
         compareCompressedMemory = GetParam();
 
         ProgramFixture::setUp();
-        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
+        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::single, true);
     }
     void TearDown() override {
         MulticontextAubFixture::tearDown();

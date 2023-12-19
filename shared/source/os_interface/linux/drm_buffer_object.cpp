@@ -35,7 +35,7 @@ BufferObjectHandleWrapper BufferObjectHandleWrapper::acquireSharedOwnership() {
     std::lock_guard lock{controlBlock->blockMutex};
     controlBlock->refCount++;
 
-    return BufferObjectHandleWrapper{boHandle, Ownership::Strong, controlBlock};
+    return BufferObjectHandleWrapper{boHandle, Ownership::strong, controlBlock};
 }
 
 BufferObjectHandleWrapper BufferObjectHandleWrapper::acquireWeakOwnership() {
@@ -46,7 +46,7 @@ BufferObjectHandleWrapper BufferObjectHandleWrapper::acquireWeakOwnership() {
     std::lock_guard lock{controlBlock->blockMutex};
     controlBlock->weakRefCount++;
 
-    return BufferObjectHandleWrapper{boHandle, Ownership::Weak, controlBlock};
+    return BufferObjectHandleWrapper{boHandle, Ownership::weak, controlBlock};
 }
 
 BufferObjectHandleWrapper::~BufferObjectHandleWrapper() {
@@ -56,7 +56,7 @@ BufferObjectHandleWrapper::~BufferObjectHandleWrapper() {
 
     std::unique_lock lock{controlBlock->blockMutex};
 
-    if (ownership == Ownership::Strong) {
+    if (ownership == Ownership::strong) {
         controlBlock->refCount--;
     } else {
         controlBlock->weakRefCount--;

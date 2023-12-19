@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ struct MultiTileBuffersXeHPAndLater : public MulticontextAubFixture, public ::te
     static constexpr uint32_t numTiles = 2;
 
     void SetUp() override {
-        MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::Single, false);
+        MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::single, false);
     }
     void TearDown() override {
         MulticontextAubFixture::tearDown();

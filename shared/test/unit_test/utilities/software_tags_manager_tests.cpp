@@ -216,9 +216,9 @@ TEST(SoftwareTagsManagerMultiDeviceTests, givenEnableSWTagsAndCreateMultipleSubD
 
 struct SoftwareTagsParametrizedTests : public ::testing::TestWithParam<SWTags::OpCode> {
     void SetUp() override {
-        tagMap.emplace(OpCode::KernelName, std::make_unique<KernelNameTag>("", 0u));
-        tagMap.emplace(OpCode::PipeControlReason, std::make_unique<PipeControlReasonTag>("", 0u));
-        tagMap.emplace(OpCode::ArbitraryString, std::make_unique<ArbitraryStringTag>(""));
+        tagMap.emplace(OpCode::kernelName, std::make_unique<KernelNameTag>("", 0u));
+        tagMap.emplace(OpCode::pipeControlReason, std::make_unique<PipeControlReasonTag>("", 0u));
+        tagMap.emplace(OpCode::arbitraryString, std::make_unique<ArbitraryStringTag>(""));
     }
 
     std::map<OpCode, std::unique_ptr<BaseTag>> tagMap;
@@ -228,9 +228,9 @@ INSTANTIATE_TEST_CASE_P(
     SoftwareTags,
     SoftwareTagsParametrizedTests,
     testing::Values(
-        OpCode::KernelName,
-        OpCode::PipeControlReason,
-        OpCode::ArbitraryString));
+        OpCode::kernelName,
+        OpCode::pipeControlReason,
+        OpCode::arbitraryString));
 
 TEST_P(SoftwareTagsParametrizedTests, whenGetOpCodeIsCalledThenCorrectValueIsReturned) {
     auto opcode = GetParam();

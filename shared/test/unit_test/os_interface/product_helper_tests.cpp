@@ -333,11 +333,11 @@ HWTEST_F(ProductHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAcce
     DebugManagerStateRestore restore{};
 
     debugManager.flags.ForceLocalMemoryAccessMode.set(0);
-    EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::defaultMode, productHelper->getLocalMemoryAccessMode(pInHwInfo));
     debugManager.flags.ForceLocalMemoryAccessMode.set(1);
-    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessAllowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::cpuAccessAllowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
     debugManager.flags.ForceLocalMemoryAccessMode.set(3);
-    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
+    EXPECT_EQ(LocalMemoryAccessMode::cpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfAllocationSizeAdjustmentIsRequiredThenFalseIsReturned) {
@@ -480,7 +480,7 @@ HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequired
     EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
 
-    auto expectedDefaultValue = (productHelper->getLocalMemoryAccessMode(pInHwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
+    auto expectedDefaultValue = (productHelper->getLocalMemoryAccessMode(pInHwInfo) == LocalMemoryAccessMode::cpuAccessDisallowed);
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
 
     EXPECT_EQ(expectedDefaultValue, productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
