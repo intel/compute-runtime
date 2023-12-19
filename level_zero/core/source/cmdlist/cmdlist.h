@@ -18,6 +18,7 @@
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -33,23 +34,6 @@ struct EventPool;
 struct Event;
 struct Kernel;
 struct CommandQueue;
-
-struct CmdListKernelLaunchParams {
-    NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
-    NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
-    uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
-    uint32_t numKernelsInSplitLaunch = 0;
-    uint32_t numKernelsExecutedInSplitLaunch = 0;
-    bool isIndirect = false;
-    bool isPredicate = false;
-    bool isCooperative = false;
-    bool isKernelSplitOperation = false;
-    bool isBuiltInKernel = false;
-    bool isDestinationAllocationInSystemMemory = false;
-    bool isHostSignalScopeEvent = false;
-    bool skipInOrderNonWalkerSignaling = false;
-    bool pipeControlSignalling = false;
-};
 
 struct CmdListReturnPoint {
     NEO::StreamProperties configSnapshot;

@@ -16,6 +16,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_immediate.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_immediate.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_launch_params.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_extended${BRANCH_DIR_SUFFIX}cmdlist_extended.inl
 )
 

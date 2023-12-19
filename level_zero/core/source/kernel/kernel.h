@@ -30,6 +30,7 @@ class MemoryManager;
 namespace L0 {
 struct Device;
 struct Module;
+struct CmdListKernelLaunchParams;
 
 struct KernelImmutableData {
     KernelImmutableData(L0::Device *l0device = nullptr);
@@ -137,6 +138,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual uint32_t *getGlobalOffsets() = 0;
     virtual ze_result_t setGlobalOffsetExp(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) = 0;
     virtual void patchGlobalOffset() = 0;
+    virtual void patchRegionParams(const CmdListKernelLaunchParams &launchParams) = 0;
 
     virtual ze_result_t suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount, NEO::EngineGroupType engineGroupType,
                                                         bool isEngineInstanced) = 0;
