@@ -45,6 +45,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // global ops
     bool isRepairStatusSupported() override;
 
+    // Voltage
+    void getCurrentVoltage(PlatformMonitoringTech *pPmt, double &voltage) override;
+
     ~SysmanProductHelperHw() override = default;
 
   protected:

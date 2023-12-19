@@ -59,6 +59,9 @@ class SysmanProductHelper {
     // Global Operations
     virtual bool isRepairStatusSupported() = 0;
 
+    // Voltage
+    virtual void getCurrentVoltage(PlatformMonitoringTech *pPmt, double &voltage) = 0;
+
     virtual ~SysmanProductHelper() = default;
 
   protected:

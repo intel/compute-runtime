@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
 
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
@@ -160,7 +161,8 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     }
 
     pState->pNext = nullptr;
-    pState->currentVoltage = -1.0;
+    getCurrentVoltage(pState->currentVoltage);
+
     pState->throttleReasons = 0u;
     if (getThrottleReasonStatus()) {
         uint32_t val = 0;
@@ -395,6 +397,10 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
     return ZE_RESULT_SUCCESS;
 }
 
+void LinuxFrequencyImp::getCurrentVoltage(double &voltage) {
+    pSysmanProductHelper->getCurrentVoltage(pPmt, voltage);
+}
+
 void LinuxFrequencyImp::init() {
 
     const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
@@ -436,6 +442,7 @@ LinuxFrequencyImp::LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice,
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
     init();
 }
 

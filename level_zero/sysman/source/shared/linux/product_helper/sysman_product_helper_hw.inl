@@ -126,5 +126,10 @@ bool SysmanProductHelperHw<gfxProduct>::isRepairStatusSupported() {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+void SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(PlatformMonitoringTech *pPmt, double &voltage) {
+    voltage = -1.0;
+}
+
 } // namespace Sysman
 } // namespace L0

@@ -18,6 +18,7 @@ namespace Sysman {
 class SysmanKmdInterface;
 class SysmanProductHelper;
 class SysFsAccessInterface;
+class PlatformMonitoringTech;
 
 class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
   public:
@@ -56,6 +57,7 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     ze_result_t getMaxVal(double &maxVal);
     ze_result_t getMinVal(double &minVal);
     bool getThrottleReasonStatus(void);
+    void getCurrentVoltage(double &voltage);
 
   private:
     std::string minFreqFile;
@@ -79,6 +81,7 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     uint32_t subdeviceId = 0;
     zes_freq_domain_t frequencyDomainNumber = ZES_FREQ_DOMAIN_GPU;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
+    PlatformMonitoringTech *pPmt = nullptr;
     void init();
 };
 
