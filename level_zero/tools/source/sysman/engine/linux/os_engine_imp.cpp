@@ -83,6 +83,10 @@ void LinuxEngineImp::init() {
     }
 }
 
+ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 LinuxEngineImp::~LinuxEngineImp() {
     for (auto &fdPair : fdList) {
         if (fdPair.first != -1) {

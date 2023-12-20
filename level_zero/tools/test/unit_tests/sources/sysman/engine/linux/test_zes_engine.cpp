@@ -199,6 +199,17 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
     }
 }
 
+TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityExtThenVerifyFailureIsReturned) {
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+
+    for (auto handle : handles) {
+        uint32_t count = 0;
+        zes_engine_stats_t stats = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivityExt(handle, &count, &stats));
+    }
+}
+
 TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
     pPmuInterface->mockPerfEventFailureReturnValue = -1;
     MockEnginePmuInterfaceImp pPmuInterfaceImp(pLinuxSysmanImp);
