@@ -112,6 +112,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     void setSysmanHandle(SysmanDevice *pSysman) override;
     SysmanDevice *getSysmanHandle() override;
     ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) override;
+    ze_result_t getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority) override;
     ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) override;
     NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::AllocationType type) override;
     void storeReusableAllocation(NEO::GraphicsAllocation &alloc) override;

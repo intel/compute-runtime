@@ -23,6 +23,7 @@ struct RootDeviceEnvironment;
 enum class EngineUsage : uint32_t {
     regular,
     lowPriority,
+    highPriority,
     internal,
     cooperative,
 

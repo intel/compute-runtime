@@ -139,6 +139,7 @@ struct Device : _ze_device_handle_t {
     virtual void setSysmanHandle(SysmanDevice *pSysmanDevice) = 0;
     virtual SysmanDevice *getSysmanHandle() = 0;
     virtual ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) = 0;
+    virtual ze_result_t getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority) = 0;
     virtual ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) = 0;
     virtual NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::AllocationType type) = 0;
     virtual void storeReusableAllocation(NEO::GraphicsAllocation &alloc) = 0;

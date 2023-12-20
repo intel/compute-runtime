@@ -152,7 +152,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 engineGroupType = deviceImp->getInternalEngineGroupType();
             }
         } else {
-            returnValue = device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
+            returnValue = device->getCsrForOrdinalAndIndexWithPriority(&csr, desc->ordinal, desc->index, desc->priority);
             if (returnValue != ZE_RESULT_SUCCESS) {
                 return commandList;
             }

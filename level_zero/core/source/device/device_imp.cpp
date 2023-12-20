@@ -306,7 +306,7 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     if (commandQueueDesc.priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !isCopyOnly) {
         getCsrForLowPriority(&csr);
     } else {
-        auto ret = getCsrForOrdinalAndIndex(&csr, commandQueueDesc.ordinal, commandQueueDesc.index);
+        auto ret = getCsrForOrdinalAndIndexWithPriority(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
@@ -1630,6 +1630,10 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DeviceImp::getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority) {
+    return getCsrForOrdinalAndIndex(csr, ordinal, index);
 }
 
 ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
