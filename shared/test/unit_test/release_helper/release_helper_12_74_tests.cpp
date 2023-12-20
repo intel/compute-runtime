@@ -25,6 +25,7 @@ TEST_F(ReleaseHelper1274Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
 
         EXPECT_TRUE(releaseHelper->isAdjustWalkOrderAvailable());
         EXPECT_TRUE(releaseHelper->isMatrixMultiplyAccumulateSupported());
+        EXPECT_TRUE(releaseHelper->isDotProductAccumulateSystolicSupported());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired());
         EXPECT_TRUE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
         EXPECT_FALSE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
