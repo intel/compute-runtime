@@ -455,13 +455,15 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTimestampWaitSupport
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenTrueIsReturned, IsNotXeHpgOrXeHpcCore) {
-    EXPECT_TRUE(productHelper->isTlbFlushRequired());
+    EXPECT_TRUE(productHelper->isTlbFlushRequired(pInHwInfo, false));
+    EXPECT_TRUE(productHelper->isTlbFlushRequired(pInHwInfo, true));
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperAndForceTlbFlushNotSetWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned, IsNotPVC) {
     DebugManagerStateRestore restore{};
     debugManager.flags.ForceTlbFlush.set(0);
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
+    EXPECT_FALSE(productHelper->isTlbFlushRequired(pInHwInfo, true));
+    EXPECT_FALSE(productHelper->isTlbFlushRequired(pInHwInfo, false));
 }
 
 HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {

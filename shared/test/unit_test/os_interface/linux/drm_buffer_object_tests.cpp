@@ -140,6 +140,15 @@ TEST_F(DrmBufferObjectTest, whenExecFailsThenValidateHostPtrFails) {
     EXPECT_EQ(EINVAL, ret);
 }
 
+TEST_F(DrmBufferObjectTest, whenSetImageAllocTypeForBOThenReturnProperValue) {
+    TestedBufferObject bo(0u, this->mock.get());
+    EXPECT_FALSE(bo.isImage());
+    bo.setIsImage(AllocationType::kernelIsa);
+    EXPECT_FALSE(bo.isImage());
+    bo.setIsImage(AllocationType::image);
+    EXPECT_TRUE(bo.isImage());
+}
+
 TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueThenDebugInformationAboutBOIsPrinted) {
     mock->ioctlExpected.total = 1;
     DebugManagerStateRestore restore;
