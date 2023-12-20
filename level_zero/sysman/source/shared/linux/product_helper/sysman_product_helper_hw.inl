@@ -116,5 +116,10 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
     return RasInterfaceType::none;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isRepairStatusSupported() {
+    return false;
+}
+
 } // namespace Sysman
 } // namespace L0

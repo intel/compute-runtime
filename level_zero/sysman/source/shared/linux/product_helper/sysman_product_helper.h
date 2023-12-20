@@ -53,6 +53,9 @@ class SysmanProductHelper {
     virtual RasInterfaceType getGtRasUtilInterface() = 0;
     virtual RasInterfaceType getHbmRasUtilInterface() = 0;
 
+    // Global Operations
+    virtual bool isRepairStatusSupported() = 0;
+
     virtual ~SysmanProductHelper() = default;
 
   protected:

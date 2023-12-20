@@ -39,6 +39,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     RasInterfaceType getGtRasUtilInterface() override;
     RasInterfaceType getHbmRasUtilInterface() override;
 
+    // global ops
+    bool isRepairStatusSupported() override;
+
     ~SysmanProductHelperHw() override = default;
 
   protected:

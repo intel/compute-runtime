@@ -18,7 +18,9 @@
 #include "shared/source/os_interface/linux/pci_path.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -720,6 +722,25 @@ void LinuxGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
         pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;
     }
 }
+
+void LinuxGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
+    SysmanProductHelper *pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    if (pSysmanProductHelper->isRepairStatusSupported()) {
+        bool ifrStatus = false;
+        auto pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
+        if (pFwInterface != nullptr) {
+            ze_result_t result = pFwInterface->fwIfrApplied(ifrStatus);
+            if (result == ZE_RESULT_SUCCESS) {
+                pState->repaired = ZES_REPAIR_STATUS_NOT_PERFORMED;
+                if (ifrStatus) {
+                    pState->reset |= ZES_RESET_REASON_FLAG_REPAIR;
+                    pState->repaired = ZES_REPAIR_STATUS_PERFORMED;
+                }
+            }
+        }
+    }
+}
+
 ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
     memset(pState, 0, sizeof(zes_device_state_t));
     pState->repaired = ZES_REPAIR_STATUS_UNSUPPORTED;
