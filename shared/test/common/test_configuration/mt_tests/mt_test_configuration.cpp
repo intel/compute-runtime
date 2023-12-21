@@ -9,7 +9,7 @@
 
 namespace NEO {
 #if defined(_WIN32)
-unsigned int ultIterationMaxTime = 60;
+unsigned int ultIterationMaxTime = 120;
 #else
 unsigned int ultIterationMaxTime = 45;
 #endif
