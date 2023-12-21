@@ -366,42 +366,10 @@ void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPT
     }
 }
 
-template struct EncodeDispatchKernel<Family>;
-template void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields<Family::DefaultWalkerType>(const RootDeviceEnvironment &rootDeviceEnvironment, Family::DefaultWalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
-template void EncodeDispatchKernel<Family>::adjustTimestampPacket<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
-template void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
-template void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
-template void EncodeDispatchKernel<Family>::setGrfInfo<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData, const size_t &sizePerThreadData, const RootDeviceEnvironment &rootDeviceEnvironment);
-template void EncodeDispatchKernel<Family>::appendAdditionalIDDFields<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
-template void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData<Family::DefaultWalkerType, Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, Family::DefaultWalkerType &walkerCmd);
-template void EncodeDispatchKernel<Family>::setupPostSyncMocs<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);
-template void EncodeDispatchKernel<Family>::encode<Family::DefaultWalkerType>(CommandContainer &container, EncodeDispatchKernelArgs &args);
-template void EncodeDispatchKernel<Family>::encodeThreadData<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const uint32_t *startWorkGroup, const uint32_t *numWorkGroups, const uint32_t *workGroupSizes, uint32_t simd, uint32_t localIdDimensions, uint32_t threadsPerThreadGroup, uint32_t threadExecutionMask, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, bool isIndirect, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
-template void EncodeDispatchKernel<Family>::adjustWalkOrder<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
+} // namespace NEO
 
+#include "shared/source/command_container/command_encoder_enablers.inl"
+
+namespace NEO {
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
-
-template struct EncodeStates<Family>;
-template struct EncodeMath<Family>;
-template struct EncodeMathMMIO<Family>;
-template struct EncodeIndirectParams<Family>;
-template struct EncodeSetMMIO<Family>;
-template struct EncodeMediaInterfaceDescriptorLoad<Family>;
-template struct EncodeStateBaseAddress<Family>;
-template struct EncodeStoreMMIO<Family>;
-template struct EncodeSurfaceState<Family>;
-template struct EncodeComputeMode<Family>;
-template struct EncodeAtomic<Family>;
-template struct EncodeSemaphore<Family>;
-template struct EncodeBatchBufferStartOrEnd<Family>;
-template struct EncodeMiFlushDW<Family>;
-template struct EncodeMiPredicate<Family>;
-template struct EncodeMemoryPrefetch<Family>;
-template struct EncodeMiArbCheck<Family>;
-template struct EncodeWA<Family>;
-template struct EncodeEnableRayTracing<Family>;
-template struct EncodeNoop<Family>;
-template struct EncodeStoreMemory<Family>;
-template struct EncodeMemoryFence<Family>;
-template struct EnodeUserInterrupt<Family>;
 } // namespace NEO
