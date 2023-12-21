@@ -216,7 +216,7 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
     EXPECT_EQ(count, 0u);
 }
 
-TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForGtThenSuccessIsReturned) {
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtThenSuccessIsReturned) {
 
     pPmuInterface->mockPmuReadCorrectable = true;
 

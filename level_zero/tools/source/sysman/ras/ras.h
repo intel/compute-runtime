@@ -23,6 +23,8 @@ class Ras : _zes_ras_handle_t {
     virtual ze_result_t rasGetConfig(zes_ras_config_t *pConfig) = 0;
     virtual ze_result_t rasSetConfig(const zes_ras_config_t *pConfig) = 0;
     virtual ze_result_t rasGetState(zes_ras_state_t *pState, ze_bool_t clear) = 0;
+    virtual ze_result_t rasGetStateExp(uint32_t *pCount, zes_ras_state_exp_t *pState) = 0;
+    virtual ze_result_t rasClearStateExp(zes_ras_error_category_exp_t category) = 0;
 
     static Ras *fromHandle(zes_ras_handle_t handle) {
         return static_cast<Ras *>(handle);

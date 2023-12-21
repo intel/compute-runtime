@@ -277,7 +277,6 @@ struct MockRasSysfsAccess : public SysfsAccess {
     bool isMultiTileArch = false;
 
     ze_result_t readSymLink(const std::string file, std::string &val) override {
-
         if (mockReadSymLinkStatus != ZE_RESULT_SUCCESS) {
             return mockReadSymLinkStatus;
         }

@@ -630,6 +630,7 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
     }
 };
 HWTEST2_F(SysmanRasMultiDeviceFixture, GivenValidSysmanHandleWithMultiDeviceWhenRetrievingRasHandlesThenSuccessIsReturned, IsGtRasSupportedProduct) {
+
     L0::Sysman::RasHandleContext *pRasHandleContext = new L0::Sysman::RasHandleContext(pSysmanDeviceImp->pOsSysman);
     uint32_t count = 0;
     ze_result_t result = pRasHandleContext->rasGet(&count, nullptr);

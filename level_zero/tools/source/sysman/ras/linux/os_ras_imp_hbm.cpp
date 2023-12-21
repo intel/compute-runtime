@@ -13,6 +13,13 @@
 
 namespace L0 {
 
+ze_result_t LinuxRasSourceHbm::getMemoryErrorCountFromFw(zes_ras_error_type_t rasErrorType, uint32_t subDeviceCount, uint64_t &errorCount) {
+    if (pFwInterface == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return pFwInterface->fwGetMemoryErrorCount(rasErrorType, subDeviceCount, subdeviceId, errorCount);
+}
+
 void LinuxRasSourceHbm::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
@@ -23,14 +30,9 @@ void LinuxRasSourceHbm::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t>
 }
 
 ze_result_t LinuxRasSourceHbm::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) {
-    if (pFwInterface == nullptr) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    uint32_t subDeviceCount = 0;
-    pDevice->getSubDevices(&subDeviceCount, nullptr);
     if (clear == true) {
         uint64_t errorCount = 0;
-        ze_result_t result = pFwInterface->fwGetMemoryErrorCount(osRasErrorType, subDeviceCount, subdeviceId, errorCount);
+        ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
         if (result != ZE_RESULT_SUCCESS) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting fwGetMemoryErrorCount() for RasErrorType:%d, SubDeviceCount:%d, SubdeviceId:%d, errorBaseline update:%d and returning error:0x%x \n", __FUNCTION__, osRasErrorType, subDeviceCount, subdeviceId, clear, result);
             return result;
@@ -38,7 +40,7 @@ ze_result_t LinuxRasSourceHbm::osRasGetState(zes_ras_state_t &state, ze_bool_t c
         errorBaseline = errorCount; // during clear update the error baseline value
     }
     uint64_t errorCount = 0;
-    ze_result_t result = pFwInterface->fwGetMemoryErrorCount(osRasErrorType, subDeviceCount, subdeviceId, errorCount);
+    ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed while getting fwGetMemoryErrorCount() for RasErrorType:%d, SubDeviceCount:%d, SubdeviceId:%d, errorBaseline update:%d and returning error:0x%x \n", __FUNCTION__, osRasErrorType, subDeviceCount, subdeviceId, clear, result);
         return result;
@@ -47,9 +49,40 @@ ze_result_t LinuxRasSourceHbm::osRasGetState(zes_ras_state_t &state, ze_bool_t c
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t LinuxRasSourceHbm::osRasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) {
+    uint64_t errorCount = 0;
+    ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    pState[0].category = ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS;
+    pState[0].errorCounter = errorCount - errorBaseline;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxRasSourceHbm::osRasClearStateExp(zes_ras_error_category_exp_t category) {
+    if (category == ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS) {
+        uint64_t errorCount = 0;
+        ze_result_t result = getMemoryErrorCountFromFw(osRasErrorType, this->subDeviceCount, errorCount);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+        errorBaseline = errorCount;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+uint32_t LinuxRasSourceHbm::osRasGetCategoryCount() {
+    // Return one for "MEMORY" category
+    return 1u;
+}
+
 LinuxRasSourceHbm::LinuxRasSourceHbm(LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), osRasErrorType(type), subdeviceId(subdeviceId) {
     pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
+    pDevice->getSubDevices(&subDeviceCount, nullptr);
 }
 
 } // namespace L0
