@@ -314,7 +314,7 @@ HWTEST2_F(AppendFillTest,
     EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList->commandContainer.getCommandStream()->getUsed()));
 
@@ -368,7 +368,7 @@ HWTEST2_F(AppendFillTest,
     EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList->commandContainer.getCommandStream()->getUsed()));
 

@@ -113,7 +113,7 @@ using MultiDeviceCommandQueueExecuteCommandLists = Test<MultiDeviceCommandQueueE
 HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncachedMOCSThenSuccessisReturned) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
@@ -170,7 +170,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenCommandListThatRequiresDisabledEU
 HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandListAddedThenProperSizeExpected) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
@@ -193,7 +193,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandL
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList,
                                           ptrOffset(commandQueue->commandStream.getCpuBase(), 0),
                                           usedSpaceAfter));
 
@@ -258,7 +258,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenFenceWhenExecutingCmdListThenFenc
 HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeControlUpdatingTagAllocation, IsGen9) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
@@ -289,7 +289,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeCon
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList,
                                           ptrOffset(commandQueue->commandStream.getCpuBase(), 0),
                                           usedSpaceAfter));
 
@@ -312,7 +312,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeCon
 HWTEST_F(CommandQueueExecuteCommandLists, whenExecutingCommandListsThenEndingPipeControlCommandIsExpected) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
@@ -335,7 +335,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenExecutingCommandListsThenEndingPip
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList,
                                           ptrOffset(commandQueue->commandStream.getCpuBase(), 0),
                                           usedSpaceAfter));
 
@@ -357,7 +357,7 @@ using CommandQueueExecuteSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE
 HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsThenMVSIsProgrammedWithMaxPTSS, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -383,7 +383,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList,
                                           ptrOffset(commandQueue->commandStream.getCpuBase(), 0),
                                           usedSpaceAfter));
 
@@ -409,7 +409,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList1;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList1,
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList1,
                                           ptrOffset(commandQueue->commandStream.getCpuBase(), 0),
                                           usedSpaceAfter));
 
@@ -424,7 +424,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
 
 HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAreExecutedThenStateSipIsAdded) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     ze_command_queue_desc_t desc{};
     desc.ordinal = 0u;
@@ -459,7 +459,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
         ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
+        ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
         auto itorSip = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
 
@@ -479,7 +479,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
 
 HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAreExecutedTwoTimesThenStateSipIsAddedOnlyTheFirstTime, IsAtLeastSkl) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     ze_command_queue_desc_t desc{};
     desc.ordinal = 0u;
@@ -517,7 +517,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
         ASSERT_GT(usedSpaceAfter1stExecute, usedSpaceBefore);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter1stExecute));
+        ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter1stExecute));
 
         auto itorSip = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
 
@@ -542,7 +542,7 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
         auto cmdBufferAddress = ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceAfter1stExecute);
         auto usedSpaceOn2ndExecute = commandQueue->commandStream.getUsed() - usedSpaceAfter1stExecute;
 
-        ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList2, cmdBufferAddress, usedSpaceOn2ndExecute));
+        ASSERT_TRUE(Parse::parseCommandBuffer(cmdList2, cmdBufferAddress, usedSpaceOn2ndExecute));
 
         itorSip = find<STATE_SIP *>(cmdList2.begin(), cmdList2.end());
         EXPECT_EQ(cmdList2.end(), itorSip);
@@ -657,7 +657,7 @@ void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -936,7 +936,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         commandQueue->commandStream.getCpuBase(),
         usedSpaceAfter));
@@ -1001,7 +1001,7 @@ using CommandQueueExecuteCommandListSWTagsTests = Test<CommandQueueExecuteComman
 
 HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsWhenExecutingCommandListThenHeapAddressesAreInserted) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
@@ -1012,7 +1012,7 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsWhenExecuti
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto sdis = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
     ASSERT_LE(2u, sdis.size());
@@ -1026,7 +1026,7 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsWhenExecuti
 
 HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandListWithDifferentPreemtpionWhenExecutingCommandListThenPipeControlReasonTagIsInserted) {
     using MI_NOOP = typename FamilyType::MI_NOOP;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     CommandList::whiteboxCast(CommandList::fromHandle(commandLists[0]))->commandListPreemptionMode = PreemptionMode::Disabled;
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
@@ -1038,7 +1038,7 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsAndCommandL
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
     ASSERT_LE(2u, noops.size());
@@ -1096,7 +1096,7 @@ void findPartitionRegister(GenCmdList &cmdList, bool expectToFind) {
 HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCountWhenExecutingCmdListThenExpectMmioProgrammingAndCorrectEstimation, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     auto neoDevice = device->getNEODevice();
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
@@ -1140,7 +1140,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
 
     // 1st call then initialize registers
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore1stExecute), usedSpaceOn1stExecute));
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore1stExecute), usedSpaceOn1stExecute));
     findPartitionRegister<FamilyType>(cmdList, true);
 
     auto usedSpaceBefore2ndExecute = commandQueue->commandStream.getUsed();
@@ -1156,7 +1156,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     }
 
     cmdList.clear();
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore2ndExecute), cmdBufferSizeWithoutMmioProgramming));
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore2ndExecute), cmdBufferSizeWithoutMmioProgramming));
     findPartitionRegister<FamilyType>(cmdList, false);
 
     auto usedSpaceBefore3rdExecute = commandQueue->commandStream.getUsed();
@@ -1169,7 +1169,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     EXPECT_GE(cmdBufferSizeWithMmioProgramming, cmdBufferSizeWithoutMmioProgramming);
 
     cmdList.clear();
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore3rdExecute), cmdBufferSizeWithMmioProgramming));
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore3rdExecute), cmdBufferSizeWithMmioProgramming));
     findPartitionRegister<FamilyType>(cmdList, false);
 
     auto pipeControlList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -1191,7 +1191,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
 
 HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecutingCommandListWithFenceThenDispatchPostSyncCommandAndUpdateFlushedTaskCount) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     DebugManagerStateRestore restorer;
     debugManager.flags.UpdateTaskCountFromWait.set(1);
@@ -1226,7 +1226,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecut
     size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
 
     uint32_t foundPostSyncMiFlush = 0u;
     auto miFlushList = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
@@ -1247,7 +1247,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenUpdateTaskCountFromWaitWhenExecut
 
 HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopyCommandListWithFenceThenExpectSingleCopyPostSyncCommand) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
@@ -1279,7 +1279,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
 
     uint32_t foundPostSyncMiFlush = 0u;
     auto miFlushList = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());

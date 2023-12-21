@@ -50,7 +50,7 @@ HWTEST2_F(CommandListAppendGen9, WhenAppendingMemoryRangesBarrierThenPipeControl
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(
             commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
@@ -104,7 +104,7 @@ HWTEST2_F(CommandListAppendGen9, givenSignalEventWhenAppendingMemoryRangesBarrie
 
     // Ensure we have two pipe controls: one for barrier, one for signal
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto itor = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());

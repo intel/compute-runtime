@@ -552,7 +552,7 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaRequiredThenColorBltPr
 
     EXPECT_EQ(expectedSize, stream.getUsed());
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
     auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
@@ -602,7 +602,7 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaSetThenColorBltPr
 
     EXPECT_EQ(expectedSize, stream.getUsed());
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
     auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);

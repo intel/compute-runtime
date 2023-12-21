@@ -65,7 +65,7 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaPro
         ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList, ptrOffset(cmdStream.getCpuBase(), 0), usedSpaceAfter));
 
         auto pcItor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -141,7 +141,7 @@ HWTEST2_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenIntern
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(cmdStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto pcItor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());

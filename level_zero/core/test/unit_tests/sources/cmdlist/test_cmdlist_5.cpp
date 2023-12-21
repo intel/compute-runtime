@@ -567,7 +567,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendSignalEventThe
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     commandList->appendSignalEvent(event.toHandle());
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
@@ -584,7 +584,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendSignalEventWithScopeThenPi
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     commandList->appendSignalEvent(event.toHandle());
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
     auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 
@@ -624,7 +624,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWith
     auto eventHandle = event.toHandle();
     commandList->appendWaitOnEvents(1, &eventHandle, false, true, false);
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
@@ -648,7 +648,7 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThen
     auto eventHandle = event.toHandle();
     commandList->appendWaitOnEvents(1, &eventHandle, false, true, false);
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
@@ -679,7 +679,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThenP
 
     commandList->appendWaitOnEvents(2, events, false, true, false);
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
@@ -737,7 +737,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     EXPECT_EQ(expectedUsed, usedBufferSize);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), startOffset),
         expectedUsed));
@@ -784,7 +784,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     EXPECT_EQ(expectedUsed, usedBufferSize);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), startOffset),
         expectedUsed));
@@ -820,7 +820,7 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
     auto used = commandContainer.getCommandStream()->getUsed();
     commandList->appendWaitOnEvents(2, events, false, true, false);
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
@@ -854,7 +854,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListAndAlreadyCompletedEventWh
 
     static_cast<CommandListCoreFamily<gfxCoreFamily> *>(commandList.get())->addEventsToCmdList(2, events, false, false, true);
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
@@ -1038,7 +1038,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
     commandList->appendWaitOnEvents(2, events, false, true, false);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
@@ -1107,7 +1107,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         cmdListStream.getUsed()));
@@ -1184,7 +1184,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     size_t queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -1234,7 +1234,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -1246,7 +1246,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     size_t afterReset = cmdListStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         afterReset));
@@ -1274,7 +1274,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         cmdListStream.getUsed()));
@@ -1343,7 +1343,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int64_t>(dsBaseAddress), finalState.dynamicStateBaseAddress.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         cmdListStream.getUsed()));
@@ -1388,7 +1388,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(csrState.dynamicStateSize.value, finalState.dynamicStateSize.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -1420,7 +1420,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -1482,7 +1482,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         cmdListStream.getUsed()));
@@ -1524,7 +1524,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     }
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdListStream.getCpuBase(), cmdListBefore),
         cmdListStream.getUsed() - cmdListBefore));
@@ -1561,7 +1561,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     size_t queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -1593,7 +1593,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -1645,7 +1645,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     size_t queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -1703,7 +1703,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         cmdListStream.getUsed()));
@@ -1724,7 +1724,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     size_t queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -1783,7 +1783,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         cmdListStream.getUsed()));
@@ -1804,7 +1804,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     size_t queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -1838,7 +1838,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         cmdListStream.getUsed()));
@@ -1904,7 +1904,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int64_t>(dsBaseAddress), finalState.dynamicStateBaseAddress.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         cmdListStream.getUsed()));
@@ -1934,7 +1934,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdListStream.getCpuBase(), sizeBefore),
         cmdListStream.getUsed() - sizeBefore));
@@ -1971,7 +1971,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     size_t csrUsedAfter = csrStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdListImmediateStream.getCpuBase(), cmdListUsedBefore),
         cmdListUsedAfter - cmdListUsedBefore));
@@ -1997,7 +1997,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     }
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2074,7 +2074,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int64_t>(dsBaseAddress), csrState.dynamicStateBaseAddress.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2121,7 +2121,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdListStream.getCpuBase(),
         cmdListStream.getUsed()));
@@ -2210,7 +2210,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(csrState.statelessMocs.value, finalState.statelessMocs.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -2285,7 +2285,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     }
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2373,7 +2373,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     }
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2482,7 +2482,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(csrState.statelessMocs.value, finalState.statelessMocs.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -2528,7 +2528,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     size_t usedAfter = cmdStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream.getCpuBase(), usedBefore),
         usedAfter - usedBefore));
@@ -2559,7 +2559,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -2580,7 +2580,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrBefore),
         csrAfter - csrBefore));
@@ -2628,7 +2628,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), csrState.statelessMocs.value);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -2651,7 +2651,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrBefore),
         csrAfter - csrBefore));
@@ -2693,7 +2693,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrBefore),
         csrAfter - csrBefore));
@@ -2726,7 +2726,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), csrState.statelessMocs.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -2767,7 +2767,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), csrState.statelessMocs.value);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrBefore),
         csrAfter - csrBefore));
@@ -2800,7 +2800,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -2835,7 +2835,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     size_t queueAfter = cmdQueueStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -2849,7 +2849,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -2952,7 +2952,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     size_t queueAfter = cmdQueueStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -2983,7 +2983,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -3022,7 +3022,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     size_t queueAfter = cmdQueueStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));
@@ -3055,7 +3055,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_NE(firstHeapSurfaceBaseAddress, secondHeapSurfaceBaseAddress);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdListStream.getCpuBase(), usedBefore),
         usedAfter - usedBefore));
@@ -3072,7 +3072,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     queueAfter = cmdQueueStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
         queueAfter - queueBefore));

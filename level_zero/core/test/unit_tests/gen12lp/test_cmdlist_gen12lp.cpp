@@ -50,7 +50,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierThenCheckWhet
     const size_t sizes[] = {size};
     commandList->applyMemoryRangesBarrier(1, sizes, ranges);
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
     auto itor = find<L3_CONTROL *>(cmdList.begin(), cmdList.end());
     if (hardwareInfo.capabilityTable.supportCacheFlushAfterWalker) {
@@ -185,7 +185,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarri
     ASSERT_NE(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(
             commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
@@ -248,7 +248,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddres
     ASSERT_NE(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(
             commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
@@ -301,7 +301,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     const size_t sizes[] = {2 * pRangeSizes};
     commandList->applyMemoryRangesBarrier(1, sizes, pRanges);
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
     auto itor = find<L3_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
@@ -334,7 +334,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     const size_t sizes[] = {pRangeSizes};
     commandList->applyMemoryRangesBarrier(1, sizes, pRanges);
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
     auto itor = find<L3_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
@@ -420,7 +420,7 @@ GEN12LPTEST_F(CommandListGen12LpStateComputeModeTrackingTest,
     }
 
     auto currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (sizeAfter - sizeBefore)));
     stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());

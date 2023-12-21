@@ -77,7 +77,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsT
 
     auto used = commandQueue->commandStream.getUsed();
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, commandQueue->commandStream.getCpuBase(), used));
 
     auto itor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(cmdList.begin(), cmdList.end());
@@ -109,7 +109,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsF
 
     GenCmdList cmdList;
     auto cmdBufferAddress = ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceAfter1stExecute);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdBufferAddress, usedSpaceOn2ndExecute));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdBufferAddress, usedSpaceOn2ndExecute));
 
     auto itor = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
@@ -1044,7 +1044,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchS
 
     uint32_t semaphoresFound = 0;
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
 
     for (auto &cmd : cmdList) {
         if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmd)) {
@@ -1274,7 +1274,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 1u);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
 
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
@@ -1337,7 +1337,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 1u);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
 
     auto itor = cmdList.begin();
     for (uint32_t i = 0u; i < static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size() * 2; ++i) {
@@ -1411,7 +1411,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 1u);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, commandList0->getCmdContainer().getCommandStream()->getCpuBase(), commandList0->getCmdContainer().getCommandStream()->getUsed()));
 
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);

@@ -32,7 +32,7 @@ HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerate
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore),
                                                       usedSpaceAfter - usedSpaceBefore));
 
@@ -55,7 +55,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList1, cmdList2;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList1,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList1,
                                                       ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
@@ -70,7 +70,7 @@ HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCo
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList2,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList2,
                                                       ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
     auto itor2 = findAll<PIPE_CONTROL *>(cmdList2.begin(), cmdList2.end());
@@ -273,7 +273,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         cmdBuffer = ptrOffset(cmdBuffer, parsedOffset);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           cmdBuffer,
                                                           postSyncSize));
 
@@ -378,7 +378,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
             registersSizeToParse += sizeof(MI_LOAD_REGISTER_IMM);
         }
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           cmdBuffer,
                                                           registersSizeToParse));
         auto begin = cmdList.begin();
@@ -412,7 +412,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
 
         cmdBuffer = ptrOffset(cmdBuffer, (parsedOffset + postBarrierSynchronization));
         cmdList.clear();
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           cmdBuffer,
                                                           registersSizeToParse));
         begin = cmdList.begin();
@@ -610,7 +610,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     EXPECT_EQ(expectedSize, (usedAfterSize - usedBeforeSize));
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream->getCpuBase(), usedBeforeSize),
         (usedAfterSize - usedBeforeSize)));
@@ -687,7 +687,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     size_t usedAfterSize = cmdStream->getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream->getCpuBase(), usedBeforeSize),
         (usedAfterSize - usedBeforeSize)));

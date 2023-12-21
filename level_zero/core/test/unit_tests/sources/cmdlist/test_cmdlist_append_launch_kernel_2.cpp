@@ -96,7 +96,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     ASSERT_NE(nullptr, gpuAllocation);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
 
     uint32_t regAddress = 0;
@@ -268,7 +268,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     ASSERT_NE(nullptr, gpuAllocation);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
 
     uint32_t regAddress = 0;
@@ -410,7 +410,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchK
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
     auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(6u, noops.size());
 
@@ -497,7 +497,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendEventRe
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
     auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
     uint32_t expecteNumberOfNops = 4u;
     EXPECT_EQ(expecteNumberOfNops, noops.size());
@@ -571,7 +571,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendSignalE
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
     auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
     uint32_t expecteNumberOfNops = 4u;
     EXPECT_EQ(expecteNumberOfNops, noops.size());
@@ -645,7 +645,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
     auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
     uint32_t expecteNumberOfNops = 4u;
     EXPECT_EQ(expecteNumberOfNops, noops.size());
@@ -705,7 +705,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
     auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
     uint32_t expecteNumberOfNops = 6u;
     EXPECT_EQ(expecteNumberOfNops, noops.size());
@@ -766,7 +766,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), 0), usedSpaceAfter));
     auto noops = findAll<MI_NOOP *>(cmdList.begin(), cmdList.end());
     uint32_t expecteNumberOfNops = 10u;
     EXPECT_EQ(expecteNumberOfNops, noops.size());
@@ -819,7 +819,7 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenDefaultThr
     EXPECT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 
     GenCmdList parsedCommandList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         parsedCommandList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
         commandList->getCmdContainer().getCommandStream()->getUsed()));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -851,7 +851,7 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenChosenThre
     EXPECT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 
     GenCmdList parsedCommandList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         parsedCommandList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
         commandList->getCmdContainer().getCommandStream()->getUsed()));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -883,7 +883,7 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThr
     uint64_t originalThreadArbitrationPolicy = std::numeric_limits<uint64_t>::max();
     {
         GenCmdList parsedCommandList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             parsedCommandList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
             commandList->getCmdContainer().getCommandStream()->getUsed()));
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -905,7 +905,7 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThr
 
     {
         GenCmdList parsedCommandList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             parsedCommandList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
             commandList->getCmdContainer().getCommandStream()->getUsed()));
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -1546,7 +1546,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
     EXPECT_EQ(4u, commandList->partitionCount);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, commandList->getCmdContainer().getCommandStream()->getCpuBase(), commandList->getCmdContainer().getCommandStream()->getUsed()));
 
     auto itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
@@ -1571,7 +1571,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto sizeAfter = commandListWithNonCooperativeKernel->getCmdContainer().getCommandStream()->getUsed();
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandListWithNonCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
     auto itorWalker = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     auto cmd = genCmdCast<typename FamilyType::DefaultWalkerType *>(*itorWalker);
@@ -1587,7 +1587,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = commandListWithCooperativeKernel->getCmdContainer().getCommandStream()->getUsed();
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandListWithCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
 
     itorWalker = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
@@ -1613,7 +1613,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
     auto sizeAfter = cmdStream->getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream->getCpuBase(), sizeBefore),
         sizeAfter - sizeBefore));

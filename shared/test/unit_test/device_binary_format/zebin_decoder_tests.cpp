@@ -3421,7 +3421,7 @@ kernels:
         addrspace:       global
         access_type:     readwrite
 kernels_misc_info:
-  // DO NOT PARSE
+  // DO NOT Parse
   // ANYTHING IN THIS SECTION
   // OTHERWISE, YOU WILL GET PARSING ERROR
 ...

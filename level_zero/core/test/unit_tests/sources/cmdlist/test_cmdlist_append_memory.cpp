@@ -117,7 +117,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndDestinationPtrOffsetWhenMemor
 
     auto &cmdContainer = cmdList.getCmdContainer();
     GenCmdList genCmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
     auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
     ASSERT_NE(genCmdList.end(), itor);
@@ -151,7 +151,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopy
 
     auto &cmdContainer = cmdList.getCmdContainer();
     GenCmdList genCmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
     auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
     ASSERT_NE(genCmdList.end(), itor);
@@ -186,7 +186,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndDestinationPtrOffsetWhenMemor
 
     auto &cmdContainer = cmdList.getCmdContainer();
     GenCmdList genCmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
     auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
     ASSERT_NE(genCmdList.end(), itor);
@@ -221,7 +221,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopy
 
     auto &cmdContainer = cmdList.getCmdContainer();
     GenCmdList genCmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
     auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
     ASSERT_NE(genCmdList.end(), itor);
@@ -255,7 +255,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndDestinationPtrOffsetWhenMemor
 
     auto &cmdContainer = cmdList.getCmdContainer();
     GenCmdList genCmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
     auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
     ASSERT_NE(genCmdList.end(), itor);
@@ -289,7 +289,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopy
 
     auto &cmdContainer = cmdList.getCmdContainer();
     GenCmdList genCmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
     auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
     ASSERT_NE(genCmdList.end(), itor);
@@ -314,7 +314,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionC
 
     auto &commandContainer = cmdList.commandContainer;
     GenCmdList genCmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto pc = genCmdCast<PIPE_CONTROL *>(*genCmdList.rbegin());
@@ -455,7 +455,7 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
 
     auto findTagUpdate = [](void *streamBase, size_t sizeUsed, uint64_t tagAddress) -> bool {
         GenCmdList genCmdList;
-        EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(genCmdList, streamBase, sizeUsed));
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, streamBase, sizeUsed));
 
         auto itor = find<MI_FLUSH_DW *>(genCmdList.begin(), genCmdList.end());
         bool found = false;
@@ -549,7 +549,7 @@ HWTEST2_F(AppendMemoryCopy, givenSyncImmediateCommandListWhenAppendingMemoryCopy
 
     auto findTagUpdate = [](void *streamBase, size_t sizeUsed, uint64_t tagAddress) -> bool {
         GenCmdList genCmdList;
-        EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(genCmdList, streamBase, sizeUsed));
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, streamBase, sizeUsed));
 
         auto itor = find<MI_FLUSH_DW *>(genCmdList.begin(), genCmdList.end());
         bool found = false;
@@ -645,7 +645,7 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledT
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
     GenCmdList genCmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         genCmdList,
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
@@ -692,7 +692,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyT
     EXPECT_EQ(1u, event->getPacketsInUse());
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0), commandList.commandContainer.getCommandStream()->getUsed()));
     auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
@@ -755,7 +755,7 @@ HWTEST2_F(AppendMemoryCopy,
     EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList.commandContainer.getCommandStream()->getUsed()));
 
@@ -813,7 +813,7 @@ HWTEST2_F(AppendMemoryCopy,
     EXPECT_EQ(1u, event->getKernelCount());
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList.commandContainer.getCommandStream()->getUsed()));
 

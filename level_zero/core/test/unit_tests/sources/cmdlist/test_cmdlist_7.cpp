@@ -110,7 +110,7 @@ HWTEST_F(CommandListCreate, WhenReservingSpaceThenCommandsAddedToBatchBuffer) {
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, commandStream->getCpuBase(), usedSpaceAfter));
 
     auto itor = cmdList.begin();
@@ -556,7 +556,7 @@ HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyCalled
 
     auto &commandContainer = commandList0->getCmdContainer();
     GenCmdList genCmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
 
     auto pc = genCmdCast<PIPE_CONTROL *>(*genCmdList.rbegin());
@@ -759,7 +759,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
     size_t usedAfter = cmdStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -793,7 +793,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
 
     cmdList.clear();
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -825,7 +825,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
 
     cmdList.clear();
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -868,7 +868,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
         parseSpace *= 2;
     }
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(oldBase, usedBefore),
         parseSpace));
@@ -926,7 +926,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
     size_t usedAfter = cmdStream.getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -956,7 +956,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
     usedAfter = cmdStream.getUsed();
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -990,7 +990,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
         parseSpace *= 2;
     }
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(oldBase, usedBefore),
         parseSpace));
@@ -1032,7 +1032,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
 
     cmdList.clear();
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -1129,7 +1129,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 
     size_t usedAfter = cmdQueueStream.getUsed();
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -1378,7 +1378,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 
     size_t usedAfter = cmdQueueStream.getUsed();
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -1601,7 +1601,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     commandList->close();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(regularCmdListStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -1628,7 +1628,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     cmdList.clear();
     feStateCmds.clear();
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -1663,7 +1663,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     cmdList.clear();
     feStateCmds.clear();
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(immediateCmdListStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -1682,7 +1682,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     cmdList.clear();
     feStateCmds.clear();
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         (csrUsedAfter - csrUsedBefore)));
@@ -1729,7 +1729,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     }
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(immediateCmdListStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -1745,7 +1745,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     cmdList.clear();
     feStateCmds.clear();
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         (csrUsedAfter - csrUsedBefore)));
@@ -1780,7 +1780,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     feStateCmds.clear();
     commandList->close();
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(regularCmdListStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));
@@ -1804,7 +1804,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     cmdList.clear();
     feStateCmds.clear();
 
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdQueueStream.getCpuBase(), usedBefore),
         (usedAfter - usedBefore)));

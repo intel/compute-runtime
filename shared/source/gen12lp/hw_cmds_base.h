@@ -89,7 +89,7 @@ struct Gen12Lp {
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 struct Gen12LpFamily : public Gen12Lp {
-    using PARSE = CmdParse<Gen12LpFamily>;
+    using Parse = CmdParse<Gen12LpFamily>;
     using GfxFamily = Gen12LpFamily;
     using DefaultWalkerType = GPGPU_WALKER;
     using FrontEndStateCommand = MEDIA_VFE_STATE;

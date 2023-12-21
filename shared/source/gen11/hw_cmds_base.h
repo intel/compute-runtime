@@ -90,7 +90,7 @@ struct Gen11 {
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 struct Gen11Family : public Gen11 {
-    using PARSE = CmdParse<Gen11Family>;
+    using Parse = CmdParse<Gen11Family>;
     using GfxFamily = Gen11Family;
     using DefaultWalkerType = GPGPU_WALKER;
     using FrontEndStateCommand = MEDIA_VFE_STATE;

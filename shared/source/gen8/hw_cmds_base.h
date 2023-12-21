@@ -91,7 +91,7 @@ struct Gen8 {
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 struct Gen8Family : public Gen8 {
-    using PARSE = CmdParse<Gen8Family>;
+    using Parse = CmdParse<Gen8Family>;
     using GfxFamily = Gen8Family;
     using DefaultWalkerType = GPGPU_WALKER;
     using FrontEndStateCommand = MEDIA_VFE_STATE;

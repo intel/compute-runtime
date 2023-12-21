@@ -49,7 +49,7 @@ HWTEST2_F(CacheFlushDG2Tests, givenCommandStreamWithSingleL3RangeAndNonZeroPostS
                                   hardwareInfo);
 
     GenCmdList cmdList;
-    EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(cmdStream->getCpuBase(), 0), cmdStream->getUsed()));
     auto itor = find<L3_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);

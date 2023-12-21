@@ -309,7 +309,7 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenCanonizedGpuVasWhenProgrammi
     debugger->captureStateBaseAddress(cmdStream, sbaAddresses, false);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
 
     EXPECT_EQ(6 * sizeof(MI_STORE_DATA_IMM), cmdStream.getUsed());
 
@@ -398,7 +398,7 @@ HWTEST_F(PerContextAddressSpaceL0DebuggerTest, givenNonZeroGpuVasWhenProgramming
     debugger->captureStateBaseAddress(cmdStream, sbaAddresses, false);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
 
     EXPECT_EQ(6 * sizeof(MI_STORE_DATA_IMM), cmdStream.getUsed());
 

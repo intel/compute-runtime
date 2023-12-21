@@ -71,7 +71,7 @@ struct HardwareParse {
     void parseCommands(NEO::LinearStream &commandStream, size_t startOffset = 0) {
         ASSERT_LE(startOffset, commandStream.getUsed());
         auto sizeToParse = commandStream.getUsed() - startOffset;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList,
             ptrOffset(commandStream.getCpuBase(), startOffset),
             sizeToParse));
@@ -193,7 +193,7 @@ struct HardwareParse {
 
     template <typename FamilyType>
     static const char *getCommandName(void *cmd) {
-        return FamilyType::PARSE::getCommandName(cmd);
+        return FamilyType::Parse::getCommandName(cmd);
     }
 
     // The starting point of parsing commandBuffers.  This is important

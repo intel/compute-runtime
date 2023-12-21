@@ -79,7 +79,7 @@ struct XeHpcCore {
 };
 
 struct XeHpcCoreFamily : public XeHpcCore {
-    using PARSE = CmdParse<XeHpcCoreFamily>;
+    using Parse = CmdParse<XeHpcCoreFamily>;
     using GfxFamily = XeHpcCoreFamily;
     using DefaultWalkerType = COMPUTE_WALKER;
     using FrontEndStateCommand = CFE_STATE;

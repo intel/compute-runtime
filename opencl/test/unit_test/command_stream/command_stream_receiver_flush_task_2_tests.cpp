@@ -701,9 +701,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPrivateScratchIsRequiredForFir
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecutiveNdRangeKernelsThenStateBaseAddressIsProgrammedOnceAndScratchAddressInMediaVfeStateIsProgrammedTwiceBothWithCorrectAddress) {
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::MEDIA_VFE_STATE MEDIA_VFE_STATE;
-    typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename FamilyType::Parse Parse;
+    typedef typename Parse::MEDIA_VFE_STATE MEDIA_VFE_STATE;
+    typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);
@@ -815,9 +815,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNdRangeKernelAndReadBufferStateBaseAddressAndScratchAddressInMediaVfeStateThenProgrammingIsCorrect) {
 
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::MEDIA_VFE_STATE MEDIA_VFE_STATE;
-    typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename FamilyType::Parse Parse;
+    typedef typename Parse::MEDIA_VFE_STATE MEDIA_VFE_STATE;
+    typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     MockContext ctx(pClDevice);
     MockKernelWithInternals kernel(*pClDevice);

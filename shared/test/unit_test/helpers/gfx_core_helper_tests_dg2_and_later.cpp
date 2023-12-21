@@ -110,7 +110,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
         }
 
         GenCmdList cmdList;
-        FamilyType::PARSE::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed());
+        FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed());
         EXPECT_EQ(requiresMemorySynchronization ? 2u : 1u, cmdList.size());
 
         PIPE_CONTROL expectedPipeControl = FamilyType::cmdInitPipeControl;

@@ -63,7 +63,7 @@ PVCTEST_F(CommandListEventFenceTestsPvc, givenCommandListWithProfilingEventAfter
     commandList->appendEventForProfiling(event.get(), false, false);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
 
     auto itor = find<MI_MEM_FENCE *>(cmdList.begin(), cmdList.end());
@@ -80,7 +80,7 @@ PVCTEST_F(CommandListAppendBarrierXeHpcCore, givenCommandListWhenAppendingBarrie
     ze_result_t returnValue = commandList->appendBarrier(nullptr, 0, nullptr, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
 
     bool correctPcFound = false;

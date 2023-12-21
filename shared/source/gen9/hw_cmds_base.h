@@ -91,7 +91,7 @@ struct Gen9 {
 };
 
 struct Gen9Family : public Gen9 {
-    using PARSE = CmdParse<Gen9Family>;
+    using Parse = CmdParse<Gen9Family>;
     using GfxFamily = Gen9Family;
     using DefaultWalkerType = GPGPU_WALKER;
     using FrontEndStateCommand = MEDIA_VFE_STATE;

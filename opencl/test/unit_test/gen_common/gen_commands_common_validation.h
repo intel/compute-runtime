@@ -58,13 +58,13 @@ void validateStateBaseAddress(uint64_t indirectObjectHeapBase,
     EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmd->getInstructionBufferSize());
 
     // Generically validate this command
-    FamilyType::PARSE::template validateCommand<STATE_BASE_ADDRESS *>(cmdList.begin(), itorCmd);
+    FamilyType::Parse::template validateCommand<STATE_BASE_ADDRESS *>(cmdList.begin(), itorCmd);
 }
 
 template <typename FamilyType>
 void validateL3Programming(GenCmdList &cmdList, GenCmdList::iterator &itorWalker) {
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef typename FamilyType::Parse Parse;
+    typedef typename Parse::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
 
     auto itorCmd = findMmio<FamilyType>(cmdList.begin(), itorWalker, L3CNTLRegisterOffset<FamilyType>::registerOffset);
     if (UnitTestHelper<FamilyType>::isL3ConfigProgrammable()) {
@@ -104,6 +104,6 @@ void validateMediaVFEState(const HardwareInfo *hwInfo, void *cmdMediaVfeState, G
     EXPECT_EQ(0u, cmd->getStackSize());
 
     // Generically validate this command
-    FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorMediaVfeState);
+    FamilyType::Parse::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorMediaVfeState);
 }
 } // namespace NEO

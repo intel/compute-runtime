@@ -55,7 +55,7 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
         EncodeDummyBlitWaArgs waArgs{false, &(device->getRootDeviceEnvironmentRef())};
         BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, patternToCommand, patternSize, stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
         auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), itor);

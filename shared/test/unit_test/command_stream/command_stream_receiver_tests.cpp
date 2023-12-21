@@ -3419,7 +3419,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     commandStreamReceiver.dispatchRayTracingStateCommand(cmdStream, *pDevice);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         cmdStream.getCpuBase(),
         cmdStream.getUsed()));
@@ -4509,7 +4509,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushRequiredWhenProgramStallingPos
     ultCsr.programStallingPostSyncCommandsForBarrier(commandStream, *tagNode, dcFlushRequired);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         commandStream.getCpuBase(),
         commandStream.getUsed()));
@@ -4540,7 +4540,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushRequiredButNoDcFlushSupportWhe
     ultCsr.programStallingPostSyncCommandsForBarrier(commandStream, *tagNode, dcFlushRequired);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         commandStream.getCpuBase(),
         commandStream.getUsed()));
@@ -4571,7 +4571,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushRequiredFalseWhenProgramStalli
     ultCsr.programStallingPostSyncCommandsForBarrier(commandStream, *tagNode, dcFlushRequired);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         commandStream.getCpuBase(),
         commandStream.getUsed()));
@@ -4652,7 +4652,7 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperWh
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandStreamReceiver.commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -4974,7 +4974,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenSingleTileWhenProgrammingPostSyncBar
     ASSERT_EQ(estimatedCmdSize, sizeUsed);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         commandStream.getCpuBase(),
         sizeUsed));

@@ -151,8 +151,8 @@ typedef EnqueueKernelTypeTest<TestParam> EnqueueWorkItemTests;
 typedef EnqueueKernelTypeTest<TestParam> EnqueueWorkItemTestsWithLimitedParamSet;
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, WhenEnqueingKernelThenGpgpuWalkerIsProgrammedCorrectly) {
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::GPGPU_WALKER GPGPU_WALKER;
+    typedef typename FamilyType::Parse Parse;
+    typedef typename Parse::GPGPU_WALKER GPGPU_WALKER;
 
     enqueueKernel<FamilyType>();
 
@@ -204,9 +204,9 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueue
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenMediaInterfaceDescriptorLoadIsCorrect) {
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-    typedef typename PARSE::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
+    typedef typename FamilyType::Parse Parse;
+    typedef typename Parse::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+    typedef typename Parse::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     enqueueKernel<FamilyType>();
 
     // All state should be programmed before walker
@@ -228,14 +228,14 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnquein
     EXPECT_EQ(0u, cmd->getInterfaceDescriptorTotalLength() % alignmentTotalLength);
 
     // Generically validate this command
-    PARSE::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorCmd);
+    Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorCmd);
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenInterfaceDescriptorDataIsCorrect) {
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-    typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-    typedef typename PARSE::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
+    typedef typename FamilyType::Parse Parse;
+    typedef typename Parse::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+    typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename Parse::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     enqueueKernel<FamilyType>();
 
     // Extract the MIDL command
@@ -271,8 +271,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnquein
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, givenDebugVariableToOverrideMOCSWhenStateBaseAddressIsBeingProgrammedThenItContainsDesiredIndex) {
     DebugManagerStateRestore restore;
     debugManager.flags.OverrideStatelessMocsIndex.set(1);
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename FamilyType::Parse Parse;
+    typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     enqueueKernel<FamilyType>();
 
     // Extract the SBA command
@@ -305,9 +305,9 @@ INSTANTIATE_TEST_CASE_P(EnqueueKernel,
 typedef EnqueueKernelTypeTest<TestParam2> EnqueueScratchSpaceTests;
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratchWhenItIsEnqueuedWithDifferentScratchSizesThenMediaVFEStateAndStateBaseAddressAreProperlyProgrammed) {
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::MEDIA_VFE_STATE MEDIA_VFE_STATE;
-    typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename FamilyType::Parse Parse;
+    typedef typename Parse::MEDIA_VFE_STATE MEDIA_VFE_STATE;
+    typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -365,7 +365,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), allocationSize);
 
     // Generically validate this command
-    PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
+    Parse::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
 
     // skip if size to big 4MB, no point in stressing memory allocator.
     if (allocationSize > 4194304) {
@@ -417,7 +417,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     EXPECT_NE(graphicsAllocation2, graphicsAllocation);
 
     // Generically validate this command
-    PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
+    Parse::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
 
     // Trigger SBA generation
     IndirectHeap dirtyDsh(nullptr);
@@ -478,9 +478,9 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAllocationsWhenKernelWithScratchIsEnqueuedThenGeneralStateHeapBaseAddressIsCorrectlyProgrammedAndMediaVFEStateContainsProgramming) {
 
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::MEDIA_VFE_STATE MEDIA_VFE_STATE;
-    typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename FamilyType::Parse Parse;
+    typedef typename Parse::MEDIA_VFE_STATE MEDIA_VFE_STATE;
+    typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     if constexpr (is64bit) {
         CommandStreamReceiver *csr = &pDevice->getGpgpuCommandStreamReceiver();
@@ -537,7 +537,7 @@ TestParam testParamPrintf[] = {
 typedef EnqueueKernelTypeTest<TestParam> EnqueueKernelPrintfTest;
 
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfThenPatchCrossThreadData) {
-    typedef typename FamilyType::PARSE PARSE;
+    typedef typename FamilyType::Parse Parse;
 
     MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.crossThreadData[64] = 0;
@@ -549,7 +549,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfThenPatchCrossThreadData)
 }
 
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3CacheIsFlushed) {
-    typedef typename FamilyType::PARSE PARSE;
+    typedef typename FamilyType::Parse Parse;
 
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
 
@@ -591,7 +591,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUnblockedThenL3CacheIsFlushed) {
-    typedef typename FamilyType::PARSE PARSE;
+    typedef typename FamilyType::Parse Parse;
 
     UserEvent userEvent(context);
     MockCommandQueueHw<FamilyType> mockCommandQueue(context, pClDevice, nullptr);
@@ -975,7 +975,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     auto cmdStream = cmdQ.commandStream;
     auto sizeUsed = cmdStream->getUsed();
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), sizeUsed));
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), sizeUsed));
 
     auto pipeControls = findAll<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
 

@@ -57,7 +57,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     auto itorPc = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -133,7 +133,7 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     auto itorPc = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -202,7 +202,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListTests, givenPartitionedCommandL
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     auto itorSba = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
@@ -407,7 +407,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
 
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
             commandList->commandContainer.getCommandStream()->getUsed()));
 
@@ -650,7 +650,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList,
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
@@ -738,7 +738,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList,
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
@@ -889,7 +889,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList,
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
@@ -974,7 +974,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList,
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
@@ -1122,7 +1122,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList,
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
@@ -1187,7 +1187,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
         GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList,
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
@@ -1634,7 +1634,7 @@ void findStateCacheFlushPipeControlAfterWalker(LinearStream &cmdStream, size_t o
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream.getCpuBase(), offset),
         size));
@@ -1669,7 +1669,7 @@ void find3dBtdCommand(LinearStream &cmdStream, size_t offset, size_t size, uint6
     }
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(cmdStream.getCpuBase(), offset),
         size));
@@ -1921,7 +1921,7 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
     auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -1943,7 +1943,7 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -1971,7 +1971,7 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
     auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -1993,7 +1993,7 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2036,7 +2036,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     auto ioBaseAddress = neoDevice->getGmmHelper()->decanonize(ioHeap->getHeapGpuBase());
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2065,7 +2065,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2098,7 +2098,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     }
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2123,7 +2123,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2153,7 +2153,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2173,7 +2173,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2214,7 +2214,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     EXPECT_EQ(nullptr, ssHeap->getGraphicsAllocation());
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2255,7 +2255,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     }
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2298,7 +2298,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2344,7 +2344,7 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
     auto ioBaseAddress = neoDevice->getGmmHelper()->decanonize(ioHeap->getHeapGpuBase());
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2373,7 +2373,7 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.clear();
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
         csrUsedAfter - csrUsedBefore));
@@ -2397,7 +2397,7 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppend
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList,
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
         commandContainer.getCommandStream()->getUsed() - commandStreamOffset));

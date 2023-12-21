@@ -158,7 +158,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         }
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -180,7 +180,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         }
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -211,7 +211,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -236,7 +236,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -266,7 +266,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         }
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
 
@@ -303,7 +303,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -328,7 +328,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -361,7 +361,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -391,7 +391,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         }
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -426,7 +426,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -448,7 +448,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         }
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -498,7 +498,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     }
 
     currentBuffer = ptrOffset(regularCommandListStream.getCpuBase(), sizeBefore);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (sizeAfter - sizeBefore)));
     pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -520,7 +520,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     }
 
     currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (sizeAfter - sizeBefore)));
 
@@ -557,7 +557,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     }
 
     currentBuffer = ptrOffset(immediateCmdListStream.getCpuBase(), sizeBefore);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (sizeAfter - sizeBefore)));
     pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -573,7 +573,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     }
 
     currentBuffer = ptrOffset(csrStream.getCpuBase(), csrUsedBefore);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (csrUsedAfter - csrUsedBefore)));
     pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -624,7 +624,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     }
 
     currentBuffer = ptrOffset(immediateCmdListStream.getCpuBase(), sizeBefore);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (sizeAfter - sizeBefore)));
     pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -640,7 +640,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     }
 
     currentBuffer = ptrOffset(csrStream.getCpuBase(), csrUsedBefore);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (csrUsedAfter - csrUsedBefore)));
     pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -674,7 +674,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     }
 
     currentBuffer = ptrOffset(regularCommandListStream.getCpuBase(), sizeBefore);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (sizeAfter - sizeBefore)));
     pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -696,7 +696,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     }
 
     currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       currentBuffer,
                                                       (sizeAfter - sizeBefore)));
     pipelineSelectList = findAll<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -744,7 +744,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                       ptrOffset(cmdQueueStream.getCpuBase(), queueSize),
                                                       (cmdQueueStream.getUsed() - queueSize)));
 
@@ -824,7 +824,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         EXPECT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, cmdListFinalState.stateComputeMode.threadArbitrationPolicy.value);
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -846,7 +846,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         EXPECT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, csrState.stateComputeMode.threadArbitrationPolicy.value);
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -872,7 +872,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -892,7 +892,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -913,7 +913,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         EXPECT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, csrState.stateComputeMode.threadArbitrationPolicy.value);
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -939,7 +939,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -959,7 +959,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -982,7 +982,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1003,7 +1003,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         EXPECT_EQ(NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency, csrState.stateComputeMode.threadArbitrationPolicy.value);
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1028,7 +1028,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1046,7 +1046,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         EXPECT_EQ(NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency, csrState.stateComputeMode.threadArbitrationPolicy.value);
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1091,7 +1091,7 @@ void CmdListLargeGrfFixture::testBody() {
         EXPECT_EQ(0, cmdListFinalState.stateComputeMode.largeGrfMode.value);
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1113,7 +1113,7 @@ void CmdListLargeGrfFixture::testBody() {
         EXPECT_EQ(0, csrState.stateComputeMode.largeGrfMode.value);
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1139,7 +1139,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1159,7 +1159,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1180,7 +1180,7 @@ void CmdListLargeGrfFixture::testBody() {
         EXPECT_EQ(0, csrState.stateComputeMode.largeGrfMode.value);
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1206,7 +1206,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1226,7 +1226,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1249,7 +1249,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1270,7 +1270,7 @@ void CmdListLargeGrfFixture::testBody() {
         EXPECT_EQ(1, csrState.stateComputeMode.largeGrfMode.value);
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1295,7 +1295,7 @@ void CmdListLargeGrfFixture::testBody() {
 
         currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
 
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
@@ -1313,7 +1313,7 @@ void CmdListLargeGrfFixture::testBody() {
         EXPECT_EQ(1, csrState.stateComputeMode.largeGrfMode.value);
 
         currentBuffer = ptrOffset(cmdQueueStream.getCpuBase(), sizeBefore);
-        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
                                                           currentBuffer,
                                                           (sizeAfter - sizeBefore)));
         stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());

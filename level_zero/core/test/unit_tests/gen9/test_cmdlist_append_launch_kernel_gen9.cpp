@@ -34,7 +34,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSLMThenL3IsProgrammedWit
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     bool foundL3 = false;

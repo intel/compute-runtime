@@ -475,7 +475,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using PARSE = typename FamilyType::PARSE;
+    using Parse = typename FamilyType::Parse;
 
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.UpdateTaskCountFromWait.set(3);
@@ -528,7 +528,7 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     EXPECT_EQ(expectedSize, executionConsumedSize);
 
     GenCmdList cmdList;
-    ASSERT_TRUE(PARSE::parseCommandBuffer(cmdList,
+    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList,
                                           ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore),
                                           executionConsumedSize));
 
