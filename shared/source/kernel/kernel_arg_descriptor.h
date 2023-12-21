@@ -11,6 +11,8 @@
 #include "shared/source/kernel/kernel_arg_metadata.h"
 #include "shared/source/utilities/arrayref.h"
 
+#include <type_traits>
+
 namespace NEO {
 
 using CrossThreadDataOffset = uint16_t;
@@ -23,6 +25,8 @@ static constexpr T undefined = std::numeric_limits<T>::max();
 
 template <typename T>
 bool isUndefinedOffset(T offset) {
+    static_assert(!std::is_pointer_v<T>);
+
     return undefined<T> == offset;
 }
 
