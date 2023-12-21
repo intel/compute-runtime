@@ -918,4 +918,11 @@ size_t EncodeStates<Family>::getSshHeapSize() {
     return 2 * MemoryConstants::megaByte;
 }
 
+template <typename Family>
+void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue) {
+    auto walkerCmd = reinterpret_cast<typename Family::COMPUTE_WALKER *>(cmd1);
+    auto &postSync = walkerCmd->getPostSync();
+    postSync.setImmediateData(baseCounterValue + appendCounterValue);
+}
+
 } // namespace NEO

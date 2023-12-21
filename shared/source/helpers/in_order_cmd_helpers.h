@@ -137,15 +137,7 @@ struct PatchCmd {
         semaphoreCmd->setSemaphoreDataDword(static_cast<uint32_t>(baseCounterValue + appendCounterValue));
     }
 
-    void patchComputeWalker(uint64_t appendCounterValue) {
-        if constexpr (GfxFamily::walkerPostSyncSupport) {
-            auto walkerCmd = reinterpret_cast<typename GfxFamily::COMPUTE_WALKER *>(cmd1);
-            auto &postSync = walkerCmd->getPostSync();
-            postSync.setImmediateData(baseCounterValue + appendCounterValue);
-        } else {
-            UNRECOVERABLE_IF(true);
-        }
-    }
+    void patchComputeWalker(uint64_t appendCounterValue);
 
     void patchLri64b(uint64_t appendCounterValue) {
         if (isExternalDependency()) {
