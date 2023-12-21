@@ -524,10 +524,12 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
     }
 
     // cleanup
-    SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
     SUCCESS_OR_TERMINATE(zeImageDestroy(planeYImageView));
     SUCCESS_OR_TERMINATE(zeImageDestroy(planeUImageView));
     SUCCESS_OR_TERMINATE(zeImageDestroy(planeVImageView));
+
+    SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
+
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
