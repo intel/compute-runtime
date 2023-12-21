@@ -12,6 +12,7 @@ if(TESTS_ARL)
                  ${NEO_CORE_tests_xe_hpg_core_arl_excludes}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_aot_config_tests_arl.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_tests_arl.cpp
   )
 
   add_subdirectories()
