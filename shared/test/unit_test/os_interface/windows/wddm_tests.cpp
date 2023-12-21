@@ -169,7 +169,7 @@ TEST(WddmNewRsourceTest, whenSetNewResourcesBoundToPageTableThenSetInContextFrom
     }
     engines = executionEnvironment.memoryManager->getRegisteredEngines(1);
     for (const auto &engine : engines) {
-        EXPECT_EQ(engine.osContext->peekTlbFlushCounter(), executionEnvironment.rootDeviceEnvironments[1]->getProductHelper().isTlbFlushRequired(*defaultHwInfo, true));
+        EXPECT_EQ(engine.osContext->peekTlbFlushCounter(), executionEnvironment.rootDeviceEnvironments[1]->getProductHelper().isTlbFlushRequired());
     }
 
     executionEnvironment.memoryManager->unregisterEngineForCsr(csr1.get());

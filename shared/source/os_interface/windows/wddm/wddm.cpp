@@ -1349,7 +1349,7 @@ void Wddm::populateIpVersion(HardwareInfo &hwInfo) {
 }
 
 void Wddm::setNewResourceBoundToPageTable() {
-    if (!this->rootDeviceEnvironment.getProductHelper().isTlbFlushRequired(*this->getHardwareInfo(), true)) {
+    if (!this->rootDeviceEnvironment.getProductHelper().isTlbFlushRequired()) {
         return;
     }
     this->forEachContextWithinWddm([](const EngineControl &engine) { engine.osContext->setNewResourceBound(); });
