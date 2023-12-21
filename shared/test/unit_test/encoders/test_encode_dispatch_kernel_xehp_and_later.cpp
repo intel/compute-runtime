@@ -1247,7 +1247,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
     args.emitSelfCleanup = true;
     args.dcFlushEnable = dispatchArgs.dcFlushEnable;
 
-    auto cleanupSectionOffset = WalkerPartition::computeControlSectionOffset<FamilyType>(args);
+    auto cleanupSectionOffset = WalkerPartition::computeControlSectionOffset<FamilyType, DefaultWalkerType>(args);
     uint64_t expectedCleanupGpuVa = cmdContainer->getCommandStream()->getGraphicsAllocation()->getGpuAddress() +
                                     cleanupSectionOffset;
     constexpr uint32_t expectedData = 0ull;

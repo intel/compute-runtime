@@ -28,8 +28,6 @@ struct PipeControlArgs;
 namespace WalkerPartition {
 
 template <typename GfxFamily>
-using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
-template <typename GfxFamily>
 using POSTSYNC_DATA = typename GfxFamily::POSTSYNC_DATA;
 template <typename GfxFamily>
 using BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
@@ -455,13 +453,13 @@ void programTilesSynchronizationWithPostSyncs(void *&currentBatchBufferPointer,
     }
 }
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 uint64_t computeWalkerSectionSize() {
     return sizeof(BATCH_BUFFER_START<GfxFamily>) +
-           sizeof(COMPUTE_WALKER<GfxFamily>);
+           sizeof(WalkerType);
 }
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 uint64_t computeControlSectionOffset(WalkerPartitionArgs &args) {
     uint64_t size = 0u;
 
@@ -472,7 +470,7 @@ uint64_t computeControlSectionOffset(WalkerPartitionArgs &args) {
     size += sizeof(MI_SET_PREDICATE<GfxFamily>) * 2 +
             sizeof(BATCH_BUFFER_START<GfxFamily>) * 2;
     size += (args.semaphoreProgrammingRequired ? NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * args.partitionCount : 0u);
-    size += computeWalkerSectionSize<GfxFamily>();
+    size += computeWalkerSectionSize<GfxFamily, WalkerType>();
     size += args.emitPipeControlStall ? NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) : 0u;
     if (args.crossTileAtomicSynchronization || args.emitSelfCleanup) {
         size += computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>();
@@ -484,10 +482,10 @@ uint64_t computeControlSectionOffset(WalkerPartitionArgs &args) {
     return size;
 }
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 uint64_t computeWalkerSectionStart(WalkerPartitionArgs &args) {
-    return computeControlSectionOffset<GfxFamily>(args) -
-           computeWalkerSectionSize<GfxFamily>();
+    return computeControlSectionOffset<GfxFamily, WalkerType>(args) -
+           computeWalkerSectionSize<GfxFamily, WalkerType>();
 }
 
 template <typename GfxFamily, typename WalkerType>
@@ -569,7 +567,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
     totalBytesProgrammed = 0u;
     void *currentBatchBufferPointer = cpuPointer;
 
-    auto controlSectionOffset = computeControlSectionOffset<GfxFamily>(args);
+    auto controlSectionOffset = computeControlSectionOffset<GfxFamily, WalkerType>(args);
     if (args.synchronizeBeforeExecution) {
         auto tileAtomicAddress = gpuAddressOfAllocation + controlSectionOffset + offsetof(BatchBufferControlData, inTileCount);
         programTilesSynchronizationWithAtomics<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, tileAtomicAddress, args.tileCount);
@@ -592,7 +590,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
     programMiBatchBufferStart<GfxFamily>(currentBatchBufferPointer,
                                          totalBytesProgrammed,
                                          gpuAddressOfAllocation +
-                                             computeWalkerSectionStart<GfxFamily>(args),
+                                             computeWalkerSectionStart<GfxFamily, WalkerType>(args),
                                          true,
                                          args.secondaryBatchBuffer);
 
@@ -671,7 +669,7 @@ bool isStartAndControlSectionRequired(WalkerPartitionArgs &args) {
     return args.synchronizeBeforeExecution || args.crossTileAtomicSynchronization || args.emitSelfCleanup;
 }
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args) {
     const auto beforeExecutionSyncAtomicSize = args.synchronizeBeforeExecution
                                                    ? computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>()
@@ -697,7 +695,7 @@ uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args
     return beforeExecutionSyncAtomicSize +
            wparidRegisterSize +
            pipeControlSize +
-           sizeof(COMPUTE_WALKER<GfxFamily>) +
+           sizeof(WalkerType) +
            selfCleanupSectionSize +
            afterExecutionSyncAtomicSize +
            afterExecutionSyncPostSyncSize +
@@ -716,7 +714,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
     void *currentBatchBufferPointer = cpuPointer;
 
     // Get address of the control section
-    const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<GfxFamily>(args);
+    const auto controlSectionOffset = computeStaticPartitioningControlSectionOffset<GfxFamily, WalkerType>(args);
     const auto afterControlSectionOffset = controlSectionOffset + sizeof(StaticPartitioningControlSection);
 
     // Synchronize tiles before walker
@@ -781,15 +779,15 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
     }
 }
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename WalkerType>
 uint64_t estimateSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args) {
     uint64_t size = {};
     if (args.staticPartitioning) {
-        size += computeStaticPartitioningControlSectionOffset<GfxFamily>(args);
+        size += computeStaticPartitioningControlSectionOffset<GfxFamily, WalkerType>(args);
         size += isStartAndControlSectionRequired<GfxFamily>(args) ? sizeof(StaticPartitioningControlSection) : 0u;
         size += args.emitSelfCleanup ? computeSelfCleanupEndSectionSize<GfxFamily>(staticPartitioningFieldsForCleanupCount, args) : 0u;
     } else {
-        size += computeControlSectionOffset<GfxFamily>(args);
+        size += computeControlSectionOffset<GfxFamily, WalkerType>(args);
         size += sizeof(BatchBufferControlData);
         size += args.emitBatchBufferEnd ? sizeof(BATCH_BUFFER_END<GfxFamily>) : 0u;
         size += args.emitSelfCleanup ? computeSelfCleanupEndSectionSize<GfxFamily>(dynamicPartitioningFieldsForCleanupCount, args) : 0u;

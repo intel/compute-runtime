@@ -84,7 +84,7 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool apiSelfCleanup,
                                                                                       false,
                                                                                       false);
 
-    return static_cast<size_t>(WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily>(args));
+    return static_cast<size_t>(WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily, WalkerType>(args));
 }
 
 template <typename GfxFamily>

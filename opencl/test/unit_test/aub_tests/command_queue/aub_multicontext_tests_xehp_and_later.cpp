@@ -463,7 +463,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenPreWalker
     taskStream->getSpace(totalBytesProgrammed);
     flushTaskStream(*taskStream);
 
-    const auto controlSectionAddress = taskStreamGpu + WalkerPartition::computeStaticPartitioningControlSectionOffset<FamilyType>(testArgs);
+    const auto controlSectionAddress = taskStreamGpu + WalkerPartition::computeStaticPartitioningControlSectionOffset<FamilyType, DefaultWalkerType>(testArgs);
     const auto preWalkerSyncAddress = controlSectionAddress + offsetof(WalkerPartition::StaticPartitioningControlSection, synchronizeBeforeWalkerCounter);
     const auto postWalkerSyncAddress = controlSectionAddress + offsetof(WalkerPartition::StaticPartitioningControlSection, synchronizeAfterWalkerCounter);
     uint32_t expectedValue = 0x4;
@@ -509,7 +509,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, whenNoPreWalke
     taskStream->getSpace(totalBytesProgrammed);
     flushTaskStream(*taskStream);
 
-    const auto controlSectionAddress = taskStreamGpu + WalkerPartition::computeStaticPartitioningControlSectionOffset<FamilyType>(testArgs);
+    const auto controlSectionAddress = taskStreamGpu + WalkerPartition::computeStaticPartitioningControlSectionOffset<FamilyType, DefaultWalkerType>(testArgs);
     const auto preWalkerSyncAddress = controlSectionAddress + offsetof(WalkerPartition::StaticPartitioningControlSection, synchronizeBeforeWalkerCounter);
     const auto postWalkerSyncAddress = controlSectionAddress + offsetof(WalkerPartition::StaticPartitioningControlSection, synchronizeAfterWalkerCounter);
     uint32_t expectedValue = 0x0;

@@ -27,13 +27,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramRegisterCommandWh
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConstructCommandBufferIsCalledWithoutBatchBufferEndThenBatchBufferEndIsNotProgrammed) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     testArgs.partitionCount = 16u;
     testArgs.tileCount = 4u;
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
 
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
                                                                               nullptr,
@@ -42,54 +44,60 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
                                                                               totalBytesProgrammed,
                                                                               testArgs,
                                                                               *defaultHwInfo);
-    auto totalProgrammedSize = computeControlSectionOffset<FamilyType>(testArgs) +
+    auto totalProgrammedSize = computeControlSectionOffset<FamilyType, WalkerType>(testArgs) +
                                sizeof(BatchBufferControlData);
     EXPECT_EQ(totalProgrammedSize, totalBytesProgrammed);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationWhenItIsCalledThenProperSizeIsReturned) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     testArgs.partitionCount = 16u;
     auto expectedUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>) +
                             sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) * 2 +
                             sizeof(WalkerPartition::LOAD_REGISTER_REG<FamilyType>) +
                             sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>) * 2 +
                             sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) * 3 +
-                            sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                            sizeof(WalkerType) +
                             sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
                             sizeof(WalkerPartition::BatchBufferControlData) +
                             sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     testArgs.emitBatchBufferEnd = false;
-    EXPECT_EQ(expectedUsedSize,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    auto size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize, size);
 
     testArgs.emitBatchBufferEnd = true;
-    EXPECT_EQ(expectedUsedSize + sizeof(WalkerPartition::BATCH_BUFFER_END<FamilyType>),
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize + sizeof(WalkerPartition::BATCH_BUFFER_END<FamilyType>), size);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationWhenPartitionCountIs4ThenSizeIsProperlyEstimated) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     testArgs.partitionCount = 4u;
     auto expectedUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>) +
                             sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) * 2 +
                             sizeof(WalkerPartition::LOAD_REGISTER_REG<FamilyType>) +
                             sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>) * 2 +
                             sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) * 3 +
-                            sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                            sizeof(WalkerType) +
                             sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
                             sizeof(WalkerPartition::BatchBufferControlData) +
                             sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     testArgs.emitBatchBufferEnd = false;
-    EXPECT_EQ(expectedUsedSize,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    auto size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize, size);
 
     testArgs.emitBatchBufferEnd = true;
-    EXPECT_EQ(expectedUsedSize + sizeof(WalkerPartition::BATCH_BUFFER_END<FamilyType>),
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize + sizeof(WalkerPartition::BATCH_BUFFER_END<FamilyType>), size);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationAndSynchronizeBeforeExecutionWhenItIsCalledThenProperSizeIsReturned) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = false;
     auto expectedUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>) +
@@ -97,7 +105,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationAndSynchronize
                             sizeof(WalkerPartition::LOAD_REGISTER_REG<FamilyType>) +
                             sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>) * 2 +
                             sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) * 3 +
-                            sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                            sizeof(WalkerType) +
                             sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
                             sizeof(WalkerPartition::BatchBufferControlData) +
                             sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
@@ -105,18 +113,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationAndSynchronize
                          sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     testArgs.synchronizeBeforeExecution = false;
-    EXPECT_EQ(expectedUsedSize,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    auto size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize, size);
 
     testArgs.synchronizeBeforeExecution = true;
-    EXPECT_EQ(expectedUsedSize + expectedDelta,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize + expectedDelta, size);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningEstimationWhenItIsCalledThenProperSizeIsReturned) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     testArgs.partitionCount = 16u;
     const auto expectedUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_MEM<FamilyType>) +
-                                  sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                                  sizeof(WalkerType) +
                                   sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
                                   sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
                                   sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
@@ -125,19 +135,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningEstima
 
     testArgs.emitBatchBufferEnd = false;
     testArgs.staticPartitioning = true;
-    EXPECT_EQ(expectedUsedSize,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+
+    auto size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize, size);
 
     testArgs.emitBatchBufferEnd = true;
-    EXPECT_EQ(expectedUsedSize,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize, size);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningEstimationAndSynchronizeBeforeExecutionWhenItIsCalledThenProperSizeIsReturned) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = false;
     const auto expectedUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_MEM<FamilyType>) +
-                                  sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                                  sizeof(WalkerType) +
                                   sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
                                   sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
                                   sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
@@ -146,16 +159,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningEstima
 
     testArgs.staticPartitioning = true;
     testArgs.synchronizeBeforeExecution = false;
-    EXPECT_EQ(expectedUsedSize,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+
+    auto size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize, size);
 
     testArgs.synchronizeBeforeExecution = true;
     const auto preExecutionSynchronizationSize = sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
-    EXPECT_EQ(expectedUsedSize + preExecutionSynchronizationSize,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+
+    size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize + preExecutionSynchronizationSize, size);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationSelfCleanupSectionsWhenItIsCalledThenProperSizeIsReturned) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = false;
     testArgs.synchronizeBeforeExecution = false;
@@ -166,7 +183,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationSelfCleanupSec
                             sizeof(WalkerPartition::LOAD_REGISTER_REG<FamilyType>) +
                             sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>) * 2 +
                             sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) * 3 +
-                            sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                            sizeof(WalkerType) +
                             sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
                             sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
                             sizeof(WalkerPartition::BatchBufferControlData) +
@@ -175,11 +192,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationSelfCleanupSec
                             sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) * 2 +
                             sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) * 3;
 
-    EXPECT_EQ(expectedUsedSize,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    auto size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize, size);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationSelfCleanupSectionsWhenAtomicsUsedForSelfCleanupThenProperSizeIsReturned) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = false;
     testArgs.synchronizeBeforeExecution = false;
@@ -191,7 +210,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationSelfCleanupSec
                             sizeof(WalkerPartition::LOAD_REGISTER_REG<FamilyType>) +
                             sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>) * 2 +
                             sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) * 3 +
-                            sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                            sizeof(WalkerType) +
                             sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
                             sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
                             sizeof(WalkerPartition::BatchBufferControlData) +
@@ -200,8 +219,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenEstimationSelfCleanupSec
                             sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) * 2 +
                             sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) * 3;
 
-    EXPECT_EQ(expectedUsedSize,
-              estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs));
+    auto size = estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedUsedSize, size);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramWparidPredicationMaskWhenItIsCalledWithWrongInputThenFalseIsReturnedAndNothingIsProgrammed) {
@@ -396,55 +415,59 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramBatchBufferStartC
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhenItIsCalledThenWalkerIsProperlyProgrammed) {
-    auto expectedUsedSize = sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    auto expectedUsedSize = sizeof(WalkerType);
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(7u);
     walker.setThreadGroupIdYDimension(10u);
     walker.setThreadGroupIdZDimension(11u);
 
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     void *walkerCommandAddress = cmdBufferAddress;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, false);
-    auto walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+    auto walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
     EXPECT_TRUE(walkerCommand->getWorkloadPartitionEnable());
-    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
     EXPECT_EQ(4u, walkerCommand->getPartitionSize());
 
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Y);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y);
     walkerCommandAddress = cmdBufferAddress;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, false);
-    walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+    walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
-    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Y, walkerCommand->getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walkerCommand->getPartitionType());
     EXPECT_EQ(5u, walkerCommand->getPartitionSize());
 
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z);
     walkerCommandAddress = cmdBufferAddress;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, false);
-    walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+    walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
-    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z, walkerCommand->getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z, walkerCommand->getPartitionType());
     EXPECT_EQ(6u, walkerCommand->getPartitionSize());
 
     // if we program with partition Count == 1 then do not trigger partition stuff
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
     walkerCommandAddress = cmdBufferAddress;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 1u, false);
-    walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+    walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
     EXPECT_EQ(0u, walkerCommand->getPartitionSize());
     EXPECT_FALSE(walkerCommand->getWorkloadPartitionEnable());
-    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walkerCommand->getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walkerCommand->getPartitionType());
 }
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWhenComputePartitionCountIsCalledThenDefaultSizeAndTypeIsReturned) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(16u);
 
@@ -452,11 +475,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWhenComputePartiti
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithNonUniformStartWhenComputePartitionCountIsCalledThenPartitionsAreDisabled) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdStartingX(1u);
 
@@ -464,7 +489,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithNonUniformStar
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(1u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
 
     walker.setThreadGroupIdStartingX(0u);
     walker.setThreadGroupIdStartingY(1u);
@@ -472,7 +497,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithNonUniformStar
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(1u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
 
     walker.setThreadGroupIdStartingY(0u);
     walker.setThreadGroupIdStartingZ(1u);
@@ -480,11 +505,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithNonUniformStar
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(1u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithDifferentWorkgroupCountsWhenPartitionCountIsObtainedThenHighestDimensionIsPartitioned) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(64u);
     walker.setThreadGroupIdYDimension(64u);
@@ -494,25 +521,27 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithDifferentWorkg
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 
     walker.setThreadGroupIdYDimension(65u);
-    walker.setPartitionType(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
     walker.setThreadGroupIdZDimension(66u);
-    walker.setPartitionType(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDisabledMinimalPartitionSizeWhenComputePartitionSizeThenProperValueIsReturned) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(64u);
     walker.setThreadGroupIdYDimension(64u);
@@ -525,25 +554,27 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDisabledMinimalPartition
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(16u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 
     walker.setThreadGroupIdYDimension(65u);
-    walker.setPartitionType(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(16u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
     walker.setThreadGroupIdZDimension(66u);
-    walker.setPartitionType(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(16u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithDifferentWorkgroupCountsWhenPartitionCountIsObtainedThenPartitionCountIsClampedToHighestDimension) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(15u);
     walker.setThreadGroupIdYDimension(7u);
@@ -553,28 +584,30 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithDifferentWorkg
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
     walker.setThreadGroupIdXDimension(1u);
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
 
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
     walker.setThreadGroupIdYDimension(1u);
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
 
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithPartitionTypeHintWhenPartitionCountIsObtainedThenSuggestedTypeIsUsedForPartition) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     DebugManagerStateRestore restore{};
 
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(8u);
     walker.setThreadGroupIdYDimension(4u);
@@ -585,31 +618,33 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithPartitionTypeH
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 
-    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X));
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X));
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 
-    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Y));
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y));
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
-    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z));
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z));
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenInvalidPartitionTypeIsRequestedWhenPartitionCountIsObtainedThenFail) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
     DebugManagerStateRestore restore{};
 
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(8u);
     walker.setThreadGroupIdYDimension(4u);
@@ -621,7 +656,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenInvalidPartitionTypeIsRe
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithSmallXDimensionSizeWhenPartitionCountIsObtainedThenPartitionCountIsAdujsted) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(32u);
     walker.setThreadGroupIdYDimension(1024u);
@@ -631,11 +668,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithSmallXDimensio
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithBigXDimensionSizeWhenPartitionCountIsObtainedThenPartitionCountIsNotAdjusted) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(16384u);
     walker.setThreadGroupIdYDimension(1u);
@@ -645,11 +684,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithBigXDimensionS
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(16u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenCustomMinimalPartitionSizeWhenComputePartitionCountThenProperValueIsReturned) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(16384u);
     walker.setThreadGroupIdYDimension(1u);
@@ -662,11 +703,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenCustomMinimalPartitionSi
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithPartitionTypeProgrammedWhenPartitionCountIsObtainedAndItEqualsOneThenPartitionMechanismIsDisabled) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(1u);
@@ -676,11 +719,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithPartitionTypeP
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(1u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenXDimensionIsNotLargetAnd2DImagesAreUsedWhenPartitionTypeIsObtainedThenSelectXDimension) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(8u);
     walker.setThreadGroupIdYDimension(64u);
@@ -688,14 +732,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenXDimensionIsNotLargetAnd
 
     bool staticPartitioning = false;
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::x, 4u, false, &staticPartitioning);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndNonPartitionableWalkerWhenPartitionCountIsObtainedThenAllowPartitioning) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(1u);
@@ -705,11 +750,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndNon
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::x, 4u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndPartitionableWalkerWhenPartitionCountIsObtainedThenAllowPartitioning) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(2u);
@@ -719,11 +765,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndPar
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndBigPartitionCountProgrammedInWalkerWhenPartitionCountIsObtainedThenNumberOfPartitionsIsEqualToNumberOfTiles) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(16384u);
@@ -733,11 +780,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndBig
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndAndNonUniformStartProgrammedInWalkerWhenPartitionCountIsObtainedThenDoNotAllowStaticPartitioningAndSetPartitionCountToOne) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(16384u);
@@ -750,12 +798,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndAnd
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, true, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(1u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndPartitionTypeHintIsUsedWhenPartitionCountIsObtainedThenUseRequestedPartitionType) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore{};
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(16384u);
@@ -765,19 +814,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndPar
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
-    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z));
+    debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z));
     staticPartitioning = false;
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(4u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZDimensionIsNotDivisibleByTwoButIsAboveThreasholThenItIsSelected) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore{};
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(16384u);
@@ -787,19 +837,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 
     debugManager.flags.WalkerPartitionPreferHighestDimension.set(0);
 
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenYDimensionIsDivisibleByTwoThenItIsSelected) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore{};
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(16384u);
     walker.setThreadGroupIdYDimension(2u);
@@ -809,19 +860,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenYD
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
     debugManager.flags.WalkerPartitionPreferHighestDimension.set(0);
 
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZDimensionIsDivisibleByTwoThenItIsSelected) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore{};
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(512u);
     walker.setThreadGroupIdYDimension(512u);
@@ -831,17 +883,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 
     debugManager.flags.WalkerPartitionPreferHighestDimension.set(0);
 
     partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 2u, true, &staticPartitioning);
     EXPECT_TRUE(staticPartitioning);
     EXPECT_EQ(2u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDebugForceDisableCrossTileSyncThenSelfCleanupOverridesDebugAndAddsOwnCleanupSection) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment mockExecutionEnvironment{};
 
     testArgs.crossTileAtomicSynchronization = false;
@@ -852,9 +905,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
     testArgs.emitSelfCleanup = true;
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
     postSync.setDestinationAddress(postSyncAddress);
@@ -866,14 +919,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
                                    sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>) * 2 +
                                    sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) * 3 +
                                    sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
-                                   sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                                   sizeof(WalkerType) +
                                    sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                    sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>);
 
     auto walkerSectionCommands = sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) +
-                                 sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
+                                 sizeof(WalkerType);
 
-    EXPECT_EQ(expectedCommandUsedSize, computeControlSectionOffset<FamilyType>(testArgs));
+    auto offset = computeControlSectionOffset<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedCommandUsedSize, offset);
 
     auto cleanupSectionOffset = expectedCommandUsedSize + sizeof(BatchBufferControlData);
 
@@ -975,9 +1029,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
     EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + cleanupSectionOffset);
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
-    auto computeWalker = genCmdCast<WalkerPartition::COMPUTE_WALKER<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    auto computeWalker = genCmdCast<WalkerType *>(ptrOffset(cmdBuffer, parsedOffset));
     EXPECT_NE(nullptr, computeWalker);
-    parsedOffset += sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
+    parsedOffset += sizeof(WalkerType);
 
     batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStart);
@@ -1048,6 +1102,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUsedForCleanupWhenDebugForceDisableCrossTileSyncThenSelfCleanupOverridesDebugAndAddsOwnCleanupSection) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment mockExecutionEnvironment{};
 
     testArgs.crossTileAtomicSynchronization = false;
@@ -1059,9 +1114,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
 
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
     postSync.setDestinationAddress(postSyncAddress);
@@ -1073,14 +1128,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
                                    sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>) * 2 +
                                    sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) * 3 +
                                    sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
-                                   sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>) +
+                                   sizeof(WalkerType) +
                                    sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     auto walkerSectionCommands = sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) +
-                                 sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
+                                 sizeof(WalkerType);
 
-    EXPECT_EQ(expectedCommandUsedSize, computeControlSectionOffset<FamilyType>(testArgs));
+    auto offset = computeControlSectionOffset<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedCommandUsedSize, offset);
 
     auto cleanupSectionOffset = expectedCommandUsedSize + sizeof(BatchBufferControlData);
 
@@ -1183,9 +1239,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
     EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + cleanupSectionOffset);
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
-    auto computeWalker = genCmdCast<WalkerPartition::COMPUTE_WALKER<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    auto computeWalker = genCmdCast<WalkerType *>(ptrOffset(cmdBuffer, parsedOffset));
     EXPECT_NE(nullptr, computeWalker);
-    parsedOffset += sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
+    parsedOffset += sizeof(WalkerType);
 
     batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStart);
@@ -1262,6 +1318,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenPipeControlProgrammingDisabledThenExpectNoPipeControlCommand) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;
     testArgs.tileCount = 4u;
@@ -1272,9 +1329,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
     postSync.setDestinationAddress(postSyncAddress);
@@ -1285,12 +1342,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
                                    sizeof(WalkerPartition::LOAD_REGISTER_REG<FamilyType>) +
                                    sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>) * 2 +
                                    sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) * 3 +
-                                   sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
+                                   sizeof(WalkerType);
 
     auto walkerSectionCommands = sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>) +
-                                 sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
+                                 sizeof(WalkerType);
 
-    EXPECT_EQ(expectedCommandUsedSize, computeControlSectionOffset<FamilyType>(testArgs));
+    auto offset = computeControlSectionOffset<FamilyType, WalkerType>(testArgs);
+    EXPECT_EQ(expectedCommandUsedSize, offset);
 
     auto cleanupSectionOffset = expectedCommandUsedSize + sizeof(BatchBufferControlData);
 
@@ -1358,9 +1416,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
     EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + cleanupSectionOffset);
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
-    auto computeWalker = genCmdCast<WalkerPartition::COMPUTE_WALKER<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
+    auto computeWalker = genCmdCast<WalkerType *>(ptrOffset(cmdBuffer, parsedOffset));
     EXPECT_NE(nullptr, computeWalker);
-    parsedOffset += sizeof(WalkerPartition::COMPUTE_WALKER<FamilyType>);
+    parsedOffset += sizeof(WalkerType);
 
     batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStart);
@@ -1690,30 +1748,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenForceExecutionOnSingleTileWhenProgramComputeWalkerThenWalkerIsProperlyProgrammed) {
-    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    WalkerType walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(32u);
     walker.setThreadGroupIdYDimension(1u);
     walker.setThreadGroupIdZDimension(1u);
 
     bool forceExecutionOnSingleTile = false;
-    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
+    walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     void *walkerCommandAddress = cmdBufferAddress;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, forceExecutionOnSingleTile);
-    auto walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+    auto walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
     EXPECT_TRUE(walkerCommand->getWorkloadPartitionEnable());
-    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
     EXPECT_EQ(16u, walkerCommand->getPartitionSize());
 
     forceExecutionOnSingleTile = true;
     walkerCommandAddress = cmdBufferAddress;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, forceExecutionOnSingleTile);
-    walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+    walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
     EXPECT_TRUE(walkerCommand->getWorkloadPartitionEnable());
-    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
+    EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
     EXPECT_EQ(32u, walkerCommand->getPartitionSize());
 }

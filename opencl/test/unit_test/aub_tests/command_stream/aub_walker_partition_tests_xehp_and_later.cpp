@@ -1009,7 +1009,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandB
     taskStream->getSpace(totalBytesProgrammed);
     flushStream();
     auto expectedGpuAddress = taskStream->getGraphicsAllocation()->getGpuAddress() +
-                              WalkerPartition::computeControlSectionOffset<FamilyType>(testArgs);
+                              WalkerPartition::computeControlSectionOffset<FamilyType, DefaultWalkerType>(testArgs);
 
     // 16 partitions updated atomic to value 16
     // 17th partition updated it to 17 and was predicated out of the batch buffer
