@@ -138,7 +138,7 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
+bool ProductHelperHw<gfxProduct>::isTlbFlushRequired(const HardwareInfo &hwInfo, bool precondition, bool isDebuggerActive) const {
     bool tlbFlushRequired = false;
     if (debugManager.flags.ForceTlbFlush.get() != -1) {
         tlbFlushRequired = !!debugManager.flags.ForceTlbFlush.get();

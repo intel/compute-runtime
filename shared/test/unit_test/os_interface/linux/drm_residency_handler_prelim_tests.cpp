@@ -131,7 +131,7 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
 
     for (const auto &engine : device->getAllEngines()) {
         auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
-        if (osContexLinux->getDeviceBitfield().test(1u) && executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->getProductHelper().isTlbFlushRequired()) {
+        if (osContexLinux->getDeviceBitfield().test(1u) && executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->getProductHelper().isTlbFlushRequired(*executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->getHardwareInfo(), true, false)) {
             EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
         } else {
             EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
@@ -150,7 +150,7 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
 
     for (const auto &engine : devices[1]->getAllEngines()) {
         auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
-        if (osContexLinux->getDeviceBitfield().test(0u) && executionEnvironment->rootDeviceEnvironments[1]->getProductHelper().isTlbFlushRequired()) {
+        if (osContexLinux->getDeviceBitfield().test(0u) && executionEnvironment->rootDeviceEnvironments[1]->getProductHelper().isTlbFlushRequired(*executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->getHardwareInfo(), true, false)) {
             EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
         } else {
             EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
@@ -168,7 +168,7 @@ TEST_F(DrmMemoryOperationsHandlerBindMultiRootDeviceTest, whenSetNewResourceBoun
 
     for (const auto &engine : device->getAllEngines()) {
         auto osContexLinux = static_cast<MockOsContextLinux *>(engine.osContext);
-        if (osContexLinux->getDeviceBitfield().test(1u) && executionEnvironment->rootDeviceEnvironments[1]->getProductHelper().isTlbFlushRequired()) {
+        if (osContexLinux->getDeviceBitfield().test(1u) && executionEnvironment->rootDeviceEnvironments[1]->getProductHelper().isTlbFlushRequired(*executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]->getHardwareInfo(), true, false)) {
             EXPECT_TRUE(osContexLinux->isTlbFlushRequired());
         } else {
             EXPECT_FALSE(osContexLinux->isTlbFlushRequired());
