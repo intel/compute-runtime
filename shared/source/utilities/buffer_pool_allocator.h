@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,10 +25,11 @@ class MemoryManager;
 template <typename PoolT>
 struct SmallBuffersParams {
   protected:
-    static constexpr auto aggregatedSmallBuffersPoolSize = 64 * MemoryConstants::kiloByte;
-    static constexpr auto smallBufferThreshold = 4 * MemoryConstants::kiloByte;
-    static constexpr auto chunkAlignment = 512u;
+    static constexpr auto aggregatedSmallBuffersPoolSize = 2 * MemoryConstants::megaByte;
+    static constexpr auto smallBufferThreshold = 1 * MemoryConstants::megaByte;
+    static constexpr auto chunkAlignment = MemoryConstants::pageSize64k;
     static constexpr auto startingOffset = chunkAlignment;
+    static constexpr auto maxPoolCount = 2u;
 };
 
 template <typename PoolT, typename BufferType, typename BufferParentType = BufferType>
@@ -41,6 +42,7 @@ struct AbstractBuffersPool : public SmallBuffersParams<PoolT>, public NonCopyabl
     using Params = SmallBuffersParams<PoolT>;
     using Params::aggregatedSmallBuffersPoolSize;
     using Params::chunkAlignment;
+    using Params::maxPoolCount;
     using Params::smallBufferThreshold;
     using Params::startingOffset;
     using AllocsVecCRef = const StackVec<NEO::GraphicsAllocation *, 1> &;
@@ -75,6 +77,7 @@ class AbstractBuffersAllocator : public SmallBuffersParams<BuffersPoolType> {
     using Params = SmallBuffersParams<BuffersPoolType>;
     using Params::aggregatedSmallBuffersPoolSize;
     using Params::chunkAlignment;
+    using Params::maxPoolCount;
     using Params::smallBufferThreshold;
     using Params::startingOffset;
     static_assert(aggregatedSmallBuffersPoolSize > smallBufferThreshold, "Largest allowed buffer needs to fit in pool");

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,8 @@
 
 namespace NEO {
 bool Context::BufferPoolAllocator::flagsAllowBufferFromPool(const cl_mem_flags &flags, const cl_mem_flags_intel &flagsIntel) const {
-    return true;
+    return (flagsIntel & CL_MEM_COMPRESSED_HINT_INTEL) == false &&
+           (flags & CL_MEM_COMPRESSED_HINT_INTEL) == false;
 }
 
 } // namespace NEO

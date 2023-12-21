@@ -624,8 +624,11 @@ Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryPropert
         return bufferFromPool;
     }
 
-    this->addNewBufferPool(BufferPool{this->context});
-    return this->allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
+    if (this->bufferPools.size() < BufferPoolAllocator::maxPoolCount) {
+        this->addNewBufferPool(BufferPool{this->context});
+        return this->allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
+    }
+    return nullptr;
 }
 
 Buffer *Context::BufferPoolAllocator::allocateFromPools(const MemoryProperties &memoryProperties,

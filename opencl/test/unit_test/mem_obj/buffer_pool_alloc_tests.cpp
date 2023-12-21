@@ -207,6 +207,19 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndS
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
     EXPECT_NE(nullptr, buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, poolAllocator->bufferPools[0].chunkAllocator->getUsedSize());
+}
+
+TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndFlagCompressedPreferredWhenBufferCreateCalledThenDoNotUsePool) {
+    EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
+    EXPECT_EQ(1u, poolAllocator->bufferPools.size());
+    EXPECT_NE(nullptr, poolAllocator->bufferPools[0].mainStorage.get());
+    size = PoolAllocator::smallBufferThreshold;
+    flags |= CL_MEM_COMPRESSED_HINT_INTEL;
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, size, hostPtr, retVal));
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, poolAllocator->bufferPools[0].chunkAllocator->getUsedSize());
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeLowerThenChunkAlignmentWhenBufferCreatedAndDestroyedThenSizeIsAsRequestedAndCorrectSizeIsNotFreed) {
@@ -342,6 +355,32 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndB
     EXPECT_EQ(1u, mockMemoryManager->allocInUseCalled);
     EXPECT_EQ(size * buffersToCreate, poolAllocator->bufferPools[0].chunkAllocator->getUsedSize());
     EXPECT_EQ(size, poolAllocator->bufferPools[1].chunkAllocator->getUsedSize());
+}
+
+TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndBufferPoolIsExhaustedAndAllocationsAreInUseAndPoolLimitIsReachedThenNewPoolIsNotCreated) {
+    EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
+    EXPECT_EQ(1u, poolAllocator->bufferPools.size());
+    EXPECT_NE(nullptr, poolAllocator->bufferPools[0].mainStorage.get());
+
+    constexpr auto buffersToCreate = (PoolAllocator::aggregatedSmallBuffersPoolSize / PoolAllocator::smallBufferThreshold) * PoolAllocator::maxPoolCount;
+    std::vector<std::unique_ptr<Buffer>> buffers(buffersToCreate);
+    for (auto i = 0u; i < buffersToCreate; ++i) {
+        buffers[i].reset(Buffer::create(context.get(), flags, size, hostPtr, retVal));
+        EXPECT_EQ(retVal, CL_SUCCESS);
+    }
+    EXPECT_EQ(PoolAllocator::maxPoolCount, poolAllocator->bufferPools.size());
+    for (auto i = 0u; i < PoolAllocator::maxPoolCount; ++i) {
+        EXPECT_EQ(PoolAllocator::aggregatedSmallBuffersPoolSize, poolAllocator->bufferPools[i].chunkAllocator->getUsedSize());
+    }
+    EXPECT_EQ(1u, mockMemoryManager->allocInUseCalled);
+    mockMemoryManager->deferAllocInUse = true;
+    mockMemoryManager->failInDevicePoolWithError = true;
+
+    std::unique_ptr<Buffer> bufferAfterExhaustMustFail(Buffer::create(context.get(), flags, size, hostPtr, retVal));
+    EXPECT_EQ(nullptr, bufferAfterExhaustMustFail.get());
+    EXPECT_NE(retVal, CL_SUCCESS);
+    EXPECT_EQ(PoolAllocator::maxPoolCount, poolAllocator->bufferPools.size());
+    EXPECT_EQ(3u, mockMemoryManager->allocInUseCalled);
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenCopyHostPointerWhenCreatingBufferButCopyFailedThenDoNotUsePool) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -214,9 +214,9 @@ bool inline copyHostPointer(Buffer *buffer,
             copyOnCpuAllowed = debugManager.flags.CopyHostPtrOnCpu.get() == 1;
         }
         if (auto lockedPointer = copyOnCpuAllowed ? device.getMemoryManager()->lockResource(memory) : nullptr) {
-            memcpy_s(ptrOffset(lockedPointer, buffer->getOffset()), size, hostPtr, size);
             memory->setAubWritable(true, GraphicsAllocation::defaultBank);
             memory->setTbxWritable(true, GraphicsAllocation::defaultBank);
+            memcpy_s(ptrOffset(lockedPointer, buffer->getOffset()), size, hostPtr, size);
             return true;
         } else {
             auto blitMemoryToAllocationResult = BlitOperationResult::unsupported;
