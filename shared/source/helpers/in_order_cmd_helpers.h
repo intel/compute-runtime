@@ -83,8 +83,8 @@ enum class PatchCmdType {
 
 template <typename GfxFamily>
 struct PatchCmd {
-    PatchCmd(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo, void *cmd1, void *cmd2, uint64_t baseCounterValue, PatchCmdType patchCmdType)
-        : cmd1(cmd1), cmd2(cmd2), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType) {
+    PatchCmd(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo, void *cmd1, void *cmd2, uint64_t baseCounterValue, PatchCmdType patchCmdType, bool deviceAtomicSignaling, bool duplicatedHostStorage)
+        : cmd1(cmd1), cmd2(cmd2), baseCounterValue(baseCounterValue), patchCmdType(patchCmdType), deviceAtomicSignaling(deviceAtomicSignaling), duplicatedHostStorage(duplicatedHostStorage) {
         if (inOrderExecInfo) {
             this->inOrderExecInfo = *inOrderExecInfo;
         }
@@ -117,6 +117,8 @@ struct PatchCmd {
     void *cmd2 = nullptr;
     const uint64_t baseCounterValue = 0;
     const PatchCmdType patchCmdType = PatchCmdType::none;
+    bool deviceAtomicSignaling = false;
+    bool duplicatedHostStorage = false;
 
   protected:
     void patchSdi(uint64_t appendCounterValue) {
