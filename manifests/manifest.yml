@@ -74,7 +74,7 @@ components:
     dest_dir: metrics/library
     type: git
     branch: master
-    revision: metrics-library-1.0.152
+    revision: metrics-library-1.0.156
     repository: https://github.com/intel/metrics-library.git
   neo-clang-format:
     dest_dir: tools/clang-format
