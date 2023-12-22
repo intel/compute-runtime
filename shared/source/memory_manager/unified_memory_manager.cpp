@@ -236,7 +236,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
     allocData.device = nullptr;
     allocData.pageSizeForAlignment = pageSizeForAlignment;
-    allocData.setAllocId(this->allocationsCounter++);
+    allocData.setAllocId(++this->allocationsCounter);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
     this->svmAllocs.insert(usmPtr, allocData);
@@ -318,7 +318,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.memoryType = memoryProperties.memoryType;
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
     allocData.device = memoryProperties.device;
-    allocData.setAllocId(this->allocationsCounter++);
+    allocData.setAllocId(++this->allocationsCounter);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
 
@@ -405,7 +405,7 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     allocData.device = unifiedMemoryProperties.device;
     allocData.size = size;
     allocData.pageSizeForAlignment = pageSizeForAlignment;
-    allocData.setAllocId(this->allocationsCounter++);
+    allocData.setAllocId(++this->allocationsCounter);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
     auto retPtr = allocationGpu->getUnderlyingBuffer();
@@ -560,6 +560,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
         allocation->setCoherent(svmProperties.coherent);
     }
     allocData.size = size;
+    allocData.setAllocId(++this->allocationsCounter);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
     this->svmAllocs.insert(usmPtr, allocData);
@@ -627,7 +628,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     allocData.device = unifiedMemoryProperties.device;
     allocData.pageSizeForAlignment = cpuAlignment;
     allocData.size = size;
-    allocData.setAllocId(this->allocationsCounter++);
+    allocData.setAllocId(++this->allocationsCounter);
 
     std::unique_lock<std::shared_mutex> lock(mtx);
     this->svmAllocs.insert(svmPtr, allocData);

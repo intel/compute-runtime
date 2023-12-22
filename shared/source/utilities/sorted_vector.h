@@ -6,8 +6,12 @@
  */
 
 #pragma once
+#include "shared/source/helpers/debug_helpers.h"
+
 #include <algorithm>
+#include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace NEO {
@@ -38,14 +42,16 @@ class BaseSortedPointerWithValueVector {
         allocations.erase(removeIt);
     }
 
-    ValueType *get(const void *ptr) {
+    typename Container::iterator getImpl(const void *ptr) {
         if (allocations.size() == 0) {
-            return nullptr;
+            return allocations.end();
         }
 
         if (nullptr == ptr) {
-            return nullptr;
+            return allocations.end();
         }
+
+        DEBUG_BREAK_IF(allocations.size() > static_cast<size_t>(std::numeric_limits<int>::max()));
 
         int begin = 0;
         int end = static_cast<int>(allocations.size() - 1);
@@ -54,7 +60,7 @@ class BaseSortedPointerWithValueVector {
             const auto &allocation = allocations[currentPos];
 
             if (compareFunctor(allocation.second, ptr, allocation.first)) {
-                return allocation.second.get();
+                return allocations.begin() + currentPos;
             } else if (ptr < allocation.first) {
                 end = currentPos - 1;
                 continue;
@@ -63,7 +69,24 @@ class BaseSortedPointerWithValueVector {
                 continue;
             }
         }
+        return allocations.end();
+    }
 
+    std::unique_ptr<ValueType> extract(const void *ptr) {
+        std::unique_ptr<ValueType> retVal{};
+        auto it = getImpl(ptr);
+        if (it != allocations.end()) {
+            retVal.swap(it->second);
+            allocations.erase(it);
+        }
+        return retVal;
+    }
+
+    ValueType *get(const void *ptr) {
+        auto it = getImpl(ptr);
+        if (it != allocations.end()) {
+            return it->second.get();
+        }
         return nullptr;
     }
 

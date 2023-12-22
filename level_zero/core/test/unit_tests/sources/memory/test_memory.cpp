@@ -682,7 +682,7 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsExpected
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_DEVICE);
     EXPECT_EQ(deviceHandle, device->toHandle());
     EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter - 1);
+              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
 
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
@@ -712,7 +712,7 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsExpectedPr
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
     EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter - 1);
+              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
 
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
@@ -746,7 +746,7 @@ TEST_F(MemoryTest, givenSharedPointerThenDriverGetAllocPropertiesReturnsExpected
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_SHARED);
     EXPECT_EQ(deviceHandle, device->toHandle());
     EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter - 1);
+              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
 
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
@@ -835,7 +835,7 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsMemoryId) 
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
     EXPECT_EQ(deviceHandle, nullptr);
     EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter - 1);
+              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -862,7 +862,7 @@ TEST_F(MemoryTest, givenSharedPointerThenDriverGetAllocPropertiesReturnsMemoryId
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_SHARED);
     EXPECT_EQ(deviceHandle, device->toHandle());
     EXPECT_EQ(memoryProperties.id,
-              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter - 1);
+              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);

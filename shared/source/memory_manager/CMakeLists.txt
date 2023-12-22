@@ -57,6 +57,8 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/surface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling.h
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table.h
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table.inl

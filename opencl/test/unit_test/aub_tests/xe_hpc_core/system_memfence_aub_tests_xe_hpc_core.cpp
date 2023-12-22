@@ -217,7 +217,7 @@ XE_HPC_CORETEST_F(SystemMemFenceViaKernel, givenSystemMemFenceWhenKernelInstruct
     retVal = clSetKernelArgSVMPointer(pMultiDeviceKernel.get(), 1, hostMemAlloc);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    size_t globalWorkSize[3] = {bufferSize, 1, 1};
+    size_t globalWorkSize[3] = {bufferSize / sizeof(cl_int), 1, 1};
     retVal = commandQueues[0][0]->enqueueKernel(pMultiDeviceKernel->getKernel(rootDeviceIndex), 1, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 

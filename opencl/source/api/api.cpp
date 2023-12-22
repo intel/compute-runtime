@@ -3903,6 +3903,11 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
         return nullptr;
     }
 
+    auto allocationFromPool = neoContext->getHostMemAllocPool().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    if (allocationFromPool) {
+        return allocationFromPool;
+    }
+
     return neoContext->getSVMAllocsManager()->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 }
 
@@ -3951,6 +3956,11 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     }
 
     unifiedMemoryProperties.device = &neoDevice->getDevice();
+
+    auto allocationFromPool = neoContext->getDeviceMemAllocPool().createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    if (allocationFromPool) {
+        return allocationFromPool;
+    }
 
     return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
 }
@@ -4023,6 +4033,14 @@ CL_API_ENTRY cl_int CL_API_CALL clMemFreeCommon(cl_context context,
 
     if (retVal != CL_SUCCESS) {
         return retVal;
+    }
+
+    if (ptr && neoContext->getDeviceMemAllocPool().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+        return CL_SUCCESS;
+    }
+
+    if (ptr && neoContext->getHostMemAllocPool().freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
+        return CL_SUCCESS;
     }
 
     if (ptr && !neoContext->getSVMAllocsManager()->freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
@@ -4978,6 +4996,9 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
             const auto allocationsCounter = svmManager->allocationsCounter.load();
             if (allocationsCounter > 0) {
                 if (allocationsCounter == multiDeviceKernel->getKernelArguments()[argIndex].allocIdMemoryManagerCounter) {
+                    // manager count is not being incremented when allocation is from pool
+                    // 1) add check for allocation from pool
+                    // 2) increment when allocation is from pool
                     reuseFromCache = true;
                 } else {
                     const auto svmData = svmManager->getSVMAlloc(argValue);
@@ -5041,7 +5062,6 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
             allocId = svmData->getAllocId();
         }
     }
-
     retVal = multiDeviceKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), svmAllocs, allocId);
     TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
     return retVal;

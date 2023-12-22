@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -30,6 +30,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/surface_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager_cache_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling_tests.cpp
 )
 
 add_subdirectories()

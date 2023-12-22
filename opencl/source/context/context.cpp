@@ -61,6 +61,8 @@ Context::~Context() {
         smallBufferPoolAllocator.releaseSmallBufferPool();
     }
 
+    cleanupUsmAllocationPools();
+
     delete[] properties;
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < specialQueues.size(); rootDeviceIndex++) {
@@ -485,6 +487,50 @@ Platform *Context::getPlatformFromProperties(const cl_context_properties *proper
 
 bool Context::isSingleDeviceContext() {
     return getNumDevices() == 1 && devices[0]->getNumGenericSubDevices() == 0;
+}
+
+void Context::initializeUsmAllocationPools() {
+    auto svmMemoryManager = getSVMAllocsManager();
+    if (!(svmMemoryManager && this->isSingleDeviceContext())) {
+        return;
+    }
+
+    bool enabled = false;
+    size_t poolSize = 2 * MemoryConstants::megaByte;
+    if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
+        enabled = debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
+        poolSize = debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
+    }
+    if (enabled) {
+        auto subDeviceBitfields = getDeviceBitfields();
+        auto &neoDevice = devices[0]->getDevice();
+        subDeviceBitfields[neoDevice.getRootDeviceIndex()] = neoDevice.getDeviceBitfield();
+        SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::deviceUnifiedMemory, MemoryConstants::pageSize2M,
+                                                                   getRootDeviceIndices(), subDeviceBitfields);
+        memoryProperties.device = &neoDevice;
+        usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, poolSize);
+    }
+
+    enabled = false;
+    poolSize = 2 * MemoryConstants::megaByte;
+    if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
+        enabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
+        poolSize = debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
+    }
+    if (enabled) {
+        auto subDeviceBitfields = getDeviceBitfields();
+        auto &neoDevice = devices[0]->getDevice();
+        subDeviceBitfields[neoDevice.getRootDeviceIndex()] = neoDevice.getDeviceBitfield();
+        SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
+                                                                   getRootDeviceIndices(), subDeviceBitfields);
+        memoryProperties.device = &neoDevice;
+        usmHostMemAllocPool.initialize(svmMemoryManager, memoryProperties, poolSize);
+    }
+}
+
+void Context::cleanupUsmAllocationPools() {
+    usmDeviceMemAllocPool.cleanup();
+    usmHostMemAllocPool.cleanup();
 }
 
 bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *context) const {

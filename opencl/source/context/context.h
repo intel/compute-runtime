@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/utilities/buffer_pool_allocator.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -46,6 +47,9 @@ struct OpenCLObjectMapper<_cl_context> {
 };
 
 class Context : public BaseObject<_cl_context> {
+    using UsmHostMemAllocPool = UsmMemAllocPool;
+    using UsmDeviceMemAllocPool = UsmMemAllocPool;
+
   public:
     using BufferAllocationsVec = StackVec<GraphicsAllocation *, 1>;
 
@@ -109,6 +113,7 @@ class Context : public BaseObject<_cl_context> {
             if (bufferPoolAllocator.isAggregatedSmallBuffersEnabled(pContext)) {
                 bufferPoolAllocator.initAggregatedSmallBuffers(pContext);
             }
+            pContext->initializeUsmAllocationPools();
         }
         gtpinNotifyContextCreate(pContext);
         return pContext;
@@ -230,11 +235,21 @@ class Context : public BaseObject<_cl_context> {
     BufferPoolAllocator &getBufferPoolAllocator() {
         return smallBufferPoolAllocator;
     }
+    UsmMemAllocPool &getDeviceMemAllocPool() {
+        return usmDeviceMemAllocPool;
+    }
+    UsmMemAllocPool &getHostMemAllocPool() {
+        return usmHostMemAllocPool;
+    }
+
     TagAllocatorBase *getMultiRootDeviceTimestampPacketAllocator();
     std::unique_lock<std::mutex> obtainOwnershipForMultiRootDeviceAllocator();
     void setMultiRootDeviceTimestampPacketAllocator(std::unique_ptr<TagAllocatorBase> &allocator);
     void setContextAsNonZebin();
     bool checkIfContextIsNonZebin() const;
+
+    void initializeUsmAllocationPools();
+    void cleanupUsmAllocationPools();
 
   protected:
     struct BuiltInKernel {
@@ -271,6 +286,8 @@ class Context : public BaseObject<_cl_context> {
     StackVec<CommandQueue *, 1> specialQueues;
     DriverDiagnostics *driverDiagnostics = nullptr;
     BufferPoolAllocator smallBufferPoolAllocator;
+    UsmDeviceMemAllocPool usmDeviceMemAllocPool;
+    UsmHostMemAllocPool usmHostMemAllocPool;
 
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     cl_bool preferD3dSharedResources = 0u;

@@ -51,6 +51,7 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
 
     void setUpImpl() {
         debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
         this->deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
         this->device = deviceFactory->rootDevices[rootDeviceIndex];
         this->mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());

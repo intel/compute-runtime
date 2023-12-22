@@ -52,7 +52,6 @@ class WhiteBoxContext : public Context {
 
 struct ContextTest : public PlatformFixture,
                      public ::testing::Test {
-
     using PlatformFixture::setUp;
 
     void SetUp() override {
@@ -820,6 +819,8 @@ extern gtpin::ocl::gtpin_events_t gtpinCallbacks;
 TEST_F(GTPinContextDestroyTest, whenCallingConxtextDestructorThenGTPinIsNotifiedBeforeSVMAllocManagerGetsDestroyed) {
     auto mockContext = reinterpret_cast<MockGTPinTestContext *>(context);
     if (mockContext->svmAllocsManager) {
+        mockContext->getDeviceMemAllocPool().cleanup();
+        mockContext->getHostMemAllocPool().cleanup();
         delete mockContext->svmAllocsManager;
     }
     mockContext->svmAllocsManager = new MockSVMAllocManager();
