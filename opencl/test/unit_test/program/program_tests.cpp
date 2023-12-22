@@ -2766,10 +2766,9 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingBuiltInProgramT
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, "-abc")) << cip->buildInternalOptions;
 }
 
-TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIsForcedAndIrBinaryIsNotPresentThenSkipRebuildPrintDebugMssageAndReturnSuccess) {
+TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebuildIsForcedAndIrBinaryIsNotPresentThenSkipRebuildPrintDebugMessageAndReturnSuccess) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.RebuildPrecompiledKernels.set(true);
-    debugManager.flags.PrintDebugMessages.set(true);
     cl_int retVal = CL_INVALID_BINARY;
 
     PatchTokensTestData::ValidEmptyProgram programTokens;
@@ -2781,7 +2780,9 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramBuiltInWhenKernelRebulildIs
 
     pProgram->irBinarySize = 0x10;
     ::testing::internal::CaptureStderr();
+    debugManager.flags.PrintDebugMessages.set(true);
     retVal = pProgram->createProgramFromBinary(programTokens.storage.data(), programTokens.storage.size(), *clDevice);
+    debugManager.flags.PrintDebugMessages.set(false);
     std::string output = testing::internal::GetCapturedStderr();
     EXPECT_FALSE(pProgram->requiresRebuild);
     EXPECT_EQ(CL_SUCCESS, retVal);
