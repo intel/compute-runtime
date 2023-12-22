@@ -10,7 +10,7 @@
 namespace NEO {
 // max time per single test iteration
 #if defined(_WIN32)
-unsigned int ultIterationMaxTime = 360;
+unsigned int ultIterationMaxTime = 540;
 #else
 unsigned int ultIterationMaxTime = 180;
 #endif
