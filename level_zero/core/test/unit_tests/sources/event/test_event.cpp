@@ -548,37 +548,6 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolWithDeviceAllocT
 
 using EventPoolCreateMultiDevice = Test<MultiDeviceFixture>;
 
-HWTEST_F(EventPoolCreateMultiDevice, givenDebugFlagSetWhenCreatingEventThenUseTsPacketSize) {
-    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
-
-    ASSERT_NE(0u, driverHandle->devices.size());
-    auto device = driverHandle->devices[0];
-
-    auto deviceHandle = device->toHandle();
-
-    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    eventPoolDesc.count = 1;
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = L0::EventPool::create(device->getDriverHandle(), context, 1, &deviceHandle, &eventPoolDesc, result);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    ze_event_desc_t eventDesc = {};
-    ze_event_handle_t hEvent = nullptr;
-
-    result = eventPool->createEvent(&eventDesc, &hEvent);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto eventObj = Event::fromHandle(hEvent);
-
-    constexpr size_t timestampPacketTypeSize = sizeof(typename FamilyType::TimestampPacketType);
-
-    EXPECT_EQ(timestampPacketTypeSize * 4, eventObj->getSinglePacketSize());
-
-    eventObj->destroy();
-
-    eventPool->destroy();
-}
-
 TEST_F(EventPoolCreateMultiDevice, whenGettingIpcHandleForEventPoolWhenHostShareableMemoryIsFalseThenUnsuportedIsReturned) {
     uint32_t numEvents = 4;
     ze_event_pool_desc_t eventPoolDesc = {
@@ -3008,28 +2977,10 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
     EXPECT_EQ(timestampPacketTypeSize * 2, eventObj0->getContextEndOffset());
     EXPECT_EQ(timestampPacketTypeSize * 3, eventObj0->getGlobalEndOffset());
 
-    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-        EXPECT_EQ(sizeof(uint64_t), eventObj0->getSinglePacketSize());
-    } else {
-        EXPECT_EQ(timestampPacketTypeSize * 4, eventObj0->getSinglePacketSize());
-    }
+    EXPECT_EQ(l0GfxCoreHelper.getImmediateWritePostSyncOffset(), eventObj0->getSinglePacketSize());
 
     auto hostPtrDiff = ptrDiff(eventObj1->getHostAddress(), eventObj0->getHostAddress());
     EXPECT_EQ(expectedSize, hostPtrDiff);
-}
-
-HWTEST_F(EventSizeTests, givenDebugFlagSetWhenCreatingEventThenUseTsPacketSize) {
-    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    eventPool.reset(EventPool::create(device->getDriverHandle(), context, 1, &hDevice, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    createEvents();
-
-    constexpr size_t timestampPacketTypeSize = sizeof(typename FamilyType::TimestampPacketType);
-
-    EXPECT_EQ(timestampPacketTypeSize * 4, eventObj0->getSinglePacketSize());
 }
 
 HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
@@ -3094,9 +3045,8 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
     }
 }
 
-HWTEST_F(EventTests, givenDebugFlagSetWhenCreatingNonTimestampEventsThenPacketsSizeIsQword) {
+HWTEST_F(EventTests, whenCreatingNonTimestampEventsThenPacketsSizeIsQword) {
     DebugManagerStateRestore restore;
-    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -3122,7 +3072,7 @@ HWTEST_F(EventTests, givenDebugFlagSetWhenCreatingNonTimestampEventsThenPacketsS
 
     auto timestampSinglePacketSize = NEO::TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>::getSinglePacketSize();
     EXPECT_EQ(timestampSinglePacketSize, timestampEvent->getSinglePacketSize());
-    EXPECT_EQ(sizeof(uint64_t), regularEvent->getSinglePacketSize());
+    EXPECT_EQ(device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset(), regularEvent->getSinglePacketSize());
 
     timestampEvent->destroy();
     regularEvent->destroy();

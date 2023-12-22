@@ -43,16 +43,6 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfDeviceAllocationCacheIsEnabledThenR
     EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
 }
 
-TEST(ApiSpecificConfigL0Tests, GivenDebugFlagSetWhenCheckingIfDynamicPostSyncAllocLayoutEnabledThenReturnFalse) {
-    DebugManagerStateRestore restore;
-
-    EXPECT_TRUE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
-
-    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
-
-    EXPECT_FALSE(ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled());
-}
-
 TEST(ApiSpecificConfigL0Tests, GivenDebugFlagCombinationsGetCorrectSharedAllocPrefetchEnabled) {
     DebugManagerStateRestore restore;
 

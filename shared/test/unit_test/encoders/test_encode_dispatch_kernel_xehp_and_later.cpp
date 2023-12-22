@@ -1058,38 +1058,6 @@ struct CommandEncodeStatesImplicitScalingFixtureT : public CommandEncodeStatesFi
 using CommandEncodeStatesImplicitScalingFixture = CommandEncodeStatesImplicitScalingFixtureT<false, false>;
 using CommandEncodeStatesImplicitScaling = Test<CommandEncodeStatesImplicitScalingFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
-            givenStaticPartitioningWhenNonTimestampEventProvidedThenExpectTimestampComputeWalkerPostSync) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-
-    uint32_t dims[] = {16, 1, 1};
-    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-
-    bool requiresUncachedMocs = false;
-    uint64_t eventAddress = 0xFF112233000;
-    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.eventAddress = eventAddress;
-    dispatchArgs.partitionCount = 2;
-
-    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
-    size_t usedBuffer = cmdContainer->getCommandStream()->getUsed();
-    EXPECT_EQ(2u, dispatchArgs.partitionCount);
-
-    GenCmdList partitionedWalkerList;
-    CmdParse<FamilyType>::parseCommandBuffer(
-        partitionedWalkerList,
-        cmdContainer->getCommandStream()->getCpuBase(),
-        usedBuffer);
-
-    auto itor = find<DefaultWalkerType *>(partitionedWalkerList.begin(), partitionedWalkerList.end());
-    ASSERT_NE(itor, partitionedWalkerList.end());
-    auto partitionWalkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
-    auto &postSync = partitionWalkerCmd->getPostSync();
-    EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
-    EXPECT_EQ(eventAddress, postSync.getDestinationAddress());
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling, givenCooperativeKernelWhenEncodingDispatchKernelThenExpectPartitionSizeEqualWorkgroupSize) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;

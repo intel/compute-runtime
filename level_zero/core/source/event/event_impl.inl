@@ -58,7 +58,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->kernelEventCompletionData =
         std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
 
-    bool useContextEndOffset = eventPool->isImplicitScalingCapableFlagSet() && !NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled();
+    bool useContextEndOffset = false;
     int32_t overrideUseContextEndOffset = NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.get();
     if (overrideUseContextEndOffset != -1) {
         useContextEndOffset = !!overrideUseContextEndOffset;
@@ -112,6 +112,17 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     }
 
     return event;
+}
+
+template <typename TagSizeT>
+EventImp<TagSizeT>::EventImp(EventPool *eventPool, int index, Device *device, bool tbxMode)
+    : Event(eventPool, index, device), tbxMode(tbxMode) {
+    contextStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextStartOffset();
+    contextEndOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextEndOffset();
+    globalStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getGlobalStartOffset();
+    globalEndOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getGlobalEndOffset();
+    timestampSizeInDw = (sizeof(TagSizeT) / sizeof(uint32_t));
+    singlePacketSize = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
 }
 
 template <typename TagSizeT>

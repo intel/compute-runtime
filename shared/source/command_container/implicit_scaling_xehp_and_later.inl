@@ -241,10 +241,7 @@ inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStr
 
 template <typename GfxFamily>
 inline uint32_t ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset() {
-    if (ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-        return static_cast<uint32_t>(sizeof(uint64_t));
-    }
-    return static_cast<uint32_t>(GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw());
+    return static_cast<uint32_t>(sizeof(uint64_t));
 }
 
 template <typename GfxFamily>

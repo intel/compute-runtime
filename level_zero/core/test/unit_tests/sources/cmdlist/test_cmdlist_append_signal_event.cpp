@@ -14,6 +14,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -264,8 +265,14 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
     commandList->partitionCount = 2;
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle()));
 
-    size_t expectedSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false) +
-                          (2 * sizeof(MI_LOAD_REGISTER_IMM));
+    size_t expectedSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false);
+
+    auto unifiedPostSyncLayout = device->getL0GfxCoreHelper().hasUnifiedPostSyncAllocationLayout();
+
+    if (!unifiedPostSyncLayout) {
+        expectedSize += (2 * sizeof(MI_LOAD_REGISTER_IMM));
+    }
+
     size_t usedSize = cmdStream->getUsed() - offset;
     EXPECT_EQ(expectedSize, usedSize);
 
@@ -286,10 +293,15 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
         auto endLriItor = cmdList.rbegin();
 
         lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*endLriItor);
-        ASSERT_NE(nullptr, lriCmd);
 
-        EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, lriCmd->getRegisterOffset());
-        EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), lriCmd->getDataDword());
+        if (unifiedPostSyncLayout) {
+            EXPECT_EQ(nullptr, lriCmd);
+        } else {
+            ASSERT_NE(nullptr, lriCmd);
+
+            EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, lriCmd->getRegisterOffset());
+            EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), lriCmd->getDataDword());
+        }
     }
 
     event->setEventTimestampFlag(false);

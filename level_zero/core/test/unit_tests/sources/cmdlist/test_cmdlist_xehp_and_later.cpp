@@ -94,21 +94,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
     EXPECT_TRUE(cmdSba->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
 }
 
-HWTEST2_F(CommandListTests, givenDebugFlagSetWhenCallingRegisterOffsetThenDontProgramMmio, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(0);
-
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-    auto &commandContainer = pCommandList->getCmdContainer();
-
-    auto offset = commandContainer.getCommandStream()->getUsed();
-
-    pCommandList->appendDispatchOffsetRegister(true, true);
-
-    EXPECT_EQ(offset, commandContainer.getCommandStream()->getUsed());
-}
-
 HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeControlPriorToNonPipelinedStateCommandIsEnabledThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed, IsAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -548,12 +533,8 @@ HWTEST2_F(CommandListAppendLaunchKernelMultiTileCompactL3FlushDisabledTest,
     arg.expectedKernelCount = 1;
     arg.expectedPacketsInUse = 4;
     arg.expectedPostSyncPipeControls = 1;
-    arg.expectedWalkerPostSyncOp = 3;
+    arg.expectedWalkerPostSyncOp = 1;
     arg.postSyncAddressZero = false;
-
-    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-        arg.expectedWalkerPostSyncOp = 1;
-    }
 
     input.eventPoolFlags = 0;
 
@@ -664,7 +645,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             expectedWalkerPostSyncOp = 1;
         }
 
-        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled() && expectedWalkerPostSyncOp == 3 && eventPoolFlags == 0 && multiTile != 0) {
+        if (expectedWalkerPostSyncOp == 3 && eventPoolFlags == 0 && multiTile != 0) {
             expectedWalkerPostSyncOp = 1;
         }
 
@@ -1356,7 +1337,6 @@ HWTEST2_F(MultiTileCommandListSignalAllEventPacketTest, givenSignalPacketsEventW
 
 struct MultiTileCommandListSignalAllocLayoutTest : public MultiTileCommandListSignalAllEventPacketTest {
     void SetUp() override {
-        debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
         MultiTileCommandListSignalAllEventPacketTest::SetUp();
     }
 };

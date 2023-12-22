@@ -1261,13 +1261,9 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
           IsXeHpOrXeHpgCore) {
     arg.expectedPacketsInUse = 8;
     arg.expectedKernelCount = 3;
-    arg.expectedWalkerPostSyncOp = 3;
+    arg.expectedWalkerPostSyncOp = 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
-
-    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-        arg.expectedWalkerPostSyncOp = 1;
-    }
 
     input.srcPtr = reinterpret_cast<void *>(0x1231);
     input.dstPtr = reinterpret_cast<void *>(0x200002345);
@@ -1307,13 +1303,9 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
           IsXeHpOrXeHpgCore) {
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = 3;
+    arg.expectedWalkerPostSyncOp = 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
-
-    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-        arg.expectedWalkerPostSyncOp = 1;
-    }
 
     input.srcPtr = reinterpret_cast<void *>(0x1000);
     input.dstPtr = reinterpret_cast<void *>(0x20000000);
@@ -1446,13 +1438,9 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
           IsXeHpOrXeHpgCore) {
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = 3;
+    arg.expectedWalkerPostSyncOp = 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
-
-    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-        arg.expectedWalkerPostSyncOp = 1;
-    }
 
     input.srcPtr = reinterpret_cast<void *>(0x1000);
     input.dstPtr = reinterpret_cast<void *>(0x20000000);

@@ -1517,8 +1517,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
-    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
-
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;

@@ -26,19 +26,7 @@ class KernelEventCompletionData : public NEO::TimestampPackets<TagSizeT, NEO::Ti
 template <typename TagSizeT>
 struct EventImp : public Event {
 
-    EventImp(EventPool *eventPool, int index, Device *device, bool tbxMode)
-        : Event(eventPool, index, device), tbxMode(tbxMode) {
-        contextStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextStartOffset();
-        contextEndOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextEndOffset();
-        globalStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getGlobalStartOffset();
-        globalEndOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getGlobalEndOffset();
-        timestampSizeInDw = (sizeof(TagSizeT) / sizeof(uint32_t));
-        singlePacketSize = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize();
-
-        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-            singlePacketSize = sizeof(uint64_t);
-        }
-    }
+    EventImp(EventPool *eventPool, int index, Device *device, bool tbxMode);
 
     ~EventImp() override {}
 

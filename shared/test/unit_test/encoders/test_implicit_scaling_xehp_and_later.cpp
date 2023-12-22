@@ -1564,15 +1564,3 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*bbStartList.begin());
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
 }
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, givenDebugFlagSetWhenCheckingImmWriteOffsetThenReturnQwordSize) {
-    EXPECT_EQ(static_cast<uint32_t>(GfxCoreHelperHw<FamilyType>::getSingleTimestampPacketSizeHw()), ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset());
-
-    debugManager.flags.EnableDynamicPostSyncAllocLayout.set(1);
-
-    if (ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-        EXPECT_EQ(static_cast<uint32_t>(sizeof(uint64_t)), ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset());
-    } else {
-        EXPECT_EQ(static_cast<uint32_t>(GfxCoreHelperHw<FamilyType>::getSingleTimestampPacketSizeHw()), ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset());
-    }
-}

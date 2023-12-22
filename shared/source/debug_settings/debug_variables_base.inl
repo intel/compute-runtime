@@ -254,7 +254,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlush, -1, "-1: default,  0: Tlb flush d
 DECLARE_DEBUG_VARIABLE(int32_t, DebugSetMemoryDiagnosticsDelay, -1, "-1: default, >=0: delay time in minutes necessary for completion of Memory diagnostics")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceStateVerification, -1, "-1: default, 0: disable, 1: enable check of device state before submit on Windows")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceStateVerificationAfterFailedSubmission, -1, "-1: default, 0: disable, 1: enable check of device state after failed submit on Windows")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableDynamicPostSyncAllocLayout, -1, "-1: default, 0: Keep Timestamp size layout, 1: Use write immediate layout (qword) and switch dynamically to TS for profiling")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintTimestampPacketUsage, -1, "-1: default, 0: Disabled, 1: Print when TSP is allocated, initialized, returned to pool, etc.")
 DECLARE_DEBUG_VARIABLE(int32_t, SynchronizeEventBeforeReset, -1, "-1: default, 0: Disabled, 1: Synchronize Event completion on host before calling reset. 2: Synchronize + print extra logs.")
 DECLARE_DEBUG_VARIABLE(int32_t, TrackNumCsrClientsOnSyncPoints, -1, "-1: default, 0: Disabled, 1: If set, synchronization points like zeEventHostSynchronize will unregister CmdQ from CSR clients")

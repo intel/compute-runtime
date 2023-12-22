@@ -520,7 +520,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendDispatchOffsetRegister(bool workloadPartitionEvent, bool beforeProfilingCmds) {
-    if (workloadPartitionEvent && NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+    if (workloadPartitionEvent && !device->getL0GfxCoreHelper().hasUnifiedPostSyncAllocationLayout()) {
         auto offset = beforeProfilingCmds ? NEO::ImplicitScalingDispatch<GfxFamily>::getTimeStampPostSyncOffset() : NEO::ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset();
 
         NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(), offset);

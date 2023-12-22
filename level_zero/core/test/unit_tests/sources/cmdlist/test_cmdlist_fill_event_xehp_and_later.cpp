@@ -935,10 +935,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     // two kernels and each kernel uses two packets (for two tiles), in total 4
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 2;
-    arg.expectedWalkerPostSyncOp = 3;
-    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-        arg.expectedWalkerPostSyncOp = 1;
-    }
+    arg.expectedWalkerPostSyncOp = 1;
 
     arg.expectedPostSyncPipeControls = 0;
     if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
@@ -991,14 +988,10 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     // kernel uses 4 packets, in addition to kernel two packets, use 2 packets to two tile cache flush
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = 3;
+    arg.expectedWalkerPostSyncOp = 1;
     // cache flush with event signal
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
-
-    if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-        arg.expectedWalkerPostSyncOp = 1;
-    }
 
     input.eventPoolFlags = 0;
 
@@ -1216,10 +1209,7 @@ HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
     } else {
         arg.expectedPacketsInUse = 4;
         arg.expectedKernelCount = 2;
-        arg.expectedWalkerPostSyncOp = 3;
-        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-            arg.expectedWalkerPostSyncOp = 1;
-        }
+        arg.expectedWalkerPostSyncOp = 1;
         arg.expectedPostSyncPipeControls = 0;
         arg.postSyncAddressZero = false;
         input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();

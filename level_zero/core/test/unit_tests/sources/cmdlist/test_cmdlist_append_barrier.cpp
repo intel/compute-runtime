@@ -13,6 +13,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
@@ -307,6 +308,8 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         using MI_MATH = typename FamilyType::MI_MATH;
         using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
+        auto &rootDeviceEnv = device->getNEODevice()->getRootDeviceEnvironment();
+
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
         eventPoolDesc.count = 2;
@@ -354,7 +357,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         }
 
         size_t postBarrierSynchronization = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false) +
-                                            NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(device->getNEODevice()->getRootDeviceEnvironment());
+                                            NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnv);
         size_t stopRegisters = timestampRegisters + postBarrierSynchronization;
 
         auto useSizeBefore = cmdListStream->getUsed();
@@ -363,8 +366,10 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(2u, eventTimeStamp->getPacketsInUse());
 
+        auto unifiedPostSyncLayout = device->getL0GfxCoreHelper().hasUnifiedPostSyncAllocationLayout();
+
         size_t totaSizedBarrierWithTimestampEvent = multiTileBarrierSize + timestampRegisters + stopRegisters;
-        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+        if (!unifiedPostSyncLayout) {
             totaSizedBarrierWithTimestampEvent += 4 * sizeof(MI_LOAD_REGISTER_IMM);
         }
 
@@ -374,7 +379,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         GenCmdList cmdList;
 
         auto registersSizeToParse = timestampRegisters;
-        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+        if (!unifiedPostSyncLayout) {
             registersSizeToParse += sizeof(MI_LOAD_REGISTER_IMM);
         }
 
@@ -389,7 +394,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
                                                true);
 
         auto barrierOffset = timestampRegisters;
-        if (NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
+        if (!unifiedPostSyncLayout) {
             barrierOffset += 2 * sizeof(MI_LOAD_REGISTER_IMM);
         }
 

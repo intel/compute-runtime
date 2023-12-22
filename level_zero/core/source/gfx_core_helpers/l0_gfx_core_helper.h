@@ -86,6 +86,8 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool platformSupportsImmediateComputeFlushTask() const = 0;
     virtual zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const = 0;
     virtual uint32_t getCmdListWaitOnMemoryDataSize() const = 0;
+    virtual bool hasUnifiedPostSyncAllocationLayout() const = 0;
+    virtual uint32_t getImmediateWritePostSyncOffset() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -125,6 +127,8 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool platformSupportsImmediateComputeFlushTask() const override;
     zet_debug_regset_type_intel_gpu_t getRegsetTypeForLargeGrfDetection() const override;
     uint32_t getCmdListWaitOnMemoryDataSize() const override;
+    bool hasUnifiedPostSyncAllocationLayout() const override;
+    uint32_t getImmediateWritePostSyncOffset() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

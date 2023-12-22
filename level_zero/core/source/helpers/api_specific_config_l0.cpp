@@ -37,10 +37,6 @@ bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
     return false;
 }
 
-bool ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled() {
-    return (NEO::debugManager.flags.EnableDynamicPostSyncAllocLayout.get() != 0);
-}
-
 ApiSpecificConfig::ApiType ApiSpecificConfig::getApiType() {
     return ApiSpecificConfig::L0;
 }

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -885,6 +886,20 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperOnGenPlatformsWhenGettingPlat
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
+}
+
+HWTEST_F(L0GfxCoreHelperTest, whenAskingForUnifiedPostSyncAllocLayoutThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    EXPECT_FALSE(l0GfxCoreHelper.hasUnifiedPostSyncAllocationLayout());
+}
+
+HWTEST_F(L0GfxCoreHelperTest, whenAskingForImmediateWritePostSyncOffsetThenReturnValueFromImplicitScalingHelper) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset(), l0GfxCoreHelper.getImmediateWritePostSyncOffset());
 }
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultUseImmediateFlushTaskThenUsePlatformDefaultSetting) {

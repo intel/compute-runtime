@@ -393,9 +393,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     if (args.partitionCount > 1 && !args.isInternal) {
         const uint64_t workPartitionAllocationGpuVa = args.device->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
-        if (args.eventAddress != 0 && !NEO::ApiSpecificConfig::isDynamicPostSyncAllocLayoutEnabled()) {
-            walkerCmd.getPostSync().setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
-        }
+
         ImplicitScalingDispatch<Family>::dispatchCommands(*listCmdBufferStream,
                                                           walkerCmd,
                                                           &args.outWalkerPtr,

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
@@ -51,6 +52,16 @@ uint32_t L0GfxCoreHelperHw<Family>::getCmdListWaitOnMemoryDataSize() const {
     } else {
         return sizeof(uint32_t);
     }
+}
+
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::hasUnifiedPostSyncAllocationLayout() const {
+    return false;
+}
+
+template <typename Family>
+uint32_t L0GfxCoreHelperHw<Family>::getImmediateWritePostSyncOffset() const {
+    return NEO::ImplicitScalingDispatch<Family>::getImmediateWritePostSyncOffset();
 }
 
 } // namespace L0
