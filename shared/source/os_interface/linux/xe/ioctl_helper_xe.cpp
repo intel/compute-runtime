@@ -1243,7 +1243,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
         bind.bind.flags = DRM_XE_VM_BIND_FLAG_ASYNC;
         bind.bind.obj_offset = vmBindParams.offset;
-        bind.bind.pat_index = vmBindParams.patIndex;
+        bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
 
         if (isBind) {
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
