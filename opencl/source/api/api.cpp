@@ -3897,7 +3897,8 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
         return nullptr;
     }
 
-    if (size > neoContext->getDevice(0u)->getSharedDeviceInfo().maxMemAllocSize && !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
+    if (size == 0 || (size > neoContext->getDevice(0u)->getSharedDeviceInfo().maxMemAllocSize &&
+                      !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize)) {
         err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }
@@ -3942,8 +3943,9 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
         return nullptr;
     }
 
-    if (size > neoDevice->getDevice().getDeviceInfo().maxMemAllocSize &&
-        !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
+    if (size == 0 ||
+        (size > neoDevice->getDevice().getDeviceInfo().maxMemAllocSize &&
+         !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize)) {
         err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }
@@ -3999,7 +4001,9 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
         return nullptr;
     }
 
-    if (size > neoDevice->getSharedDeviceInfo().maxMemAllocSize && !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
+    if (size == 0 ||
+        (size > neoDevice->getSharedDeviceInfo().maxMemAllocSize &&
+         !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize)) {
         err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }

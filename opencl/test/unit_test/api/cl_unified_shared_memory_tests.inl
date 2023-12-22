@@ -25,6 +25,17 @@ TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocINTELisCalledWithoutContextTh
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
+TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledWithSizeZeroThenInvalidBufferSizeIsReturned) {
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 0u, 0, &retVal);
+    EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
+    EXPECT_EQ(nullptr, unifiedMemoryHostAllocation);
+}
+
 TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesHostUnifiedMemoryAllocation) {
     MockContext mockContext;
     auto device = mockContext.getDevice(0u);
@@ -128,6 +139,17 @@ TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocINTELisCalledWithWrongConte
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
+TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledWithSizeZeroThenItInvalidBufferSizeIsReturned) {
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 0u, 0, &retVal);
+    EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
+    EXPECT_EQ(nullptr, unifiedMemoryDeviceAllocation);
+}
+
 TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledThenItAllocatesDeviceUnifiedMemoryAllocation) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
@@ -184,6 +206,17 @@ TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongConte
     auto ptr = clSharedMemAllocINTEL(0, 0, nullptr, 0, 0, &retVal);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledWithSizeZeroThenInvalidBufferSizeIsReturned) {
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
+    cl_int retVal = CL_SUCCESS;
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, mockContext.getDevice(0u), nullptr, 0u, 0, &retVal);
+    EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
+    EXPECT_EQ(nullptr, unifiedMemorySharedAllocation);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongDeviceThenInvalidDeviceErrorIsReturned) {
@@ -1145,7 +1178,7 @@ TEST(clUnifiedSharedMemoryTests, givenInvalidMemPropertiesWhenClSharedMemAllocIn
     EXPECT_EQ(nullptr, unifiedMemorySharedAllocation);
 }
 
-TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndClMemAllowUnrestrictedSizeFlagWhenCreateAllocationThenSuccesIsReturned) {
+TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndClMemAllowUnrestrictedSizeFlagWhenCreateAllocationThenSuccessIsReturned) {
     MockContext mockContext;
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL, 0};
@@ -1188,7 +1221,7 @@ TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxM
     }
 }
 
-TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndDebugFlagSetWhenCreateAllocationThenSuccesIsReturned) {
+TEST(clUnifiedSharedMemoryTests, givenUnifiedMemoryAllocationSizeGreaterThanMaxMemAllocSizeAndDebugFlagSetWhenCreateAllocationThenSuccessIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.AllowUnrestrictedSize.set(1);
     MockContext mockContext;

@@ -2469,7 +2469,7 @@ TEST_F(MemoryRelaxedSizeTests,
 }
 
 TEST_F(MemoryRelaxedSizeTests,
-       givenCallToHostAllocWithLargerThanAllowedSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
+       givenCallToHostAllocWithLargerThanAllowedSizeOrZeroSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2477,6 +2477,11 @@ TEST_F(MemoryRelaxedSizeTests,
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocHostMem(&hostDesc,
                                                size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
+    EXPECT_EQ(nullptr, ptr);
+
+    result = context->allocHostMem(&hostDesc,
+                                   0u, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
     EXPECT_EQ(nullptr, ptr);
 }
@@ -2575,7 +2580,7 @@ TEST_F(MemoryRelaxedSizeTests,
 }
 
 TEST_F(MemoryRelaxedSizeTests,
-       givenCallToDeviceAllocWithLargerThanAllowedSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
+       givenCallToDeviceAllocWithLargerThanAllowedSizeOrZeroSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2584,6 +2589,12 @@ TEST_F(MemoryRelaxedSizeTests,
     ze_result_t result = context->allocDeviceMem(device->toHandle(),
                                                  &deviceDesc,
                                                  size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
+    EXPECT_EQ(nullptr, ptr);
+
+    result = context->allocDeviceMem(device->toHandle(),
+                                     &deviceDesc,
+                                     0u, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
     EXPECT_EQ(nullptr, ptr);
 }
@@ -2805,7 +2816,7 @@ TEST_F(MemoryRelaxedSizeTests,
 }
 
 TEST_F(MemoryRelaxedSizeTests,
-       givenCallToSharedAllocWithLargerThanAllowedSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
+       givenCallToSharedAllocWithLargerThanAllowedSizeOrZeroSizeAndWithoutRelaxedFlagThenAllocationIsNotMade) {
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2816,6 +2827,13 @@ TEST_F(MemoryRelaxedSizeTests,
                                                  &deviceDesc,
                                                  &hostDesc,
                                                  size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
+    EXPECT_EQ(nullptr, ptr);
+
+    result = context->allocSharedMem(device->toHandle(),
+                                     &deviceDesc,
+                                     &hostDesc,
+                                     0u, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
     EXPECT_EQ(nullptr, ptr);
 }

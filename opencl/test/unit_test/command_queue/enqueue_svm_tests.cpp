@@ -766,7 +766,7 @@ TEST_F(EnqueueSvmTest, GivenNullSvmPtrWhenFillingMemoryThenInvalidValueErrorIsRe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-HWTEST_F(EnqueueSvmTest, givenSvmAllocWhenEnqueueSvmFillThenSuccesIsReturnedAndAddressIsProperlyAligned) {
+HWTEST_F(EnqueueSvmTest, givenSvmAllocWhenEnqueueSvmFillThenSuccessIsReturnedAndAddressIsProperlyAligned) {
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);

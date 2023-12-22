@@ -1236,7 +1236,7 @@ TEST_F(CompilerInterfaceTest, whenIgcTranlationContextCreationFailsThenErrorIsRe
     EXPECT_EQ(TranslationOutput::ErrorCode::unknownError, err);
 }
 
-TEST_F(CompilerInterfaceTest, givenCompilerInterfaceWhenGetSpecializationConstantsThenSuccesIsReturned) {
+TEST_F(CompilerInterfaceTest, givenCompilerInterfaceWhenGetSpecializationConstantsThenSuccessIsReturned) {
     TranslationOutput translationOutput;
     NEO::SpecConstantInfo specConstInfo;
     auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, inputArgs.src, specConstInfo);
