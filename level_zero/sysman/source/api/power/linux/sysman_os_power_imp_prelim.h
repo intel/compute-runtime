@@ -20,7 +20,7 @@ namespace Sysman {
 
 class SysmanKmdInterface;
 class SysFsAccessInterface;
-
+class SysmanProductHelper;
 class PlatformMonitoringTech;
 class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   public:
@@ -56,6 +56,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     uint32_t subdeviceId = 0;
     uint32_t powerLimitCount = 0;
     PRODUCT_FAMILY productFamily{};
+    SysmanProductHelper *pSysmanProductHelper = nullptr;
     class PowerLimitRestorer;
 
     ze_result_t getErrorCode(ze_result_t result) {

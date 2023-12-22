@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
@@ -285,14 +286,8 @@ ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
             pSustained[count].source = ZES_POWER_SOURCE_ANY;
             pSustained[count].level = ZES_POWER_LEVEL_PEAK;
             pSustained[count].interval = 0; // Hardcode to 100 micro seconds i.e 0.1 milli seconds
-            if (productFamily == IGFX_PVC) {
-                pSustained[count].limit = static_cast<int32_t>(val);
-                pSustained[count].limitUnit = ZES_LIMIT_UNIT_CURRENT;
-            } else {
-                val /= milliFactor; // Convert microwatts to milliwatts
-                pSustained[count].limit = static_cast<int32_t>(val);
-                pSustained[count].limitUnit = ZES_LIMIT_UNIT_POWER;
-            }
+            pSustained[count].limit = pSysmanProductHelper->getPowerLimitValue(val);
+            pSustained[count].limitUnit = pSysmanProductHelper->getPowerLimitUnit();
         }
     }
     return result;
@@ -317,11 +312,7 @@ ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
                     return getErrorCode(result);
                 }
             } else if (pSustained[i].level == ZES_POWER_LEVEL_PEAK) {
-                if (productFamily == IGFX_PVC) {
-                    val = pSustained[i].limit;
-                } else {
-                    val = static_cast<uint64_t>(pSustained[i].limit) * milliFactor; // Convert milliwatts to microwatts
-                }
+                val = pSysmanProductHelper->setPowerLimitValue(pSustained[i].limit);
                 result = pSysfsAccess->write(criticalPowerLimit, val);
                 if (ZE_RESULT_SUCCESS != result) {
                     NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), criticalPowerLimit.c_str(), getErrorCode(result));
@@ -407,6 +398,7 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     productFamily = pLinuxSysmanImp->getProductFamily();
+    pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
 }
 
 OsPower *OsPower::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {

@@ -131,5 +131,22 @@ void SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(PlatformMonitoringTech
     voltage = -1.0;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+int32_t SysmanProductHelperHw<gfxProduct>::getPowerLimitValue(uint64_t value) {
+    uint64_t val = value / milliFactor;
+    return static_cast<int32_t>(val);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint64_t SysmanProductHelperHw<gfxProduct>::setPowerLimitValue(int32_t value) {
+    uint64_t val = static_cast<uint64_t>(value) * milliFactor;
+    return val;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+zes_limit_unit_t SysmanProductHelperHw<gfxProduct>::getPowerLimitUnit() {
+    return ZES_LIMIT_UNIT_POWER;
+}
+
 } // namespace Sysman
 } // namespace L0

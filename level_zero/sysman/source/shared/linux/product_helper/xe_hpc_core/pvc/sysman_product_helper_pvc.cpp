@@ -94,6 +94,21 @@ bool SysmanProductHelperHw<gfxProduct>::isRepairStatusSupported() {
     return true;
 }
 
+template <>
+int32_t SysmanProductHelperHw<gfxProduct>::getPowerLimitValue(uint64_t value) {
+    return static_cast<int32_t>(value);
+}
+
+template <>
+uint64_t SysmanProductHelperHw<gfxProduct>::setPowerLimitValue(int32_t value) {
+    return static_cast<uint64_t>(value);
+}
+
+template <>
+zes_limit_unit_t SysmanProductHelperHw<gfxProduct>::getPowerLimitUnit() {
+    return ZES_LIMIT_UNIT_CURRENT;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman
