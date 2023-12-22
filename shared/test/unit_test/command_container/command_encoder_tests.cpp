@@ -7,12 +7,14 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -475,4 +477,51 @@ HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerSta
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
     productHelper.adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
+}
+
+HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysReturnStubs, IsAtMostGen12lp) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    MockExecutionEnvironment executionEnvironment{};
+    auto rootExecEnv = executionEnvironment.rootDeviceEnvironments[0].get();
+
+    uint8_t buffer[128] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    WalkerType walkerCmd = {};
+
+    DeviceBitfield deviceBitField = 1;
+    uint32_t partitionCount = 1;
+
+    Vec3<size_t> vec3 = {1, 1, 1};
+
+    EXPECT_EQ(0u, ImplicitScalingDispatch<FamilyType>::template getSize<WalkerType>(false, false, deviceBitField, vec3, vec3));
+
+    void *ptr = nullptr;
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(linearStream, walkerCmd, &ptr, deviceBitField, RequiredPartitionDim::x, partitionCount, false, false, false, false, 0, *defaultHwInfo);
+    EXPECT_EQ(0u, linearStream.getUsed());
+
+    EXPECT_TRUE(ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired());
+
+    EXPECT_EQ(0u, ImplicitScalingDispatch<FamilyType>::getBarrierSize(*rootExecEnv, false, false));
+
+    PipeControlArgs pcArgs = {};
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(linearStream, deviceBitField, pcArgs, *rootExecEnv, 0, 0, false, false);
+    EXPECT_EQ(0u, linearStream.getUsed());
+
+    EXPECT_EQ(0u, ImplicitScalingDispatch<FamilyType>::getRegisterConfigurationSize());
+
+    ImplicitScalingDispatch<FamilyType>::dispatchRegisterConfiguration(linearStream, 0, 0);
+    EXPECT_EQ(0u, linearStream.getUsed());
+
+    EXPECT_EQ(0u, ImplicitScalingDispatch<FamilyType>::getOffsetRegisterSize());
+
+    ImplicitScalingDispatch<FamilyType>::dispatchOffsetRegister(linearStream, 0);
+    EXPECT_EQ(0u, linearStream.getUsed());
+
+    EXPECT_EQ(static_cast<uint32_t>(sizeof(uint64_t)), ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset());
+
+    EXPECT_EQ(static_cast<uint32_t>(GfxCoreHelperHw<FamilyType>::getSingleTimestampPacketSizeHw()), ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset());
+
+    EXPECT_FALSE(ImplicitScalingDispatch<FamilyType>::platformSupportsImplicitScaling(*rootExecEnv));
 }

@@ -81,3 +81,5 @@ template struct EncodeL3State<Family>;
 template void EncodeDispatchKernel<Family>::programBarrierEnable<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
 template void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue);
 } // namespace NEO
+
+#include "shared/source/command_container/implicit_scaling_before_xe_hp.inl"
