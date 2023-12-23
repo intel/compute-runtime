@@ -571,12 +571,12 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
 
             auto ssInHeap = image->getBindlessSlot();
             auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
-            // redescribed image's surface state is after image's implicit args
-            auto bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * 2;
+            // redescribed image's surface state is after image's state
+            auto bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize;
             auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
 
-            image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize * 2), 0u);
+            image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u);
             isBindlessOffsetSet[argIndex] = true;
             this->residencyContainer.push_back(ssInHeap->heapAllocation);
         } else {
@@ -588,10 +588,6 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
         image->copyRedescribedSurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful);
     }
     residencyContainer[argIndex] = image->getAllocation();
-
-    if (image->getImplicitArgsAllocation()) {
-        this->residencyContainer.push_back(image->getImplicitArgsAllocation());
-    }
 
     return ZE_RESULT_SUCCESS;
 }
@@ -782,8 +778,6 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
 
             image->copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, isMediaBlockImage);
-            image->copyImplicitArgsSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u);
-
             isBindlessOffsetSet[argIndex] = true;
             this->residencyContainer.push_back(ssInHeap->heapAllocation);
         } else {
@@ -796,10 +790,6 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     }
 
     residencyContainer[argIndex] = image->getAllocation();
-
-    if (image->getImplicitArgsAllocation()) {
-        this->residencyContainer.push_back(image->getImplicitArgsAllocation());
-    }
 
     auto imageInfo = image->getImageInfo();
     auto clChannelType = getClChannelDataType(image->getImageDesc().format);

@@ -25,7 +25,6 @@ struct WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>
 
     ~WhiteBox() override {}
 
-    using BaseClass::implicitArgsSurfaceState;
     using BaseClass::redescribedSurfaceState;
     using BaseClass::surfaceState;
 };

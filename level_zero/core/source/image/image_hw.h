@@ -22,7 +22,6 @@ struct ImageCoreFamily : public ImageImp {
     ze_result_t initialize(Device *device, const ze_image_desc_t *desc) override;
     void copySurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset, bool isMediaBlockArg) override;
     void copyRedescribedSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) override;
-    void copyImplicitArgsSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) override;
     bool isMediaFormat(const ze_image_format_layout_t layout) {
         if (layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_NV12 ||
             layout == ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_P010 ||
@@ -50,7 +49,6 @@ struct ImageCoreFamily : public ImageImp {
     bool isSuitableForCompression(const StructuresLookupTable &structuresLookupTable, const NEO::ImageInfo &imgInfo);
 
     RENDER_SURFACE_STATE surfaceState;
-    RENDER_SURFACE_STATE implicitArgsSurfaceState;
     RENDER_SURFACE_STATE redescribedSurfaceState;
 };
 
