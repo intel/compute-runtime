@@ -1905,25 +1905,27 @@ size_t DrmMemoryManager::getSizeOfChunk(size_t allocSize) {
     size_t chunkSize = MemoryConstants::chunkThreshold;
     size_t chunkMask = (~(MemoryConstants::chunkThreshold - 1));
     size_t numChunk = debugManager.flags.NumberOfBOChunks.get();
+    size_t alignSize = alignUp(allocSize, MemoryConstants::pageSize64k);
     if (debugManager.flags.SetBOChunkingSize.get() != -1) {
         chunkSize = debugManager.flags.SetBOChunkingSize.get() & chunkMask;
         if (chunkSize == 0) {
             chunkSize = MemoryConstants::chunkThreshold;
         }
-        numChunk = allocSize / chunkSize;
+        numChunk = alignSize / chunkSize;
         if (numChunk < 2) {
             numChunk = 2;
         }
     }
     if (numChunk > 1) {
-        chunkSize = (allocSize / numChunk) & chunkMask;
+        chunkSize = (alignSize / numChunk) & chunkMask;
         if (chunkSize == 0) {
             chunkSize = MemoryConstants::chunkThreshold;
         }
-        numChunk = allocSize / chunkSize;
-        while (((!Math::isPow2(numChunk)) || (chunkSize & (MemoryConstants::chunkThreshold - 1))) && (numChunk > 2)) {
-            numChunk -= 1;
-            chunkSize = allocSize / numChunk;
+        while ((alignSize % chunkSize) && ((alignSize / chunkSize) > 1)) {
+            chunkSize += MemoryConstants::chunkThreshold;
+        }
+        while ((alignSize % chunkSize) && (chunkSize >= (2 * MemoryConstants::chunkThreshold))) {
+            chunkSize -= MemoryConstants::chunkThreshold;
         }
     }
     return chunkSize;
@@ -1939,7 +1941,8 @@ bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *alloc
     auto memoryInfo = drm->getMemoryInfo();
     uint32_t handle = 0;
     auto memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
-    uint32_t numOfChunks = static_cast<uint32_t>(boSize / getSizeOfChunk(boSize));
+    auto alignSize = alignUp(boSize, MemoryConstants::pageSize64k);
+    uint32_t numOfChunks = static_cast<uint32_t>(alignSize / getSizeOfChunk(alignSize));
 
     auto gmm = allocation->getGmm(0u);
     auto patIndex = drm->getPatIndex(gmm, allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, !allocation->isAllocatedInLocalMemoryPool());
@@ -2316,18 +2319,19 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     BufferObjects bos{};
     auto currentAddress = cpuPointer;
     auto remainingSize = size;
+    auto alignSize = alignUp(remainingSize, MemoryConstants::pageSize64k);
     auto remainingMemoryBanks = allocationData.storageInfo.memoryBanks;
     auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(allocationData.storageInfo.getNumBanks());
 
     bool useChunking = false;
     uint32_t numOfChunks = 0;
 
-    if (checkAllocationForChunking(size, drm.getMinimalSizeForChunking(),
+    if (checkAllocationForChunking(alignSize, drm.getMinimalSizeForChunking(),
                                    true, (!executionEnvironment.isDebuggingEnabled()),
                                    (drm.getChunkingMode() & chunkingModeShared), true)) {
         numHandles = 1;
         useChunking = true;
-        numOfChunks = static_cast<uint32_t>(size / getSizeOfChunk(size));
+        numOfChunks = static_cast<uint32_t>(alignSize / getSizeOfChunk(alignSize));
     }
 
     const auto memoryPool = MemoryPool::localMemory;

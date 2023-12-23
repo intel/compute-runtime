@@ -5318,11 +5318,20 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
     EXPECT_EQ(expectedSize, chunkSize);
 }
 
-TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor7ChunksThenCorrectedValueReturned) {
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkFor6ChunksThenCorrectedValueReturned) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.NumberOfBOChunks.set(6);
     size_t allocSize = 2097152;
     size_t expectedSize = 524288;
+    size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
+    EXPECT_EQ(expectedSize, chunkSize);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemoryManagerWhenGetSizeOfChunkForUnevenChunksThenCorrectedValueReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.NumberOfBOChunks.set(2);
+    size_t allocSize = 2162688;
+    size_t expectedSize = 720896;
     size_t chunkSize = memoryManager->getSizeOfChunk(allocSize);
     EXPECT_EQ(expectedSize, chunkSize);
 }
