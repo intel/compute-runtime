@@ -678,7 +678,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
         return nullptr;
     }
     bo->setAddress(gpuRange);
-    bo->setIsImage(allocationData.type);
 
     [[maybe_unused]] auto ret2 = bo->setTiling(ioctlHelper->getDrmParamValue(DrmParam::tilingY), static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
     DEBUG_BREAK_IF(ret2 != true);
@@ -1068,7 +1067,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         drmAllocation->setDefaultGmm(gmm);
 
         bo->setPatIndex(drm.getPatIndex(gmm, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool)));
-        bo->setIsImage(properties.allocationType);
     }
 
     if (!reuseSharedAllocation) {
@@ -1899,7 +1897,6 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
     }
 
     bo->setAddress(gpuAddress);
-    bo->setIsImage(allocationType);
 
     return bo;
 }

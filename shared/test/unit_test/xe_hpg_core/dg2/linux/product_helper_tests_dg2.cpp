@@ -6,9 +6,7 @@
  */
 
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -44,25 +42,4 @@ DG2TEST_F(Dg2ProductHelperLinux, GivenDg2WhenConfigureHardwareCustomThenKmdNotif
     EXPECT_EQ(150ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     EXPECT_EQ(20ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
-}
-
-DG2TEST_F(Dg2ProductHelperLinux, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
-    EXPECT_EQ(productHelper->isTlbFlushRequired(pInHwInfo, true, false), !DG2::isG10(pInHwInfo));
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(pInHwInfo, false, false));
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(pInHwInfo, false, true));
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(pInHwInfo, true, true));
-}
-
-DG2TEST_F(Dg2ProductHelperLinux, whenForceTlbFlushSetAndCheckIsTlbFlushRequiredThenReturnProperValue) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ForceTlbFlush.set(1);
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(pInHwInfo, false, true));
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(pInHwInfo, true, true));
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(pInHwInfo, false, false));
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(pInHwInfo, true, false));
-    debugManager.flags.ForceTlbFlush.set(0);
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(pInHwInfo, false, true));
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(pInHwInfo, true, true));
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(pInHwInfo, true, false));
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(pInHwInfo, true, false));
 }

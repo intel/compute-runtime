@@ -30,19 +30,13 @@ PVCTEST_F(PvcProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
 }
 
 PVCTEST_F(PvcProductHelper, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(*defaultHwInfo, true, true));
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(*defaultHwInfo, false, true));
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(*defaultHwInfo, true, false));
-    EXPECT_FALSE(productHelper->isTlbFlushRequired(*defaultHwInfo, false, false));
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }
 
 PVCTEST_F(PvcProductHelper, whenForceTlbFlushSetAndCheckIsTlbFlushRequiredThenReturnProperValue) {
     DebugManagerStateRestore restore;
     debugManager.flags.ForceTlbFlush.set(1);
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(*defaultHwInfo, false, true));
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(*defaultHwInfo, true, true));
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(*defaultHwInfo, true, false));
-    EXPECT_TRUE(productHelper->isTlbFlushRequired(*defaultHwInfo, false, false));
+    EXPECT_TRUE(productHelper->isTlbFlushRequired());
 }
 
 PVCTEST_F(PvcProductHelper, givenPVCRevId3AndAboveWhenGettingThreadEuRatioForScratchThen16IsReturned) {

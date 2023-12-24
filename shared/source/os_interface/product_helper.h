@@ -161,7 +161,7 @@ class ProductHelper {
     virtual bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const = 0;
     virtual bool isMidThreadPreemptionDisallowedForRayTracingKernels() const = 0;
     virtual bool isBufferPoolAllocatorSupported() const = 0;
-    virtual bool isTlbFlushRequired(const HardwareInfo &hwInfo, bool precondition, bool isDebuggerActive) const = 0;
+    virtual bool isTlbFlushRequired() const = 0;
     virtual bool isDummyBlitWaRequired() const = 0;
     virtual bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled) const = 0;
     virtual bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const = 0;

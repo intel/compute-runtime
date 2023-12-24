@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/linux/cache_info.h"
@@ -214,14 +213,6 @@ class BufferObject {
 
     bool isChunked = false;
 
-    void setIsImage(AllocationType type) {
-        this->isImageAllocation = type == AllocationType::image;
-    }
-
-    bool isImage() const {
-        return this->isImageAllocation;
-    }
-
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
 
@@ -239,7 +230,6 @@ class BufferObject {
     bool allowCapture = false;
     bool requiresImmediateBinding = false;
     bool requiresExplicitResidency = false;
-    bool isImageAllocation = false;
 
     MOCKABLE_VIRTUAL void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
     void printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal);
