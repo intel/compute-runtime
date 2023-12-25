@@ -47,12 +47,12 @@ ze_result_t readMcChannelCounters(PlatformMonitoringTech *pPmt, uint64_t &readCo
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringTech *pPmt, SysmanDeviceImp *pDevice, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subdeviceId) {
     auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
-
+    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     pBandwidth->readCounter = 0;
     pBandwidth->writeCounter = 0;
     pBandwidth->timestamp = 0;
     pBandwidth->maxBandwidth = 0;
-    ze_result_t result = readMcChannelCounters(pPmt, pBandwidth->readCounter, pBandwidth->writeCounter);
+    result = readMcChannelCounters(pPmt, pBandwidth->readCounter, pBandwidth->writeCounter);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
         return result;
@@ -60,7 +60,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     pBandwidth->maxBandwidth = 0u;
     const std::string maxBwFile = "prelim_lmem_max_bw_Mbps";
     uint64_t maxBw = 0;
-    pSysFsAccess->read(maxBwFile, maxBw);
+    result = pSysFsAccess->read(maxBwFile, maxBw);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Sysfsread for maxBw returning error:0x%x \n", __FUNCTION__, result);
+        return result;
+    }
     pBandwidth->maxBandwidth = maxBw * mbpsToBytesPerSecond;
     pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
     return result;

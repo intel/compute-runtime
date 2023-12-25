@@ -802,8 +802,12 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesMemoryG
 }
 
 HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesSysmanMemoryGetBandwidthForDg2PlatformAndReadingMaxBwFailsThenMaxBwIsReturnedAsZero, IsDG2) {
-    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        errno = ENOENT;
+        return -1;
+    });
 
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
     for (const auto &handle : handles) {
         ASSERT_NE(nullptr, handle);
         zes_mem_properties_t properties = {};
@@ -811,7 +815,7 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesSysmanM
 
         zes_mem_bandwidth_t bandwidth;
 
-        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_NOT_AVAILABLE);
         EXPECT_EQ(bandwidth.maxBandwidth, 0u);
     }
 }

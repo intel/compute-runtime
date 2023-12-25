@@ -15,17 +15,10 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
   )
 
 else()
-  if(SUPPORT_DG1)
-    list(APPEND L0_TESTS_SYSMAN_MEMORY_LINUX
-         ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_memory_dg1.cpp
-         ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory.h
-    )
-  else()
-    list(APPEND L0_TESTS_SYSMAN_MEMORY_LINUX
-         ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_memory.cpp
-         ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory.h
-    )
-  endif()
+  list(APPEND L0_TESTS_SYSMAN_MEMORY_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_memory.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory.h
+  )
 endif()
 
 if(UNIX)

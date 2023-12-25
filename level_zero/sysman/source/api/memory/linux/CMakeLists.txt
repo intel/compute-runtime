@@ -16,12 +16,6 @@ if(UNIX)
                    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_memory_imp_prelim.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_memory_imp_prelim.h
     )
-  elseif(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
-    target_sources(${L0_STATIC_LIB_NAME}
-                   PRIVATE
-                   ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_memory_imp.h
-                   ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_memory_imp_dg1.cpp
-    )
   else()
     target_sources(${L0_STATIC_LIB_NAME}
                    PRIVATE
@@ -29,4 +23,5 @@ if(UNIX)
                    ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_memory_imp.cpp
     )
   endif()
+
 endif()
