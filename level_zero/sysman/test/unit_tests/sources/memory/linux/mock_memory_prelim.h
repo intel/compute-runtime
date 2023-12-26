@@ -13,6 +13,8 @@
 
 #include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp_prelim.h"
 #include "level_zero/sysman/source/api/memory/sysman_memory_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
@@ -85,8 +87,6 @@ namespace Sysman {
 namespace ult {
 
 uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::hbm2e;
-std::string mockPhysicalSize = "0x00000040000000";
-uint64_t hbmRP0Frequency = 4200; // in MHz
 const std::string deviceMemoryHealth("device_memory_health");
 std::string gpuUpstreamPortPathInMemory = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
 const std::string baseTelemSysFS("/sys/class/intel_pmt");
@@ -105,36 +105,7 @@ struct MockMemorySysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     std::vector<ze_result_t> mockReadReturnStatus{};
     std::vector<std::string> mockReadStringValue{};
-    std::vector<uint64_t> mockReadUInt64Value{};
     bool isRepeated = false;
-
-    ze_result_t getVal(const std::string file, std::string &val) {
-        if ((file.compare("gt/gt0/addr_range") == 0) || (file.compare("gt/gt1/addr_range") == 0)) {
-            val = mockPhysicalSize;
-            return ZE_RESULT_SUCCESS;
-        }
-        val = "0";
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getValError(const std::string file, std::string &val) {
-        val = "0";
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getMemHealthValReturnErrorNotAvailable(const std::string file, std::string &val) {
-        if (file.compare(deviceMemoryHealth) == 0) {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getMemHealthReturnErrorUnknown(const std::string file, std::string &val) {
-        if (file.compare(deviceMemoryHealth) == 0) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
 
     ze_result_t read(const std::string file, std::string &val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
@@ -157,52 +128,6 @@ struct MockMemorySysfsAccess : public L0::Sysman::SysFsAccessInterface {
             val = "OK";
         }
         return result;
-    }
-
-    ze_result_t read(const std::string file, uint64_t &val) override {
-        ze_result_t result = ZE_RESULT_SUCCESS;
-        if (!mockReadReturnStatus.empty()) {
-            result = mockReadReturnStatus.front();
-            if (!mockReadUInt64Value.empty()) {
-                val = mockReadUInt64Value.front();
-            }
-
-            if (isRepeated != true) {
-                mockReadReturnStatus.erase(mockReadReturnStatus.begin());
-                if (!mockReadUInt64Value.empty()) {
-                    mockReadUInt64Value.erase(mockReadUInt64Value.begin());
-                }
-            }
-        }
-        return result;
-    }
-
-    ze_result_t getMemHealthDegraded(const std::string file, std::string &val) {
-        if (file.compare(deviceMemoryHealth) == 0) {
-            val = "REBOOT_ALARM";
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getMemHealthCritical(const std::string file, std::string &val) {
-        if (file.compare(deviceMemoryHealth) == 0) {
-            val = "DEGRADED";
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getMemHealthReplace(const std::string file, std::string &val) {
-        if (file.compare(deviceMemoryHealth) == 0) {
-            val = "DEGRADED_FAILED";
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getMemHealthUnknown(const std::string file, std::string &val) {
-        if (file.compare(deviceMemoryHealth) == 0) {
-            val = "RANDOM";
-        }
-        return ZE_RESULT_SUCCESS;
     }
 };
 
@@ -262,7 +187,7 @@ struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
         this->guid = guid;
     }
 
-    MockMemoryPmt(L0::Sysman::FsAccessInterface *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
+    MockMemoryPmt() = default;
     ze_result_t readValue(const std::string key, uint32_t &val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -437,52 +362,11 @@ struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
     }
 };
 
-struct MockMemoryFsAccess : public L0::Sysman::FsAccessInterface {
-    ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfTelemNodes) override {
-        if (directory.compare(baseTelemSysFS) == 0) {
-            listOfTelemNodes.push_back("telem1");
-            listOfTelemNodes.push_back("telem2");
-            listOfTelemNodes.push_back("telem3");
-            listOfTelemNodes.push_back("telem4");
-            listOfTelemNodes.push_back("telem5");
-            return ZE_RESULT_SUCCESS;
-        }
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t listDirectoryFailure(const std::string directory, std::vector<std::string> &events) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getRealPath(const std::string path, std::string &buf) override {
-        if (path.compare(sysfsPahTelem1) == 0) {
-            buf = realPathTelem1;
-        } else if (path.compare(sysfsPahTelem2) == 0) {
-            buf = realPathTelem2;
-        } else if (path.compare(sysfsPahTelem3) == 0) {
-            buf = realPathTelem3;
-        } else if (path.compare(sysfsPahTelem4) == 0) {
-            buf = realPathTelem4;
-        } else if (path.compare(sysfsPahTelem5) == 0) {
-            buf = realPathTelem5;
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getRealPathFailure(const std::string path, std::string &buf) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    MockMemoryFsAccess() = default;
-};
-
-class PublicLinuxMemoryImp : public L0::Sysman::LinuxMemoryImp {
+class MockSysmanKmdInterfaceI915Prelim : public L0::Sysman::SysmanKmdInterfaceI915Prelim {
   public:
-    PublicLinuxMemoryImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxMemoryImp(pOsSysman, onSubdevice, subdeviceId) {}
-    PublicLinuxMemoryImp() = default;
-    using LinuxMemoryImp::getHbmFrequency;
+    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
+    MockSysmanKmdInterfaceI915Prelim(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceI915Prelim(productFamily) {}
+    ~MockSysmanKmdInterfaceI915Prelim() override = default;
 };
 
 } // namespace ult

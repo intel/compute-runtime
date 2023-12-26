@@ -5,10 +5,17 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/source/os_interface/linux/system_info.h"
+
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <algorithm>
@@ -22,12 +29,65 @@ void SysmanProductHelperHw<gfxProduct>::getFrequencyStepSize(double *pStepSize) 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, const LinuxSysmanImp *pLinuxSysmanImp) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
+    auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
+
+    pProperties->location = ZES_MEM_LOC_DEVICE;
+    pProperties->type = ZES_MEM_TYPE_DDR;
+    pProperties->onSubdevice = isSubdevice;
+    pProperties->subdeviceId = subDeviceId;
+    pProperties->busWidth = -1;
+    pProperties->numChannels = -1;
+    pProperties->physicalSize = 0;
+
+    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+    auto status = pDrm->querySystemInfo();
+
+    if (status) {
+        auto memSystemInfo = pDrm->getSystemInfo();
+        if (memSystemInfo != nullptr) {
+            pProperties->numChannels = memSystemInfo->getMaxMemoryChannels();
+            auto memType = memSystemInfo->getMemoryType();
+            switch (memType) {
+            case NEO::DeviceBlobConstants::MemoryType::hbm2e:
+            case NEO::DeviceBlobConstants::MemoryType::hbm2:
+                pProperties->type = ZES_MEM_TYPE_HBM;
+                break;
+            case NEO::DeviceBlobConstants::MemoryType::lpddr4:
+                pProperties->type = ZES_MEM_TYPE_LPDDR4;
+                break;
+            case NEO::DeviceBlobConstants::MemoryType::lpddr5:
+                pProperties->type = ZES_MEM_TYPE_LPDDR5;
+                break;
+            default:
+                pProperties->type = ZES_MEM_TYPE_DDR;
+                break;
+            }
+        }
+    }
+
+    pProperties->busWidth = memoryBusWidth;
+    pProperties->physicalSize = 0;
+
+    if (pSysmanKmdInterface->isPhysicalMemorySizeSupported() == true) {
+        if (isSubdevice) {
+            std::string memval;
+            std::string physicalSizeFile = pSysmanKmdInterface->getSysfsFilePathForPhysicalMemorySize(subDeviceId);
+            ze_result_t result = pSysFsAccess->read(physicalSizeFile, memval);
+            uint64_t intval = strtoull(memval.c_str(), nullptr, 16);
+            if (ZE_RESULT_SUCCESS != result) {
+                pProperties->physicalSize = 0u;
+            } else {
+                pProperties->physicalSize = intval;
+            }
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, const LinuxSysmanImp *pLinuxSysmanImp) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringTech *pPmt, SysmanDeviceImp *pDevice, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subdeviceId) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

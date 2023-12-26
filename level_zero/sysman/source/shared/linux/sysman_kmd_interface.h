@@ -136,6 +136,7 @@ class SysmanKmdInterface {
     virtual bool isDefaultFrequencyAvailable() const = 0;
     virtual bool isBoostFrequencyAvailable() const = 0;
     virtual bool isTdpFrequencyAvailable() const = 0;
+    virtual bool isPhysicalMemorySizeSupported() const = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -182,6 +183,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     bool isDefaultFrequencyAvailable() const override { return true; }
     bool isBoostFrequencyAvailable() const override { return true; }
     bool isTdpFrequencyAvailable() const override { return true; }
+    bool isPhysicalMemorySizeSupported() const override { return false; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -223,6 +225,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     bool isDefaultFrequencyAvailable() const override { return true; }
     bool isBoostFrequencyAvailable() const override { return true; }
     bool isTdpFrequencyAvailable() const override { return true; }
+    bool isPhysicalMemorySizeSupported() const override { return true; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -264,6 +267,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isDefaultFrequencyAvailable() const override { return false; }
     bool isBoostFrequencyAvailable() const override { return false; }
     bool isTdpFrequencyAvailable() const override { return false; }
+    bool isPhysicalMemorySizeSupported() const override { return true; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

@@ -44,6 +44,7 @@ class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
     using LinuxSysmanImp::pProcfsAccess;
     using LinuxSysmanImp::pSysfsAccess;
     using LinuxSysmanImp::pSysmanKmdInterface;
+    using LinuxSysmanImp::pSysmanProductHelper;
     using LinuxSysmanImp::rootPath;
 };
 

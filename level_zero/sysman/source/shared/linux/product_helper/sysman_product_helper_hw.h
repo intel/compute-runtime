@@ -26,8 +26,8 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     void getFrequencyStepSize(double *pStepSize) override;
 
     // Memory
-    ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, const LinuxSysmanImp *pLinuxSysmanImp) override;
-    ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, const LinuxSysmanImp *pLinuxSysmanImp) override;
+    ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) override;
+    ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringTech *pPmt, SysmanDeviceImp *pDevice, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subdeviceId) override;
 
     // Performance
     void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) override;

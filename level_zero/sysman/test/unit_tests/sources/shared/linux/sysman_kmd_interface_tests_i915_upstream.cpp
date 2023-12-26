@@ -152,6 +152,11 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheck
     EXPECT_TRUE(pSysmanKmdInterface->isTdpFrequencyAvailable());
 }
 
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheckingPhysicalMemorySizeAvailabilityThenFalseValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_FALSE(pSysmanKmdInterface->isPhysicalMemorySizeSupported());
+}
+
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCallingGetNativeUnitWithProperSysfsNameThenValidValuesAreReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_EQ(SysmanKmdInterface::SysfsValueUnit::milliSecond, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSchedulerTimeout));

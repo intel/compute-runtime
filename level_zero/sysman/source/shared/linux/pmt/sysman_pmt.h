@@ -25,7 +25,7 @@ class FsAccessInterface;
 
 class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
   public:
-    PlatformMonitoringTech() = delete;
+    PlatformMonitoringTech() = default;
     PlatformMonitoringTech(FsAccessInterface *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId);
     virtual ~PlatformMonitoringTech();
 

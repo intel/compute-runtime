@@ -106,6 +106,18 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
     return RasInterfaceType::pmu;
 }
 
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) {
+    pProperties->location = ZES_MEM_LOC_DEVICE;
+    pProperties->type = ZES_MEM_TYPE_DDR;
+    pProperties->onSubdevice = isSubdevice;
+    pProperties->subdeviceId = subDeviceId;
+    pProperties->busWidth = -1;
+    pProperties->numChannels = -1;
+    pProperties->physicalSize = 0;
+    return ZE_RESULT_SUCCESS;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

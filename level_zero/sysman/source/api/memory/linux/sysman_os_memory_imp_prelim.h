@@ -41,14 +41,8 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp *pDevice = nullptr;
     PlatformMonitoringTech *pPmt = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
-    void getHbmFrequency(PRODUCT_FAMILY productFamily, unsigned short stepping, uint64_t &hbmFrequency);
 
   private:
-    ze_result_t readMcChannelCounters(uint64_t &readCounters, uint64_t &writeCounters);
-    ze_result_t getVFIDString(std::string &vfID);
-    ze_result_t getBandwidthForDg2(zes_mem_bandwidth_t *pBandwidth);
-    ze_result_t getHbmBandwidthPVC(uint32_t numHbmModules, zes_mem_bandwidth_t *pBandwidth);
-    ze_result_t getHbmBandwidth(uint32_t numHbmModules, zes_mem_bandwidth_t *pBandwidth);
     static const std::string deviceMemoryHealth;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;

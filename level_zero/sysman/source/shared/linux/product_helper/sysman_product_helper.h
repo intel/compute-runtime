@@ -14,12 +14,19 @@
 
 #include <memory>
 
+namespace NEO {
+class Drm;
+}
+
 namespace L0 {
 namespace Sysman {
 
+struct SysmanDeviceImp;
 class SysmanProductHelper;
 class LinuxSysmanImp;
 class PlatformMonitoringTech;
+class SysmanKmdInterface;
+
 enum class RasInterfaceType;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
@@ -40,8 +47,8 @@ class SysmanProductHelper {
     virtual void getFrequencyStepSize(double *pStepSize) = 0;
 
     // Memory
-    virtual ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, const LinuxSysmanImp *pLinuxSysmanImp) = 0;
-    virtual ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, const LinuxSysmanImp *pLinuxSysmanImp) = 0;
+    virtual ze_result_t getMemoryProperties(zes_mem_properties_t *pProperties, LinuxSysmanImp *pLinuxSysmanImp, NEO::Drm *pDrm, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subDeviceId, bool isSubdevice) = 0;
+    virtual ze_result_t getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringTech *pPmt, SysmanDeviceImp *pDevice, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subdeviceId) = 0;
 
     // Performance
     virtual void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) = 0;
