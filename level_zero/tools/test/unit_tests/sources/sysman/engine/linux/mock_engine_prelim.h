@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -168,6 +168,7 @@ struct MockEngineSysfsAccess : public SysfsAccess {
 
     bool mockReadSymLinkFailure = false;
     bool mockReadSymLinkSuccess = false;
+    ze_result_t mockReadStatus = ZE_RESULT_SUCCESS;
     uint32_t mockReadVal = 0;
 
     ze_result_t readSymLink(const std::string file, std::string &val) override {
@@ -199,7 +200,7 @@ struct MockEngineSysfsAccess : public SysfsAccess {
 
     ze_result_t read(const std::string file, uint32_t &val) override {
         val = mockReadVal;
-        return ZE_RESULT_SUCCESS;
+        return mockReadStatus;
     }
 
     MockEngineSysfsAccess() = default;

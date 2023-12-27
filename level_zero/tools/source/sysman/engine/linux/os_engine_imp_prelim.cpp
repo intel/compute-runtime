@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
 
 static ze_result_t readBusynessFromGroupFd(PmuInterface *pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) {
     uint64_t data[4] = {};
+
     auto ret = pPmuInterface->pmuRead(static_cast<int>(fdPair.first), data, sizeof(data));
     if (ret < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
@@ -168,13 +169,18 @@ void LinuxEngineImp::init() {
     fd[1] = pPmuInterface->pmuInterfaceOpen(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
     fdList.push_back(std::make_pair(fd[0], fd[1]));
 
-    pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
+    auto status = pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
+    if (status != ZE_RESULT_SUCCESS) {
+        numberOfVfs = 0;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Reading Number Of Vfs Failed \n", __FUNCTION__);
+        return;
+    }
     // +1 to include PF
     for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
-        uint64_t functionConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
-
-        fd[0] = pPmuInterface->pmuInterfaceOpen(functionConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
-        fd[1] = pPmuInterface->pmuInterfaceOpen(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+        const uint64_t busyConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
+        fd[0] = pPmuInterface->pmuInterfaceOpen(busyConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+        const uint64_t totalConfig = ___PRELIM_I915_PMU_FN_EVENT(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), i);
+        fd[1] = pPmuInterface->pmuInterfaceOpen(totalConfig, static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
         fdList.push_back(std::make_pair(fd[0], fd[1]));
     }
 }
