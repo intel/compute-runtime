@@ -19,8 +19,6 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
-#include "drm/intel_hwconfig_types.h"
-
 using namespace NEO;
 
 namespace L0 {
@@ -659,7 +657,7 @@ struct MockRasFwInterface : public L0::Sysman::FirmwareUtil {
 
 struct MockRasNeoDrm : public Drm {
     using Drm::setupIoctlHelper;
-    uint32_t mockMemoryType = INTEL_HWCONFIG_MEMORY_TYPE_LPDDR5;
+    uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::lpddr5;
     const int mockFd = 33;
     std::vector<bool> mockQuerySystemInfoReturnValue{};
     bool isRepeated = false;
@@ -684,7 +682,7 @@ struct MockRasNeoDrm : public Drm {
             return returnValue;
         }
 
-        uint32_t hwBlob[] = {INTEL_HWCONFIG_MAX_MEMORY_CHANNELS, 1, 8, INTEL_HWCONFIG_MEMORY_TYPE, 0, mockMemoryType};
+        uint32_t hwBlob[] = {NEO::DeviceBlobConstants::maxMemoryChannels, 1, 8, NEO::DeviceBlobConstants::memoryType, 0, mockMemoryType};
         std::vector<uint32_t> inputBlobData(reinterpret_cast<uint32_t *>(hwBlob), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob, sizeof(hwBlob))));
         this->systemInfo.reset(new SystemInfo(inputBlobData));
         return returnValue;

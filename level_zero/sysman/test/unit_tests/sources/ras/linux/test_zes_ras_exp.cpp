@@ -81,7 +81,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpTh
     VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
     pLinuxSysmanImp->pFsAccess = pFsAccess.get();
 
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
 
     pRasFwUtilInterface->mockMemorySuccess = true;
     VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
@@ -210,7 +210,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpFo
 
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpForHbmThenSuccessIsReturned, IsPVC) {
 
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pRasFwUtilInterface->mockMemorySuccess = true;
     VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
@@ -362,7 +362,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpFo
 }
 
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesGetRasStateExpAndFirmwareInterfaceIsAbsentOtherInterfacesAreAlsoAbsentThenCallFails, IsPVC) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pFsAccess->mockReadVal = true;
     VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
     pLinuxSysmanImp->pFsAccess = pFsAccess.get();
@@ -529,7 +529,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesRasClearStateExp
 }
 
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExpAndFirmwareInterfaceIsAbsentOtherInterfacesAreAlsoAbsentThenCallFails, IsPVC) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pFsAccess->mockReadVal = true;
     VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
     pLinuxSysmanImp->pFsAccess = pFsAccess.get();
@@ -548,7 +548,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExp
 }
 
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExpAndGetMemoryErrorFailsAndOtherInterfacesAreAlsoAbsentThenCallFails, IsPVC) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
 
@@ -563,7 +563,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExp
 }
 
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesGetClearStateExpAndOtherInterfacesAreAbsentThenCallSucceeds, IsPVC) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pRasFwUtilInterface->mockMemorySuccess = true;
     VariableBackup<L0::Sysman::FirmwareUtil *> fwBackup(&pLinuxSysmanImp->pFwUtilInterface);
     pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
@@ -700,7 +700,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenC
 }
 
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesRasClearStateExpAndGetStateExpForHbmThenVerifyErrorCountersAreCleared, IsPVC) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2);
     pPmuInterface->mockPmuReadResult = true;
     VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
     pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
@@ -916,7 +916,7 @@ HWTEST2_F(SysmanRasExpMultiDeviceFixture, GivenValidRasHandleWhenCallingZesRasGe
 
 HWTEST2_F(SysmanRasExpMultiDeviceFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpForHbmThenSuccessIsReturned, IsPVC) {
 
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pPmuInterface->mockPmuReadResult = true;
     VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
     pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
@@ -1158,7 +1158,7 @@ HWTEST2_F(SysmanRasExpMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasCl
 }
 
 HWTEST2_F(SysmanRasExpMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasClearStateExpAndGetStateExpForHbmThenVerifyErrorCountersAreCleared, IsPVC) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pPmuInterface->mockPmuReadResult = true;
     VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
     pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();

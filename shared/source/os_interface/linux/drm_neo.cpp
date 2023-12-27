@@ -882,11 +882,6 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * sysInfo->getNumThreadsPerEu();
     gtSysInfo->MemoryType = sysInfo->getMemoryType();
-    gtSysInfo->TotalVsThreads = sysInfo->getTotalVsThreads();
-    gtSysInfo->TotalHsThreads = sysInfo->getTotalHsThreads();
-    gtSysInfo->TotalDsThreads = sysInfo->getTotalDsThreads();
-    gtSysInfo->TotalGsThreads = sysInfo->getTotalGsThreads();
-    gtSysInfo->TotalPsThreadsWindowerRange = sysInfo->getTotalPsThreads();
     gtSysInfo->MaxEuPerSubSlice = sysInfo->getMaxEuPerDualSubSlice();
     gtSysInfo->MaxSlicesSupported = sysInfo->getMaxSlicesSupported();
     if (sysInfo->getMaxDualSubSlicesSupported() > 0) {

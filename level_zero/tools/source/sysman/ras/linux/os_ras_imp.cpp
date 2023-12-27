@@ -13,14 +13,12 @@
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
-#include "drm/intel_hwconfig_types.h"
-
 #include <algorithm>
 namespace L0 {
 
 static bool isMemoryTypeHbm(LinuxSysmanImp *pLinuxSysmanImp) {
     uint32_t memType = pLinuxSysmanImp->getMemoryType();
-    if (memType == INTEL_HWCONFIG_MEMORY_TYPE_HBM2e || memType == INTEL_HWCONFIG_MEMORY_TYPE_HBM2) {
+    if (memType == NEO::DeviceBlobConstants::MemoryType::hbm2e || memType == NEO::DeviceBlobConstants::MemoryType::hbm2) {
         return true;
     }
     return false;

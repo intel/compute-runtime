@@ -38,11 +38,6 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThen
     EXPECT_EQ(0u, systemInfo.getMemoryType());
     EXPECT_EQ(0u, systemInfo.getMaxMemoryChannels());
     EXPECT_EQ(0u, systemInfo.getNumThreadsPerEu());
-    EXPECT_EQ(0u, systemInfo.getTotalVsThreads());
-    EXPECT_EQ(0u, systemInfo.getTotalHsThreads());
-    EXPECT_EQ(0u, systemInfo.getTotalDsThreads());
-    EXPECT_EQ(0u, systemInfo.getTotalGsThreads());
-    EXPECT_EQ(0u, systemInfo.getTotalPsThreads());
     EXPECT_EQ(0u, systemInfo.getMaxEuPerDualSubSlice());
     EXPECT_EQ(0u, systemInfo.getMaxSlicesSupported());
     EXPECT_EQ(0u, systemInfo.getMaxDualSubSlicesSupported());
@@ -144,11 +139,6 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsN
 
     EXPECT_NE(0u, systemInfo->getMaxMemoryChannels());
     EXPECT_NE(0u, systemInfo->getMemoryType());
-    EXPECT_NE(0u, systemInfo->getTotalVsThreads());
-    EXPECT_NE(0u, systemInfo->getTotalHsThreads());
-    EXPECT_NE(0u, systemInfo->getTotalDsThreads());
-    EXPECT_NE(0u, systemInfo->getTotalGsThreads());
-    EXPECT_NE(0u, systemInfo->getTotalPsThreads());
     EXPECT_NE(0u, systemInfo->getMaxEuPerDualSubSlice());
     EXPECT_NE(0u, systemInfo->getMaxSlicesSupported());
     EXPECT_NE(0u, systemInfo->getMaxDualSubSlicesSupported());
@@ -165,11 +155,6 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
 
     EXPECT_EQ(0x0Au, systemInfo.getMaxMemoryChannels());
     EXPECT_EQ(0x0Bu, systemInfo.getMemoryType());
-    EXPECT_EQ(0x10u, systemInfo.getTotalVsThreads());
-    EXPECT_EQ(0x12u, systemInfo.getTotalHsThreads());
-    EXPECT_EQ(0x13u, systemInfo.getTotalDsThreads());
-    EXPECT_EQ(0x11u, systemInfo.getTotalGsThreads());
-    EXPECT_EQ(0x15u, systemInfo.getTotalPsThreads());
     EXPECT_EQ(0x03u, systemInfo.getMaxEuPerDualSubSlice());
     EXPECT_EQ(0x01u, systemInfo.getMaxSlicesSupported());
     EXPECT_EQ(0x04u, systemInfo.getMaxDualSubSlicesSupported());
@@ -226,12 +211,6 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
-    EXPECT_GT(gtSystemInfo.TotalVsThreads, 0u);
-    EXPECT_GT(gtSystemInfo.TotalHsThreads, 0u);
-    EXPECT_GT(gtSystemInfo.TotalDsThreads, 0u);
-    EXPECT_GT(gtSystemInfo.TotalGsThreads, 0u);
-    EXPECT_GT(gtSystemInfo.TotalPsThreadsWindowerRange, 0u);
-    EXPECT_GT(gtSystemInfo.TotalDsThreads, 0u);
     EXPECT_GT(gtSystemInfo.MaxEuPerSubSlice, 0u);
     EXPECT_GT(gtSystemInfo.MaxSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MaxSubSlicesSupported, 0u);

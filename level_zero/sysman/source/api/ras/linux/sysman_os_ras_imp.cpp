@@ -14,8 +14,6 @@
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
-#include "drm/intel_hwconfig_types.h"
-
 #include <algorithm>
 
 namespace L0 {
@@ -23,7 +21,7 @@ namespace Sysman {
 
 static bool isMemoryTypeHbm(LinuxSysmanImp *pLinuxSysmanImp) {
     uint32_t memType = pLinuxSysmanImp->getMemoryType();
-    if (memType == INTEL_HWCONFIG_MEMORY_TYPE_HBM2e || memType == INTEL_HWCONFIG_MEMORY_TYPE_HBM2) {
+    if (memType == NEO::DeviceBlobConstants::MemoryType::hbm2e || memType == NEO::DeviceBlobConstants::MemoryType::hbm2) {
         return true;
     }
     return false;

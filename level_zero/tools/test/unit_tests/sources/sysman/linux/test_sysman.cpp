@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/linux/system_info.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
@@ -17,7 +18,6 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 #include "drm/drm.h"
-#include "drm/intel_hwconfig_types.h"
 
 namespace NEO {
 namespace SysCalls {
@@ -844,7 +844,7 @@ TEST_F(SysmanDeviceFixture, GivenValidEnumeratedHandlesWhenReleaseIsCalledThenHa
 
     count = 0;
     RasImp *pRas = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
-    pLinuxSysmanImp->memType = INTEL_HWCONFIG_MEMORY_TYPE_LPDDR4;
+    pLinuxSysmanImp->memType = NEO::DeviceBlobConstants::MemoryType::lpddr4;
     pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pRas);
     result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

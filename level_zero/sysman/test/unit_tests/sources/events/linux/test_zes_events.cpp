@@ -40,7 +40,7 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pDrm = new MockEventNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
         pDrm->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
-        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+        pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockEventNeoDrm>(pDrm));
 

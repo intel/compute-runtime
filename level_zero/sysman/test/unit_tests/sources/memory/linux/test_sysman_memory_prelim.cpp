@@ -69,7 +69,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pFsAccess = std::make_unique<MockMemoryFsAccess>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+        pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
         pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<SysmanMemoryMockIoctlHelper>(*pDrm));
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
@@ -252,7 +252,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
 }
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetPropertiesWithHBMLocalMemoryThenVerifySysmanMemoryGetPropertiesCallSucceeds) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2);
     setLocalSupportedAndReinit(true);
 
     auto handles = getMemoryHandles(memoryHandleComponentCount);
@@ -275,7 +275,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
 }
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetPropertiesWithLPDDR4LocalMemoryThenVerifySysmanMemoryGetPropertiesCallSucceeds) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_LPDDR4);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::lpddr4);
     setLocalSupportedAndReinit(true);
 
     auto handles = getMemoryHandles(memoryHandleComponentCount);
@@ -298,7 +298,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
 }
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetPropertiesWithLPDDR5LocalMemoryThenVerifySysmanMemoryGetPropertiesCallSucceeds) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_LPDDR5);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::lpddr5);
     setLocalSupportedAndReinit(true);
 
     auto handles = getMemoryHandles(memoryHandleComponentCount);
@@ -321,7 +321,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
 }
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetPropertiesWithDDRLocalMemoryThenVerifySysmanMemoryGetPropertiesCallSucceeds) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_GDDR6);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::gddr6);
     setLocalSupportedAndReinit(true);
 
     auto handles = getMemoryHandles(memoryHandleComponentCount);

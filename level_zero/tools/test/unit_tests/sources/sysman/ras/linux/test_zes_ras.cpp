@@ -56,7 +56,7 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
         pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
-        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+        pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
         pLinuxSysmanImp->pDrm = pDrm.get();
 
         for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
@@ -173,7 +173,7 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
 }
 
 TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAndHbmAreAbsentThenZeroHandlesAreCreated) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_LPDDR4);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::lpddr4);
     pRasFwUtilInterface->mockMemorySuccess = true;
     pFsAccess->mockReadDirectoryWithoutRasEvents = true;
 
@@ -188,7 +188,7 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
 }
 
 TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfHbmAndFwInterfaceArePresentThenSuccessIsReturned) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2);
     pRasFwUtilInterface->mockMemorySuccess = true;
 
     for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
@@ -617,7 +617,7 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
         pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
-        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+        pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
         pLinuxSysmanImp->pDrm = pDrm.get();
 
         pFsAccess->mockReadDirectoryForMultiDevice = true;

@@ -22,7 +22,6 @@
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
-#include "drm/intel_hwconfig_types.h"
 #include "igfxfmid.h"
 
 namespace L0 {
@@ -63,14 +62,14 @@ ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
             pProperties->numChannels = memSystemInfo->getMaxMemoryChannels();
             auto memType = memSystemInfo->getMemoryType();
             switch (memType) {
-            case INTEL_HWCONFIG_MEMORY_TYPE_HBM2e:
-            case INTEL_HWCONFIG_MEMORY_TYPE_HBM2:
+            case NEO::DeviceBlobConstants::MemoryType::hbm2e:
+            case NEO::DeviceBlobConstants::MemoryType::hbm2:
                 pProperties->type = ZES_MEM_TYPE_HBM;
                 break;
-            case INTEL_HWCONFIG_MEMORY_TYPE_LPDDR4:
+            case NEO::DeviceBlobConstants::MemoryType::lpddr4:
                 pProperties->type = ZES_MEM_TYPE_LPDDR4;
                 break;
-            case INTEL_HWCONFIG_MEMORY_TYPE_LPDDR5:
+            case NEO::DeviceBlobConstants::MemoryType::lpddr5:
                 pProperties->type = ZES_MEM_TYPE_LPDDR5;
                 break;
             default:

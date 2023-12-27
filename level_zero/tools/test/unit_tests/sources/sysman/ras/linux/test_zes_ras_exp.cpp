@@ -46,7 +46,7 @@ struct SysmanRasExpFixture : public SysmanDeviceFixture {
         pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20>(*pDrm));
         pOriginalDrm = pLinuxSysmanImp->pDrm;
 
-        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+        pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
         pLinuxSysmanImp->pDrm = pDrm.get();
 
         for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
@@ -709,7 +709,7 @@ struct SysmanRasExpMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20>(*pDrm));
         pOriginalDrm = pLinuxSysmanImp->pDrm;
 
-        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+        pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
         pLinuxSysmanImp->pDrm = pDrm.get();
 
         pFsAccess = std::make_unique<MockRasFsAccess>();

@@ -16,7 +16,6 @@
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
 
 #include "drm/i915_drm.h"
-#include "drm/intel_hwconfig_types.h"
 
 using namespace NEO;
 
@@ -82,7 +81,7 @@ constexpr uint64_t transactionSize = 32;
 
 namespace L0 {
 namespace ult {
-uint32_t mockMemoryType = INTEL_HWCONFIG_MEMORY_TYPE_HBM2e;
+uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::hbm2e;
 std::string mockPhysicalSize = "0x00000040000000";
 uint64_t hbmRP0Frequency = 4200; // in MHz
 const std::string deviceMemoryHealth("device_memory_health");
@@ -234,7 +233,7 @@ struct MockMemoryNeoDrm : public Drm {
             return returnValue;
         }
 
-        uint32_t hwBlob[] = {INTEL_HWCONFIG_MAX_MEMORY_CHANNELS, 1, 8, INTEL_HWCONFIG_MEMORY_TYPE, 0, mockMemoryType};
+        uint32_t hwBlob[] = {NEO::DeviceBlobConstants::maxMemoryChannels, 1, 8, NEO::DeviceBlobConstants::memoryType, 0, mockMemoryType};
         std::vector<uint32_t> inputBlobData(reinterpret_cast<uint32_t *>(hwBlob), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob, sizeof(hwBlob))));
         this->systemInfo.reset(new SystemInfo(inputBlobData));
         return returnValue;

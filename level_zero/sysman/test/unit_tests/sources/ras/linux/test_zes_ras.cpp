@@ -131,7 +131,7 @@ HWTEST2_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasE
 
 HWTEST2_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErrorsForHbmAndFwInterfaceIsAbsentThenNoSupportedErrorTypeIsReturned, IsPVC) {
     std::set<zes_ras_error_type_t> errorType = {};
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
 
     L0::Sysman::LinuxRasSourceHbm::getSupportedRasErrorTypes(errorType, pOsSysman, false, 0);
@@ -167,7 +167,7 @@ HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasE
 }
 
 HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfHbmAndFwInterfaceArePresentThenSuccessIsReturned, IsPVC) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pRasFwUtilInterface->mockMemorySuccess = true;
 
     uint32_t count = 0;
@@ -177,7 +177,7 @@ HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfHbmA
 }
 
 HWTEST2_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAreAbsentAndQuerySystemInfoSucceedsButMemSysInfoIsNullThenZeroHandlesAreCreated, IsPVC) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pFsAccess->mockReadDirectoryWithoutRasEvents = true;
     pDrm->mockQuerySystemInfoReturnValue.push_back(true);
 
@@ -308,7 +308,7 @@ HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmTh
 
     pPmuInterface->mockPmuReadResult = true;
     pRasFwUtilInterface->mockMemorySuccess = true;
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
 
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
@@ -329,7 +329,7 @@ HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForHbmWi
 
     pPmuInterface->mockPmuReadResult = true;
     pRasFwUtilInterface->mockMemorySuccess = true;
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
 
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
@@ -554,7 +554,7 @@ HWTEST2_F(SysmanRasFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenRequ
 }
 
 HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingZesGetRasStateAndFirmwareInterfaceIsAbsentOtherInterfacesAreAlsoAbsentThenCallFails, IsPVC) {
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pFsAccess->mockReadVal = true;
     VariableBackup<L0::Sysman::FsAccessInterface *> fsBackup(&pLinuxSysmanImp->pFsAccess);
     pLinuxSysmanImp->pFsAccess = pFsAccess.get();
@@ -731,7 +731,7 @@ HWTEST2_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGetSt
 
     pPmuInterface->mockPmuReadResult = true;
     pRasFwUtilInterface->mockMemorySuccess = true;
-    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     auto handles = getRasHandles(mockHandleCountForSubDevice);
     uint32_t handleIndex = 0u;
 
