@@ -50,7 +50,7 @@ TEST_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContext
     EXPECT_EQ(nullptr, mockHostUsmMemAllocPool->pool);
 }
 
-using ContextUsmPoolEnabledFlagsTest = ContextUsmPoolFlagValuesTest<1, 1>;
+using ContextUsmPoolEnabledFlagsTest = ContextUsmPoolFlagValuesTest<1, 3>;
 TEST_F(ContextUsmPoolEnabledFlagsTest, givenEnabledDebugFlagsWhenCreatingContextThenPoolsAreInitialized) {
     EXPECT_TRUE(mockDeviceUsmMemAllocPool->isInitialized());
     EXPECT_EQ(1 * MemoryConstants::megaByte, mockDeviceUsmMemAllocPool->poolSize);
@@ -58,7 +58,7 @@ TEST_F(ContextUsmPoolEnabledFlagsTest, givenEnabledDebugFlagsWhenCreatingContext
     EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, mockDeviceUsmMemAllocPool->poolMemoryType);
 
     EXPECT_TRUE(mockHostUsmMemAllocPool->isInitialized());
-    EXPECT_EQ(1 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolSize);
+    EXPECT_EQ(3 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolSize);
     EXPECT_NE(nullptr, mockHostUsmMemAllocPool->pool);
     EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, mockHostUsmMemAllocPool->poolMemoryType);
 

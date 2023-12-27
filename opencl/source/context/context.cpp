@@ -515,7 +515,7 @@ void Context::initializeUsmAllocationPools() {
     poolSize = 2 * MemoryConstants::megaByte;
     if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
-        poolSize = debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
+        poolSize = debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
     }
     if (enabled) {
         auto subDeviceBitfields = getDeviceBitfields();
