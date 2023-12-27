@@ -88,6 +88,7 @@ constexpr uint32_t rl = 4;
 
 namespace hardwareContextFlags {
 constexpr uint32_t contextGroup = 1 << 15;
+constexpr uint32_t highPriority = 1 << 14;
 } // namespace hardwareContextFlags
 
 static_assert(std::is_pod<SurfaceInfo>::value, "SurfaceInfo is not POD type");
