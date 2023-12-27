@@ -2826,6 +2826,11 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     eventDesc.index = 0;
     eventDesc.signal = 0;
     eventDesc.wait = 0;
+
+    constexpr uint32_t packetsUsed = 4u;
+
+    eventPool->setEventSize(static_cast<uint32_t>(alignUp(packetsUsed * device->getGfxCoreHelper().getSingleTimestampPacketSize(), 64)));
+
     auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
                                                                                                                            &eventDesc,
                                                                                                                            device)));
@@ -2835,7 +2840,6 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
     EXPECT_EQ(1u, event->getPacketsInUse());
 
-    constexpr uint32_t packetsUsed = 4u;
     event->setPacketsInUse(packetsUsed);
     event->setEventTimestampFlag(false);
     event->hostSignal();
@@ -2849,6 +2853,11 @@ TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThe
     eventDesc.index = 0;
     eventDesc.signal = 0;
     eventDesc.wait = 0;
+
+    constexpr uint32_t packetsUsed = 4u;
+
+    eventPool->setEventSize(static_cast<uint32_t>(alignUp(packetsUsed * device->getGfxCoreHelper().getSingleTimestampPacketSize(), 64)));
+
     auto event = std::unique_ptr<L0::EventImp<uint32_t>>(static_cast<L0::EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(),
                                                                                                                            &eventDesc,
                                                                                                                            device)));
@@ -2861,7 +2870,6 @@ TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThe
     EXPECT_EQ(Event::STATE_INITIAL, *hostAddr);
     EXPECT_EQ(1u, event->getPacketsInUse());
 
-    constexpr uint32_t packetsUsed = 4u;
     event->setPacketsInUse(packetsUsed);
     event->setEventTimestampFlag(false);
 
@@ -3409,7 +3417,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(2u, ultCsr.writeMemoryParams.callCount);
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
-    EXPECT_EQ(sizeof(uint64_t), ultCsr.writeMemoryParams.latestChunkSize);
+    EXPECT_EQ(event->getSinglePacketSize(), ultCsr.writeMemoryParams.latestChunkSize);
     EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
 
     EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
@@ -3428,7 +3436,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(3u, ultCsr.writeMemoryParams.callCount);
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
-    EXPECT_EQ(sizeof(uint64_t), ultCsr.writeMemoryParams.latestChunkSize);
+    EXPECT_EQ(event->getSinglePacketSize(), ultCsr.writeMemoryParams.latestChunkSize);
     EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
 
     EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));

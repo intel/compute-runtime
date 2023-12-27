@@ -413,7 +413,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
 
     uint32_t packets = 0;
 
-    std::array<uint64_t, 16 * 3> tempCopyData = {}; // 16 packets, 3 kernels
+    std::array<uint64_t, 16 * 4 * 3> tempCopyData = {}; // 16 packets, 4 timestamps, 3 kernels
     UNRECOVERABLE_IF(tempCopyData.size() * sizeof(uint64_t) < totalEventSize);
 
     const auto numElements = getMaxPacketsCount() * kernelCount;

@@ -282,12 +282,22 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
 
         auto lriItor = cmdList.begin();
         auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lriItor);
-        ASSERT_NE(nullptr, lriCmd);
 
-        EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, lriCmd->getRegisterOffset());
-        EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset(), lriCmd->getDataDword());
+        std::vector<GenCmdList::iterator> pipeControlList;
 
-        auto pipeControlList = findAll<PIPE_CONTROL *>(++lriItor, cmdList.end());
+        if (unifiedPostSyncLayout) {
+            EXPECT_EQ(nullptr, lriCmd);
+            pipeControlList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+        } else {
+            ASSERT_NE(nullptr, lriCmd);
+
+            EXPECT_EQ(NEO::PartitionRegisters<FamilyType>::addressOffsetCCSOffset, lriCmd->getRegisterOffset());
+            EXPECT_EQ(NEO::ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset(), lriCmd->getDataDword());
+
+            pipeControlList = findAll<PIPE_CONTROL *>(++lriItor, cmdList.end());
+        }
+
         ASSERT_NE(0u, pipeControlList.size());
 
         auto endLriItor = cmdList.rbegin();

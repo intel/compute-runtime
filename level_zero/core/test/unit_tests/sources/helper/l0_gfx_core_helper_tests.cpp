@@ -888,11 +888,12 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperOnGenPlatformsWhenGettingPlat
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
 }
 
-HWTEST_F(L0GfxCoreHelperTest, whenAskingForUnifiedPostSyncAllocLayoutThenReturnFalse) {
+HWTEST_F(L0GfxCoreHelperTest, whenAskingForUnifiedPostSyncAllocLayoutThenCheckImmWriteOffset) {
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
-    EXPECT_FALSE(l0GfxCoreHelper.hasUnifiedPostSyncAllocationLayout());
+    EXPECT_EQ((NEO::ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset() == NEO::ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset()),
+              l0GfxCoreHelper.hasUnifiedPostSyncAllocationLayout());
 }
 
 HWTEST_F(L0GfxCoreHelperTest, whenAskingForImmediateWritePostSyncOffsetThenReturnValueFromImplicitScalingHelper) {

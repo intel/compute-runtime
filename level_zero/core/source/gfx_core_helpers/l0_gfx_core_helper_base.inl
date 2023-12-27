@@ -56,7 +56,7 @@ uint32_t L0GfxCoreHelperHw<Family>::getCmdListWaitOnMemoryDataSize() const {
 
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::hasUnifiedPostSyncAllocationLayout() const {
-    return false;
+    return (getImmediateWritePostSyncOffset() == NEO::ImplicitScalingDispatch<Family>::getTimeStampPostSyncOffset());
 }
 
 template <typename Family>
