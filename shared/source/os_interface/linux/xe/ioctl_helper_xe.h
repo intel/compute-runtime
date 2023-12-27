@@ -119,13 +119,11 @@ class IoctlHelperXe : public IoctlHelper {
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
     bool isImmediateVmBindRequired() const override;
+    void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) override;
+    void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) override;
+    void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId) override;
+    void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger) override;
     uint16_t getCpuCachingMode();
-
-  private:
-    template <typename... XeLogArgs>
-    void xeLog(XeLogArgs &&...args) const;
-    int xeGetQuery(Query *data);
-    drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance);
 
   protected:
     const char *xeGetClassName(int className);
@@ -149,7 +147,6 @@ class IoctlHelperXe : public IoctlHelper {
 
     void setDefaultEngine();
 
-  protected:
     int chipsetId = 0;
     int revId = 0;
     int defaultAlignment = 0;
@@ -161,11 +158,27 @@ class IoctlHelperXe : public IoctlHelper {
     std::vector<BindInfo> bindInfo;
     int instance = 0;
     uint32_t xeTimestampFrequency = 0;
-    std::vector<uint32_t> hwconfigFakei915;
+    std::vector<uint32_t> hwconfig;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;
     std::vector<drm_xe_engine_class_instance> allEngines;
 
     drm_xe_engine_class_instance *defaultEngine = nullptr;
+
+  private:
+    template <typename... XeLogArgs>
+    void xeLog(XeLogArgs &&...args) const;
+    drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance);
+
+    struct ExecObjectXe {
+        uint64_t gpuAddress;
+        uint32_t handle;
+    };
+
+    struct ExecBufferXe {
+        ExecObjectXe *execObject;
+        uint64_t startOffset;
+        uint32_t drmContextId;
+    };
 };
 
 template <typename... XeLogArgs>

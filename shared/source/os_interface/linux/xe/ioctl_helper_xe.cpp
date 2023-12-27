@@ -25,11 +25,11 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_time.h"
 
-#include "drm/i915_drm_prelim.h"
 #include "drm/xe_drm.h"
 
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 
 #define XE_FIND_INVALID_INSTANCE 16
 
@@ -42,31 +42,6 @@
 #define USER_FENCE_VALUE 0xc0ffee0000000000ull
 
 namespace NEO {
-
-int IoctlHelperXe::xeGetQuery(Query *data) {
-    if (data->numItems == 1) {
-        QueryItem *queryItem = reinterpret_cast<QueryItem *>(data->itemsPtr);
-        std::vector<uint32_t> *queryData = nullptr;
-        switch (queryItem->queryId) {
-        case static_cast<int>(DrmParam::queryHwconfigTable):
-            queryData = &hwconfigFakei915;
-            break;
-        default:
-            xeLog("error: bad query 0x%x\n", queryItem->queryId);
-            return -1;
-        }
-        auto queryDataSize = static_cast<int32_t>(queryData->size() * sizeof(uint32_t));
-        if (queryItem->length == 0) {
-            queryItem->length = queryDataSize;
-            return 0;
-        }
-        UNRECOVERABLE_IF(queryItem->length != queryDataSize);
-        memcpy_s(reinterpret_cast<void *>(queryItem->dataPtr),
-                 queryItem->length, queryData->data(), queryItem->length);
-        return 0;
-    }
-    return -1;
-}
 
 const char *IoctlHelperXe::xeGetClassName(int className) {
     switch (className) {
@@ -175,8 +150,8 @@ bool IoctlHelperXe::initialize() {
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;
     IoctlHelper::ioctl(DrmIoctl::query, &queryConfig);
     auto newSize = queryConfig.size / sizeof(uint32_t);
-    hwconfigFakei915.resize(newSize);
-    queryConfig.data = castToUint64(hwconfigFakei915.data());
+    hwconfig.resize(newSize);
+    queryConfig.data = castToUint64(hwconfig.data());
     IoctlHelper::ioctl(DrmIoctl::query, &queryConfig);
 
     auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -682,45 +657,70 @@ uint16_t IoctlHelperXe::getWaitUserFenceSoftFlag() {
     return 0;
 };
 
+void IoctlHelperXe::fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) {
+
+    auto execObjectXe = reinterpret_cast<ExecObjectXe *>(execObject.data);
+    execObjectXe->gpuAddress = gpuAddress;
+    execObjectXe->handle = handle;
+}
+
+void IoctlHelperXe::logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) {
+    auto execObjectXe = reinterpret_cast<const ExecObjectXe *>(execObject.data);
+    logger << "ExecBufferXe = { handle: BO-" << execObjectXe->handle
+           << ", address range: 0x" << reinterpret_cast<void *>(execObjectXe->gpuAddress) << " }\n";
+}
+
+void IoctlHelperXe::fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId) {
+    auto execBufferXe = reinterpret_cast<ExecBufferXe *>(execBuffer.data);
+    execBufferXe->execObject = reinterpret_cast<ExecObjectXe *>(buffersPtr);
+    execBufferXe->startOffset = startOffset;
+    execBufferXe->drmContextId = drmContextId;
+}
+
+void IoctlHelperXe::logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger) {
+    auto execBufferXe = reinterpret_cast<const ExecBufferXe *>(execBuffer.data);
+    logger << "ExecBufferXe { "
+           << "exec object: " + std::to_string(reinterpret_cast<uintptr_t>(execBufferXe->execObject))
+           << ", start offset: " + std::to_string(execBufferXe->startOffset)
+           << ", drm context id: " + std::to_string(execBufferXe->drmContextId)
+           << " }\n";
+}
+
 int IoctlHelperXe::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     int ret = 0;
     if (execBuffer) {
-        drm_i915_gem_execbuffer2 *d = reinterpret_cast<drm_i915_gem_execbuffer2 *>(execBuffer->data);
-        if (d) {
-            drm_i915_gem_exec_object2 *obj = reinterpret_cast<drm_i915_gem_exec_object2
-                                                                  *>(d->buffers_ptr);
-            uint32_t engine = static_cast<uint32_t>(d->rsvd1);
-            if (obj) {
+        auto execBufferXe = reinterpret_cast<ExecBufferXe *>(execBuffer->data);
+        if (execBufferXe) {
+            auto execObject = execBufferXe->execObject;
+            uint32_t engine = execBufferXe->drmContextId;
 
-                xeLog("EXEC bc=%d ofs=%d len=%d f=0x%llx ctx=0x%x ptr=0x%llx r=0x%x\n",
-                      d->buffer_count, d->batch_start_offset, d->batch_len,
-                      d->flags, engine, obj->offset, ret);
+            xeLog("EXEC ofs=%d ctx=0x%x ptr=0x%p\n",
+                  execBufferXe->startOffset, execBufferXe->drmContextId, execBufferXe->execObject);
 
-                xeLog(" -> IoctlHelperXe::%s CA=0x%llx v=0x%x ctx=0x%x\n", __FUNCTION__,
-                      completionGpuAddress, counterValue, engine);
+            xeLog(" -> IoctlHelperXe::%s CA=0x%llx v=0x%x ctx=0x%x\n", __FUNCTION__,
+                  completionGpuAddress, counterValue, engine);
 
-                struct drm_xe_sync sync[1] = {};
-                sync[0].type = DRM_XE_SYNC_TYPE_USER_FENCE;
-                sync[0].flags = DRM_XE_SYNC_FLAG_SIGNAL;
-                sync[0].addr = completionGpuAddress;
-                sync[0].timeline_value = counterValue;
-                struct drm_xe_exec exec = {};
+            struct drm_xe_sync sync[1] = {};
+            sync[0].type = DRM_XE_SYNC_TYPE_USER_FENCE;
+            sync[0].flags = DRM_XE_SYNC_FLAG_SIGNAL;
+            sync[0].addr = completionGpuAddress;
+            sync[0].timeline_value = counterValue;
+            struct drm_xe_exec exec = {};
 
-                exec.exec_queue_id = engine;
-                exec.num_syncs = 1;
-                exec.syncs = reinterpret_cast<uintptr_t>(&sync);
-                exec.address = obj->offset + d->batch_start_offset;
-                exec.num_batch_buffer = 1;
+            exec.exec_queue_id = engine;
+            exec.num_syncs = 1;
+            exec.syncs = reinterpret_cast<uintptr_t>(&sync);
+            exec.address = execObject->gpuAddress + execBufferXe->startOffset;
+            exec.num_batch_buffer = 1;
 
-                ret = IoctlHelper::ioctl(DrmIoctl::gemExecbuffer2, &exec);
-                xeLog("r=0x%x batch=0x%lx\n", ret, exec.address);
+            ret = IoctlHelper::ioctl(DrmIoctl::gemExecbuffer2, &exec);
+            xeLog("r=0x%x batch=0x%lx\n", ret, exec.address);
 
-                if (debugManager.flags.PrintCompletionFenceUsage.get()) {
-                    std::cout << "Completion fence submitted."
-                              << " GPU address: " << std::hex << completionGpuAddress << std::dec
-                              << ", value: " << counterValue << std::endl;
-                }
+            if (debugManager.flags.PrintCompletionFenceUsage.get()) {
+                std::cout << "Completion fence submitted."
+                          << " GPU address: " << std::hex << completionGpuAddress << std::dec
+                          << ", value: " << counterValue << std::endl;
             }
         }
     }
@@ -933,15 +933,27 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
 
     case DrmIoctl::query: {
 
-        Query *q = static_cast<Query *>(arg);
-        ret = xeGetQuery(q);
-        if (ret == 0) {
-            QueryItem *queryItem = reinterpret_cast<QueryItem *>(q->itemsPtr);
-            xeLog(" -> IoctlHelperXe::ioctl Query id=0x%x f=0x%x len=%d r=%d\n",
-                  static_cast<int>(queryItem->queryId), static_cast<int>(queryItem->flags), queryItem->length, ret);
+        Query *query = static_cast<Query *>(arg);
 
-        } else {
-            xeLog(" -> IoctlHelperXe::ioctl Query r=%d\n", ret);
+        QueryItem *queryItems = reinterpret_cast<QueryItem *>(query->itemsPtr);
+        for (auto i = 0u; i < query->numItems; i++) {
+            auto &queryItem = queryItems[i];
+
+            if (queryItem.queryId != static_cast<int>(DrmParam::queryHwconfigTable)) {
+                xeLog("error: bad query 0x%x\n", queryItem.queryId);
+                return -1;
+            }
+            auto queryDataSize = static_cast<int32_t>(hwconfig.size() * sizeof(uint32_t));
+            if (queryItem.length == 0) {
+                queryItem.length = queryDataSize;
+            } else {
+                UNRECOVERABLE_IF(queryItem.length != queryDataSize);
+                memcpy_s(reinterpret_cast<void *>(queryItem.dataPtr),
+                         queryItem.length, hwconfig.data(), queryItem.length);
+            }
+            xeLog(" -> IoctlHelperXe::ioctl Query id=0x%x f=0x%x len=%d\n",
+                  static_cast<int>(queryItem.queryId), static_cast<int>(queryItem.flags), queryItem.length);
+            ret = 0;
         }
     } break;
     case DrmIoctl::gemUserptr: {
@@ -996,14 +1008,14 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
                 ret = 0;
             break;
         case static_cast<int>(DrmParam::contextParamEngines): {
-            i915_context_param_engines *contextEngine = reinterpret_cast<i915_context_param_engines *>(d->value);
+            auto contextEngine = reinterpret_cast<ContextParamEngines<> *>(d->value);
             int items = (d->size - sizeof(uint64_t)) / sizeof(uint32_t);
             contextParamEngine.clear();
             if (items < 11) {
                 for (int i = 0; i < items; i++) {
                     drm_xe_engine_class_instance engine = {
-                        contextEngine->engines[i].engine_class,
-                        contextEngine->engines[i].engine_instance,
+                        contextEngine->engines[i].engineClass,
+                        contextEngine->engines[i].engineInstance,
                         0};
                     if (engine.engine_class != 65535)
                         contextParamEngine.push_back(engine);

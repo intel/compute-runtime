@@ -139,11 +139,11 @@ class IoctlHelper {
     virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint64_t> &data);
 
-    void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
-    void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size);
+    virtual void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
+    virtual void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size);
 
-    void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId);
-    void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
+    virtual void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId);
+    virtual void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
     virtual int getDrmParamValueBase(DrmParam drmParam) const;
     unsigned int getIoctlRequestValueBase(DrmIoctl ioctlRequest) const;
     bool setDomainCpu(uint32_t handle, bool writeEnable);

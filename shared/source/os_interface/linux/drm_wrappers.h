@@ -188,7 +188,7 @@ struct PrimeHandle {
 };
 
 #pragma pack(1)
-template <uint32_t numEngines>
+template <uint32_t numEngines = 10> // 1 + max engines
 struct ContextParamEngines {
     uint64_t extensions;
     EngineClassInstance engines[numEngines];
