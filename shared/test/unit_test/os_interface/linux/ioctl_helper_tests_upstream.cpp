@@ -26,6 +26,7 @@ bool getGpuTime36(Drm &drm, uint64_t *timestamp);
 } // namespace NEO
 
 struct MockIoctlHelperUpstream : IoctlHelperUpstream {
+    using IoctlHelperUpstream::getGpuTime;
     using IoctlHelperUpstream::initializeGetGpuTimeFunction;
     using IoctlHelperUpstream::IoctlHelperUpstream;
     using IoctlHelperUpstream::isSetPatSupported;
@@ -755,7 +756,7 @@ TEST(IoctlHelperTestsUpstream, whenGettingTimeThenTimeIsCorrect) {
     auto drm = std::make_unique<DrmMockCustom>(*executionEnvironment.rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
-    IoctlHelperUpstream ioctlHelper{*drm};
+    MockIoctlHelperUpstream ioctlHelper{*drm};
     ASSERT_EQ(true, ioctlHelper.initialize());
 
     {

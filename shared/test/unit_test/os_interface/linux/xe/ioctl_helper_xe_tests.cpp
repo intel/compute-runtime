@@ -1662,15 +1662,6 @@ TEST(IoctlHelperXeTest, givenNoEnginesWhenSetDefaultEngineIsCalledThenAbortIsThr
     EXPECT_THROW(xeIoctlHelper->setDefaultEngine(), std::exception);
 }
 
-TEST(IoctlHelperXeTest, givenXeIoctlHelperWhenInitializeGetGpuTimeFunctionIsCalledGetGpuFunctionIsNotSet) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
-
-    xeIoctlHelper->initializeGetGpuTimeFunction();
-    EXPECT_EQ(xeIoctlHelper->getGpuTime, nullptr);
-}
-
 TEST(IoctlHelperXeTest, givenIoctlHelperXeAndDebugOverrideEnabledWhenGetCpuCachingModeCalledThenOverriddenValueIsReturned) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

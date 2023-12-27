@@ -33,10 +33,17 @@ bool getGpuTime32(Drm &drm, uint64_t *timestamp);
 bool getGpuTime36(Drm &drm, uint64_t *timestamp);
 } // namespace NEO
 
+struct MockIoctlHelperPrelim : public IoctlHelperPrelim20 {
+    using IoctlHelperPrelim20::getGpuTime;
+    using IoctlHelperPrelim20::initializeGetGpuTimeFunction;
+    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+    using IoctlHelperPrelim20::translateToMemoryRegions;
+};
+
 struct IoctlPrelimHelperTests : ::testing::Test {
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-    IoctlHelperPrelim20 ioctlHelper{*drm};
+    MockIoctlHelperPrelim ioctlHelper{*drm};
 };
 
 TEST_F(IoctlPrelimHelperTests, whenGettingIfImmediateVmBindIsRequiredThenFalseIsReturned) {
@@ -645,7 +652,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingTimeThenTimeIsCorrect) {
     auto drm = std::make_unique<DrmMockCustom>(*executionEnvironment.rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
-    IoctlHelperPrelim20 ioctlHelper{*drm};
+    MockIoctlHelperPrelim ioctlHelper{*drm};
     ASSERT_EQ(true, ioctlHelper.initialize());
 
     {

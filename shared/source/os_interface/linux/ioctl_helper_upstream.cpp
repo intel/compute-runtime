@@ -274,7 +274,7 @@ unsigned int IoctlHelperUpstream::getIoctlRequestValue(DrmIoctl ioctlRequest) co
     case DrmIoctl::gemCreateExt:
         return DRM_IOCTL_I915_GEM_CREATE_EXT;
     default:
-        return getIoctlRequestValueBase(ioctlRequest);
+        return IoctlHelperI915::getIoctlRequestValue(ioctlRequest);
     }
 }
 
@@ -287,18 +287,15 @@ int IoctlHelperUpstream::getDrmParamValue(DrmParam drmParam) const {
     case DrmParam::queryComputeSlices:
         return 0;
     default:
-        return getDrmParamValueBase(drmParam);
+        return IoctlHelperI915::getDrmParamValueBase(drmParam);
     }
-}
-std::string IoctlHelperUpstream::getDrmParamString(DrmParam param) const {
-    return getDrmParamStringBase(param);
 }
 std::string IoctlHelperUpstream::getIoctlString(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
     case DrmIoctl::gemCreateExt:
         return "DRM_IOCTL_I915_GEM_CREATE_EXT";
     default:
-        return getIoctlStringBase(ioctlRequest);
+        return IoctlHelperI915::getIoctlString(ioctlRequest);
     }
 }
 

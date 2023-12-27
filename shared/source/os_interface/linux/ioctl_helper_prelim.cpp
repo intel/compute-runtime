@@ -34,7 +34,7 @@
 
 namespace NEO {
 
-IoctlHelperPrelim20::IoctlHelperPrelim20(Drm &drmArg) : IoctlHelper(drmArg) {
+IoctlHelperPrelim20::IoctlHelperPrelim20(Drm &drmArg) : IoctlHelperI915(drmArg) {
     const auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
     handleExecBufferInNonBlockMode = productHelper.isNonBlockingGpuSubmissionSupported();
     if (debugManager.flags.ForceNonblockingExecbufferCalls.get() != -1) {
@@ -132,7 +132,7 @@ bool IoctlHelperPrelim20::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQ
     }
 
     // fallback to DRM_I915_QUERY_TOPOLOGY_INFO
-    return IoctlHelper::getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+    return IoctlHelperI915::getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
 }
 
 bool IoctlHelperPrelim20::isVmBindAvailable() {
@@ -767,7 +767,7 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) co
     case DrmIoctl::gemCacheReserve:
         return PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE;
     default:
-        return getIoctlRequestValueBase(ioctlRequest);
+        return IoctlHelperI915::getIoctlRequestValue(ioctlRequest);
     }
 }
 
@@ -784,7 +784,7 @@ int IoctlHelperPrelim20::getDrmParamValue(DrmParam drmParam) const {
     case DrmParam::queryComputeSlices:
         return PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES;
     default:
-        return getDrmParamValueBase(drmParam);
+        return IoctlHelperI915::getDrmParamValueBase(drmParam);
     }
 }
 std::string IoctlHelperPrelim20::getDrmParamString(DrmParam drmParam) const {
@@ -794,7 +794,7 @@ std::string IoctlHelperPrelim20::getDrmParamString(DrmParam drmParam) const {
     case DrmParam::paramHasPageFault:
         return "PRELIM_I915_PARAM_HAS_PAGE_FAULT";
     default:
-        return getDrmParamStringBase(drmParam);
+        return IoctlHelperI915::getDrmParamString(drmParam);
     }
 }
 
@@ -825,7 +825,7 @@ std::string IoctlHelperPrelim20::getIoctlString(DrmIoctl ioctlRequest) const {
     case DrmIoctl::gemCacheReserve:
         return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
     default:
-        return getIoctlStringBase(ioctlRequest);
+        return IoctlHelperI915::getIoctlString(ioctlRequest);
     }
 }
 

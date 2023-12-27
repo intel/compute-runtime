@@ -113,7 +113,6 @@ class IoctlHelperXe : public IoctlHelper {
     void getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap);
 
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
-    void initializeGetGpuTimeFunction() override{};
     bool getTimestampFrequency(uint64_t &frequency);
 
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
@@ -123,6 +122,7 @@ class IoctlHelperXe : public IoctlHelper {
     void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) override;
     void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId) override;
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger) override;
+    bool setDomainCpu(uint32_t handle, bool writeEnable) override;
     uint16_t getCpuCachingMode();
 
   protected:

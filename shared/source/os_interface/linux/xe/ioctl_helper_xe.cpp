@@ -177,6 +177,10 @@ bool IoctlHelperXe::isVmBindAvailable() {
     return true;
 }
 
+bool IoctlHelperXe::setDomainCpu(uint32_t handle, bool writeEnable) {
+    return false;
+}
+
 template <typename DataType>
 std::vector<DataType> IoctlHelperXe::queryData(uint32_t queryId) {
     struct drm_xe_device_query deviceQuery = {};

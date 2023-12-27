@@ -85,7 +85,7 @@ class IoctlHelper {
     virtual bool isChunkingAvailable() = 0;
     virtual bool isVmBindAvailable() = 0;
     virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) = 0;
-    virtual uint32_t createGem(uint64_t size, uint32_t memoryBanks);
+    virtual uint32_t createGem(uint64_t size, uint32_t memoryBanks) = 0;
     virtual CacheRegion closAlloc() = 0;
     virtual uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
     virtual CacheRegion closFree(CacheRegion closIndex) = 0;
@@ -98,8 +98,8 @@ class IoctlHelper {
     virtual bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) = 0;
     virtual bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) = 0;
-    virtual bool setGemTiling(void *setTiling);
-    virtual bool getGemTiling(void *setTiling);
+    virtual bool setGemTiling(void *setTiling) = 0;
+    virtual bool getGemTiling(void *setTiling) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
     virtual uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) = 0;
@@ -134,25 +134,20 @@ class IoctlHelper {
     virtual std::string getIoctlString(DrmIoctl ioctlRequest) const = 0;
 
     virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
-    virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);
+    virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) = 0;
 
-    virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
-    std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint64_t> &data);
-
-    virtual void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
-    virtual void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size);
-
-    virtual void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId);
-    virtual void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger);
-    virtual int getDrmParamValueBase(DrmParam drmParam) const;
+    virtual void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) = 0;
+    virtual void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) = 0;
+    virtual void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId) = 0;
+    virtual void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger) = 0;
+    virtual int getDrmParamValueBase(DrmParam drmParam) const = 0;
     unsigned int getIoctlRequestValueBase(DrmIoctl ioctlRequest) const;
-    bool setDomainCpu(uint32_t handle, bool writeEnable);
+    virtual bool setDomainCpu(uint32_t handle, bool writeEnable) = 0;
 
-    std::string getDrmParamStringBase(DrmParam param) const;
     std::string getIoctlStringBase(DrmIoctl ioctlRequest) const;
-    virtual std::string getFileForMaxGpuFrequency() const;
-    virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const;
-    virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const;
+    virtual std::string getFileForMaxGpuFrequency() const = 0;
+    virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const = 0;
+    virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const = 0;
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool isWaitBeforeBindRequired(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
@@ -160,24 +155,55 @@ class IoctlHelper {
     virtual bool isImmediateVmBindRequired() const { return false; }
 
     uint32_t getFlagsForPrimeHandleToFd() const;
-    virtual std::unique_ptr<MemoryInfo> createMemoryInfo();
-    virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled);
-    virtual bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap);
-    bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, DrmQueryTopologyData &topologyData, TopologyMapping &mapping);
-    virtual void fillBindInfoForIpcHandle(uint32_t handle, size_t size);
-    virtual bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd);
+    virtual std::unique_ptr<MemoryInfo> createMemoryInfo() = 0;
+    virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) = 0;
+    virtual bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) = 0;
+    virtual void fillBindInfoForIpcHandle(uint32_t handle, size_t size) = 0;
+    virtual bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) = 0;
 
-    virtual void initializeGetGpuTimeFunction();
-    virtual bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime);
-    bool (*getGpuTime)(::NEO::Drm &, uint64_t *) = nullptr;
+    virtual bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) = 0;
 
   protected:
     Drm &drm;
 };
 
-class IoctlHelperUpstream : public IoctlHelper {
+class IoctlHelperI915 : public IoctlHelper {
   public:
     using IoctlHelper::IoctlHelper;
+    void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) override;
+    void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) override;
+    void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId) override;
+    void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger) override;
+    int getDrmParamValueBase(DrmParam drmParam) const override;
+    std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint64_t> &data);
+    std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
+    std::unique_ptr<MemoryInfo> createMemoryInfo() override;
+    bool setDomainCpu(uint32_t handle, bool writeEnable) override;
+    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
+    std::string getDrmParamString(DrmParam param) const override;
+    std::string getIoctlString(DrmIoctl ioctlRequest) const override;
+    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override;
+    std::string getFileForMaxGpuFrequency() const override;
+    std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const override;
+    std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const override;
+    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
+    void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
+    bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
+    uint32_t createGem(uint64_t size, uint32_t memoryBanks) override;
+    bool setGemTiling(void *setTiling) override;
+    bool getGemTiling(void *setTiling) override;
+    bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
+
+  protected:
+    virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);
+    bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, DrmQueryTopologyData &topologyData, TopologyMapping &mapping);
+    MOCKABLE_VIRTUAL void initializeGetGpuTimeFunction();
+    bool (*getGpuTime)(::NEO::Drm &, uint64_t *) = nullptr;
+};
+
+class IoctlHelperUpstream : public IoctlHelperI915 {
+  public:
+    using IoctlHelperI915::IoctlHelperI915;
 
     bool initialize() override;
     bool isSetPairAvailable() override;
@@ -226,7 +252,6 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool isDebugAttachAvailable() override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     int getDrmParamValue(DrmParam drmParam) const override;
-    std::string getDrmParamString(DrmParam param) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
     bool isWaitBeforeBindRequired(bool bind) const override;
@@ -250,7 +275,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
 };
 
-class IoctlHelperPrelim20 : public IoctlHelper {
+class IoctlHelperPrelim20 : public IoctlHelperI915 {
   public:
     IoctlHelperPrelim20(Drm &drmArg);
 

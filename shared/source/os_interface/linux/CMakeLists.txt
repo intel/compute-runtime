@@ -55,6 +55,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/i915_upstream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_i915.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_prelim.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}ioctl_helper_getter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.h

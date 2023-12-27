@@ -91,7 +91,7 @@ std::string IoctlHelperImpl<gfxProduct>::getIoctlString(DrmIoctl ioctlRequest) c
     case DrmIoctl::dg1GemCreateExt:
         return "DRM_IOCTL_I915_GEM_CREATE_EXT";
     default:
-        return getIoctlStringBase(ioctlRequest);
+        return IoctlHelperUpstream::getIoctlString(ioctlRequest);
     }
 }
 
