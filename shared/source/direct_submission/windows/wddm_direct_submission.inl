@@ -55,7 +55,9 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
 
 template <typename GfxFamily, typename Dispatcher>
 inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
-    this->startRingBuffer();
+    auto needStart = !this->ringStart;
+    this->ringStart = true;
+    auto startVA = this->ringCommandStream.getCurrentGpuAddressPosition();
 
     size_t requiredMinimalSize = this->getSizeSemaphoreSection(false) +
                                  Dispatcher::getSizeMonitorFence(this->rootDeviceEnvironment) +
@@ -71,8 +73,7 @@ inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
     Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
 
     this->dispatchSemaphoreSection(this->currentQueueWorkCount + 1);
-    this->handleResidency();
-    this->unblockGpu();
+    this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize);
     this->currentQueueWorkCount++;
 
     this->updateTagValueImpl(this->currentRingBuffer);
