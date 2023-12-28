@@ -41,7 +41,7 @@ TEST_F(UnifiedMemoryPoolingTest, givenUsmAllocPoolWhenCallingIsInitializedThenRe
 template <InternalMemoryType poolMemoryType, bool failAllocation>
 class InitializedUnifiedMemoryPoolingTest : public UnifiedMemoryPoolingTest {
   public:
-    void SetUp() {
+    void SetUp() override {
         UnifiedMemoryPoolingTest::setUp();
         EXPECT_FALSE(usmMemAllocPool.isInitialized());
 
@@ -54,7 +54,7 @@ class InitializedUnifiedMemoryPoolingTest : public UnifiedMemoryPoolingTest {
         poolMemoryProperties->device = device;
         ASSERT_EQ(!failAllocation, usmMemAllocPool.initialize(svmManager.get(), *poolMemoryProperties.get(), poolSize));
     }
-    void TearDown() {
+    void TearDown() override {
         usmMemAllocPool.cleanup();
         UnifiedMemoryPoolingTest::tearDown();
     }
