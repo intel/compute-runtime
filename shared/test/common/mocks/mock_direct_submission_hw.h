@@ -40,7 +40,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::dispatchSemaphoreSection;
     using BaseClass::dispatchStartSection;
     using BaseClass::dispatchSwitchRingBufferSection;
-    using BaseClass::dispatchUllsState;
     using BaseClass::dispatchWorkloadSection;
     using BaseClass::getDiagnosticModeSection;
     using BaseClass::getSizeDisablePrefetcher;
@@ -80,6 +79,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::semaphorePtr;
     using BaseClass::semaphores;
     using BaseClass::setReturnAddress;
+    using BaseClass::startRingBuffer;
     using BaseClass::stopRingBuffer;
     using BaseClass::switchRingBuffersAllocations;
     using BaseClass::switchRingBuffersNeeded;
