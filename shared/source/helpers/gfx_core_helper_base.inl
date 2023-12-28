@@ -730,4 +730,9 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getContextGroupContextsCount() const {
     return 0;
 }
 
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::is48ResourceNeededForCmdBuffer() const {
+    return true;
+}
+
 } // namespace NEO

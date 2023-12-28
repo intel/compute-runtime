@@ -476,8 +476,11 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
-    case AllocationType::deferredTasksList:
     case AllocationType::commandBuffer:
+    case AllocationType::ringBuffer:
+        allocationData.flags.resource48Bit = helper.is48ResourceNeededForCmdBuffer();
+        break;
+    case AllocationType::deferredTasksList:
     case AllocationType::image:
     case AllocationType::indirectObjectHeap:
     case AllocationType::instructionHeap:
@@ -495,7 +498,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::timestampPacketTagBuffer:
     case AllocationType::debugModuleArea:
     case AllocationType::gpuTimestampDeviceBuffer:
-    case AllocationType::ringBuffer:
     case AllocationType::semaphoreBuffer:
         allocationData.flags.resource48Bit = true;
         break;

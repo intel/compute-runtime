@@ -1034,6 +1034,27 @@ TEST_P(MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest, givenAllocationTy
     EXPECT_TRUE(allocationData.flags.resource48Bit);
 }
 
+using MemoryManagerGetAlloctionDataOptionallyForcedTo48BitTest = testing::TestWithParam<std::tuple<AllocationType, bool>>;
+
+TEST_P(MemoryManagerGetAlloctionDataOptionallyForcedTo48BitTest, givenAllocationTypesOptionalFor48BitThenAllocationDataResource48BitIsSet) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+
+    AllocationType allocationType;
+    bool propertiesFlag48Bit;
+
+    std::tie(allocationType, propertiesFlag48Bit) = GetParam();
+
+    AllocationProperties properties(mockRootDeviceIndex, 0, allocationType, mockDeviceBitfield);
+    properties.flags.resource48Bit = propertiesFlag48Bit;
+
+    AllocationData allocationData;
+    MockMemoryManager mockMemoryManager;
+    mockMemoryManager.getAllocationData(allocationData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+
+    EXPECT_EQ(gfxCoreHelper.is48ResourceNeededForCmdBuffer(), allocationData.flags.resource48Bit);
+}
+
 using MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest = testing::TestWithParam<std::tuple<AllocationType, bool>>;
 
 TEST_P(MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest, givenAllocationTypesHaveNotToBeForcedTo48BitThenAllocationDataResource48BitIsSetProperly) {
@@ -1052,7 +1073,6 @@ TEST_P(MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest, givenAllocatio
 }
 
 static const AllocationType allocationHaveToBeForcedTo48Bit[] = {
-    AllocationType::commandBuffer,
     AllocationType::image,
     AllocationType::indirectObjectHeap,
     AllocationType::instructionHeap,
@@ -1066,9 +1086,13 @@ static const AllocationType allocationHaveToBeForcedTo48Bit[] = {
     AllocationType::sharedResourceCopy,
     AllocationType::surfaceStateHeap,
     AllocationType::timestampPacketTagBuffer,
-    AllocationType::ringBuffer,
     AllocationType::semaphoreBuffer,
     AllocationType::deferredTasksList,
+};
+
+static const AllocationType allocationsOptionallyForcedTo48Bit[] = {
+    AllocationType::commandBuffer,
+    AllocationType::ringBuffer,
 };
 
 static const AllocationType allocationHaveNotToBeForcedTo48Bit[] = {
@@ -1104,4 +1128,10 @@ INSTANTIATE_TEST_CASE_P(NotForceTo48Bit,
                         MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest,
                         ::testing::Combine(
                             ::testing::ValuesIn(allocationHaveNotToBeForcedTo48Bit),
+                            ::testing::Bool()));
+
+INSTANTIATE_TEST_CASE_P(OptionallyForceTo48Bit,
+                        MemoryManagerGetAlloctionDataOptionallyForcedTo48BitTest,
+                        ::testing::Combine(
+                            ::testing::ValuesIn(allocationsOptionallyForcedTo48Bit),
                             ::testing::Bool()));

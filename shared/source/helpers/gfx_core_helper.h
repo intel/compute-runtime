@@ -176,6 +176,8 @@ class GfxCoreHelper {
     virtual bool areSecondaryContextsSupported() const = 0;
     virtual uint32_t getContextGroupContextsCount() const = 0;
 
+    virtual bool is48ResourceNeededForCmdBuffer() const = 0;
+
     virtual ~GfxCoreHelper() = default;
 
   protected:
@@ -389,6 +391,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool areSecondaryContextsSupported() const override;
     uint32_t getContextGroupContextsCount() const override;
+
+    bool is48ResourceNeededForCmdBuffer() const override;
 
     ~GfxCoreHelperHw() override = default;
 

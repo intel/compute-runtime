@@ -1610,3 +1610,7 @@ TEST_F(GfxCoreHelperTest, givenContextGroupEnabledWithDebugKeyWhenContextGroupCo
     EXPECT_EQ(2u, gfxCoreHelper.getContextGroupContextsCount());
     EXPECT_TRUE(gfxCoreHelper.areSecondaryContextsSupported());
 }
+
+HWTEST_F(GfxCoreHelperTest, whenAskingIf48bResourceNeededForCmdBufferThenReturnTrue) {
+    EXPECT_TRUE(getHelper<GfxCoreHelper>().is48ResourceNeededForCmdBuffer());
+}
