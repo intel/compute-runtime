@@ -495,7 +495,7 @@ void Context::initializeUsmAllocationPools() {
         return;
     }
 
-    bool enabled = false;
+    bool enabled = true;
     size_t poolSize = 2 * MemoryConstants::megaByte;
     if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
@@ -511,7 +511,7 @@ void Context::initializeUsmAllocationPools() {
         usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, poolSize);
     }
 
-    enabled = false;
+    enabled = true;
     poolSize = 2 * MemoryConstants::megaByte;
     if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
