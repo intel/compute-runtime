@@ -4996,6 +4996,9 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
             const auto allocationsCounter = svmManager->allocationsCounter.load();
             if (allocationsCounter > 0) {
                 if (allocationsCounter == multiDeviceKernel->getKernelArguments()[argIndex].allocIdMemoryManagerCounter) {
+                    // manager count is not being incremented when allocation is from pool
+                    // 1) add check for allocation from pool
+                    // 2) increment when allocation is from pool
                     reuseFromCache = true;
                 } else {
                     const auto svmData = svmManager->getSVMAlloc(argValue);
