@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -500,6 +500,55 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit, bo
 }
 
 template <typename GfxFamily, typename Dispatcher>
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
+    if (ringStart) {
+        return true;
+    }
+
+    size_t startSize = getSizeSemaphoreSection(false);
+    if (!this->partitionConfigSet) {
+        startSize += getSizePartitionRegisterConfigurationSection();
+    }
+    if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
+        startSize += getSizeSystemMemoryFenceAddress();
+    }
+    if (this->relaxedOrderingEnabled && !this->relaxedOrderingInitialized) {
+        startSize += RelaxedOrderingHelper::getSizeRegistersInit<GfxFamily>();
+    }
+
+    size_t requiredSize = startSize + getSizeDispatch(false, false, dispatchMonitorFenceRequired(true)) + getSizeEnd(false);
+    if (ringCommandStream.getAvailableSpace() < requiredSize) {
+        switchRingBuffers(nullptr);
+    }
+    uint64_t gpuStartVa = ringCommandStream.getCurrentGpuAddressPosition();
+
+    if (!this->partitionConfigSet) {
+        dispatchPartitionRegisterConfiguration();
+        this->partitionConfigSet = true;
+    }
+
+    if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
+        dispatchSystemMemoryFenceAddress();
+        this->systemMemoryFenceAddressSet = true;
+    }
+
+    if (this->relaxedOrderingEnabled && !this->relaxedOrderingInitialized) {
+        preinitializeRelaxedOrderingSections();
+        dispatchStaticRelaxedOrderingScheduler();
+        initRelaxedOrderingRegisters();
+
+        this->relaxedOrderingInitialized = true;
+    }
+
+    currentQueueWorkCount++;
+    dispatchSemaphoreSection(currentQueueWorkCount);
+
+    ringStart = submit(gpuStartVa, startSize);
+
+    return ringStart;
+}
+
+template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer(bool blocking) {
     if (!ringStart) {
         if (blocking) {
@@ -892,45 +941,14 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::copyCommandBufferIntoRing(BatchB
 }
 
 template <typename GfxFamily, typename Dispatcher>
-size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getUllsStateSize() {
-    size_t startSize = 0u;
-    if (!this->partitionConfigSet) {
-        startSize += getSizePartitionRegisterConfigurationSection();
-    }
-    if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
-        startSize += getSizeSystemMemoryFenceAddress();
-    }
-    if (this->relaxedOrderingEnabled && !this->relaxedOrderingInitialized) {
-        startSize += RelaxedOrderingHelper::getSizeRegistersInit<GfxFamily>();
-    }
-    return startSize;
-}
-
-template <typename GfxFamily, typename Dispatcher>
-void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchUllsState() {
-    if (!this->partitionConfigSet) {
-        dispatchPartitionRegisterConfiguration();
-        this->partitionConfigSet = true;
-    }
-    if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
-        dispatchSystemMemoryFenceAddress();
-        this->systemMemoryFenceAddressSet = true;
-    }
-    if (this->relaxedOrderingEnabled && !this->relaxedOrderingInitialized) {
-        preinitializeRelaxedOrderingSections();
-        dispatchStaticRelaxedOrderingScheduler();
-        initRelaxedOrderingRegisters();
-
-        this->relaxedOrderingInitialized = true;
-    }
-}
-
-template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) {
     if (batchBuffer.ringBufferRestartRequest) {
         this->stopRingBuffer(false);
     }
 
+    if (!this->startRingBuffer()) {
+        return false;
+    }
     lastSubmittedThrottle = batchBuffer.throttle;
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
     bool inputRequiredMonitorFence = false;
@@ -941,7 +959,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     }
     bool dispatchMonitorFence = this->dispatchMonitorFenceRequired(inputRequiredMonitorFence);
 
-    size_t dispatchSize = this->getUllsStateSize() + getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies, dispatchMonitorFence);
+    size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies, dispatchMonitorFence);
 
     if (this->copyCommandBufferIntoRing(batchBuffer)) {
         dispatchSize += (batchBuffer.stream->getUsed() - batchBuffer.startOffset) - 2 * getSizeStartSection();
@@ -960,13 +978,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         }
     }
 
-    auto needStart = !this->ringStart;
-    this->ringStart = true;
-    auto startVA = ringCommandStream.getCurrentGpuAddressPosition();
-
     this->switchRingBuffersNeeded(requiredMinimalSize, batchBuffer.allocationsForResidency);
-
-    this->dispatchUllsState();
 
     if (this->relaxedOrderingEnabled && batchBuffer.hasStallingCmds && this->relaxedOrderingSchedulerRequired) {
         dispatchRelaxedOrderingQueueStall();
@@ -979,10 +991,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     void *currentPosition = dispatchWorkloadSection(batchBuffer, dispatchMonitorFence);
 
     cpuCachelineFlush(currentPosition, dispatchSize);
+    handleResidency();
 
-    if (!this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize)) {
-        return false;
-    }
+    this->unblockGpu();
 
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
     currentQueueWorkCount++;
@@ -995,17 +1006,6 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     flushStamp.setStamp(flushValue);
 
     return ringStart;
-}
-
-template <typename GfxFamily, typename Dispatcher>
-bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size) {
-    if (needStart) {
-        return this->submit(gpuAddress, size);
-    } else {
-        handleResidency();
-        this->unblockGpu();
-        return true;
-    }
 }
 
 template <typename GfxFamily, typename Dispatcher>

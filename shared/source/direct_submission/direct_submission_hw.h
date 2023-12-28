@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,6 +82,8 @@ class DirectSubmissionHw {
 
     MOCKABLE_VIRTUAL bool stopRingBuffer(bool blocking);
 
+    bool startRingBuffer();
+
     MOCKABLE_VIRTUAL bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp);
     uint32_t getDispatchErrorCode();
 
@@ -119,7 +121,6 @@ class DirectSubmissionHw {
     virtual bool dispatchMonitorFenceRequired(bool requireMonitorFence);
     virtual void getTagAddressValue(TagData &tagData) = 0;
     void unblockGpu();
-    bool submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size);
     bool copyCommandBufferIntoRing(BatchBuffer &batchBuffer);
 
     void cpuCachelineFlush(void *ptr, size_t size);
@@ -133,9 +134,6 @@ class DirectSubmissionHw {
 
     void dispatchStartSection(uint64_t gpuStartAddress);
     size_t getSizeStartSection();
-
-    size_t getUllsStateSize();
-    void dispatchUllsState();
 
     void dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress);
     size_t getSizeSwitchRingBufferSection();

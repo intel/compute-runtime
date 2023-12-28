@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,9 +55,7 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
 
 template <typename GfxFamily, typename Dispatcher>
 inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
-    auto needStart = !this->ringStart;
-    this->ringStart = true;
-    auto startVA = this->ringCommandStream.getCurrentGpuAddressPosition();
+    this->startRingBuffer();
 
     size_t requiredMinimalSize = this->getSizeSemaphoreSection(false) +
                                  Dispatcher::getSizeMonitorFence(this->rootDeviceEnvironment) +
@@ -73,7 +71,8 @@ inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
     Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
 
     this->dispatchSemaphoreSection(this->currentQueueWorkCount + 1);
-    this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize);
+    this->handleResidency();
+    this->unblockGpu();
     this->currentQueueWorkCount++;
 
     this->updateTagValueImpl(this->currentRingBuffer);
