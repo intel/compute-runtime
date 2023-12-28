@@ -39,9 +39,6 @@ namespace L0 {
 template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *);
 template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *);
 
-template struct EventImp<uint32_t>;
-template struct EventImp<uint64_t>;
-
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
     this->context = static_cast<ContextImp *>(context);
 

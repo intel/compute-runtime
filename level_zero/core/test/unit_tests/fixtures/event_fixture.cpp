@@ -9,10 +9,14 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/event/event_impl.inl"
 
 #include "gtest/gtest.h"
 
 namespace L0 {
+template struct EventImp<uint32_t>;
+template struct EventImp<uint64_t>;
+
 namespace ult {
 
 void EventFixtureImpl::setUpImpl(int32_t eventPoolHostFlag, int32_t eventPoolTimestampFlag) {

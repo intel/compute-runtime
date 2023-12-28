@@ -7,6 +7,7 @@
 
 #include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/hw_info.h"
@@ -14,6 +15,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/utilities/wait_util.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event_imp.h"
