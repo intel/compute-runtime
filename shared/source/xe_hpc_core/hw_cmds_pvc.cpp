@@ -23,4 +23,9 @@ bool PVC::isXt(const HardwareInfo &hwInfo) {
     return it != pvcXtDeviceIds.end();
 }
 
+bool PVC::isXtVg(const HardwareInfo &hwInfo) {
+    auto it = std::find(pvcXtVgDeviceIds.begin(), pvcXtVgDeviceIds.end(), hwInfo.platform.usDeviceID);
+    return it != pvcXtVgDeviceIds.end();
+}
+
 } // namespace NEO

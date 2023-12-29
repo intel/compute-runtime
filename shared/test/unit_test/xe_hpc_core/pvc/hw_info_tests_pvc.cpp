@@ -28,6 +28,7 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcDeviceIdsAndRevisionsWhenCheckingConfigs
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_TRUE(PVC::isXl(hwInfo));
         EXPECT_FALSE(PVC::isXt(hwInfo));
+        EXPECT_FALSE(PVC::isXtVg(hwInfo));
 
         hwInfo.platform.usRevId = 0x0;
         EXPECT_TRUE(PVC::isXlA0(hwInfo));
@@ -46,6 +47,26 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcDeviceIdsAndRevisionsWhenCheckingConfigs
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_FALSE(PVC::isXl(hwInfo));
         EXPECT_TRUE(PVC::isXt(hwInfo));
+        EXPECT_FALSE(PVC::isXtVg(hwInfo));
+
+        hwInfo.platform.usRevId = 0x0;
+        EXPECT_TRUE(PVC::isAtMostXtA0(hwInfo));
+
+        hwInfo.platform.usRevId = 0x1;
+        EXPECT_TRUE(PVC::isAtMostXtA0(hwInfo));
+
+        hwInfo.platform.usRevId = 0x3;
+        EXPECT_TRUE(PVC::isAtMostXtA0(hwInfo));
+
+        hwInfo.platform.usRevId = 0x5;
+        EXPECT_FALSE(PVC::isAtMostXtA0(hwInfo));
+    }
+
+    for (auto &deviceId : pvcXtVgDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_FALSE(PVC::isXl(hwInfo));
+        EXPECT_FALSE(PVC::isXt(hwInfo));
+        EXPECT_TRUE(PVC::isXtVg(hwInfo));
 
         hwInfo.platform.usRevId = 0x0;
         EXPECT_TRUE(PVC::isAtMostXtA0(hwInfo));

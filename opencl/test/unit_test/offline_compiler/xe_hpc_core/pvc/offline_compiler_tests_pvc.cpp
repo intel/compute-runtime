@@ -61,6 +61,32 @@ PVCTEST_F(PvcOfflineCompilerTests, givenPvcDeviceAndRevisionIdValueWhenInitHwInf
     }
 }
 
+PVCTEST_F(PvcOfflineCompilerTests, givenPvcXtVgDeviceAndRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
+    MockOfflineCompiler mockOfflineCompiler;
+
+    std::string deviceStr;
+    auto deviceID = pvcXtVgDeviceIds.front();
+
+    HardwareIpVersion config = AOT::PVC_XT_C0_VG;
+    int revisionID = 0x2f;
+
+    std::stringstream deviceIDStr, expectedOutput;
+    mockOfflineCompiler.revisionId = revisionID;
+
+    deviceIDStr << "0x" << std::hex << deviceID;
+    deviceStr = mockOfflineCompiler.argHelper->productConfigHelper->getAcronymForProductConfig(config.value);
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
+    std::string output = testing::internal::GetCapturedStdout();
+    expectedOutput << "Auto-detected target based on " << deviceIDStr.str() << " device id: " << deviceStr << "\n";
+
+    EXPECT_STREQ(output.c_str(), expectedOutput.str().c_str());
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usDeviceID, deviceID);
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, revisionID);
+    EXPECT_EQ(mockOfflineCompiler.deviceConfig, config.value);
+}
+
 PVCTEST_F(PvcOfflineCompilerTests, givenPvcXtDeviceAndUnknownRevisionIdValueWhenInitHwInfoThenDefaultConfigIsSet) {
     MockOfflineCompiler mockOfflineCompiler;
     mockOfflineCompiler.argHelper->getPrinterRef().setSuppressMessages(true);

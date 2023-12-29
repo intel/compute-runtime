@@ -18,7 +18,11 @@ bool ProductHelperHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const Hardw
 
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
-    if (PVC::isXt(hwInfo)) {
+    if (PVC::isXtVg(hwInfo)) {
+        if (stepping == REVISION_C) {
+            return 0x7;
+        }
+    } else if (PVC::isXt(hwInfo)) {
         switch (stepping) {
         case REVISION_A0:
             return 0x3;
@@ -44,7 +48,13 @@ uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, 
 
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
-    switch (hwInfo.platform.usRevId & PVC::pvcSteppingBits) {
+    auto rev = hwInfo.platform.usRevId & PVC::pvcSteppingBits;
+
+    if (PVC::isXtVg(hwInfo) && rev != 7) {
+        return CommonConstants::invalidStepping;
+    }
+
+    switch (rev) {
     case 0x0:
     case 0x1:
     case 0x3:
@@ -178,7 +188,7 @@ bool ProductHelperHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequ
 
 template <>
 bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
-    return PVC::isXt(hwInfo);
+    return PVC::isXt(hwInfo) || PVC::isXtVg(hwInfo);
 }
 
 template <>

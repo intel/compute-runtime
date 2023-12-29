@@ -81,6 +81,14 @@ PVCTEST_F(ProductConfigTests, givenPvcXtDeviceIdWhenDifferentRevisionIsPassedThe
         productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
     }
+
+    for (const auto &deviceId : pvcXtVgDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+
+        hwInfo.platform.usRevId = 0x17;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XT_C0_VG);
+    }
 }
 
 PVCTEST_F(ProductConfigTests, givenDefaultDeviceAndRevisionIdWhenGetProductConfigThenPvcXtC0ConfigIsReturned) {

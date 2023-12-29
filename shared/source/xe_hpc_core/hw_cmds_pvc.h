@@ -55,6 +55,7 @@ struct PVC : public XeHpcCoreFamily {
     static bool isXl(const HardwareInfo &hwInfo);
 
     static bool isXt(const HardwareInfo &hwInfo);
+    static bool isXtVg(const HardwareInfo &hwInfo);
 
     static bool isXlA0(const HardwareInfo &hwInfo) {
         auto revId = hwInfo.platform.usRevId & pvcSteppingBits;

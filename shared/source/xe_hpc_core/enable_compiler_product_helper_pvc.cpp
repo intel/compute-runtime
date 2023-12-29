@@ -28,7 +28,13 @@ uint32_t CompilerProductHelperHw<IGFX_PVC>::getProductConfigFromHwInfo(const Har
     auto deviceId = hwInfo.platform.usDeviceID;
     bool isPvcXl = (std::find(pvcXlDeviceIds.begin(), pvcXlDeviceIds.end(), deviceId) != pvcXlDeviceIds.end());
     bool isPvcXt = (std::find(pvcXtDeviceIds.begin(), pvcXtDeviceIds.end(), deviceId) != pvcXtDeviceIds.end());
-    if (isPvcXl) {
+    bool isPvcXtVg = (std::find(pvcXtVgDeviceIds.begin(), pvcXtVgDeviceIds.end(), deviceId) != pvcXtVgDeviceIds.end());
+
+    if (isPvcXtVg) {
+        if ((hwInfo.platform.usRevId & PVC::pvcSteppingBits) == 7) {
+            return AOT::PVC_XT_C0_VG;
+        }
+    } else if (isPvcXl) {
         switch (hwInfo.platform.usRevId & PVC::pvcSteppingBits) {
         case 0x0:
             return AOT::PVC_XL_A0;
