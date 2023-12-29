@@ -3235,7 +3235,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(*syncAllocation, nullptr, *neoDevice->getMemoryManager(), 1, false, false);
     *inOrderExecInfo->getBaseHostAddress() = 1;
 
-    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->enableCounterBasedMode(true);
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
@@ -3247,7 +3247,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
     auto event2 = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
 
-    event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event2->enableCounterBasedMode(true);
     event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
     syncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
     ultCsr->downloadAllocationsCalledCount = 0;
@@ -3291,7 +3291,7 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(*deviceSyncAllocation, hostSyncAllocation, *neoDevice->getMemoryManager(), 1, false, false);
     *inOrderExecInfo->getBaseHostAddress() = 1;
 
-    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->enableCounterBasedMode(true);
     event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
@@ -3304,7 +3304,7 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
 
     auto event2 = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
 
-    event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event2->enableCounterBasedMode(true);
     event2->updateInOrderExecState(inOrderExecInfo, 1, 0);
     hostSyncAllocation->updateTaskCount(0u, ultCsr->getOsContext().getContextId());
     ultCsr->downloadAllocationsCalledCount = 0;

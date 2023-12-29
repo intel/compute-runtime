@@ -87,7 +87,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     }
 
     if (eventPool->isCounterBased() || NEO::debugManager.flags.ForceInOrderEvents.get() == 1) {
-        event->enableCounterBasedMode(true, eventPool->getCounterBasedFlags());
+        event->enableCounterBasedMode(true);
     }
 
     auto extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);

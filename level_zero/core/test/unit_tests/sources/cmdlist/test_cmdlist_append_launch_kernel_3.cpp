@@ -813,43 +813,12 @@ HWTEST2_F(InOrderCmdListTests, givenIpcAndCounterBasedEventPoolFlagsWhenCreating
     eventPoolDesc.count = 1;
 
     ze_event_pool_counter_based_exp_desc_t counterBasedExtension = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
-    counterBasedExtension.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE;
     eventPoolDesc.pNext = &counterBasedExtension;
 
     auto eventPool = EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue);
 
     EXPECT_EQ(nullptr, eventPool);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, returnValue);
-}
-
-HWTEST2_F(InOrderCmdListTests, givenIncorrectFlagsWhenCreatingCounterBasedEventsThenReturnError, IsAtLeastSkl) {
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-
-    ze_event_pool_counter_based_exp_desc_t counterBasedExtension = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
-    eventPoolDesc.pNext = &counterBasedExtension;
-
-    counterBasedExtension.flags = 0;
-    auto eventPool = EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue);
-    EXPECT_EQ(nullptr, eventPool);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
-
-    counterBasedExtension.flags = static_cast<uint32_t>(ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE) << 1;
-    eventPool = EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue);
-    EXPECT_EQ(nullptr, eventPool);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
-
-    counterBasedExtension.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE;
-    eventPool = EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue);
-    EXPECT_EQ(counterBasedExtension.flags, eventPool->getCounterBasedFlags());
-    EXPECT_NE(nullptr, eventPool);
-    eventPool->destroy();
-
-    counterBasedExtension.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE;
-    eventPool = EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue);
-    EXPECT_EQ(counterBasedExtension.flags, eventPool->getCounterBasedFlags());
-    EXPECT_NE(nullptr, eventPool);
-    eventPool->destroy();
 }
 
 HWTEST2_F(InOrderCmdListTests, givenIpcPoolEventWhenTryingToImplicitlyConverToCounterBasedEventThenDisallow, IsAtLeastSkl) {
@@ -875,7 +844,7 @@ HWTEST2_F(InOrderCmdListTests, givenIpcPoolEventWhenTryingToImplicitlyConverToCo
 
 HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderWhenWhenCallingQueryStatusThenReturnNotReady, IsAtLeastSkl) {
     auto eventPool = createEvents<FamilyType>(1, false);
-    events[0]->enableCounterBasedMode(true, eventPool->getCounterBasedFlags());
+    events[0]->enableCounterBasedMode(true);
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->queryStatus());
 }
@@ -1441,48 +1410,40 @@ HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmed
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
-    EXPECT_EQ(0u, events[0]->counterBasedFlags);
     EXPECT_FALSE(events[0]->isCounterBased());
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[1]->counterBasedMode);
-    EXPECT_EQ(0u, events[1]->counterBasedFlags);
     EXPECT_FALSE(events[1]->isCounterBased());
 
     debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(-1);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
-    EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE), events[0]->counterBasedFlags);
     EXPECT_TRUE(events[0]->isCounterBased());
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[1]->counterBasedMode);
-    EXPECT_EQ(0u, events[1]->counterBasedFlags);
     EXPECT_FALSE(events[1]->isCounterBased());
 
     outOfOrderImmCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[2]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[2]->counterBasedMode);
-    EXPECT_EQ(0u, events[2]->counterBasedFlags);
     EXPECT_FALSE(events[2]->isCounterBased());
 
     // Reuse on Regular = disable
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[0]->counterBasedMode);
-    EXPECT_EQ(0u, events[0]->counterBasedFlags);
     EXPECT_FALSE(events[0]->isCounterBased());
 
     // Reuse on non-inOrder = disable
     events[0]->counterBasedMode = Event::CounterBasedMode::implicitlyEnabled;
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[0]->counterBasedMode);
-    EXPECT_EQ(0u, events[0]->counterBasedFlags);
     EXPECT_FALSE(events[0]->isCounterBased());
 
     // Reuse on already disabled
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[0]->counterBasedMode);
-    EXPECT_EQ(0u, events[0]->counterBasedFlags);
     EXPECT_FALSE(events[0]->isCounterBased());
 
     // On explicitly enabled
@@ -1497,18 +1458,17 @@ HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingAppen
 
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->makeCounterBasedInitiallyDisabled();
-    events[0]->enableCounterBasedMode(false, eventPool->getCounterBasedFlags());
+    events[0]->enableCounterBasedMode(false);
 
     immCmdList->appendEventReset(events[0]->toHandle());
     EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[0]->counterBasedMode);
-    EXPECT_EQ(0u, events[0]->counterBasedFlags);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenCallingAppendThenHandleInOrderExecInfo, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->makeCounterBasedInitiallyDisabled();
-    events[0]->enableCounterBasedMode(false, eventPool->getCounterBasedFlags());
+    events[0]->enableCounterBasedMode(false);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
