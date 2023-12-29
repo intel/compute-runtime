@@ -3678,7 +3678,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             }
 
             if (isInOrderExecutionEnabled() && (this->cmdListType == typeImmediate)) {
-                signalEvent->enableCounterBasedMode(false);
+                signalEvent->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
             } else {
                 signalEvent->disableImplicitCounterBasedMode();
             }

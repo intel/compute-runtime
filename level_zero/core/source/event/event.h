@@ -241,7 +241,7 @@ struct Event : _ze_event_handle_t {
     void updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset);
     bool isCounterBased() const { return ((counterBasedMode == CounterBasedMode::explicitlyEnabled) || (counterBasedMode == CounterBasedMode::implicitlyEnabled)); }
     bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::explicitlyEnabled); }
-    void enableCounterBasedMode(bool apiRequest);
+    void enableCounterBasedMode(bool apiRequest, uint32_t flags);
     void disableImplicitCounterBasedMode();
     NEO::GraphicsAllocation *getInOrderExecDataAllocation() const;
     uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
@@ -305,6 +305,7 @@ struct Event : _ze_event_handle_t {
     uint32_t kernelCount = 1u;
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
+    uint32_t counterBasedFlags = 0;
     CounterBasedMode counterBasedMode = CounterBasedMode::initiallyDisabled;
 
     ze_event_scope_flags_t signalScope = 0u;
@@ -386,6 +387,7 @@ struct EventPool : _ze_event_pool_handle_t {
     }
 
     bool isCounterBased() const { return counterBased; }
+    uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
     bool isIpcPoolFlagSet() const { return isIpcPoolFlag; }
 
   protected:
@@ -406,6 +408,8 @@ struct EventPool : _ze_event_pool_handle_t {
     uint32_t eventSize = 0;
     uint32_t eventPackets = 0;
     uint32_t maxKernelCount = 0;
+
+    uint32_t counterBasedFlags = 0;
 
     ze_event_pool_flags_t eventPoolFlags{};
 
