@@ -48,6 +48,7 @@ enum PRODUCT_CONFIG : uint32_t {
     PVC_XT_B0 = 0x030f0005,
     PVC_XT_B1 = 0x030f0006,
     PVC_XT_C0 = 0x030f0007,
+    PVC_XT_C0_VG = 0x030f4007,
     MTL_M_A0 = 0x03118000,
     MTL_M_B0 = 0x03118004,
     MTL_P_A0 = 0x0311c000,
@@ -189,6 +190,7 @@ inline const std::map<std::string, AOT::PRODUCT_CONFIG> deviceAcronyms = {
 #ifdef SUPPORT_PVC
     {"pvc-sdv", PVC_XL_A0P},
     {"pvc", PVC_XT_C0},
+    {"pvc-xt-c0-vg", PVC_XT_C0_VG},
 #endif
 #ifdef SUPPORT_MTL
     {"mtl-s", MTL_M_B0},

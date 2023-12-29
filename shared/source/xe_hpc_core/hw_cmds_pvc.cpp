@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,11 @@ bool PVC::isXl(const HardwareInfo &hwInfo) {
 bool PVC::isXt(const HardwareInfo &hwInfo) {
     auto it = std::find(pvcXtDeviceIds.begin(), pvcXtDeviceIds.end(), hwInfo.platform.usDeviceID);
     return it != pvcXtDeviceIds.end();
+}
+
+bool PVC::isXtVg(const HardwareInfo &hwInfo) {
+    auto it = std::find(pvcXtVgDeviceIds.begin(), pvcXtVgDeviceIds.end(), hwInfo.platform.usDeviceID);
+    return it != pvcXtVgDeviceIds.end();
 }
 
 } // namespace NEO

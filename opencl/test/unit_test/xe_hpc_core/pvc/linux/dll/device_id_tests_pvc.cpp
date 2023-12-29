@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 using namespace NEO;
 
 PVCTEST_F(DeviceIdTests, GivenPvcSupportedDeviceIdThenConfigIsCorrect) {
-    std::array<DeviceDescriptor, 10> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 11> expectedDescriptors = {{
         {0x0BD0, &PvcHwConfig::hwInfo, &PvcHwConfig::setupHardwareInfo},
         {0x0BD5, &PvcHwConfig::hwInfo, &PvcHwConfig::setupHardwareInfo},
         {0x0BD6, &PvcHwConfig::hwInfo, &PvcHwConfig::setupHardwareInfo},
@@ -21,6 +21,7 @@ PVCTEST_F(DeviceIdTests, GivenPvcSupportedDeviceIdThenConfigIsCorrect) {
         {0x0BDB, &PvcHwConfig::hwInfo, &PvcHwConfig::setupHardwareInfo},
         {0x0B69, &PvcHwConfig::hwInfo, &PvcHwConfig::setupHardwareInfo},
         {0x0B6E, &PvcHwConfig::hwInfo, &PvcHwConfig::setupHardwareInfo},
+        {0x0BD4, &PvcHwConfig::hwInfo, &PvcHwConfig::setupHardwareInfo},
     }};
 
     testImpl(expectedDescriptors);

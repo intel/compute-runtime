@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,6 +80,14 @@ PVCTEST_F(ProductConfigTests, givenPvcXtDeviceIdWhenDifferentRevisionIsPassedThe
         hwInfo.platform.usRevId = 0x17;
         productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
+    }
+
+    for (const auto &deviceId : pvcXtVgDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+
+        hwInfo.platform.usRevId = 0x17;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XT_C0_VG);
     }
 }
 

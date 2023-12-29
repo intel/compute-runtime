@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@ enum class ReleaseType {
     release1256,
     release1257,
     release1260,
+    release1261,
     release1270,
     release1271,
     release1274,

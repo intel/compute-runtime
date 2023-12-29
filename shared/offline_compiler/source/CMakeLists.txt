@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -73,6 +73,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1256.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1257.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1260.cpp
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1261.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1270.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1271.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1274.cpp

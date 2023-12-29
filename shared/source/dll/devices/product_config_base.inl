@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@ DEVICE_CONFIG(PVC_XT_A0, PvcHwConfig, pvcXtDeviceIds, XE_FAMILY, XE_HPC_RELEASE)
 DEVICE_CONFIG(PVC_XT_B0, PvcHwConfig, pvcXtDeviceIds, XE_FAMILY, XE_HPC_RELEASE)
 DEVICE_CONFIG(PVC_XT_B1, PvcHwConfig, pvcXtDeviceIds, XE_FAMILY, XE_HPC_RELEASE)
 DEVICE_CONFIG(PVC_XT_C0, PvcHwConfig, pvcXtDeviceIds, XE_FAMILY, XE_HPC_RELEASE)
+DEVICE_CONFIG(PVC_XT_C0_VG, PvcHwConfig, pvcXtVgDeviceIds, XE_FAMILY, XE_HPC_RELEASE)
 
 #endif
 #endif

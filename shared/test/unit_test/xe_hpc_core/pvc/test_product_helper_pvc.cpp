@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,6 +77,11 @@ PVCTEST_F(PvcProductHelper, givenPvcHwInfoWhenIsIpSamplingSupportedThenCorrectRe
     }
 
     for (const auto &deviceId : pvcXtDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_TRUE(productHelper->isIpSamplingSupported(hwInfo));
+    }
+
+    for (const auto &deviceId : pvcXtVgDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_TRUE(productHelper->isIpSamplingSupported(hwInfo));
     }
@@ -221,13 +226,19 @@ PVCTEST_F(PvcProductHelper, givenDeviceIdThenProperMaxThreadsForWorkgroupIsRetur
         uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
         EXPECT_EQ(64u * numThreadsPerEU, productHelper->getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, 64u, 64u));
     }
+
+    for (const auto &deviceId : pvcXtVgDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        uint32_t numThreadsPerEU = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+        EXPECT_EQ(64u * numThreadsPerEU, productHelper->getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, 64u, 64u));
+    }
 }
 
 PVCTEST_F(PvcProductHelper, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConversionIsCorrect) {
     auto hwInfo = *defaultHwInfo;
 
     for (uint32_t testValue = 0; testValue < 0xFF; testValue++) {
-        for (const auto *pvc : {&pvcXlDeviceIds, &pvcXtDeviceIds}) {
+        for (const auto *pvc : {&pvcXlDeviceIds, &pvcXtDeviceIds, &pvcXtVgDeviceIds}) {
             for (const auto &deviceId : *pvc) {
                 hwInfo.platform.usDeviceID = deviceId;
                 auto hwRevIdFromStepping = productHelper->getHwRevIdFromStepping(testValue, hwInfo);
@@ -241,7 +252,7 @@ PVCTEST_F(PvcProductHelper, givenVariousValuesWhenConvertingHwRevIdAndSteppingTh
         auto steppingFromHwRevId = productHelper->getSteppingFromHwRevId(hwInfo);
         if (steppingFromHwRevId != CommonConstants::invalidStepping) {
             bool anyMatchAfterConversionFromStepping = false;
-            for (const auto *pvc : {&pvcXlDeviceIds, &pvcXtDeviceIds}) {
+            for (const auto *pvc : {&pvcXlDeviceIds, &pvcXtDeviceIds, &pvcXtVgDeviceIds}) {
                 for (const auto &deviceId : *pvc) {
                     hwInfo.platform.usDeviceID = deviceId;
                     auto hwRevId = productHelper->getHwRevIdFromStepping(steppingFromHwRevId, hwInfo);
@@ -267,6 +278,11 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsIpSamplingSupportedThenCo
     }
 
     for (const auto &deviceId : pvcXtDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+        EXPECT_TRUE(productHelper->isIpSamplingSupported(hwInfo));
+    }
+
+    for (const auto &deviceId : pvcXtVgDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
         EXPECT_TRUE(productHelper->isIpSamplingSupported(hwInfo));
     }
