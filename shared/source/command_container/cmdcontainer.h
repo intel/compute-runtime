@@ -256,7 +256,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     uint32_t nextIddInBlock = 0;
 
     bool isFlushTaskUsedForImmediate = false;
-    bool isHandleFenceCompletionRequired = false;
+    bool isHandleFenceCompletionRequired = true;
     bool heapSharingEnabled = false;
     bool useSecondaryCommandStream = false;
     bool indirectHeapInLocalMemory = false;
