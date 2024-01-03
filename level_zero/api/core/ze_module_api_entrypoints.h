@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -510,5 +510,11 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchMultipleKernelsIndi
         hSignalEvent,
         numWaitEvents,
         phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeKernelSchedulingHintExp(
+    ze_kernel_handle_t hKernel,
+    ze_scheduling_hint_exp_desc_t *pHint) {
+    return L0::zeKernelSchedulingHintExp(hKernel, pHint);
 }
 }
