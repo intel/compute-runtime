@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -22,6 +22,7 @@ endif()
 if(TESTS_XE_HPC_CORE)
   target_sources(neo_shared_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_60_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_61_tests.cpp
   )
 endif()
 add_subdirectories()
