@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -298,6 +298,12 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
         if (this->reusableAllocationList) {
 
             if (isHandleFenceCompletionRequired) {
+                for (auto &engine : this->device->getMemoryManager()->getRegisteredEngines(cmdBufferAllocations[i]->getRootDeviceIndex())) {
+                    if (cmdBufferAllocations[i]->isUsedByOsContext(engine.osContext->getContextId())) {
+                        auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                        engine.commandStreamReceiver->stopDirectSubmission(false);
+                    }
+                }
                 this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
             }
 

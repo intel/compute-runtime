@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -299,6 +299,52 @@ TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndReset
     cmdContainer.reset();
     EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 0u);
     EXPECT_FALSE(allocList.peekIsEmpty());
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+HWTEST_F(CommandContainerTest, givenCmdContainerAndHandleFenceWithAllocsListWhenAllocateAndResetThenCmdBufferAllocIsReused) {
+    AllocationsList allocList;
+    auto cmdContainer = std::make_unique<CommandContainer>();
+    cmdContainer->setHandleFenceCompletionRequired();
+    cmdContainer->initialize(pDevice, &allocList, true, HeapSize::defaultHeapSize, false);
+    auto &cmdBufferAllocs = cmdContainer->getCmdBufferAllocations();
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 0u);
+    EXPECT_EQ(cmdBufferAllocs.size(), 1u);
+    EXPECT_TRUE(allocList.peekIsEmpty());
+
+    cmdContainer->allocateNextCommandBuffer();
+    EXPECT_EQ(cmdBufferAllocs.size(), 2u);
+
+    auto cmdBuffer0 = cmdBufferAllocs[0];
+    auto cmdBuffer1 = cmdBufferAllocs[1];
+
+    cmdContainer->reset();
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 1u);
+    EXPECT_EQ(cmdBufferAllocs.size(), 1u);
+    EXPECT_EQ(cmdBufferAllocs[0], cmdBuffer0);
+    EXPECT_FALSE(allocList.peekIsEmpty());
+
+    cmdContainer->allocateNextCommandBuffer();
+    EXPECT_EQ(cmdBufferAllocs.size(), 2u);
+    EXPECT_EQ(cmdBufferAllocs[0], cmdBuffer0);
+    EXPECT_EQ(cmdBufferAllocs[1], cmdBuffer1);
+    EXPECT_TRUE(allocList.peekIsEmpty());
+    auto csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(memoryManager->getRegisteredEngines(0u)[0].commandStreamReceiver);
+    EXPECT_FALSE(csr->stopDirectSubmissionCalled);
+    EXPECT_FALSE(csr->stopDirectSubmissionCalledBlocking);
+    cmdBuffer1->updateTaskCount(1u, 0u);
+
+    cmdContainer.reset();
+
+    EXPECT_TRUE(csr->stopDirectSubmissionCalled);
+    EXPECT_FALSE(csr->stopDirectSubmissionCalledBlocking);
+    csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(memoryManager->getRegisteredEngines(0u)[1].commandStreamReceiver);
+    EXPECT_FALSE(csr->stopDirectSubmissionCalled);
+    EXPECT_FALSE(csr->stopDirectSubmissionCalledBlocking);
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 3u);
+    EXPECT_FALSE(allocList.peekIsEmpty());
+    cmdBuffer1->releaseUsageInOsContext(0u);
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 

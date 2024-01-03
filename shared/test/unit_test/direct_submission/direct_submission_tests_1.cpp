@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,25 @@ HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledNotSetThenExpectCpuCac
     EXPECT_EQ(expectedPtrVal, CpuIntrinsicsTests::lastClFlushedPtr);
 }
 
+HWTEST_F(DirectSubmissionTest, givenDirectSubmissionDisabledWhenStopThenRingIsNotStopped) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    bool ret = directSubmission.initialize(true, false);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(directSubmission.ringStart);
+
+    csr.stopDirectSubmission(false);
+    EXPECT_TRUE(directSubmission.ringStart);
+
+    csr.directSubmission.release();
+}
+
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenStopThenRingIsNotStarted) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.directSubmission.reset(&directSubmission);
@@ -79,6 +97,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenStopThenRingIsNotStarted
 }
 
 HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNotStarted) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
     MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,

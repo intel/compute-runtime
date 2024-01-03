@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1470,10 +1470,12 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const 
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocking) {
-    if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
-        this->blitterDirectSubmission->stopRingBuffer(blocking);
-    } else {
-        this->directSubmission->stopRingBuffer(blocking);
+    if (this->isAnyDirectSubmissionEnabled()) {
+        if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+            this->blitterDirectSubmission->stopRingBuffer(blocking);
+        } else {
+            this->directSubmission->stopRingBuffer(blocking);
+        }
     }
 }
 

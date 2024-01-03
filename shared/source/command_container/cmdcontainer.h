@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -202,6 +202,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
         return this->alignedPrimarySize;
     }
     void endAlignedPrimaryBuffer();
+    void setHandleFenceCompletionRequired() {
+        this->isHandleFenceCompletionRequired = true;
+    }
 
   protected:
     size_t getAlignedCmdBufferSize() const;

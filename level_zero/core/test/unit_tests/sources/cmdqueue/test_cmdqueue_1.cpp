@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1907,6 +1907,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
         EXPECT_NE(0u, bbStart->getBatchBufferStartAddress());
     }
 
+    static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = false;
     commandQueue->destroy();
 }
 
@@ -1954,6 +1955,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
         }
     }
 
+    static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = false;
     commandQueue->destroy();
 }
 
