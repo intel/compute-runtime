@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5143,6 +5143,11 @@ HWTEST2_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASPropte
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
     EXPECT_EQ(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
+}
+
+TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZexCommandListAppendWaitOnMemory64ThenReturnCorrectValue) {
+    auto map = getExtensionFunctionsLookupMap();
+    EXPECT_NE(map.end(), map.find("zexCommandListAppendWaitOnMemory64"));
 }
 
 } // namespace ult
