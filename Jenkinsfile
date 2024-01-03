@@ -1,11 +1,11 @@
 #!groovy
 
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-dependenciesRevision='da420d56e6729e033d41706b4a98b6e3bc51cb58-2214'
+dependenciesRevision='2c734f0cced066ab8df75b845adff0ef9e65e066-2220'
 kernelVersion='dev-5283'
