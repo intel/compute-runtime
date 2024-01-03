@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,13 +85,7 @@ struct SvmMapOperation {
 
 class SVMAllocsManager {
   public:
-    struct CompareAcceptOffsetSvmPointers {
-        bool operator()(const std::unique_ptr<SvmAllocationData> &svmData, const void *ptr, const void *otherPtr) {
-            return ptr == otherPtr || (otherPtr < ptr &&
-                                       (reinterpret_cast<uintptr_t>(ptr) < (reinterpret_cast<uintptr_t>(otherPtr) + svmData->size)));
-        }
-    };
-    using SortedVectorBasedAllocationTracker = BaseSortedPointerWithValueVector<SvmAllocationData, CompareAcceptOffsetSvmPointers>;
+    using SortedVectorBasedAllocationTracker = BaseSortedPointerWithValueVector<SvmAllocationData>;
 
     class MapBasedAllocationTracker {
         friend class SVMAllocsManager;

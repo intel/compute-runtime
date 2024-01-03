@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -4110,11 +4110,23 @@ CL_API_ENTRY cl_int CL_API_CALL clGetMemAllocInfoINTEL(
         if (!unifiedMemoryAllocation) {
             return changeGetInfoStatusToCLResultType(info.set<void *>(nullptr));
         }
+        if (auto basePtrFromDevicePool = pContext->getDeviceMemAllocPool().getPooledAllocationBasePtr(ptr)) {
+            return changeGetInfoStatusToCLResultType(info.set<uint64_t>(castToUint64(basePtrFromDevicePool)));
+        }
+        if (auto basePtrFromHostPool = pContext->getHostMemAllocPool().getPooledAllocationBasePtr(ptr)) {
+            return changeGetInfoStatusToCLResultType(info.set<uint64_t>(castToUint64(basePtrFromHostPool)));
+        }
         return changeGetInfoStatusToCLResultType(info.set<uint64_t>(unifiedMemoryAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
     }
     case CL_MEM_ALLOC_SIZE_INTEL: {
         if (!unifiedMemoryAllocation) {
             return changeGetInfoStatusToCLResultType(info.set<size_t>(0u));
+        }
+        if (auto sizeFromDevicePool = pContext->getDeviceMemAllocPool().getPooledAllocationSize(ptr)) {
+            return changeGetInfoStatusToCLResultType(info.set<size_t>(sizeFromDevicePool));
+        }
+        if (auto sizeFromHostPool = pContext->getHostMemAllocPool().getPooledAllocationSize(ptr)) {
+            return changeGetInfoStatusToCLResultType(info.set<size_t>(sizeFromHostPool));
         }
         return changeGetInfoStatusToCLResultType(info.set<size_t>(unifiedMemoryAllocation->size));
     }

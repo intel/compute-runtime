@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,13 +16,22 @@
 
 namespace NEO {
 
-template <typename ValueType, class Compare>
+template <typename ValueType>
 class BaseSortedPointerWithValueVector {
   public:
     using PointerPair = std::pair<const void *, std::unique_ptr<ValueType>>;
     using Container = std::vector<PointerPair>;
 
-    BaseSortedPointerWithValueVector() : compareFunctor(Compare()){};
+    BaseSortedPointerWithValueVector() = default;
+
+    bool comparePointers(size_t allowedOffset, const void *ptr, const void *otherPtr) {
+        return ptr == otherPtr || (allowedOffset > 0u && (otherPtr < ptr &&
+                                                          (reinterpret_cast<uintptr_t>(ptr) < (reinterpret_cast<uintptr_t>(otherPtr) + allowedOffset))));
+    }
+
+    size_t getAllocationSize(const std::unique_ptr<ValueType> &data) {
+        return data->size;
+    }
 
     void insert(const void *ptr, const ValueType &value) {
         allocations.push_back(std::make_pair(ptr, std::make_unique<ValueType>(value)));
@@ -42,7 +51,7 @@ class BaseSortedPointerWithValueVector {
         allocations.erase(removeIt);
     }
 
-    typename Container::iterator getImpl(const void *ptr) {
+    typename Container::iterator getImpl(const void *ptr, bool allowOffset) {
         if (allocations.size() == 0) {
             return allocations.end();
         }
@@ -58,8 +67,8 @@ class BaseSortedPointerWithValueVector {
         while (end >= begin) {
             int currentPos = (begin + end) / 2;
             const auto &allocation = allocations[currentPos];
-
-            if (compareFunctor(allocation.second, ptr, allocation.first)) {
+            const size_t allowedOffset = allowOffset ? getAllocationSize(allocation.second) : 0u;
+            if (comparePointers(allowedOffset, ptr, allocation.first)) {
                 return allocations.begin() + currentPos;
             } else if (ptr < allocation.first) {
                 end = currentPos - 1;
@@ -74,7 +83,7 @@ class BaseSortedPointerWithValueVector {
 
     std::unique_ptr<ValueType> extract(const void *ptr) {
         std::unique_ptr<ValueType> retVal{};
-        auto it = getImpl(ptr);
+        auto it = getImpl(ptr, false);
         if (it != allocations.end()) {
             retVal.swap(it->second);
             allocations.erase(it);
@@ -83,7 +92,7 @@ class BaseSortedPointerWithValueVector {
     }
 
     ValueType *get(const void *ptr) {
-        auto it = getImpl(ptr);
+        auto it = getImpl(ptr, true);
         if (it != allocations.end()) {
             return it->second.get();
         }
@@ -93,6 +102,5 @@ class BaseSortedPointerWithValueVector {
     size_t getNumAllocs() const { return allocations.size(); }
 
     Container allocations;
-    Compare compareFunctor;
 };
 } // namespace NEO

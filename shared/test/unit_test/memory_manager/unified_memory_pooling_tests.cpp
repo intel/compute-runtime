@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
 using namespace NEO;
 
 using UnifiedMemoryPoolingTest = Test<SVMMemoryAllocatorFixture<true>>;
@@ -73,11 +74,20 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenDifferentAllocationSizesWhe
     EXPECT_TRUE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold, memoryProperties));
     EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold + 1, memoryProperties));
 
+    memoryProperties.memoryType = InternalMemoryType::sharedUnifiedMemory;
+    EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold, memoryProperties));
+    EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold + 1, memoryProperties));
+
     memoryProperties.memoryType = InternalMemoryType::deviceUnifiedMemory;
     EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold, memoryProperties));
     EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold + 1, memoryProperties));
 
-    memoryProperties.memoryType = InternalMemoryType::sharedUnifiedMemory;
+    memoryProperties.memoryType = InternalMemoryType::hostUnifiedMemory;
+    memoryProperties.allocationFlags.allFlags = 1u;
+    EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold, memoryProperties));
+    EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold + 1, memoryProperties));
+    memoryProperties.allocationFlags.allFlags = 0u;
+    memoryProperties.allocationFlags.allAllocFlags = 1u;
     EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold, memoryProperties));
     EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold + 1, memoryProperties));
 }
@@ -90,6 +100,13 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenVariousPointersWhenCallingI
     EXPECT_TRUE(usmMemAllocPool.isInPool(usmMemAllocPool.pool));
     EXPECT_TRUE(usmMemAllocPool.isInPool(lastPtrInPool));
     EXPECT_FALSE(usmMemAllocPool.isInPool(usmMemAllocPool.poolEnd));
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenAlignmentsWhenCallingAlignmentIsAllowedThenCorrectValueIsReturned) {
+    EXPECT_FALSE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::chunkAlignment / 2));
+    EXPECT_TRUE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::chunkAlignment));
+    EXPECT_FALSE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::chunkAlignment + UsmMemAllocPool::chunkAlignment / 2));
+    EXPECT_TRUE(usmMemAllocPool.alignmentIsAllowed(UsmMemAllocPool::chunkAlignment * 2));
 }
 
 TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenUsingPoolThenAllocationIsPooledUnlessPoolIsFull) {
@@ -127,10 +144,82 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenUsing
     EXPECT_NE(nullptr, usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties));
 }
 
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenVariousAlignmentsWhenUsingPoolThenAddressIsAligned) {
+    SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, 0u, rootDeviceIndices, deviceBitfields);
+    const auto allocationSize = UsmMemAllocPool::allocationThreshold;
+
+    std::array<size_t, 8> alignmentsToCheck = {UsmMemAllocPool::chunkAlignment,
+                                               UsmMemAllocPool::chunkAlignment * 2,
+                                               UsmMemAllocPool::chunkAlignment * 4,
+                                               UsmMemAllocPool::chunkAlignment * 8,
+                                               UsmMemAllocPool::chunkAlignment * 16,
+                                               UsmMemAllocPool::chunkAlignment * 32,
+                                               UsmMemAllocPool::chunkAlignment * 64,
+                                               UsmMemAllocPool::chunkAlignment * 128};
+    for (const auto &alignment : alignmentsToCheck) {
+        if (alignment > UsmMemAllocPool::allocationThreshold) {
+            break;
+        }
+        memoryProperties.alignment = alignment;
+        auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+        EXPECT_NE(nullptr, allocFromPool);
+        EXPECT_TRUE(usmMemAllocPool.isInPool(allocFromPool));
+        auto address = castToUint64(allocFromPool);
+        EXPECT_EQ(0u, address % alignment);
+
+        EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(allocFromPool, true));
+    }
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenGettingSizeAndBasePtrThenCorrectValuesAreReturned) {
+    const auto bogusPtr = reinterpret_cast<void *>(0x1);
+    EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(bogusPtr));
+    EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(bogusPtr));
+
+    const auto ptrInPoolButNotAllocated = usmMemAllocPool.pool;
+    EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(ptrInPoolButNotAllocated));
+    EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(ptrInPoolButNotAllocated));
+
+    SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    const auto allocationSize = 1 * MemoryConstants::kiloByte;
+    EXPECT_GT(usmMemAllocPool.allocationThreshold, allocationSize + usmMemAllocPool.chunkAlignment);
+
+    // we want an allocation from the middle of the pool for testing
+    auto unusedAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    EXPECT_NE(nullptr, unusedAlloc);
+    EXPECT_TRUE(usmMemAllocPool.isInPool(unusedAlloc));
+    auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    EXPECT_NE(nullptr, allocFromPool);
+    EXPECT_TRUE(usmMemAllocPool.isInPool(allocFromPool));
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(unusedAlloc, true));
+
+    auto offsetPointer = ptrOffset(allocFromPool, allocationSize - 1);
+    auto pastEndPointer = ptrOffset(allocFromPool, allocationSize);
+
+    EXPECT_TRUE(usmMemAllocPool.isInPool(offsetPointer));
+    EXPECT_TRUE(usmMemAllocPool.isInPool(pastEndPointer));
+
+    EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(bogusPtr));
+    EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(usmMemAllocPool.pool));
+    EXPECT_EQ(allocationSize, usmMemAllocPool.getPooledAllocationSize(allocFromPool));
+    EXPECT_EQ(allocationSize, usmMemAllocPool.getPooledAllocationSize(offsetPointer));
+    EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(pastEndPointer));
+
+    EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(bogusPtr));
+    EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(usmMemAllocPool.pool));
+    EXPECT_EQ(allocFromPool, usmMemAllocPool.getPooledAllocationBasePtr(allocFromPool));
+    EXPECT_EQ(allocFromPool, usmMemAllocPool.getPooledAllocationBasePtr(offsetPointer));
+    EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(pastEndPointer));
+}
+
 using InitializationFailedUnifiedMemoryPoolingTest = InitializedUnifiedMemoryPoolingTest<InternalMemoryType::hostUnifiedMemory, true>;
 TEST_F(InitializationFailedUnifiedMemoryPoolingTest, givenNotInitializedPoolWhenUsingPoolThenMethodsSucceed) {
     SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
     const auto allocationSize = UsmMemAllocPool::allocationThreshold;
     EXPECT_EQ(nullptr, usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties));
-    EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(reinterpret_cast<void *>(0x1), true));
+    const auto bogusPtr = reinterpret_cast<void *>(0x1);
+    EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(bogusPtr, true));
+    EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(bogusPtr));
+    EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(bogusPtr));
 }

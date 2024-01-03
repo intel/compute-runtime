@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, const Unifi
 }
 
 bool UsmMemAllocPool::isInitialized() {
-    return this->svmMemoryManager && this->pool;
+    return this->pool;
 }
 
 void UsmMemAllocPool::cleanup() {
@@ -44,18 +44,27 @@ void UsmMemAllocPool::cleanup() {
     }
 }
 
-bool UsmMemAllocPool::canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties) {
-    return size <= allocationThreshold && memoryProperties.memoryType == this->poolMemoryType;
+bool UsmMemAllocPool::alignmentIsAllowed(size_t alignment) {
+    return alignment % chunkAlignment == 0;
 }
 
-void *UsmMemAllocPool::createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) {
+bool UsmMemAllocPool::canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties) {
+    return size <= allocationThreshold &&
+           alignmentIsAllowed(memoryProperties.alignment) &&
+           memoryProperties.memoryType == this->poolMemoryType &&
+           memoryProperties.allocationFlags.allFlags == 0u &&
+           memoryProperties.allocationFlags.allAllocFlags == 0u;
+}
+
+void *UsmMemAllocPool::createUnifiedMemoryAllocation(size_t requestedSize, const UnifiedMemoryProperties &memoryProperties) {
     void *pooledPtr = nullptr;
     if (isInitialized()) {
-        if (false == canBePooled(size, memoryProperties)) {
+        if (false == canBePooled(requestedSize, memoryProperties)) {
             return nullptr;
         }
         std::unique_lock<std::mutex> lock(mtx);
-        size_t offset = static_cast<size_t>(this->chunkAllocator->allocate(size));
+        auto actualSize = requestedSize;
+        size_t offset = static_cast<size_t>(this->chunkAllocator->allocateWithCustomAlignment(actualSize, memoryProperties.alignment));
         if (offset == 0) {
             return nullptr;
         }
@@ -63,7 +72,7 @@ void *UsmMemAllocPool::createUnifiedMemoryAllocation(size_t size, const UnifiedM
         DEBUG_BREAK_IF(offset >= poolSize);
         pooledPtr = ptrOffset(this->pool, offset);
         {
-            this->allocations.insert(pooledPtr, AllocationInfo{offset, size});
+            this->allocations.insert(pooledPtr, AllocationInfo{offset, actualSize, requestedSize});
         }
         ++this->svmMemoryManager->allocationsCounter;
     }
@@ -91,6 +100,28 @@ bool UsmMemAllocPool::freeSVMAlloc(void *ptr, bool blocking) {
         }
     }
     return false;
+}
+
+size_t UsmMemAllocPool::getPooledAllocationSize(const void *ptr) {
+    if (isInitialized() && isInPool(ptr)) {
+        std::unique_lock<std::mutex> lock(mtx);
+        auto allocationInfo = allocations.get(ptr);
+        if (allocationInfo) {
+            return allocationInfo->requestedSize;
+        }
+    }
+    return 0u;
+}
+
+void *UsmMemAllocPool::getPooledAllocationBasePtr(const void *ptr) {
+    if (isInitialized() && isInPool(ptr)) {
+        std::unique_lock<std::mutex> lock(mtx);
+        auto allocationInfo = allocations.get(ptr);
+        if (allocationInfo) {
+            return ptrOffset(this->pool, allocationInfo->offset);
+        }
+    }
+    return nullptr;
 }
 
 } // namespace NEO
