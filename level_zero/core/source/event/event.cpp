@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,11 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
 
     if (isIpcPoolFlagSet() && counterBased) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    constexpr uint32_t supportedCounterBasedFlags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE;
+    if (counterBased && ((counterBasedFlags & supportedCounterBasedFlags) == 0)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     RootDeviceIndicesContainer rootDeviceIndices;
@@ -210,6 +215,8 @@ void EventPool::setupDescriptorFlags(const ze_event_pool_desc_t *desc) {
     auto pNext = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
 
     if (pNext && pNext->stype == ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC) {
+        auto counterBasedDesc = reinterpret_cast<const ze_event_pool_counter_based_exp_desc_t *>(pNext);
+        counterBasedFlags = counterBasedDesc->flags;
         counterBased = true;
     }
 }
@@ -354,9 +361,10 @@ ze_result_t Event::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-void Event::enableCounterBasedMode(bool apiRequest) {
+void Event::enableCounterBasedMode(bool apiRequest, uint32_t flags) {
     if (counterBasedMode == CounterBasedMode::initiallyDisabled) {
         counterBasedMode = apiRequest ? CounterBasedMode::explicitlyEnabled : CounterBasedMode::implicitlyEnabled;
+        counterBasedFlags = flags;
     }
 }
 
@@ -367,6 +375,7 @@ void Event::disableImplicitCounterBasedMode() {
 
     if (counterBasedMode == CounterBasedMode::implicitlyEnabled || counterBasedMode == CounterBasedMode::initiallyDisabled) {
         counterBasedMode = CounterBasedMode::implicitlyDisabled;
+        counterBasedFlags = 0;
         unsetInOrderExecInfo();
     }
 }

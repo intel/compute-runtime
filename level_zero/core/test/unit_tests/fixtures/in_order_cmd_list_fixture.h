@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ namespace ult {
 struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     struct FixtureMockEvent : public EventImp<uint32_t> {
         using EventImp<uint32_t>::Event::counterBasedMode;
+        using EventImp<uint32_t>::Event::counterBasedFlags;
         using EventImp<uint32_t>::maxPacketCount;
         using EventImp<uint32_t>::inOrderExecInfo;
         using EventImp<uint32_t>::inOrderExecSignalValue;
@@ -33,10 +34,12 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
 
         void makeCounterBasedInitiallyDisabled() {
             counterBasedMode = CounterBasedMode::initiallyDisabled;
+            counterBasedFlags = 0;
         }
 
         void makeCounterBasedImplicitlyDisabled() {
             counterBasedMode = CounterBasedMode::implicitlyDisabled;
+            counterBasedFlags = 0;
         }
     };
 
@@ -62,6 +65,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         eventPoolDesc.count = numEvents;
 
         ze_event_pool_counter_based_exp_desc_t counterBasedExtension = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+        counterBasedExtension.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE;
         eventPoolDesc.pNext = &counterBasedExtension;
 
         if (timestampEvent) {
@@ -78,6 +82,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
             events.emplace_back(DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device))));
             EXPECT_EQ(Event::CounterBasedMode::explicitlyEnabled, events.back()->counterBasedMode);
             EXPECT_TRUE(events.back()->isCounterBased());
+            EXPECT_EQ(counterBasedExtension.flags, events.back()->counterBasedFlags);
         }
 
         return eventPool;

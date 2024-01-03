@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     }
 
     if (eventPool->isCounterBased() || NEO::debugManager.flags.ForceInOrderEvents.get() == 1) {
-        event->enableCounterBasedMode(true);
+        event->enableCounterBasedMode(true, eventPool->getCounterBasedFlags());
     }
 
     auto extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
