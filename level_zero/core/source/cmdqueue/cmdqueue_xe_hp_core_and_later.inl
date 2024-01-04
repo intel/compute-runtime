@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,7 +178,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
 
             cfeStateCmd->setScratchSpaceBuffer(lowScratchAddress);
-            cfeStateCmd->setSingleSliceDispatchCcsMode(csr->getOsContext().isEngineInstanced());
+            NEO::PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(cfeStateCmd, csr->getOsContext().isEngineInstanced());
 
             *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
             break;

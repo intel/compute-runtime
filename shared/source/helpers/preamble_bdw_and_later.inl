@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,6 +80,10 @@ template <typename GfxFamily>
 size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const RootDeviceEnvironment &rootDeviceEnvironment) {
     using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
     return sizeof(PIPELINE_SELECT);
+}
+
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(void *cmd, bool enable) {
 }
 
 } // namespace NEO

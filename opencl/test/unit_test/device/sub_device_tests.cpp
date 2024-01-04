@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -950,7 +951,15 @@ TEST_F(EngineInstancedDeviceTests, givenAffinityMaskWhenCreatingClSubDevicesThen
     EXPECT_EQ(0b100u, clRootDevice->getSubDevice(1)->getDeviceBitfield().to_ulong());
 }
 
-HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingCfeStateThenSetSingleSliceDispatch, IsAtLeastXeHpCore) {
+struct SingleSliceDispatchSupportMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        using GfxProduct = typename HwMapper<productFamily>::GfxProduct;
+        return GfxProduct::FrontEndStateSupport::singleSliceDispatchCcsMode;
+    }
+};
+
+HWTEST2_F(EngineInstancedDeviceTests, givenEngineInstancedDeviceWhenProgrammingCfeStateThenSetSingleSliceDispatch, SingleSliceDispatchSupportMatcher) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     debugManager.flags.EngineInstancedSubDevices.set(true);

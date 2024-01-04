@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/os_context.h"
@@ -677,7 +678,15 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
     NEO::MockDevice *rootDevice = nullptr;
 };
 
-HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecutingThenEnableSingleSliceDispatch, IsAtLeastXeHpCore) {
+struct SingleSliceDispatchSupportMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        using GfxProduct = typename HwMapper<productFamily>::GfxProduct;
+        return GfxProduct::FrontEndStateSupport::singleSliceDispatchCcsMode;
+    }
+};
+
+HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecutingThenEnableSingleSliceDispatch, SingleSliceDispatchSupportMatcher) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     constexpr uint32_t genericDevicesCount = 1;
@@ -726,7 +735,7 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecu
     commandQueue->destroy();
 }
 
-HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWithFabricEnumerationWhenExecutingThenEnableSingleSliceDispatch, IsAtLeastXeHpCore) {
+HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWithFabricEnumerationWhenExecutingThenEnableSingleSliceDispatch, SingleSliceDispatchSupportMatcher) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     constexpr uint32_t genericDevicesCount = 1;

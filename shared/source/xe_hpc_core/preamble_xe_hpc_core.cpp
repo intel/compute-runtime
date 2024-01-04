@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,22 +24,12 @@ template <>
 void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {
     auto command = static_cast<CFE_STATE *>(cmd);
 
-    command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
-    command->setSingleSliceDispatchCcsMode(streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
-
     if (streamProperties.frontEndState.computeDispatchAllWalkerEnable.value > 0) {
         command->setComputeDispatchAllWalkerEnable(true);
     }
 
     if (debugManager.flags.CFEComputeDispatchAllWalkerEnable.get() != -1) {
         command->setComputeDispatchAllWalkerEnable(debugManager.flags.CFEComputeDispatchAllWalkerEnable.get());
-    }
-
-    if (debugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
-        command->setComputeOverdispatchDisable(debugManager.flags.CFEComputeOverdispatchDisable.get());
-    }
-    if (debugManager.flags.CFESingleSliceDispatchCCSMode.get() != -1) {
-        command->setSingleSliceDispatchCcsMode(debugManager.flags.CFESingleSliceDispatchCCSMode.get());
     }
 
     command->setNumberOfWalkers(1);

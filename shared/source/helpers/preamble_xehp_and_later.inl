@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,16 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
     uint32_t lowAddress = uint32_t(0xFFFFFFFF & scratchAddress);
     cmd.setScratchSpaceBuffer(lowAddress);
     cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
+
+    cmd.setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
+
+    PreambleHelper<Family>::setSingleSliceDispatchMode(&cmd, streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
+
     appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
+
+    if (debugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
+        cmd.setComputeOverdispatchDisable(debugManager.flags.CFEComputeOverdispatchDisable.get());
+    }
 
     if (debugManager.flags.CFEMaximumNumberOfThreads.get() != -1) {
         cmd.setMaximumNumberOfThreads(debugManager.flags.CFEMaximumNumberOfThreads.get());
@@ -82,6 +91,17 @@ size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
 template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     return 0u;
+}
+
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(void *cmd, bool enable) {
+    auto cfeState = reinterpret_cast<typename GfxFamily::CFE_STATE *>(cmd);
+
+    cfeState->setSingleSliceDispatchCcsMode(enable);
+
+    if (debugManager.flags.CFESingleSliceDispatchCCSMode.get() != -1) {
+        cfeState->setSingleSliceDispatchCcsMode(debugManager.flags.CFESingleSliceDispatchCCSMode.get());
+    }
 }
 
 template <>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,7 @@ struct PreambleHelper {
     static size_t getCmdSizeForPipelineSelect(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSemaphoreDelayCommandSize();
     static uint32_t getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize);
+    static void setSingleSliceDispatchMode(void *cmd, bool enable);
 };
 
 template <PRODUCT_FAMILY productFamily>
