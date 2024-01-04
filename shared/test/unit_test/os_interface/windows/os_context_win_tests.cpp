@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_wddm.h"
+#include "shared/test/common/mocks/mock_wddm_interface.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
 using namespace NEO;
@@ -97,6 +98,53 @@ TEST_F(OsContextWinTest, givenWddmOnLinuxThenDirectSubmissionIsNotSupported) {
     static_cast<MockRootDeviceEnvironment *>(this->rootDeviceEnvironment)->isWddmOnLinuxEnable = true;
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
     EXPECT_FALSE(osContext->isDirectSubmissionSupported());
+}
+
+TEST_F(OsContextWinTest, givenWddmWhenReinitializeCalledThenHwQueueDestroyCalled) {
+    auto wddm = static_cast<WddmMock *>(osInterface->getDriverModel()->as<Wddm>());
+    auto mockWddmInterface = std::make_unique<WddmMockInterface>(*wddm);
+    auto pMockWddmInterface = mockWddmInterface.get();
+    wddm->wddmInterface.reset(mockWddmInterface.release());
+    osContext->reInitializeContext();
+    EXPECT_EQ(pMockWddmInterface->destroyHwQueueCalled, 1u);
+}
+
+TEST_F(OsContextWinTest, givenWddmWithHwQueuesEnabledWhenReinitializeCalledThenCreateHwQueueCalled) {
+    auto wddm = static_cast<WddmMock *>(osInterface->getDriverModel()->as<Wddm>());
+    auto mockWddmInterface = std::make_unique<WddmMockInterface>(*wddm);
+    mockWddmInterface->hwQueuesSupportedResult = true;
+    auto pMockWddmInterface = mockWddmInterface.get();
+    wddm->wddmInterface.reset(mockWddmInterface.release());
+    osContext->reInitializeContext();
+    EXPECT_EQ(pMockWddmInterface->createHwQueueCalled, 1u);
+}
+TEST_F(OsContextWinTest, givenWddmWithHwQueuesEnabledWhenReinitializeCalledThenCreateMonitorFenceCalled) {
+    auto wddm = static_cast<WddmMock *>(osInterface->getDriverModel()->as<Wddm>());
+    auto mockWddmInterface = std::make_unique<WddmMockInterface>(*wddm);
+    mockWddmInterface->hwQueuesSupportedResult = true;
+    auto pMockWddmInterface = mockWddmInterface.get();
+    wddm->wddmInterface.reset(mockWddmInterface.release());
+    osContext->reInitializeContext();
+    EXPECT_EQ(pMockWddmInterface->createMonitoredFenceCalled, 1u);
+}
+
+TEST_F(OsContextWinTest, givenWddmWithHwQueuesDisabledWhenReinitializeCalledThenCreateHwQueueNotCalled) {
+    auto wddm = static_cast<WddmMock *>(osInterface->getDriverModel()->as<Wddm>());
+    auto mockWddmInterface = std::make_unique<WddmMockInterface>(*wddm);
+    mockWddmInterface->hwQueuesSupportedResult = false;
+    auto pMockWddmInterface = mockWddmInterface.get();
+    wddm->wddmInterface.reset(mockWddmInterface.release());
+    osContext->reInitializeContext();
+    EXPECT_EQ(pMockWddmInterface->createHwQueueCalled, 0u);
+}
+TEST_F(OsContextWinTest, givenWddmWithHwQueuesDisabledWhenReinitializeCalledThenCreateMonitorFenceNotCalled) {
+    auto wddm = static_cast<WddmMock *>(osInterface->getDriverModel()->as<Wddm>());
+    auto mockWddmInterface = std::make_unique<WddmMockInterface>(*wddm);
+    mockWddmInterface->hwQueuesSupportedResult = false;
+    auto pMockWddmInterface = mockWddmInterface.get();
+    wddm->wddmInterface.reset(mockWddmInterface.release());
+    osContext->reInitializeContext();
+    EXPECT_EQ(pMockWddmInterface->createMonitoredFenceCalled, 0u);
 }
 
 struct OsContextWinTestNoCleanup : public WddmTestWithMockGdiDllNoCleanup {

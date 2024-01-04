@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,9 +58,15 @@ void OsContextWin::reInitializeContext() {
     bool disableContextCreationFlag = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
     if (!disableContextCreationFlag) {
         if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
+            wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
             wddm.destroyContext(wddmContextHandle);
         }
         UNRECOVERABLE_IF(!wddm.createContext(*this));
+        auto wddmInterface = wddm.getWddmInterface();
+        if (wddmInterface->hwQueuesSupported()) {
+            UNRECOVERABLE_IF(!wddmInterface->createHwQueue(*this));
+            UNRECOVERABLE_IF(!wddmInterface->createMonitoredFence(*this));
+        }
     }
 };
 

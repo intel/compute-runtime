@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -117,6 +117,7 @@ endif()
 if(WIN32 OR NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface20.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
