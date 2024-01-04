@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1644,6 +1644,40 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
 }
 
 ze_result_t DeviceImp::getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority) {
+
+    if (!this->isQueueGroupOrdinalValid(ordinal)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    const NEO::GfxCoreHelper &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
+
+    if (secondaryContextsEnabled && priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
+
+        auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
+        uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
+
+        if (ordinal < numEngineGroups) {
+            auto &engines = engineGroups[ordinal].engines;
+            if (index >= engines.size()) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            *csr = engines[index].commandStreamReceiver;
+            auto &osContext = (*csr)->getOsContext();
+
+            if (neoDevice->isSecondaryContextEngineType(osContext.getEngineType())) {
+                NEO::EngineTypeUsage engineTypeUsage;
+                engineTypeUsage.first = osContext.getEngineType();
+                engineTypeUsage.second = NEO::EngineUsage::highPriority;
+                auto engine = neoDevice->getSecondaryEngineCsr(index, engineTypeUsage);
+                if (engine) {
+                    *csr = engine->commandStreamReceiver;
+                    return ZE_RESULT_SUCCESS;
+                }
+            }
+        }
+    }
+
     return getCsrForOrdinalAndIndex(csr, ordinal, index);
 }
 

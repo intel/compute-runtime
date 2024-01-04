@@ -3932,6 +3932,108 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingLowPriorityCsrThenCorr
     }
 }
 
+HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCorrectCsrAndContextIsReturned) {
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+
+        const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+            auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+            EngineInstancesContainer engines;
+
+            uint32_t numCcs = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+            if (hwInfo.featureTable.flags.ftrCCSNode) {
+                for (uint32_t i = 0; i < numCcs; i++) {
+                    auto engineType = static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS);
+                    engines.push_back({engineType, EngineUsage::regular});
+                }
+
+                engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::lowPriority});
+            }
+            if (hwInfo.featureTable.flags.ftrRcsNode) {
+                engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::regular});
+            }
+
+            return engines;
+        }
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
+            if (engineType == aub_stream::ENGINE_RCS) {
+                return EngineGroupType::renderCompute;
+            }
+            if (engineType >= aub_stream::ENGINE_CCS && engineType < (aub_stream::ENGINE_CCS + hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled)) {
+                return EngineGroupType::compute;
+            }
+            UNRECOVERABLE_IF(true);
+        }
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(8);
+
+    const uint32_t rootDeviceIndex = 0u;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
+
+    {
+        MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment{&hwInfo};
+        auto *neoMockDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, rootDeviceIndex);
+        MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+        NEO::CommandStreamReceiver *highPriorityCsr = nullptr;
+        NEO::CommandStreamReceiver *highPriorityCsr2 = nullptr;
+
+        auto &engineGroups = neoMockDevice->getRegularEngineGroups();
+        uint32_t count = static_cast<uint32_t>(engineGroups.size());
+        auto ordinal = 0u;
+
+        for (uint32_t i = 0; i < count; i++) {
+            if (engineGroups[i].engineGroupType == NEO::EngineGroupType::compute) {
+                ordinal = i;
+                break;
+            }
+        }
+
+        ASSERT_TRUE(engineGroups[ordinal].engineGroupType == NEO::EngineGroupType::compute);
+
+        uint32_t index = 1;
+        auto result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, highPriorityCsr);
+
+        ASSERT_EQ(8u, neoMockDevice->secondaryEngines[index].engines.size());
+
+        auto highPriorityIndex = neoMockDevice->secondaryEngines[index].regularEnginesTotal;
+        ASSERT_LT(highPriorityIndex, static_cast<uint32_t>(neoMockDevice->secondaryEngines[index].engines.size()));
+
+        EXPECT_EQ(neoMockDevice->secondaryEngines[index].engines[highPriorityIndex].osContext, &highPriorityCsr->getOsContext());
+        EXPECT_EQ(neoMockDevice->secondaryEngines[index].engines[highPriorityIndex].commandStreamReceiver, highPriorityCsr);
+
+        EXPECT_TRUE(highPriorityCsr->getOsContext().isPartOfContextGroup());
+        EXPECT_NE(nullptr, highPriorityCsr->getOsContext().getPrimaryContext());
+
+        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr2, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, highPriorityCsr2);
+        EXPECT_NE(highPriorityCsr, highPriorityCsr2);
+
+        EXPECT_EQ(neoMockDevice->secondaryEngines[index].engines[highPriorityIndex + 1].commandStreamReceiver, highPriorityCsr2);
+        EXPECT_TRUE(highPriorityCsr2->getOsContext().isPartOfContextGroup());
+
+        index = 100;
+        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+        index = 0;
+        ordinal = 100;
+        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    }
+}
+
 TEST(DevicePropertyFlagIsIntegratedTest, givenIntegratedDeviceThenCorrectDevicePropertyFlagSet) {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
