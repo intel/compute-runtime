@@ -3667,21 +3667,35 @@ bool CommandListCoreFamily<gfxCoreFamily>::hasInOrderDependencies() const {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Event *signalEvent) {
-    if (signalEvent) {
-        if (signalEvent->isCounterBased() && !isInOrderExecutionEnabled()) {
-            return false;
-        }
+    if (!signalEvent) {
+        return true;
+    }
 
-        if ((NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() != 0)) {
-            if (signalEvent->isCounterBasedExplicitlyEnabled()) {
-                return true;
-            }
+    const bool isImmCmdList = (this->cmdListType == typeImmediate);
 
-            if (isInOrderExecutionEnabled() && (this->cmdListType == typeImmediate)) {
+    if ((NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() != 0)) {
+        if (!signalEvent->isCounterBasedExplicitlyEnabled()) {
+            if (isInOrderExecutionEnabled() && isImmCmdList) {
                 signalEvent->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
             } else {
                 signalEvent->disableImplicitCounterBasedMode();
             }
+        }
+    }
+
+    if (signalEvent->isCounterBased()) {
+        if (!isInOrderExecutionEnabled()) {
+            return false;
+        }
+
+        const auto counterBasedFlags = signalEvent->getCounterBasedFlags();
+
+        if (isImmCmdList && !(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE)) {
+            return false;
+        }
+
+        if (!isImmCmdList && !(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE)) {
+            return false;
         }
     }
 

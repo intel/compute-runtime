@@ -260,6 +260,7 @@ struct Event : _ze_event_handle_t {
     bool isKmdWaitModeEnabled() const { return kmdWaitMode; }
     bool isInterruptModeEnabled() const { return interruptMode; }
     void unsetInOrderExecInfo();
+    uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
 
   protected:
     Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
