@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,7 +124,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         auto device = kernel.getContext().getDevice(0);
         uint64_t indirectDataAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), indirectHeap.getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
         indirectDataAddress += indirectHeap.getHeapGpuStartOffset();
-
+        indirectDataAddress += offsetCrossThreadData;
         HardwareCommandsHelper<GfxFamily>::programInlineData<WalkerType>(kernel, walkerCmd, indirectDataAddress, scratchAddress);
     }
 
