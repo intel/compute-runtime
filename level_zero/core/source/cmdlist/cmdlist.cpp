@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ CommandList::~CommandList() {
         cmdQImmediate->destroy();
     }
     removeDeallocationContainerData();
-    if (this->cmdListType == CommandListType::typeRegular || !this->isFlushTaskSubmissionEnabled) {
+    if (!isImmediateType() || !this->isFlushTaskSubmissionEnabled) {
         removeHostPtrAllocations();
     }
     removeMemoryPrefetchAllocations();

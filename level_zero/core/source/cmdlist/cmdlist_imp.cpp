@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,12 +47,12 @@ ze_result_t CommandListImp::destroy() {
         static_cast<DeviceImp *>(this->device)->bcsSplit.releaseResources();
     }
 
-    if (this->cmdListType == CommandListType::typeImmediate && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
+    if (isImmediateType() && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
     }
 
-    if (this->cmdListType == CommandListType::typeRegular &&
+    if (!isImmediateType() &&
         !isCopyOnly() &&
         this->stateBaseAddressTracking &&
         this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
@@ -89,7 +89,7 @@ ze_result_t CommandListImp::appendMetricStreamerMarker(zet_metric_streamer_handl
 }
 
 ze_result_t CommandListImp::appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) {
-    if (cmdListType == CommandListType::typeImmediate && isFlushTaskSubmissionEnabled) {
+    if (isImmediateType() && isFlushTaskSubmissionEnabled) {
         this->device->activateMetricGroups();
     }
 
@@ -248,7 +248,7 @@ void CommandListImp::enableInOrderExecution() {
     UNRECOVERABLE_IF(!inOrderDependencyCounterAllocation);
 
     inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(*inOrderDependencyCounterAllocation, hostCounterAllocation, *device->getMemoryManager(), this->partitionCount,
-                                                             (this->cmdListType == typeRegular), inOrderAtomicSignallingEnabled());
+                                                             !isImmediateType(), inOrderAtomicSignallingEnabled());
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {

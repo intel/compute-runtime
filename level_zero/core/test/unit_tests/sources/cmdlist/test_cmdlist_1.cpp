@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -940,7 +940,7 @@ TEST_F(CommandListCreate, whenCreatingImmediateCommandListThenItHasImmediateComm
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, static_cast<CommandList *>(commandList.get())->cmdQImmediate);
 }
 
@@ -952,7 +952,7 @@ TEST_F(CommandListCreate, whenCreatingImmediateCommandListWithSyncModeThenItHasI
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, static_cast<CommandList *>(commandList.get())->cmdQImmediate);
 }
 
@@ -964,7 +964,7 @@ TEST_F(CommandListCreate, whenCreatingImmediateCommandListWithASyncModeThenItHas
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, static_cast<CommandList *>(commandList.get())->cmdQImmediate);
 }
 
@@ -976,7 +976,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendSignalEvent
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, static_cast<CommandList *>(commandList.get())->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1016,7 +1016,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, static_cast<CommandList *>(commandList.get())->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1795,7 +1795,7 @@ TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppen
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
@@ -1842,7 +1842,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1898,7 +1898,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImme
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1947,7 +1947,7 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForIm
     whiteBoxCmdList->isFlushTaskSubmissionEnabled = true;
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -1982,7 +1982,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2033,7 +2033,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2083,7 +2083,7 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2133,7 +2133,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2199,7 +2199,7 @@ HWTEST_F(CommandListCreate, GivenImmediateCommandListWithFlushTaskCreatedThenNum
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     auto &commandContainer = commandList->getCmdContainer();
@@ -2221,7 +2221,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWhenCre
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2268,7 +2268,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendResetEventT
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2309,7 +2309,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEven
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2350,7 +2350,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2394,7 +2394,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndCopyEngineAndApp
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2437,7 +2437,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -2478,7 +2478,7 @@ TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -2520,7 +2520,7 @@ TEST_F(ContextCommandListCreate, givenDeferredEngineCreationWhenImmediateCommand
             L0::CommandList *cmdList = L0::CommandList::fromHandle(cmdListHandle);
 
             EXPECT_EQ(device, cmdList->getDevice());
-            EXPECT_EQ(CommandList::CommandListType::typeImmediate, cmdList->getCmdListType());
+            EXPECT_TRUE(cmdList->isImmediateType());
             EXPECT_NE(nullptr, cmdList);
             EXPECT_EQ(ZE_RESULT_SUCCESS, result);
             EXPECT_TRUE(expectedCsr->getOsContext().isInitialized());
@@ -2538,7 +2538,7 @@ TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -2555,7 +2555,7 @@ TEST_F(CommandListCreate, whenInvokingAppendMemoryCopyFromContextForImmediateCom
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -2577,7 +2577,7 @@ TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListF
             auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
             EXPECT_EQ(device, commandList->getDevice());
-            EXPECT_EQ(CommandList::CommandListType::typeImmediate, commandList->getCmdListType());
+            EXPECT_TRUE(commandList->isImmediateType());
             EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
         }
     }
@@ -2691,7 +2691,7 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWithCopyOnlyWhenSetBarrierT
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     EXPECT_EQ(device, commandList->getDevice());
-    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_TRUE(commandList->isImmediateType());
     EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     auto &commandContainer = commandList->getCmdContainer();

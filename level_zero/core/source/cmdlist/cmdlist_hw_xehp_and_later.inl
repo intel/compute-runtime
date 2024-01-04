@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -322,7 +322,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.isCooperative,                             // isCooperative
         isHostSignalScopeEvent,                                 // isHostScopeSignalEvent
         isKernelUsingSystemAllocation,                          // isKernelUsingSystemAllocation
-        cmdListType == CommandListType::typeImmediate,          // isKernelDispatchedFromImmediateCmdList
+        isImmediateType(),                                      // isKernelDispatchedFromImmediateCmdList
         engineGroupType == NEO::EngineGroupType::renderCompute, // isRcs
         this->dcFlushSupport,                                   // dcFlushEnable
         this->heaplessModeEnabled,                              // isHeaplessModeEnabled
@@ -467,15 +467,13 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::Device &n
                                                                      neoDevice.getRootDeviceEnvironment(),
                                                                      0,
                                                                      0,
-                                                                     !(cmdListType == CommandListType::typeImmediate),
+                                                                     !isImmediateType(),
                                                                      !(this->isFlushTaskSubmissionEnabled || this->dispatchCmdListBatchBufferAsPrimary));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    return NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(rootDeviceEnvironment,
-                                                                   !(cmdListType == CommandListType::typeImmediate),
-                                                                   false);
+    return NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(rootDeviceEnvironment, !isImmediateType(), false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

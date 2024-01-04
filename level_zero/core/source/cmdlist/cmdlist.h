@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -243,11 +243,11 @@ struct CommandList : _ze_command_list_handle_t {
         return performMemoryPrefetch;
     }
     bool storeExternalPtrAsTemporary() const {
-        return this->cmdListType == CommandListType::typeImmediate && (this->isFlushTaskSubmissionEnabled || isCopyOnly());
+        return isImmediateType() && (this->isFlushTaskSubmissionEnabled || isCopyOnly());
     }
     bool isWaitForEventsFromHostEnabled();
 
-    enum CommandListType : uint32_t {
+    enum class CommandListType : uint32_t {
         typeRegular = 0u,
         typeImmediate = 1u
     };
@@ -305,8 +305,8 @@ struct CommandList : _ze_command_list_handle_t {
         return this->partitionCount;
     }
 
-    uint32_t getCmdListType() const {
-        return this->cmdListType;
+    bool isImmediateType() const {
+        return (this->cmdListType == CommandListType::typeImmediate);
     }
 
     bool isRequiredQueueUncachedMocs() const {
@@ -389,7 +389,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::EngineGroupType engineGroupType = NEO::EngineGroupType::maxEngineGroups;
     NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
 
-    uint32_t cmdListType = CommandListType::typeRegular;
+    CommandListType cmdListType = CommandListType::typeRegular;
     uint32_t commandListPerThreadScratchSize = 0u;
     uint32_t commandListPerThreadPrivateScratchSize = 0u;
     uint32_t partitionCount = 1;

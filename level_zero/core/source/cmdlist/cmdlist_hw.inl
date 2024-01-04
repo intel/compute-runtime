@@ -228,7 +228,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->l1CachePolicyData.init(productHelper);
     this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
     this->dummyBlitWa.rootDeviceEnvironment = &(neoDevice->getRootDeviceEnvironmentRef());
-    this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, this->cmdListType == CommandListType::typeRegular);
+    this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, !isImmediateType());
     this->useOnlyGlobalTimestamps = gfxCoreHelper.useOnlyGlobalTimestamps();
     this->maxFillPaternSizeForCopyEngine = gfxCoreHelper.getMaxFillPaternSizeForCopyEngine();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
@@ -259,7 +259,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     commandContainer.setReservedSshSize(getReserveSshSize());
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
 
-    auto createSecondaryCmdBufferInHostMem = this->cmdListType == typeImmediate &&
+    auto createSecondaryCmdBufferInHostMem = isImmediateType() &&
                                              this->isFlushTaskSubmissionEnabled &&
                                              !device->isImplicitScalingCapable() &&
                                              this->csr &&
@@ -547,7 +547,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     }
 
     event->resetPackets(false);
-    event->disableHostCaching(this->cmdListType == CommandList::CommandListType::typeRegular);
+    event->disableHostCaching(!isImmediateType());
     commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
 
     // default state of event is single packet, handle case when reset is used 1st, launchkernel 2nd - just reset all packets then, use max
@@ -2458,7 +2458,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(const Event &event) const {
     if (isInOrderExecutionEnabled()) {
-        return ((this->cmdListType == typeImmediate && event.getLatestUsedCmdQueue() == this->cmdQImmediate) ||                      // 1. Immediate CmdList can skip "regular Events" from the same CmdList
+        return ((isImmediateType() && event.getLatestUsedCmdQueue() == this->cmdQImmediate) ||                                       // 1. Immediate CmdList can skip "regular Events" from the same CmdList
                 (event.isCounterBased() && event.getInOrderExecDataAllocation() == &inOrderExecInfo->getDeviceCounterAllocation())); // 2. Both Immediate and Regular CmdLists can skip "CounterBased Events" from the same CmdList
     }
 
@@ -2504,7 +2504,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
 
-        if ((this->cmdListType == typeImmediate && event->isAlreadyCompleted()) ||
+        if ((isImmediateType() && event->isAlreadyCompleted()) ||
             canSkipInOrderEventWait(*event)) {
             continue;
         }
@@ -2516,7 +2516,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
             // 1. Regular CmdList adds submission counter to base value on each Execute
             // 2. Immediate CmdList takes current value (with submission counter)
-            auto waitValue = (this->cmdListType == typeRegular) ? event->getInOrderExecBaseSignalValue() : event->getInOrderExecSignalValueWithSubmissionCounter();
+            auto waitValue = !isImmediateType() ? event->getInOrderExecBaseSignalValue() : event->getInOrderExecSignalValueWithSubmissionCounter();
 
             CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(event->getInOrderExecInfo(), waitValue, event->getInOrderAllocationOffset(), relaxedOrderingAllowed, false);
 
@@ -2528,7 +2528,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         appendWaitOnSingleEvent(event, relaxedOrderingAllowed);
     }
 
-    if (this->cmdListType == typeImmediate && isCopyOnly() && trackDependencies) {
+    if (isImmediateType() && isCopyOnly() && trackDependencies) {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         args.commandWithPostSync = true;
         NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), this->csr->getBarrierCountGpuAddress(), this->csr->getNextBarrierCount() + 1, args);
@@ -3231,7 +3231,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
             NEO::MiFlushArgs args{this->dummyBlitWa};
             uint64_t gpuAddress = 0u;
             TaskCountType value = 0u;
-            if (this->cmdListType == typeImmediate) {
+            if (isImmediateType()) {
                 args.commandWithPostSync = true;
                 gpuAddress = this->csr->getBarrierCountGpuAddress();
                 value = this->csr->getNextBarrierCount() + 1;
@@ -3567,7 +3567,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
 
         const auto &productHelper = this->device->getNEODevice()->getRootDeviceEnvironment().template getHelper<NEO::ProductHelper>();
         if (productHelper.isDirectSubmissionConstantCacheInvalidationNeeded(this->device->getHwInfo())) {
-            if (this->cmdListType == CommandListType::typeImmediate) {
+            if (isImmediateType()) {
                 pipeControlArgs.constantCacheInvalidationEnable = this->csr->isDirectSubmissionEnabled();
             } else {
                 pipeControlArgs.constantCacheInvalidationEnable = this->device->getNEODevice()->isAnyDirectSubmissionEnabled();
@@ -3643,7 +3643,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
-    if ((NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && (this->cmdListType == typeRegular)) {
+    if ((NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && !isImmediateType()) {
         this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, inOrderExecInfo->isAtomicDeviceSignalling(), inOrderExecInfo->isHostStorageDuplicated());
     }
 }
@@ -3671,11 +3671,9 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         return true;
     }
 
-    const bool isImmCmdList = (this->cmdListType == typeImmediate);
-
     if ((NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() != 0)) {
         if (!signalEvent->isCounterBasedExplicitlyEnabled()) {
-            if (isInOrderExecutionEnabled() && isImmCmdList) {
+            if (isInOrderExecutionEnabled() && isImmediateType()) {
                 signalEvent->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
             } else {
                 signalEvent->disableImplicitCounterBasedMode();
@@ -3690,11 +3688,11 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
 
         const auto counterBasedFlags = signalEvent->getCounterBasedFlags();
 
-        if (isImmCmdList && !(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE)) {
+        if (isImmediateType() && !(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE)) {
             return false;
         }
 
-        if (!isImmCmdList && !(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE)) {
+        if (!isImmediateType() && !(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE)) {
             return false;
         }
     }

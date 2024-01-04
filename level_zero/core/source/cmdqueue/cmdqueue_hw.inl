@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -531,7 +531,7 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
     uint32_t numCommandLists,
     ze_fence_handle_t hFence) {
 
-    ctx.containsAnyRegularCmdList = ctx.firstCommandList->getCmdListType() == CommandList::CommandListType::typeRegular;
+    ctx.containsAnyRegularCmdList = !ctx.firstCommandList->isImmediateType();
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = static_cast<CommandListImp *>(CommandList::fromHandle(phCommandLists[i]));
