@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 std::string lastTest("");
 
 namespace NEO {
-extern const unsigned int ultIterationMaxTime;
+extern const unsigned int ultIterationMaxTimeInS;
 extern const char *executionName;
 } // namespace NEO
 
@@ -92,12 +92,12 @@ int setAlarm(bool enableAlarm) {
             startTimeSpec.tv_sec = 0;
         }
 
-        auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
-        auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
-        if (ultIterationMaxTimeEnv != nullptr) {
-            currentUltIterationMaxTime = atoi(ultIterationMaxTimeEnv);
+        auto currentUltIterationMaxTimeInS = NEO::ultIterationMaxTimeInS;
+        auto ultIterationMaxTimeInSEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
+        if (ultIterationMaxTimeInSEnv != nullptr) {
+            currentUltIterationMaxTimeInS = atoi(ultIterationMaxTimeInSEnv);
         }
-        unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
+        unsigned int alarmTime = currentUltIterationMaxTimeInS * ::testing::GTEST_FLAG(repeat);
 
         struct sigaction sa;
         sa.sa_handler = &handleSIGALRM;
@@ -111,7 +111,7 @@ int setAlarm(bool enableAlarm) {
             newStdOut = dup(1);
         }
         alarm(alarmTime);
-        std::cout << "set timeout to: " << alarmTime << std::endl;
+        std::cout << "set timeout to: " << alarmTime << " seconds" << std::endl;
     }
     return 0;
 }

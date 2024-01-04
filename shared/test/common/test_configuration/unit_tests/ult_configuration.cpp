@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,12 @@
 namespace NEO {
 #if defined(_WIN32)
 #if defined(_DEBUG)
-unsigned int ultIterationMaxTime = 240;
+unsigned int ultIterationMaxTimeInS = 240;
 #else
-unsigned int ultIterationMaxTime = 120;
+unsigned int ultIterationMaxTimeInS = 120;
 #endif
 #else
-unsigned int ultIterationMaxTime = 45;
+unsigned int ultIterationMaxTimeInS = 45;
 #endif
 unsigned int testCaseMaxTimeInMs = 16000;
 bool useMockGmm = true;

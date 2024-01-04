@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ static int newStdOut = -1;
 
 namespace NEO {
 extern const char *executionName;
-extern unsigned int ultIterationMaxTime;
+extern unsigned int ultIterationMaxTimeInS;
 } // namespace NEO
 
 std::unique_ptr<std::thread> alarmThread;
@@ -75,13 +75,13 @@ int setAlarm(bool enableAlarm) {
         abortOnTimeout = true;
         std::atomic<bool> threadStarted{false};
         alarmThread = std::make_unique<std::thread>([&]() {
-            auto currentUltIterationMaxTime = NEO::ultIterationMaxTime;
-            auto ultIterationMaxTimeEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
-            if (ultIterationMaxTimeEnv != nullptr) {
-                currentUltIterationMaxTime = atoi(ultIterationMaxTimeEnv);
+            auto currentUltIterationMaxTimeInS = NEO::ultIterationMaxTimeInS;
+            auto ultIterationMaxTimeInSEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
+            if (ultIterationMaxTimeInSEnv != nullptr) {
+                currentUltIterationMaxTimeInS = atoi(ultIterationMaxTimeInSEnv);
             }
-            unsigned int alarmTime = currentUltIterationMaxTime * ::testing::GTEST_FLAG(repeat);
-            std::cout << "set timeout to: " << alarmTime << std::endl;
+            unsigned int alarmTimeInS = currentUltIterationMaxTimeInS * ::testing::GTEST_FLAG(repeat);
+            std::cout << "set timeout to: " << alarmTimeInS << " seconds" << std::endl;
             threadStarted = true;
             std::chrono::high_resolution_clock::time_point startTime, endTime;
             std::chrono::milliseconds elapsedTime{};
@@ -95,9 +95,9 @@ int setAlarm(bool enableAlarm) {
                     printf("abort disabled by global tests cleanup\n");
                     return;
                 }
-            } while (abortOnTimeout && elapsedTime.count() < alarmTime * 1000);
+            } while (abortOnTimeout && elapsedTime.count() < alarmTimeInS * 1000);
 
-            if (abortOnTimeout && elapsedTime.count() >= alarmTime) {
+            if (abortOnTimeout) {
                 printf("timeout on: %s\n", lastTest.c_str());
                 abort();
             }
