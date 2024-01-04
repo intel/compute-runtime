@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,12 @@
 
 using namespace NEO;
 
+struct MockIoctlHelperXeDebug : IoctlHelperXe {
+    using IoctlHelperXe::debugMetadata;
+    using IoctlHelperXe::freeDebugMetadata;
+    using IoctlHelperXe::IoctlHelperXe;
+};
+
 inline constexpr int testValueVmId = 0x5764;
 inline constexpr int testValueMapOff = 0x7788;
 inline constexpr int testValuePrime = 0x4321;
@@ -53,7 +59,15 @@ class DrmMockXeDebug : public DrmMockCustom {
             return setIoctlAnswer;
         }
         switch (request) {
-
+        case DrmIoctl::gemVmCreate: {
+            struct drm_xe_vm_create *v = static_cast<struct drm_xe_vm_create *>(arg);
+            drm_xe_ext_vm_set_debug_metadata *metadata = reinterpret_cast<drm_xe_ext_vm_set_debug_metadata *>(v->extensions);
+            while (metadata) {
+                vmCreateMetadata.push_back(*metadata);
+                metadata = reinterpret_cast<drm_xe_ext_vm_set_debug_metadata *>(metadata->base.next_extension);
+            }
+            ret = 0;
+        } break;
         case DrmIoctl::debuggerOpen: {
             auto debuggerOpen = reinterpret_cast<drm_xe_eudebug_connect *>(arg);
 
@@ -107,6 +121,7 @@ class DrmMockXeDebug : public DrmMockCustom {
     int gemVmBindReturn = 0;
 
     alignas(64) std::vector<uint8_t> queryTopology;
+    std::vector<drm_xe_ext_vm_set_debug_metadata> vmCreateMetadata;
 
     // Debugger ioctls
     int debuggerOpenRetval = 10; // debugFd

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ using namespace NEO;
 
 struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::bindInfo;
+    using IoctlHelperXe::debugMetadata;
     using IoctlHelperXe::defaultEngine;
     using IoctlHelperXe::getFdFromVmExport;
     using IoctlHelperXe::IoctlHelperXe;

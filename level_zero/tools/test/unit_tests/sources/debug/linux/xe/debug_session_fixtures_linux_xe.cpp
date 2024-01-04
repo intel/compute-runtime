@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,9 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/xe/debug_session_fixtures_linux_xe.h"
 
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/linux/debug_mock_drm_xe.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
-
-#include "level_zero/tools/test/unit_tests/sources/debug/linux/xe/debug_mock_drm_xe.h"
 
 namespace L0 {
 namespace ult {

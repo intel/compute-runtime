@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/mocks/linux/debug_mock_drm_xe.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
@@ -20,7 +21,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/tools/source/debug/linux/xe/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
-#include "level_zero/tools/test/unit_tests/sources/debug/linux/xe/debug_mock_drm_xe.h"
 
 #include "common/StateSaveAreaHeader.h"
 #include "uapi-eudebug/drm/xe_drm.h"
