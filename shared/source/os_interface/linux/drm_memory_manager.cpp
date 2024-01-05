@@ -2159,7 +2159,8 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         cpuPointer = alignUp(cpuPointer, alignment);
 
         auto pointerDiff = ptrDiff(cpuPointer, cpuBasePointer);
-        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(allocationData.rootDeviceIndex, nullptr, allocationData.type,
+        auto gmm = makeGmmIfSingleHandle(allocationData, alignedSize);
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(allocationData.rootDeviceIndex, gmm.get(), allocationData.type,
                                                                                                        reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount, -1,
                                                                                                        MemoryPoolHelper::isSystemMemoryPool(memoryPool), allocationData.flags.isUSMHostAllocation));
 
@@ -2206,10 +2207,8 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
             return nullptr;
         }
 
-        auto gmm = makeGmmIfSingleHandle(allocationData, alignedSize);
-        allocation->setDefaultGmm(gmm.release());
-
         bo.release();
+        allocation->setDefaultGmm(gmm.release());
         allocation->isShareableHostMemory = true;
         allocation->storageInfo = allocationData.storageInfo;
         return allocation.release();

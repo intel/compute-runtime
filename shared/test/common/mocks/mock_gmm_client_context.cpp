@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,8 @@ uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmm
         return MockPatIndex::error;
     }
 
-    if (usage == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) {
+    if (usage == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED ||
+        usage == GMM_RESOURCE_USAGE_SURFACE_UNCACHED) {
         return MockPatIndex::uncached;
     }
 
