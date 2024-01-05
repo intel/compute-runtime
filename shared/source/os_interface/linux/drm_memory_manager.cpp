@@ -2206,6 +2206,9 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
             return nullptr;
         }
 
+        auto gmm = makeGmmIfSingleHandle(allocationData, alignedSize);
+        allocation->setDefaultGmm(gmm.release());
+
         bo.release();
         allocation->isShareableHostMemory = true;
         allocation->storageInfo = allocationData.storageInfo;

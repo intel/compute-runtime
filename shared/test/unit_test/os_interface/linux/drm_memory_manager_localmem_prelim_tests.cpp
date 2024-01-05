@@ -1461,6 +1461,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapRetur
 
     munmapCalledCount = 0;
     auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, 0u);
+    EXPECT_NE(allocation->getDefaultGmm(), nullptr);
 
     EXPECT_EQ(alignUp(reinterpret_cast<void *>(0x12345678), MemoryConstants::pageSize64k), allocation->getMmapPtr());
     EXPECT_EQ(1u, munmapCalledCount);
