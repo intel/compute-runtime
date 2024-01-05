@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ TEST_F(ContextFailureInjection, GivenFailedAllocationInjectionWhenCreatingContex
     debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);      // failing to allocate pool buffer is non-critical
     debugManager.flags.SetAmountOfReusableAllocationsPerCmdQueue.set(0); // same for preallocations
     debugManager.flags.EnableDeviceUsmAllocationPool.set(0);             // usm device allocation pooling
+    debugManager.flags.EnableHostUsmAllocationPool.set(0);               // usm host allocation pooling
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
 

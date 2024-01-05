@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -221,6 +221,7 @@ TEST_F(clSetKernelArgSVMPointerTests, givenSvmAndValidArgValueWhenSettingSameKer
         void *const ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
         auto callCounter = 0u;
+        auto svmData = mockSvmManager->getSVMAlloc(ptrSvm);
         //  first set arg - called
         mockSvmManager->allocationsCounter = 0u;
         auto retVal = clSetKernelArgSVMPointer(
@@ -261,7 +262,7 @@ TEST_F(clSetKernelArgSVMPointerTests, givenSvmAndValidArgValueWhenSettingSameKer
         ++mockSvmManager->allocationsCounter;
 
         // different pointer - called
-        void *const nextPtrSvm = static_cast<char *>(ptrSvm) + 1;
+        void *const nextPtrSvm = ptrOffset(ptrSvm, 1);
         retVal = clSetKernelArgSVMPointer(
             pMockMultiDeviceKernel, // cl_kernel kernel
             0,                      // cl_uint arg_index
@@ -272,18 +273,7 @@ TEST_F(clSetKernelArgSVMPointerTests, givenSvmAndValidArgValueWhenSettingSameKer
         ++mockSvmManager->allocationsCounter;
 
         // different allocId - called
-        pMockKernel->kernelArguments[0].allocId = 2;
-        retVal = clSetKernelArgSVMPointer(
-            pMockMultiDeviceKernel, // cl_kernel kernel
-            0,                      // cl_uint arg_index
-            nextPtrSvm              // const void *arg_value
-        );
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
-        ++mockSvmManager->allocationsCounter;
-
-        // allocId = 3 - called
-        pMockKernel->kernelArguments[0].allocId = 3;
+        pMockKernel->kernelArguments[0].allocId = svmData->getAllocId() + 1;
         retVal = clSetKernelArgSVMPointer(
             pMockMultiDeviceKernel, // cl_kernel kernel
             0,                      // cl_uint arg_index

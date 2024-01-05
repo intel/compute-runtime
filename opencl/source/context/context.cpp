@@ -494,8 +494,8 @@ void Context::initializeUsmAllocationPools() {
     if (!(svmMemoryManager && this->isSingleDeviceContext())) {
         return;
     }
-
-    bool enabled = false;
+    auto &productHelper = getDevices()[0]->getProductHelper();
+    bool enabled = productHelper.isUsmPoolAllocatorSupported();
     size_t poolSize = 2 * MemoryConstants::megaByte;
     if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
@@ -511,7 +511,7 @@ void Context::initializeUsmAllocationPools() {
         usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, poolSize);
     }
 
-    enabled = false;
+    enabled = productHelper.isUsmPoolAllocatorSupported();
     poolSize = 2 * MemoryConstants::megaByte;
     if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;

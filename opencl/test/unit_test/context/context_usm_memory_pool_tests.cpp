@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -40,7 +41,7 @@ struct ContextUsmPoolFlagValuesTest : public ::testing::Test {
 
 using ContextUsmPoolDefaultFlagsTest = ContextUsmPoolFlagValuesTest<-1, -1>;
 
-TEST_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContextThenPoolsAreNotInitialized) {
+HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContextThenPoolsAreNotInitialized, IsNotXeHpgCore) {
     EXPECT_FALSE(mockDeviceUsmMemAllocPool->isInitialized());
     EXPECT_EQ(0u, mockDeviceUsmMemAllocPool->poolSize);
     EXPECT_EQ(nullptr, mockDeviceUsmMemAllocPool->pool);
@@ -48,6 +49,18 @@ TEST_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContext
     EXPECT_FALSE(mockHostUsmMemAllocPool->isInitialized());
     EXPECT_EQ(0u, mockHostUsmMemAllocPool->poolSize);
     EXPECT_EQ(nullptr, mockHostUsmMemAllocPool->pool);
+}
+
+HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContextThenPoolsAreInitialized, IsXeHpgCore) {
+    EXPECT_TRUE(mockDeviceUsmMemAllocPool->isInitialized());
+    EXPECT_EQ(2 * MemoryConstants::megaByte, mockDeviceUsmMemAllocPool->poolSize);
+    EXPECT_NE(nullptr, mockDeviceUsmMemAllocPool->pool);
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, mockDeviceUsmMemAllocPool->poolMemoryType);
+
+    EXPECT_TRUE(mockHostUsmMemAllocPool->isInitialized());
+    EXPECT_EQ(2 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolSize);
+    EXPECT_NE(nullptr, mockHostUsmMemAllocPool->pool);
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, mockHostUsmMemAllocPool->poolMemoryType);
 }
 
 using ContextUsmPoolEnabledFlagsTest = ContextUsmPoolFlagValuesTest<1, 3>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -770,6 +770,14 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocator
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsNotXeHpgCore) {
+    EXPECT_FALSE(productHelper->isUsmPoolAllocatorSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
+    EXPECT_TRUE(productHelper->isUsmPoolAllocatorSupported());
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsUnlockingLockedPtrNecessaryThenReturnFalse) {

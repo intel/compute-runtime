@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,6 +210,11 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(c
 
 template <>
 bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
     return true;
 }
 

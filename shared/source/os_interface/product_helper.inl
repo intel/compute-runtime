@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -581,6 +581,11 @@ bool ProductHelperHw<gfxProduct>::isMidThreadPreemptionDisallowedForRayTracingKe
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
     return false;
 }
 

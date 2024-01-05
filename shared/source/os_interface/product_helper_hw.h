@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,6 +112,7 @@ class ProductHelperHw : public ProductHelper {
     bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const override;
     bool isMidThreadPreemptionDisallowedForRayTracingKernels() const override;
     bool isBufferPoolAllocatorSupported() const override;
+    bool isUsmPoolAllocatorSupported() const override;
     bool isTlbFlushRequired() const override;
     bool isDummyBlitWaRequired() const override;
     bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled) const override;
