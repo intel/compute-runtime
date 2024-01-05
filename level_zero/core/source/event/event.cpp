@@ -217,6 +217,9 @@ void EventPool::setupDescriptorFlags(const ze_event_pool_desc_t *desc) {
     if (pNext && pNext->stype == ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC) {
         auto counterBasedDesc = reinterpret_cast<const ze_event_pool_counter_based_exp_desc_t *>(pNext);
         counterBasedFlags = counterBasedDesc->flags;
+        if (counterBasedFlags == 0) {
+            counterBasedFlags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE;
+        }
         counterBased = true;
     }
 }
