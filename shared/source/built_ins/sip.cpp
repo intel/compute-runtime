@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -208,7 +208,7 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
 
-    gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
+    gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize, rootDeviceEnvironment);
     const auto allocType = AllocationType::kernelIsaInternal;
     AllocationProperties properties = {rootDeviceIndex, kernelBinarySize, allocType, device.getDeviceBitfield()};
     properties.flags.use32BitFrontWindow = false;

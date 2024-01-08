@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -216,11 +216,12 @@ TEST_F(DeviceFactoryTest, WhenOverridingEngineTypeThenDebugEngineIsReported) {
 TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSurfaceSizeIsSettedProperly) {
     bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
     ASSERT_TRUE(success);
-    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
 
-    const auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    const auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
     auto expextedSize = static_cast<size_t>(hwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte);
-    gfxCoreHelper.adjustPreemptionSurfaceSize(expextedSize);
+    gfxCoreHelper.adjustPreemptionSurfaceSize(expextedSize, *rootDeviceEnvironment);
 
     EXPECT_EQ(expextedSize, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 }

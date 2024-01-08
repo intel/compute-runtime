@@ -1193,7 +1193,7 @@ HWTEST_F(GfxCoreHelperTest, whenAdjustPreemptionSurfaceSizeIsCalledThenCsrSizeDo
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     size_t csrSize = 1024;
     size_t oldCsrSize = csrSize;
-    gfxCoreHelper.adjustPreemptionSurfaceSize(csrSize);
+    gfxCoreHelper.adjustPreemptionSurfaceSize(csrSize, pDevice->getRootDeviceEnvironment());
     EXPECT_EQ(oldCsrSize, csrSize);
 }
 
@@ -1203,7 +1203,7 @@ HWTEST_F(GfxCoreHelperTest, whenSetSipKernelDataIsCalledThenSipKernelDataDoesntC
     uint32_t *oldSipKernelBinary = sipKernelBinary;
     size_t kernelBinarySize = 1024;
     size_t oldKernelBinarySize = kernelBinarySize;
-    gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
+    gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize, pDevice->getRootDeviceEnvironment());
     EXPECT_EQ(oldKernelBinarySize, kernelBinarySize);
     EXPECT_EQ(oldSipKernelBinary, sipKernelBinary);
 }

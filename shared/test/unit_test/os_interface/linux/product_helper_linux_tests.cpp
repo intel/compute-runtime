@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -311,8 +311,9 @@ TEST_F(MockProductHelperTestLinux, givenPointerToHwInfoWhenConfigureHwInfoCalled
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
     auto expectedSize = static_cast<size_t>(outHwInfo.gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte);
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    gfxCoreHelper.adjustPreemptionSurfaceSize(expectedSize);
+    auto &rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0];
+    auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+    gfxCoreHelper.adjustPreemptionSurfaceSize(expectedSize, *rootDeviceEnvironment);
     EXPECT_EQ(expectedSize, outHwInfo.capabilityTable.requiredPreemptionSurfaceSize);
 }
 

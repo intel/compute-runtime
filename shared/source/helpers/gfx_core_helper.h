@@ -143,8 +143,8 @@ class GfxCoreHelper {
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
 
     virtual bool isSipKernelAsHexadecimalArrayPreferred() const = 0;
-    virtual void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const = 0;
-    virtual void adjustPreemptionSurfaceSize(size_t &csrSize) const = 0;
+    virtual void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual void adjustPreemptionSurfaceSize(size_t &csrSize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getSamplerStateSize() const = 0;
     virtual bool preferInternalBcsEngine() const = 0;
     virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
@@ -363,9 +363,9 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool isSipKernelAsHexadecimalArrayPreferred() const override;
 
-    void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize) const override;
+    void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
-    void adjustPreemptionSurfaceSize(size_t &csrSize) const override;
+    void adjustPreemptionSurfaceSize(size_t &csrSize, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isScratchSpaceSurfaceStateAccessible() const override;
     uint32_t getMaxScratchSize() const override;
     bool preferInternalBcsEngine() const override;
