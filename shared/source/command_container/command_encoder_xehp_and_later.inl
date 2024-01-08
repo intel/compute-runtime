@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -382,7 +382,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     EncodeWalkerArgs walkerArgs{
         args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType,
-        args.isHostScopeSignalEvent && args.isKernelUsingSystemAllocation,
+        args.requiresSystemMemoryFence(),
         kernelDescriptor,
         args.requiredDispatchWalkOrder,
         args.additionalSizeParam,

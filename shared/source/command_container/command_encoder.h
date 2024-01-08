@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,10 @@ struct EncodeDispatchKernelArgs {
     bool dcFlushEnable = false;
     bool isHeaplessModeEnabled = false;
     bool interruptEvent = false;
+
+    bool requiresSystemMemoryFence() const {
+        return (isHostScopeSignalEvent && isKernelUsingSystemAllocation);
+    }
 };
 
 enum class MiPredicateType : uint32_t {
