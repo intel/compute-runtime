@@ -517,14 +517,14 @@ TEST(MemoryInfo, givenMemoryInfoWithMemoryPolicyEnabledWhenCallingCreateGemExtFo
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    constexpr int num_numa = 4;
+    constexpr static int numNuma = 4;
     // setup numa library in MemoryInfo
     WhiteBoxNumaLibrary::GetMemPolicyPtr memPolicyHandler =
         [](int *mode, unsigned long nodeMask[], unsigned long, void *, unsigned long) -> long {
         if (mode) {
             *mode = 0;
         }
-        for (int i = 0; i < num_numa; i++) {
+        for (int i = 0; i < numNuma; i++) {
             nodeMask[i] = i;
         }
         return 0;
@@ -532,7 +532,7 @@ TEST(MemoryInfo, givenMemoryInfoWithMemoryPolicyEnabledWhenCallingCreateGemExtFo
     WhiteBoxNumaLibrary::NumaAvailablePtr numaAvailableHandler =
         [](void) -> int { return 0; };
     WhiteBoxNumaLibrary::NumaMaxNodePtr numaMaxNodeHandler =
-        [](void) -> int { return num_numa - 1; };
+        [](void) -> int { return numNuma - 1; };
     MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
     MockOsLibraryCustom *osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
     // register proc pointers
@@ -578,14 +578,14 @@ TEST(MemoryInfo, givenMemoryInfoWithMemoryPolicyEnabledAndOverrideMemoryPolicyMo
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    constexpr int num_numa = 4;
+    constexpr static int numNuma = 4;
     // setup numa library in MemoryInfo
     WhiteBoxNumaLibrary::GetMemPolicyPtr memPolicyHandler =
         [](int *mode, unsigned long nodeMask[], unsigned long, void *, unsigned long) -> long {
         if (mode) {
             *mode = 3;
         }
-        for (int i = 0; i < num_numa; i++) {
+        for (int i = 0; i < numNuma; i++) {
             nodeMask[i] = i;
         }
         return 0;
@@ -593,7 +593,7 @@ TEST(MemoryInfo, givenMemoryInfoWithMemoryPolicyEnabledAndOverrideMemoryPolicyMo
     WhiteBoxNumaLibrary::NumaAvailablePtr numaAvailableHandler =
         [](void) -> int { return 0; };
     WhiteBoxNumaLibrary::NumaMaxNodePtr numaMaxNodeHandler =
-        [](void) -> int { return num_numa - 1; };
+        [](void) -> int { return numNuma - 1; };
     MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
     MockOsLibraryCustom *osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
     // register proc pointers

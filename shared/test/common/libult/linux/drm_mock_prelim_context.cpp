@@ -168,9 +168,9 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         prelim_drm_i915_gem_create_ext_setparam *chunkingSetparamRegion = nullptr;
         prelim_drm_i915_gem_create_ext_vm_private *vmPrivateExt = nullptr;
         prelim_drm_i915_gem_create_ext_memory_policy *memPolicyExt = nullptr;
-        void *next_extension = reinterpret_cast<void *>(extension->base.next_extension);
-        while (next_extension != 0) {
-            auto *setparamCandidate = reinterpret_cast<prelim_drm_i915_gem_create_ext_setparam *>(next_extension);
+        void *nextExtension = reinterpret_cast<void *>(extension->base.next_extension);
+        while (nextExtension != 0) {
+            auto *setparamCandidate = reinterpret_cast<prelim_drm_i915_gem_create_ext_setparam *>(nextExtension);
             if (setparamCandidate->base.name == PRELIM_I915_GEM_CREATE_EXT_SETPARAM) {
                 if ((setparamCandidate->param.param & PRELIM_I915_PARAM_SET_PAIR) != 0) {
                     pairSetparamRegion = setparamCandidate;
@@ -179,19 +179,19 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
                 } else {
                     return EINVAL;
                 }
-                next_extension = reinterpret_cast<void *>(setparamCandidate->base.next_extension);
+                nextExtension = reinterpret_cast<void *>(setparamCandidate->base.next_extension);
                 continue;
             }
-            auto *vmPrivateCandidate = reinterpret_cast<prelim_drm_i915_gem_create_ext_vm_private *>(next_extension);
+            auto *vmPrivateCandidate = reinterpret_cast<prelim_drm_i915_gem_create_ext_vm_private *>(nextExtension);
             if (vmPrivateCandidate->base.name == PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE) {
                 vmPrivateExt = vmPrivateCandidate;
-                next_extension = reinterpret_cast<void *>(vmPrivateCandidate->base.next_extension);
+                nextExtension = reinterpret_cast<void *>(vmPrivateCandidate->base.next_extension);
                 continue;
             }
-            auto *memPolicyCandidate = reinterpret_cast<prelim_drm_i915_gem_create_ext_memory_policy *>(next_extension);
+            auto *memPolicyCandidate = reinterpret_cast<prelim_drm_i915_gem_create_ext_memory_policy *>(nextExtension);
             if (memPolicyCandidate->base.name == PRELIM_I915_GEM_CREATE_EXT_MEMORY_POLICY) {
                 memPolicyExt = memPolicyCandidate;
-                next_extension = reinterpret_cast<void *>(memPolicyCandidate->base.next_extension);
+                nextExtension = reinterpret_cast<void *>(memPolicyCandidate->base.next_extension);
                 continue;
             }
             // incorrect extension detected
