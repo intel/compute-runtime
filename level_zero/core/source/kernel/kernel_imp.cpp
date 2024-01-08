@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -850,6 +850,7 @@ ze_result_t KernelImp::getKernelName(size_t *pSize, char *pName) {
 }
 
 ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) {
+    const auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
     const auto &kernelDescriptor = this->kernelImmData->getDescriptor();
     pKernelProperties->numKernelArgs = static_cast<uint32_t>(kernelDescriptor.payloadMappings.explicitArgs.size());
     pKernelProperties->requiredGroupSizeX = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
@@ -859,12 +860,11 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
     pKernelProperties->requiredSubgroupSize = kernelDescriptor.kernelMetadata.requiredSubGroupSize;
     pKernelProperties->maxSubgroupSize = kernelDescriptor.kernelAttributes.simdSize;
     pKernelProperties->localMemSize = kernelDescriptor.kernelAttributes.slmInlineSize;
-    pKernelProperties->privateMemSize = kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
+    pKernelProperties->privateMemSize = gfxCoreHelper.getKernelPrivateMemSize(kernelDescriptor);
     pKernelProperties->spillMemSize = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
     memset(pKernelProperties->uuid.kid, 0, ZE_MAX_KERNEL_UUID_SIZE);
     memset(pKernelProperties->uuid.mid, 0, ZE_MAX_MODULE_UUID_SIZE);
 
-    const auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
     uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getMaxGroupSize(kernelDescriptor));
 
     maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, !kernelRequiresGenerationOfLocalIdsByRuntime, maxKernelWorkGroupSize);

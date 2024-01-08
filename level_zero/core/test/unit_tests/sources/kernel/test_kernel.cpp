@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1514,6 +1514,13 @@ TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     ze_kernel_properties_t kernelPropertiesBefore = {};
     kernelPropertiesBefore = kernelProperties;
 
+    auto expectedSpillSize = 0x100u;
+    auto expectedPrivateSize = 0x200u;
+
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(kernel->getKernelDescriptor());
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = expectedSpillSize;
+    kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = expectedPrivateSize;
+
     ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -1531,8 +1538,8 @@ TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     EXPECT_EQ(maxNumSubgroups, kernelProperties.maxNumSubgroups);
 
     EXPECT_EQ(sizeof(float) * 16U, kernelProperties.localMemSize);
-    EXPECT_EQ(0U, kernelProperties.privateMemSize);
-    EXPECT_EQ(0U, kernelProperties.spillMemSize);
+    EXPECT_EQ(expectedPrivateSize, kernelProperties.privateMemSize);
+    EXPECT_EQ(expectedSpillSize, kernelProperties.spillMemSize);
 
     uint8_t zeroKid[ZE_MAX_KERNEL_UUID_SIZE];
     uint8_t zeroMid[ZE_MAX_MODULE_UUID_SIZE];
@@ -1542,6 +1549,27 @@ TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
                         sizeof(kernelProperties.uuid.kid)));
     EXPECT_EQ(0, memcmp(&kernelProperties.uuid.mid, &zeroMid,
                         sizeof(kernelProperties.uuid.mid)));
+}
+
+HWTEST2_F(KernelPropertiesTests, givenKernelWithPrivateScratchMemoryThenProperPrivateMemorySizeIsReported, IsAtLeastXeHpCore) {
+    ze_kernel_properties_t kernelProperties = {};
+
+    kernelProperties.privateMemSize = std::numeric_limits<uint32_t>::max();
+    kernelProperties.spillMemSize = std::numeric_limits<uint32_t>::max();
+
+    auto expectedSpillSize = 0x100u;
+    auto expectedPrivateSize = 0x200u;
+
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(kernel->getKernelDescriptor());
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = expectedSpillSize;
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[1] = expectedPrivateSize;
+    kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = 0xDEAD;
+
+    ze_result_t res = kernel->getProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(expectedPrivateSize, kernelProperties.privateMemSize);
+    EXPECT_EQ(expectedSpillSize, kernelProperties.spillMemSize);
 }
 
 using KernelMaxNumSubgroupsTests = Test<ModuleImmutableDataFixture>;

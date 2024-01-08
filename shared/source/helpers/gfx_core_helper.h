@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -177,6 +177,7 @@ class GfxCoreHelper {
     virtual uint32_t getContextGroupContextsCount() const = 0;
 
     virtual bool is48ResourceNeededForCmdBuffer() const = 0;
+    virtual uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -393,6 +394,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getContextGroupContextsCount() const override;
 
     bool is48ResourceNeededForCmdBuffer() const override;
+
+    uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const override;
 
     ~GfxCoreHelperHw() override = default;
 

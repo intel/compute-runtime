@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 namespace NEO {
 
@@ -149,5 +150,10 @@ inline bool GfxCoreHelperHw<GfxFamily>::preferInternalBcsEngine() const {
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalScratchSpaceSize() const {
     return 1024U;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const {
+    return kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize;
 }
 } // namespace NEO

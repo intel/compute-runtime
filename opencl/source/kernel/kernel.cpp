@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -580,7 +580,6 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     cl_uint regCount;
     const auto &hwInfo = clDevice.getHardwareInfo();
     auto &gfxCoreHelper = this->getGfxCoreHelper();
-    auto &clGfxCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
     switch (paramName) {
@@ -623,7 +622,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         pSrc = &scratchSize;
         break;
     case CL_KERNEL_PRIVATE_MEM_SIZE:
-        privateMemSize = clGfxCoreHelper.getKernelPrivateMemSize(kernelInfo);
+        privateMemSize = gfxCoreHelper.getKernelPrivateMemSize(kernelDescriptor);
         srcSize = sizeof(privateMemSize);
         pSrc = &privateMemSize;
         break;

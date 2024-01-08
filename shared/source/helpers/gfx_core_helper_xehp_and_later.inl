@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -199,4 +199,9 @@ bool GfxCoreHelperHw<Family>::largeGrfModeSupported() const {
     return true;
 }
 
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const {
+    const auto &kernelAttributes = kernelDescriptor.kernelAttributes;
+    return (kernelAttributes.perThreadScratchSize[1] > 0) ? kernelAttributes.perThreadScratchSize[1] : kernelAttributes.perHwThreadPrivateMemorySize;
+}
 } // namespace NEO

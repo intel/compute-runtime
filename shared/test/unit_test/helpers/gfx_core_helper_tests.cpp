@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1613,4 +1613,17 @@ TEST_F(GfxCoreHelperTest, givenContextGroupEnabledWithDebugKeyWhenContextGroupCo
 
 HWTEST_F(GfxCoreHelperTest, whenAskingIf48bResourceNeededForCmdBufferThenReturnTrue) {
     EXPECT_TRUE(getHelper<GfxCoreHelper>().is48ResourceNeededForCmdBuffer());
+}
+
+TEST_F(GfxCoreHelperTest, whenOnlyPerThreadPrivateMemorySizeIsDefinedThenItIsReturnedAsKernelPrivateMemorySize) {
+    KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = 0x100u;
+    EXPECT_EQ(0x100u, getHelper<GfxCoreHelper>().getKernelPrivateMemSize(kernelDescriptor));
+}
+
+HWTEST2_F(GfxCoreHelperTest, whenPrivateScratchSizeIsDefinedThenItIsReturnedAsKernelPrivateMemorySize, IsAtLeastXeHpCore) {
+    KernelDescriptor kernelDescriptor{};
+    kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = 0x100u;
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[1] = 0x200u;
+    EXPECT_EQ(0x200u, getHelper<GfxCoreHelper>().getKernelPrivateMemSize(kernelDescriptor));
 }
