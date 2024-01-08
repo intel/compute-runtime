@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     EngineUsage getEngineUsage() { return engineUsage; }
     bool isRegular() const { return engineUsage == EngineUsage::regular; }
     bool isLowPriority() const { return engineUsage == EngineUsage::lowPriority; }
+    bool isHighPriority() const { return engineUsage == EngineUsage::highPriority; }
     bool isInternalEngine() const { return engineUsage == EngineUsage::internal; }
     bool isCooperativeEngine() const { return engineUsage == EngineUsage::cooperative; }
     bool isRootDevice() const { return rootDevice; }

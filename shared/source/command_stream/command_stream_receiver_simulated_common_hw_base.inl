@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,10 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
     if (osContext.isPartOfContextGroup()) {
         constexpr uint32_t contextGroupBit = aub_stream::hardwareContextFlags::contextGroup;
         flags |= contextGroupBit;
+    }
+
+    if (osContext.isHighPriority()) {
+        flags |= aub_stream::hardwareContextFlags::highPriority;
     }
 
     if (debugManager.flags.AppendAubStreamContextFlags.get() != -1) {

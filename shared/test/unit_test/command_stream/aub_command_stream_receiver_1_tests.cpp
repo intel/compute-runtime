@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -200,6 +200,21 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
     EXPECT_NE(nullptr, aubCsr->hardwareContextController.get());
     auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr->hardwareContextController->hardwareContexts[0].get());
     EXPECT_EQ(deviceIndex, mockHardwareContext->deviceIndex);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndHighPriorityContextWhenOsContextIsSetThenCorrectFlagIsPassed) {
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::highPriority}, DeviceBitfield(1)));
+    std::string fileName = "file_name.aub";
+    MockAubManager *mockManager = new MockAubManager();
+    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::CSR_AUB);
+    mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(fileName, true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield())));
+    EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
+
+    aubCsr->setupContext(osContext);
+    EXPECT_TRUE(aub_stream::hardwareContextFlags::highPriority & mockManager->contextFlags);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSetThenDontCreateHardwareContext) {
