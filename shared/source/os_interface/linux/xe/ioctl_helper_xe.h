@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include <bitset>
@@ -125,8 +124,6 @@ class IoctlHelperXe : public IoctlHelper {
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger) override;
     bool setDomainCpu(uint32_t handle, bool writeEnable) override;
     uint16_t getCpuCachingMode();
-    void addDebugMetadata(DrmResourceClass type, uint64_t *offset, uint64_t size);
-    void addDebugMetadataCookie(uint64_t cookie);
 
   protected:
     const char *xeGetClassName(int className);
@@ -140,8 +137,6 @@ class IoctlHelperXe : public IoctlHelper {
     int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
     void xeShowBindTable();
     void updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size);
-    void *allocateDebugMetadata();
-    void *freeDebugMetadata(void *metadata);
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;
@@ -168,14 +163,6 @@ class IoctlHelperXe : public IoctlHelper {
     std::vector<drm_xe_engine_class_instance> allEngines;
 
     drm_xe_engine_class_instance *defaultEngine = nullptr;
-
-    struct DebugMetadata {
-        DrmResourceClass type;
-        uint64_t offset;
-        uint64_t size;
-        bool isCookie;
-    };
-    std::vector<DebugMetadata> debugMetadata;
 
   private:
     template <typename... XeLogArgs>

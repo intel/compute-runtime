@@ -28,7 +28,6 @@ using namespace NEO;
 
 struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::bindInfo;
-    using IoctlHelperXe::debugMetadata;
     using IoctlHelperXe::defaultEngine;
     using IoctlHelperXe::getFdFromVmExport;
     using IoctlHelperXe::IoctlHelperXe;
