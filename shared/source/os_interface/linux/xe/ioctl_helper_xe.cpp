@@ -17,6 +17,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -1208,6 +1209,17 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     }
     create.instances = castToUint64(engine.data());
     create.num_placements = engine.size();
+
+    struct drm_xe_ext_set_property ext {};
+    auto &gfxCoreHelper = drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    if (gfxCoreHelper.isRunaloneModeRequired(drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode())) {
+        ext.base.next_extension = 0;
+        ext.base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
+        ext.property = getRunaloneExtProperty();
+        ext.value = 1;
+
+        create.extensions = castToUint64(&ext);
+    }
 
     int ret = IoctlHelper::ioctl(DrmIoctl::gemContextCreateExt, &create);
     drmContextId = create.exec_queue_id;

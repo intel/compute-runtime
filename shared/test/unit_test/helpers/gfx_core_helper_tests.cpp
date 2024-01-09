@@ -1562,6 +1562,12 @@ HWTEST2_F(GfxCoreHelperTest, givenParamsWhenCalculateNumThreadsPerThreadGroupThe
     }
 }
 
+HWTEST2_F(GfxCoreHelperTest, givenDebugModeWhenCheckingIfRunaloneModeRequiredThenMethodReturnFalseValue, IsAtMostXeHpcCore) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isRunaloneModeRequired(DebuggingMode::offline));
+    EXPECT_FALSE(gfxCoreHelper.isRunaloneModeRequired(DebuggingMode::online));
+}
+
 HWTEST_F(GfxCoreHelperTest, givenFlagRemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroupWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup.set(1);

@@ -105,7 +105,7 @@ class Drm : public DriverModel {
     int queryVmId(uint32_t drmContextId, uint32_t &vmId);
     void setLowPriorityContextParam(uint32_t drmContextId);
 
-    unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice);
+    MOCKABLE_VIRTUAL unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice);
 
     MOCKABLE_VIRTUAL int getErrno();
     bool setQueueSliceCount(uint64_t sliceCount);

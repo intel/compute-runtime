@@ -147,6 +147,7 @@ class IoctlHelperXe : public IoctlHelper {
     void updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size);
     void *allocateDebugMetadata();
     void *freeDebugMetadata(void *metadata);
+    int getRunaloneExtProperty();
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;

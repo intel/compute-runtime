@@ -5,13 +5,17 @@
  *
  */
 
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/debug_mock_drm_xe.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "uapi-eudebug/drm/xe_drm.h"
@@ -146,4 +150,66 @@ TEST(IoctlHelperXeTest, givenFreeDebugMetadataWhenVmCreateHasMultipleExtTypesThe
     delete node1;
     delete node2;
     delete node3;
+}
+
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetRunaloneExtPropertyThenCorrectValueReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->setDebuggingMode(DebuggingMode::offline);
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    EXPECT_EQ(xeIoctlHelper->getRunaloneExtProperty(), DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE);
+}
+
+using IoctlHelperXeTestFixture = ::testing::Test;
+HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnFalseWhenCreateDrmContextThenRunAloneContextIsNotRequested) {
+    DebugManagerStateRestore restorer;
+    struct MockGfxCoreHelperHw : NEO::GfxCoreHelperHw<FamilyType> {
+        bool isRunaloneModeRequired(DebuggingMode debuggingMode) const override {
+            return false;
+        }
+    };
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto raiiFactory = RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw>(rootDeviceEnvironment);
+    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    auto engineInfo = xeIoctlHelper->createEngineInfo(false);
+    ASSERT_NE(nullptr, engineInfo);
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    xeIoctlHelper->createDrmContext(drm, osContext, 0, 0);
+
+    auto ext = drm.receivedContextCreateSetParam;
+    EXPECT_NE(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE));
+}
+
+HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnTrueWhenCreateDrmContextThenRunAloneContextIsRequested) {
+    DebugManagerStateRestore restorer;
+    struct MockGfxCoreHelperHw : NEO::GfxCoreHelperHw<FamilyType> {
+        bool isRunaloneModeRequired(DebuggingMode debuggingMode) const override {
+            return true;
+        }
+    };
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto raiiFactory = RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw>(rootDeviceEnvironment);
+    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    auto engineInfo = xeIoctlHelper->createEngineInfo(false);
+    ASSERT_NE(nullptr, engineInfo);
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    xeIoctlHelper->createDrmContext(drm, osContext, 0, 0);
+
+    auto ext = drm.receivedContextCreateSetParam;
+    EXPECT_EQ(ext.base.name, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY));
+    EXPECT_EQ(ext.base.next_extension, 0ULL);
+    EXPECT_EQ(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE));
+    EXPECT_EQ(ext.value, 1ULL);
 }

@@ -104,4 +104,8 @@ void IoctlHelperXe::addDebugMetadata(DrmResourceClass type, uint64_t *offset, ui
     return;
 }
 
+int IoctlHelperXe::getRunaloneExtProperty() {
+    return DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE;
+}
+
 } // namespace NEO

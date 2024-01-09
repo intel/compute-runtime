@@ -31,6 +31,7 @@ using namespace NEO;
 struct MockIoctlHelperXeDebug : IoctlHelperXe {
     using IoctlHelperXe::debugMetadata;
     using IoctlHelperXe::freeDebugMetadata;
+    using IoctlHelperXe::getRunaloneExtProperty;
     using IoctlHelperXe::IoctlHelperXe;
 };
 
@@ -52,6 +53,10 @@ class DrmMockXeDebug : public DrmMockCustom {
     bool baseErrno = false;
     int errnoRetVal = 0;
 
+    unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) override {
+        return static_cast<unsigned int>(DrmParam::execDefault);
+    }
+
     int ioctl(DrmIoctl request, void *arg) override {
         int ret = -1;
         ioctlCalled = true;
@@ -59,6 +64,25 @@ class DrmMockXeDebug : public DrmMockCustom {
             return setIoctlAnswer;
         }
         switch (request) {
+        case DrmIoctl::query: {
+            struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
+            switch (deviceQuery->query) {
+            case DRM_XE_DEVICE_QUERY_ENGINES:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryEngines, sizeof(queryEngines));
+                }
+                deviceQuery->size = sizeof(queryEngines);
+                break;
+            };
+            ret = 0;
+        } break;
+        case DrmIoctl::gemContextCreateExt: {
+            auto create = static_cast<struct drm_xe_exec_queue_create *>(arg);
+            if (create->extensions) {
+                receivedContextCreateSetParam = *reinterpret_cast<struct drm_xe_ext_set_property *>(create->extensions);
+            }
+            ret = 0;
+        } break;
         case DrmIoctl::gemVmCreate: {
             struct drm_xe_vm_create *v = static_cast<struct drm_xe_vm_create *>(arg);
             drm_xe_ext_vm_set_debug_metadata *metadata = reinterpret_cast<drm_xe_ext_vm_set_debug_metadata *>(v->extensions);
@@ -112,6 +136,20 @@ class DrmMockXeDebug : public DrmMockCustom {
         return allowDebugAttach;
     }
 
+    const drm_xe_engine_class_instance queryEngines[11] = {
+        {DRM_XE_ENGINE_CLASS_RENDER, 0, 0},
+        {DRM_XE_ENGINE_CLASS_COPY, 1, 0},
+        {DRM_XE_ENGINE_CLASS_COPY, 2, 0},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1},
+        {DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1},
+        {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1},
+        {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}};
+
+    struct drm_xe_ext_set_property receivedContextCreateSetParam = {};
     bool allowDebugAttachCallBase = false;
     bool allowDebugAttach = false;
     bool ioctlCalled = false;
