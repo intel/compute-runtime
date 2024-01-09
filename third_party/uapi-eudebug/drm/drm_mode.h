@@ -312,16 +312,48 @@ struct drm_mode_set_plane {
 	__u32 src_w;
 };
 
+/**
+ * struct drm_mode_get_plane - Get plane metadata.
+ *
+ * Userspace can perform a GETPLANE ioctl to retrieve information about a
+ * plane.
+ *
+ * To retrieve the number of formats supported, set @count_format_types to zero
+ * and call the ioctl. @count_format_types will be updated with the value.
+ *
+ * To retrieve these formats, allocate an array with the memory needed to store
+ * @count_format_types formats. Point @format_type_ptr to this array and call
+ * the ioctl again (with @count_format_types still set to the value returned in
+ * the first ioctl call).
+ */
 struct drm_mode_get_plane {
+	/**
+	 * @plane_id: Object ID of the plane whose information should be
+	 * retrieved. Set by caller.
+	 */
 	__u32 plane_id;
 
+	/** @crtc_id: Object ID of the current CRTC. */
 	__u32 crtc_id;
+	/** @fb_id: Object ID of the current fb. */
 	__u32 fb_id;
 
+	/**
+	 * @possible_crtcs: Bitmask of CRTC's compatible with the plane. CRTC's
+	 * are created and they receive an index, which corresponds to their
+	 * position in the bitmask. Bit N corresponds to
+	 * :ref:`CRTC index<crtc_index>` N.
+	 */
 	__u32 possible_crtcs;
+	/** @gamma_size: Never used. */
 	__u32 gamma_size;
 
+	/** @count_format_types: Number of formats. */
 	__u32 count_format_types;
+	/**
+	 * @format_type_ptr: Pointer to ``__u32`` array of formats that are
+	 * supported by the plane. These formats do not require modifiers.
+	 */
 	__u64 format_type_ptr;
 };
 
@@ -413,9 +445,10 @@ enum drm_mode_subconnector {
  *
  * **Force-probing a connector**
  *
- * If the @count_modes field is set to zero, the kernel will perform a forced
- * probe on the connector to refresh the connector status, modes and EDID.
- * A forced-probe can be slow, might cause flickering and the ioctl will block.
+ * If the @count_modes field is set to zero and the DRM client is the current
+ * DRM master, the kernel will perform a forced probe on the connector to
+ * refresh the connector status, modes and EDID. A forced-probe can be slow,
+ * might cause flickering and the ioctl will block.
  *
  * User-space needs to force-probe connectors to ensure their metadata is
  * up-to-date at startup and after receiving a hot-plug event. User-space
@@ -455,6 +488,9 @@ struct drm_mode_get_connector {
 	 * This is not an object ID. This is a per-type connector number. Each
 	 * (type, type_id) combination is unique across all connectors of a DRM
 	 * device.
+	 *
+	 * The (type, type_id) combination is not a stable identifier: the
+	 * type_id can change depending on the driver probe order.
 	 */
 	__u32 connector_type_id;
 
@@ -508,22 +544,74 @@ struct drm_mode_get_connector {
  */
 #define DRM_MODE_PROP_ATOMIC        0x80000000
 
+/**
+ * struct drm_mode_property_enum - Description for an enum/bitfield entry.
+ * @value: numeric value for this enum entry.
+ * @name: symbolic name for this enum entry.
+ *
+ * See struct drm_property_enum for details.
+ */
 struct drm_mode_property_enum {
 	__u64 value;
 	char name[DRM_PROP_NAME_LEN];
 };
 
+/**
+ * struct drm_mode_get_property - Get property metadata.
+ *
+ * User-space can perform a GETPROPERTY ioctl to retrieve information about a
+ * property. The same property may be attached to multiple objects, see
+ * "Modeset Base Object Abstraction".
+ *
+ * The meaning of the @values_ptr field changes depending on the property type.
+ * See &drm_property.flags for more details.
+ *
+ * The @enum_blob_ptr and @count_enum_blobs fields are only meaningful when the
+ * property has the type &DRM_MODE_PROP_ENUM or &DRM_MODE_PROP_BITMASK. For
+ * backwards compatibility, the kernel will always set @count_enum_blobs to
+ * zero when the property has the type &DRM_MODE_PROP_BLOB. User-space must
+ * ignore these two fields if the property has a different type.
+ *
+ * User-space is expected to retrieve values and enums by performing this ioctl
+ * at least twice: the first time to retrieve the number of elements, the
+ * second time to retrieve the elements themselves.
+ *
+ * To retrieve the number of elements, set @count_values and @count_enum_blobs
+ * to zero, then call the ioctl. @count_values will be updated with the number
+ * of elements. If the property has the type &DRM_MODE_PROP_ENUM or
+ * &DRM_MODE_PROP_BITMASK, @count_enum_blobs will be updated as well.
+ *
+ * To retrieve the elements themselves, allocate an array for @values_ptr and
+ * set @count_values to its capacity. If the property has the type
+ * &DRM_MODE_PROP_ENUM or &DRM_MODE_PROP_BITMASK, allocate an array for
+ * @enum_blob_ptr and set @count_enum_blobs to its capacity. Calling the ioctl
+ * again will fill the arrays.
+ */
 struct drm_mode_get_property {
-	__u64 values_ptr; /* values and blob lengths */
-	__u64 enum_blob_ptr; /* enum and blob id ptrs */
+	/** @values_ptr: Pointer to a ``__u64`` array. */
+	__u64 values_ptr;
+	/** @enum_blob_ptr: Pointer to a struct drm_mode_property_enum array. */
+	__u64 enum_blob_ptr;
 
+	/**
+	 * @prop_id: Object ID of the property which should be retrieved. Set
+	 * by the caller.
+	 */
 	__u32 prop_id;
+	/**
+	 * @flags: ``DRM_MODE_PROP_*`` bitfield. See &drm_property.flags for
+	 * a definition of the flags.
+	 */
 	__u32 flags;
+	/**
+	 * @name: Symbolic property name. User-space should use this field to
+	 * recognize properties.
+	 */
 	char name[DRM_PROP_NAME_LEN];
 
+	/** @count_values: Number of elements in @values_ptr. */
 	__u32 count_values;
-	/* This is only used to count enum values, not blobs. The _blobs is
-	 * simply because of a historical reason, i.e. backwards compat. */
+	/** @count_enum_blobs: Number of elements in @enum_blob_ptr. */
 	__u32 count_enum_blobs;
 };
 
@@ -749,6 +837,11 @@ struct drm_color_ctm {
 	/*
 	 * Conversion matrix in S31.32 sign-magnitude
 	 * (not two's complement!) format.
+	 *
+	 * out   matrix    in
+	 * |R|   |0 1 2|   |R|
+	 * |G| = |3 4 5| x |G|
+	 * |B|   |6 7 8|   |B|
 	 */
 	__u64 matrix[9];
 };
@@ -793,7 +886,7 @@ struct hdr_metadata_infoframe {
 	 */
 	struct {
 		__u16 x, y;
-		} display_primaries[3];
+	} display_primaries[3];
 	/**
 	 * @white_point: White Point of Colorspace Data.
 	 * These are coded as unsigned 16-bit values in units of
@@ -804,7 +897,7 @@ struct hdr_metadata_infoframe {
 	 */
 	struct {
 		__u16 x, y;
-		} white_point;
+	} white_point;
 	/**
 	 * @max_display_mastering_luminance: Max Mastering Display Luminance.
 	 * This value is coded as an unsigned 16-bit value in units of 1 cd/m2,
@@ -850,70 +943,40 @@ struct hdr_output_metadata {
 	};
 };
 
-/*
- * DRM_MODE_LUT_GAMMA|DRM_MODE_LUT_DEGAMMA is legal and means the LUT
- * can be used for either purpose, but not simultaneously. To expose
- * modes that support gamma and degamma simultaneously the gamma mode
- * must declare distinct DRM_MODE_LUT_GAMMA and DRM_MODE_LUT_DEGAMMA
- * ranges.
+/**
+ * DRM_MODE_PAGE_FLIP_EVENT
+ *
+ * Request that the kernel sends back a vblank event (see
+ * struct drm_event_vblank) with the &DRM_EVENT_FLIP_COMPLETE type when the
+ * page-flip is done.
  */
-/* LUT is for gamma (after CTM) */
-#define DRM_MODE_LUT_GAMMA BIT(0)
-/* LUT is for degamma (before CTM) */
-#define DRM_MODE_LUT_DEGAMMA BIT(1)
-/* linearly interpolate between the points */
-#define DRM_MODE_LUT_INTERPOLATE BIT(2)
-/*
- * the last value of the previous range is the
- * first value of the current range.
- */
-#define DRM_MODE_LUT_REUSE_LAST BIT(3)
-/* the curve must be non-decreasing */
-#define DRM_MODE_LUT_NON_DECREASING BIT(4)
-/* the curve is reflected across origin for negative inputs */
-#define DRM_MODE_LUT_REFLECT_NEGATIVE BIT(5)
-/* the same curve (red) is used for blue and green channels as well */
-#define DRM_MODE_LUT_SINGLE_CHANNEL BIT(6)
-
-struct drm_color_lut_range {
-	/* DRM_MODE_LUT_* */
-	__u32 flags;
-	/* number of points on the curve */
-	__u16 count;
-	/* input/output bits per component */
-	__u8 input_bpc, output_bpc;
-	/* input start/end values */
-	__s32 start, end;
-	/* output min/max values */
-	__s32 min, max;
-};
-
-enum lut_type {
-	LUT_TYPE_DEGAMMA = 0,
-	LUT_TYPE_GAMMA = 1,
-};
-
-/*
- * Creating 64 bit palette entries for better data
- * precision. This will be required for HDR and
- * similar color processing usecases.
- */
-struct drm_color_lut_ext {
-	/*
-	 * Data is U32.32 fixed point format.
-	 */
-	__u64 red;
-	__u64 green;
-	__u64 blue;
-	__u64 reserved;
-};
-
 #define DRM_MODE_PAGE_FLIP_EVENT 0x01
+/**
+ * DRM_MODE_PAGE_FLIP_ASYNC
+ *
+ * Request that the page-flip is performed as soon as possible, ie. with no
+ * delay due to waiting for vblank. This may cause tearing to be visible on
+ * the screen.
+ *
+ * When used with atomic uAPI, the driver will return an error if the hardware
+ * doesn't support performing an asynchronous page-flip for this update.
+ * User-space should handle this, e.g. by falling back to a regular page-flip.
+ *
+ * Note, some hardware might need to perform one last synchronous page-flip
+ * before being able to switch to asynchronous page-flips. As an exception,
+ * the driver will return success even though that first page-flip is not
+ * asynchronous.
+ */
 #define DRM_MODE_PAGE_FLIP_ASYNC 0x02
 #define DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE 0x4
 #define DRM_MODE_PAGE_FLIP_TARGET_RELATIVE 0x8
 #define DRM_MODE_PAGE_FLIP_TARGET (DRM_MODE_PAGE_FLIP_TARGET_ABSOLUTE | \
 				   DRM_MODE_PAGE_FLIP_TARGET_RELATIVE)
+/**
+ * DRM_MODE_PAGE_FLIP_FLAGS
+ *
+ * Bitmask of flags suitable for &drm_mode_crtc_page_flip_target.flags.
+ */
 #define DRM_MODE_PAGE_FLIP_FLAGS (DRM_MODE_PAGE_FLIP_EVENT | \
 				  DRM_MODE_PAGE_FLIP_ASYNC | \
 				  DRM_MODE_PAGE_FLIP_TARGET)
@@ -978,13 +1041,25 @@ struct drm_mode_crtc_page_flip_target {
 	__u64 user_data;
 };
 
-/* create a dumb scanout buffer */
+/**
+ * struct drm_mode_create_dumb - Create a KMS dumb buffer for scanout.
+ * @height: buffer height in pixels
+ * @width: buffer width in pixels
+ * @bpp: bits per pixel
+ * @flags: must be zero
+ * @handle: buffer object handle
+ * @pitch: number of bytes between two consecutive lines
+ * @size: size of the whole buffer in bytes
+ *
+ * User-space fills @height, @width, @bpp and @flags. If the IOCTL succeeds,
+ * the kernel fills @handle, @pitch and @size.
+ */
 struct drm_mode_create_dumb {
 	__u32 height;
 	__u32 width;
 	__u32 bpp;
 	__u32 flags;
-	/* handle, pitch, size will be returned */
+
 	__u32 handle;
 	__u32 pitch;
 	__u64 size;
@@ -1007,11 +1082,53 @@ struct drm_mode_destroy_dumb {
 	__u32 handle;
 };
 
-/* page-flip flags are valid, plus: */
+/**
+ * DRM_MODE_ATOMIC_TEST_ONLY
+ *
+ * Do not apply the atomic commit, instead check whether the hardware supports
+ * this configuration.
+ *
+ * See &drm_mode_config_funcs.atomic_check for more details on test-only
+ * commits.
+ */
 #define DRM_MODE_ATOMIC_TEST_ONLY 0x0100
+/**
+ * DRM_MODE_ATOMIC_NONBLOCK
+ *
+ * Do not block while applying the atomic commit. The &DRM_IOCTL_MODE_ATOMIC
+ * IOCTL returns immediately instead of waiting for the changes to be applied
+ * in hardware. Note, the driver will still check that the update can be
+ * applied before retuning.
+ */
 #define DRM_MODE_ATOMIC_NONBLOCK  0x0200
+/**
+ * DRM_MODE_ATOMIC_ALLOW_MODESET
+ *
+ * Allow the update to result in temporary or transient visible artifacts while
+ * the update is being applied. Applying the update may also take significantly
+ * more time than a page flip. All visual artifacts will disappear by the time
+ * the update is completed, as signalled through the vblank event's timestamp
+ * (see struct drm_event_vblank).
+ *
+ * This flag must be set when the KMS update might cause visible artifacts.
+ * Without this flag such KMS update will return a EINVAL error. What kind of
+ * update may cause visible artifacts depends on the driver and the hardware.
+ * User-space that needs to know beforehand if an update might cause visible
+ * artifacts can use &DRM_MODE_ATOMIC_TEST_ONLY without
+ * &DRM_MODE_ATOMIC_ALLOW_MODESET to see if it fails.
+ *
+ * To the best of the driver's knowledge, visual artifacts are guaranteed to
+ * not appear when this flag is not set. Some sinks might display visual
+ * artifacts outside of the driver's control.
+ */
 #define DRM_MODE_ATOMIC_ALLOW_MODESET 0x0400
 
+/**
+ * DRM_MODE_ATOMIC_FLAGS
+ *
+ * Bitfield of flags accepted by the &DRM_IOCTL_MODE_ATOMIC IOCTL in
+ * &drm_mode_atomic.flags.
+ */
 #define DRM_MODE_ATOMIC_FLAGS (\
 		DRM_MODE_PAGE_FLIP_EVENT |\
 		DRM_MODE_PAGE_FLIP_ASYNC |\
@@ -1213,6 +1330,16 @@ struct drm_mode_rect {
 	__s32 y1;
 	__s32 x2;
 	__s32 y2;
+};
+
+/**
+ * struct drm_mode_closefb
+ * @fb_id: Framebuffer ID.
+ * @pad: Must be zero.
+ */
+struct drm_mode_closefb {
+	__u32 fb_id;
+	__u32 pad;
 };
 
 #if defined(__cplusplus)
