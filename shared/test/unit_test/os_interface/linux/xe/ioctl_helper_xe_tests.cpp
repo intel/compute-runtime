@@ -1159,6 +1159,14 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
+    auto baseCopyEngine = aub_stream::EngineType::ENGINE_BCS;
+    auto nextCopyEngine = aub_stream::EngineType::ENGINE_BCS1;
+    const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
+    if (baseCopyEngine != productHelper.getDefaultCopyEngine()) {
+        baseCopyEngine = aub_stream::EngineType::ENGINE_BCS1;
+        nextCopyEngine = aub_stream::EngineType::ENGINE_BCS2;
+    }
+
     for (const auto &isSysmanEnabled : ::testing::Bool()) {
         auto engineInfo = xeIoctlHelper->createEngineInfo(isSysmanEnabled);
 
@@ -1173,21 +1181,21 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
 
         EXPECT_EQ(nullptr, engineInfo->getEngineInstance(1, rcsEngineType));
 
-        auto bcsEngine = engineInfo->getEngineInstance(0, aub_stream::EngineType::ENGINE_BCS);
-        EXPECT_NE(nullptr, bcsEngine);
-        EXPECT_EQ(1, bcsEngine->engineInstance);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COPY), bcsEngine->engineClass);
-        EXPECT_EQ(0u, engineInfo->getEngineTileIndex(*bcsEngine));
+        auto baseCopyEngineInstance = engineInfo->getEngineInstance(0, baseCopyEngine);
+        EXPECT_NE(nullptr, baseCopyEngineInstance);
+        EXPECT_EQ(1, baseCopyEngineInstance->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COPY), baseCopyEngineInstance->engineClass);
+        EXPECT_EQ(0u, engineInfo->getEngineTileIndex(*baseCopyEngineInstance));
 
-        EXPECT_EQ(nullptr, engineInfo->getEngineInstance(1, aub_stream::EngineType::ENGINE_BCS));
+        EXPECT_EQ(nullptr, engineInfo->getEngineInstance(1, baseCopyEngine));
 
-        auto bcs1Engine = engineInfo->getEngineInstance(0, aub_stream::EngineType::ENGINE_BCS1);
-        EXPECT_NE(nullptr, bcs1Engine);
-        EXPECT_EQ(2, bcs1Engine->engineInstance);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COPY), bcs1Engine->engineClass);
-        EXPECT_EQ(0u, engineInfo->getEngineTileIndex(*bcs1Engine));
+        auto nextCopyEngineInstance = engineInfo->getEngineInstance(0, nextCopyEngine);
+        EXPECT_NE(nullptr, nextCopyEngineInstance);
+        EXPECT_EQ(2, nextCopyEngineInstance->engineInstance);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_ENGINE_CLASS_COPY), nextCopyEngineInstance->engineClass);
+        EXPECT_EQ(0u, engineInfo->getEngineTileIndex(*nextCopyEngineInstance));
 
-        EXPECT_EQ(nullptr, engineInfo->getEngineInstance(1, aub_stream::EngineType::ENGINE_BCS1));
+        EXPECT_EQ(nullptr, engineInfo->getEngineInstance(1, nextCopyEngine));
 
         auto ccsEngine0 = engineInfo->getEngineInstance(0, aub_stream::EngineType::ENGINE_CCS);
         EXPECT_NE(nullptr, ccsEngine0);

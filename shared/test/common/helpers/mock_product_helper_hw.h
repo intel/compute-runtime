@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
     bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
     std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
+    aub_stream::EngineType getDefaultCopyEngine() const override;
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;
@@ -37,5 +38,6 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     uint32_t returnedL1CachePolicy = 0;
     uint32_t returnedL1CachePolicyIfDebugger = 0;
     std::vector<int32_t> threadArbPolicies = {};
+    aub_stream::EngineType mockDefaultCopyEngine = aub_stream::EngineType::ENGINE_BCS;
 };
 } // namespace NEO

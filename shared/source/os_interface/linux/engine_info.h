@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,8 @@ struct EngineInfo {
 
     void assignCopyEngine(aub_stream::EngineType baseEngineType, uint32_t tileId, const EngineClassInstance &engine,
                           BcsInfoMask &bcsInfoMask, uint32_t &numHostLinkCopyEngines, uint32_t &numScaleUpLinkCopyEngines);
+    void mapEngine(const NEO::IoctlHelper *ioctlHelper, const EngineClassInstance &engine, BcsInfoMask &bcsInfoMask, const NEO::RootDeviceEnvironment &rootDeviceEnvironment,
+                   const aub_stream::EngineType *&mappingCopyEngineIt, uint32_t &computeEnginesCounter, uint32_t tileId = 0u);
 
     std::vector<EngineToInstanceMap> tileToEngineToInstanceMap;
     std::multimap<uint32_t, EngineClassInstance> tileToEngineMap;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,4 +82,10 @@ std::vector<uint32_t> MockProductHelperHw<gfxProduct>::getSupportedNumGrfs(const
     }
     return {128u};
 }
+
+template <>
+aub_stream::EngineType MockProductHelperHw<gfxProduct>::getDefaultCopyEngine() const {
+    return this->mockDefaultCopyEngine;
+}
+
 } // namespace NEO

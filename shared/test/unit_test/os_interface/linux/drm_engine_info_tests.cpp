@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,11 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/test/common/helpers/mock_product_helper_hw.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -114,6 +117,9 @@ TEST(EngineInfoTest, whenGetEngineInstanceAndTileThenCorrectValuesReturned) {
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = drm->getIoctlHelper();
 
+    const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
+    const auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+
     std::vector<EngineCapabilities> engines(4);
     engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 0};
     engines[0].capabilities = 0;
@@ -145,7 +151,7 @@ TEST(EngineInfoTest, whenGetEngineInstanceAndTileThenCorrectValuesReturned) {
     EXPECT_EQ(engines[0].engine.engineClass, engine->engineClass);
     EXPECT_EQ(engines[0].engine.engineInstance, engine->engineInstance);
 
-    engine = engineInfo->getEngineInstance(1, aub_stream::EngineType::ENGINE_BCS);
+    engine = engineInfo->getEngineInstance(1, defaultCopyEngine);
     EXPECT_EQ(engines[3].engine.engineClass, engine->engineClass);
     EXPECT_EQ(engines[3].engine.engineInstance, engine->engineInstance);
 
@@ -202,4 +208,40 @@ TEST(EngineInfoTest, whenEmptyEngineInfoCreatedThen0TileReturned) {
 
     auto engineInfo = std::make_unique<EngineInfo>(drm.get(), 0, distances, queryItems, engines);
     EXPECT_EQ(0u, engineInfo->getEngineTileIndex({static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 1}));
+}
+
+using DisabledBCSEngineInfoTest = ::testing::Test;
+
+HWTEST2_F(DisabledBCSEngineInfoTest, whenBCS0IsNotEnabledThenSkipMappingItAndSetProperBcsInfoMask, MatchAny) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto drm = std::make_unique<DrmMockEngine>(rootDeviceEnvironment);
+    auto ioctlHelper = drm->getIoctlHelper();
+
+    RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(rootDeviceEnvironment);
+    raii.mockProductHelper->mockDefaultCopyEngine = aub_stream::EngineType::ENGINE_BCS1;
+    auto emplaceCopyEngine = [&ioctlHelper](std::vector<EngineClassInstance> &vec) {
+        auto &emplaced = vec.emplace_back();
+        emplaced.engineClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
+        emplaced.engineInstance = 0u;
+    };
+
+    StackVec<std::vector<EngineClassInstance>, 2> enginesPerTile{};
+    enginesPerTile.resize(2u);
+    for (int tileIdx = 0; tileIdx < 2; tileIdx++) {
+        emplaceCopyEngine(enginesPerTile[tileIdx]);
+        emplaceCopyEngine(enginesPerTile[tileIdx]);
+    }
+
+    auto engineInfo = std::make_unique<EngineInfo>(drm.get(), enginesPerTile);
+    EXPECT_EQ(nullptr, engineInfo->getEngineInstance(0u, aub_stream::EngineType::ENGINE_BCS));
+    EXPECT_NE(nullptr, engineInfo->getEngineInstance(0u, aub_stream::EngineType::ENGINE_BCS1));
+    EXPECT_NE(nullptr, engineInfo->getEngineInstance(0u, aub_stream::EngineType::ENGINE_BCS2));
+
+    EXPECT_EQ(nullptr, engineInfo->getEngineInstance(1u, aub_stream::EngineType::ENGINE_BCS));
+    EXPECT_NE(nullptr, engineInfo->getEngineInstance(1u, aub_stream::EngineType::ENGINE_BCS1));
+    EXPECT_NE(nullptr, engineInfo->getEngineInstance(1u, aub_stream::EngineType::ENGINE_BCS2));
+
+    const auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    EXPECT_EQ(false, hwInfo->featureTable.ftrBcsInfo.test(0));
 }
