@@ -3906,12 +3906,21 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest, givenDrmMemoryManagerAnd
     }
 }
 
+struct MockIoctlHelperPrelimResourceRegistration : public IoctlHelperPrelim20 {
+  public:
+    using IoctlHelperPrelim20::classHandles;
+    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+};
+
 TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeShouldBeRegisteredThenBoHasBindExtHandleAdded) {
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
+
     for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        drm.classHandles.push_back(i);
+        ioctlHelper->classHandles.push_back(i);
     }
+    drm.ioctlHelper.reset(ioctlHelper.release());
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -3969,10 +3978,12 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
     drm.registeredClass = DrmResourceClass::maxSize;
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
     for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        drm.classHandles.push_back(i);
+        ioctlHelper->classHandles.push_back(i);
     }
+    drm.ioctlHelper.reset(ioctlHelper.release());
 
     {
         MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -3987,7 +3998,9 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeSho
 TEST_F(DrmAllocationTests, givenResourceRegistrationNotEnabledWhenRegisteringBindExtHandleThenHandleIsNotAddedToBo) {
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
-    EXPECT_EQ(0u, drm.classHandles.size());
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
+    EXPECT_EQ(0u, ioctlHelper->classHandles.size());
+    drm.ioctlHelper.reset(ioctlHelper.release());
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::system4KBPages);
@@ -4030,7 +4043,9 @@ TEST(DrmMemoryManager, givenResourceRegistrationEnabledAndAllocTypeToCaptureWhen
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
 
     // mock resource registration enabling by storing class handles
-    mockDrm->classHandles.push_back(1);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(*mockDrm);
+    ioctlHelper->classHandles.push_back(1);
+    mockDrm->ioctlHelper.reset(ioctlHelper.release());
 
     MockBufferObject bo(rootDeviceIndex, mockDrm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::scratchSurface, MemoryPool::system4KBPages);
@@ -4056,9 +4071,12 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenAllocatingThenAllocationIsR
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
 
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(*mockDrm);
+
     for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        mockDrm->classHandles.push_back(i);
+        ioctlHelper->classHandles.push_back(i);
     }
+    mockDrm->ioctlHelper.reset(ioctlHelper.release());
 
     EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
 
@@ -4086,9 +4104,12 @@ TEST(DrmMemoryManager, givenTrackedAllocationTypeWhenFreeingThenRegisteredHandle
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
 
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(*mockDrm);
+
     for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        mockDrm->classHandles.push_back(i);
+        ioctlHelper->classHandles.push_back(i);
     }
+    mockDrm->ioctlHelper.reset(ioctlHelper.release());
 
     EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
 
@@ -4117,9 +4138,12 @@ TEST(DrmMemoryManager, givenEnabledResourceRegistrationWhenSshIsAllocatedThenItI
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mockDrm, 0u, false);
     executionEnvironment->memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
 
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(*mockDrm);
+
     for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        mockDrm->classHandles.push_back(i);
+        ioctlHelper->classHandles.push_back(i);
     }
+    mockDrm->ioctlHelper.reset(ioctlHelper.release());
     EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
@@ -4141,9 +4165,12 @@ TEST(DrmMemoryManager, givenNullBoWhenRegisteringBindExtHandleThenEarlyReturn) {
 
     auto mockDrm = std::make_unique<DrmMockResources>(*executionEnvironment->rootDeviceEnvironments[0]);
 
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(*mockDrm);
+
     for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        mockDrm->classHandles.push_back(i);
+        ioctlHelper->classHandles.push_back(i);
     }
+    mockDrm->ioctlHelper.reset(ioctlHelper.release());
 
     EXPECT_TRUE(mockDrm->resourceRegistrationEnabled());
 
@@ -4158,7 +4185,10 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationIsRegis
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     // mock resource registration enabling by storing class handles
-    drm.classHandles.push_back(1);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
+
+    ioctlHelper->classHandles.push_back(1);
+    drm.ioctlHelper.reset(ioctlHelper.release());
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::system4KBPages);
@@ -4173,10 +4203,12 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndTileInstancedIsaWh
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        drm.classHandles.push_back(i);
-    }
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
+        ioctlHelper->classHandles.push_back(i);
+    }
+    drm.ioctlHelper.reset(ioctlHelper.release());
     drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -4197,10 +4229,12 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSingleInstanceIsaW
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        drm.classHandles.push_back(i);
-    }
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
+        ioctlHelper->classHandles.push_back(i);
+    }
+    drm.ioctlHelper.reset(ioctlHelper.release());
     drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -4219,10 +4253,12 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenIsaIsRegisteredTh
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        drm.classHandles.push_back(i);
-    }
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
+        ioctlHelper->classHandles.push_back(i);
+    }
+    drm.ioctlHelper.reset(ioctlHelper.release());
     drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -4243,10 +4279,12 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldS
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        drm.classHandles.push_back(i);
-    }
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
+        ioctlHelper->classHandles.push_back(i);
+    }
+    drm.ioctlHelper.reset(ioctlHelper.release());
     drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -4281,10 +4319,12 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldN
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        drm.classHandles.push_back(i);
-    }
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
+        ioctlHelper->classHandles.push_back(i);
+    }
+    drm.ioctlHelper.reset(ioctlHelper.release());
     drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -4318,10 +4358,12 @@ TEST_F(DrmAllocationTests, givenTwoBufferObjectsAndTileInstancedSbaAndSubDeviceB
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        drm.classHandles.push_back(i);
-    }
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
+        ioctlHelper->classHandles.push_back(i);
+    }
+    drm.ioctlHelper.reset(ioctlHelper.release());
     drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo0(rootDeviceIndex, &drm, 3, 0, 0, 1);
@@ -4361,10 +4403,12 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenSbaTrackingBuffer
     const uint32_t rootDeviceIndex = 0u;
     DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
 
-    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
-        drm.classHandles.push_back(i);
-    }
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::maxSize); i++) {
+        ioctlHelper->classHandles.push_back(i);
+    }
+    drm.ioctlHelper.reset(ioctlHelper.release());
     drm.registeredClass = DrmResourceClass::maxSize;
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);

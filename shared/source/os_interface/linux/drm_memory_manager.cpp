@@ -1474,7 +1474,7 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
 }
 
 void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
-    if (allocation && getDrm(allocation->getRootDeviceIndex()).resourceRegistrationEnabled()) {
+    if (allocation && getDrm(allocation->getRootDeviceIndex()).getIoctlHelper()->resourceRegistrationEnabled()) {
         auto drmAllocation = static_cast<DrmAllocation *>(allocation);
         drmAllocation->registerBOBindExtHandle(&getDrm(drmAllocation->getRootDeviceIndex()));
 

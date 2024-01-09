@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,6 @@ class DrmMock : public Drm {
     using Drm::checkQueueSliceSupport;
     using Drm::chunkingAvailable;
     using Drm::chunkingMode;
-    using Drm::classHandles;
     using Drm::completionFenceSupported;
     using Drm::contextDebugSupported;
     using Drm::engineInfo;

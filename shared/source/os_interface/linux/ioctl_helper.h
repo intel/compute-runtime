@@ -8,11 +8,13 @@
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/topology_map.h"
+#include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "igfxfmid.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -162,6 +164,14 @@ class IoctlHelper {
     virtual bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) = 0;
 
     virtual bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) = 0;
+    virtual bool registerResourceClasses() { return false; }
+    virtual uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) { return 0; }
+    virtual uint32_t registerIsaCookie(uint32_t isaHandle) { return 0; }
+    virtual void unregisterResource(uint32_t handle) { return; }
+    virtual bool resourceRegistrationEnabled() { return false; }
+
+    virtual uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size) { return 0; }
+    virtual void notifyLastCommandQueueDestroyed(uint32_t handle) { return; }
 
   protected:
     Drm &drm;
@@ -334,11 +344,23 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     void *pciBarrierMmap() override;
     void setupIpVersion() override;
     bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
+    uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;
+    bool registerResourceClasses() override;
+    uint32_t registerIsaCookie(uint32_t isaHandle) override;
+    void unregisterResource(uint32_t handle) override;
+    bool resourceRegistrationEnabled() override {
+        return classHandles.size() > 0;
+    }
+    uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size) override;
+    void notifyLastCommandQueueDestroyed(uint32_t handle) override;
 
   protected:
     bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);
-
+    StackVec<uint32_t, size_t(DrmResourceClass::maxSize)> classHandles;
     bool handleExecBufferInNonBlockMode = false;
+    std::string generateUUID();
+    std::string generateElfUUID(const void *data);
+    uint64_t uuid = 0;
 };
 
 } // namespace NEO

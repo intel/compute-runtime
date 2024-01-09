@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,6 +166,7 @@ class Drm : public DriverModel {
     bool hasPageFaultSupport() const;
     bool hasKmdMigrationSupport() const;
 
+    MOCKABLE_VIRTUAL bool resourceRegistrationEnabled();
     MOCKABLE_VIRTUAL uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size);
     MOCKABLE_VIRTUAL void unregisterResource(uint32_t handle);
     MOCKABLE_VIRTUAL uint32_t registerIsaCookie(uint32_t isaHandle);
@@ -198,11 +199,6 @@ class Drm : public DriverModel {
         return rootDeviceEnvironment;
     }
     const HardwareInfo *getHardwareInfo() const override;
-
-    bool resourceRegistrationEnabled() {
-        return classHandles.size() > 0;
-    }
-
     static bool isDrmSupported(int fileDescriptor);
 
     static Drm *create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
@@ -316,7 +312,6 @@ class Drm : public DriverModel {
     std::mutex bindFenceMutex;
     std::array<uint64_t, EngineLimits::maxHandleCount> pagingFence;
     std::array<uint64_t, EngineLimits::maxHandleCount> fenceVal;
-    StackVec<uint32_t, size_t(DrmResourceClass::maxSize)> classHandles;
     std::vector<uint32_t> virtualMemoryIds;
 
     std::unique_ptr<HwDeviceIdDrm> hwDeviceId;
@@ -332,7 +327,6 @@ class Drm : public DriverModel {
     std::once_flag checkCompletionFenceOnce;
 
     RootDeviceEnvironment &rootDeviceEnvironment;
-    uint64_t uuid = 0;
 
     bool sliceCountChangeSupported = false;
     bool preemptionSupported = false;

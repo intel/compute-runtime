@@ -976,6 +976,101 @@ void IoctlHelperPrelim20::setupIpVersion() {
     }
 }
 
+bool IoctlHelperPrelim20::registerResourceClasses() {
+    for (auto &classNameUUID : classNamesToUuid) {
+        auto className = classNameUUID.first;
+        auto uuid = classNameUUID.second;
+
+        const auto result = registerStringClassUuid(uuid, (uintptr_t)className, strnlen_s(className, 100));
+        if (result.retVal != 0) {
+            return false;
+        }
+
+        classHandles.push_back(result.handle);
+    }
+    return true;
+}
+
+uint32_t IoctlHelperPrelim20::registerIsaCookie(uint32_t isaHandle) {
+    auto uuid = generateUUID();
+
+    const auto result = registerUuid(uuid, isaHandle, 0, 0);
+
+    PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_UUID_REGISTER: isa handle = %lu, uuid = %s, data = %p, handle = %lu, ret = %d\n", isaHandle, std::string(uuid, 36).c_str(), 0, result.handle, result.retVal);
+    DEBUG_BREAK_IF(result.retVal != 0);
+
+    return result.handle;
+}
+
+void IoctlHelperPrelim20::unregisterResource(uint32_t handle) {
+    PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER: handle = %lu\n", handle);
+    [[maybe_unused]] const auto ret = unregisterUuid(handle);
+    DEBUG_BREAK_IF(ret != 0);
+}
+
+std::string IoctlHelperPrelim20::generateUUID() {
+    const char uuidString[] = "00000000-0000-0000-%04" SCNx64 "-%012" SCNx64;
+    char buffer[36 + 1] = "00000000-0000-0000-0000-000000000000";
+    uuid++;
+
+    UNRECOVERABLE_IF(uuid == 0xFFFFFFFFFFFFFFFF);
+
+    uint64_t parts[2] = {0, 0};
+    parts[0] = uuid & 0xFFFFFFFFFFFF;
+    parts[1] = (uuid & 0xFFFF000000000000) >> 48;
+    snprintf(buffer, sizeof(buffer), uuidString, parts[1], parts[0]);
+
+    return std::string(buffer, 36);
+}
+
+std::string IoctlHelperPrelim20::generateElfUUID(const void *data) {
+    std::string elfClassUuid = classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::elf)].second;
+    std::string uuiD1st = elfClassUuid.substr(0, 18);
+
+    const char uuidString[] = "%s-%04" SCNx64 "-%012" SCNx64;
+    char buffer[36 + 1] = "00000000-0000-0000-0000-000000000000";
+
+    uint64_t parts[2] = {0, 0};
+    parts[0] = reinterpret_cast<uintptr_t>(data) & 0xFFFFFFFFFFFF;
+    parts[1] = (reinterpret_cast<uintptr_t>(data) & 0xFFFF000000000000) >> 48;
+    snprintf(buffer, sizeof(buffer), uuidString, uuiD1st.c_str(), parts[1], parts[0]);
+
+    return std::string(buffer, 36);
+}
+
+uint32_t IoctlHelperPrelim20::registerResource(DrmResourceClass classType, const void *data, size_t size) {
+    const auto classIndex = static_cast<uint32_t>(classType);
+    if (classHandles.size() <= classIndex) {
+        return 0;
+    }
+
+    std::string uuid;
+    if (classType == NEO::DrmResourceClass::elf) {
+        uuid = generateElfUUID(data);
+    } else {
+        uuid = generateUUID();
+    }
+
+    const auto uuidClass = classHandles[classIndex];
+    const auto ptr = size > 0 ? (uintptr_t)data : 0;
+    const auto result = registerUuid(uuid, uuidClass, ptr, size);
+
+    PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_UUID_REGISTER: classType = %d, uuid = %s, data = %p, handle = %lu, ret = %d\n", (int)classType, std::string(uuid, 36).c_str(), ptr, result.handle, result.retVal);
+    DEBUG_BREAK_IF(result.retVal != 0);
+
+    return result.handle;
+}
+
+uint32_t IoctlHelperPrelim20::notifyFirstCommandQueueCreated(const void *data, size_t size) {
+    const auto result = registerStringClassUuid(uuidL0CommandQueueHash, (uintptr_t)data, size);
+    DEBUG_BREAK_IF(result.retVal);
+    return result.handle;
+}
+
+void IoctlHelperPrelim20::notifyLastCommandQueueDestroyed(uint32_t handle) {
+    unregisterResource(handle);
+}
+
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));
 static_assert(offsetof(MemoryClassInstance, memoryClass) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_class));
 static_assert(offsetof(MemoryClassInstance, memoryInstance) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_instance));

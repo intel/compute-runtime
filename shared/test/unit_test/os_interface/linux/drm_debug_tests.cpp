@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,11 +26,11 @@ struct DrmDebugTest : public ::testing::Test {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
 };
 
-TEST_F(DrmDebugTest, whenRegisterResourceClassesCalledThenTrueIsReturned) {
+TEST_F(DrmDebugTest, whenRegisterResourceClassesCalledWhenNoImplementationThenFalseIsReturned) {
     DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto result = drmMock.registerResourceClasses();
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
 TEST_F(DrmDebugTest, whenRegisterResourceCalledThenImplementationIsEmpty) {

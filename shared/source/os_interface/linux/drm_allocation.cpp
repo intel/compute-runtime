@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -315,7 +315,7 @@ bool DrmAllocation::prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t s
 }
 
 void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
-    if (!drm->resourceRegistrationEnabled()) {
+    if (!drm->getIoctlHelper()->resourceRegistrationEnabled()) {
         return;
     }
 

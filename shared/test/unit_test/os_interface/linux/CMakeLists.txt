@@ -30,7 +30,6 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_special_heap_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_system_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_uuid_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_version_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_logger_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/numa_library_tests.cpp
@@ -61,6 +60,7 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_with_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_tests_prelim.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/prelim_helper_func.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_prelim_uuid_tests.cpp
   )
   if(TESTS_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
     list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX

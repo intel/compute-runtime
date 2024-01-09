@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,19 +33,26 @@ struct DrmDebugPrelimTest : public ::testing::Test {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
 };
 
+struct MockIoctlHelperPrelimResourceRegistration : public IoctlHelperPrelim20 {
+  public:
+    using IoctlHelperPrelim20::classHandles;
+    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+};
+
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringClassesThenHandlesAreStored) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
     auto handle = drm.context.uuidHandle;
 
-    EXPECT_EQ(0u, drm.classHandles.size());
-    auto result = drm.registerResourceClasses();
+    EXPECT_EQ(0u, ioctlHelper->classHandles.size());
+    auto result = ioctlHelper->registerResourceClasses();
 
     EXPECT_TRUE(result);
-    EXPECT_EQ(classNamesToUuid.size(), drm.classHandles.size());
+    EXPECT_EQ(classNamesToUuid.size(), ioctlHelper->classHandles.size());
 
     for (size_t i = 0; i < classNamesToUuid.size(); i++) {
-        EXPECT_EQ(drm.classHandles[i], handle);
+        EXPECT_EQ(ioctlHelper->classHandles[i], handle);
         handle++;
     }
     ASSERT_TRUE(drm.context.receivedRegisterUuid);
@@ -54,14 +61,15 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringClassesThenHandlesAreStored) {
 
 TEST_F(DrmDebugPrelimTest, GivenUnsupportedUUIDRegisterIoctlWhenRegisteringClassesThenErrorIsReturnedAndClassHandlesAreEmpty) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
     drm.context.uuidControlReturn = -1;
 
-    EXPECT_EQ(0u, drm.classHandles.size());
-    auto result = drm.registerResourceClasses();
+    EXPECT_EQ(0u, ioctlHelper->classHandles.size());
+    auto result = ioctlHelper->registerResourceClasses();
 
     EXPECT_FALSE(result);
-    EXPECT_EQ(0u, drm.classHandles.size());
+    EXPECT_EQ(0u, ioctlHelper->classHandles.size());
 }
 
 TEST_F(DrmDebugPrelimTest, GivenNoClassesRegisteredWhenRegisteringResourceThenRegisterUUIDIoctlIsNotCalledAndZeroHandleReturned) {
@@ -74,12 +82,13 @@ TEST_F(DrmDebugPrelimTest, GivenNoClassesRegisteredWhenRegisteringResourceThenRe
 
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegisterUUIDIoctlIsCalled) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
-    const auto result = drm.registerResourceClasses();
+    const auto result = ioctlHelper->registerResourceClasses();
     EXPECT_TRUE(result);
 
     const auto handle = drm.context.uuidHandle;
-    auto registeredHandle = drm.registerResource(DrmResourceClass::isa, nullptr, 0);
+    auto registeredHandle = ioctlHelper->registerResource(DrmResourceClass::isa, nullptr, 0);
 
     EXPECT_EQ(handle + 1, drm.context.uuidHandle);
     EXPECT_EQ(handle, registeredHandle);
@@ -90,19 +99,20 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegiste
     EXPECT_EQ(nullptr, receivedUuid->ptr);
     EXPECT_EQ(0u, receivedUuid->size);
     EXPECT_TRUE(hasSubstr(std::string(receivedUuid->uuid), std::string("00000000-0000-0000")));
-    EXPECT_EQ(drm.classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
+    EXPECT_EQ(ioctlHelper->classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
 }
 
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUUIDIoctlIsCalledWithCorrectData) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
 
-    auto result = drm.registerResourceClasses();
+    auto result = ioctlHelper->registerResourceClasses();
     EXPECT_TRUE(result);
 
     auto handle = drm.context.uuidHandle;
     uint64_t data = 0x12345678;
 
-    auto registeredHandle = drm.registerResource(DrmResourceClass::isa, &data, sizeof(uint64_t));
+    auto registeredHandle = ioctlHelper->registerResource(DrmResourceClass::isa, &data, sizeof(uint64_t));
 
     EXPECT_EQ(handle + 1, drm.context.uuidHandle);
     EXPECT_EQ(handle, registeredHandle);
@@ -113,7 +123,7 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUU
     EXPECT_EQ(&data, receivedUuid->ptr);
     EXPECT_EQ(sizeof(uint64_t), receivedUuid->size);
     EXPECT_TRUE(hasSubstr(std::string(receivedUuid->uuid), std::string("00000000-0000-0000")));
-    EXPECT_EQ(drm.classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
+    EXPECT_EQ(ioctlHelper->classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
     EXPECT_EQ(0u, receivedUuid->flags);
     EXPECT_EQ(0u, receivedUuid->extensions);
 }
