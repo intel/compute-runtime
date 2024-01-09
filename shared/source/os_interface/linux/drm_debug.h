@@ -21,6 +21,7 @@ enum class DrmResourceClass : uint32_t {
     sbaTrackingBuffer,
     contextID,
     l0ZebinModule,
+    cookie,
     maxSize
 };
 

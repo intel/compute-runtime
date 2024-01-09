@@ -8,6 +8,8 @@
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/debugger/debugger.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
@@ -1076,7 +1078,15 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         if (drm.hasPageFaultSupport()) {
             args.flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
         }
+
+        if (drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() != DebuggingMode::disabled) {
+            args.extensions = reinterpret_cast<unsigned long long>(allocateDebugMetadata());
+        }
         ret = IoctlHelper::ioctl(request, &args);
+        if (drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() != DebuggingMode::disabled) {
+            args.extensions = reinterpret_cast<unsigned long long>(freeDebugMetadata(reinterpret_cast<void *>(args.extensions)));
+        }
+
         d->vmId = ret ? 0 : args.vm_id;
         d->flags = ret ? 0 : args.flags;
         xeVmId = d->vmId;
