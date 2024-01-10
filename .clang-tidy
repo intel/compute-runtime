@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,-clang-analyzer-osx.*,-clang-analyzer-optin.osx.*,-clang-analyzer-nullability.*,google-default-arguments,readability-identifier-naming,modernize-use-override,modernize-use-default-member-init,-clang-analyzer-alpha*'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,-clang-analyzer-osx.*,-clang-analyzer-optin.osx.*,-clang-analyzer-nullability.*,google-default-arguments,readability-identifier-naming,modernize-use-override,modernize-use-default-member-init,-clang-analyzer-alpha*,-clang-diagnostic-instantiation-after-specialization'
 WarningsAsErrors: '.*'
 HeaderFilterRegex: '(shared|opencl|level_zero).+\.(h|hpp|inl)$'
 AnalyzeTemporaryDtors: false

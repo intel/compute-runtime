@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ template void NEO::EncodeDispatchKernel<Family>::setupPostSyncMocs<Family::Defau
 template void NEO::EncodeDispatchKernel<Family>::encode<Family::DefaultWalkerType>(CommandContainer &container, EncodeDispatchKernelArgs &args);
 template void NEO::EncodeDispatchKernel<Family>::encodeThreadData<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const uint32_t *startWorkGroup, const uint32_t *numWorkGroups, const uint32_t *workGroupSizes, uint32_t simd, uint32_t localIdDimensions, uint32_t threadsPerThreadGroup, uint32_t threadExecutionMask, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, bool isIndirect, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 template void NEO::EncodeDispatchKernel<Family>::adjustWalkOrder<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
+template void NEO::EncodeDispatchKernel<Family>::programBarrierEnable<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
 
 template struct NEO::EncodeStates<Family>;
 template struct NEO::EncodeMath<Family>;

@@ -760,7 +760,7 @@ if(NOT MSVC)
 
   if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     # clang only
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshorten-64-to-32 -Wno-extern-c-compat")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshorten-64-to-32 -Wno-extern-c-compat -Wno-instantiation-after-specialization")
     if(NOT (CMAKE_C_COMPILER_VERSION VERSION_LESS 3.6))
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs -DSANITIZER_BUILD")
     endif()
