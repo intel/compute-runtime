@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1755,14 +1755,8 @@ kernels:
         simd_size : 32
         slm_size : 1024
         subgroup_independent_forward_progress : true
-        required_work_group_size:
-          - 8
-          - 2
-          - 1
-        work_group_walk_order_dimensions:
-          - 0
-          - 1
-          - 2 
+        required_work_group_size: [8, 2, 1]
+        work_group_walk_order_dimensions: [0, 1, 2]
         thread_scheduling_mode: age_based
         indirect_stateless_count: 2
 ...
@@ -1869,9 +1863,7 @@ TEST(ReadZeInfoExecutionEnvironment, GivenInvalidLengthForKnownCollectionEntryTh
 kernels:         
   - name:            some_kernel
     execution_env: 
-        required_work_group_size:
-          - 5
-          - 2
+        required_work_group_size: [5, 2]
 ...
 )===";
 
@@ -4153,14 +4145,8 @@ kernels:
         slm_size : 1024
         subgroup_independent_forward_progress : true
         eu_thread_count : 8
-        required_work_group_size:
-          - 8
-          - 2
-          - 1
-        work_group_walk_order_dimensions:
-          - 0
-          - 1
-          - 2
+        required_work_group_size: [8, 2, 1]
+        work_group_walk_order_dimensions: [0, 1, 2]
         indirect_stateless_count : 2
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
