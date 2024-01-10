@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,17 +16,12 @@ set(GENERATED_BUILTINS_AUX_TRANSLATION ${GENERATED_BUILTINS_AUX_TRANSLATION} PAR
 set(GENERATED_BUILTINS_IMAGES ${GENERATED_BUILTINS_IMAGES} PARENT_SCOPE)
 set(GENERATED_BUILTINS_STATELESS ${GENERATED_BUILTINS_STATELESS} PARENT_SCOPE)
 
-set(BUILTIN_OPTIONS_STATELESS
-    "-cl-intel-greater-than-4GB-buffer-required"
-)
+set(BUILTIN_OPTIONS_STATELESS "-cl-intel-greater-than-4GB-buffer-required")
+set(BUILTIN_OPTIONS_STATEFUL "-force_stos_opt")
 
-set(bindless_OPTIONS
-    -internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode"
-)
-
-set(bindful_OPTIONS
-    ""
-)
+set(stateless_INTERNAL_OPTIONS "")
+set(bindful_INTERNAL_OPTIONS "")
+set(bindless_INTERNAL_OPTIONS -internal_options "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode")
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   list(APPEND __ocloc__options__ "-D DEBUG")
@@ -41,13 +36,27 @@ function(get_bits_for_stateless core_type platform_it_lower)
   endif()
 endfunction()
 
-function(get_builtin_options core_type neo_arch)
+function(get_builtin_options core_type neo_arch mode_type)
   if("${neo_arch}" STREQUAL "x32")
-    set(BUILTIN_OPTIONS "-cl-intel-greater-than-4GB-buffer-required" PARENT_SCOPE)
-  elseif("${core_type}" STREQUAL "XE_HPC_CORE")
-    set(BUILTIN_OPTIONS "" PARENT_SCOPE)
+    set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATELESS}" PARENT_SCOPE)
+  elseif("${mode_type}" STREQUAL "stateless")
+    set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATELESS}" PARENT_SCOPE)
   else()
-    set(BUILTIN_OPTIONS "-force_stos_opt" PARENT_SCOPE)
+    set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATEFUL}" PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(get_generated_builtins core_type mode_type)
+  if("${core_type}" STREQUAL "XE_HPC_CORE")
+    # Compile all builtin kernels as stateless for XeHpc
+    set(generated_builtins "${GENERATED_BUILTINS};${GENERATED_BUILTINS_STATELESS}" PARENT_SCOPE)
+    set(generated_builtins_images "${GENERATED_BUILTINS_IMAGES};${GENERATED_BUILTINS_IMAGES_STATELESS}" PARENT_SCOPE)
+  elseif(${mode_type} STREQUAL "stateless")
+    set(generated_builtins "${GENERATED_BUILTINS_STATELESS}" PARENT_SCOPE)
+    set(generated_builtins_images "${GENERATED_BUILTINS_IMAGES_STATELESS}" PARENT_SCOPE)
+  else()
+    set(generated_builtins "${GENERATED_BUILTINS}" PARENT_SCOPE)
+    set(generated_builtins_images "${GENERATED_BUILTINS_IMAGES}" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -66,7 +75,7 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
       ${OUTPUTDIR}/${mode}_${BASENAME}_${platform_it_lower}.spv
   )
   list(APPEND __ocloc__options__ "-cl-kernel-arg-info")
-  set(INTERNAL_OPTIONS "${${mode}_OPTIONS}")
+  set(INTERNAL_OPTIONS "${${mode}_INTERNAL_OPTIONS}")
   add_custom_command(
                      OUTPUT ${OUTPUT_FILE_SPV}
                      COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -spv_only -device ${platform_it_lower} ${builtin_options} -${bits} -output ${mode}_${BASENAME} -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
@@ -175,11 +184,11 @@ macro(macro_for_each_platform)
   CORE_CONTAINS_PLATFORM("SUPPORTED_IMAGES" ${CORE_TYPE} ${PLATFORM_IT} IMAGE_SUPPORT)
   CORE_CONTAINS_PLATFORM("SUPPORTED_AUX_TRANSLATION" ${CORE_TYPE} ${PLATFORM_IT} AUX_TRANSLATION_SUPPORT)
   get_bits_for_stateless(${CORE_TYPE} ${PLATFORM_IT})
-  get_builtin_options(${CORE_TYPE} ${NEO_ARCH})
   set(target_name builtins_${PLATFORM_IT_LOWER})
   add_custom_target(${target_name})
   add_dependencies(builtins ${target_name})
   set_target_properties(${target_name} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}/${PLATFORM_IT_LOWER}")
+
   foreach(MODE ${ADDRESSING_MODES})
     unset(BUILTINS_COMMANDS)
 
@@ -187,48 +196,31 @@ macro(macro_for_each_platform)
       continue()
     endif()
 
-    if(${AUX_TRANSLATION_SUPPORT})
-      foreach(GENERATED_BUILTIN_AUX_TRANSLATION ${GENERATED_BUILTINS_AUX_TRANSLATION})
-        compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTIN_AUX_TRANSLATION}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
-      endforeach()
+    # XeHpc supports only stateless addressing mode
+    if(NOT ${MODE} STREQUAL "stateless" AND "${CORE_TYPE}" STREQUAL "XE_HPC_CORE")
+      continue()
     endif()
 
-    if(${MODE} STREQUAL "stateless")
-      foreach(GENERATED_BUILTIN_STATELESS ${GENERATED_BUILTINS_STATELESS})
-        compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTIN_STATELESS}.builtin_kernel ${BITS} "${BUILTIN_OPTIONS_STATELESS}" ${MODE})
+    get_builtin_options(${CORE_TYPE} ${NEO_ARCH} ${MODE})
+    get_generated_builtins(${CORE_TYPE} ${MODE})
+
+    if(${AUX_TRANSLATION_SUPPORT})
+      # Stateless aux translation are only supported for XeHpc
+      if(NOT ${MODE} STREQUAL "stateless" OR "${CORE_TYPE}" STREQUAL "XE_HPC_CORE")
+        foreach(GENERATED_BUILTIN_AUX_TRANSLATION ${GENERATED_BUILTINS_AUX_TRANSLATION})
+          compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTIN_AUX_TRANSLATION}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
+        endforeach()
+      endif()
+    endif()
+
+    foreach(generated_builtin ${generated_builtins})
+      compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${generated_builtin}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
+    endforeach()
+
+    if(${IMAGE_SUPPORT})
+      foreach(generated_builtin_images ${generated_builtins_images})
+        compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${generated_builtin_images}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
       endforeach()
-
-      if(${IMAGE_SUPPORT})
-        foreach(GENERATED_BUILTIN_IMAGES_STATELESS ${GENERATED_BUILTINS_IMAGES_STATELESS})
-          compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTIN_IMAGES_STATELESS}.builtin_kernel ${BITS} "${BUILTIN_OPTIONS_STATELESS}" ${MODE})
-        endforeach()
-      endif()
-
-      if("${CORE_TYPE}" STREQUAL "XE_HPC_CORE")
-        # Compile stateful versions as stateless
-        foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
-          compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTIN}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
-        endforeach()
-
-        if(${IMAGE_SUPPORT})
-          foreach(GENERATED_BUILTINS_IMAGES ${GENERATED_BUILTINS_IMAGES})
-            compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTINS_IMAGES}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
-          endforeach()
-        endif()
-      endif()
-    else()
-      if("${CORE_TYPE}" STREQUAL "XE_HPC_CORE")
-        continue()
-      endif()
-      foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
-        compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTIN}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
-      endforeach()
-
-      if(${IMAGE_SUPPORT})
-        foreach(GENERATED_BUILTINS_IMAGES ${GENERATED_BUILTINS_IMAGES})
-          compile_builtin(${CORE_TYPE} ${PLATFORM_IT} ${GENERATED_BUILTINS_IMAGES}.builtin_kernel ${NEO_BITS} "${BUILTIN_OPTIONS}" ${MODE})
-        endforeach()
-      endif()
     endif()
 
     get_property(GENERATED_BUILTINS_CPPS_${MODE} GLOBAL PROPERTY GENERATED_BUILTINS_CPPS_${MODE})
@@ -240,6 +232,7 @@ macro(macro_for_each_platform)
     add_dependencies(${target_name} ${target_name}_${MODE})
     set_target_properties(${target_name}_${MODE} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}/${PLATFORM_IT_LOWER}")
   endforeach()
+
 endmacro()
 
 macro(macro_for_each_core_type)
