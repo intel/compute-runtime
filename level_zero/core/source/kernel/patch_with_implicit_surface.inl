@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,55 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
         args.numAvailableDevices = device.getNumGenericSubDevices();
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.mocs = gfxCoreHelper.getMocsIndex(*args.gmmHelper, true, false) << 1;
+        args.implicitScaling = implicitScaling;
+        args.isDebuggerActive = isDebuggerActive;
+
+        gfxCoreHelper.encodeBufferSurfaceState(args);
+    }
+}
+
+inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> crossThreadData, ArrayRef<uint8_t> surfaceStateHeap, NEO::GraphicsAllocation *allocation,
+                                                             const NEO::ArgDescPointer &ptr, const NEO::Device &device, bool useGlobalAtomics, bool implicitScaling,
+                                                             const NEO::SurfaceStateInHeapInfo &ssInHeap, const NEO::KernelDescriptor &kernelDescriptor) {
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+    void *surfaceStateAddress = nullptr;
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+    if (NEO::isValidOffset(ptr.bindless)) {
+        if (device.getBindlessHeapsHelper()) {
+            surfaceStateAddress = ssInHeap.ssPtr;
+
+            auto patchLocation = ptrOffset(crossThreadData.begin(), ptr.bindless);
+            auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
+            patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
+        } else {
+            auto index = std::numeric_limits<uint32_t>::max();
+            const auto &iter = kernelDescriptor.getBindlessOffsetToSurfaceState().find(ptr.bindless);
+            if (iter != kernelDescriptor.getBindlessOffsetToSurfaceState().end()) {
+                index = iter->second;
+            }
+
+            if (index < std::numeric_limits<uint32_t>::max()) {
+                surfaceStateAddress = ptrOffset(surfaceStateHeap.begin(), index * surfaceStateSize);
+            }
+        }
+    }
+
+    if (surfaceStateAddress) {
+        auto addressToPatch = allocation->getGpuAddress();
+        size_t sizeToPatch = allocation->getUnderlyingBufferSize();
+        auto isDebuggerActive = device.getDebugger() != nullptr;
+
+        NEO::EncodeSurfaceStateArgs args;
+        args.outMemory = surfaceStateAddress;
+        args.graphicsAddress = addressToPatch;
+        args.size = sizeToPatch;
+        args.mocs = gfxCoreHelper.getMocsIndex(*device.getGmmHelper(), true, false) << 1;
+        args.numAvailableDevices = device.getNumGenericSubDevices();
+        args.allocation = allocation;
+        args.gmmHelper = device.getGmmHelper();
+        args.useGlobalAtomics = useGlobalAtomics;
+        args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.implicitScaling = implicitScaling;
         args.isDebuggerActive = isDebuggerActive;
 

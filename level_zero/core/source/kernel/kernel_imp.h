@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,14 +114,7 @@ struct KernelImp : Kernel {
     void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
 
     const uint8_t *getSurfaceStateHeapData() const override { return surfaceStateHeapData.get(); }
-    uint32_t getSurfaceStateHeapDataSize() const override {
-        if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelImmData->getDescriptor())) {
-            if (std::none_of(usingSurfaceStateHeap.cbegin(), usingSurfaceStateHeap.cend(), [](bool i) { return i; })) {
-                return 0;
-            }
-        }
-        return surfaceStateHeapDataSize;
-    }
+    uint32_t getSurfaceStateHeapDataSize() const override;
 
     const uint8_t *getDynamicStateHeapData() const override { return dynamicStateHeapData.get(); }
 
@@ -181,6 +174,7 @@ struct KernelImp : Kernel {
     NEO::GraphicsAllocation *allocatePrivateMemoryGraphicsAllocation() override;
     void patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) override;
     void patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const override;
+    void patchBindlessOffsetsForImplicitArgs(uint64_t bindlessSurfaceStateBaseOffset) const;
 
     NEO::GraphicsAllocation *getPrivateMemoryGraphicsAllocation() override {
         return privateMemoryGraphicsAllocation;

@@ -136,6 +136,21 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         this->residencyContainer.push_back(globalConstBuffer);
     }
 
+    if (globalConstBuffer && NEO::isValidOffset(kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless)) {
+        if (!neoDevice->getMemoryManager()->allocateBindlessSlot(globalConstBuffer)) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+        auto ssInHeap = globalConstBuffer->getBindlessInfo();
+
+        if (ssInHeap.heapAllocation) {
+            this->residencyContainer.push_back(ssInHeap.heapAllocation);
+        }
+
+        patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
+                                                         globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
+                                                         *neoDevice, kernelDescriptor->kernelAttributes.flags.useGlobalAtomics, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
+    }
+
     if (NEO::isValidOffset(kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless)) {
         UNRECOVERABLE_IF(globalVarBuffer == nullptr);
 
@@ -146,6 +161,21 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         this->residencyContainer.push_back(globalVarBuffer);
     } else if (nullptr != globalVarBuffer) {
         this->residencyContainer.push_back(globalVarBuffer);
+    }
+
+    if (globalVarBuffer && NEO::isValidOffset(kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless)) {
+        if (!neoDevice->getMemoryManager()->allocateBindlessSlot(globalVarBuffer)) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+        auto ssInHeap = globalVarBuffer->getBindlessInfo();
+
+        if (ssInHeap.heapAllocation) {
+            this->residencyContainer.push_back(ssInHeap.heapAllocation);
+        }
+
+        patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
+                                                         globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
+                                                         *neoDevice, kernelDescriptor->kernelAttributes.flags.useGlobalAtomics, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1133,6 +1163,32 @@ void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t b
                       static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
 }
 
+uint32_t KernelImp::getSurfaceStateHeapDataSize() const {
+    if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelImmData->getDescriptor())) {
+        const auto bindlessHeapsHelper = this->module && this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
+
+        bool isBindlessImplicitArgPresent = false;
+        auto implicitArgsVec = kernelImmData->getDescriptor().getImplicitArgBindlessCandidatesVec();
+        for (const auto implicitArg : implicitArgsVec) {
+            if (NEO::isValidOffset(implicitArg->bindless)) {
+                isBindlessImplicitArgPresent = true;
+                break;
+            }
+        }
+
+        const bool noBindlessExplicitArgs = std::none_of(usingSurfaceStateHeap.cbegin(), usingSurfaceStateHeap.cend(), [](bool i) { return i; });
+
+        if (isBindlessImplicitArgPresent && !bindlessHeapsHelper) {
+            return surfaceStateHeapDataSize;
+        }
+
+        if (noBindlessExplicitArgs) {
+            return 0;
+        }
+    }
+    return surfaceStateHeapDataSize;
+}
+
 void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
     auto ssInHeap = alloc->getBindlessInfo();
@@ -1279,6 +1335,8 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
             }
         }
     }
+
+    patchBindlessOffsetsForImplicitArgs(bindlessSurfaceStateBaseOffset);
 }
 
 uint32_t KernelImp::getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const {
@@ -1288,6 +1346,27 @@ uint32_t KernelImp::getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOf
     }
     DEBUG_BREAK_IF(true);
     return std::numeric_limits<uint32_t>::max();
+}
+
+void KernelImp::patchBindlessOffsetsForImplicitArgs(uint64_t bindlessSurfaceStateBaseOffset) const {
+    auto implicitArgsVec = kernelImmData->getDescriptor().getImplicitArgBindlessCandidatesVec();
+
+    auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+    for (size_t i = 0; i < implicitArgsVec.size(); i++) {
+        if (NEO::isValidOffset(implicitArgsVec[i]->bindless)) {
+            auto patchLocation = ptrOffset(getCrossThreadData(), implicitArgsVec[i]->bindless);
+            auto index = getSurfaceStateIndexForBindlessOffset(implicitArgsVec[i]->bindless);
+
+            if (index < std::numeric_limits<uint32_t>::max()) {
+                auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + index * surfaceStateSize);
+                auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateOffset));
+
+                patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
+            }
+        }
+    }
 }
 
 } // namespace L0

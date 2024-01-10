@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,14 +145,7 @@ void KernelDescriptor::initBindlessOffsetToSurfaceState() {
             }
         }
 
-        StackVec<ArgDescPointer *, 8> implicitArgsVec({&this->payloadMappings.implicitArgs.printfSurfaceAddress,
-                                                       &this->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
-                                                       &this->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
-                                                       &this->payloadMappings.implicitArgs.privateMemoryAddress,
-                                                       &this->payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress,
-                                                       &this->payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress,
-                                                       &this->payloadMappings.implicitArgs.systemThreadSurfaceAddress,
-                                                       &this->payloadMappings.implicitArgs.syncBufferAddress});
+        auto implicitArgsVec = getImplicitArgBindlessCandidatesVec();
 
         for (size_t i = 0; i < implicitArgsVec.size(); i++) {
             if (isValidOffset(implicitArgsVec[i]->bindless)) {

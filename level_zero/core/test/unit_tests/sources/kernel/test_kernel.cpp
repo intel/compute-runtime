@@ -2190,6 +2190,40 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSur
     EXPECT_EQ(mockKernel.surfaceStateHeapDataSize, mockKernel.getSurfaceStateHeapDataSize());
 }
 
+HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessImplicitArgAndNoBindlessHeapsHelperWhenGetSurfaceStateHeapDataSizeThenReturnSurfaceStateHeapDataSize, MatchAny) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
+    mockKernel.module = module.get();
+    mockKernel.initialize(&desc);
+    const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    EXPECT_EQ(0u, mockKernel.getSurfaceStateHeapDataSize());
+
+    const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 0x20;
+    ASSERT_EQ(nullptr, mockKernel.module->getDevice()->getNEODevice()->getBindlessHeapsHelper());
+    EXPECT_NE(0u, mockKernel.surfaceStateHeapDataSize);
+    EXPECT_EQ(mockKernel.surfaceStateHeapDataSize, mockKernel.getSurfaceStateHeapDataSize());
+}
+
+HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessImplicitArgAndBindlessHeapsHelperWhenGetSurfaceStateHeapDataSizeThenReturnZero, MatchAny) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
+    mockKernel.module = module.get();
+    mockKernel.initialize(&desc);
+    const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    EXPECT_EQ(0u, mockKernel.getSurfaceStateHeapDataSize());
+
+    const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 0x20;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
+    EXPECT_EQ(0u, mockKernel.getSurfaceStateHeapDataSize());
+}
+
 HWTEST2_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhenSettingSurfaceStateThenKernelReportsNonZeroSurfaceStateHeapDataSize, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
@@ -3579,13 +3613,16 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
     argDescriptor2.as<NEO::ArgDescPointer>().stateless = 2 * sizeof(uint64_t);
     mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor2);
 
+    mockKernel.descriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = 3 * sizeof(uint64_t);
+    mockKernel.descriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 4 * sizeof(uint64_t);
+
     mockKernel.isBindlessOffsetSet.resize(4, 0);
     mockKernel.usingSurfaceStateHeap.resize(4, 0);
 
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
 
-    mockKernel.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
-    mockKernel.crossThreadDataSize = 4 * sizeof(uint64_t);
+    mockKernel.crossThreadData = std::make_unique<uint8_t[]>(5 * sizeof(uint64_t));
+    mockKernel.crossThreadDataSize = 5 * sizeof(uint64_t);
     memset(mockKernel.crossThreadData.get(), 0, mockKernel.crossThreadDataSize);
 
     const uint64_t baseAddress = 0x1000;
@@ -3593,7 +3630,9 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
 
     auto patchValue1 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress));
-    auto patchValue2 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + surfaceStateSize));
+    auto patchValue2 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 1 * surfaceStateSize));
+    auto patchValue3 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 2 * surfaceStateSize));
+    auto patchValue4 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 3 * surfaceStateSize));
 
     mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
 
@@ -3602,7 +3641,9 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
 
     EXPECT_EQ(patchValue1, crossThreadData[0]);
     EXPECT_EQ(patchValue2, crossThreadData[1]);
-    EXPECT_EQ(0u, crossThreadData[3]);
+    EXPECT_EQ(0u, crossThreadData[2]);
+    EXPECT_EQ(patchValue3, crossThreadData[3]);
+    EXPECT_EQ(patchValue4, crossThreadData[4]);
 }
 
 TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {

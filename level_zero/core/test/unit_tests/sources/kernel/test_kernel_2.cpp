@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,14 +10,17 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/kernel_max_cooperative_groups_count_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -484,6 +487,304 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTczAddressControlMode());
     EXPECT_EQ(SamplerState::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());
     EXPECT_EQ(SamplerState::MAG_MODE_FILTER_NEAREST, samplerState->getMagModeFilter());
+}
+
+using KernelImmutableDataBindlessTest = Test<DeviceFixture>;
+
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndNoBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    static EncodeSurfaceStateArgs savedSurfaceStateArgs{};
+    static size_t encodeBufferSurfaceStateCalled{};
+    savedSurfaceStateArgs = {};
+    encodeBufferSurfaceStateCalled = {};
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override {
+            savedSurfaceStateArgs = args;
+            ++encodeBufferSurfaceStateCalled;
+        }
+    };
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+
+    {
+        device->incRefInternal();
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
+
+        uint64_t gpuAddress = 0x1200;
+        void *buffer = reinterpret_cast<void *>(gpuAddress);
+        size_t allocSize = 0x1100;
+        NEO::MockGraphicsAllocation globalConstBuffer(buffer, gpuAddress, allocSize);
+
+        auto kernelInfo = std::make_unique<KernelInfo>();
+
+        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+        kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+
+        auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+        argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+        argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+        argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x40;
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+
+        kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 0x80;
+
+        kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful = 2;
+        kernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4 * sizeof(uint64_t);
+
+        kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
+        const auto globalConstantsSurfaceAddressSSIndex = 1;
+
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, &globalConstBuffer, nullptr, false);
+
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+
+        EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
+
+        auto &residencyContainer = kernelImmutableData->getResidencyContainer();
+        EXPECT_EQ(1u, residencyContainer.size());
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalConstBuffer));
+
+        EXPECT_EQ(1u, encodeBufferSurfaceStateCalled);
+        EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
+        EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
+
+        EXPECT_EQ(ptrOffset(kernelImmutableData->getSurfaceStateHeapTemplate(), globalConstantsSurfaceAddressSSIndex * surfaceStateSize), savedSurfaceStateArgs.outMemory);
+        EXPECT_EQ(&globalConstBuffer, savedSurfaceStateArgs.allocation);
+    }
+}
+
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplicitAndImplicitArgsAndNoBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    static EncodeSurfaceStateArgs savedSurfaceStateArgs{};
+    static size_t encodeBufferSurfaceStateCalled{};
+    savedSurfaceStateArgs = {};
+    encodeBufferSurfaceStateCalled = {};
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override {
+            savedSurfaceStateArgs = args;
+            ++encodeBufferSurfaceStateCalled;
+        }
+    };
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+
+    {
+        device->incRefInternal();
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
+
+        uint64_t gpuAddress = 0x1200;
+        void *buffer = reinterpret_cast<void *>(gpuAddress);
+        size_t allocSize = 0x1100;
+        NEO::MockGraphicsAllocation globalVarBuffer(buffer, gpuAddress, allocSize);
+
+        auto kernelInfo = std::make_unique<KernelInfo>();
+
+        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+        kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+
+        auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+        argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+        argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+        argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x40;
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+
+        kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = 0x80;
+
+        kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful = 2;
+        kernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4 * sizeof(uint64_t);
+
+        kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
+        const auto globalVariablesSurfaceAddressSSIndex = 1;
+
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, &globalVarBuffer, false);
+
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+
+        EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
+
+        auto &residencyContainer = kernelImmutableData->getResidencyContainer();
+        EXPECT_EQ(1u, residencyContainer.size());
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalVarBuffer));
+
+        EXPECT_EQ(1u, encodeBufferSurfaceStateCalled);
+        EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
+        EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
+
+        EXPECT_EQ(ptrOffset(kernelImmutableData->getSurfaceStateHeapTemplate(), globalVariablesSurfaceAddressSSIndex * surfaceStateSize), savedSurfaceStateArgs.outMemory);
+        EXPECT_EQ(&globalVarBuffer, savedSurfaceStateArgs.allocation);
+    }
+}
+
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getMemoryManager(),
+                                                               device->getNumGenericSubDevices() > 1,
+                                                               device->getRootDeviceIndex(),
+                                                               device->getDeviceBitfield());
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
+    static EncodeSurfaceStateArgs savedSurfaceStateArgs{};
+    static size_t encodeBufferSurfaceStateCalled{};
+    savedSurfaceStateArgs = {};
+    encodeBufferSurfaceStateCalled = {};
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override {
+            savedSurfaceStateArgs = args;
+            ++encodeBufferSurfaceStateCalled;
+        }
+    };
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+
+    {
+        device->incRefInternal();
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
+
+        uint64_t gpuAddress = 0x1200;
+        void *buffer = reinterpret_cast<void *>(gpuAddress);
+        size_t allocSize = 0x1100;
+        NEO::MockGraphicsAllocation globalConstBuffer(buffer, gpuAddress, allocSize);
+
+        auto kernelInfo = std::make_unique<KernelInfo>();
+
+        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+        kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+
+        auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+        argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+        argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+        argDescriptor.as<NEO::ArgDescPointer>().bindless = 4;
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+
+        NEO::CrossThreadDataOffset globalConstSurfaceAddressBindlessOffset = 8;
+        kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = globalConstSurfaceAddressBindlessOffset;
+
+        kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful = 2;
+        kernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4 * sizeof(uint64_t);
+
+        kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
+
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, &globalConstBuffer, nullptr, false);
+
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+
+        EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
+
+        auto &residencyContainer = kernelImmutableData->getResidencyContainer();
+        EXPECT_EQ(2u, residencyContainer.size());
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalConstBuffer));
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), globalConstBuffer.getBindlessInfo().heapAllocation));
+
+        auto crossThreadData = kernelImmutableData->getCrossThreadDataTemplate();
+        auto patchLocation = reinterpret_cast<const uint32_t *>(ptrOffset(crossThreadData, globalConstSurfaceAddressBindlessOffset));
+        auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(globalConstBuffer.getBindlessInfo().surfaceStateOffset));
+
+        EXPECT_EQ(patchValue, *patchLocation);
+
+        EXPECT_EQ(1u, encodeBufferSurfaceStateCalled);
+        EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
+        EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
+
+        EXPECT_EQ(globalConstBuffer.getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
+        EXPECT_EQ(&globalConstBuffer, savedSurfaceStateArgs.allocation);
+    }
+}
+
+HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getMemoryManager(),
+                                                               device->getNumGenericSubDevices() > 1,
+                                                               device->getRootDeviceIndex(),
+                                                               device->getDeviceBitfield());
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
+    static EncodeSurfaceStateArgs savedSurfaceStateArgs{};
+    static size_t encodeBufferSurfaceStateCalled{};
+    savedSurfaceStateArgs = {};
+    encodeBufferSurfaceStateCalled = {};
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override {
+            savedSurfaceStateArgs = args;
+            ++encodeBufferSurfaceStateCalled;
+        }
+    };
+
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+
+    {
+        device->incRefInternal();
+        MockDeviceImp deviceImp(device.get(), device->getExecutionEnvironment());
+
+        uint64_t gpuAddress = 0x1200;
+        void *buffer = reinterpret_cast<void *>(gpuAddress);
+        size_t allocSize = 0x1100;
+        NEO::MockGraphicsAllocation globalVarBuffer(buffer, gpuAddress, allocSize);
+
+        auto kernelInfo = std::make_unique<KernelInfo>();
+
+        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+        kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+
+        auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+        argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+        argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+        argDescriptor.as<NEO::ArgDescPointer>().bindless = 4;
+        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+
+        NEO::CrossThreadDataOffset globalVariablesSurfaceAddressBindlessOffset = 8;
+        kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = globalVariablesSurfaceAddressBindlessOffset;
+
+        kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful = 2;
+        kernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4 * sizeof(uint64_t);
+
+        kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
+
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&deviceImp);
+        kernelImmutableData->initialize(kernelInfo.get(), &deviceImp, 0, nullptr, &globalVarBuffer, false);
+
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+
+        EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
+
+        auto &residencyContainer = kernelImmutableData->getResidencyContainer();
+        EXPECT_EQ(2u, residencyContainer.size());
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalVarBuffer));
+        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), globalVarBuffer.getBindlessInfo().heapAllocation));
+
+        auto crossThreadData = kernelImmutableData->getCrossThreadDataTemplate();
+        auto patchLocation = reinterpret_cast<const uint32_t *>(ptrOffset(crossThreadData, globalVariablesSurfaceAddressBindlessOffset));
+        auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(globalVarBuffer.getBindlessInfo().surfaceStateOffset));
+
+        EXPECT_EQ(patchValue, *patchLocation);
+
+        EXPECT_EQ(1u, encodeBufferSurfaceStateCalled);
+        EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
+        EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
+
+        EXPECT_EQ(globalVarBuffer.getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
+        EXPECT_EQ(&globalVarBuffer, savedSurfaceStateArgs.allocation);
+    }
 }
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -195,6 +195,18 @@ struct KernelDescriptor {
 
         std::vector<std::unique_ptr<ArgDescriptorExtended>> explicitArgsExtendedDescriptors;
     } payloadMappings;
+
+    StackVec<const ArgDescPointer *, 8> getImplicitArgBindlessCandidatesVec() const {
+        StackVec<const ArgDescPointer *, 8> implicitArgsVec({&payloadMappings.implicitArgs.printfSurfaceAddress,
+                                                             &payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
+                                                             &payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
+                                                             &payloadMappings.implicitArgs.privateMemoryAddress,
+                                                             &payloadMappings.implicitArgs.systemThreadSurfaceAddress,
+                                                             &payloadMappings.implicitArgs.syncBufferAddress,
+                                                             &payloadMappings.implicitArgs.rtDispatchGlobals,
+                                                             &payloadMappings.implicitArgs.assertBufferAddress});
+        return implicitArgsVec;
+    }
 
     std::vector<ArgTypeMetadataExtended> explicitArgsExtendedMetadata;
 

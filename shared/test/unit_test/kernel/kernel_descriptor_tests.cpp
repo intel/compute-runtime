@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -176,6 +176,65 @@ TEST(KernelDescriptor, GivenDescriptorWithBindlessArgsWhenInitBindlessOffsetsToS
     EXPECT_EQ(0u, desc.getBindlessOffsetToSurfaceState().find(0x40)->second);
     EXPECT_EQ(1u, desc.getBindlessOffsetToSurfaceState().find(0x100)->second);
     EXPECT_EQ(2u, desc.getBindlessOffsetToSurfaceState().find(0x80)->second);
+
+    desc.bindlessArgsMap.clear();
+    desc.initBindlessOffsetToSurfaceState();
+    EXPECT_EQ(0u, desc.bindlessArgsMap.size());
+}
+
+TEST(KernelDescriptor, GivenDescriptorWithBindlessExplicitAndImplicitArgsWhenInitBindlessOffsetsToSurfaceStateCalledThenMapIsInitializedOnceAndReturnsCorrectSurfaceIndices) {
+    NEO::KernelDescriptor desc;
+
+    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    desc.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x40;
+
+    desc.payloadMappings.explicitArgs.push_back(argDescriptor);
+
+    auto argDescriptor2 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    argDescriptor2.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptor2.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor2.as<NEO::ArgDescPointer>().bindless = NEO::undefined<NEO::CrossThreadDataOffset>;
+    argDescriptor2.as<NEO::ArgDescPointer>().stateless = 0x80;
+
+    desc.payloadMappings.explicitArgs.push_back(argDescriptor2);
+
+    auto argDescriptor3 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    argDescriptor3.as<NEO::ArgDescImage>() = NEO::ArgDescImage();
+    argDescriptor3.as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor3.as<NEO::ArgDescImage>().bindless = 0x100;
+
+    desc.payloadMappings.explicitArgs.push_back(argDescriptor3);
+
+    auto argDescriptor4 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    argDescriptor4.as<NEO::ArgDescImage>() = NEO::ArgDescImage();
+    argDescriptor4.as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor4.as<NEO::ArgDescImage>().bindless = NEO::undefined<NEO::CrossThreadDataOffset>;
+
+    desc.payloadMappings.explicitArgs.push_back(argDescriptor4);
+
+    desc.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = 0x140;
+    desc.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless = 0x180;
+
+    desc.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 0x220;
+    desc.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless = 0x260;
+
+    desc.initBindlessOffsetToSurfaceState();
+    EXPECT_EQ(4u, desc.bindlessArgsMap.size());
+
+    EXPECT_EQ(0u, desc.bindlessArgsMap[0x40]);
+    EXPECT_EQ(1u, desc.bindlessArgsMap[0x100]);
+    EXPECT_EQ(2u, desc.bindlessArgsMap[0x140]);
+    EXPECT_EQ(3u, desc.bindlessArgsMap[0x220]);
+
+    EXPECT_EQ(0u, desc.getBindlessOffsetToSurfaceState().find(0x40)->second);
+    EXPECT_EQ(1u, desc.getBindlessOffsetToSurfaceState().find(0x100)->second);
+    EXPECT_EQ(2u, desc.getBindlessOffsetToSurfaceState().find(0x140)->second);
+    EXPECT_EQ(3u, desc.getBindlessOffsetToSurfaceState().find(0x220)->second);
 
     desc.bindlessArgsMap.clear();
     desc.initBindlessOffsetToSurfaceState();

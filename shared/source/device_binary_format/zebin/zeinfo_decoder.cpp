@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -959,6 +959,10 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
                 return decodeErr;
             }
 
+            if (arg.argIndex == -1) {
+                continue;
+            }
+
             if (arg.addrmode == Types::Kernel::PayloadArgument::memoryAddressingModeBindless) {
                 if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::argTPointer>()) {
                     bindlessBufferAccess = true;
@@ -971,6 +975,14 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
                 } else if (dst.payloadMappings.explicitArgs[arg.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
                     bindfulImageAccess = true;
                 }
+            }
+        }
+
+        const auto implicitArgsVec = dst.getImplicitArgBindlessCandidatesVec();
+        for (const auto implicitArg : implicitArgsVec) {
+            if (isValidOffset(implicitArg->bindless)) {
+                bindlessBufferAccess = true;
+                break;
             }
         }
 
@@ -1274,17 +1286,27 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.rtDispatchGlobals);
 
     case Types::Kernel::argTypeDataConstBuffer:
-        if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
-            populateArgPointerStateless(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress);
+        if (src.addrmode == Types::Kernel::PayloadArgument::memoryAddressingModeBindless) {
+            dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = src.offset;
+            dst.kernelAttributes.numArgsStateful++;
+        } else {
+            if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
+                populateArgPointerStateless(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress);
+            }
+            setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful, src.btiValue, dst.payloadMappings.bindingTable.numEntries);
         }
-        setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful, src.btiValue, dst.payloadMappings.bindingTable.numEntries);
         return DecodeError::success;
 
     case Types::Kernel::argTypeDataGlobalBuffer:
-        if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
-            populateArgPointerStateless(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress);
+        if (src.addrmode == Types::Kernel::PayloadArgument::memoryAddressingModeBindless) {
+            dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = src.offset;
+            dst.kernelAttributes.numArgsStateful++;
+        } else {
+            if (src.offset != Types::Kernel::PayloadArgument::Defaults::offset) {
+                populateArgPointerStateless(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress);
+            }
+            setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful, src.btiValue, dst.payloadMappings.bindingTable.numEntries);
         }
-        setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful, src.btiValue, dst.payloadMappings.bindingTable.numEntries);
         return DecodeError::success;
 
     case Types::Kernel::argTypeImageHeight:

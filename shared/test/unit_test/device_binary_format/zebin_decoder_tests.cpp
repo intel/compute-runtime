@@ -1532,6 +1532,105 @@ kernels:
     EXPECT_EQ(KernelDescriptor::BindlessAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenStatefulImplicitArgsWhenDecodingZeInfoThenNumberOfStatefulArgsIsCorrect) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        const_base
+          offset:          48
+          size:            8
+        - arg_type:        global_base
+          offset:          56
+          size:            8
+        - arg_type:        global_base
+          offset:          72
+          size:            4
+          addrmode:        bindless
+...
+)===";
+
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_EQ(KernelDescriptor::BindlessAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
+    EXPECT_EQ(1u, kernelDescriptor->kernelAttributes.numArgsStateful);
+
+    EXPECT_EQ(56, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
+    EXPECT_EQ(72, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless);
+
+    EXPECT_EQ(48, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
+    EXPECT_EQ(undefined<CrossThreadDataOffset>, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless);
+
+    ConstStringRef zeinfo2 = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        const_base
+          offset:          48
+          size:            8
+        - arg_type:        global_base
+          offset:          56
+          size:            8
+        - arg_type:        const_base
+          offset:          72
+          size:            4
+          addrmode:        bindless
+...
+)===";
+
+    err = decodeZeInfoKernelEntry(zeinfo2);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_EQ(KernelDescriptor::BindlessAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
+    EXPECT_EQ(1u, kernelDescriptor->kernelAttributes.numArgsStateful);
+
+    EXPECT_EQ(56, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
+    EXPECT_EQ(undefined<CrossThreadDataOffset>, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless);
+
+    EXPECT_EQ(48, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
+    EXPECT_EQ(72, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless);
+
+    ConstStringRef zeinfo3 = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        const_base
+          offset:          48
+          size:            8
+        - arg_type:        global_base
+          offset:          56
+          size:            8
+        - arg_type:        global_base
+          offset:          72
+          size:            4
+          addrmode:        bindless
+        - arg_type:        const_base
+          offset:          80
+          size:            4
+          addrmode:        bindless
+...
+)===";
+
+    err = decodeZeInfoKernelEntry(zeinfo3);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_EQ(KernelDescriptor::BindlessAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
+    EXPECT_EQ(2u, kernelDescriptor->kernelAttributes.numArgsStateful);
+
+    EXPECT_EQ(56, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless);
+    EXPECT_EQ(72, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless);
+
+    EXPECT_EQ(48, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless);
+    EXPECT_EQ(80, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenStatefulArgsWhenDecodingZeInfoThenNumberOfStatefulArgsIsCorrect) {
     ConstStringRef zeinfo = R"===(
 kernels:
