@@ -332,7 +332,7 @@ bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, 
         uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
         for (size_t i = 0; i < allocSize; i++) {
             if (data2[i] != dstCharBuffer[i]) {
-                std::cout << "data2[" << i << "] = " << std::dec << static_cast<unsigned int>(data2[i]) << " not equal to "
+                std::cout << "error: data2[" << i << "] = " << std::dec << static_cast<unsigned int>(data2[i]) << " not equal to "
                           << "dstBuffer[" << i << "] = " << std::dec << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
                 break;
             }
@@ -437,10 +437,10 @@ bool testBindlessImageSampled(ze_context_handle_t context, ze_device_handle_t de
     // Validate
     float *dst = reinterpret_cast<float *>(dstBuffer);
     std::vector<float> groundTruth = {5.f, 15.f, 25.f, 30.f};
-    for (size_t i = 0; i < srcImgDesc.height; ++i) {
+    for (size_t i = 0; (i < srcImgDesc.height) && outputValidated; ++i) {
         for (size_t j = 0; j < (srcImgDesc.width * 4); ++j, ++dst) {
             if (*dst != groundTruth[i]) {
-                std::cerr << "dstBuffer[" << i << "][" << j << "] = " << *dst << " is not equal to " << groundTruth[i] << "\n";
+                std::cerr << "error: dstBuffer[" << i << "][" << j << "] = " << *dst << " is not equal to " << groundTruth[i] << "\n";
                 outputValidated = false;
                 break;
             }
@@ -448,7 +448,6 @@ bool testBindlessImageSampled(ze_context_handle_t context, ze_device_handle_t de
     }
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
-
     SUCCESS_OR_TERMINATE(zeSamplerDestroy(sampler));
     SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
@@ -459,7 +458,7 @@ bool testBindlessImageSampled(ze_context_handle_t context, ze_device_handle_t de
 
 int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
-    bool outputValidated = false;
+    bool outputValidated = true;
 
     ze_context_handle_t context = nullptr;
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
@@ -476,11 +475,20 @@ int main(int argc, char *argv[]) {
     ze_device_uuid_t uuid = deviceProperties.uuid;
     std::string revisionId = std::to_string(reinterpret_cast<uint16_t *>(uuid.id)[2]);
 
+    int numTests = 3;
     int testCase = -1;
     testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", -1);
-    auto bindlessImages = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "", "--bindless-images");
+    if (testCase < -1 || testCase >= numTests) {
+        std::cout << "\nInvalid test-case. Valid values are between [-1, " << (numTests - 1) << "]" << std::endl;
+        return -1;
+    }
 
-    for (int i = 0; i < 3; i++) {
+    bool isIntegratedGPU = (deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+
+    auto bindlessImages = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "", "--bindless-images");
+    AddressingMode mode = bindlessImages ? AddressingMode::bindlessImages : AddressingMode::bindless;
+
+    for (int i = 0; i < numTests; i++) {
         if (testCase != -1) {
             i = testCase;
         }
@@ -488,36 +496,38 @@ int main(int argc, char *argv[]) {
         switch (i) {
         default:
         case 0:
-            std::cout << "test case: testBindlessBufferCopy\n"
+            std::cout << "\ntest case: testBindlessBufferCopy\n"
                       << std::endl;
-            outputValidated = testBindlessBufferCopy(context, device, ss.str(), revisionId);
+            outputValidated &= testBindlessBufferCopy(context, device, ss.str(), revisionId);
             break;
         case 1:
-            if (!(deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)) {
-                std::cout << "test case: testBindlessImages\n"
-                          << std::endl;
+            std::cout << "\ntest case: testBindlessImages\n"
+                      << std::endl;
+            if (!isIntegratedGPU) {
                 int defaultImageCount = testCase == 1 ? 4 * 4096 + 8 : 4;
                 auto imageCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--image-count", defaultImageCount);
 
-                AddressingMode mode = bindlessImages ? AddressingMode::bindlessImages : AddressingMode::bindless;
                 std::cout << "--image-count: " << imageCount << std::endl;
 
                 if (bindlessImages) {
                     std::cout << "--bindless-images " << std::endl;
                 }
 
-                outputValidated = testBindlessImages(context, device, ss.str(), revisionId, imageCount, mode);
+                outputValidated &= testBindlessImages(context, device, ss.str(), revisionId, imageCount, mode);
+            } else {
+                std::cout << "Skipped on integrated GPU\n";
             }
             break;
         case 2:
-            if (!(deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)) {
-                std::cout << "test case: testBindlessImageSampled\n"
-                          << std::endl;
-                AddressingMode mode = bindlessImages ? AddressingMode::bindless : AddressingMode::defaultMode;
+            std::cout << "\ntest case: testBindlessImageSampled\n"
+                      << std::endl;
+            if (!isIntegratedGPU) {
                 if (bindlessImages) {
                     std::cout << "--bindless-images " << std::endl;
                 }
-                outputValidated = testBindlessImageSampled(context, device, ss.str(), revisionId, mode);
+                outputValidated &= testBindlessImageSampled(context, device, ss.str(), revisionId, mode);
+            } else {
+                std::cout << "Skipped on integrated GPU\n";
             }
             break;
         }
