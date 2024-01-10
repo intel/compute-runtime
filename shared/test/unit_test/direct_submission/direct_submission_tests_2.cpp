@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2731,6 +2731,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenNotStartedDirectSubmissionWhen
     directSubmission.submitReturn = false;
 
     EXPECT_FALSE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+    EXPECT_FALSE(directSubmission.ringStart);
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenNotStartedDirectSubmissionWhenUpdateMonitorFenceTagFailsDuringDispatchCommandBufferThenExpectReturnFalse) {

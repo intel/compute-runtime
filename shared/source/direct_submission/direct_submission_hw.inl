@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -961,7 +961,6 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     }
 
     auto needStart = !this->ringStart;
-    this->ringStart = true;
 
     this->switchRingBuffersNeeded(requiredMinimalSize, batchBuffer.allocationsForResidency);
 
@@ -995,13 +994,14 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     }
     flushStamp.setStamp(flushValue);
 
-    return ringStart;
+    return this->ringStart;
 }
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size) {
     if (needStart) {
-        return this->submit(gpuAddress, size);
+        this->ringStart = this->submit(gpuAddress, size);
+        return this->ringStart;
     } else {
         handleResidency();
         this->unblockGpu();

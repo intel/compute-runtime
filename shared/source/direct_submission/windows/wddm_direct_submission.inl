@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,6 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
 template <typename GfxFamily, typename Dispatcher>
 inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
     auto needStart = !this->ringStart;
-    this->ringStart = true;
 
     size_t requiredMinimalSize = this->getSizeSemaphoreSection(false) +
                                  Dispatcher::getSizeMonitorFence(this->rootDeviceEnvironment) +
