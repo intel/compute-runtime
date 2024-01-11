@@ -7,11 +7,31 @@
 
 #include "level_zero/api/driver_experimental/public/zex_event.h"
 
+#include "shared/source/memory_manager/graphics_allocation.h"
+
+#include "level_zero/core/source/event/event.h"
+
 namespace L0 {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto eventObj = Event::fromHandle(event);
+
+    if (!eventObj || !eventObj->isCounterBased() || !completionValue || !address) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    *completionValue = eventObj->getInOrderExecSignalValueWithSubmissionCounter();
+
+    auto deviceAlloc = eventObj->getInOrderExecDataAllocation();
+
+    if (deviceAlloc) {
+        *address = deviceAlloc->getGpuAddress() + eventObj->getInOrderAllocationOffset();
+    } else {
+        *address = 0;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

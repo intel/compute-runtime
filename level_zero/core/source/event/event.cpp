@@ -447,7 +447,8 @@ void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInO
 }
 
 uint64_t Event::getInOrderExecSignalValueWithSubmissionCounter() const {
-    return (inOrderExecSignalValue + NEO::InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo));
+    uint64_t appendCounter = inOrderExecInfo.get() ? NEO::InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo) : 0;
+    return (inOrderExecSignalValue + appendCounter);
 }
 
 void Event::setLatestUsedCmdQueue(CommandQueue *newCmdQ) {

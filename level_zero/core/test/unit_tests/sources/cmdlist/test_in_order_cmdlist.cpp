@@ -3512,6 +3512,63 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDoingCpuCopyThenPassInfo
     context->freeMem(deviceAlloc);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenIncorrectInputParamsWhenAskingForEventAddressAndValueThenReturnError, IsAtLeastSkl) {
+    auto eventPool = createEvents<FamilyType>(1, false);
+    uint64_t counterValue = 0;
+    uint64_t address = 0;
+
+    auto eventHandle = events[0]->toHandle();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexEventGetDeviceAddress(eventHandle, &counterValue, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexEventGetDeviceAddress(eventHandle, nullptr, &address));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexEventGetDeviceAddress(nullptr, &counterValue, &address));
+
+    events[0]->makeCounterBasedImplicitlyDisabled();
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAndValueThenReturnCorrectValues, IsAtLeastSkl) {
+    auto eventPool = createEvents<FamilyType>(1, false);
+    uint64_t counterValue = -1;
+    uint64_t address = -1;
+
+    auto cmdList = createRegularCmdList<gfxCoreFamily>(false);
+    auto &deviceAlloc = cmdList->inOrderExecInfo->getDeviceCounterAllocation();
+
+    auto eventHandle = events[0]->toHandle();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(0u, counterValue);
+    EXPECT_EQ(0u, address);
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(2u, counterValue);
+    EXPECT_EQ(deviceAlloc.getGpuAddress(), address);
+
+    cmdList->close();
+
+    ze_command_queue_desc_t desc = {};
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(false, false, false);
+
+    auto cmdListHandle = cmdList->toHandle();
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(4u, counterValue);
+    EXPECT_EQ(deviceAlloc.getGpuAddress(), address);
+
+    events[0]->inOrderAllocationOffset = 0x12300;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(4u, counterValue);
+    EXPECT_EQ(deviceAlloc.getGpuAddress() + events[0]->inOrderAllocationOffset, address);
+}
+
 HWTEST2_F(InOrderCmdListTests, wWhenUsingImmediateCmdListThenDontAddCmdsToPatch, IsAtLeastXeHpCore) {
     auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
 
