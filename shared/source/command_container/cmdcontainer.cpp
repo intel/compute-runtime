@@ -298,15 +298,21 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
         if (this->reusableAllocationList) {
 
             if (isHandleFenceCompletionRequired) {
+                std::vector<std::unique_lock<CommandStreamReceiver::MutexType>> locks;
                 for (auto &engine : this->device->getMemoryManager()->getRegisteredEngines(cmdBufferAllocations[i]->getRootDeviceIndex())) {
                     if (cmdBufferAllocations[i]->isUsedByOsContext(engine.osContext->getContextId())) {
-                        auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                        locks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
                         engine.commandStreamReceiver->stopDirectSubmission(false);
                     }
                 }
-                this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
+                if (!locks.empty()) {
+                    this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
+                }
             }
 
+            for (auto &engine : this->device->getMemoryManager()->getRegisteredEngines(cmdBufferAllocations[i]->getRootDeviceIndex())) {
+                cmdBufferAllocations[i]->releaseUsageInOsContext(engine.osContext->getContextId());
+            }
             reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
         } else {
             this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);

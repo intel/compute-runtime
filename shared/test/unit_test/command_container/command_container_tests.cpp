@@ -318,20 +318,33 @@ HWTEST_F(CommandContainerTest, givenCmdContainerAndHandleFenceWithAllocsListWhen
 
     auto cmdBuffer0 = cmdBufferAllocs[0];
     auto cmdBuffer1 = cmdBufferAllocs[1];
+    auto csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(memoryManager->getRegisteredEngines(0u)[0].commandStreamReceiver);
 
+    cmdContainer->reset();
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 0u);
+    EXPECT_EQ(cmdBufferAllocs.size(), 1u);
+    EXPECT_EQ(cmdBufferAllocs[0], cmdBuffer0);
+    EXPECT_FALSE(allocList.peekIsEmpty());
+    EXPECT_FALSE(csr->stopDirectSubmissionCalled);
+    EXPECT_FALSE(csr->stopDirectSubmissionCalledBlocking);
+
+    cmdContainer->allocateNextCommandBuffer();
+    EXPECT_EQ(cmdBufferAllocs.size(), 2u);
+    cmdBuffer1->updateTaskCount(1u, 0u);
     cmdContainer->reset();
     EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 1u);
     EXPECT_EQ(cmdBufferAllocs.size(), 1u);
     EXPECT_EQ(cmdBufferAllocs[0], cmdBuffer0);
     EXPECT_FALSE(allocList.peekIsEmpty());
+    EXPECT_TRUE(csr->stopDirectSubmissionCalled);
+    EXPECT_FALSE(csr->stopDirectSubmissionCalledBlocking);
 
     cmdContainer->allocateNextCommandBuffer();
     EXPECT_EQ(cmdBufferAllocs.size(), 2u);
     EXPECT_EQ(cmdBufferAllocs[0], cmdBuffer0);
     EXPECT_EQ(cmdBufferAllocs[1], cmdBuffer1);
     EXPECT_TRUE(allocList.peekIsEmpty());
-    auto csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(memoryManager->getRegisteredEngines(0u)[0].commandStreamReceiver);
-    EXPECT_FALSE(csr->stopDirectSubmissionCalled);
+    EXPECT_TRUE(csr->stopDirectSubmissionCalled);
     EXPECT_FALSE(csr->stopDirectSubmissionCalledBlocking);
     cmdBuffer1->updateTaskCount(1u, 0u);
 
@@ -342,7 +355,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerAndHandleFenceWithAllocsListWhen
     csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(memoryManager->getRegisteredEngines(0u)[1].commandStreamReceiver);
     EXPECT_FALSE(csr->stopDirectSubmissionCalled);
     EXPECT_FALSE(csr->stopDirectSubmissionCalledBlocking);
-    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 3u);
+    EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 2u);
     EXPECT_FALSE(allocList.peekIsEmpty());
     cmdBuffer1->releaseUsageInOsContext(0u);
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -363,10 +376,19 @@ TEST_F(CommandContainerTest, givenReusableAllocationsAndRemoveUserFenceInCmdlist
     EXPECT_EQ(cmdBufferAllocs.size(), 2u);
 
     cmdContainer->reset();
-    EXPECT_EQ(1u, memoryManager->handleFenceCompletionCalled);
+    EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
     cmdContainer->allocateNextCommandBuffer();
     EXPECT_EQ(cmdBufferAllocs.size(), 2u);
 
+    cmdBufferAllocs[1]->updateTaskCount(2u, 0u);
+    cmdContainer->reset();
+    EXPECT_EQ(1u, memoryManager->handleFenceCompletionCalled);
+    cmdContainer->allocateNextCommandBuffer();
+    EXPECT_EQ(cmdBufferAllocs.size(), 2u);
+    EXPECT_FALSE(cmdBufferAllocs[1]->isUsedByOsContext(0u));
+
+    cmdBufferAllocs[0]->updateTaskCount(5u, 0u);
+    cmdBufferAllocs[1]->updateTaskCount(5u, 0u);
     cmdContainer.reset();
     EXPECT_EQ(3u, memoryManager->handleFenceCompletionCalled);
     allocList.freeAllGraphicsAllocations(pDevice);
