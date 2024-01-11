@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -4668,6 +4668,51 @@ TEST_F(MultipleDevicePeerAllocationTest,
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MultipleDevicePeerAllocationTest,
+       whenGettingAllocationProperityOfAnIpcBufferThenTheSameSubDeviceIsReturned) {
+    for (auto l0Device : driverHandle->devices) {
+        uint32_t nSubDevices = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, l0Device->getSubDevices(&nSubDevices, nullptr));
+        EXPECT_EQ(numSubDevices, nSubDevices);
+        std::vector<ze_device_handle_t> subDevices(nSubDevices);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, l0Device->getSubDevices(&nSubDevices, subDevices.data()));
+
+        for (auto subDevice : subDevices) {
+            constexpr size_t size = 1ul << 18;
+            ze_device_mem_alloc_desc_t deviceDesc{};
+            void *ptr = nullptr;
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(subDevice, &deviceDesc, size, 1ul, &ptr));
+            EXPECT_NE(nullptr, ptr);
+
+            uint32_t numIpcHandles = 0;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, nullptr));
+            EXPECT_EQ(numIpcHandles, 2u);
+
+            std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data()));
+
+            void *ipcPtr = nullptr;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->openIpcMemHandles(subDevice, numIpcHandles, ipcHandles.data(), 0, &ipcPtr));
+            EXPECT_NE(nullptr, ipcPtr);
+
+            ze_device_handle_t registeredDevice = nullptr;
+            ze_memory_allocation_properties_t allocProp{};
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->getMemAllocProperties(ipcPtr, &allocProp, &registeredDevice));
+            EXPECT_EQ(ZE_MEMORY_TYPE_DEVICE, allocProp.type);
+            EXPECT_EQ(subDevice, registeredDevice);
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->closeIpcMemHandle(ipcPtr));
+
+            for (auto &ipcHandle : ipcHandles) {
+                EXPECT_EQ(ZE_RESULT_SUCCESS, context->putIpcMemHandle(ipcHandle));
+            }
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+        }
+    }
 }
 
 struct MemoryFailedOpenIpcHandleTest : public ::testing::Test {

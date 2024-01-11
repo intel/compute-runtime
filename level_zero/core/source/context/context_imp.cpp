@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -721,7 +721,7 @@ ze_result_t ContextImp::openIpcMemHandles(ze_device_handle_t hDevice,
 
         handles.push_back(static_cast<NEO::osHandle>(handle));
     }
-    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice()->getRootDevice();
+    auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
     *pptr = this->driverHandle->importFdHandles(neoDevice, flags, handles, nullptr, nullptr, allocDataInternal);
     if (nullptr == *pptr) {
