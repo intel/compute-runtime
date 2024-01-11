@@ -3644,19 +3644,27 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
     if ((NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && !isImmediateType()) {
-        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, inOrderExecInfo->isAtomicDeviceSignalling(), inOrderExecInfo->isHostStorageDuplicated());
+        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, inOrderAtomicSignallingEnabled(), duplicatedInOrderCounterStorageEnabled());
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::patchInOrderCmds() {
-    if (isInOrderExecutionEnabled()) {
-        auto implicitAppendCounter = NEO::InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
+    if (inOrderPatchCmds.size() == 0) {
+        return;
+    }
 
-        for (auto &cmd : inOrderPatchCmds) {
-            if (cmd.isExternalDependency() || (inOrderExecInfo->getRegularCmdListSubmissionCounter() > 1)) {
-                cmd.patch(implicitAppendCounter);
-            }
+    uint64_t implicitAppendCounter = 0;
+    bool hasRgularCmdListSubmissionCounter = false;
+
+    if (isInOrderExecutionEnabled()) {
+        implicitAppendCounter = NEO::InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo);
+        hasRgularCmdListSubmissionCounter = (inOrderExecInfo->getRegularCmdListSubmissionCounter() > 1);
+    }
+
+    for (auto &cmd : inOrderPatchCmds) {
+        if (cmd.isExternalDependency() || hasRgularCmdListSubmissionCounter) {
+            cmd.patch(implicitAppendCounter);
         }
     }
 }

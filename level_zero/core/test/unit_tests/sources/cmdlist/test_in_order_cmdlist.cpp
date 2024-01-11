@@ -5128,5 +5128,111 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
     alignedFree(alignedPtr);
 }
 
+HWTEST2_F(InOrderRegularCmdListTests, givenNonInOrderRegularCmdListWhenPassingCounterBasedEventToWaitThenPatchOnExecute, IsAtLeastXeHpCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    ze_command_queue_desc_t desc = {};
+
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(false, false, false);
+    auto inOrderRegularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    regularCmdList->inOrderExecInfo.reset();
+
+    inOrderRegularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+
+    size_t offset = cmdStream->getUsed();
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    ASSERT_EQ(1u, regularCmdList->inOrderPatchCmds.size());
+
+    MI_SEMAPHORE_WAIT *semaphoreFromParser2 = nullptr;
+    MI_SEMAPHORE_WAIT *semaphoreFromContainer2 = nullptr;
+
+    MI_LOAD_REGISTER_IMM *firstLriFromContainer2 = nullptr;
+    MI_LOAD_REGISTER_IMM *secondLriFromContainer2 = nullptr;
+
+    MI_LOAD_REGISTER_IMM *firstLriFromParser2 = nullptr;
+    MI_LOAD_REGISTER_IMM *secondLriFromParser2 = nullptr;
+
+    if (regularCmdList->isQwordInOrderCounter()) {
+        firstLriFromContainer2 = genCmdCast<MI_LOAD_REGISTER_IMM *>(regularCmdList->inOrderPatchCmds[0].cmd1);
+        ASSERT_NE(nullptr, firstLriFromContainer2);
+        secondLriFromContainer2 = genCmdCast<MI_LOAD_REGISTER_IMM *>(regularCmdList->inOrderPatchCmds[0].cmd2);
+        ASSERT_NE(nullptr, secondLriFromContainer2);
+    } else {
+        semaphoreFromContainer2 = genCmdCast<MI_SEMAPHORE_WAIT *>(regularCmdList->inOrderPatchCmds[0].cmd1);
+        EXPECT_EQ(nullptr, regularCmdList->inOrderPatchCmds[0].cmd2);
+        ASSERT_NE(nullptr, semaphoreFromContainer2);
+    }
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto itor = cmdList.begin();
+
+        if (regularCmdList->isQwordInOrderCounter()) {
+            itor = find<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+            ASSERT_NE(cmdList.end(), itor);
+
+            firstLriFromParser2 = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
+            ASSERT_NE(nullptr, firstLriFromParser2);
+            secondLriFromParser2 = genCmdCast<MI_LOAD_REGISTER_IMM *>(*(++itor));
+            ASSERT_NE(nullptr, secondLriFromParser2);
+        } else {
+            auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+            ASSERT_NE(cmdList.end(), itor);
+
+            semaphoreFromParser2 = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+            ASSERT_NE(nullptr, semaphoreFromParser2);
+        }
+    }
+
+    auto verifyPatching = [&](uint64_t executionCounter) {
+        auto appendValue = inOrderRegularCmdList->inOrderExecInfo->getCounterValue() * executionCounter;
+
+        if (regularCmdList->isQwordInOrderCounter()) {
+            EXPECT_EQ(getLowPart(1u + appendValue), firstLriFromContainer2->getDataDword());
+            EXPECT_EQ(getLowPart(1u + appendValue), firstLriFromParser2->getDataDword());
+
+            EXPECT_EQ(getHighPart(1u + appendValue), secondLriFromContainer2->getDataDword());
+            EXPECT_EQ(getHighPart(1u + appendValue), secondLriFromParser2->getDataDword());
+        } else {
+            EXPECT_EQ(1u + appendValue, semaphoreFromContainer2->getSemaphoreDataDword());
+            EXPECT_EQ(1u + appendValue, semaphoreFromParser2->getSemaphoreDataDword());
+        }
+    };
+
+    regularCmdList->close();
+    inOrderRegularCmdList->close();
+
+    auto inOrderRegularCmdListHandle = inOrderRegularCmdList->toHandle();
+    auto regularHandle = regularCmdList->toHandle();
+
+    mockCmdQHw->executeCommandLists(1, &inOrderRegularCmdListHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false);
+    verifyPatching(0);
+
+    mockCmdQHw->executeCommandLists(1, &inOrderRegularCmdListHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false);
+    verifyPatching(1);
+
+    mockCmdQHw->executeCommandLists(1, &inOrderRegularCmdListHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false);
+    verifyPatching(2);
+
+    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false);
+    verifyPatching(2);
+}
+
 } // namespace ult
 } // namespace L0
