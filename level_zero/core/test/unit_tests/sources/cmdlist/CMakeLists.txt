@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -27,6 +27,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_blit.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_fill.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_memory_extension.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_in_order_cmdlist.cpp
 )
 
 if(TESTS_XEHP_AND_LATER)
