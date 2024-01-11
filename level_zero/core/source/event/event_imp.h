@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ class KernelEventCompletionData : public NEO::TimestampPackets<TagSizeT, NEO::Ti
 template <typename TagSizeT>
 struct EventImp : public Event {
 
-    EventImp(EventPool *eventPool, int index, Device *device, bool tbxMode);
+    EventImp(int index, Device *device, bool tbxMode);
 
     ~EventImp() override {}
 

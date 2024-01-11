@@ -25,40 +25,43 @@
 
 namespace L0 {
 template <typename TagSizeT>
-Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
+Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc_t *desc, Device *device) {
     auto neoDevice = device->getNEODevice();
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    auto &hwInfo = neoDevice->getHardwareInfo();
 
-    auto event = new EventImp<TagSizeT>(eventPool, desc->index, device, csr->isTbxMode());
+    auto event = new EventImp<TagSizeT>(desc->index, device, csr->isTbxMode());
     UNRECOVERABLE_IF(event == nullptr);
 
-    if (eventPool->isEventPoolTimestampFlagSet()) {
+    event->eventPoolAllocation = eventDescriptor.eventPoolAllocation;
+
+    if (eventDescriptor.timestampPool) {
         event->setEventTimestampFlag(true);
         event->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
-    event->hasKerneMappedTsCapability = eventPool->isEventPoolKerneMappedTsFlagSet();
-    auto &hwInfo = neoDevice->getHardwareInfo();
+    event->hasKerneMappedTsCapability = eventDescriptor.kerneMappedTsPoolFlag;
 
     event->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
 
-    auto alloc = eventPool->getAllocation().getGraphicsAllocation(neoDevice->getRootDeviceIndex());
+    void *baseHostAddress = 0;
+    if (event->eventPoolAllocation) {
+        baseHostAddress = event->eventPoolAllocation->getGraphicsAllocation(neoDevice->getRootDeviceIndex())->getUnderlyingBuffer();
+    }
 
-    uint64_t baseHostAddr = reinterpret_cast<uint64_t>(alloc->getUnderlyingBuffer());
-    event->totalEventSize = eventPool->getEventSize();
+    event->totalEventSize = eventDescriptor.totalEventSize;
     event->eventPoolOffset = desc->index * event->totalEventSize;
-    event->hostAddress = reinterpret_cast<void *>(baseHostAddr + event->eventPoolOffset);
+    event->hostAddress = ptrOffset(baseHostAddress, event->eventPoolOffset);
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
     event->csrs.push_back(csr);
-    event->maxKernelCount = eventPool->getMaxKernelCount();
-    event->maxPacketCount = eventPool->getEventMaxPackets();
-    event->isFromIpcPool = eventPool->getImportedIpcPool();
-    if (event->isFromIpcPool || eventPool->isIpcPoolFlagSet()) {
+    event->maxKernelCount = eventDescriptor.maxKernelCount;
+    event->maxPacketCount = eventDescriptor.maxPacketsCount;
+    event->isFromIpcPool = eventDescriptor.importedIpcPool;
+    if (event->isFromIpcPool || eventDescriptor.ipcPool) {
         event->disableImplicitCounterBasedMode();
     }
 
-    event->kernelEventCompletionData =
-        std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
+    event->kernelEventCompletionData = std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
 
     bool useContextEndOffset = false;
     int32_t overrideUseContextEndOffset = NEO::debugManager.flags.UseContextEndOffsetForEventCompletion.get();
@@ -86,8 +89,8 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->timestampRefreshIntervalInNanoSec = refreshTime * milliSecondsToNanoSeconds;
     }
 
-    if (eventPool->isCounterBased() || NEO::debugManager.flags.ForceInOrderEvents.get() == 1) {
-        event->enableCounterBasedMode(true, eventPool->getCounterBasedFlags());
+    if (eventDescriptor.counterBasedFlags != 0 || NEO::debugManager.flags.ForceInOrderEvents.get() == 1) {
+        event->enableCounterBasedMode(true, eventDescriptor.counterBasedFlags);
     }
 
     auto extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
@@ -117,8 +120,25 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 }
 
 template <typename TagSizeT>
-EventImp<TagSizeT>::EventImp(EventPool *eventPool, int index, Device *device, bool tbxMode)
-    : Event(eventPool, index, device), tbxMode(tbxMode) {
+Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
+    EventDescriptor eventDescriptor = {
+        &eventPool->getAllocation(),                  // eventPoolAllocation
+        eventPool->getEventSize(),                    // totalEventSize
+        eventPool->getMaxKernelCount(),               // maxKernelCount
+        eventPool->getEventMaxPackets(),              // maxPacketsCount
+        eventPool->getCounterBasedFlags(),            // counterBasedFlags
+        eventPool->isEventPoolTimestampFlagSet(),     // timestampPool
+        eventPool->isEventPoolKerneMappedTsFlagSet(), // kerneMappedTsPoolFlag
+        eventPool->getImportedIpcPool(),              // importedIpcPool
+        eventPool->isIpcPoolFlagSet(),                // ipcPool
+    };
+
+    return Event::create<TagSizeT>(eventDescriptor, desc, device);
+}
+
+template <typename TagSizeT>
+EventImp<TagSizeT>::EventImp(int index, Device *device, bool tbxMode)
+    : Event(index, device), tbxMode(tbxMode) {
     contextStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextStartOffset();
     contextEndOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getContextEndOffset();
     globalStartOffset = NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getGlobalStartOffset();

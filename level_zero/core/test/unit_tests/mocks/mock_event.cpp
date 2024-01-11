@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 namespace L0 {
 namespace ult {
 
-Mock<Event>::Mock() : WhiteBox<::L0::Event>(nullptr, 0, nullptr),
+Mock<Event>::Mock() : WhiteBox<::L0::Event>(0, nullptr),
                       mockAllocation(0,
                                      NEO::AllocationType::internalHostMemory,
                                      &memory,

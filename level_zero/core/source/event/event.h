@@ -64,6 +64,18 @@ inline constexpr uint32_t maxKernelSplit = 3;
 inline constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketConstants::preferredPacketCount;
 } // namespace EventPacketsCount
 
+struct EventDescriptor {
+    NEO::MultiGraphicsAllocation *eventPoolAllocation = nullptr;
+    uint32_t totalEventSize = 0;
+    uint32_t maxKernelCount = 0;
+    uint32_t maxPacketsCount = 0;
+    uint32_t counterBasedFlags = 0;
+    bool timestampPool = false;
+    bool kerneMappedTsPoolFlag = false;
+    bool importedIpcPool = false;
+    bool ipcPool = false;
+};
+
 struct Event : _ze_event_handle_t {
     virtual ~Event() = default;
     virtual ze_result_t destroy();
@@ -94,6 +106,9 @@ struct Event : _ze_event_handle_t {
 
     template <typename TagSizeT>
     static Event *create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device);
+
+    template <typename TagSizeT>
+    static Event *create(const EventDescriptor &eventDescriptor, const ze_event_desc_t *desc, Device *device);
 
     static Event *fromHandle(ze_event_handle_t handle) { return static_cast<Event *>(handle); }
 
@@ -263,7 +278,7 @@ struct Event : _ze_event_handle_t {
     uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
 
   protected:
-    Event(EventPool *eventPool, int index, Device *device) : device(device), eventPool(eventPool), index(index) {}
+    Event(int index, Device *device) : device(device), index(index) {}
 
     void unsetCmdQueue();
 
@@ -293,10 +308,10 @@ struct Event : _ze_event_handle_t {
 
     // Metric instance associated with the event.
     MetricCollectorEventNotify *metricNotification = nullptr;
+    NEO::MultiGraphicsAllocation *eventPoolAllocation = nullptr;
     StackVec<NEO::CommandStreamReceiver *, 1> csrs;
     void *hostAddress = nullptr;
     Device *device = nullptr;
-    EventPool *eventPool = nullptr;
     std::weak_ptr<Kernel> kernelWithPrintf = std::weak_ptr<Kernel>{};
     std::mutex *kernelWithPrintfDeviceMutex = nullptr;
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
@@ -387,7 +402,6 @@ struct EventPool : _ze_event_pool_handle_t {
         return isImplicitScalingCapable;
     }
 
-    bool isCounterBased() const { return counterBased; }
     uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
     bool isIpcPoolFlagSet() const { return isIpcPoolFlag; }
 
@@ -420,7 +434,6 @@ struct EventPool : _ze_event_pool_handle_t {
     bool isIpcPoolFlag = false;
     bool isShareableEventMemory = false;
     bool isImplicitScalingCapable = false;
-    bool counterBased = false;
 };
 
 } // namespace L0

@@ -38,9 +38,13 @@
 namespace L0 {
 template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *);
 template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *);
+template Event *Event::create<uint64_t>(const EventDescriptor &, const ze_event_desc_t *, Device *);
+template Event *Event::create<uint32_t>(const EventDescriptor &, const ze_event_desc_t *, Device *);
 
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
     this->context = static_cast<ContextImp *>(context);
+
+    const bool counterBased = (counterBasedFlags != 0);
 
     if (isIpcPoolFlagSet() && counterBased) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -220,7 +224,6 @@ void EventPool::setupDescriptorFlags(const ze_event_pool_desc_t *desc) {
         if (counterBasedFlags == 0) {
             counterBasedFlags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE;
         }
-        counterBased = true;
     }
 }
 
@@ -388,7 +391,7 @@ uint64_t Event::getGpuAddress(Device *device) const {
 }
 
 NEO::GraphicsAllocation &Event::getAllocation(Device *device) const {
-    return *this->eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
+    return *this->eventPoolAllocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
 }
 
 void Event::setGpuStartTimestamp() {

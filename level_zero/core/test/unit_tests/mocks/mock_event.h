@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,7 +110,7 @@ class MockEvent : public ::L0::Event {
     using ::L0::Event::signalScope;
     using ::L0::Event::waitScope;
 
-    MockEvent() : Event(nullptr, 0, nullptr) {
+    MockEvent() : Event(0, nullptr) {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0,
                                                              NEO::AllocationType::internalHostMemory,
                                                              reinterpret_cast<void *>(0x1234),
