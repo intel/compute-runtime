@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -272,14 +272,14 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     driverHandle->enableSysman = envVariables.sysman;
     driverHandle->enablePciIdDeviceOrder = envVariables.pciIdDeviceOrder;
     char const *preferredDeviceHierarchy = envVariables.deviceHierarchyMode.c_str();
-    if (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyUnk) == 0) {
+    if ((strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyUnk) == 0) || ((strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyComposite) != 0) && (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyFlat) != 0) && (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyCombined) != 0))) {
         preferredDeviceHierarchy = devices[0]->getGfxCoreHelper().getDefaultDeviceHierarchy();
     }
-    if (strcmp(preferredDeviceHierarchy, "COMPOSITE") == 0) {
+    if (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyComposite) == 0) {
         driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
-    } else if (strcmp(preferredDeviceHierarchy, "FLAT") == 0) {
+    } else if (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyFlat) == 0) {
         driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
-    } else if (strcmp(preferredDeviceHierarchy, "COMBINED") == 0) {
+    } else if (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyCombined) == 0) {
         driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
     }
     ze_result_t res = driverHandle->initialize(std::move(devices));

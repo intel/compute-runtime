@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -566,6 +566,33 @@ TEST_F(DriverImpTest, givenCombinedDeviceHierarchyWhenCreatingExecutionEnvironme
     driverImp.initialize(&result);
     L0::DriverHandleImp *driverHandleImp = reinterpret_cast<L0::DriverHandleImp *>(L0::globalDriverHandle);
     EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED);
+    ASSERT_NE(nullptr, L0::globalDriver);
+    ASSERT_NE(0u, L0::globalDriver->numDevices);
+
+    delete L0::globalDriver;
+    L0::globalDriverHandle = nullptr;
+    L0::globalDriver = nullptr;
+}
+
+TEST_F(DriverImpTest, givenErrantDeviceHierarchyWhenCreatingExecutionEnvironmentThenDefaultHierarchyIsEnabled) {
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "Flat"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    DriverImp driverImp;
+    driverImp.initialize(&result);
+    L0::DriverHandleImp *driverHandleImp = reinterpret_cast<L0::DriverHandleImp *>(L0::globalDriverHandle);
+    auto &gfxCoreHelper = driverHandleImp->memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    if (strcmp(gfxCoreHelper.getDefaultDeviceHierarchy(), "COMPOSITE") == 0) {
+        EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE);
+    } else {
+        EXPECT_EQ(driverHandleImp->deviceHierarchyMode, L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT);
+    }
     ASSERT_NE(nullptr, L0::globalDriver);
     ASSERT_NE(0u, L0::globalDriver->numDevices);
 

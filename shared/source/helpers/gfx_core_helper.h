@@ -49,6 +49,7 @@ using GfxCoreHelperCreateFunctionType = std::unique_ptr<GfxCoreHelper> (*)();
 
 extern const char *deviceHierarchyComposite;
 extern const char *deviceHierarchyFlat;
+extern const char *deviceHierarchyCombined;
 extern const char *deviceHierarchyUnk;
 
 class GfxCoreHelper {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ GfxCoreHelperCreateFunctionType gfxCoreHelperFactory[IGFX_MAX_CORE] = {};
 
 const char *deviceHierarchyComposite = "COMPOSITE";
 const char *deviceHierarchyFlat = "FLAT";
+const char *deviceHierarchyCombined = "COMBINED";
 const char *deviceHierarchyUnk = "UNK";
 
 std::unique_ptr<GfxCoreHelper> GfxCoreHelper::create(const GFXCORE_FAMILY gfxCoreFamily) {
