@@ -586,7 +586,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
     }
 
     unsetInOrderExecInfo();
-    unsetCmdQueue();
+    latestUsedCmdQueue = nullptr;
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();
