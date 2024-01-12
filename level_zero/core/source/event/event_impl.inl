@@ -303,6 +303,10 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
 
 template <typename TagSizeT>
 bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
+    if (!this->eventPoolAllocation) {
+        return false;
+    }
+
     if (metricNotification != nullptr) {
         hostEventSetValue(metricNotification->getNotificationState());
     }
@@ -322,7 +326,7 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
             }
 
             if (!downloadedInOrdedAllocation && inOrderExecInfo) {
-                auto alloc = inOrderExecInfo->isHostStorageDuplicated() ? inOrderExecInfo->getHostCounterAllocation() : &inOrderExecInfo->getDeviceCounterAllocation();
+                auto alloc = inOrderExecInfo->isHostStorageDuplicated() ? inOrderExecInfo->getHostCounterAllocation() : inOrderExecInfo->getDeviceCounterAllocation();
 
                 if (alloc->isUsedByOsContext(csr->getOsContext().getContextId())) {
                     csr->downloadAllocation(*alloc);

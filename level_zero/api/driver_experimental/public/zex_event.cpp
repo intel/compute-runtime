@@ -7,6 +7,7 @@
 
 #include "level_zero/api/driver_experimental/public/zex_event.h"
 
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -57,7 +58,10 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), castToUint64(deviceAddress), hostAddress, completionValue);
+
     *phEvent = Event::create<uint64_t>(eventDescriptor, desc, device);
+    Event::fromHandle(*phEvent)->updateInOrderExecState(inOrderExecInfo, completionValue, 0);
 
     return ZE_RESULT_SUCCESS;
 }

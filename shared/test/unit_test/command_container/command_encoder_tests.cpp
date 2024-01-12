@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -50,31 +51,50 @@ HWTEST_F(CommandEncoderTests, givenMisalignedSizeWhenProgrammingSurfaceStateForB
     EXPECT_EQ(alignedSize, renderSurfaceState.getWidth());
 }
 
-HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecInfoThenSetupCorrectly) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
+HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingStandaloneInOrderExecInfoThenSetupCorrectly) {
+    MockDevice mockDevice;
 
-    MockMemoryManager memoryManager(mockExecutionEnvironment);
+    uint64_t counterValue = 2;
+    uint64_t *hostAddress = &counterValue;
+    uint64_t gpuAddress = castToUint64(ptrOffset(&counterValue, 64));
+
+    auto inOrderExecInfo = InOrderExecInfo::createFromExternalAllocation(mockDevice, gpuAddress, hostAddress, counterValue);
+
+    EXPECT_EQ(counterValue, inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(hostAddress, inOrderExecInfo->getBaseHostAddress());
+    EXPECT_EQ(gpuAddress, inOrderExecInfo->getBaseDeviceAddress());
+    EXPECT_EQ(nullptr, inOrderExecInfo->getDeviceCounterAllocation());
+    EXPECT_EQ(nullptr, inOrderExecInfo->getHostCounterAllocation());
+
+    inOrderExecInfo->reset();
+
+    EXPECT_EQ(0u, inOrderExecInfo->getCounterValue());
+}
+
+HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecInfoThenSetupCorrectly) {
+    MockDevice mockDevice;
+
+    auto &memoryManager = *mockDevice.getMemoryManager();
     uint64_t storage1[2] = {1, 1};
     uint64_t storage2[2] = {1, 1};
 
     {
-        auto deviceSyncAllocation = new MockGraphicsAllocation(&storage1, sizeof(storage1));
+        auto inOrderExecInfo = InOrderExecInfo::create(mockDevice, 2, false, false, false);
 
-        InOrderExecInfo inOrderExecInfo(*deviceSyncAllocation, nullptr, memoryManager, 2, false, false);
-        EXPECT_EQ(inOrderExecInfo.getDeviceCounterAllocation().getUnderlyingBuffer(), inOrderExecInfo.getBaseHostAddress());
-        EXPECT_EQ(nullptr, inOrderExecInfo.getHostCounterAllocation());
-        EXPECT_FALSE(inOrderExecInfo.isHostStorageDuplicated());
-        EXPECT_FALSE(inOrderExecInfo.isRegularCmdList());
-        EXPECT_FALSE(inOrderExecInfo.isAtomicDeviceSignalling());
-        EXPECT_EQ(2u, inOrderExecInfo.getNumDevicePartitionsToWait());
-        EXPECT_EQ(2u, inOrderExecInfo.getNumHostPartitionsToWait());
-        EXPECT_EQ(0u, InOrderPatchCommandHelpers::getAppendCounterValue(inOrderExecInfo));
+        EXPECT_EQ(inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer(), inOrderExecInfo->getBaseHostAddress());
+        EXPECT_EQ(nullptr, inOrderExecInfo->getHostCounterAllocation());
+        EXPECT_FALSE(inOrderExecInfo->isHostStorageDuplicated());
+        EXPECT_FALSE(inOrderExecInfo->isRegularCmdList());
+        EXPECT_FALSE(inOrderExecInfo->isAtomicDeviceSignalling());
+        EXPECT_EQ(2u, inOrderExecInfo->getNumDevicePartitionsToWait());
+        EXPECT_EQ(2u, inOrderExecInfo->getNumHostPartitionsToWait());
+        EXPECT_EQ(0u, InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo));
     }
 
     {
         auto deviceSyncAllocation = new MockGraphicsAllocation(&storage1, sizeof(storage1));
 
-        InOrderExecInfo inOrderExecInfo(*deviceSyncAllocation, nullptr, memoryManager, 2, true, true);
+        InOrderExecInfo inOrderExecInfo(deviceSyncAllocation, nullptr, memoryManager, 2, true, true);
         EXPECT_TRUE(inOrderExecInfo.isRegularCmdList());
         EXPECT_TRUE(inOrderExecInfo.isAtomicDeviceSignalling());
         EXPECT_EQ(1u, inOrderExecInfo.getNumDevicePartitionsToWait());
@@ -82,20 +102,20 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
     }
 
     {
-        auto deviceSyncAllocation = new MockGraphicsAllocation(&storage1, sizeof(storage1));
-        auto hostSyncAllocation = new MockGraphicsAllocation(&storage2, sizeof(storage2));
-        InOrderExecInfo inOrderExecInfo(*deviceSyncAllocation, hostSyncAllocation, memoryManager, 1, false, false);
-        EXPECT_NE(inOrderExecInfo.getDeviceCounterAllocation().getUnderlyingBuffer(), inOrderExecInfo.getBaseHostAddress());
-        EXPECT_EQ(inOrderExecInfo.getHostCounterAllocation()->getUnderlyingBuffer(), inOrderExecInfo.getBaseHostAddress());
-        EXPECT_EQ(hostSyncAllocation, inOrderExecInfo.getHostCounterAllocation());
-        EXPECT_TRUE(inOrderExecInfo.isHostStorageDuplicated());
+        auto inOrderExecInfo = InOrderExecInfo::create(mockDevice, 2, false, false, true);
+
+        EXPECT_NE(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
+
+        EXPECT_NE(inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer(), inOrderExecInfo->getBaseHostAddress());
+        EXPECT_EQ(inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer(), inOrderExecInfo->getBaseHostAddress());
+        EXPECT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
     }
 
     {
         auto deviceSyncAllocation = new MockGraphicsAllocation(&storage1, sizeof(storage1));
         auto hostSyncAllocation = new MockGraphicsAllocation(&storage2, sizeof(storage2));
-        InOrderExecInfo inOrderExecInfo(*deviceSyncAllocation, hostSyncAllocation, memoryManager, 1, false, false);
-        auto deviceAllocHostAddress = reinterpret_cast<uint64_t *>(inOrderExecInfo.getDeviceCounterAllocation().getUnderlyingBuffer());
+        InOrderExecInfo inOrderExecInfo(deviceSyncAllocation, hostSyncAllocation, memoryManager, 1, false, false);
+        auto deviceAllocHostAddress = reinterpret_cast<uint64_t *>(inOrderExecInfo.getDeviceCounterAllocation()->getUnderlyingBuffer());
         EXPECT_EQ(0u, inOrderExecInfo.getCounterValue());
         EXPECT_EQ(0u, inOrderExecInfo.getRegularCmdListSubmissionCounter());
         EXPECT_EQ(0u, inOrderExecInfo.getAllocationOffset());
@@ -124,7 +144,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
     {
         auto deviceSyncAllocation = new MockGraphicsAllocation(&storage1, sizeof(storage1));
 
-        InOrderExecInfo inOrderExecInfo(*deviceSyncAllocation, nullptr, memoryManager, 2, true, false);
+        InOrderExecInfo inOrderExecInfo(deviceSyncAllocation, nullptr, memoryManager, 2, true, false);
 
         EXPECT_EQ(0u, InOrderPatchCommandHelpers::getAppendCounterValue(inOrderExecInfo));
         inOrderExecInfo.addCounterValue(2);
@@ -145,7 +165,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValu
 
     auto deviceSyncAllocation = new MockGraphicsAllocation(&storage1, sizeof(storage1));
 
-    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(*deviceSyncAllocation, nullptr, memoryManager, 2, true, false);
+    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(deviceSyncAllocation, nullptr, memoryManager, 2, true, false);
     inOrderExecInfo->addCounterValue(1);
 
     {
@@ -212,7 +232,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingWalkerThenSetCorre
 
     auto deviceSyncAllocation = new MockGraphicsAllocation(&storage1, sizeof(storage1));
 
-    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(*deviceSyncAllocation, nullptr, memoryManager, 2, false, false);
+    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(deviceSyncAllocation, nullptr, memoryManager, 2, false, false);
 
     auto cmd = FamilyType::cmdInitGpgpuWalker;
 

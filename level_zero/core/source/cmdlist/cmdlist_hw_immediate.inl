@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1297,10 +1297,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     waitStartTime = lastHangCheckTime;
 
     do {
-        if (inOrderExecInfo->isHostStorageDuplicated()) {
+        if (inOrderExecInfo->getHostCounterAllocation()) {
             this->csr->downloadAllocation(*inOrderExecInfo->getHostCounterAllocation());
         } else {
-            this->csr->downloadAllocation(inOrderExecInfo->getDeviceCounterAllocation());
+            UNRECOVERABLE_IF(!inOrderExecInfo->getDeviceCounterAllocation());
+            this->csr->downloadAllocation(*inOrderExecInfo->getDeviceCounterAllocation());
         }
 
         bool signaled = true;

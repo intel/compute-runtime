@@ -464,7 +464,7 @@ void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walke
     postSync.setDataportPipelineFlush(true);
     postSync.setDataportSubsliceCacheFlush(true);
 
-    uint64_t gpuVa = args.inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress() + args.inOrderExecInfo->getAllocationOffset();
+    uint64_t gpuVa = args.inOrderExecInfo->getBaseDeviceAddress() + args.inOrderExecInfo->getAllocationOffset();
 
     UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
 

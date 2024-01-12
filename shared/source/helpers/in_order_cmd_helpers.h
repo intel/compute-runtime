@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 namespace NEO {
 class GraphicsAllocation;
 class MemoryManager;
+class Device;
 
 class InOrderExecInfo : public NEO::NonCopyableClass {
   public:
@@ -24,11 +25,15 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     InOrderExecInfo() = delete;
 
-    InOrderExecInfo(NEO::GraphicsAllocation &deviceCounterAllocation, NEO::GraphicsAllocation *hostCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
+    static std::shared_ptr<InOrderExecInfo> create(NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling, bool duplicatedHostStorage);
+    static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, uint64_t deviceAddress, uint64_t *hostAddress, uint64_t counterValue);
 
-    NEO::GraphicsAllocation &getDeviceCounterAllocation() const { return deviceCounterAllocation; }
+    InOrderExecInfo(NEO::GraphicsAllocation *deviceCounterAllocation, NEO::GraphicsAllocation *hostCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
+
+    NEO::GraphicsAllocation *getDeviceCounterAllocation() const { return deviceCounterAllocation; }
     NEO::GraphicsAllocation *getHostCounterAllocation() const { return hostCounterAllocation; }
     uint64_t *getBaseHostAddress() const { return hostAddress; }
+    uint64_t getBaseDeviceAddress() const { return deviceAddress; }
 
     uint64_t getCounterValue() const { return counterValue; }
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
@@ -50,11 +55,12 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     void reset();
 
   protected:
-    NEO::GraphicsAllocation &deviceCounterAllocation;
     NEO::MemoryManager &memoryManager;
+    NEO::GraphicsAllocation *deviceCounterAllocation = nullptr;
     NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
     uint64_t counterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
+    uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;
     uint32_t numDevicePartitionsToWait = 0;
     uint32_t numHostPartitionsToWait = 0;

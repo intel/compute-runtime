@@ -171,14 +171,14 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
         inOrderExecInfo->addAllocationOffset(offset);
 
-        UNRECOVERABLE_IF(inOrderExecInfo->getAllocationOffset() + offset >= inOrderExecInfo->getDeviceCounterAllocation().getUnderlyingBufferSize());
+        UNRECOVERABLE_IF(inOrderExecInfo->getAllocationOffset() + offset >= inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBufferSize());
 
         CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr); // signal counter on new offset
     }
 
     inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
 
-    this->commandContainer.addToResidencyContainer(&inOrderExecInfo->getDeviceCounterAllocation());
+    this->commandContainer.addToResidencyContainer(inOrderExecInfo->getDeviceCounterAllocation());
     this->commandContainer.addToResidencyContainer(inOrderExecInfo->getHostCounterAllocation());
 
     if (signalEvent) {
@@ -2415,11 +2415,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 
     UNRECOVERABLE_IF(waitValue > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) && !isQwordInOrderCounter());
 
-    auto &dependencyCounterAllocation = inOrderExecInfo->getDeviceCounterAllocation();
+    commandContainer.addToResidencyContainer(inOrderExecInfo->getDeviceCounterAllocation());
 
-    commandContainer.addToResidencyContainer(&dependencyCounterAllocation);
-
-    uint64_t gpuAddress = dependencyCounterAllocation.getGpuAddress() + offset;
+    uint64_t gpuAddress = inOrderExecInfo->getBaseDeviceAddress() + offset;
 
     for (uint32_t i = 0; i < inOrderExecInfo->getNumDevicePartitionsToWait(); i++) {
         if (relaxedOrderingAllowed) {
@@ -2458,8 +2456,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(const Event &event) const {
     if (isInOrderExecutionEnabled()) {
-        return ((isImmediateType() && event.getLatestUsedCmdQueue() == this->cmdQImmediate) ||                                       // 1. Immediate CmdList can skip "regular Events" from the same CmdList
-                (event.isCounterBased() && event.getInOrderExecDataAllocation() == &inOrderExecInfo->getDeviceCounterAllocation())); // 2. Both Immediate and Regular CmdLists can skip "CounterBased Events" from the same CmdList
+        return ((isImmediateType() && event.getLatestUsedCmdQueue() == this->cmdQImmediate) ||                                      // 1. Immediate CmdList can skip "regular Events" from the same CmdList
+                (event.isCounterBased() && event.getInOrderExecDataAllocation() == inOrderExecInfo->getDeviceCounterAllocation())); // 2. Both Immediate and Regular CmdLists can skip "CounterBased Events" from the same CmdList
     }
 
     return false;
@@ -2571,7 +2569,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSdiInOrderCounterSignalling(uin
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(Event *signalEvent) {
-    uint64_t deviceAllocGpuVa = inOrderExecInfo->getDeviceCounterAllocation().getGpuAddress();
+    uint64_t deviceAllocGpuVa = inOrderExecInfo->getBaseDeviceAddress();
     uint64_t signalValue = inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
 
     auto cmdStream = commandContainer.getCommandStream();
