@@ -91,13 +91,14 @@ TEST_F(OsContextWinTest, givenWddm23ThenDirectSubmissionIsNotSupported) {
     EXPECT_FALSE(osContext->isDirectSubmissionSupported());
 }
 
-TEST_F(OsContextWinTest, givenWddmOnLinuxThenDirectSubmissionIsNotSupported) {
+TEST_F(OsContextWinTest, givenWddmOnLinuxThenDirectSubmissionIsSupported) {
     struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
         using RootDeviceEnvironment::isWddmOnLinuxEnable;
     };
     static_cast<MockRootDeviceEnvironment *>(this->rootDeviceEnvironment)->isWddmOnLinuxEnable = true;
+    auto &productHelper = this->rootDeviceEnvironment->getHelper<ProductHelper>();
     osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
-    EXPECT_FALSE(osContext->isDirectSubmissionSupported());
+    EXPECT_EQ(productHelper.isDirectSubmissionSupported(this->rootDeviceEnvironment->getReleaseHelper()), osContext->isDirectSubmissionSupported());
 }
 
 TEST_F(OsContextWinTest, givenWddmWhenReinitializeCalledThenHwQueueDestroyCalled) {
