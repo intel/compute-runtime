@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -222,6 +222,10 @@ bool Device::createDeviceImpl() {
         getGmmHelper()->forceAllResourcesUncached();
     }
 
+    getRootDeviceEnvironmentRef().initOsTime();
+
+    initializeCaps();
+
     if (!createEngines()) {
         return false;
     }
@@ -243,10 +247,6 @@ bool Device::createDeviceImpl() {
         }
     }
     executionEnvironment->memoryManager->setDefaultEngineIndex(getRootDeviceIndex(), defaultEngineIndexWithinMemoryManager);
-
-    getRootDeviceEnvironmentRef().initOsTime();
-
-    initializeCaps();
 
     if (getRootDeviceEnvironment().osInterface) {
         if (hwInfo.capabilityTable.instrumentationEnabled) {

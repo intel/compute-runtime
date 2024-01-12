@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,6 +110,48 @@ TEST(Device, givenDeviceWithoutBrandingStringNameWhenGettingDeviceNameThenGeneri
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
     EXPECT_STREQ("Intel(R) Graphics [0x01ab]", device->getDeviceName().c_str());
+}
+
+TEST(Device, WhenCreatingDeviceThenCapsInitilizedBeforeEnginesAreCreated) {
+
+    class CapsInitMockDevice : public RootDevice {
+      public:
+        using Device::createDeviceImpl;
+        using RootDevice::RootDevice;
+
+        void initializeCaps() override {
+            capsInitialized = true;
+            return Device::initializeCaps();
+        }
+
+        bool createEngines() override {
+            capsInitializedWhenCreatingEngines = capsInitialized;
+            return RootDevice::createEngines();
+        }
+
+        bool capsInitialized = false;
+        bool capsInitializedWhenCreatingEngines = false;
+    };
+
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.capabilityTable.deviceName = "";
+    hwInfo.platform.usDeviceID = 0x1AB;
+
+    auto executionEnvironment = new ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+    executionEnvironment->setDeviceHierarchy(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
+    executionEnvironment->calculateMaxOsContextCount();
+    executionEnvironment->initializeMemoryManager();
+
+    auto device = std::make_unique<CapsInitMockDevice>(executionEnvironment, 0);
+    device->createDeviceImpl();
+
+    EXPECT_TRUE(device->capsInitializedWhenCreatingEngines);
 }
 
 using DeviceTest = Test<DeviceFixture>;
