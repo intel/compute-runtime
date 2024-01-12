@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -506,7 +506,7 @@ ze_result_t EventImp<TagSizeT>::reset() {
         hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    unsetCmdQueue();
+    latestUsedCmdQueue = nullptr;
     this->resetCompletionStatus();
     this->resetDeviceCompletionData(false);
     this->l3FlushAppliedOnKernel.reset();
