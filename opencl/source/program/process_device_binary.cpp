@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -193,6 +193,7 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
             this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = singleDeviceBinarySize;
 
             this->isGeneratedByIgc = singleDeviceBinary.generator == GeneratorType::igc;
+            this->indirectDetectionVersion = singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection;
 
         } else {
             return CL_INVALID_BINARY;
@@ -286,6 +287,8 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
 
         kernelInfo->apply(deviceInfoConstants);
     }
+
+    indirectDetectionVersion = src.indirectDetectionVersion;
 
     return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalConstants.size, src.globalVariables.initData,
                       src.globalVariables.size, src.globalStrings, src.externalFunctions);

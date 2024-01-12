@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,6 +80,10 @@ struct SingleDeviceBinary {
     ConstStringRef buildOptions;
     TargetDevice targetDevice;
     GeneratorType generator = GeneratorType::igc;
+    struct GeneratorFeatureVersions {
+        using VersionT = uint32_t;
+        VersionT indirectMemoryAccessDetection = 0u;
+    } generatorFeatureVersions;
 };
 
 template <DeviceBinaryFormat format>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,6 +46,7 @@ struct ProgramInfo {
     std::vector<KernelInfo *> kernelInfos;
     uint32_t grfSize = 32U;
     uint32_t minScratchSpaceSize = 0U;
+    uint32_t indirectDetectionVersion = 0U;
     size_t kernelMiscInfoPos = std::string::npos;
 };
 

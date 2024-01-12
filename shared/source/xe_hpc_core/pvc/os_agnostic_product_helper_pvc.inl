@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -202,10 +202,11 @@ bool ProductHelperHw<gfxProduct>::isStatefulAddressingModeSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled) const {
+bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t kernelIndirectDetectionVersion) const {
     const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::zebin;
     const bool isCMKernelHeuristic = kernelDescriptor.kernelAttributes.simdSize == 1;
-    return !isPrecompiled && isZebin && !isCMKernelHeuristic;
+    const bool indirectDetectionValid = !isPrecompiled;
+    return isZebin && indirectDetectionValid && !isCMKernelHeuristic;
 }
 
 template <>

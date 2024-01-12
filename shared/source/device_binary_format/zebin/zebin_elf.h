@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,8 @@ enum IntelGTSectionType : uint32_t {
     zebinVersion = 4,
     vISAAbiVersion = 5, // for debugger only
     productConfig = 6,
-    lastSupported = productConfig
+    indirectAccessDetectionVersion = 7,
+    lastSupported = indirectAccessDetectionVersion
 };
 struct IntelGTNote {
     IntelGTSectionType type;

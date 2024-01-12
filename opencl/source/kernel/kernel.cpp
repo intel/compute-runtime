@@ -286,7 +286,8 @@ cl_int Kernel::initialize() {
     slmSizes.resize(numArgs);
 
     this->setInlineSamplers();
-    bool detectIndirectAccessInKernel = productHelper.isDetectIndirectAccessInKernelSupported(kernelDescriptor, program->getCreatedFromBinary());
+
+    bool detectIndirectAccessInKernel = productHelper.isDetectIndirectAccessInKernelSupported(kernelDescriptor, program->getCreatedFromBinary(), program->getIndirectDetectionVersion());
     if (debugManager.flags.DetectIndirectAccessInKernel.get() != -1) {
         detectIndirectAccessInKernel = debugManager.flags.DetectIndirectAccessInKernel.get() == 1;
     }

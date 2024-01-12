@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
 
     bool validForTarget = true;
     if (elf.elfFileHeader->machine == Elf::ElfMachine::EM_INTELGT) {
-        validForTarget &= Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning, ret.generator);
+        validForTarget &= Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning, ret);
     } else {
         const auto &flags = reinterpret_cast<const NEO::Zebin::Elf::ZebinTargetFlags &>(elf.elfFileHeader->flags);
         validForTarget &= flags.machineEntryUsesGfxCoreInsteadOfProductFamily
@@ -116,12 +116,13 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
 
     dst.grfSize = src.targetDevice.grfSize;
     dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
+    dst.indirectDetectionVersion = src.generatorFeatureVersions.indirectMemoryAccessDetection;
     auto decodeError = NEO::Zebin::decodeZebin<numBits>(dst, elf, outErrReason, outWarning);
     if (DecodeError::success != decodeError) {
         return decodeError;
     }
 
-    bool isGeneratedByIgc = src.generator == GeneratorType::igc;
+    const bool isGeneratedByIgc = src.generator == GeneratorType::igc;
 
     for (auto &kernelInfo : dst.kernelInfos) {
         kernelInfo->kernelDescriptor.kernelMetadata.isGeneratedByIgc = isGeneratedByIgc;

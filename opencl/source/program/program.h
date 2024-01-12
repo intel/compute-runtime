@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -246,6 +246,7 @@ class Program : public BaseObject<_cl_program> {
     static cl_int processInputDevices(ClDeviceVector *&deviceVectorPtr, cl_uint numDevices, const cl_device_id *deviceList, const ClDeviceVector &allAvailableDevices);
     MOCKABLE_VIRTUAL std::string getInternalOptions() const;
     uint32_t getMaxRootDeviceIndex() const { return maxRootDeviceIndex; }
+    uint32_t getIndirectDetectionVersion() const { return indirectDetectionVersion; }
     void retainForKernel() {
         std::unique_lock<std::mutex> lock{lockMutex};
         exposedKernels++;
@@ -370,6 +371,7 @@ class Program : public BaseObject<_cl_program> {
     ClDeviceVector clDevices;
     ClDeviceVector clDevicesInProgram;
 
+    uint32_t indirectDetectionVersion = 0u;
     bool isBuiltIn = false;
     bool isGeneratedByIgc = true;
 

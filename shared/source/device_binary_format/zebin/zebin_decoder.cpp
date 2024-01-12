@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,10 +75,10 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierCl
     return true;
 }
 
-template bool validateTargetDevice<Elf::EI_CLASS_32>(const Elf::Elf<Elf::EI_CLASS_32> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorType &generatorType);
-template bool validateTargetDevice<Elf::EI_CLASS_64>(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorType &generatorType);
+template bool validateTargetDevice<Elf::EI_CLASS_32>(const Elf::Elf<Elf::EI_CLASS_32> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, SingleDeviceBinary &singleDeviceBinary);
+template bool validateTargetDevice<Elf::EI_CLASS_64>(const Elf::Elf<Elf::EI_CLASS_64> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, SingleDeviceBinary &singleDeviceBinary);
 template <Elf::ElfIdentifierClass numBits>
-bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, GeneratorType &generatorType) {
+bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targetDevice, std::string &outErrReason, std::string &outWarning, SingleDeviceBinary &singleDeviceBinary) {
     GFXCORE_FAMILY gfxCore = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
     AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
@@ -106,7 +106,7 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
             auto targetMetadataPacked = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
             targetMetadata.packed = static_cast<uint32_t>(*targetMetadataPacked);
-            generatorType = static_cast<GeneratorType>(targetMetadata.generatorId);
+            singleDeviceBinary.generator = static_cast<GeneratorType>(targetMetadata.generatorId);
             break;
         }
         case Elf::IntelGTSectionType::zebinVersion: {
@@ -133,6 +133,12 @@ bool validateTargetDevice(const Elf::Elf<numBits> &elf, const TargetDevice &targ
             break;
         }
         case Elf::IntelGTSectionType::vISAAbiVersion: {
+            break;
+        }
+        case Elf::IntelGTSectionType::indirectAccessDetectionVersion: {
+            DEBUG_BREAK_IF(sizeof(uint32_t) != intelGTNote.data.size());
+            auto indirectDetectionVersion = reinterpret_cast<const uint32_t *>(intelGTNote.data.begin());
+            singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection = static_cast<uint32_t>(*indirectDetectionVersion);
             break;
         }
         default:
