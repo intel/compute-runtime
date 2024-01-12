@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,8 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenI915PrelimVersionWhenSysmanKmdInterfa
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetHwmonNameThenEmptyNameIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    EXPECT_STREQ("", pSysmanKmdInterface->getHwmonName(0, true).c_str());
+    EXPECT_STREQ("i915_gt0", pSysmanKmdInterface->getHwmonName(0, true).c_str());
+    EXPECT_STREQ("i915", pSysmanKmdInterface->getHwmonName(0, false).c_str());
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEngineBasePathThenEmptyPathIsReturned) {

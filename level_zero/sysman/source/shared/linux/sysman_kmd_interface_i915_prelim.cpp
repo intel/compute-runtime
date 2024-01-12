@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ int64_t SysmanKmdInterfaceI915Prelim::getEngineActivityFd(zes_engine_group_t eng
 }
 
 std::string SysmanKmdInterfaceI915Prelim::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
-    return "";
+    return getHwmonNameI915(subDeviceId, isSubdevice);
 }
 
 std::string SysmanKmdInterfaceI915Prelim::getEngineBasePath(uint32_t subDeviceId) const {
