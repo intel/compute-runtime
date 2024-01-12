@@ -2641,6 +2641,11 @@ struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
         passedSurfaceStateOffset = surfaceStateOffset;
     }
 
+    void copyImplicitArgsSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) override {
+        passedImplicitArgsSurfaceStateHeap = surfaceStateHeap;
+        passedImplicitArgsSurfaceStateOffset = surfaceStateOffset;
+    }
+
     void copyRedescribedSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) override {
         passedRedescribedSurfaceStateHeap = surfaceStateHeap;
         passedRedescribedSurfaceStateOffset = surfaceStateOffset;
@@ -2648,6 +2653,9 @@ struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
 
     void *passedSurfaceStateHeap = nullptr;
     uint32_t passedSurfaceStateOffset = 0;
+
+    void *passedImplicitArgsSurfaceStateHeap = nullptr;
+    uint32_t passedImplicitArgsSurfaceStateOffset = 0;
 
     void *passedRedescribedSurfaceStateHeap = nullptr;
     uint32_t passedRedescribedSurfaceStateOffset = 0;
@@ -2741,6 +2749,39 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgIma
     EXPECT_EQ(nullptr, bindlessInfo.heapAllocation);
 }
 
+HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopyImplicitArgsSurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
+    createKernel();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
+                                                                                                                             neoDevice->getRootDeviceIndex(),
+                                                                                                                             neoDevice->getDeviceBitfield());
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    auto imageHW = std::make_unique<MyMockImage<gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    auto handle = imageHW->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+    auto expectedSsInHeap = imageHW->getAllocation()->getBindlessInfo();
+    EXPECT_EQ(imageHW->passedImplicitArgsSurfaceStateHeap, ptrOffset(expectedSsInHeap.ssPtr, surfaceStateSize));
+    EXPECT_EQ(imageHW->passedImplicitArgsSurfaceStateOffset, 0u);
+    EXPECT_TRUE(kernel->isBindlessOffsetSet[3]);
+    EXPECT_FALSE(kernel->usingSurfaceStateHeap[3]);
+}
+
 HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetArgRedescribedImageCalledThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
     createKernel();
 
@@ -2768,7 +2809,7 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
 
     auto expectedSsInHeap = imageHW->getAllocation()->getBindlessInfo();
-    EXPECT_EQ(imageHW->passedRedescribedSurfaceStateHeap, ptrOffset(expectedSsInHeap.ssPtr, surfaceStateSize));
+    EXPECT_EQ(imageHW->passedRedescribedSurfaceStateHeap, ptrOffset(expectedSsInHeap.ssPtr, surfaceStateSize * 2));
     EXPECT_EQ(imageHW->passedRedescribedSurfaceStateOffset, 0u);
     EXPECT_TRUE(kernel->isBindlessOffsetSet[3]);
     EXPECT_FALSE(kernel->usingSurfaceStateHeap[3]);

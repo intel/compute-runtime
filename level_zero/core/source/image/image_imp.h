@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
     ~ImageImp() override;
 
     NEO::GraphicsAllocation *getAllocation() override { return allocation; }
+    NEO::GraphicsAllocation *getImplicitArgsAllocation() override { return implicitArgsAllocation; }
     NEO::ImageInfo getImageInfo() override { return imgInfo; }
     ze_image_desc_t getImageDesc() override {
         return imageFormatDesc;
@@ -52,6 +53,7 @@ struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
     Device *device = nullptr;
     NEO::ImageInfo imgInfo = {};
     NEO::GraphicsAllocation *allocation = nullptr;
+    NEO::GraphicsAllocation *implicitArgsAllocation = nullptr;
     ze_image_desc_t imageFormatDesc = {};
     std::optional<ze_image_desc_t> sourceImageFormatDesc = {};
     std::unique_ptr<NEO::SurfaceStateInHeapInfo> bindlessInfo;

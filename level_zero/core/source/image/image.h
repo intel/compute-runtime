@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,10 +36,12 @@ struct Image : _ze_image_handle_t {
     virtual ze_result_t createView(Device *device, const ze_image_desc_t *desc, ze_image_handle_t *pImage) = 0;
 
     virtual NEO::GraphicsAllocation *getAllocation() = 0;
+    virtual NEO::GraphicsAllocation *getImplicitArgsAllocation() = 0;
     virtual void copySurfaceStateToSSH(void *surfaceStateHeap,
                                        const uint32_t surfaceStateOffset,
                                        bool isMediaBlockArg) = 0;
     virtual void copyRedescribedSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) = 0;
+    virtual void copyImplicitArgsSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) = 0;
     virtual NEO::ImageInfo getImageInfo() = 0;
     virtual ze_image_desc_t getImageDesc() = 0;
     virtual ze_result_t getMemoryProperties(ze_image_memory_properties_exp_t *pMemoryProperties) = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1050,7 +1050,7 @@ bool MemoryManager::allocateBindlessSlot(GraphicsAllocation *allocation) {
     if (bindlessHelper && allocation->getBindlessOffset() == std::numeric_limits<uint64_t>::max()) {
         auto &gfxCoreHelper = peekExecutionEnvironment().rootDeviceEnvironments[allocation->getRootDeviceIndex()]->getHelper<GfxCoreHelper>();
         const auto isImage = allocation->getAllocationType() == AllocationType::image || allocation->getAllocationType() == AllocationType::sharedImage;
-        auto surfStateCount = isImage ? 2 : 1;
+        auto surfStateCount = isImage ? 3 : 1;
         auto surfaceStateSize = surfStateCount * gfxCoreHelper.getRenderSurfaceStateSize();
 
         auto surfaceStateInfo = bindlessHelper->allocateSSInHeap(surfaceStateSize, allocation, NEO::BindlessHeapsHelper::globalSsh);

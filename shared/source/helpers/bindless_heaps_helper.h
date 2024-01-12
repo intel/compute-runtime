@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ class BindlessHeapsHelper {
 
     int getReusedSshVectorIndex(size_t ssSize) {
         int index = 0;
-        if (ssSize == 2 * surfaceStateSize) {
+        if (ssSize == 3 * surfaceStateSize) {
             index = 1;
         } else {
             UNRECOVERABLE_IF(ssSize != surfaceStateSize);

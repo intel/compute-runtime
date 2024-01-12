@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
+
+#include "third_party/opencl_headers/CL/cl_ext.h"
 
 namespace NEO {
 enum SurfaceFormat : unsigned short {
@@ -241,6 +243,27 @@ struct ImageInfo {
     bool linearStorage;
     bool useLocalMemory;
 };
+
+struct ImageImplicitArgs {
+    const uint8_t structSize = sizeof(ImageImplicitArgs);
+    uint8_t structVersion;
+    uint64_t imageWidth;
+    uint64_t imageHeight;
+    uint64_t imageDepth;
+    uint64_t imageArraySize;
+    uint32_t numSamples;
+    cl_channel_type channelType;
+    cl_channel_order channelOrder;
+    uint32_t numMipLevels;
+    uint64_t flatBaseOffset;
+    uint64_t flatWidth;
+    uint64_t flagHeight;
+    uint64_t flatPitch;
+
+    static constexpr uint8_t getSize() { return sizeof(ImageImplicitArgs); }
+};
+
+static_assert(ImageImplicitArgs::getSize() == 88);
 
 struct McsSurfaceInfo {
     uint32_t pitch;
