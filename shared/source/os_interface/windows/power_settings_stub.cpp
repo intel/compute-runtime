@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,8 @@
 
 namespace NEO {
 
-void Wddm::setProcessPowerThrottling() {
-}
+void Wddm::setProcessPowerThrottling() {}
+
+void Wddm::setThreadPriority() {}
 
 } // namespace NEO

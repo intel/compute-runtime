@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -143,6 +143,12 @@ void setProcessPowerThrottlingState(ProcessPowerThrottlingState state) {
 
     prio.StateMask = state == ProcessPowerThrottlingState::Eco ? PROCESS_POWER_THROTTLING_EXECUTION_SPEED : 0;
     SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &prio, sizeof(prio));
+}
+
+void setThreadPriority(ThreadPriority priority) {
+    if (ThreadPriority::AboveNormal == priority) {
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+    }
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {

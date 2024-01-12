@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,8 @@ namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
 extern size_t setProcessPowerThrottlingStateCalled;
 extern SysCalls::ProcessPowerThrottlingState setProcessPowerThrottlingStateLastValue;
+extern size_t setThreadPriorityCalled;
+extern SysCalls::ThreadPriority setThreadPriorityLastValue;
 } // namespace SysCalls
 extern uint32_t numRootDevicesToEnum;
 std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinalIn);
@@ -371,4 +373,32 @@ TEST_F(WddmTestWithMockGdiDll, givenSetProcessPowerThrottlingStateUnsupportedWhe
     SysCalls::setProcessPowerThrottlingStateLastValue = SysCalls::ProcessPowerThrottlingState::Eco;
     wddm->init();
     EXPECT_EQ(0u, SysCalls::setProcessPowerThrottlingStateCalled);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenSetThreadPriorityStateDefaultWhenInitWddmThenThreadPriorityIsNotSet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetThreadPriority.set(-1);
+    SysCalls::setThreadPriorityCalled = 0u;
+    SysCalls::setThreadPriorityLastValue = SysCalls::ThreadPriority::Normal;
+    wddm->init();
+    EXPECT_EQ(0u, SysCalls::setThreadPriorityCalled);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenSetThreadPriorityStateDisabledWhenInitWddmThenThreadPriorityIsNotSet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetThreadPriority.set(0);
+    SysCalls::setThreadPriorityCalled = 0u;
+    SysCalls::setThreadPriorityLastValue = SysCalls::ThreadPriority::Normal;
+    wddm->init();
+    EXPECT_EQ(0u, SysCalls::setThreadPriorityCalled);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenSetThreadPriorityStateEnabledWhenInitWddmThenThreadPriorityIsSet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetThreadPriority.set(1);
+    SysCalls::setThreadPriorityCalled = 0u;
+    SysCalls::setThreadPriorityLastValue = SysCalls::ThreadPriority::Normal;
+    wddm->init();
+    EXPECT_EQ(1u, SysCalls::setThreadPriorityCalled);
+    EXPECT_EQ(SysCalls::ThreadPriority::AboveNormal, SysCalls::setThreadPriorityLastValue);
 }

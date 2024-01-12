@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,6 +95,9 @@ DWORD setFilePointerResult = 0;
 
 size_t setProcessPowerThrottlingStateCalled = 0u;
 ProcessPowerThrottlingState setProcessPowerThrottlingStateLastValue{};
+
+size_t setThreadPriorityCalled = 0u;
+ThreadPriority setThreadPriorityLastValue{};
 
 bool pathExists(const std::string &path) {
     std::string tempP1 = path;
@@ -279,6 +282,11 @@ void coTaskMemFree(LPVOID pv) {
 void setProcessPowerThrottlingState(ProcessPowerThrottlingState state) {
     setProcessPowerThrottlingStateCalled++;
     setProcessPowerThrottlingStateLastValue = state;
+}
+
+void setThreadPriority(ThreadPriority priority) {
+    setThreadPriorityCalled++;
+    setThreadPriorityLastValue = priority;
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {

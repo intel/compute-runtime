@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,11 @@ namespace SysCalls {
 enum class ProcessPowerThrottlingState {
     Eco,
     High
+};
+
+enum class ThreadPriority {
+    Normal,
+    AboveNormal
 };
 
 DWORD getLastError();
@@ -42,6 +47,7 @@ DWORD getFileAttributesA(LPCSTR lpFileName);
 DWORD setFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
 
 void setProcessPowerThrottlingState(ProcessPowerThrottlingState state);
+void setThreadPriority(ThreadPriority priority);
 void coTaskMemFree(LPVOID pv);
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);

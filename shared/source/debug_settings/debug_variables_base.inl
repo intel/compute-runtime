@@ -267,6 +267,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableInOrderRelaxedOrderingForEventsChaining, -
 DECLARE_DEBUG_VARIABLE(int32_t, InOrderAtomicSignallingEnabled, -1, "-1: default, 0: disabled, 1: Use atomic GPU operations in increment the counter. Otherwise use non-atomic commands like SDI.")
 DECLARE_DEBUG_VARIABLE(int32_t, InOrderDuplicatedCounterStorageEnabled, -1, "-1: default, 0: disabled, 1: Allocate additional host storage for signalling")
 DECLARE_DEBUG_VARIABLE(int32_t, SetProcessPowerThrottlingState, -1, "-1: default, 0: Disabled, 1: ECO, 2: HIGH. If set, will override process power throttling state on os context init. Windows only.")
+DECLARE_DEBUG_VARIABLE(int32_t, SetThreadPriority, -1, "-1: default, 0: Disabled, 1: Enabled. If set, will set thread priority to above normal on os context init. Windows only.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCpuCaching, -1, "-1: default, 1: DRM_XE_GEM_CPU_CACHING_WB, 2: DRM_XE_GEM_CPU_CACHING_WC")
 
 /*LOGGING FLAGS*/

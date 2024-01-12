@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,16 @@ void Wddm::setProcessPowerThrottling() {
     }
     if (doSetProcessPowerThrottlingState) {
         SysCalls::setProcessPowerThrottlingState(processPowerThrottlingState);
+    }
+}
+
+void Wddm::setThreadPriority() {
+    bool doSetThreadPriority = false;
+    if (debugManager.flags.SetThreadPriority.get() != -1) {
+        doSetThreadPriority = !!debugManager.flags.SetThreadPriority.get();
+    }
+    if (doSetThreadPriority) {
+        SysCalls::setThreadPriority(SysCalls::ThreadPriority::AboveNormal);
     }
 }
 
