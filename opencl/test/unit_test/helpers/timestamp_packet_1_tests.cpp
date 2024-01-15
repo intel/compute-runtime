@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -639,6 +639,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
     csr.callBaseWaitForCompletionWithTimeout = false;
     *csr.getTagAddress() = 0u;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    cmdQ->waitUntilCompleteReturnValue = WaitStatus::ready;
 
     cl_event clEvent1;
     cl_event clEvent2;
@@ -700,6 +701,45 @@ HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenEnqueueWithEventThen
 
     clReleaseEvent(clEvent1);
     clReleaseEvent(clEvent2);
+    *csr.getTagAddress() = csr.peekTaskCount();
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampWaitEnabledWhenWaitDoesNotReturnReadyThenEventIsReportedAsNotReady) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+    debugManager.flags.EnableTimestampWaitForEvents.set(1);
+    debugManager.flags.EnableTimestampWaitForQueues.set(1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    if (!csr.getDcFlushSupport()) {
+        GTEST_SKIP();
+    }
+    csr.timestampPacketWriteEnabled = true;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    *csr.getTagAddress() = 0u;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    cmdQ->waitUntilCompleteReturnValue = WaitStatus::notReady;
+
+    cl_event clEvent;
+    TimestampPacketContainer *timestampPacketContainer = cmdQ->timestampPacketContainer.get();
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &clEvent);
+    cmdQ->flush();
+
+    EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
+
+    Event &event = static_cast<Event &>(*clEvent);
+    EXPECT_FALSE(event.isCompleted());
+
+    typename FamilyType::TimestampPacketType timestampData[] = {2, 2, 2, 2};
+    for (uint32_t i = 0; i < timestampPacketContainer->peekNodes()[0]->getPacketsUsed(); i++) {
+        timestampPacketContainer->peekNodes()[0]->assignDataToAllTimestamps(i, timestampData);
+    }
+    EXPECT_FALSE(event.isCompleted());
+
+    cmdQ->waitUntilCompleteReturnValue = WaitStatus::ready;
+    EXPECT_TRUE(event.isCompleted());
+
+    clReleaseEvent(clEvent);
     *csr.getTagAddress() = csr.peekTaskCount();
 }
 

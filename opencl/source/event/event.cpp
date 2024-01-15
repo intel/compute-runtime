@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -722,8 +722,20 @@ bool Event::isCompleted() {
 
     Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
 
-    if (cmdQueue->isCompleted(getCompletionStamp(), states) || this->areTimestampsCompleted()) {
+    if (cmdQueue->isCompleted(getCompletionStamp(), states)) {
         gpuStateWaited = true;
+    } else {
+        if (this->areTimestampsCompleted()) {
+            if (cmdQueue->getGpgpuCommandStreamReceiver().getDcFlushSupport()) {
+                // also flush L3 and wait for cmd queue when L3 flush required
+                auto waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), false, true, false);
+                if (waitStatus == WaitStatus::ready) {
+                    this->gpuStateWaited = true;
+                }
+            } else {
+                gpuStateWaited = true;
+            }
+        }
     }
 
     return gpuStateWaited;
