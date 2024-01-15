@@ -422,9 +422,7 @@ void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpu
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
-    if (!hostAddress) {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
+    UNRECOVERABLE_IF(hostAddress == nullptr);
 
     if (isEventTimestampFlagSet()) {
         return hostEventSetValueTimestamps(eventVal);
