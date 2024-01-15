@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -7390,4 +7391,82 @@ TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocating48bResou
     EXPECT_LT(sharedUSM->getGpuAddress(), maxNBitValue(48));
     EXPECT_EQ(sharedUSM->getReservedAddressPtr(), nullptr);
     memoryManager->freeGraphicsMemory(sharedUSM);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingResourceInHeapExtendedThenSpecificBitIsToggled) {
+    if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
+        GTEST_SKIP();
+    }
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->initHeap(HeapIndex::heapExtended, maxNBitValue(56) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
+    memoryManager->gfxPartitions[1] = std::move(mockGfxPartition);
+
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+    drm.memoryInfo.reset(new MemoryInfo(regionInfo, drm));
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+    memoryManager->localMemorySupported[rootDeviceIndex] = true;
+
+    mock->ioctlExpected.gemCreateExt = 3;
+    mock->ioctlExpected.gemWait = 3;
+    mock->ioctlExpected.gemClose = 3;
+
+    DebugManagerStateRestore restorer;
+    EXPECT_EQ(4u, static_cast<uint32_t>(AllocationType::constantSurface));
+    EXPECT_EQ(7u, static_cast<uint32_t>(AllocationType::globalSurface));
+    debugManager.flags.ToggleBitIn57GpuVa.set("4:55,7:32");
+
+    auto size = MemoryConstants::kiloByte;
+
+    auto status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.size = size;
+    allocData.type = AllocationType::buffer;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    {
+        allocData.type = AllocationType::buffer;
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+        ASSERT_NE(nullptr, allocation);
+
+        auto gpuVA = allocation->getGpuAddress();
+
+        EXPECT_TRUE(isBitSet(gpuVA, 56));
+        EXPECT_FALSE(isBitSet(gpuVA, 55));
+        EXPECT_TRUE(isBitSet(gpuVA, 32));
+
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+    {
+        allocData.type = AllocationType::constantSurface;
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+        ASSERT_NE(nullptr, allocation);
+
+        auto gpuVA = allocation->getGpuAddress();
+
+        EXPECT_TRUE(isBitSet(gpuVA, 56));
+        EXPECT_TRUE(isBitSet(gpuVA, 55));
+        EXPECT_TRUE(isBitSet(gpuVA, 32));
+
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+
+    {
+        allocData.type = AllocationType::globalSurface;
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+        ASSERT_NE(nullptr, allocation);
+
+        auto gpuVA = allocation->getGpuAddress();
+
+        EXPECT_TRUE(isBitSet(gpuVA, 56));
+        EXPECT_FALSE(isBitSet(gpuVA, 55));
+        EXPECT_FALSE(isBitSet(gpuVA, 32));
+
+        memoryManager->freeGraphicsMemory(allocation);
+    }
 }

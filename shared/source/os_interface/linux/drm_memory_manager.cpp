@@ -1671,6 +1671,9 @@ AllocationStatus getGpuAddress(const AlignmentSelector &alignmentSelector, HeapA
             alignment.alignment = allocationData.alignment;
         }
         gpuAddress = gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(alignment.heap, sizeAllocated, alignment.alignment));
+        if (alignment.heap == HeapIndex::heapExtended) {
+            gpuAddress = MemoryManager::adjustToggleBitFlagForGpuVa(allocationData.type, gpuAddress);
+        }
         break;
     }
 

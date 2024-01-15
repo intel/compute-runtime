@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/gfx_partition.h"
@@ -15,6 +16,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -870,5 +872,72 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
             }
             memoryManager->freeGraphicsMemory(allocation);
         }
+    }
+}
+
+TEST(MemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingResourceInHeapExtendedThenSpecificBitIsToggled) {
+    if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
+        GTEST_SKIP();
+    }
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(true, true, executionEnvironment);
+
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->initHeap(HeapIndex::heapExtended, maxNBitValue(56) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
+    memoryManager.gfxPartitions[0] = std::move(mockGfxPartition);
+
+    DebugManagerStateRestore restorer;
+    EXPECT_EQ(4u, static_cast<uint32_t>(AllocationType::constantSurface));
+    EXPECT_EQ(7u, static_cast<uint32_t>(AllocationType::globalSurface));
+    debugManager.flags.ToggleBitIn57GpuVa.set("4:55,7:32");
+
+    auto status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.size = static_cast<size_t>(MemoryConstants::kiloByte);
+    allocData.type = AllocationType::buffer;
+    allocData.rootDeviceIndex = mockRootDeviceIndex;
+
+    {
+        allocData.type = AllocationType::buffer;
+        auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+        ASSERT_NE(nullptr, allocation);
+
+        auto gpuVA = allocation->getGpuAddress();
+
+        EXPECT_TRUE(isBitSet(gpuVA, 56));
+        EXPECT_FALSE(isBitSet(gpuVA, 55));
+        EXPECT_TRUE(isBitSet(gpuVA, 32));
+
+        memoryManager.freeGraphicsMemory(allocation);
+    }
+    {
+        allocData.type = AllocationType::constantSurface;
+        auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+        ASSERT_NE(nullptr, allocation);
+
+        auto gpuVA = allocation->getGpuAddress();
+
+        EXPECT_TRUE(isBitSet(gpuVA, 56));
+        EXPECT_TRUE(isBitSet(gpuVA, 55));
+        EXPECT_TRUE(isBitSet(gpuVA, 32));
+
+        memoryManager.freeGraphicsMemory(allocation);
+    }
+
+    {
+        allocData.type = AllocationType::globalSurface;
+        auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+        ASSERT_NE(nullptr, allocation);
+
+        auto gpuVA = allocation->getGpuAddress();
+
+        EXPECT_TRUE(isBitSet(gpuVA, 56));
+        EXPECT_FALSE(isBitSet(gpuVA, 55));
+        EXPECT_FALSE(isBitSet(gpuVA, 32));
+
+        memoryManager.freeGraphicsMemory(allocation);
     }
 }

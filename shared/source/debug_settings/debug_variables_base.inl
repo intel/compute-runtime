@@ -95,6 +95,7 @@ DECLARE_DEBUG_VARIABLE(std::string, InjectApiBuildOptions, std::string("unk"), "
 DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Override device name to provided string; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, OverridePlatformName, std::string("unk"), "Override platform name to provided string; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, WddmResidencyLoggerOutputDirectory, std::string("unk"), "Selects non-default output directory for Wddm Residency logger file")
+DECLARE_DEBUG_VARIABLE(std::string, ToggleBitIn57GpuVa, std::string("unk"), "Toggles specific bit in GPU VA for given allocation type from heap extended. Format <allocation type 1>:<bit number 1>,<allocation type 2>:<bit number 2>")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "Place memory only in selected tiles indicated by bit mask; ignore when -1")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceCompressionDisabledForCompressedBlitCopies, -1, "If compression is required, set AUX_CCS_E, but force CompressionEnable filed; 0 should result in uncompressed read/write; values = -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int64_t, WddmPagingFenceCpuWaitDelayTime, 0, "Amount of microseconds after waitng for paging fence on CPU")

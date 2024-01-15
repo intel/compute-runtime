@@ -19,11 +19,13 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
@@ -1079,4 +1081,29 @@ bool MemoryTransferHelper::transferMemoryToAllocationBanks(const Device &device,
     }
     return true;
 }
+
+uint64_t MemoryManager::adjustToggleBitFlagForGpuVa(AllocationType inputAllocationType, uint64_t gpuAddress) {
+    if (debugManager.flags.ToggleBitIn57GpuVa.get() != "unk") {
+        auto toggleBitIn57GpuVaEntries = StringHelpers::split(debugManager.flags.ToggleBitIn57GpuVa.get(), ",");
+
+        for (const auto &entry : toggleBitIn57GpuVaEntries) {
+            auto subEntries = StringHelpers::split(entry, ":");
+            UNRECOVERABLE_IF(subEntries.size() < 2u);
+            uint32_t allocationType = StringHelpers::toUint32t(subEntries[0]);
+            uint32_t bitNumber = StringHelpers::toUint32t(subEntries[1]);
+
+            UNRECOVERABLE_IF(allocationType >= static_cast<uint32_t>(AllocationType::count));
+            UNRECOVERABLE_IF(bitNumber >= 56);
+            if (allocationType == static_cast<uint32_t>(inputAllocationType)) {
+                if (isBitSet(gpuAddress, bitNumber)) {
+                    gpuAddress &= ~(1ull << bitNumber);
+                } else {
+                    gpuAddress |= 1ull << bitNumber;
+                }
+            }
+        }
+    }
+    return gpuAddress;
+}
+
 } // namespace NEO

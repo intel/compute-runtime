@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,6 +81,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
     using MemoryManager::allRegisteredEngines;
     using MemoryManager::heapAssigners;
+    using MemoryManager::localMemorySupported;
 
     TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment);
     TestedDrmMemoryManager(bool enableLocalMemory,
