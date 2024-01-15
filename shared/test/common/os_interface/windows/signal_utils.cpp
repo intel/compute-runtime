@@ -92,7 +92,6 @@ int setAlarm(bool enableAlarm) {
                 endTime = std::chrono::high_resolution_clock::now();
                 elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
                 if (!abortOnTimeout) {
-                    printf("abort disabled by global tests cleanup\n");
                     return;
                 }
             } while (abortOnTimeout && elapsedTime.count() < alarmTimeInS * 1000);
