@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -256,7 +256,7 @@ HWTEST_F(ImageWidthTest, givenMediaBlockWhenProgrammingWidthInSurfaceStateThenCo
     auto renderSurfaceState = FamilyType::cmdInitRenderSurfaceState;
     {
         surfaceFormatInfo.imageElementSizeInBytes = 1u;
-        constexpr std::array<ImageWidthParams, 6> params = {{
+        static constexpr std::array<ImageWidthParams, 6> params = {{
             {1, 1},
             {2, 1},
             {3, 1},
@@ -268,7 +268,7 @@ HWTEST_F(ImageWidthTest, givenMediaBlockWhenProgrammingWidthInSurfaceStateThenCo
     }
     {
         surfaceFormatInfo.imageElementSizeInBytes = 2u;
-        constexpr std::array<ImageWidthParams, 6> params = {{
+        static constexpr std::array<ImageWidthParams, 6> params = {{
             {1, 1},
             {2, 1},
             {3, 2},
@@ -280,7 +280,7 @@ HWTEST_F(ImageWidthTest, givenMediaBlockWhenProgrammingWidthInSurfaceStateThenCo
     }
     {
         surfaceFormatInfo.imageElementSizeInBytes = 4u;
-        constexpr std::array<ImageWidthParams, 6> params = {{
+        static constexpr std::array<ImageWidthParams, 6> params = {{
             {1, 1},
             {2, 2},
             {3, 3},

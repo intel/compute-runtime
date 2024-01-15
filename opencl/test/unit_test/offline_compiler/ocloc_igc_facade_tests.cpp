@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -115,7 +115,7 @@ TEST_F(OclocIgcFacadeTest, GivenFailingCreationOfIgcDeviceContextWhenPreparingIg
 }
 
 TEST_F(OclocIgcFacadeTest, GivenInvalidIgcDeviceContextWhenPreparingIgcThenFailureIsReported) {
-    constexpr std::array invalidReturnFlags = {
+    static constexpr std::array invalidReturnFlags = {
         &MockOclocIgcFacade::shouldReturnInvalidIgcPlatformHandle,
         &MockOclocIgcFacade::shouldReturnInvalidGTSystemInfoHandle,
         &MockOclocIgcFacade::shouldReturnInvalidIgcFeaturesAndWorkaroundsHandle};

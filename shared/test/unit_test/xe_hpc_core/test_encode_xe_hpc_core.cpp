@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,7 +91,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugVariableSetwhenProgramin
 
     const GraphicsAllocation allocation(0, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
 
-    constexpr std::array<uint32_t, 7> expectedSizes = {{
+    static constexpr std::array<uint32_t, 7> expectedSizes = {{
         MemoryConstants::cacheLineSize - 1,
         MemoryConstants::cacheLineSize,
         MemoryConstants::cacheLineSize + 1,

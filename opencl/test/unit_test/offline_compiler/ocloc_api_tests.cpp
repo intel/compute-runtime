@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -753,7 +753,7 @@ TEST(OclocApiTests, GivenCommandWithoutArgsWhenOclocIsInvokedThenHelpIsPrinted) 
 }
 
 TEST(OclocApiTests, GivenHelpArgumentWhenOclocIsInvokedThenHelpIsPrinted) {
-    constexpr std::array flagsToTest = {"-h", "--help"};
+    static constexpr std::array flagsToTest = {"-h", "--help"};
     for (const auto helpFlag : flagsToTest) {
         const char *argv[] = {
             "ocloc",

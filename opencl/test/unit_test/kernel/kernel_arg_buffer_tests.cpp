@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -558,10 +558,10 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
 
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
-    constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::buffer, false},
-                                                                      {AllocationType::buffer, true},
-                                                                      {AllocationType::bufferHostMemory, false},
-                                                                      {AllocationType::svmGpu, true}}};
+    static constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::buffer, false},
+                                                                             {AllocationType::buffer, true},
+                                                                             {AllocationType::bufferHostMemory, false},
+                                                                             {AllocationType::svmGpu, true}}};
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
@@ -600,10 +600,10 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.EnableStatelessCompression.set(1);
 
-    constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::buffer, false},
-                                                                      {AllocationType::buffer, true},
-                                                                      {AllocationType::bufferHostMemory, false},
-                                                                      {AllocationType::svmGpu, true}}};
+    static constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::buffer, false},
+                                                                             {AllocationType::buffer, true},
+                                                                             {AllocationType::bufferHostMemory, false},
+                                                                             {AllocationType::svmGpu, true}}};
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
