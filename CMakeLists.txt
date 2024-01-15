@@ -158,9 +158,7 @@ add_definitions(
                 -DCL_USE_DEPRECATED_OPENCL_2_2_APIS
 )
 
-if(UNIX)
-  add_definitions(-D__user= -D__packed=)
-endif()
+add_definitions(-D__user= -D__packed=)
 
 set(CMAKE_C_FLAGS_RELEASEINTERNAL "${CMAKE_C_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_RELEASEINTERNAL "${CMAKE_CXX_FLAGS_RELEASE}")
