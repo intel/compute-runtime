@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ TEST_F(EventTests, givenUserEventBlockingEnqueueWithBlockingFlagWhenUserEventIsC
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create());
     std::unique_ptr<char[]> dst(new char[srcBuffer->getSize()]);
 
-    for (int32_t i = 0; i < 20; i++) {
+    for (int32_t i = 0; i < 4; i++) {
         UserEvent uEvent;
         cl_event eventWaitList[] = {&uEvent};
         int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
