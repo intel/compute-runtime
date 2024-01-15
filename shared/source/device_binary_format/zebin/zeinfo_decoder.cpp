@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -786,8 +786,9 @@ void populateKernelSourceAttributes(NEO::KernelDescriptor &dst, const KernelAttr
     appendAttributeIfSet(languageAttributes, AttributeTags::workgroupSizeHint, attributes.workgroupSizeHint);
     appendAttributeIfSet(languageAttributes, AttributeTags::vecTypeHint, attributes.vecTypeHint);
     appendAttributeIfSet(languageAttributes, AttributeTags::invalidKernel, attributes.invalidKernel);
-    dst.kernelAttributes.flags.isInvalid = attributes.invalidKernel.has_value();
 
+    dst.kernelAttributes.flags.isInvalid = attributes.invalidKernel.has_value();
+    dst.kernelAttributes.flags.requiresWorkgroupWalkOrder = attributes.intelReqdWorkgroupWalkOrder.has_value();
     dst.kernelMetadata.requiredSubGroupSize = static_cast<uint8_t>(attributes.intelReqdSubgroupSize.value_or(0U));
 }
 

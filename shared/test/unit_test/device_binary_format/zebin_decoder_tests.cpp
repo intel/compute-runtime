@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2170,6 +2170,21 @@ TEST(PopulateKernelSourceAttributes, GivenInvalidKernelAttributeWhenPopulatingKe
     NEO::Zebin::ZeInfo::populateKernelSourceAttributes(kd, attributes);
     EXPECT_TRUE(kd.kernelAttributes.flags.isInvalid);
     EXPECT_STREQ("invalid_kernel(reason)", kd.kernelMetadata.kernelLanguageAttributes.c_str());
+}
+
+TEST(PopulateKernelSourceAttributes, GivenAttributesWithoutRequiredWalkOrderWhenPopulatingKernelSourceAttributesThenKernelNotRequireWalkOrder) {
+    NEO::KernelDescriptor kd;
+    NEO::Zebin::ZeInfo::KernelAttributesBaseT attributes;
+    NEO::Zebin::ZeInfo::populateKernelSourceAttributes(kd, attributes);
+    EXPECT_FALSE(kd.kernelAttributes.flags.requiresWorkgroupWalkOrder);
+}
+
+TEST(PopulateKernelSourceAttributes, GivenRequiredWalkOrderAttributeWhenPopulatingKernelSourceAttributesThenKernelRequireWalkOrder) {
+    NEO::KernelDescriptor kd;
+    NEO::Zebin::ZeInfo::KernelAttributesBaseT attributes;
+    attributes.intelReqdWorkgroupWalkOrder = {0, 2, 1};
+    NEO::Zebin::ZeInfo::populateKernelSourceAttributes(kd, attributes);
+    EXPECT_TRUE(kd.kernelAttributes.flags.requiresWorkgroupWalkOrder);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenUnknownAttributeWhenPopulatingKernelDescriptorThenErrorIsReturned) {
