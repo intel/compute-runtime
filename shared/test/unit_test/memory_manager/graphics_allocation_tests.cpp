@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,6 +59,20 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenOnly
         EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation.getTaskCount(i));
     }
 }
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenGettingTaskCountForInvalidContextIdThenObjectNotUsedIsReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    for (auto i = 0u; i < MemoryManager::maxOsContextCount; i++) {
+        graphicsAllocation.updateTaskCount(1u, i);
+    }
+    EXPECT_EQ(MockGraphicsAllocation::objectNotUsed, graphicsAllocation.getTaskCount(MemoryManager::maxOsContextCount));
+}
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatingTaskCountForInvalidContextIdThenAbortExecution) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_THROW(graphicsAllocation.updateTaskCount(1u, MemoryManager::maxOsContextCount), std::runtime_error);
+}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountToobjectNotUsedValueThenUnregisterContext) {
     MockGraphicsAllocation graphicsAllocation;
     EXPECT_FALSE(graphicsAllocation.isUsed());

@@ -683,6 +683,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     mock->ioctlCallsCount = 0;
     mock->setBindAvailable();
 
+    executionEnvironment->calculateMaxOsContextCount();
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);

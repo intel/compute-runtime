@@ -1080,6 +1080,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenCCSEngineAndContextGroupSizeEnabl
 
     UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
 
+    MemoryManager::maxOsContextCount++;
+
     deviceFactory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular});
 
     auto defaultEngine = deviceFactory.rootDevices[0]->getDefaultEngine();

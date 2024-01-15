@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,7 +160,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
     bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
     MOCKABLE_VIRTUAL void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId);
-    MOCKABLE_VIRTUAL TaskCountType getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
+    MOCKABLE_VIRTUAL TaskCountType getTaskCount(uint32_t contextId) const {
+        if (contextId >= usageInfos.size()) {
+            return objectNotUsed;
+        }
+
+        return usageInfos[contextId].taskCount;
+    }
     void releaseUsageInOsContext(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
     uint32_t getInspectionId(uint32_t contextId) const { return usageInfos[contextId].inspectionId; }
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }

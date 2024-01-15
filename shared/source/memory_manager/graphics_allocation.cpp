@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,7 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
 GraphicsAllocation::~GraphicsAllocation() = default;
 
 void GraphicsAllocation::updateTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
+    UNRECOVERABLE_IF(contextId >= usageInfos.size());
     if (usageInfos[contextId].taskCount == objectNotUsed) {
         registeredContextsNum++;
     }
