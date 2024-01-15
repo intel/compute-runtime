@@ -100,8 +100,9 @@ uint64_t OsContextWin::getOfflineDumpContextId(uint32_t deviceIndex) const {
 bool OsContextWin::isDirectSubmissionSupported() const {
     auto &rootDeviceEnvironment = wddm.getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto isWSL = rootDeviceEnvironment.isWddmOnLinux();
 
-    return wddm.getWddmVersion() == WddmVersion::wddm20 && productHelper.isDirectSubmissionSupported(rootDeviceEnvironment.getReleaseHelper());
+    return !isWSL && wddm.getWddmVersion() == WddmVersion::wddm20 && productHelper.isDirectSubmissionSupported(rootDeviceEnvironment.getReleaseHelper());
 }
 
 OsContextWin::~OsContextWin() {
