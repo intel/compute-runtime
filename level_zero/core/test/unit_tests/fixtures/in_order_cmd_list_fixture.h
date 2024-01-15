@@ -58,6 +58,35 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         ::Test<ModuleFixture>::TearDown();
     }
 
+    DestroyableZeUniquePtr<FixtureMockEvent> createStandaloneCbEvent() {
+        constexpr uint32_t counterBasedFlags = (ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE);
+
+        constexpr EventDescriptor eventDescriptor = {
+            nullptr,                           // eventPoolAllocation
+            0,                                 // totalEventSize
+            EventPacketsCount::maxKernelSplit, // maxKernelCount
+            0,                                 // maxPacketsCount
+            counterBasedFlags,                 // counterBasedFlags
+            false,                             // timestampPool
+            false,                             // kerneMappedTsPoolFlag
+            false,                             // importedIpcPool
+            false,                             // ipcPool
+        };
+
+        standaloneCbEventStorage.push_back(1);
+
+        uint64_t *hostAddress = &(standaloneCbEventStorage.data()[standaloneCbEventStorage.size() - 1]);
+        uint64_t *deviceAddress = ptrOffset(hostAddress, 0x1000);
+
+        auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), castToUint64(deviceAddress), hostAddress, 1);
+
+        ze_event_desc_t eventDesc = {};
+        auto event = static_cast<FixtureMockEvent *>(Event::create<uint64_t>(eventDescriptor, &eventDesc, device));
+        event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+
+        return DestroyableZeUniquePtr<FixtureMockEvent>(event);
+    }
+
     template <typename GfxFamily>
     std::unique_ptr<L0::EventPool> createEvents(uint32_t numEvents, bool timestampEvent) {
         ze_event_pool_desc_t eventPoolDesc = {};
@@ -186,6 +215,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     uint32_t createdCmdLists = 0;
     std::vector<DestroyableZeUniquePtr<FixtureMockEvent>> events;
     std::vector<std::unique_ptr<Mock<CommandQueue>>> mockCmdQs;
+    std::vector<uint64_t> standaloneCbEventStorage;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};

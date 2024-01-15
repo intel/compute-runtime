@@ -303,41 +303,41 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
 
 template <typename TagSizeT>
 bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
-    if (!this->eventPoolAllocation) {
-        return false;
-    }
+    if (this->eventPoolAllocation) {
+        if (metricNotification != nullptr) {
+            hostEventSetValue(metricNotification->getNotificationState());
+        }
+        if (this->tbxMode) {
+            auto &allEngines = this->device->getNEODevice()->getAllEngines();
 
-    if (metricNotification != nullptr) {
-        hostEventSetValue(metricNotification->getNotificationState());
-    }
-    if (this->tbxMode) {
-        auto &allEngines = this->device->getNEODevice()->getAllEngines();
+            bool downloadedAllocation = false;
+            bool downloadedInOrdedAllocation = false;
 
-        bool downloadedAllocation = false;
-        bool downloadedInOrdedAllocation = false;
-
-        for (auto const &engine : allEngines) {
-            const auto &csr = engine.commandStreamReceiver;
-            if (!downloadedAllocation) {
-                if (auto &alloc = this->getAllocation(this->device); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
-                    csr->downloadAllocation(alloc);
-                    downloadedAllocation = true;
+            for (auto const &engine : allEngines) {
+                const auto &csr = engine.commandStreamReceiver;
+                if (!downloadedAllocation) {
+                    if (auto &alloc = this->getAllocation(this->device); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
+                        csr->downloadAllocation(alloc);
+                        downloadedAllocation = true;
+                    }
                 }
-            }
 
-            if (!downloadedInOrdedAllocation && inOrderExecInfo) {
-                auto alloc = inOrderExecInfo->isHostStorageDuplicated() ? inOrderExecInfo->getHostCounterAllocation() : inOrderExecInfo->getDeviceCounterAllocation();
+                if (!downloadedInOrdedAllocation && inOrderExecInfo) {
+                    auto alloc = inOrderExecInfo->isHostStorageDuplicated() ? inOrderExecInfo->getHostCounterAllocation() : inOrderExecInfo->getDeviceCounterAllocation();
 
-                if (alloc->isUsedByOsContext(csr->getOsContext().getContextId())) {
-                    csr->downloadAllocation(*alloc);
-                    downloadedInOrdedAllocation = true;
+                    if (alloc->isUsedByOsContext(csr->getOsContext().getContextId())) {
+                        csr->downloadAllocation(*alloc);
+                        downloadedInOrdedAllocation = true;
+                    }
                 }
-            }
 
-            if (downloadedAllocation && downloadedInOrdedAllocation) {
-                break;
+                if (downloadedAllocation && downloadedInOrdedAllocation) {
+                    break;
+                }
             }
         }
+    } else {
+        DEBUG_BREAK_IF(this->tbxMode); // external allocation - not able to download
     }
 
     if (!this->isFromIpcPool && isAlreadyCompleted()) {

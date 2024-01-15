@@ -21,6 +21,7 @@
 #include "shared/test/common/mocks/mock_timestamp_packet.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
@@ -3259,6 +3260,30 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
     EXPECT_NE(0u, downloadAllocationTrack[syncAllocation]);
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
+}
+
+HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandleCorrectly) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    uint64_t counterValue = 2;
+    uint64_t *hostAddress = &counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+
+    ze_event_desc_t eventDesc = {};
+    ze_event_handle_t handle = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
+
+    auto eventObj = Event::fromHandle(handle);
+
+    ASSERT_NE(event, nullptr);
+    auto result = eventObj->hostSynchronize(1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zeEventDestroy(handle);
 }
 
 HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {

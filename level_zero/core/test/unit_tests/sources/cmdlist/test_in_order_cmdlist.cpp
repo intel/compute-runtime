@@ -3087,6 +3087,39 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithW
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
 
+HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenDispatchingThenProgramCorrectly, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto event = createStandaloneCbEvent();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    auto eventHandle = event->toHandle();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
+
+    auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+
+    bool semaphoreFound = false;
+
+    for (auto &semaphore : semaphores) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+
+        if (event->getInOrderExecInfo()->getBaseDeviceAddress() == semaphoreCmd->getSemaphoreGraphicsAddress()) {
+            semaphoreFound = true;
+        }
+    }
+
+    EXPECT_TRUE(semaphoreFound);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithoutWaitlistThenInheritSignalSyncAllocation, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 

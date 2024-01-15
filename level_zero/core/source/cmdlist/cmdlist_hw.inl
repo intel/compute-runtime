@@ -2508,7 +2508,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
 
         if (event->isCounterBased()) {
-            if (!event->getInOrderExecDataAllocation()) {
+            if (!event->getInOrderExecInfo().get()) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
             }
 
