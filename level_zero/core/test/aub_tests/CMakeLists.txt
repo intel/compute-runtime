@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -53,6 +53,7 @@ if(DEFINED AUB_STREAM_PROJECT_NAME)
                  $<TARGET_OBJECTS:neo_libult>
                  $<TARGET_OBJECTS:neo_shared_mocks>
                  $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
+                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_HEAPLESS_LIB_NAME}>
                  $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                  $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
                  $<TARGET_OBJECTS:neo_aub_tests_config>
