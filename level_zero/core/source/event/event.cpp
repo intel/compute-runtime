@@ -257,8 +257,13 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     poolData.maxEventPackets = this->getEventMaxPackets();
     poolData.numDevices = static_cast<uint32_t>(this->devices.size());
 
-    int retCode = this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager(), poolData.handle);
-    return retCode == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    auto memoryManager = this->context->getDriverHandle()->getMemoryManager();
+    auto allocation = this->eventPoolAllocations->getDefaultGraphicsAllocation();
+    if (int retCode = allocation->peekInternalHandle(memoryManager, poolData.handle); retCode != 0) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
+    memoryManager->registerIpcExportedAllocation(allocation);
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle, ze_event_pool_handle_t *eventPoolHandle,

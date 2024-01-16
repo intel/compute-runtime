@@ -3858,6 +3858,161 @@ TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
     EXPECT_EQ(expectedOutput.str(), output);
 }
 
+struct DrmMemoryManagerWithHostIpcAllocationParamTest : public DrmMemoryManagerFixture, ::testing::TestWithParam<bool> {
+    void SetUp() override {
+        DrmMemoryManagerFixture::setUp();
+    }
+    void TearDown() override {
+        DrmMemoryManagerFixture::tearDown();
+    }
+};
+
+TEST_P(DrmMemoryManagerWithHostIpcAllocationParamTest,
+       givenIPCBoHandleAndSharedAllocationReuseEnabledWhenAllocationCreatedThenBoHandleSharingIsNotUsed) {
+    const bool reuseSharedAllocation = true;
+
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->outputHandle = 88u;
+    bool isHostIpcAllocation = GetParam();
+    AllocationProperties properties(rootDeviceIndex, false, 4096u, AllocationType::sharedBuffer, false, {});
+
+    osHandle handle1 = 11u;
+    auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties, false, isHostIpcAllocation, reuseSharedAllocation, nullptr);
+    DrmAllocation *drmAllocation1 = static_cast<DrmAllocation *>(gfxAllocation1);
+    ASSERT_NE(nullptr, drmAllocation1);
+
+    // BoHandle not registered as shared at all
+    auto bo1 = drmAllocation1->getBO();
+    EXPECT_NE(bo1, nullptr);
+    EXPECT_EQ(static_cast<uint32_t>(bo1->getHandle()), mock->outputHandle);
+    EXPECT_FALSE(bo1->isBoHandleShared());
+    auto boHandleWrapperIt1 = memoryManager->sharedBoHandles.find(mock->outputHandle);
+    EXPECT_EQ(boHandleWrapperIt1, std::end(memoryManager->sharedBoHandles));
+
+    memoryManager->freeGraphicsMemory(gfxAllocation1);
+}
+
+TEST_P(DrmMemoryManagerWithHostIpcAllocationParamTest,
+       givenIPCBoHandleAndSharedAllocationReuseEnabledWhenAllocationCreatedFromMultipleHandlesThenBoHandleSharingIsNotUsed) {
+    const bool reuseSharedAllocation = true;
+
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->outputHandle = 88u;
+    bool isHostIpcAllocation = GetParam();
+    AllocationProperties properties(rootDeviceIndex, true, 4096u, AllocationType::sharedBuffer, false, {0b0010});
+
+    std::vector<osHandle> handles = {11u};
+    auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, isHostIpcAllocation, reuseSharedAllocation, nullptr);
+    DrmAllocation *drmAllocation1 = static_cast<DrmAllocation *>(gfxAllocation1);
+    ASSERT_NE(nullptr, drmAllocation1);
+
+    // BoHandle not registered as shared at all
+    auto bo1 = drmAllocation1->getBO();
+    EXPECT_NE(bo1, nullptr);
+    EXPECT_EQ(static_cast<uint32_t>(bo1->getHandle()), mock->outputHandle);
+    EXPECT_FALSE(bo1->isBoHandleShared());
+    auto boHandleWrapperIt1 = memoryManager->sharedBoHandles.find(mock->outputHandle);
+    EXPECT_EQ(boHandleWrapperIt1, std::end(memoryManager->sharedBoHandles));
+
+    memoryManager->freeGraphicsMemory(gfxAllocation1);
+}
+
+TEST_P(DrmMemoryManagerWithHostIpcAllocationParamTest,
+       givenIPCBoHandleAndSharedAllocationReuseDisabledWhenMultipleAllocationsCreatedFromSingleProcessThenBoHandleIsClosedOnlyOnce) {
+    const bool reuseSharedAllocation = false;
+
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 1;
+    mock->outputHandle = 88u;
+    bool isHostIpcAllocation = GetParam();
+    AllocationProperties properties(rootDeviceIndex, false, 4096u, AllocationType::sharedBuffer, false, {});
+
+    osHandle handle1 = 11u;
+    auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromSharedHandle(handle1, properties, false, isHostIpcAllocation, reuseSharedAllocation, nullptr);
+    DrmAllocation *drmAllocation1 = static_cast<DrmAllocation *>(gfxAllocation1);
+    ASSERT_NE(nullptr, drmAllocation1);
+
+    // BoHandle registered as shared but with WEAK ownership - GEM_CLOSE can be called on it
+    auto bo1 = drmAllocation1->getBO();
+    EXPECT_NE(bo1, nullptr);
+    EXPECT_EQ(static_cast<uint32_t>(bo1->getHandle()), mock->outputHandle);
+    EXPECT_TRUE(bo1->isBoHandleShared());
+    auto boHandleWrapperIt1 = memoryManager->sharedBoHandles.find(mock->outputHandle);
+    EXPECT_NE(boHandleWrapperIt1, std::end(memoryManager->sharedBoHandles));
+    EXPECT_TRUE(boHandleWrapperIt1->second.canCloseBoHandle());
+
+    osHandle handle2 = 12u;
+    auto gfxAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(handle2, properties, false, isHostIpcAllocation, false, nullptr);
+    DrmAllocation *drmAllocation2 = static_cast<DrmAllocation *>(gfxAllocation2);
+    ASSERT_NE(nullptr, drmAllocation2);
+    // BoHandle registered as shared with SHARED ownership - GEM_CLOSE cannot be called on it
+    auto bo2 = drmAllocation2->getBO();
+    EXPECT_NE(bo2, nullptr);
+    EXPECT_EQ(static_cast<uint32_t>(bo2->getHandle()), mock->outputHandle);
+    EXPECT_TRUE(bo2->isBoHandleShared());
+    auto boHandleWrapperIt2 = memoryManager->sharedBoHandles.find(mock->outputHandle);
+    EXPECT_EQ(boHandleWrapperIt2, boHandleWrapperIt1);
+    EXPECT_FALSE(boHandleWrapperIt2->second.canCloseBoHandle());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation2);
+    // GEM_CLOSE can be called on BoHandle again
+    EXPECT_TRUE(boHandleWrapperIt2->second.canCloseBoHandle());
+    memoryManager->freeGraphicsMemory(gfxAllocation1);
+}
+
+TEST_P(DrmMemoryManagerWithHostIpcAllocationParamTest,
+       givenIPCBoHandleAndSharedAllocationReuseDisabledWhenMultipleAllocationsCreatedFromMultipleSharedHandlesFromSingleProcessThenBoHandleIsClosedOnlyOnce) {
+    const bool reuseSharedAllocation = false;
+
+    mock->ioctlExpected.primeFdToHandle = 2;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 1;
+    mock->outputHandle = 88u;
+    bool isHostIpcAllocation = GetParam();
+    AllocationProperties properties(rootDeviceIndex, true, 4096u, AllocationType::sharedBuffer, false, {});
+
+    std::vector<osHandle> handles1 = {11u};
+    auto gfxAllocation1 = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles1, properties, false, isHostIpcAllocation, reuseSharedAllocation, nullptr);
+    DrmAllocation *drmAllocation1 = static_cast<DrmAllocation *>(gfxAllocation1);
+    ASSERT_NE(nullptr, drmAllocation1);
+
+    // BoHandle registered as shared but with WEAK ownership - GEM_CLOSE can be called on it
+    auto bo1 = drmAllocation1->getBO();
+    EXPECT_NE(bo1, nullptr);
+    EXPECT_EQ(static_cast<uint32_t>(bo1->getHandle()), mock->outputHandle);
+    EXPECT_TRUE(bo1->isBoHandleShared());
+    auto boHandleWrapperIt1 = memoryManager->sharedBoHandles.find(mock->outputHandle);
+    EXPECT_NE(boHandleWrapperIt1, std::end(memoryManager->sharedBoHandles));
+    EXPECT_TRUE(boHandleWrapperIt1->second.canCloseBoHandle());
+
+    std::vector<osHandle> handles2 = {12u};
+    auto gfxAllocation2 = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles2, properties, false, isHostIpcAllocation, false, nullptr);
+    DrmAllocation *drmAllocation2 = static_cast<DrmAllocation *>(gfxAllocation2);
+    ASSERT_NE(nullptr, drmAllocation2);
+    // BoHandle registered as shared with SHARED ownership - GEM_CLOSE cannot be called on it
+    auto bo2 = drmAllocation2->getBO();
+    EXPECT_NE(bo2, nullptr);
+    EXPECT_EQ(static_cast<uint32_t>(bo2->getHandle()), mock->outputHandle);
+    EXPECT_TRUE(bo2->isBoHandleShared());
+    auto boHandleWrapperIt2 = memoryManager->sharedBoHandles.find(mock->outputHandle);
+    EXPECT_EQ(boHandleWrapperIt2, boHandleWrapperIt1);
+    EXPECT_FALSE(boHandleWrapperIt2->second.canCloseBoHandle());
+
+    memoryManager->freeGraphicsMemory(gfxAllocation2);
+    // GEM_CLOSE can be called on BoHandle again
+    EXPECT_TRUE(boHandleWrapperIt2->second.canCloseBoHandle());
+    memoryManager->freeGraphicsMemory(gfxAllocation1);
+}
+
+INSTANTIATE_TEST_CASE_P(HostIpcAllocationFlag,
+                        DrmMemoryManagerWithHostIpcAllocationParamTest,
+                        ::testing::Values(false, true));
+
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
      givenCallToCreateSharedAllocationWithReuseSharedAllocationThenAllocationsSuccedAndAddressesAreTheSame) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());

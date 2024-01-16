@@ -2470,18 +2470,30 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         return allocation;
     }
 
+    auto boHandle = static_cast<int>(openFd.handle);
+    auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle);
+
     const bool useBooMmap = drm.getMemoryInfo() && properties.useMmapObject;
     if (!useBooMmap) {
-        auto bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, openFd.handle, properties.size, maxOsContextCount);
+        auto bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
         auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
-        return new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                                 handle, memoryPool, canonizedGpuAddress);
+        auto drmAllocation = std::make_unique<DrmAllocation>(properties.rootDeviceIndex,
+                                                             properties.allocationType,
+                                                             bo,
+                                                             reinterpret_cast<void *>(bo->peekAddress()),
+                                                             bo->peekSize(),
+                                                             handle,
+                                                             memoryPool,
+                                                             canonizedGpuAddress);
+        if (!reuseSharedAllocation) {
+            registerSharedBoHandleAllocation(drmAllocation.get());
+        }
+        return drmAllocation.release();
     }
 
-    auto boHandle = openFd.handle;
     BufferObject *bo = nullptr;
     if (reuseSharedAllocation) {
         bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
@@ -2494,7 +2506,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         memoryPool = MemoryPool::system4KBPages;
         patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
-        bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, boHandle, size, maxOsContextCount);
+        bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount);
 
         if (properties.allocationType == AllocationType::gpuTimestampDeviceBuffer) {
             cpuPointer = this->mmapFunction(0, size + MemoryConstants::pageSize64k, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -2553,6 +2565,9 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
             return nullptr;
         }
 
+        if (!reuseSharedAllocation) {
+            registerSharedBoHandleAllocation(drmAllocation.get());
+        }
         return drmAllocation.release();
     }
 
