@@ -278,7 +278,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, {});
 
-    auto ptr = memoryManager->createUSMHostAllocationFromSharedHandle(1, properties, false, true);
+    auto ptr = memoryManager->createUSMHostAllocationFromSharedHandle(1, properties, nullptr, true);
 
     EXPECT_EQ(ptr, nullptr);
 

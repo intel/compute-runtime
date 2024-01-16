@@ -113,8 +113,14 @@ class DrmAllocation : public GraphicsAllocation {
     bool setAtomicAccess(Drm *drm, size_t size, AtomicAccessMode mode);
     bool setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds);
 
-    void *getMmapPtr() { return this->mmapPtr; }
+    void *getMmapPtr() {
+        if (this->importedMmapPtr)
+            return this->importedMmapPtr;
+        else
+            return this->mmapPtr;
+    }
     void setMmapPtr(void *ptr) { this->mmapPtr = ptr; }
+    void setImportedMmapPtr(void *ptr) { this->importedMmapPtr = ptr; }
     size_t getMmapSize() { return this->mmapSize; }
     void setMmapSize(size_t size) { this->mmapSize = size; }
 
@@ -151,6 +157,7 @@ class DrmAllocation : public GraphicsAllocation {
     std::vector<uint64_t> handles;
 
     void *mmapPtr = nullptr;
+    void *importedMmapPtr = nullptr;
     size_t mmapSize = 0u;
 
     bool usmHostAllocation = false;

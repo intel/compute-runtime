@@ -123,11 +123,11 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
     auto ptr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphics);
 
     EXPECT_NE(ptr, nullptr);
-    EXPECT_NE(static_cast<DrmAllocation *>(multiGraphics.getDefaultGraphicsAllocation())->getMmapPtr(), nullptr);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
         if (i != 0) {
             EXPECT_EQ(static_cast<DrmQueryMock *>(executionEnvironment->rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<Drm>())->inputFd, 7);
         }
+        EXPECT_NE(static_cast<DrmAllocation *>(multiGraphics.getGraphicsAllocation(i))->getMmapPtr(), nullptr);
         EXPECT_NE(multiGraphics.getGraphicsAllocation(i), nullptr);
         memoryManager->freeGraphicsMemory(multiGraphics.getGraphicsAllocation(i));
     }
@@ -244,7 +244,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenMultiRootDeviceEnvironmen
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, {});
 
-    auto ptr = memoryManager->createUSMHostAllocationFromSharedHandle(1, properties, false, true);
+    auto ptr = memoryManager->createUSMHostAllocationFromSharedHandle(1, properties, nullptr, true);
     EXPECT_EQ(ptr, nullptr);
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
@@ -282,8 +282,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
 
     EXPECT_NE(ptr, nullptr);
 
-    EXPECT_EQ(static_cast<DrmAllocation *>(multiGraphics.getDefaultGraphicsAllocation())->getMmapPtr(), nullptr);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+        EXPECT_EQ(static_cast<DrmAllocation *>(multiGraphics.getGraphicsAllocation(i))->getMmapPtr(), nullptr);
         EXPECT_NE(multiGraphics.getGraphicsAllocation(i), nullptr);
         memoryManager->freeGraphicsMemory(multiGraphics.getGraphicsAllocation(i));
     }

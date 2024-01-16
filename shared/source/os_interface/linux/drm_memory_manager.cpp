@@ -951,7 +951,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
                                                                                bool reuseSharedAllocation,
                                                                                void *mapPointer) {
     if (isHostIpcAllocation) {
-        return createUSMHostAllocationFromSharedHandle(handle, properties, false, reuseSharedAllocation);
+        return createUSMHostAllocationFromSharedHandle(handle, properties, nullptr, reuseSharedAllocation);
     }
 
     std::unique_lock<std::mutex> lock(mtx);
@@ -1190,7 +1190,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
         if (ret < 0) {
             return nullptr;
         }
-        return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, true, true);
+        return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, ptr, true);
     } else {
         return allocateGraphicsMemoryWithProperties(properties, ptr);
     }
@@ -2439,7 +2439,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
 DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle,
                                                                          const AllocationProperties &properties,
-                                                                         bool hasMappedPtr,
+                                                                         void *mappedPtr,
                                                                          bool reuseSharedAllocation) {
     PrimeHandle openFd{};
     openFd.fileDescriptor = handle;
@@ -2458,14 +2458,16 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         return nullptr;
     }
 
-    if (hasMappedPtr) {
+    if (mappedPtr) {
         auto bo = new BufferObject(properties.rootDeviceIndex, &drm, patIndex, openFd.handle, properties.size, maxOsContextCount);
         bo->setAddress(properties.gpuAddress);
 
         auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
-        return new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                                 handle, memoryPool, canonizedGpuAddress);
+        auto allocation = new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
+                                            handle, memoryPool, canonizedGpuAddress);
+        allocation->setImportedMmapPtr(mappedPtr);
+        return allocation;
     }
 
     const bool useBooMmap = drm.getMemoryInfo() && properties.useMmapObject;
