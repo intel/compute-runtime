@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,6 +46,7 @@ struct L0DebuggerFixture {
             MockSipData::useMockSip = true;
         }
 
+        executionEnvironment->calculateMaxOsContextCount();
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->initializeMemoryManager();
 
