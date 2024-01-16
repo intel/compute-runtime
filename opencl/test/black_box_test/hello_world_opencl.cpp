@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     cl_device_type deviceType = CL_DEVICE_TYPE_GPU;
     err = clGetDeviceIDs(platforms.get()[0], deviceType, 1, &device_id, NULL);
     if (err != CL_SUCCESS) {
-        cout << "Error gettting device_id" << endl;
+        cout << "Error getting device_id" << endl;
         abort();
     }
 
