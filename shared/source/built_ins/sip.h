@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ class SipKernel {
     static std::string createHeaderFilename(const std::string &filename);
 
     static bool initHexadecimalArraySipKernel(SipKernelType type, Device &device);
-    static void selectSipClassType(std::string &fileName, const GfxCoreHelper &gfxCoreHelper);
+    static void selectSipClassType(std::string &fileName, Device &device);
 
     const std::vector<char> stateSaveAreaHeader;
     const std::vector<char> binary;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -729,4 +729,21 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
     EXPECT_EQ(high, patchedBinary[6]);
 
     gEnvironment->igcPopDebugVars();
+}
+class SipKernelMock : public SipKernel {
+  public:
+    using SipKernel::selectSipClassType;
+};
+
+using DebugBuiltinSipTest = Test<DeviceFixture>;
+
+TEST_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFromBuiltin) {
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
+    auto sipKernelType = SipKernel::getSipKernelType(*pDevice);
+    EXPECT_TRUE(SipKernel::initSipKernel(sipKernelType, *pDevice));
+    EXPECT_LE(SipKernelType::dbgCsr, sipKernelType);
+
+    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
+    EXPECT_NE(nullptr, sipAllocation);
+    EXPECT_EQ(SipKernelMock::classType, SipClassType::builtins);
 }

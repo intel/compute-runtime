@@ -237,12 +237,18 @@ void SipKernel::freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, Mem
     }
 }
 
-void SipKernel::selectSipClassType(std::string &fileName, const GfxCoreHelper &gfxCoreHelper) {
+void SipKernel::selectSipClassType(std::string &fileName, Device &device) {
+    const GfxCoreHelper &gfxCoreHelper = device.getGfxCoreHelper();
     const std::string unknown("unk");
     if (fileName.compare(unknown) == 0) {
-        SipKernel::classType = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()
-                                   ? SipClassType::hexadecimalHeaderFile
-                                   : SipClassType::builtins;
+        bool debuggingEnabled = device.getDebugger() != nullptr;
+        if (debuggingEnabled) {
+            SipKernel::classType = SipClassType::builtins;
+        } else {
+            SipKernel::classType = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()
+                                       ? SipClassType::hexadecimalHeaderFile
+                                       : SipClassType::builtins;
+        }
     } else {
         SipKernel::classType = SipClassType::rawBinaryFromFile;
     }
@@ -250,7 +256,7 @@ void SipKernel::selectSipClassType(std::string &fileName, const GfxCoreHelper &g
 
 bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device, OsContext *context) {
     std::string fileName = debugManager.flags.LoadBinarySipFromFile.get();
-    SipKernel::selectSipClassType(fileName, device.getGfxCoreHelper());
+    SipKernel::selectSipClassType(fileName, device);
 
     switch (SipKernel::classType) {
     case SipClassType::rawBinaryFromFile:
