@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,9 @@ bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithStatefulAccessPrefer
 
 template <>
 bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isMatrixMultiplyAccumulateSupported();
+    }
     return true;
 }
 
