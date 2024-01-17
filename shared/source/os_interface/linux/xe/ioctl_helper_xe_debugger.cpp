@@ -30,7 +30,7 @@ void *IoctlHelperXe::allocateDebugMetadata() {
     drm_xe_ext_vm_set_debug_metadata *prev = nullptr;
     drm_xe_ext_vm_set_debug_metadata *xeMetadataRoot = nullptr;
 
-    for (auto metadata : debugMetadata) {
+    for (auto &metadata : debugMetadata) {
         auto *xeMetadata = new drm_xe_ext_vm_set_debug_metadata();
         if (!xeMetadataRoot) {
             xeMetadataRoot = xeMetadata;
