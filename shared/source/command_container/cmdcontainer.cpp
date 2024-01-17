@@ -296,24 +296,29 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
     }
     for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {
         if (this->reusableAllocationList) {
-
-            if (isHandleFenceCompletionRequired) {
-                std::vector<std::unique_lock<CommandStreamReceiver::MutexType>> locks;
-                for (auto &engine : this->device->getMemoryManager()->getRegisteredEngines(cmdBufferAllocations[i]->getRootDeviceIndex())) {
-                    if (cmdBufferAllocations[i]->isUsedByOsContext(engine.osContext->getContextId())) {
-                        locks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
-                        engine.commandStreamReceiver->stopDirectSubmission(false);
-                    }
+            bool allocationHandled = false;
+            for (auto &engine : this->device->getMemoryManager()->getRegisteredEngines(cmdBufferAllocations[i]->getRootDeviceIndex())) {
+                auto osContextId = engine.osContext->getContextId();
+                if (cmdBufferAllocations[i]->isUsedByOsContext(osContextId) && engine.commandStreamReceiver->isAnyDirectSubmissionEnabled()) {
+                    auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                    auto taskCount = engine.commandStreamReceiver->peekTaskCount() + 1;
+                    cmdBufferAllocations[i]->updateTaskCount(taskCount, osContextId);
+                    cmdBufferAllocations[i]->updateResidencyTaskCount(taskCount, osContextId);
+                    engine.commandStreamReceiver->flushTagUpdate();
+                    engine.commandStreamReceiver->waitForTaskCount(taskCount);
+                    allocationHandled = true;
                 }
-                if (!locks.empty()) {
-                    this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
-                }
+            }
+            if (!allocationHandled && isHandleFenceCompletionRequired) {
+                this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
             }
 
             for (auto &engine : this->device->getMemoryManager()->getRegisteredEngines(cmdBufferAllocations[i]->getRootDeviceIndex())) {
-                cmdBufferAllocations[i]->releaseUsageInOsContext(engine.osContext->getContextId());
+                auto osContextId = engine.osContext->getContextId();
+                cmdBufferAllocations[i]->releaseUsageInOsContext(osContextId);
             }
-            reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
+
+            reusableAllocationList->pushTailOne(*cmdBufferAllocations[i]);
         } else {
             this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
         }
@@ -328,7 +333,7 @@ GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation(bool for
     forceHostMemory &= this->useSecondaryCommandStream;
     GraphicsAllocation *cmdBufferAllocation = nullptr;
     if (this->reusableAllocationList) {
-        size_t alignedSize = getAlignedCmdBufferSize();
+        const size_t alignedSize = getAlignedCmdBufferSize();
         cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, nullptr, AllocationType::commandBuffer).release();
     }
     if (!cmdBufferAllocation) {

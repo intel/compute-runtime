@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -336,7 +336,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
     SubmissionStatus flushTagUpdate() override {
         flushTagUpdateCalled = true;
-        return CommandStreamReceiverHw<GfxFamily>::flushTagUpdate();
+        auto ret = SubmissionStatus::success;
+        if (this->callFlushTagUpdate) {
+            ret = CommandStreamReceiverHw<GfxFamily>::flushTagUpdate();
+        }
+        return ret;
     }
 
     void initProgrammingFlags() override {
@@ -505,6 +509,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::atomic_bool downloadAllocationsCalled = false;
     bool flushBatchedSubmissionsCalled = false;
     bool flushTagUpdateCalled = false;
+    bool callFlushTagUpdate = true;
     bool initProgrammingFlagsCalled = false;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
