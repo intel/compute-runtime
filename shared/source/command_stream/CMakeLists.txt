@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -69,10 +69,15 @@ if(SUPPORT_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_xehp_and_later.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/preemption_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/scratch_space_controller_xehp_and_later.h
        ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_xehp_and_later.inl
+  )
+endif()
+
+if(SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE)
+  list(APPEND NEO_CORE_COMMAND_STREAM
+       ${CMAKE_CURRENT_SOURCE_DIR}/preemption_xe.inl
   )
 endif()
 
