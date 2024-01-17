@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,6 +89,9 @@ struct ImplicitScalingDispatch {
     static uint32_t getTimeStampPostSyncOffset();
 
     static bool platformSupportsImplicitScaling(const RootDeviceEnvironment &rootDeviceEnvironment);
+
+    template <typename WalkerType>
+    static void appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount);
 
   private:
     static bool pipeControlStallRequired;

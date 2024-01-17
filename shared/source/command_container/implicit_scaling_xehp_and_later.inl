@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -252,6 +252,11 @@ inline uint32_t ImplicitScalingDispatch<GfxFamily>::getTimeStampPostSyncOffset()
 template <typename GfxFamily>
 inline bool ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return false;
+}
+
+template <typename GfxFamily>
+template <typename WalkerType>
+void ImplicitScalingDispatch<GfxFamily>::appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount) {
 }
 
 } // namespace NEO

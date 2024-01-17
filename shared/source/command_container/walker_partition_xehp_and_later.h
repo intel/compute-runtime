@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -492,6 +493,7 @@ template <typename GfxFamily, typename WalkerType>
 void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgrammed,
                                WalkerType *inputWalker,
                                uint32_t partitionCount,
+                               uint32_t tileCount,
                                bool forceExecutionOnSingleTile) {
     auto computeWalker = putCommand<WalkerType>(inputAddress, totalBytesProgrammed);
     WalkerType cmd = *inputWalker;
@@ -521,6 +523,9 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
             cmd.setPartitionSize(Math::divideAndRoundUp(workgroupCount, partitionCount));
         }
     }
+
+    NEO::ImplicitScalingDispatch<GfxFamily>::appendWalkerFields(cmd, tileCount);
+
     *computeWalker = cmd;
 
     return computeWalker;
@@ -633,7 +638,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
         args.secondaryBatchBuffer);
 
     // Walker section
-    auto walkerPtr = programPartitionedWalker<GfxFamily, WalkerType>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.forceExecutionOnSingleTile);
+    auto walkerPtr = programPartitionedWalker<GfxFamily, WalkerType>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.tileCount, args.forceExecutionOnSingleTile);
     if (outWalkerPtr) {
         *outWalkerPtr = walkerPtr;
     }
@@ -727,7 +732,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
     if (args.initializeWparidRegister) {
         programMiLoadRegisterMem<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args.workPartitionAllocationGpuVa, wparidCCSOffset);
     }
-    auto walkerPtr = programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.forceExecutionOnSingleTile);
+    auto walkerPtr = programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.tileCount, args.forceExecutionOnSingleTile);
     if (outWalkerPtr) {
         *outWalkerPtr = walkerPtr;
     }
