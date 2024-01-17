@@ -71,6 +71,9 @@ bool CompilerProductHelperHw<IGFX_PVC>::failBuildProgramWithStatefulAccessPrefer
 
 template <>
 bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isMatrixMultiplyAccumulateSupported();
+    }
     return true;
 }
 
