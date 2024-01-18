@@ -69,14 +69,14 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
         return 1024u;
     }
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, void *addr) override {
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
         return 0;
     }
-    int createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation, void *addr) override {
+    int createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation) override {
         if (allocSize == 0) {
             return EINVAL;
         }
@@ -84,7 +84,7 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
         pairHandlePassed = pairHandle;
         return 0;
     }
-    int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation, void *addr) override {
+    int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation) override {
         if (allocSize == 0) {
             return EINVAL;
         }
@@ -92,7 +92,7 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
         banks = memoryBanks;
         return 0;
     }
-    int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, void *addr) override {
+    int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) override {
         if (allocSize == 0) {
             return EINVAL;
         }

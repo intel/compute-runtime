@@ -50,7 +50,7 @@ TEST(NumaLibraryTests, givenNumaLibraryWithValidMockOsLibraryWhenCallingGetMemPo
     EXPECT_EQ(reinterpret_cast<WhiteBoxNumaLibrary::GetMemPolicyPtr>(memPolicyHandler), WhiteBoxNumaLibrary::getMemPolicyFunction);
     std::vector<unsigned long> memPolicyNodeMask;
     int mode = -1;
-    EXPECT_EQ(true, WhiteBoxNumaLibrary::getMemPolicy(&mode, memPolicyNodeMask, nullptr));
+    EXPECT_EQ(true, WhiteBoxNumaLibrary::getMemPolicy(&mode, memPolicyNodeMask));
 
     MockOsLibrary::loadLibraryNewObject = nullptr;
     WhiteBoxNumaLibrary::osLibrary.reset();
@@ -138,7 +138,7 @@ TEST(NumaLibraryTests, givenNumaLibraryWithInvalidGetMemPolicyWhenCallingGetMemP
     EXPECT_EQ(nullptr, WhiteBoxNumaLibrary::getMemPolicyFunction);
     std::vector<unsigned long> memPolicyNodeMask;
     int mode = -1;
-    EXPECT_EQ(false, WhiteBoxNumaLibrary::getMemPolicy(&mode, memPolicyNodeMask, nullptr));
+    EXPECT_EQ(false, WhiteBoxNumaLibrary::getMemPolicy(&mode, memPolicyNodeMask));
     MockOsLibrary::loadLibraryNewObject = nullptr;
     WhiteBoxNumaLibrary::osLibrary.reset();
 }
