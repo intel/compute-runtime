@@ -11,7 +11,6 @@
 
 #include <cerrno>
 #include <iostream>
-#include <numaif.h>
 
 namespace NEO {
 namespace Linux {
@@ -45,11 +44,11 @@ bool NumaLibrary::init() {
     return numaLoaded;
 }
 
-bool NumaLibrary::getMemPolicy(int *mode, std::vector<unsigned long> &nodeMask, void *addr) {
+bool NumaLibrary::getMemPolicy(int *mode, std::vector<unsigned long> &nodeMask) {
     if (numaLoaded) {
         // re-initialize vector with size maxNode;
         std::vector<unsigned long>(maxNode + 1, 0).swap(nodeMask);
-        return (*getMemPolicyFunction)(mode, nodeMask.data(), maxNode + 1, addr, MPOL_F_MEMS_ALLOWED) != -1;
+        return (*getMemPolicyFunction)(mode, nodeMask.data(), maxNode + 1, nullptr, 0) != -1;
     }
     return false;
 }
