@@ -65,6 +65,7 @@ PVCTEST_F(ClGfxCoreHelperTestsPvcXt, givenRelease1261WhenAskingForDeviceFeatures
     std::string extensions = compilerHelper.getDeviceExtensions(*deviceHwInfo, rootEnv->releaseHelper.get());
 
     EXPECT_EQ(std::string::npos, extensions.find("cl_intel_subgroup_matrix_multiply_accumulate"));
+    EXPECT_EQ(std::string::npos, extensions.find("cl_intel_subgroup_split_matrix_multiply_accumulate"));
 }
 
 } // namespace NEO

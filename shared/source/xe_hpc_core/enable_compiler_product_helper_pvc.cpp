@@ -78,11 +78,6 @@ bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateSupported(cons
 }
 
 template <>
-bool CompilerProductHelperHw<IGFX_PVC>::isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
-    return true;
-}
-
-template <>
 bool CompilerProductHelperHw<IGFX_PVC>::isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const {
     return true;
 }
