@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,11 +180,11 @@ HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultipl
     }
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultiplyAccumulateIsSupported, IsXeHpcCore) {
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultiplyAccumulateIsNotSupported, IsXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();
 
-    EXPECT_TRUE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper));
+    EXPECT_FALSE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper));
 }
 
 HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostDg2) {
