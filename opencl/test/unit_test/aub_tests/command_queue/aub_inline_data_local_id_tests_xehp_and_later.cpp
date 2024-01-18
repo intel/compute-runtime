@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/hw_walk_order.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -382,21 +383,24 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
     auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-
-    auto localId = kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
-    uint32_t expectedEmitLocal = 0;
-    if (localId[0]) {
-        expectedEmitLocal |= (1 << 0);
+    if (kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder) {
+        EXPECT_EQ(0u, walker->getGenerateLocalId());
+    } else {
+        auto localId = kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
+        uint32_t expectedEmitLocal = 0;
+        if (localId[0]) {
+            expectedEmitLocal |= (1 << 0);
+        }
+        if (localId[1]) {
+            expectedEmitLocal |= (1 << 1);
+        }
+        if (localId[2]) {
+            expectedEmitLocal |= (1 << 2);
+        }
+        EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
+        EXPECT_EQ(1u, walker->getGenerateLocalId());
+        EXPECT_EQ(4u, walker->getWalkOrder());
     }
-    if (localId[1]) {
-        expectedEmitLocal |= (1 << 1);
-    }
-    if (localId[2]) {
-        expectedEmitLocal |= (1 << 2);
-    }
-    EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
-    EXPECT_EQ(1u, walker->getGenerateLocalId());
-    EXPECT_EQ(4u, walker->getWalkOrder());
 
     pCmdQ->flush();
 
@@ -424,8 +428,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     cl_uint workDim = 1;
-    size_t globalWorkSize[3] = {200, 1, 1};
-    size_t localWorkSize[3] = {200, 1, 1};
+    size_t globalWorkSize[3] = {256, 1, 1};
+    size_t localWorkSize[3] = {256, 1, 1};
 
     auto retVal = pCmdQ->enqueueKernel(
         kernels[9].get(),
@@ -458,11 +462,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     }
     EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
     EXPECT_EQ(1u, walker->getGenerateLocalId());
-    EXPECT_EQ(4u, walker->getWalkOrder());
+    for (size_t i = 0; i < 3; i++) {
+        EXPECT_EQ(kernels[9]->getKernelInfo().kernelDescriptor.kernelAttributes.workgroupWalkOrder[i], HwWalkOrderHelper::compatibleDimensionOrders[walker->getWalkOrder()][i]);
+    }
 
     pCmdQ->finish();
 
-    // we expect sequence of local ids from 0..199
+    // we expect sequence of local ids from 0..256
     auto expectedMemory = reinterpret_cast<uint32_t *>(variables[0].expectedMemory);
     auto currentWorkItem = 0u;
 
