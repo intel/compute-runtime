@@ -23,7 +23,7 @@ class NumaLibrary {
     static bool getMemPolicy(int *mode, std::vector<unsigned long> &nodeMask, void *addr);
 
   protected:
-    static constexpr const char *numaLibNameStr = "libnuma.so";
+    static constexpr const char *numaLibNameStr = "libnuma.so.1";
     static constexpr const char *procGetMemPolicyStr = "get_mempolicy";
     static constexpr const char *procNumaAvailableStr = "numa_available";
     static constexpr const char *procNumaMaxNodeStr = "numa_max_node";
