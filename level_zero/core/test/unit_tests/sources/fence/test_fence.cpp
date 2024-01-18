@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -238,6 +239,9 @@ TEST_F(FenceSynchronizeTest, givenCallToFenceHostSynchronizeWithTimeoutNonZeroAn
 TEST_F(FenceSynchronizeTest, givenInfiniteTimeoutWhenWaitingForFenceCompletionThenReturnOnlyAfterAllCsrPartitionsCompleted) {
     constexpr uint32_t activePartitions = 2;
     constexpr uint32_t postSyncOffset = 16;
+
+    VariableBackup<bool> backupWaitpkgUse(&NEO::WaitUtils::waitpkgUse, false);
+    VariableBackup<uint32_t> backupWaitCount(&NEO::WaitUtils::waitCount, 1);
 
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     ASSERT_NE(nullptr, csr->getTagAddress());

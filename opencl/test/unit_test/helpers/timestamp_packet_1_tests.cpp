@@ -8,6 +8,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/utilities/tag_allocator.h"
+#include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -1071,6 +1072,9 @@ extern std::function<void()> setupPauseAddress;
 } // namespace CpuIntrinsicsTests
 
 HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenCallWaitUtils) {
+    VariableBackup<bool> backupWaitpkgUse(&WaitUtils::waitpkgUse, false);
+    VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount, 1);
+
     DebugManagerStateRestore restorer;
     debugManager.flags.UpdateTaskCountFromWait.set(3);
     debugManager.flags.EnableTimestampWaitForQueues.set(1);

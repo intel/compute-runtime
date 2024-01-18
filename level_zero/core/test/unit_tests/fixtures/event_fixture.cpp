@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,8 @@ template struct EventImp<uint64_t>;
 namespace ult {
 
 void EventFixtureImpl::setUpImpl(int32_t eventPoolHostFlag, int32_t eventPoolTimestampFlag) {
+    NEO::debugManager.flags.EnableWaitpkg.set(0);
+
     DeviceFixture::setUp();
 
     ze_event_pool_flags_t eventPoolFlags = 0;

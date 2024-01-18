@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@ constexpr uint64_t defaultCounterValue = 10000;
 constexpr uint32_t defaultControlValue = 0;
 constexpr bool defaultEnableWaitPkg = false;
 
-uint64_t counterValue = defaultCounterValue;
-uint32_t controlValue = defaultControlValue;
+uint64_t waitpkgCounterValue = defaultCounterValue;
+uint32_t waitpkgControlValue = defaultControlValue;
 
 uint32_t waitCount = defaultWaitCount;
 
@@ -45,11 +45,11 @@ void init() {
 
     int64_t overrideWaitPkgCounter = debugManager.flags.WaitpkgCounterValue.get();
     if (overrideWaitPkgCounter != -1) {
-        counterValue = static_cast<uint64_t>(overrideWaitPkgCounter);
+        waitpkgCounterValue = static_cast<uint64_t>(overrideWaitPkgCounter);
     }
     int32_t overrideWaitPkgControl = debugManager.flags.WaitpkgControlValue.get();
     if (overrideWaitPkgControl != -1) {
-        controlValue = static_cast<uint32_t>(overrideWaitPkgControl);
+        waitpkgControlValue = static_cast<uint32_t>(overrideWaitPkgControl);
     }
 
     int32_t overrideWaitCount = debugManager.flags.WaitLoopCount.get();

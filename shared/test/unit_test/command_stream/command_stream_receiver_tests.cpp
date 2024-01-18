@@ -1763,6 +1763,9 @@ extern uint32_t pauseOffset;
 } // namespace CpuIntrinsicsTests
 
 TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingForTaskCountForCleaningTemporaryAllocationsThenExpectAllPartitionTaskCountsAreChecked) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableWaitpkg.set(0);
+
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -1807,6 +1810,9 @@ TEST(CommandStreamReceiverSimpleTest, givenMultipleActivePartitionsWhenWaitingFo
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenEmptyTemporaryAllocationListWhenWaitingForTaskCountForCleaningTemporaryAllocationsThenDoNotWait) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableWaitpkg.set(0);
+
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();

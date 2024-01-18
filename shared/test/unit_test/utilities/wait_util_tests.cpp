@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,21 @@ namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
 } // namespace CpuIntrinsicsTests
 
-TEST(WaitTest, givenDefaultSettingsWhenNoPollAddressProvidedThenPauseDefaultTimeAndReturnFalse) {
+struct WaitPredicateOnlyFixture {
+    void setUp() {
+        debugManager.flags.EnableWaitpkg.set(0);
+        backupWaitCount = std::make_unique<VariableBackup<uint32_t>>(&WaitUtils::waitCount);
+    }
+
+    void tearDown() {}
+
+    DebugManagerStateRestore restore;
+    std::unique_ptr<VariableBackup<uint32_t>> backupWaitCount;
+};
+
+using WaitPredicateOnlyTest = Test<WaitPredicateOnlyFixture>;
+
+TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenNoPollAddressProvidedThenPauseDefaultTimeAndReturnFalse) {
     EXPECT_EQ(1u, WaitUtils::defaultWaitCount);
 
     WaitUtils::init();
@@ -30,10 +44,7 @@ TEST(WaitTest, givenDefaultSettingsWhenNoPollAddressProvidedThenPauseDefaultTime
     EXPECT_EQ(oldCount + WaitUtils::waitCount, CpuIntrinsicsTests::pauseCounter);
 }
 
-TEST(WaitTest, givenDebugFlagOverridesWhenNoPollAddressProvidedThenPauseDefaultTimeAndReturnFalse) {
-    DebugManagerStateRestore restore;
-    VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount);
-
+TEST_F(WaitPredicateOnlyTest, givenDebugFlagOverridesWhenNoPollAddressProvidedThenPauseDefaultTimeAndReturnFalse) {
     uint32_t count = 10u;
     debugManager.flags.WaitLoopCount.set(count);
 
@@ -46,7 +57,7 @@ TEST(WaitTest, givenDebugFlagOverridesWhenNoPollAddressProvidedThenPauseDefaultT
     EXPECT_EQ(oldCount + count, CpuIntrinsicsTests::pauseCounter);
 }
 
-TEST(WaitTest, givenDefaultSettingsWhenPollAddressProvidedDoesNotMeetCriteriaThenPauseDefaultTimeAndReturnFalse) {
+TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenPollAddressProvidedDoesNotMeetCriteriaThenPauseDefaultTimeAndReturnFalse) {
     WaitUtils::init();
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
@@ -59,7 +70,7 @@ TEST(WaitTest, givenDefaultSettingsWhenPollAddressProvidedDoesNotMeetCriteriaThe
     EXPECT_EQ(oldCount + WaitUtils::waitCount, CpuIntrinsicsTests::pauseCounter);
 }
 
-TEST(WaitTest, givenDefaultSettingsWhenPollAddressProvidedMeetsCriteriaThenPauseDefaultTimeAndReturnTrue) {
+TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenPollAddressProvidedMeetsCriteriaThenPauseDefaultTimeAndReturnTrue) {
     WaitUtils::init();
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
@@ -72,10 +83,7 @@ TEST(WaitTest, givenDefaultSettingsWhenPollAddressProvidedMeetsCriteriaThenPause
     EXPECT_EQ(oldCount + WaitUtils::waitCount, CpuIntrinsicsTests::pauseCounter);
 }
 
-TEST(WaitTest, givenDebugFlagSetZeroWhenPollAddressProvidedMeetsCriteriaThenPauseZeroTimesAndReturnTrue) {
-    DebugManagerStateRestore restore;
-    VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount);
-
+TEST_F(WaitPredicateOnlyTest, givenDebugFlagSetZeroWhenPollAddressProvidedMeetsCriteriaThenPauseZeroTimesAndReturnTrue) {
     uint32_t count = 0u;
     debugManager.flags.WaitLoopCount.set(count);
 

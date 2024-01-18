@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/utilities/wait_util.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/sharings/sharing.h"
@@ -79,6 +82,8 @@ TEST_F(ClEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnCpuThenRetur
 TEST_F(ClEnqueueUnmapMemObjTests, givenZeroCopyWithoutCoherencyAllowedWhenMapAndUnmapThenFlushCachelines) {
     DebugManagerStateRestore restorer;
     debugManager.flags.AllowZeroCopyWithoutCoherency.set(1);
+    VariableBackup<bool> backupWaitpkgUse(&WaitUtils::waitpkgUse, false);
+    VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount, 1);
 
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferAllocHostPtr<>>::create(pContext));
     EXPECT_TRUE(buffer->mappingOnCpuAllowed());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ uint64_t rdtscRetValue = 0;
 unsigned char umwaitRetValue = 0;
 
 std::function<void()> setupPauseAddress;
-std::function<unsigned char()> controlUmwait;
+std::function<void()> controlUmwait;
 } // namespace CpuIntrinsicsTests
 
 namespace NEO {
@@ -73,7 +73,8 @@ unsigned char umwait(unsigned int ctrl, uint64_t counter) {
     CpuIntrinsicsTests::lastUmwaitCounter = counter;
     CpuIntrinsicsTests::umwaitCounter++;
     if (CpuIntrinsicsTests::controlUmwait) {
-        return CpuIntrinsicsTests::controlUmwait();
+        CpuIntrinsicsTests::controlUmwait();
+        return CpuIntrinsicsTests::umwaitRetValue;
     } else {
         return CpuIntrinsicsTests::umwaitRetValue;
     }
