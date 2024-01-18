@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -847,7 +847,7 @@ TEST_F(SysmanDeviceSchedulerFixtureXe, GivenDestinationOrSourceUnitsAreNotSuppor
 
     uint64_t sourceValue = 100;
     uint64_t dstValue = 0;
-    pLinuxSysmanImp->pSysmanKmdInterface->convertSysfsValueUnit(SysmanKmdInterface::SysfsValueUnit::unAvailable, SysmanKmdInterface::SysfsValueUnit::milliSecond, sourceValue, dstValue);
+    pLinuxSysmanImp->pSysmanKmdInterface->convertSysfsValueUnit(SysmanKmdInterface::SysfsValueUnit::unAvailable, SysmanKmdInterface::SysfsValueUnit::milli, sourceValue, dstValue);
     EXPECT_EQ(sourceValue, dstValue);
 }
 
