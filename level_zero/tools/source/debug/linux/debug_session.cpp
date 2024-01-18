@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,6 +114,11 @@ std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
         }
     }
     return eventMemory;
+}
+
+void DebugSessionLinux::closeAsyncThread() {
+    asyncThread.close();
+    internalEventThread.close();
 }
 
 } // namespace L0

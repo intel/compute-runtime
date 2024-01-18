@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ struct DebugSessionLinux : DebugSessionImp {
     DebugSessionLinux(const zet_debug_config_t &config, Device *device, int fd) : DebugSessionImp(config, device), fd(fd){};
     static ze_result_t translateDebuggerOpenErrno(int error);
     bool closeFd();
+    void closeAsyncThread();
 
     int fd = 0;
     std::atomic<bool> internalThreadHasStarted{false};

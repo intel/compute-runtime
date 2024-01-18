@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -320,11 +320,6 @@ void *DebugSessionLinuxi915::asyncThreadFunction(void *arg) {
 
 void DebugSessionLinuxi915::startAsyncThread() {
     asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
-}
-
-void DebugSessionLinuxi915::closeAsyncThread() {
-    asyncThread.close();
-    internalEventThread.close();
 }
 
 void DebugSessionLinuxi915::handleEventsAsync() {

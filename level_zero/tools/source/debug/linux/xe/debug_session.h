@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,8 +42,54 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         return ZE_RESULT_SUCCESS;
     }
 
-    void startAsyncThread() override {
-    }
+    struct IoctlHandlerXe : DebugSessionLinux::IoctlHandler {
+        int ioctl(int fd, unsigned long request, void *arg) override {
+            int ret = 0;
+            int error = 0;
+            bool shouldRetryIoctl = false;
+            do {
+                shouldRetryIoctl = false;
+                ret = NEO::SysCalls::ioctl(fd, request, arg);
+                error = errno;
+
+                if (ret == -1) {
+                    shouldRetryIoctl = (error == EINTR || error == EAGAIN || error == EBUSY);
+
+                    if (request == DRM_XE_EUDEBUG_IOCTL_EU_CONTROL) {
+                        shouldRetryIoctl = (error == EINTR || error == EAGAIN);
+                    }
+                }
+            } while (shouldRetryIoctl);
+            return ret;
+        }
+    };
+
+    using ContextHandle = uint64_t;
+    using ExecQueueHandle = uint64_t;
+
+    struct ContextParams {
+        ContextHandle handle = 0;
+        uint64_t vm = UINT64_MAX;
+        std::vector<drm_xe_engine_class_instance> engines;
+    };
+
+    struct ExecQueueParams {
+        uint64_t vmHandle = 0;
+        uint16_t engineClass = UINT16_MAX;
+    };
+
+    struct BindInfo {
+        uint64_t gpuVa = 0;
+        uint64_t size = 0;
+    };
+
+    std::unique_ptr<IoctlHandlerXe> ioctlHandler;
+    uint32_t xeDebuggerVersion = 0;
+
+  protected:
+    void startAsyncThread() override;
+    static void *asyncThreadFunction(void *arg);
+    void handleEventsAsync();
 
     bool readModuleDebugArea() override {
         UNRECOVERABLE_IF(true);
@@ -100,52 +146,18 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         UNRECOVERABLE_IF(true);
     }
 
-    struct IoctlHandlerXe : DebugSessionLinux::IoctlHandler {
-        int ioctl(int fd, unsigned long request, void *arg) override {
-            int ret = 0;
-            int error = 0;
-            bool shouldRetryIoctl = false;
-            do {
-                shouldRetryIoctl = false;
-                ret = NEO::SysCalls::ioctl(fd, request, arg);
-                error = errno;
-
-                if (ret == -1) {
-                    shouldRetryIoctl = (error == EINTR || error == EAGAIN || error == EBUSY);
-
-                    if (request == DRM_XE_EUDEBUG_IOCTL_EU_CONTROL) {
-                        shouldRetryIoctl = (error == EINTR || error == EAGAIN);
-                    }
-                }
-            } while (shouldRetryIoctl);
-            return ret;
-        }
-    };
-
-    using ContextHandle = uint64_t;
-
-    struct ContextParams {
-        ContextHandle handle = 0;
-        uint64_t vm = UINT64_MAX;
-        std::vector<drm_xe_engine_class_instance> engines;
-    };
-
-    struct BindInfo {
-        uint64_t gpuVa = 0;
-        uint64_t size = 0;
-    };
-
     struct ClientConnection {
         drm_xe_eudebug_event_client client = {};
+        std::unordered_map<ExecQueueHandle, ExecQueueParams> execQueues;
+        std::unordered_map<uint64_t, uint64_t> lrcHandleToVmHandle;
         std::unordered_map<uint64_t, BindInfo> vmToModuleDebugAreaBindInfo;
     };
 
+    std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
     bool checkAllEventsCollected();
-    void handleEvent(drm_xe_eudebug_event *event);
+    MOCKABLE_VIRTUAL void handleEvent(drm_xe_eudebug_event *event);
     void readInternalEventsAsync() override;
     void pushApiEvent(zet_debug_event_t &debugEvent);
-    std::unique_ptr<IoctlHandlerXe> ioctlHandler;
-    uint32_t xeDebuggerVersion = 0;
     std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;
     std::atomic<bool> detached{false};
 

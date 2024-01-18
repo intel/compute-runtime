@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -195,7 +195,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
     static void *asyncThreadFunction(void *arg);
     void startAsyncThread() override;
-    void closeAsyncThread();
 
     virtual std::vector<uint64_t> getAllMemoryHandles() {
         std::vector<uint64_t> allVms;

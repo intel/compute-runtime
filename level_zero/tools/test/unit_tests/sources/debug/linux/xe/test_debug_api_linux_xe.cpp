@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -410,6 +410,256 @@ TEST_F(DebugApiLinuxTestXe, GivenMoreThan3EventsInQueueThenInternalEventsOnlyRea
     EXPECT_EQ(3, handler->ioctlCalled);
     EXPECT_EQ(DebugSessionLinuxXe::maxEventSize, handler->debugEventInput.len);
     EXPECT_EQ(static_cast<decltype(drm_xe_eudebug_event::type)>(DRM_XE_EUDEBUG_EVENT_READ), handler->debugEventInput.type);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEventInInternalEventQueueWhenAsyncThreadFunctionIsExecutedThenEventIsHandled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockAsyncThreadDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+
+    uint8_t eventClientData[sizeof(drm_xe_eudebug_event_client)];
+    auto client = reinterpret_cast<drm_xe_eudebug_event_client *>(&eventClientData);
+    client->base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client->base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client->base.len = sizeof(drm_xe_eudebug_event_client);
+    client->client_handle = 0x123456789;
+
+    auto memory = std::make_unique<uint64_t[]>(sizeof(drm_xe_eudebug_event_client) / sizeof(uint64_t));
+    memcpy(memory.get(), client, sizeof(drm_xe_eudebug_event_client));
+
+    // Clear the event queue before using it
+    while (!session->internalEventQueue.empty()) {
+        session->internalEventQueue.pop();
+    }
+    session->internalEventQueue.push(std::move(memory));
+
+    session->startAsyncThread();
+
+    while (session->getInternalEventCounter == 0)
+        ;
+    EXPECT_TRUE(session->asyncThread.threadActive);
+    EXPECT_FALSE(session->asyncThreadFinished);
+
+    session->closeAsyncThread();
+
+    EXPECT_FALSE(session->asyncThread.threadActive);
+    EXPECT_TRUE(session->asyncThreadFinished);
+    EXPECT_EQ(session->clientHandleToConnection.size(), 1ul);
+    EXPECT_NE(session->clientHandleToConnection.find(client->client_handle), session->clientHandleToConnection.end());
+
+    uint64_t wrongClientHandle = 34;
+    EXPECT_EQ(session->clientHandleToConnection.find(wrongClientHandle), session->clientHandleToConnection.end());
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenNoEventInInternalEventQueueWhenAsyncThreadFunctionIsExecutedThenEventsAreCheckedForAvailability) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockAsyncThreadDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    // Clear the event queue before using it
+    while (!session->internalEventQueue.empty()) {
+        session->internalEventQueue.pop();
+    }
+
+    session->startAsyncThread();
+
+    while (session->getInternalEventCounter == 0)
+        ;
+    EXPECT_TRUE(session->asyncThread.threadActive);
+    EXPECT_FALSE(session->asyncThreadFinished);
+
+    session->closeAsyncThread();
+
+    EXPECT_FALSE(session->asyncThread.threadActive);
+    EXPECT_TRUE(session->asyncThreadFinished);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenOneEuDebugOpenEventAndOneIncorrectEventWhenHandleEventThenEventsAreHandled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    drm_xe_eudebug_event_client client1;
+    client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client1.client_handle = 0x123456789;
+
+    drm_xe_eudebug_event client2;
+    client2.type = DRM_XE_EUDEBUG_EVENT_NONE;
+    client2.flags = 0;
+
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client2));
+    EXPECT_EQ(session->clientHandleToConnection.size(), 1ul);
+    EXPECT_NE(session->clientHandleToConnection.find(client1.client_handle), session->clientHandleToConnection.end());
+
+    uint64_t wrongClientHandle = 34;
+    EXPECT_EQ(session->clientHandleToConnection.find(wrongClientHandle), session->clientHandleToConnection.end());
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventCreateFlagWhenHandleEventThenNewClientConnectionIsCreated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    drm_xe_eudebug_event_client client1;
+    client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client1.client_handle = 0x123456789;
+
+    drm_xe_eudebug_event_client client2;
+    client2.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client2.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client2.client_handle = 0x123456788;
+
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client2));
+    EXPECT_EQ(session->clientHandleToConnection.size(), 2ul);
+    EXPECT_NE(session->clientHandleToConnection.find(client1.client_handle), session->clientHandleToConnection.end());
+    EXPECT_NE(session->clientHandleToConnection.find(client2.client_handle), session->clientHandleToConnection.end());
+
+    uint64_t wrongClientHandle = 34;
+    EXPECT_EQ(session->clientHandleToConnection.find(wrongClientHandle), session->clientHandleToConnection.end());
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventDestroyFlagWhenHandleEventThenClientConnectionIsDestroyed) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    drm_xe_eudebug_event_client client1;
+    client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client1.client_handle = 0x123456789;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
+    EXPECT_EQ(session->clientHandleToConnection.size(), 1ul);
+    EXPECT_NE(session->clientHandleToConnection.find(client1.client_handle), session->clientHandleToConnection.end());
+
+    drm_xe_eudebug_event_client client2;
+    client2.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client2.base.flags = DRM_XE_EUDEBUG_EVENT_DESTROY;
+    client2.client_handle = client1.client_handle;
+    EXPECT_EQ(session->clientHandleClosed, session->invalidClientHandle);
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client2));
+    EXPECT_EQ(session->clientHandleClosed, client2.client_handle);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventCreateFlagWhenHandleEventThenExecQueueIsCreated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    drm_xe_eudebug_event_client client1;
+    client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client1.client_handle = 0x123456789;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
+
+    uint64_t execQueueData[sizeof(drm_xe_eudebug_event_exec_queue) / sizeof(uint64_t) + 3 * sizeof(typeOfLrcHandle)];
+    auto *lrcHandle = reinterpret_cast<typeOfLrcHandle *>(ptrOffset(execQueueData, sizeof(drm_xe_eudebug_event_exec_queue)));
+    typeOfLrcHandle lrcHandleTemp[3];
+    const uint64_t lrcHandle0 = 2;
+    const uint64_t lrcHandle1 = 3;
+    const uint64_t lrcHandle2 = 5;
+    lrcHandleTemp[0] = static_cast<typeOfLrcHandle>(lrcHandle0);
+    lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
+    lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
+
+    drm_xe_eudebug_event_exec_queue *execQueue = reinterpret_cast<drm_xe_eudebug_event_exec_queue *>(&execQueueData);
+    execQueue->base.type = DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE;
+    execQueue->base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    execQueue->client_handle = client1.client_handle;
+    execQueue->vm_handle = 0x1234;
+    execQueue->exec_queue_handle = 0x100;
+    execQueue->engine_class = DRM_XE_ENGINE_CLASS_COMPUTE;
+    execQueue->width = 3;
+    memcpy(lrcHandle, lrcHandleTemp, sizeof(lrcHandleTemp));
+    session->handleEvent(&execQueue->base);
+    EXPECT_NE(session->clientHandleToConnection.find(execQueue->client_handle), session->clientHandleToConnection.end());
+    EXPECT_EQ(session->clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].vmHandle,
+              execQueue->vm_handle);
+    EXPECT_EQ(session->clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].engineClass,
+              DRM_XE_ENGINE_CLASS_COMPUTE);
+    for (uint16_t idx = 0; idx < execQueue->width; idx++) {
+        EXPECT_EQ(session->clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle[execQueue->lrc_handle[idx]],
+                  execQueue->vm_handle);
+    }
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHandleEventThenExecQueueIsDestroyed) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    drm_xe_eudebug_event_client client1;
+    client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client1.client_handle = 0x123456789;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
+
+    uint64_t execQueueData[sizeof(drm_xe_eudebug_event_exec_queue) / sizeof(uint64_t) + 3 * sizeof(typeOfLrcHandle)];
+    auto *lrcHandle = reinterpret_cast<typeOfLrcHandle *>(ptrOffset(execQueueData, sizeof(drm_xe_eudebug_event_exec_queue)));
+    typeOfLrcHandle lrcHandleTemp[3];
+    const uint64_t lrcHandle0 = 2;
+    const uint64_t lrcHandle1 = 3;
+    const uint64_t lrcHandle2 = 5;
+    lrcHandleTemp[0] = static_cast<typeOfLrcHandle>(lrcHandle0);
+    lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
+    lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
+
+    // ExecQueue create event handle
+    drm_xe_eudebug_event_exec_queue *execQueue = reinterpret_cast<drm_xe_eudebug_event_exec_queue *>(&execQueueData);
+    execQueue->base.type = DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE;
+    execQueue->base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    execQueue->client_handle = client1.client_handle;
+    execQueue->vm_handle = 0x1234;
+    execQueue->exec_queue_handle = 0x100;
+    execQueue->engine_class = DRM_XE_ENGINE_CLASS_COMPUTE;
+    execQueue->width = 3;
+    memcpy(lrcHandle, lrcHandleTemp, sizeof(lrcHandleTemp));
+    session->handleEvent(&execQueue->base);
+    EXPECT_NE(session->clientHandleToConnection.find(execQueue->client_handle), session->clientHandleToConnection.end());
+    EXPECT_EQ(session->clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].vmHandle,
+              execQueue->vm_handle);
+    EXPECT_EQ(session->clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].engineClass,
+              DRM_XE_ENGINE_CLASS_COMPUTE);
+    for (uint16_t idx = 0; idx < execQueue->width; idx++) {
+        EXPECT_EQ(session->clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle[execQueue->lrc_handle[idx]],
+                  execQueue->vm_handle);
+    }
+
+    // ExecQueue Destroy event handle
+    execQueue->base.type = DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE;
+    execQueue->base.flags = DRM_XE_EUDEBUG_EVENT_DESTROY;
+    execQueue->client_handle = client1.client_handle;
+    execQueue->vm_handle = 0x1234;
+    execQueue->exec_queue_handle = 0x100;
+    execQueue->engine_class = DRM_XE_ENGINE_CLASS_COMPUTE;
+    execQueue->width = 3;
+    session->handleEvent(&execQueue->base);
+    EXPECT_TRUE(session->clientHandleToConnection[execQueue->client_handle]->execQueues.empty());
+    EXPECT_TRUE(session->clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle.empty());
 }
 
 } // namespace ult

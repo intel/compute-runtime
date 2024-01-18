@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ DebugSessionLinuxXe::DebugSessionLinuxXe(const zet_debug_config_t &config, Devic
 };
 DebugSessionLinuxXe::~DebugSessionLinuxXe() {
 
-    // closeAsyncThread();
+    closeAsyncThread();
     closeInternalEventsThread();
     closeFd();
 }
@@ -81,6 +81,31 @@ ze_result_t DebugSessionLinuxXe::initialize() {
     startInternalEventsThread();
 
     return ZE_RESULT_SUCCESS;
+}
+
+void DebugSessionLinuxXe::handleEventsAsync() {
+    auto eventMemory = getInternalEvent();
+    if (eventMemory != nullptr) {
+        auto debugEvent = reinterpret_cast<drm_xe_eudebug_event *>(eventMemory.get());
+        handleEvent(debugEvent);
+    }
+}
+
+void *DebugSessionLinuxXe::asyncThreadFunction(void *arg) {
+    DebugSessionLinuxXe *self = reinterpret_cast<DebugSessionLinuxXe *>(arg);
+    PRINT_DEBUGGER_INFO_LOG("Debugger async thread start\n", "");
+
+    while (self->asyncThread.threadActive) {
+        self->handleEventsAsync();
+    }
+
+    PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");
+
+    return nullptr;
+}
+
+void DebugSessionLinuxXe::startAsyncThread() {
+    asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
 }
 
 void DebugSessionLinuxXe::readInternalEventsAsync() {
@@ -157,6 +182,62 @@ void DebugSessionLinuxXe::pushApiEvent(zet_debug_event_t &debugEvent) {
 bool DebugSessionLinuxXe::closeConnection() {
     closeInternalEventsThread();
     return closeFd();
+}
+
+void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
+    auto type = event->type;
+
+    PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type = %u flags = %u seqno = %llu len = %lu",
+                            (uint16_t)event->type, (uint16_t)event->flags, (uint64_t)event->seqno, (uint32_t)event->len);
+
+    switch (type) {
+    case DRM_XE_EUDEBUG_EVENT_OPEN: {
+        auto clientEvent = reinterpret_cast<drm_xe_eudebug_event_client *>(event);
+
+        if (event->flags & DRM_XE_EUDEBUG_EVENT_CREATE) {
+            DEBUG_BREAK_IF(clientHandleToConnection.find(clientEvent->client_handle) != clientHandleToConnection.end());
+            clientHandleToConnection[clientEvent->client_handle].reset(new ClientConnection);
+            clientHandleToConnection[clientEvent->client_handle]->client = *clientEvent;
+        }
+
+        if (event->flags & DRM_XE_EUDEBUG_EVENT_DESTROY) {
+            clientHandleClosed = clientEvent->client_handle;
+        }
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_OPEN flags = %u len = %lu client.handle = %llu\n",
+                                (uint16_t)event->flags, (uint32_t)event->len, (uint64_t)clientEvent->client_handle);
+
+    } break;
+
+    case DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE: {
+        drm_xe_eudebug_event_exec_queue *execQueue = reinterpret_cast<drm_xe_eudebug_event_exec_queue *>(event);
+
+        if (event->flags & DRM_XE_EUDEBUG_EVENT_CREATE) {
+            UNRECOVERABLE_IF(clientHandleToConnection.find(execQueue->client_handle) == clientHandleToConnection.end());
+            clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].vmHandle = execQueue->vm_handle;
+            clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].engineClass = execQueue->engine_class;
+            for (uint16_t idx = 0; idx < execQueue->width; idx++) {
+                clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle[execQueue->lrc_handle[idx]] = execQueue->vm_handle;
+            }
+        }
+
+        if (event->flags & DRM_XE_EUDEBUG_EVENT_DESTROY) {
+            for (uint16_t idx = 0; idx < execQueue->width; idx++) {
+                clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle.erase(execQueue->lrc_handle[idx]);
+            }
+            clientHandleToConnection[execQueue->client_handle]->execQueues.erase(execQueue->exec_queue_handle);
+        }
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE flags = %u len = %lu client_handle = %llu\
+                                vm_handle = %llu exec_queue_handle = %llu engine_class = %u\n",
+                                (uint16_t)event->flags, (uint32_t)event->len, (uint64_t)execQueue->client_handle, (uint64_t)execQueue->vm_handle,
+                                (uint64_t)execQueue->exec_queue_handle, (uint16_t)execQueue->engine_class);
+    } break;
+
+    default:
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", (uint16_t)event->type, (uint16_t)event->flags, (uint32_t)event->len);
+        break;
+    }
 }
 
 } // namespace L0

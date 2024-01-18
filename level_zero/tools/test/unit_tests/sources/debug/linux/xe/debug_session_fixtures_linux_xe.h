@@ -33,6 +33,7 @@
 
 namespace L0 {
 namespace ult {
+using typeOfLrcHandle = std::decay<decltype(drm_xe_eudebug_event_exec_queue::lrc_handle[0])>::type;
 
 struct DebugApiLinuxXeFixture : public DeviceFixture {
     void setUp() {
@@ -97,8 +98,17 @@ struct MockIoctlHandlerXe : public L0::DebugSessionLinuxXe::IoctlHandlerXe {
 
 struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionImp::apiEvents;
+    using L0::DebugSessionLinuxXe::asyncThread;
+    using L0::DebugSessionLinuxXe::asyncThreadFunction;
+    using L0::DebugSessionLinuxXe::clientHandleClosed;
+    using L0::DebugSessionLinuxXe::clientHandleToConnection;
+    using L0::DebugSessionLinuxXe::handleEvent;
     using L0::DebugSessionLinuxXe::internalEventQueue;
     using L0::DebugSessionLinuxXe::internalEventThread;
+    using L0::DebugSessionLinuxXe::invalidClientHandle;
+    using L0::DebugSessionLinuxXe::readEventImp;
+    using L0::DebugSessionLinuxXe::readInternalEventsAsync;
+    using L0::DebugSessionLinuxXe::startAsyncThread;
 
     MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxXe(config, device, debugFd, params) {
         clientHandleToConnection[mockClientHandle].reset(new ClientConnection);
@@ -115,8 +125,34 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         }
         return DebugSessionLinuxXe::initialize();
     }
+
+    std::unique_ptr<uint64_t[]> getInternalEvent() override {
+        getInternalEventCounter++;
+        if (synchronousInternalEventRead) {
+            readInternalEventsAsync();
+        }
+        return DebugSessionLinuxXe::getInternalEvent();
+    }
+
+    bool synchronousInternalEventRead = false;
+    std::atomic<int> getInternalEventCounter = 0;
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;
     static constexpr uint64_t mockClientHandle = 1;
+};
+
+struct MockAsyncThreadDebugSessionLinuxXe : public MockDebugSessionLinuxXe {
+    using MockDebugSessionLinuxXe::MockDebugSessionLinuxXe;
+    static void *mockAsyncThreadFunction(void *arg) {
+        DebugSessionLinuxXe::asyncThreadFunction(arg);
+        reinterpret_cast<MockAsyncThreadDebugSessionLinuxXe *>(arg)->asyncThreadFinished = true;
+        return nullptr;
+    }
+
+    void startAsyncThread() override {
+        asyncThread.thread = NEO::Thread::create(mockAsyncThreadFunction, reinterpret_cast<void *>(this));
+    }
+
+    std::atomic<bool> asyncThreadFinished{false};
 };
 
 } // namespace ult
