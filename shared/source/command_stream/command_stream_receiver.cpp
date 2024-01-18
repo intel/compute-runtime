@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -867,6 +867,9 @@ bool CommandStreamReceiver::createGlobalFenceAllocation() {
 }
 
 bool CommandStreamReceiver::createPreemptionAllocation() {
+    if (EngineHelpers::isBcs(osContext->getEngineType())) {
+        return true;
+    }
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
     size_t preemptionSurfaceSize = hwInfo->capabilityTable.requiredPreemptionSurfaceSize;
