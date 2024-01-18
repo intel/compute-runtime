@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -280,7 +280,8 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
         if (useExternalFrontWindowPool && HeapAssigner::heapTypeExternalWithFrontWindowPool(heap)) {
             heapInitExternalWithFrontWindow(heap, gfxBase, gfxHeap32Size);
             size_t externalFrontWindowSize = GfxPartition::externalFrontWindowPoolSize;
-            heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), heapAllocate(heap, externalFrontWindowSize),
+            auto allocation = heapAllocate(heap, externalFrontWindowSize);
+            heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), allocation,
                                             externalFrontWindowSize);
         } else if (HeapAssigner::isInternalHeap(heap)) {
             heapInitWithFrontWindow(heap, gfxBase, gfxHeap32Size, GfxPartition::internalFrontWindowPoolSize);
