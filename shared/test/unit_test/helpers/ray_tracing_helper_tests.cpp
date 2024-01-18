@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,9 @@ TEST(RayTracingHelperTests, whenMemoryBackedFifoSizeIsRequestedThenCorrectValueI
     MockDevice device;
 
     size_t size = RayTracingHelper::getTotalMemoryBackedFifoSize(device);
-    size_t expectedSize = device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported * RayTracingHelper::memoryBackedFifoSizePerDss;
+    uint32_t subSliceCount = GfxCoreHelper::getHighestEnabledDualSubSlice(device.getHardwareInfo());
+    size_t expectedSize = subSliceCount * RayTracingHelper::memoryBackedFifoSizePerDss;
+    EXPECT_LT(0u, size);
     EXPECT_EQ(expectedSize, size);
 }
 
@@ -57,8 +59,9 @@ TEST(RayTracingHelperTests, whenNumRtStacksIsQueriedThenItIsEqualToNumRtStacksPe
 
     uint32_t numDssRtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(device);
     uint32_t numDssRtStacks = RayTracingHelper::getNumRtStacks(device);
-    uint32_t subsliceCount = device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported;
+    uint32_t subsliceCount = GfxCoreHelper::getHighestEnabledDualSubSlice(device.getHardwareInfo());
 
+    EXPECT_LT(0u, numDssRtStacks);
     EXPECT_EQ(numDssRtStacks, numDssRtStacksPerDss * subsliceCount);
 }
 

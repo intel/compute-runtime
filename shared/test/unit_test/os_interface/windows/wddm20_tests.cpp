@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1725,16 +1725,15 @@ TEST_F(WddmTestWithMockGdiDll, givenForceDeviceIdWhenQueryAdapterInfoThenProperD
     EXPECT_EQ(expectedDeviceId, wddm->gfxPlatform->usDeviceID);
 }
 
-TEST_F(WddmTestWithMockGdiDll, givenNoMaxDualSubSlicesSupportedWhenQueryAdapterInfoThenMaxDualSubSliceIsEqualHalfOfMaxSubSlice) {
+TEST_F(WddmTestWithMockGdiDll, givenNoMaxDualSubSlicesSupportedWhenQueryAdapterInfoThenMaxDualSubSliceIsNotSet) {
     HardwareInfo hwInfo = *defaultHwInfo.get();
     uint32_t maxSS = 8u;
-    uint32_t expectedMaxDSS = maxSS / 2;
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = maxSS;
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 0u;
 
     mockGdiDll.reset(setAdapterInfo(&hwInfo.platform, &hwInfo.gtSystemInfo, hwInfo.capabilityTable.gpuAddressSpace));
     EXPECT_TRUE(wddm->queryAdapterInfo());
-    EXPECT_EQ(expectedMaxDSS, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
+    EXPECT_EQ(0u, wddm->getGtSysInfo()->MaxDualSubSlicesSupported);
 }
 
 TEST_F(WddmTestWithMockGdiDll, givenNonZeroMaxDualSubSlicesSupportedWhenQueryAdapterInfoThenNothingChanged) {
