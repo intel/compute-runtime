@@ -318,7 +318,7 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
                 cmdBufferAllocations[i]->releaseUsageInOsContext(osContextId);
             }
 
-            reusableAllocationList->pushTailOne(*cmdBufferAllocations[i]);
+            reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
         } else {
             this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
         }
