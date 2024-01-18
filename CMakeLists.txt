@@ -419,14 +419,6 @@ if(NOT DISABLE_LIBVA)
   endif()
 endif()
 
-if(UNIX)
-  if(NOT DEFINED NUMA_HEADERS_DIR)
-    get_filename_component(NUMA_HEADERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/numa" ABSOLUTE)
-    message(STATUS "NUMA config headers dir: ${NUMA_HEADERS_DIR}")
-    include_directories("${NUMA_HEADERS_DIR}")
-  endif()
-endif()
-
 add_subdirectory_unique(third_party/gtest)
 
 message(STATUS "AUB_STREAM_DIR = ${AUB_STREAM_DIR}")

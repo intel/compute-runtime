@@ -20,7 +20,7 @@ class NumaLibrary {
   public:
     static bool init();
     static bool isLoaded() { return numaLoaded; }
-    static bool getMemPolicy(int *mode, std::vector<unsigned long> &nodeMask, void *addr);
+    static bool getMemPolicy(int *mode, std::vector<unsigned long> &nodeMask);
 
   protected:
     static constexpr const char *numaLibNameStr = "libnuma.so.1";

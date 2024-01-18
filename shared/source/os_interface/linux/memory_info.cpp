@@ -60,12 +60,12 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
     }
 }
 
-int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, void *addr) {
+int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) {
     std::vector<unsigned long> memPolicyNodeMask;
     int mode = -1;
     if (memPolicySupported &&
         isUSMHostAllocation &&
-        Linux::NumaLibrary::getMemPolicy(&mode, memPolicyNodeMask, addr)) {
+        Linux::NumaLibrary::getMemPolicy(&mode, memPolicyNodeMask)) {
         if (memPolicyMode != -1) {
             mode = memPolicyMode;
         }
@@ -124,7 +124,7 @@ void MemoryInfo::printRegionSizes() {
     }
 }
 
-int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation, void *addr) {
+int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
     MemRegionsVec region = {regionClassAndInstance};
@@ -136,11 +136,11 @@ int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocS
         }
     }
     uint32_t numOfChunks = 0;
-    auto ret = createGemExt(region, allocSize, handle, patIndex, vmId, pairHandle, false, numOfChunks, isUSMHostAllocation, addr);
+    auto ret = createGemExt(region, allocSize, handle, patIndex, vmId, pairHandle, false, numOfChunks, isUSMHostAllocation);
     return ret;
 }
 
-int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation, void *addr) {
+int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto banks = std::bitset<4>(memoryBanks);
     MemRegionsVec memRegions{};
@@ -155,11 +155,11 @@ int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t all
         currentBank++;
     }
     uint32_t numOfChunks = 0;
-    auto ret = createGemExt(memRegions, allocSize, handle, patIndex, {}, -1, false, numOfChunks, isUSMHostAllocation, addr);
+    auto ret = createGemExt(memRegions, allocSize, handle, patIndex, {}, -1, false, numOfChunks, isUSMHostAllocation);
     return ret;
 }
 
-int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation, void *addr) {
+int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto banks = std::bitset<4>(memoryBanks);
     MemRegionsVec memRegions{};
@@ -173,7 +173,7 @@ int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t all
         }
         currentBank++;
     }
-    auto ret = createGemExt(memRegions, allocSize, handle, patIndex, {}, pairHandle, isChunked, numOfChunks, isUSMHostAllocation, addr);
+    auto ret = createGemExt(memRegions, allocSize, handle, patIndex, {}, pairHandle, isChunked, numOfChunks, isUSMHostAllocation);
     return ret;
 }
 

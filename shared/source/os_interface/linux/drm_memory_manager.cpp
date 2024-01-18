@@ -1866,9 +1866,9 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
 
     auto banks = std::bitset<4>(memoryBanks);
     if (banks.count() > 1) {
-        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex, isUsmHostAllocation, reinterpret_cast<void *>(gpuAddress));
+        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex, isUsmHostAllocation);
     } else {
-        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, patIndex, pairHandle, isUsmHostAllocation, reinterpret_cast<void *>(gpuAddress));
+        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, patIndex, pairHandle, isUsmHostAllocation);
     }
 
     if (ret != 0) {
@@ -1894,7 +1894,7 @@ bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *alloc
 
     auto gmm = allocation->getGmm(0u);
     auto patIndex = drm->getPatIndex(gmm, allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false, !allocation->isAllocatedInLocalMemoryPool());
-    int ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, boSize, handle, patIndex, -1, true, numOfChunks, allocation->isUsmHostAllocation(), reinterpret_cast<void *>(boAddress));
+    int ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, boSize, handle, patIndex, -1, true, numOfChunks, allocation->isUsmHostAllocation());
     if (ret != 0) {
         return false;
     }
@@ -2312,7 +2312,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
         auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
 
-        int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks, allocationData.flags.isUSMHostAllocation, reinterpret_cast<void *>(preferredAddress));
+        int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks, allocationData.flags.isUSMHostAllocation);
 
         if (ret) {
             this->munmapFunction(cpuPointer, totalSizeToAlloc);
