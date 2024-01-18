@@ -1387,6 +1387,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
 
         kernel->initialize(&desc);
 
@@ -1404,6 +1405,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
 
         kernel->initialize(&desc);
 
@@ -1421,6 +1423,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
 
         kernel->initialize(&desc);
 
@@ -1438,6 +1441,45 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = true;
+        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
+
+        kernel->initialize(&desc);
+
+        EXPECT_TRUE(kernel->hasIndirectAccess());
+    }
+
+    {
+        std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+        ze_kernel_desc_t desc = {};
+        desc.pKernelName = kernelName.c_str();
+
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = true;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = false;
+
+        kernel->initialize(&desc);
+
+        EXPECT_FALSE(kernel->hasIndirectAccess());
+    }
+
+    {
+        std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+        ze_kernel_desc_t desc = {};
+        desc.pKernelName = kernelName.c_str();
+
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = true;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = true;
 
         kernel->initialize(&desc);
 

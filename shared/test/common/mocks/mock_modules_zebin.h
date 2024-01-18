@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,6 +69,7 @@ kernels:
     - name: Intel_Symbol_Table_Void_Program
       execution_env:
         simd_size: 8
+        indirect_stateless_count: 1
 functions:
     - name: fun0
       execution_env:

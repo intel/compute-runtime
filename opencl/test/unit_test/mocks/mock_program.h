@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,7 @@ class MockProgram : public Program {
     using Program::deviceBuildInfos;
     using Program::disableZebinIfVmeEnabled;
     using Program::extractInternalOptions;
+    using Program::functionPointerWithIndirectAccessExists;
     using Program::getKernelInfo;
     using Program::getModuleAllocations;
     using Program::internalOptionsToExtract;

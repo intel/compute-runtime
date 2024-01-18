@@ -289,6 +289,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
     }
 
     indirectDetectionVersion = src.indirectDetectionVersion;
+    functionPointerWithIndirectAccessExists = src.functionPointerWithIndirectAccessExists;
 
     return linkBinary(&clDevice.getDevice(), src.globalConstants.initData, src.globalConstants.size, src.globalVariables.initData,
                       src.globalVariables.size, src.globalStrings, src.externalFunctions);

@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/device_binary_format/zebin/zeinfo_enum_lookup.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
@@ -493,6 +494,9 @@ DecodeError decodeZeInfoKernels(ProgramInfo &dst, Yaml::YamlParser &parser, cons
         auto zeInfoErr = decodeZeInfoKernelEntry(kernelInfo->kernelDescriptor, parser, kernelNd, dst.grfSize, dst.minScratchSpaceSize, outErrReason, outWarning);
         if (DecodeError::success != zeInfoErr) {
             return zeInfoErr;
+        }
+        if (kernelInfo->kernelDescriptor.kernelMetadata.kernelName == Zebin::Elf::SectionNames::externalFunctions) {
+            dst.functionPointerWithIndirectAccessExists |= kernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess;
         }
 
         dst.kernelInfos.push_back(kernelInfo.release());

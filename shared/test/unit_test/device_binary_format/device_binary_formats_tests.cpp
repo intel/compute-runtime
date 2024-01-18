@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -343,6 +343,7 @@ TEST(DecodeSingleDeviceBinary, GivenZebinWithExternalFunctionsThenDecodingSuccee
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
     EXPECT_NE(nullptr, programInfo.linkerInput.get());
     EXPECT_EQ(1, programInfo.linkerInput->getExportedFunctionsSegmentId());
+    EXPECT_TRUE(programInfo.functionPointerWithIndirectAccessExists);
 }
 
 TEST(DecodeSingleDeviceBinary, GivenOclElfFormatThenDecodingFails) {
