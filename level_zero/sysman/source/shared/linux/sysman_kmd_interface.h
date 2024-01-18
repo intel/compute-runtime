@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,8 +99,8 @@ class SysmanKmdInterface {
     SysmanKmdInterface();
     virtual ~SysmanKmdInterface();
     enum SysfsValueUnit : uint32_t {
-        milliSecond,
-        microSecond,
+        milli,
+        micro,
         unAvailable,
     };
     static std::unique_ptr<SysmanKmdInterface> create(NEO::Drm &drm);
@@ -190,9 +190,12 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
         return sysfsNameToNativeUnitMap;
     }
     const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
-        {SysfsName::sysfsNameSchedulerTimeout, milliSecond},
-        {SysfsName::sysfsNameSchedulerTimeslice, milliSecond},
-        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milliSecond},
+        {SysfsName::sysfsNameSchedulerTimeout, milli},
+        {SysfsName::sysfsNameSchedulerTimeslice, milli},
+        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milli},
+        {SysfsName::sysfsNameSustainedPowerLimit, micro},
+        {SysfsName::sysfsNameCriticalPowerLimit, micro},
+        {SysfsName::sysfsNameDefaultPowerLimit, micro},
     };
 };
 
@@ -231,9 +234,12 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
         return sysfsNameToNativeUnitMap;
     }
     const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
-        {SysfsName::sysfsNameSchedulerTimeout, milliSecond},
-        {SysfsName::sysfsNameSchedulerTimeslice, milliSecond},
-        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milliSecond},
+        {SysfsName::sysfsNameSchedulerTimeout, milli},
+        {SysfsName::sysfsNameSchedulerTimeslice, milli},
+        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milli},
+        {SysfsName::sysfsNameSustainedPowerLimit, micro},
+        {SysfsName::sysfsNameCriticalPowerLimit, micro},
+        {SysfsName::sysfsNameDefaultPowerLimit, micro},
     };
 };
 
@@ -272,10 +278,13 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
         return sysfsNameToNativeUnitMap;
     }
     const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
-        {SysfsName::sysfsNameSchedulerTimeout, microSecond},
-        {SysfsName::sysfsNameSchedulerTimeslice, microSecond},
-        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milliSecond},
-        {SysfsName::sysfsNameSchedulerWatchDogTimeoutMaximum, milliSecond},
+        {SysfsName::sysfsNameSchedulerTimeout, micro},
+        {SysfsName::sysfsNameSchedulerTimeslice, micro},
+        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milli},
+        {SysfsName::sysfsNameSchedulerWatchDogTimeoutMaximum, milli},
+        {SysfsName::sysfsNameSustainedPowerLimit, micro},
+        {SysfsName::sysfsNameCriticalPowerLimit, micro},
+        {SysfsName::sysfsNameDefaultPowerLimit, micro},
     };
 };
 

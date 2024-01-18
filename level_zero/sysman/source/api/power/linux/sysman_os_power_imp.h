@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ namespace Sysman {
 class PlatformMonitoringTech;
 class SysFsAccessInterface;
 class SysmanKmdInterface;
+class SysmanProductHelper;
 class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getProperties(zes_power_properties_t *pProperties) override;
@@ -32,7 +33,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) override;
 
     bool isPowerModuleSupported() override;
-    bool isHwmonDir(std::string name);
+    bool isIntelGraphicsHwmonDir(const std::string &name);
     ze_result_t getPmtEnergyCounter(zes_power_energy_counter_t *pEnergy);
     LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxPowerImp() = default;
@@ -42,22 +43,18 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     PlatformMonitoringTech *pPmt = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
+    SysmanProductHelper *pSysmanProductHelper = nullptr;
 
   private:
-    std::string intelGraphicsHwmonDir;
-    std::string energyHwmonDir;
-    static const std::string sustainedPowerLimitEnabled;
-    static const std::string sustainedPowerLimit;
-    static const std::string sustainedPowerLimitInterval;
-    static const std::string burstPowerLimitEnabled;
-    static const std::string burstPowerLimit;
-    static const std::string energyCounterNode;
-    static const std::string defaultPowerLimit;
-    static const std::string minPowerLimit;
-    static const std::string maxPowerLimit;
+    std::string intelGraphicsHwmonDir = {};
+    std::string criticalPowerLimit = {};
+    std::string sustainedPowerLimit = {};
+    std::string sustainedPowerLimitInterval = {};
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
+    uint32_t powerLimitCount = 0;
+    class PowerLimitRestorer;
 
     ze_result_t getErrorCode(ze_result_t result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
@@ -65,6 +62,10 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
         }
         return result;
     }
+
+    ze_result_t getMinLimit(int32_t &minLimit);
+    ze_result_t getMaxLimit(int32_t &maxLimit);
+    ze_result_t getDefaultLimit(int32_t &defaultLimit);
 };
 } // namespace Sysman
 } // namespace L0

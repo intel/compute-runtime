@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,9 +133,9 @@ void SysmanKmdInterface::convertSysfsValueUnit(const SysfsValueUnit dstUnit, con
     dstValue = srcValue;
 
     if (dstUnit != srcUnit) {
-        if (dstUnit == SysfsValueUnit::milliSecond && srcUnit == SysfsValueUnit::microSecond) {
+        if (dstUnit == SysfsValueUnit::milli && srcUnit == SysfsValueUnit::micro) {
             dstValue = srcValue / 1000u;
-        } else if (dstUnit == SysfsValueUnit::microSecond && srcUnit == SysfsValueUnit::milliSecond) {
+        } else if (dstUnit == SysfsValueUnit::micro && srcUnit == SysfsValueUnit::milli) {
             dstValue = srcValue * 1000u;
         }
     }
