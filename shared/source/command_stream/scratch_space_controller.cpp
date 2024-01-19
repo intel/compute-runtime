@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,11 +24,11 @@ ScratchSpaceController::ScratchSpaceController(uint32_t rootDeviceIndex, Executi
 }
 
 ScratchSpaceController::~ScratchSpaceController() {
-    if (scratchAllocation) {
-        getMemoryManager()->freeGraphicsMemory(scratchAllocation);
+    if (scratchSlot0Allocation) {
+        getMemoryManager()->freeGraphicsMemory(scratchSlot0Allocation);
     }
-    if (privateScratchAllocation) {
-        getMemoryManager()->freeGraphicsMemory(privateScratchAllocation);
+    if (scratchSlot1Allocation) {
+        getMemoryManager()->freeGraphicsMemory(scratchSlot1Allocation);
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,5 +26,5 @@ TEST_F(MultiDispatchInfoTest, GivenNullKernelWhenCreatingMultiDispatchInfoThenEx
 
     EXPECT_FALSE(multiDispatchInfo.begin()->usesSlm());
     EXPECT_FALSE(multiDispatchInfo.begin()->usesStatelessPrintfSurface());
-    EXPECT_EQ(0u, multiDispatchInfo.begin()->getRequiredScratchSize());
+    EXPECT_EQ(0u, multiDispatchInfo.begin()->getRequiredScratchSize(0u));
 }

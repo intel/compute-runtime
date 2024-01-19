@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,6 @@ class MockKernelInfo : public KernelInfo {
     void setSyncBuffer(uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful = undefined<CrossThreadDataOffset>);
     void setPrivateMemory(uint32_t perThreadPrivateMemorySize, bool isSimtThread, uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful = undefined<CrossThreadDataOffset>);
     void setSamplerTable(DynamicStateHeapOffset borderColor, uint8_t numSamplers, DynamicStateHeapOffset tableOffset);
-    void setPerThreadScratchSize(uint32_t perThreadScratchSize, uint32_t slot);
     void setLocalIds(const std::array<uint8_t, 3> &localIds);
 
   private:

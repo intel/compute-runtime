@@ -1182,8 +1182,8 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWithScratchAndPrivateWhenAp
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(commandList->getCommandListPerThreadPrivateScratchSize(), static_cast<uint32_t>(0x100));
-    EXPECT_EQ(commandList->getCommandListPerThreadScratchSize(), static_cast<uint32_t>(0x200));
+    EXPECT_EQ(commandList->getCommandListPerThreadScratchSize(1u), static_cast<uint32_t>(0x100));
+    EXPECT_EQ(commandList->getCommandListPerThreadScratchSize(0u), static_cast<uint32_t>(0x200));
 }
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithPrivateScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, IsAtLeastXeHpCore) {

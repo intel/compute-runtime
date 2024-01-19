@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     using BaseClass::makeResident;
     using BaseClass::mediaVfeStateDirty;
     using BaseClass::osContext;
-    using BaseClass::requiredScratchSize;
+    using BaseClass::requiredScratchSlot0Size;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAddress;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAllocation;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::latestSentTaskCount;

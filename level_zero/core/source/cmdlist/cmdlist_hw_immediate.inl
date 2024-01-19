@@ -198,7 +198,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
             }
         }
 
-        this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
+        this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(0u), this->getCommandListPerThreadScratchSize(1u));
     }
 
     NEO::ImmediateDispatchFlags dispatchFlags{
@@ -259,7 +259,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
 
     if (kernelOperation) {
         this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
-        this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(), this->getCommandListPerThreadPrivateScratchSize());
+        this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(0u), this->getCommandListPerThreadScratchSize(1u));
 
         if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
             ssh = this->csr->getGlobalStatelessHeap();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,11 +21,11 @@ namespace ult {
 ModuleImmutableDataFixture::MockImmutableMemoryManager::MockImmutableMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 
 ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize) : MockImmutableData(perHwThreadPrivateMemorySize, 0, 0) {}
-ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSize, uint32_t perThreaddPrivateScratchSize) {
+ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSlot0Size, uint32_t perThreadScratchSlot1Size) {
     mockKernelDescriptor = new NEO::KernelDescriptor;
     mockKernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize = perHwThreadPrivateMemorySize;
-    mockKernelDescriptor->kernelAttributes.perThreadScratchSize[0] = perThreadScratchSize;
-    mockKernelDescriptor->kernelAttributes.perThreadScratchSize[1] = perThreaddPrivateScratchSize;
+    mockKernelDescriptor->kernelAttributes.perThreadScratchSize[0] = perThreadScratchSlot0Size;
+    mockKernelDescriptor->kernelAttributes.perThreadScratchSize[1] = perThreadScratchSlot1Size;
     kernelDescriptor = mockKernelDescriptor;
 
     mockKernelInfo = new NEO::KernelInfo;

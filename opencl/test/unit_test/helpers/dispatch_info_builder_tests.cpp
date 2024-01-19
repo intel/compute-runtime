@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
         pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
 
-        pKernelInfo->setPerThreadScratchSize(1024, 0);
+        pKernelInfo->kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 1024;
         pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
 
         pKernelInfo->addArgBuffer(0, 0x10, sizeof(void *));

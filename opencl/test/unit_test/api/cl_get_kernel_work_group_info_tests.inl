@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,16 +74,14 @@ TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
 
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
-TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
+TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceForSpillWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
-    mockKernel.kernelInfo.setPerThreadScratchSize(1024, 0);
-
-    cl_ulong scratchSpaceSize = static_cast<cl_ulong>(mockKernel.mockKernel->getScratchSize());
-    EXPECT_EQ(scratchSpaceSize, 1024u);
+    auto spillMemorySize = 1024u;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.spillFillScratchMemorySize = spillMemorySize;
 
     retVal = clGetKernelWorkGroupInfo(
         mockKernel.mockMultiDeviceKernel,
@@ -95,7 +93,7 @@ TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
 
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(paramValueSizeRet, sizeof(cl_ulong));
-    EXPECT_EQ(paramValue, scratchSpaceSize);
+    EXPECT_EQ(paramValue, spillMemorySize);
 }
 
 using matcher = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImmutableData::kernelDescriptor;
         using KernelImmutableData::kernelInfo;
         MockImmutableData(uint32_t perHwThreadPrivateMemorySize);
-        MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSize, uint32_t perThreaddPrivateScratchSize);
+        MockImmutableData(uint32_t perHwThreadPrivateMemorySize, uint32_t perThreadScratchSlot0Size, uint32_t perThreadScratchSlot1Size);
         void setDevice(L0::Device *inDevice) {
             device = inDevice;
         }

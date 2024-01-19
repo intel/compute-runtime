@@ -109,9 +109,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     appendEventForProfiling(event, true, false);
-    auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
+    auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(0u),
                                                         kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
-    this->setCommandListPerThreadScratchSize(perThreadScratchSize);
+    this->setCommandListPerThreadScratchSize(0u, perThreadScratchSize);
 
     auto slmEnable = (kernel->getImmutableData()->getDescriptor().kernelAttributes.slmInlineSize > 0);
     this->setCommandListSLMEnable(slmEnable);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,8 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
 
     void setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t scratchSlot,
-                                 uint32_t requiredPerThreadScratchSize,
-                                 uint32_t requiredPerThreadPrivateScratchSize,
+                                 uint32_t requiredPerThreadScratchSizeSlot0,
+                                 uint32_t requiredPerThreadScratchSizeSlot1,
                                  TaskCountType currentTaskCount,
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
@@ -36,15 +36,15 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
 
     void programHeaps(HeapContainer &heapContainer,
                       uint32_t scratchSlot,
-                      uint32_t requiredPerThreadScratchSize,
-                      uint32_t requiredPerThreadPrivateScratchSize,
+                      uint32_t requiredPerThreadScratchSizeSlot0,
+                      uint32_t requiredPerThreadScratchSizeSlot1,
                       TaskCountType currentTaskCount,
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override;
     void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
-                                               uint32_t requiredPerThreadScratchSize,
-                                               uint32_t requiredPerThreadPrivateScratchSize,
+                                               uint32_t requiredPerThreadScratchSizeSlot0,
+                                               uint32_t requiredPerThreadScratchSizeSlot1,
                                                TaskCountType currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
@@ -54,8 +54,8 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
   protected:
     MOCKABLE_VIRTUAL void programSurfaceState();
     MOCKABLE_VIRTUAL void programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation);
-    MOCKABLE_VIRTUAL void prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
-                                                   uint32_t requiredPerThreadPrivateScratchSize,
+    MOCKABLE_VIRTUAL void prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
+                                                   uint32_t requiredPerThreadScratchSizeSlot1,
                                                    TaskCountType currentTaskCount,
                                                    OsContext &osContext,
                                                    bool &stateBaseAddressDirty,
@@ -66,13 +66,13 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
     bool updateSlots = true;
     uint32_t stateSlotsCount = 16;
     static const uint32_t scratchType = 6;
-    bool privateScratchSpaceSupported = true;
+    bool twoSlotScratchSpaceSupported = true;
 
     char *surfaceStateHeap = nullptr;
     size_t singleSurfaceStateSize = 0;
     uint32_t slotId = 0;
     uint32_t perThreadScratchSize = 0;
-    uint32_t perThreadPrivateScratchSize = 0;
+    uint32_t perThreadScratchSpaceSlot1Size = 0;
     uint32_t sshOffset = 0;
     SurfaceStateInHeapInfo bindlessSS = {};
 };

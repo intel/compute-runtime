@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -587,40 +587,40 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenc
 }
 
 struct MockScratchController : public ScratchSpaceController {
-    using ScratchSpaceController::privateScratchAllocation;
-    using ScratchSpaceController::scratchAllocation;
+    using ScratchSpaceController::scratchSlot0Allocation;
+    using ScratchSpaceController::scratchSlot1Allocation;
     using ScratchSpaceController::ScratchSpaceController;
     void setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t scratchSlot,
-                                 uint32_t requiredPerThreadScratchSize,
-                                 uint32_t requiredPerThreadPrivateScratchSize,
+                                 uint32_t requiredPerThreadScratchSizeSlot0,
+                                 uint32_t requiredPerThreadScratchSizeSlot1,
                                  TaskCountType currentTaskCount,
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override {
-        if (requiredPerThreadScratchSize > scratchSizeBytes) {
-            scratchSizeBytes = requiredPerThreadScratchSize;
-            scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, requiredPerThreadScratchSize});
+        if (requiredPerThreadScratchSizeSlot0 > scratchSlot0SizeInBytes) {
+            scratchSlot0SizeInBytes = requiredPerThreadScratchSizeSlot0;
+            scratchSlot0Allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, requiredPerThreadScratchSizeSlot0});
         }
-        if (requiredPerThreadPrivateScratchSize > privateScratchSizeBytes) {
-            privateScratchSizeBytes = requiredPerThreadPrivateScratchSize;
-            privateScratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, requiredPerThreadPrivateScratchSize});
+        if (requiredPerThreadScratchSizeSlot1 > scratchSlot1SizeInBytes) {
+            scratchSlot1SizeInBytes = requiredPerThreadScratchSizeSlot1;
+            scratchSlot1Allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, requiredPerThreadScratchSizeSlot1});
         }
     }
     uint64_t calculateNewGSH() override { return 0u; };
     uint64_t getScratchPatchAddress() override { return 0u; };
     void programHeaps(HeapContainer &heapContainer,
                       uint32_t scratchSlot,
-                      uint32_t requiredPerThreadScratchSize,
-                      uint32_t requiredPerThreadPrivateScratchSize,
+                      uint32_t requiredPerThreadScratchSizeSlot0,
+                      uint32_t requiredPerThreadScratchSizeSlot1,
                       TaskCountType currentTaskCount,
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override {
     }
     void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
-                                               uint32_t requiredPerThreadScratchSize,
-                                               uint32_t requiredPerThreadPrivateScratchSize,
+                                               uint32_t requiredPerThreadScratchSizeSlot0,
+                                               uint32_t requiredPerThreadScratchSizeSlot1,
                                                TaskCountType currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
@@ -640,10 +640,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenScratchIsRequiredForFirstFlush
 
     flushTask(*commandStreamReceiver);
 
-    EXPECT_NE(nullptr, scratchController->scratchAllocation);
-    EXPECT_EQ(nullptr, scratchController->privateScratchAllocation);
+    EXPECT_NE(nullptr, scratchController->scratchSlot0Allocation);
+    EXPECT_EQ(nullptr, scratchController->scratchSlot1Allocation);
 
-    auto scratchAllocation = scratchController->scratchAllocation;
+    auto scratchAllocation = scratchController->scratchSlot0Allocation;
 
     EXPECT_TRUE(commandStreamReceiver->isMadeResident(scratchAllocation));
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratchAllocation));
@@ -654,15 +654,15 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenScratchIsRequiredForFirstFlush
 
     flushTask(*commandStreamReceiver); // 2nd flush
 
-    EXPECT_NE(nullptr, scratchController->scratchAllocation);
-    EXPECT_NE(nullptr, scratchController->privateScratchAllocation);
+    EXPECT_NE(nullptr, scratchController->scratchSlot0Allocation);
+    EXPECT_NE(nullptr, scratchController->scratchSlot1Allocation);
 
-    auto privateScratchAllocation = scratchController->privateScratchAllocation;
+    auto scratch1Allocation = scratchController->scratchSlot1Allocation;
 
     EXPECT_TRUE(commandStreamReceiver->isMadeResident(scratchAllocation));
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratchAllocation));
-    EXPECT_TRUE(commandStreamReceiver->isMadeResident(privateScratchAllocation));
-    EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(privateScratchAllocation));
+    EXPECT_TRUE(commandStreamReceiver->isMadeResident(scratch1Allocation));
+    EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratch1Allocation));
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPrivateScratchIsRequiredForFirstFlushAndCommonScratchForSecondFlushThenHandleResidencyProperly) {
@@ -675,13 +675,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPrivateScratchIsRequiredForFir
 
     flushTask(*commandStreamReceiver);
 
-    EXPECT_EQ(nullptr, scratchController->scratchAllocation);
-    EXPECT_NE(nullptr, scratchController->privateScratchAllocation);
+    EXPECT_EQ(nullptr, scratchController->scratchSlot0Allocation);
+    EXPECT_NE(nullptr, scratchController->scratchSlot1Allocation);
 
-    auto privateScratchAllocation = scratchController->privateScratchAllocation;
+    auto scratch1Allocation = scratchController->scratchSlot1Allocation;
 
-    EXPECT_TRUE(commandStreamReceiver->isMadeResident(privateScratchAllocation));
-    EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(privateScratchAllocation));
+    EXPECT_TRUE(commandStreamReceiver->isMadeResident(scratch1Allocation));
+    EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratch1Allocation));
 
     commandStreamReceiver->madeResidentGfxAllocations.clear(); // this is only history - we can clean this
     commandStreamReceiver->madeNonResidentGfxAllocations.clear();
@@ -689,15 +689,15 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPrivateScratchIsRequiredForFir
 
     flushTask(*commandStreamReceiver); // 2nd flush
 
-    EXPECT_NE(nullptr, scratchController->scratchAllocation);
-    EXPECT_NE(nullptr, scratchController->privateScratchAllocation);
+    EXPECT_NE(nullptr, scratchController->scratchSlot0Allocation);
+    EXPECT_NE(nullptr, scratchController->scratchSlot1Allocation);
 
-    auto scratchAllocation = scratchController->scratchAllocation;
+    auto scratchAllocation = scratchController->scratchSlot0Allocation;
 
     EXPECT_TRUE(commandStreamReceiver->isMadeResident(scratchAllocation));
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratchAllocation));
-    EXPECT_TRUE(commandStreamReceiver->isMadeResident(privateScratchAllocation));
-    EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(privateScratchAllocation));
+    EXPECT_TRUE(commandStreamReceiver->isMadeResident(scratch1Allocation));
+    EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratch1Allocation));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecutiveNdRangeKernelsThenStateBaseAddressIsProgrammedOnceAndScratchAddressInMediaVfeStateIsProgrammedTwiceBothWithCorrectAddress) {
@@ -713,7 +713,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
 
     size_t gws = 1;
     uint32_t scratchSize = 1024;
-    kernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
 
     EXPECT_EQ(false, kernel.mockKernel->isBuiltIn);
 
@@ -786,7 +786,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenTwoConsecu
 
     // now re-try to see if SBA is not programmed
     scratchSize *= 2;
-    kernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
 
@@ -827,7 +827,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNdRangeKer
 
     size_t gws = 1;
     uint32_t scratchSize = 1024;
-    kernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
 
     EXPECT_EQ(false, kernel.mockKernel->isBuiltIn);
 

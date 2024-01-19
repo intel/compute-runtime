@@ -2704,7 +2704,7 @@ kernels:
         usage:           private_space
         size:            128
       - type:            scratch
-        usage:           single_space
+        usage:           private_space
         size:            256
         slot:            1
 ...
@@ -2737,7 +2737,7 @@ kernels:
     EXPECT_FALSE(buffers[1].isSimtThread);
 
     EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeScratch, buffers[2].allocationType);
-    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::PerThreadMemoryBuffer::MemoryUsageSingleSpace, buffers[2].memoryUsage);
+    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::PerThreadMemoryBuffer::MemoryUsagePrivateSpace, buffers[2].memoryUsage);
     EXPECT_FALSE(buffers[2].isSimtThread);
     EXPECT_EQ(256, buffers[2].size);
     EXPECT_EQ(1, buffers[2].slot);
@@ -4041,7 +4041,7 @@ kernels:
         simd_size: 8
       per_thread_memory_buffers: 
           - type:            scratch
-            usage:           private_space
+            usage:           spill_fill_space
             size:            2048
             is_simt_thread:  true
 )===";
@@ -4051,6 +4051,7 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
     EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.spillFillScratchMemorySize);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferBiggerThanMinimalWhenSlotAndSimtThreadIsProvidedThenSetsProperFieldsInDescriptorInCorrectSlot) {
@@ -4072,6 +4073,7 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
     EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.privateScratchMemorySize);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferOfSizeSmallerThanMinimalWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
