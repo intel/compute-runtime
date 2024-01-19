@@ -474,35 +474,22 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
     UNRECOVERABLE_IF(0 == groupSize[1]);
     UNRECOVERABLE_IF(0 == groupSize[2]);
 
-    auto &hardwareInfo = module->getDevice()->getHwInfo();
-
-    auto dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
-    if (dssCount == 0) {
-        dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
-    }
-
     auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &helper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     auto &descriptor = kernelImmData->getDescriptor();
-    auto availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, descriptor.kernelAttributes.numGrfRequired);
 
-    auto availableSlmSize = static_cast<uint32_t>(dssCount * MemoryConstants::kiloByte * hardwareInfo.capabilityTable.slmSize);
     auto usedSlmSize = helper.alignSlmSize(slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize);
-    auto maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
-    auto barrierCount = descriptor.kernelAttributes.barrierCount;
     const uint32_t workDim = 3;
     const size_t localWorkSize[] = {groupSize[0], groupSize[1], groupSize[2]};
 
-    *totalGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(descriptor.kernelAttributes.simdSize,
-                                                               availableThreadCount,
-                                                               dssCount,
-                                                               availableSlmSize,
+    *totalGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(rootDeviceEnvironment,
+                                                               descriptor,
                                                                usedSlmSize,
-                                                               maxBarrierCount,
-                                                               barrierCount,
                                                                workDim,
-                                                               localWorkSize);
-    *totalGroupCount = helper.adjustMaxWorkGroupCount(*totalGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced);
+                                                               localWorkSize,
+                                                               engineGroupType,
+                                                               isEngineInstanced);
+
     return ZE_RESULT_SUCCESS;
 }
 

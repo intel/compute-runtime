@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,30 +12,53 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include <algorithm>
 
 using namespace NEO;
 
 struct KernelHelperMaxWorkGroupsTests : ::testing::Test {
+    EngineGroupType engineType = EngineGroupType::compute;
     uint32_t simd = 8;
-    uint32_t threadCount = 8 * 1024;
     uint32_t dssCount = 16;
     uint32_t availableSlm = 64 * MemoryConstants::kiloByte;
     uint32_t usedSlm = 0;
-    uint32_t maxBarrierCount = 32;
     uint32_t numberOfBarriers = 0;
     uint32_t workDim = 3;
+    uint32_t grf = 128;
     size_t lws[3] = {10, 10, 10};
 
-    uint32_t getMaxWorkGroupCount() {
-        return KernelHelper::getMaxWorkGroupCount(simd, threadCount, dssCount, availableSlm, usedSlm,
-                                                  maxBarrierCount, numberOfBarriers, workDim, lws);
+    void SetUp() override {
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1u);
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     }
+
+    uint32_t getMaxWorkGroupCount() {
+        KernelDescriptor descriptor = {};
+        descriptor.kernelAttributes.simdSize = simd;
+        descriptor.kernelAttributes.barrierCount = numberOfBarriers;
+        descriptor.kernelAttributes.numGrfRequired = grf;
+
+        auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+        hwInfo->gtSystemInfo.DualSubSliceCount = dssCount;
+        hwInfo->capabilityTable.slmSize = (availableSlm / MemoryConstants::kiloByte) / dssCount;
+
+        return KernelHelper::getMaxWorkGroupCount(*rootDeviceEnvironment, descriptor, usedSlm, workDim, lws, engineType, false);
+    }
+
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
+    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithSimd) {
-    auto workGroupSize = lws[0] * lws[1] * lws[2];
-    auto expected = threadCount / Math::divideAndRoundUp(workGroupSize, simd);
+    auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
+
+    uint32_t workGroupSize = static_cast<uint32_t>(lws[0] * lws[1] * lws[2]);
+    uint32_t expected = helper.calculateAvailableThreadCount(*rootDeviceEnvironment->getHardwareInfo(), grf) / static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
+
+    expected = helper.adjustMaxWorkGroupCount(expected, EngineGroupType::compute, *rootDeviceEnvironment, false);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
@@ -47,33 +70,44 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenDebugFlagSetWhenGetMaxWorkGroupCount
 }
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToBarriersCount) {
+    numberOfBarriers = 0;
+    auto baseCount = getMaxWorkGroupCount();
+
     numberOfBarriers = 16;
 
-    auto expected = dssCount * (maxBarrierCount / numberOfBarriers);
+    auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
+    auto maxBarrierCount = helper.getMaxBarrierRegisterPerSlice();
+
+    auto expected = std::min(baseCount, static_cast<uint32_t>(dssCount * (maxBarrierCount / numberOfBarriers)));
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenUsedSlmSizeWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToUsedSlmSize) {
+    usedSlm = 0;
+    auto baseCount = getMaxWorkGroupCount();
+
     usedSlm = 4 * MemoryConstants::kiloByte;
 
-    auto expected = availableSlm / usedSlm;
+    auto expected = std::min(baseCount, availableSlm / usedSlm);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenVariousValuesWhenCalculatingMaxWorkGroupsCountThenLowestResultIsAlwaysReturned) {
+    auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
+
+    engineType = EngineGroupType::cooperativeCompute;
     usedSlm = 1 * MemoryConstants::kiloByte;
     numberOfBarriers = 1;
     dssCount = 1;
 
     workDim = 1;
     lws[0] = simd;
-    threadCount = 1;
-    EXPECT_EQ(1u, getMaxWorkGroupCount());
+    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
 
-    threadCount = 1024;
+    hwInfo->gtSystemInfo.ThreadCount = 1024;
     EXPECT_NE(1u, getMaxWorkGroupCount());
 
-    numberOfBarriers = 32;
+    numberOfBarriers = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
     EXPECT_EQ(1u, getMaxWorkGroupCount());
 
     numberOfBarriers = 1;

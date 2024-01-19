@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 
 #include <cstddef>
@@ -14,6 +15,7 @@
 
 namespace NEO {
 class Device;
+struct RootDeviceEnvironment;
 
 struct KernelHelper {
     enum class ErrorCode {
@@ -21,9 +23,8 @@ struct KernelHelper {
         outOfDeviceMemory = 1,
         invalidKernel = 2
     };
-    static uint32_t getMaxWorkGroupCount(uint32_t simd, uint32_t availableThreadCount, uint32_t dssCount, uint32_t availableSlmSize,
-                                         uint32_t usedSlmSize, uint32_t maxBarrierCount, uint32_t numberOfBarriers, uint32_t workDim,
-                                         const size_t *localWorkSize);
+    static uint32_t getMaxWorkGroupCount(const RootDeviceEnvironment &rootDeviceEnvironment, const KernelDescriptor &kernelDescriptor,
+                                         uint32_t usedSlmSize, uint32_t workDim, const size_t *localWorkSize, EngineGroupType engineGroupType, bool isEngineInstanced);
     static inline uint64_t getPrivateSurfaceSize(uint64_t perHwThreadPrivateMemorySize, uint32_t computeUnitsUsedForScratch) {
         return perHwThreadPrivateMemorySize * computeUnitsUsedForScratch;
     }

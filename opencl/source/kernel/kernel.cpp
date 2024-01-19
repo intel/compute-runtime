@@ -1128,29 +1128,18 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
 
     auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                      commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-
-    const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
-    auto dssCount = hardwareInfo.gtSystemInfo.DualSubSliceCount;
-    if (dssCount == 0) {
-        dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
-    }
-    auto availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, kernelDescriptor.kernelAttributes.numGrfRequired);
-    auto availableSlmSize = static_cast<uint32_t>(dssCount * MemoryConstants::kiloByte * hardwareInfo.capabilityTable.slmSize);
-    auto usedSlmSize = helper.alignSlmSize(slmTotalSize);
-    auto maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
-    auto barrierCount = kernelDescriptor.kernelAttributes.barrierCount;
-
-    auto maxWorkGroupCount = KernelHelper::getMaxWorkGroupCount(kernelInfo.getMaxSimdSize(),
-                                                                availableThreadCount,
-                                                                dssCount,
-                                                                availableSlmSize,
-                                                                usedSlmSize,
-                                                                maxBarrierCount,
-                                                                barrierCount,
-                                                                workDim,
-                                                                localWorkSize);
     auto isEngineInstanced = commandQueue->getGpgpuCommandStreamReceiver().getOsContext().isEngineInstanced();
-    maxWorkGroupCount = helper.adjustMaxWorkGroupCount(maxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced);
+
+    auto usedSlmSize = helper.alignSlmSize(slmTotalSize);
+
+    auto maxWorkGroupCount = KernelHelper::getMaxWorkGroupCount(rootDeviceEnvironment,
+                                                                kernelInfo.kernelDescriptor,
+                                                                usedSlmSize,
+                                                                workDim,
+                                                                localWorkSize,
+                                                                engineGroupType,
+                                                                isEngineInstanced);
+
     return maxWorkGroupCount;
 }
 

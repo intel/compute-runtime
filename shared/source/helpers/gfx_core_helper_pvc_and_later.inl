@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupC
         UNRECOVERABLE_IF(ccsCount == 0);
         numberOfpartsInTileForConcurrentKernels = std::max(numberOfpartsInTileForConcurrentKernels, ccsCount);
     }
-    return maxWorkGroupCount / numberOfpartsInTileForConcurrentKernels;
+    return std::max(maxWorkGroupCount / numberOfpartsInTileForConcurrentKernels, 1u);
 }
 
 template <typename Family>
