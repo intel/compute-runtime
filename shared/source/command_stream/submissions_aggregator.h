@@ -43,6 +43,8 @@ struct BatchBuffer {
     uint64_t taskStartAddress = 0; // if task not available, use CSR stream
 
     GraphicsAllocation *chainedBatchBuffer = nullptr;
+    bool lowPriority = false;
+    QueueThrottle throttle = QueueThrottle::MEDIUM;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     size_t usedSize = 0u;
 
@@ -51,13 +53,11 @@ struct BatchBuffer {
     void *endCmdPtr = nullptr;
     uint32_t numCsrClients = 0;
 
-    QueueThrottle throttle = QueueThrottle::MEDIUM;
+    bool hasStallingCmds = false;
+    bool hasRelaxedOrderingDependencies = false;
+    bool ringBufferRestartRequest = false;
     bool disableFlatRingBuffer = false;
     bool dispatchMonitorFence = false;
-    bool hasRelaxedOrderingDependencies = false;
-    bool hasStallingCmds = false;
-    bool lowPriority = false;
-    bool ringBufferRestartRequest = false;
 };
 
 struct CommandBuffer : public IDNode<CommandBuffer> {
