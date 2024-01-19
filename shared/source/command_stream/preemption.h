@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,7 @@ class PreemptionHelper {
     static void programCsrBaseAddressCmd(LinearStream &preambleCmdStream, const GraphicsAllocation *preemptionCsr);
 
     template <typename GfxFamily>
-    static void programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation);
+    static void programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, bool useFullAddress);
 };
 
 template <typename GfxFamily>

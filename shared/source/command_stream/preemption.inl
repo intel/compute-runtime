@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
@@ -43,19 +44,28 @@ void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &
     bool debuggingEnabled = device.getDebugger() != nullptr;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 
+    auto &compilerProductHelper = device.getCompilerProductHelper();
+    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled();
+
     if (isMidThreadPreemption || debuggingEnabled) {
         GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, context).getSipAllocation();
-        programStateSipCmd<GfxFamily>(preambleCmdStream, sipAllocation);
+        programStateSipCmd<GfxFamily>(preambleCmdStream, sipAllocation, useFullAddress);
     }
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation) {
+void PreemptionHelper::programStateSipCmd(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, bool useFullAddress) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
 
     auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
     STATE_SIP cmd = GfxFamily::cmdInitStateSip;
-    cmd.setSystemInstructionPointer(sipAllocation->getGpuAddressToPatch());
+    if (useFullAddress) {
+        cmd.setSystemInstructionPointer(sipAllocation->getGpuAddress());
+
+    } else {
+        cmd.setSystemInstructionPointer(sipAllocation->getGpuAddressToPatch());
+    }
+
     *sip = cmd;
 }
 
