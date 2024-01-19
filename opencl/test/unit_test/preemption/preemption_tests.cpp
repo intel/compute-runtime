@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ TEST_F(ThreadGroupPreemptionTests, GivenValidKernelsInMdiThenThreadGroupPreempti
     EXPECT_EQ(PreemptionMode::ThreadGroup, ClPreemptionHelper::taskPreemptionMode(device->getDevice(), multiDispatchInfo));
 }
 
-TEST_F(ThreadGroupPreemptionTests, GivenValidKernelsInMdiAndDisabledPremptionThenPreemptionIsDisabled) {
+TEST_F(ThreadGroupPreemptionTests, GivenValidKernelsInMdiAndDisabledPreemptionThenPreemptionIsDisabled) {
     device->setPreemptionMode(PreemptionMode::Disabled);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(*dispatchInfo);

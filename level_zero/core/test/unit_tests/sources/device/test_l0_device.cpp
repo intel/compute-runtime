@@ -284,7 +284,7 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyIsNo
     Os::frontEndDllName = oldFclDllName;
 }
 
-TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryAndMidThreadPremptionThenInvalidDependencyIsReturned) {
+TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryAndMidThreadPreemptionThenInvalidDependencyIsReturned) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
@@ -304,7 +304,7 @@ TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryAndMidThreadPremptionThen
     Os::igcDllName = oldIgcDllName;
 }
 
-TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryAndMidThreadPremptionThenInvalidDependencyIsReturned) {
+TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryAndMidThreadPreemptionThenInvalidDependencyIsReturned) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
