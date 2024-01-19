@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenBufferWithFourP
     buffer->forceDisallowCPUCopy = true;
     auto allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
-    auto gpuAddress = allocation->getGpuAddress();
+    auto gpuAddress = ptrOffset(allocation->getGpuAddress(), buffer->getOffset());
     allocation->storageInfo.cloningOfPageTables = false;
     allocation->storageInfo.memoryBanks = 0;
     allocation->setAubWritable(false, static_cast<uint32_t>(maxNBitValue(numTiles)));
@@ -79,7 +79,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenBufferWithFourP
     buffer->forceDisallowCPUCopy = true;
     auto allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
-    auto gpuAddress = allocation->getGpuAddress();
+    auto gpuAddress = ptrOffset(allocation->getGpuAddress(), buffer->getOffset());
     allocation->storageInfo.cloningOfPageTables = false;
     allocation->storageInfo.memoryBanks = 0;
 
@@ -122,7 +122,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenColouredBufferW
 
     commandQueues[0][0]->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, memoryToWrite, nullptr, 0, nullptr, nullptr);
 
-    auto gpuAddress = allocation->getGpuAddress();
+    auto gpuAddress = ptrOffset(allocation->getGpuAddress(), buffer->getOffset());
     for (uint32_t tile = 0; tile < numTiles; tile++) {
         for (uint32_t offset = 0; offset < bufferSize; offset += MemoryConstants::pageSize64k) {
             expectMemory<FamilyType>(reinterpret_cast<void *>(gpuAddress + offset), ptrOffset(memoryToWrite, offset), MemoryConstants::pageSize64k, tile, 0);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,7 @@ HWTEST_P(AUBWriteBuffer, WhenWritingBufferThenExpectationsAreMet) {
         eventWaitList,
         event);
 
-    auto pDestMemory = reinterpret_cast<decltype(destMemory)>((dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
+    auto pDestMemory = reinterpret_cast<decltype(destMemory)>(ptrOffset(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstBuffer->getOffset()));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -157,7 +157,7 @@ struct AUBWriteBufferUnaligned
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         // Check the memory
-        auto bufferGPUPtr = reinterpret_cast<char *>((buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
+        auto bufferGPUPtr = reinterpret_cast<char *>(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset()));
         expectMemory<FamilyType>(ptrOffset(bufferGPUPtr, offset), ptrOffset(srcMemory, offset), size);
     }
 };

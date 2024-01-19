@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -307,7 +307,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(kernel->getKernelInfo(), 0u, pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 0), rootDeviceIndex);
 
-    EXPECT_EQ((void *)((uintptr_t)buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), *pArgument);
+    EXPECT_EQ(addrToPtr(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset())), *pArgument);
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }

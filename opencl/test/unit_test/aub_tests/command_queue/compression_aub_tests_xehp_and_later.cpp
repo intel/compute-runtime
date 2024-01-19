@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,7 +178,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImage2DFromBufferW
     EXPECT_TRUE(graphicsAllocation->getDefaultGmm()->isCompressionEnabled);
     EXPECT_TRUE(compressedImage->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled);
 
-    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), writePattern, bufferSize);
+    expectNotEqualMemory<FamilyType>(addrToPtr(ptrOffset(graphicsAllocation->getGpuAddress(), compressedBuffer->getOffset())), writePattern, bufferSize);
 
     clReleaseMemObject(clCompressedImage);
 }

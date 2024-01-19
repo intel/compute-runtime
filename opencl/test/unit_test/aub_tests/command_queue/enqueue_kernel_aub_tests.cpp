@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -238,7 +238,7 @@ HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
     auto globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
     auto sizeWritten = globalWorkItems * sizeof(float);
 
-    auto pDestGpuAddress = reinterpret_cast<void *>((destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
+    auto pDestGpuAddress = addrToPtr(ptrOffset(destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), destBuffer->getOffset()));
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(pDestGpuAddress, this->pSrcMemory, sizeWritten);
 
@@ -468,7 +468,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
         *(expectedData + maxId) = maxId;
 
         outBuffer.reset(Buffer::create(context, CL_MEM_COPY_HOST_PTR, alignUp(sizeUserMemory, 4096), destMemory, retVal));
-        bufferGpuAddress = reinterpret_cast<void *>(outBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress());
+        bufferGpuAddress = addrToPtr(ptrOffset(outBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), outBuffer->getOffset()));
         kernel->setArg(1, outBuffer.get());
 
         sizeWrittenMemory = maxId * typeSize;
@@ -564,7 +564,7 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
     EXPECT_TRUE(this->kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
 
     this->pCmdQ->flush();
-    expectMemory<FamilyType>(reinterpret_cast<void *>(pBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
+    expectMemory<FamilyType>(addrToPtr(ptrOffset(pBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), pBuffer->getOffset())),
                              bufferExpected, bufferSize);
 }
 
@@ -1010,7 +1010,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyKernelWhenEnqueuedThenRes
     EXPECT_TRUE(this->kernel->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>().isPureStateful());
 
     this->pCmdQ->finish();
-    expectMemory<FamilyType>(reinterpret_cast<void *>(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
+    expectMemory<FamilyType>(addrToPtr(ptrOffset(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), pBufferDst->getOffset())),
                              bufferDataSrc, bufferSize);
 }
 

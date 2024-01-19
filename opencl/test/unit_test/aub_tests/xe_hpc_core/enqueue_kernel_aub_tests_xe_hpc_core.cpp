@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,6 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenPrefetchEnabledWhenEnqueuedKernelThe
                                         localWorkSize, 0, nullptr, nullptr);
 
     this->pCmdQ->flush();
-    expectMemory<FamilyType>(reinterpret_cast<void *>(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress()),
+    expectMemory<FamilyType>(addrToPtr(ptrOffset(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), buffer->getOffset())),
                              bufferExpected, bufferSize);
 }

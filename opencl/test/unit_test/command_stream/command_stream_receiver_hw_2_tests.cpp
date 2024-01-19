@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -993,6 +993,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 100, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    auto bufferGpuVa = ptrOffset(graphicsAllocation->getGpuAddress(), buffer->getOffset());
 
     const size_t hostPtrOffset = 0x1234;
 
@@ -1009,7 +1010,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
             auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                                   csr, graphicsAllocation,
                                                                                   mapAllocation, mapPtr,
-                                                                                  graphicsAllocation->getGpuAddress(),
+                                                                                  bufferGpuVa,
                                                                                   castToUint64(mapPtr),
                                                                                   {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
 
@@ -1023,7 +1024,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
             if (pDevice->isFullRangeSvm()) {
                 EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getSourceBaseAddress());
             }
-            EXPECT_EQ(graphicsAllocation->getGpuAddress(), bltCmd->getDestinationBaseAddress());
+            EXPECT_EQ(bufferGpuVa, bltCmd->getDestinationBaseAddress());
         }
 
         {
@@ -1033,7 +1034,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
             auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                                   csr, graphicsAllocation,
                                                                                   mapAllocation, mapPtr,
-                                                                                  graphicsAllocation->getGpuAddress(),
+                                                                                  bufferGpuVa,
                                                                                   castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
             flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
@@ -1046,7 +1047,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
             if (pDevice->isFullRangeSvm()) {
                 EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
             }
-            EXPECT_EQ(graphicsAllocation->getGpuAddress(), bltCmd->getSourceBaseAddress());
+            EXPECT_EQ(bufferGpuVa, bltCmd->getSourceBaseAddress());
         }
 
         {
@@ -1057,7 +1058,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
             auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                                   csr, graphicsAllocation,
                                                                                   mapAllocation, mapPtr,
-                                                                                  graphicsAllocation->getGpuAddress(),
+                                                                                  bufferGpuVa,
                                                                                   castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
             flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
@@ -1070,7 +1071,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
             if (pDevice->isFullRangeSvm()) {
                 EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
             }
-            EXPECT_EQ(graphicsAllocation->getGpuAddress(), bltCmd->getSourceBaseAddress());
+            EXPECT_EQ(bufferGpuVa, bltCmd->getSourceBaseAddress());
         }
         {
             // bufferWrite from hostPtr
@@ -1078,7 +1079,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
             auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                                   csr, graphicsAllocation,
                                                                                   mapAllocation, mapPtr,
-                                                                                  graphicsAllocation->getGpuAddress(),
+                                                                                  bufferGpuVa,
                                                                                   castToUint64(mapPtr),
                                                                                   {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
             flushBcsTask(&csr, blitProperties, true, *pDevice);
@@ -1092,7 +1093,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
             if (pDevice->isFullRangeSvm()) {
                 EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getSourceBaseAddress());
             }
-            EXPECT_EQ(graphicsAllocation->getGpuAddress(), bltCmd->getDestinationBaseAddress());
+            EXPECT_EQ(bufferGpuVa, bltCmd->getDestinationBaseAddress());
         }
     }
 
@@ -1483,7 +1484,7 @@ HWTEST_F(BcsTests, givenAuxTranslationRequestWhenBlitCalledThenProgramCommandCor
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 123, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
-    auto allocationGpuAddress = graphicsAllocation->getGpuAddress();
+    auto allocationGpuAddress = ptrOffset(graphicsAllocation->getGpuAddress(), buffer->getOffset());
     auto allocationSize = graphicsAllocation->getUnderlyingBufferSize();
 
     AuxTranslationDirection translationDirection[] = {AuxTranslationDirection::auxToNonAux, AuxTranslationDirection::nonAuxToAux};

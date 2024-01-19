@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -538,7 +538,7 @@ struct ConditionalBbStartTests : public MiMath {
 
         csr->makeResident(*buffer->getGraphicsAllocation(rootDeviceIndex));
 
-        baseGpuVa = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
+        baseGpuVa = ptrOffset(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), buffer->getOffset());
         baseWriteGpuVa = baseGpuVa + (sizeof(CompareDataT) * numCompareModes);
     }
 

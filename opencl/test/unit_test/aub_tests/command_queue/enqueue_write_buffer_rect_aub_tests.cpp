@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ HWTEST_P(AUBWriteBufferRect, Given3dWhenWritingBufferThenExpectationsAreMet) {
         retVal));
     ASSERT_NE(nullptr, dstBuffer);
 
-    uint8_t *pDestMemory = reinterpret_cast<uint8_t *>(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress());
+    uint8_t *pDestMemory = reinterpret_cast<uint8_t *>(ptrOffset(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstBuffer->getOffset()));
 
     cl_bool blockingWrite = CL_TRUE;
 
@@ -144,7 +144,7 @@ struct AUBWriteBufferRectUnaligned
 
         buffer->forceDisallowCPUCopy = true;
 
-        uint8_t *pDestMemory = reinterpret_cast<uint8_t *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress());
+        uint8_t *pDestMemory = reinterpret_cast<uint8_t *>(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset()));
 
         cl_bool blockingWrite = CL_TRUE;
 

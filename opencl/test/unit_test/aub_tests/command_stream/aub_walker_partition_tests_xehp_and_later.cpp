@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,7 +122,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
             postSyncAddress += 16; // next post sync needs to be right after the previous one
         }
 
-        auto dstGpuAddress = reinterpret_cast<void *>(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress());
+        auto dstGpuAddress = addrToPtr(ptrOffset(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), dstBuffer->getOffset()));
         expectMemory<FamilyType>(dstGpuAddress, &totalWorkItemsCount, sizeof(uint32_t));
         auto groupSpecificWorkCounts = ptrOffset(dstGpuAddress, 4);
         StackVec<uint32_t, 8> workgroupCounts;
@@ -300,7 +300,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetTo
         EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionSize());
     }
 
-    auto dstGpuAddress = reinterpret_cast<void *>(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress());
+    auto dstGpuAddress = addrToPtr(ptrOffset(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), dstBuffer->getOffset()));
     expectMemory<FamilyType>(dstGpuAddress, &gwsSize[workingDimensions - 1], sizeof(uint32_t));
 
     const uint32_t workgroupCount = static_cast<uint32_t>(gwsSize[workingDimensions - 1] / lwsSize[workingDimensions - 1]);

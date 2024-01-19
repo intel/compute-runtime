@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ HWTEST_P(AUBCopyBuffer, WhenCopyingThenExpectationsMet) {
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    auto pDstMemory = reinterpret_cast<cl_float *>(dstBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress());
+    auto pDstMemory = reinterpret_cast<cl_float *>(ptrOffset(dstBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress(), dstBuffer->getOffset()));
 
     retVal = pCmdQ->enqueueCopyBuffer(
         srcBuffer,

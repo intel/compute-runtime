@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,8 +105,8 @@ HWTEST2_F(ResourceBarrierAubTest, givenAllocationsWhenEnqueueResourceBarrierCall
 
     pCmdQ->flush();
 
-    expectMemory<FamilyType>(reinterpret_cast<void *>(dstBuffer1->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
+    expectMemory<FamilyType>(addrToPtr(ptrOffset(dstBuffer1->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), dstBuffer1->getOffset())),
                              bufferAMemory, bufferSize);
-    expectMemory<FamilyType>(reinterpret_cast<void *>(dstBuffer2->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
+    expectMemory<FamilyType>(addrToPtr(ptrOffset(dstBuffer2->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), dstBuffer2->getOffset())),
                              bufferAMemory, bufferSize);
 }

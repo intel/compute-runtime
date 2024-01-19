@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ HWTEST_P(AUBFillBuffer, WhenFillingThenExpectationsMet) {
 
     pCmdQ->flush();
 
-    pDestMemory = reinterpret_cast<decltype(pDestMemory)>((destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
+    pDestMemory = reinterpret_cast<decltype(pDestMemory)>(ptrOffset(destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), destBuffer->getOffset()));
 
     // The memory under offset should be untouched
     if (offset) {
@@ -134,7 +134,7 @@ HWTEST_F(AUBFillBuffer, givenFillBufferWhenSeveralSubmissionsWithoutPollForCompl
 
     pollForCompletion<FamilyType>();
 
-    pDestMemory = reinterpret_cast<decltype(pDestMemory)>((destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
+    pDestMemory = reinterpret_cast<decltype(pDestMemory)>(ptrOffset(destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), destBuffer->getOffset()));
     auto pEndMemory = ptrOffset(pDestMemory, numWrites * size);
     while (pDestMemory < pEndMemory) {
         expectMemory<FamilyType>(pDestMemory, pattern, patternSize);

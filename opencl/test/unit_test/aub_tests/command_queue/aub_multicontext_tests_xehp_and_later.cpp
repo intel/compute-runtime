@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,10 +80,10 @@ struct MultitileMulticontextTests : public MulticontextAubFixture, public ::test
             for (uint32_t tileEngine = 0; tileEngine < commandQueues[tile].size(); tileEngine++) {
                 getSimulatedCsr<FamilyType>(tile, tileEngine)->pollForCompletion();
 
-                auto regularBufferGpuAddress = static_cast<uintptr_t>(regularBuffers[tile][tileEngine]->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress());
-                auto tileOnlyBufferGpuAddress = static_cast<uintptr_t>(tileOnlyBuffers[tile][tileEngine]->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress());
-                expectMemory<FamilyType>(reinterpret_cast<void *>(regularBufferGpuAddress), writePattern, bufferSize, tile, tileEngine);
-                expectMemory<FamilyType>(reinterpret_cast<void *>(tileOnlyBufferGpuAddress), writePattern, bufferSize, tile, tileEngine);
+                auto regularBufferGpuAddress = ptrOffset(regularBuffers[tile][tileEngine]->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), regularBuffers[tile][tileEngine]->getOffset());
+                auto tileOnlyBufferGpuAddress = ptrOffset(tileOnlyBuffers[tile][tileEngine]->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), tileOnlyBuffers[tile][tileEngine]->getOffset());
+                expectMemory<FamilyType>(addrToPtr(regularBufferGpuAddress), writePattern, bufferSize, tile, tileEngine);
+                expectMemory<FamilyType>(addrToPtr(tileOnlyBufferGpuAddress), writePattern, bufferSize, tile, tileEngine);
             }
         }
     }
@@ -253,7 +253,7 @@ struct EnqueueWithWalkerPartitionFourTilesTests : public FourTilesSingleContextT
     }
 
     void *getGpuAddress(Buffer &buffer) {
-        return reinterpret_cast<void *>(buffer.getGraphicsAllocation(this->rootDeviceIndex)->getGpuAddress());
+        return addrToPtr(ptrOffset(buffer.getGraphicsAllocation(this->rootDeviceIndex)->getGpuAddress(), buffer.getOffset()));
     }
 
     uint32_t bufferSize = 0;
