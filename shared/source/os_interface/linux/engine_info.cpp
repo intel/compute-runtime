@@ -17,14 +17,11 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/product_helper.h"
 
-#include <array>
-#include <iterator>
-
 namespace NEO {
 namespace DrmEngineMappingHelper {
-constexpr std::array<aub_stream::EngineType, 9> engineMapping = {{aub_stream::ENGINE_BCS, aub_stream::ENGINE_BCS1, aub_stream::ENGINE_BCS2,
-                                                                  aub_stream::ENGINE_BCS3, aub_stream::ENGINE_BCS4, aub_stream::ENGINE_BCS5,
-                                                                  aub_stream::ENGINE_BCS6, aub_stream::ENGINE_BCS7, aub_stream::ENGINE_BCS8}};
+constexpr aub_stream::EngineType engineMapping[] = {aub_stream::ENGINE_BCS, aub_stream::ENGINE_BCS1, aub_stream::ENGINE_BCS2,
+                                                    aub_stream::ENGINE_BCS3, aub_stream::ENGINE_BCS4, aub_stream::ENGINE_BCS5,
+                                                    aub_stream::ENGINE_BCS6, aub_stream::ENGINE_BCS7, aub_stream::ENGINE_BCS8};
 
 // 3 types of copy engines:
 // - Main - BCS (legacy, aka. BCS0)
@@ -51,7 +48,7 @@ void assignLinkCopyEngine(std::vector<EngineInfo::EngineToInstanceMap> &tileToEn
 }
 
 auto getCopyEnginesMappingIterator(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto mappingCopyEngineIt = DrmEngineMappingHelper::engineMapping.begin();
+    auto mappingCopyEngineIt = DrmEngineMappingHelper::engineMapping;
     if (const auto defaultCopyEngine = rootDeviceEnvironment.getProductHelper().getDefaultCopyEngine(); defaultCopyEngine != *mappingCopyEngineIt) {
         mappingCopyEngineIt++;
     } // Note that BCS0 may not be enabled
