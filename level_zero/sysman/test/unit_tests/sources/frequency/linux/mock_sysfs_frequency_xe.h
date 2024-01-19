@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
@@ -212,6 +213,14 @@ struct MockProductHelperFreq : NEO::ProductHelperHw<IGFX_UNKNOWN> {
         return isMediaFreqDomainPresent;
     }
 };
+
+struct MockSysmanProductHelperFreq : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+    MockSysmanProductHelperFreq() = default;
+    bool isFrequencySetRangeSupported() override {
+        return false;
+    }
+};
+
 class PublicLinuxFrequencyImp : public L0::Sysman::LinuxFrequencyImp {
   public:
     PublicLinuxFrequencyImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t type) : L0::Sysman::LinuxFrequencyImp(pOsSysman, onSubdevice, subdeviceId, type) {}

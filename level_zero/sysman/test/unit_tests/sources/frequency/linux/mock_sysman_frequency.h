@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 #include "gtest/gtest.h"
@@ -355,6 +356,13 @@ struct MockProductHelperFreq : NEO::ProductHelperHw<IGFX_UNKNOWN> {
     bool getMediaFrequencyTileIndex(const NEO::ReleaseHelper *releaseHelper, uint32_t &tileIndex) const override {
         tileIndex = 1;
         return isMediaFreqDomainPresent;
+    }
+};
+
+struct MockSysmanProductHelperFreq : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+    MockSysmanProductHelperFreq() = default;
+    bool isFrequencySetRangeSupported() override {
+        return false;
     }
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,10 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
     double newMin = round(pLimits->min);
     double newMax = round(pLimits->max);
 
+    if (!pSysmanProductHelper->isFrequencySetRangeSupported()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     if (pSysmanKmdInterface->isDefaultFrequencyAvailable()) {
         if (newMax == -1 && newMin == -1) {
             double maxDefault = 0, minDefault = 0;
@@ -117,6 +121,7 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
     }
     return setMax(newMax);
 }
+
 bool LinuxFrequencyImp::getThrottleReasonStatus(void) {
     uint32_t val = 0;
     auto result = pSysfsAccess->read(throttleReasonStatusFile, val);

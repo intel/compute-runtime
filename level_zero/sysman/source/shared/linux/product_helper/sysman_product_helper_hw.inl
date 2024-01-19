@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,6 +105,11 @@ void SysmanProductHelperHw<gfxProduct>::getMediaPerformanceFactorMultiplier(cons
 template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
     return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
+    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

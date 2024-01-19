@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,11 @@ HWTEST2_F(SysmanProductHelperFrequencyTest, GivenFrequencyModuleWhenGettingStepS
     double stepSize = 0;
     pSysmanProductHelper->getFrequencyStepSize(&stepSize);
     EXPECT_EQ((50.0 / 3), stepSize);
+}
+
+HWTEST2_F(SysmanProductHelperFrequencyTest, GivenFrequencyModuleWhenQueryingFrequencySetRangeSupportedThenVerifySetRangeIsSupported, IsXeHpOrXeHpcOrXeHpgCore) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(true, pSysmanProductHelper->isFrequencySetRangeSupported());
 }
 
 TEST_F(SysmanProductHelperFrequencyTest, GivenSysmanProductHelperInstanceWhenGettingCurrentVoltageThenVerifyCurrentVoltageIsNegative) {
