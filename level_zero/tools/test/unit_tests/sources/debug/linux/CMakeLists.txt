@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,6 +10,6 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_session_linux.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/debug_session_fixtures_linux.cpp
   )
+  add_subdirectories()
 endif()
 
-add_subdirectories()
