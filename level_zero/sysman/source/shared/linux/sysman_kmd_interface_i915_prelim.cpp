@@ -94,5 +94,9 @@ uint32_t SysmanKmdInterfaceI915Prelim::getEventType(const bool isIntegratedDevic
     return 0;
 }
 
+void SysmanKmdInterfaceI915Prelim::getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) {
+    getWedgedStatusImpl(pLinuxSysmanImp, pState);
+}
+
 } // namespace Sysman
 } // namespace L0

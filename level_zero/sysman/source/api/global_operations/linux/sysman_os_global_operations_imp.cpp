@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -707,22 +707,6 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
     return result;
 }
 
-void LinuxGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
-    NEO::GemContextCreateExt gcc{};
-    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
-    auto pDrm = pLinuxSysmanImp->getDrm();
-    // Device is said to be in wedged if context creation returns EIO.
-    auto ret = pDrm->getIoctlHelper()->ioctl(NEO::DrmIoctl::gemContextCreateExt, &gcc);
-    if (ret == 0) {
-        pDrm->destroyDrmContext(gcc.contextId);
-        return;
-    }
-
-    if (pDrm->getErrno() == EIO) {
-        pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;
-    }
-}
-
 void LinuxGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
     SysmanProductHelper *pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     if (pSysmanProductHelper->isRepairStatusSupported()) {
@@ -744,7 +728,8 @@ void LinuxGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
 ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
     memset(pState, 0, sizeof(zes_device_state_t));
     pState->repaired = ZES_REPAIR_STATUS_UNSUPPORTED;
-    getWedgedStatus(pState);
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, pState);
     getRepairStatus(pState);
     return ZE_RESULT_SUCCESS;
 }

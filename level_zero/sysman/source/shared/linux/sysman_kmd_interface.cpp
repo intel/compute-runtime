@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,6 +163,22 @@ uint32_t SysmanKmdInterface::getEventTypeImpl(std::string &dirName, const bool i
         return 0;
     }
     return eventTypeVal;
+}
+
+void SysmanKmdInterface::getWedgedStatusImpl(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) {
+    NEO::GemContextCreateExt gcc{};
+    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+    auto pDrm = pLinuxSysmanImp->getDrm();
+    // Device is said to be in wedged if context creation returns EIO.
+    auto ret = pDrm->getIoctlHelper()->ioctl(NEO::DrmIoctl::gemContextCreateExt, &gcc);
+    if (ret == 0) {
+        pDrm->destroyDrmContext(gcc.contextId);
+        return;
+    }
+
+    if (pDrm->getErrno() == EIO) {
+        pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;
+    }
 }
 
 std::string SysmanKmdInterfaceI915::getBasePathI915(uint32_t subDeviceId) {

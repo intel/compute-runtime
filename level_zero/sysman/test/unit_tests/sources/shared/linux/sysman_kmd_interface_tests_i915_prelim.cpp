@@ -7,11 +7,14 @@
 
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/sysman_kmd_interface_tests.h"
 
 #include "gtest/gtest.h"
@@ -125,13 +128,37 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCalling
     EXPECT_EQ(std::nullopt, pSysmanKmdInterface->getEngineClassString(EngineClass::ENGINE_CLASS_COMPUTE));
 }
 
-TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetNumEngineTypeAndInstancesTenErrorIsReturned) {
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetNumEngineTypeAndInstancesThenErrorIsReturned) {
     std::vector<std::string> mockVecString = {"rcs"};
     std::map<zes_engine_type_flag_t, std::vector<std::string>> mockMapofEngine = {{ZES_ENGINE_TYPE_FLAG_RENDER, mockVecString}};
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanKmdInterface->getNumEngineTypeAndInstances(
                                                        mockMapofEngine, pLinuxSysmanImp, nullptr, true, 0));
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetDeviceWedgedStatusThenVerifyDeviceIsNotWedged) {
+    class DrmMock : public Drm {
+      public:
+        DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+        using Drm::setupIoctlHelper;
+        int ioctlRetVal = 0;
+        int ioctlErrno = 0;
+        int mockFd = 33;
+        int ioctl(DrmIoctl request, void *arg) override {
+            return ioctlRetVal;
+        }
+        int getErrno() override { return ioctlErrno; }
+    };
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = new DrmMock(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
+    pDrm->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
+    auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
+    osInterface->setDriverModel(std::unique_ptr<DrmMock>(pDrm));
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    zes_device_state_t deviceState = {};
+    pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, &deviceState);
+    EXPECT_EQ(0u, deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED);
 }
 
 } // namespace ult

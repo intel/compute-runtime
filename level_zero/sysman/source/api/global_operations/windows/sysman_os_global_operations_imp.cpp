@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,8 +33,6 @@ void WddmGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPER
 void WddmGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
 }
 
-void WddmGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
-}
 void WddmGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
 }
 bool WddmGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {

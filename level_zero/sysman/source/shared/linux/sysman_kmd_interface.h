@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,6 +137,7 @@ class SysmanKmdInterface {
     virtual bool isBoostFrequencyAvailable() const = 0;
     virtual bool isTdpFrequencyAvailable() const = 0;
     virtual bool isPhysicalMemorySizeSupported() const = 0;
+    virtual void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -144,6 +145,7 @@ class SysmanKmdInterface {
     std::unique_ptr<SysFsAccessInterface> pSysfsAccess;
     virtual const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() = 0;
     uint32_t getEventTypeImpl(std::string &dirName, const bool isIntegratedDevice);
+    void getWedgedStatusImpl(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState);
 };
 
 class SysmanKmdInterfaceI915 {
@@ -184,6 +186,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     bool isBoostFrequencyAvailable() const override { return true; }
     bool isTdpFrequencyAvailable() const override { return true; }
     bool isPhysicalMemorySizeSupported() const override { return false; }
+    void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -226,6 +229,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     bool isBoostFrequencyAvailable() const override { return true; }
     bool isTdpFrequencyAvailable() const override { return true; }
     bool isPhysicalMemorySizeSupported() const override { return true; }
+    void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -268,6 +272,9 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isBoostFrequencyAvailable() const override { return false; }
     bool isTdpFrequencyAvailable() const override { return false; }
     bool isPhysicalMemorySizeSupported() const override { return true; }
+
+    // Wedged state is not supported in XE.
+    void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override{};
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

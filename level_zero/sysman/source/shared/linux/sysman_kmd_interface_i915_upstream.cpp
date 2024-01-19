@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,6 +106,10 @@ ze_result_t SysmanKmdInterfaceI915Upstream::getNumEngineTypeAndInstances(std::ma
 uint32_t SysmanKmdInterfaceI915Upstream::getEventType(const bool isIntegratedDevice) {
     std::string i915DirName = "i915";
     return getEventTypeImpl(i915DirName, isIntegratedDevice);
+}
+
+void SysmanKmdInterfaceI915Upstream::getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) {
+    getWedgedStatusImpl(pLinuxSysmanImp, pState);
 }
 
 } // namespace Sysman
