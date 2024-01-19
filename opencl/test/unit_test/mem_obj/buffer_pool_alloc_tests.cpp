@@ -698,28 +698,48 @@ TEST_F(AggregatedSmallBuffersSubBufferApiTest, givenBufferFromPoolWhenCreateSubB
 }
 
 TEST_F(AggregatedSmallBuffersSubBufferApiTest, givenSubBufferFromBufferPoolWhenGetMemObjInfoCalledThenReturnValuesLikeForNormalSubBuffer) {
-    cl_mem buffer = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
-    EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_NE(buffer, nullptr);
-    MockBuffer *mockBuffer = static_cast<MockBuffer *>(buffer);
-    EXPECT_TRUE(context->getBufferPoolAllocator().isPoolBuffer(mockBuffer->associatedMemObject));
+    cl_mem buffer{};
+    cl_mem buffer1 = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer1);
+    auto mockBuffer1 = static_cast<MockBuffer *>(buffer1);
+    EXPECT_TRUE(context->getBufferPoolAllocator().isPoolBuffer(mockBuffer1->associatedMemObject));
+
+    // need buffer to have non-zero offset, to verify offset calculations in clGemMemObjectInfo
+    // so if we get first pool buffer with offset 0, use a second buffer
+    if (mockBuffer1->getOffset() != 0u) {
+        buffer = buffer1;
+    } else {
+        cl_mem buffer2 = clCreateBuffer(clContext, flags, size, hostPtr, &retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, buffer2);
+        auto mockBuffer2 = static_cast<MockBuffer *>(buffer2);
+        EXPECT_TRUE(context->getBufferPoolAllocator().isPoolBuffer(mockBuffer2->associatedMemObject));
+        EXPECT_NE(0u, mockBuffer2->getOffset());
+        buffer = buffer2;
+        retVal = clReleaseMemObject(buffer1);
+        EXPECT_EQ(retVal, CL_SUCCESS);
+    }
 
     cl_buffer_region region{};
     region.size = 1;
     region.origin = size / 2;
     cl_mem subBuffer = clCreateSubBuffer(buffer, flags, CL_BUFFER_CREATE_TYPE_REGION, &region, &retVal);
-    EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_NE(subBuffer, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, subBuffer);
 
     cl_mem associatedMemObj = nullptr;
     retVal = clGetMemObjectInfo(subBuffer, CL_MEM_ASSOCIATED_MEMOBJECT, sizeof(cl_mem), &associatedMemObj, nullptr);
-    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(associatedMemObj, buffer);
 
+    auto mockSubBuffer = static_cast<MockBuffer *>(subBuffer);
+    const auto offsetInternal = mockSubBuffer->getOffset();
     size_t offset = 0u;
     retVal = clGetMemObjectInfo(subBuffer, CL_MEM_OFFSET, sizeof(size_t), &offset, nullptr);
-    EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_EQ(offset, region.origin);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(region.origin, offset);
+    EXPECT_EQ(offsetInternal, mockSubBuffer->getOffset()); // internal offset should not be modified after call
 
     retVal = clReleaseMemObject(subBuffer);
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -727,7 +747,7 @@ TEST_F(AggregatedSmallBuffersSubBufferApiTest, givenSubBufferFromBufferPoolWhenG
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
+    EXPECT_EQ(CL_SUCCESS, clReleaseContext(context));
 }
 
 TEST_F(AggregatedSmallBuffersSubBufferApiTest, givenBufferFromPoolWhenCreateSubBufferCalledWithRegionOutsideBufferThenItFails) {

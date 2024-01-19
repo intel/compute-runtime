@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,6 +127,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     size_t srcParamSize = GetInfo::invalidSourceSize;
     void *srcParam = nullptr;
     cl_bool usesSVMPointer;
+    size_t clOffset = 0;
     cl_uint refCnt = 0;
     cl_uint mapCount = 0;
     cl_mem clAssociatedMemObject = static_cast<cl_mem>(this->associatedMemObject);
@@ -169,15 +170,16 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_OFFSET:
+        clOffset = this->getOffset();
         if (nullptr != this->associatedMemObject) {
             if (this->getContext()->getBufferPoolAllocator().isPoolBuffer(this->associatedMemObject)) {
-                offset = 0;
+                clOffset = 0;
             } else {
-                offset -= this->associatedMemObject->getOffset();
+                clOffset -= this->associatedMemObject->getOffset();
             }
         }
-        srcParamSize = sizeof(offset);
-        srcParam = &offset;
+        srcParamSize = sizeof(clOffset);
+        srcParam = &clOffset;
         break;
 
     case CL_MEM_ASSOCIATED_MEMOBJECT:

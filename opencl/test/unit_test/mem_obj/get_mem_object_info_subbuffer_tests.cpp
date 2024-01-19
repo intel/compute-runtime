@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,6 +85,10 @@ TEST_F(GetMemObjectSubBufferInfo, GivenMemOffsetWhenGettingMembojectInfoThenCorr
     retVal = subBuffer->getMemObjectInfo(CL_MEM_OFFSET, 0, nullptr, &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(offset), sizeReturned);
+
+    retVal = subBuffer->getMemObjectInfo(CL_MEM_OFFSET, sizeof(offset), &offset, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(region.origin, offset);
 
     retVal = subBuffer->getMemObjectInfo(CL_MEM_OFFSET, sizeof(offset), &offset, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
