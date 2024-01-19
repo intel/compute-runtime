@@ -1657,6 +1657,13 @@ TEST_F(GfxCoreHelperTest, whenOnlyPerThreadPrivateMemorySizeIsDefinedThenItIsRet
     EXPECT_EQ(0x100u, getHelper<GfxCoreHelper>().getKernelPrivateMemSize(kernelDescriptor));
 }
 
+HWTEST_F(GfxCoreHelperTest, givenCooperativeKernelWhenAskingForSingleTileDispatchThenReturnTrue) {
+    auto &helper = getHelper<GfxCoreHelper>();
+
+    EXPECT_TRUE(helper.singleTileExecImplicitScalingRequired(true));
+    EXPECT_FALSE(helper.singleTileExecImplicitScalingRequired(false));
+}
+
 HWTEST2_F(GfxCoreHelperTest, whenPrivateScratchSizeIsDefinedThenItIsReturnedAsKernelPrivateMemorySize, IsAtLeastXeHpCore) {
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = 0x100u;

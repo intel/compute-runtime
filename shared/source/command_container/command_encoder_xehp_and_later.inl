@@ -403,7 +403,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                           !(container.getFlushTaskUsedForImmediate() || container.isUsingPrimaryBuffer()),
                                                           !args.isKernelDispatchedFromImmediateCmdList,
                                                           args.dcFlushEnable,
-                                                          args.isCooperative,
+                                                          gfxCoreHelper.singleTileExecImplicitScalingRequired(args.isCooperative),
                                                           workPartitionAllocationGpuVa,
                                                           hwInfo);
     } else {

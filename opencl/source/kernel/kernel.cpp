@@ -1264,7 +1264,9 @@ bool Kernel::hasRunFinished(TimestampPacketContainer *timestampContainer) {
 }
 
 bool Kernel::isSingleSubdevicePreferred() const {
-    return this->singleSubdevicePreferredInCurrentEnqueue || this->usesSyncBuffer();
+    auto &gfxCoreHelper = this->getGfxCoreHelper();
+
+    return this->singleSubdevicePreferredInCurrentEnqueue || gfxCoreHelper.singleTileExecImplicitScalingRequired(this->usesSyncBuffer());
 }
 
 void Kernel::setInlineSamplers() {

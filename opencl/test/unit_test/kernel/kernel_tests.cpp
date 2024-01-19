@@ -380,6 +380,8 @@ TEST_F(KernelTests, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValu
 }
 
 TEST_F(KernelTests, WhenIsSingleSubdevicePreferredIsCalledThenCorrectValuesAreReturned) {
+    auto &helper = pClDevice->getGfxCoreHelper();
+
     std::unique_ptr<MockKernel> kernel{MockKernel::create<MockKernel>(pClDevice->getDevice(), pProgram)};
     for (auto usesSyncBuffer : ::testing::Bool()) {
         kernel->getAllocatedKernelInfo()->kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = usesSyncBuffer;
@@ -387,7 +389,7 @@ TEST_F(KernelTests, WhenIsSingleSubdevicePreferredIsCalledThenCorrectValuesAreRe
             kernel->singleSubdevicePreferredInCurrentEnqueue = singleSubdevicePreferredInCurrentEnqueue;
 
             EXPECT_EQ(usesSyncBuffer, kernel->usesSyncBuffer());
-            auto expectedSingleSubdevicePreferredInCurrentEnqueue = singleSubdevicePreferredInCurrentEnqueue || usesSyncBuffer;
+            auto expectedSingleSubdevicePreferredInCurrentEnqueue = singleSubdevicePreferredInCurrentEnqueue || helper.singleTileExecImplicitScalingRequired(usesSyncBuffer);
             EXPECT_EQ(expectedSingleSubdevicePreferredInCurrentEnqueue, kernel->isSingleSubdevicePreferred());
         }
     }

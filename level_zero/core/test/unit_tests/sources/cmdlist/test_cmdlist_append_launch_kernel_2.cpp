@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1591,7 +1591,14 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     itorWalker = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     cmd = genCmdCast<typename FamilyType::DefaultWalkerType *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
-    EXPECT_EQ(16u, cmd->getPartitionSize());
+
+    const auto &gfxCoreHelper = device->getGfxCoreHelper();
+
+    if (gfxCoreHelper.singleTileExecImplicitScalingRequired(true)) {
+        EXPECT_EQ(16u, cmd->getPartitionSize());
+    } else {
+        EXPECT_EQ(4u, cmd->getPartitionSize());
+    }
 }
 
 HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,

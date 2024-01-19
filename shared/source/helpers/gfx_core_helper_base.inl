@@ -740,4 +740,9 @@ bool GfxCoreHelperHw<GfxFamily>::is48ResourceNeededForCmdBuffer() const {
     return true;
 }
 
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::singleTileExecImplicitScalingRequired(bool cooperativeKernel) const {
+    return cooperativeKernel;
+}
+
 } // namespace NEO

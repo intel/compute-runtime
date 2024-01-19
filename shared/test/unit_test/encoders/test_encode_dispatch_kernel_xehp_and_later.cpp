@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1084,7 +1084,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling, givenCooperativ
 
     auto partitionWalkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, partitionWalkerCmd->getPartitionType());
+
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     uint32_t expectedPartitionSize = dims[0];
+
+    if (!gfxCoreHelper.singleTileExecImplicitScalingRequired(isCooperative)) {
+        expectedPartitionSize /= dispatchArgs.partitionCount;
+    }
+
     EXPECT_EQ(expectedPartitionSize, partitionWalkerCmd->getPartitionSize());
 }
 

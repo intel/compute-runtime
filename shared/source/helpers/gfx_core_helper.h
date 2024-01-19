@@ -182,6 +182,8 @@ class GfxCoreHelper {
     virtual bool is48ResourceNeededForCmdBuffer() const = 0;
     virtual uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const = 0;
 
+    virtual bool singleTileExecImplicitScalingRequired(bool cooperativeKernel) const = 0;
+
     virtual ~GfxCoreHelper() = default;
 
   protected:
@@ -401,6 +403,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool is48ResourceNeededForCmdBuffer() const override;
 
     uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const override;
+
+    bool singleTileExecImplicitScalingRequired(bool cooperativeKernel) const override;
 
     ~GfxCoreHelperHw() override = default;
 
