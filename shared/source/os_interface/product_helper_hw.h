@@ -163,6 +163,7 @@ class ProductHelperHw : public ProductHelper {
     uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex) const override;
     std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
+    void adjustEngineGroupType(EngineGroupType &engineGroupType) const override;
 
     ~ProductHelperHw() override = default;
 

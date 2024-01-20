@@ -42,6 +42,7 @@ struct RootDeviceEnvironment;
 class OSInterface;
 class DriverModel;
 enum class DriverModelType;
+enum class EngineGroupType : uint32_t;
 
 using ProductHelperCreateFunctionType = std::unique_ptr<ProductHelper> (*)();
 extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];
@@ -213,6 +214,7 @@ class ProductHelper {
     virtual uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex) const = 0;
     virtual std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const = 0;
     virtual aub_stream::EngineType getDefaultCopyEngine() const = 0;
+    virtual void adjustEngineGroupType(EngineGroupType &engineGroupType) const = 0;
 
     virtual ~ProductHelper() = default;
 

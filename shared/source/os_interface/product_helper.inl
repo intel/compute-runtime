@@ -836,4 +836,7 @@ aub_stream::EngineType ProductHelperHw<gfxProduct>::getDefaultCopyEngine() const
     return aub_stream::EngineType::ENGINE_BCS;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::adjustEngineGroupType(EngineGroupType &engineGroupType) const {}
+
 } // namespace NEO

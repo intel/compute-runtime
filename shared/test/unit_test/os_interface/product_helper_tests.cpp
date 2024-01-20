@@ -859,3 +859,12 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCor
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingDefaultCopyEngineThenEngineBCSIsReturned) {
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, productHelper->getDefaultCopyEngine());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAdjustingEnginesGroupThenDoNotChangeEngineGroups) {
+    for (uint32_t engineGroupIt = static_cast<uint32_t>(EngineGroupType::compute); engineGroupIt < static_cast<uint32_t>(EngineGroupType::maxEngineGroups); engineGroupIt++) {
+        auto engineGroupType = static_cast<EngineGroupType>(engineGroupIt);
+        auto engineGroupTypeUnchanged = engineGroupType;
+        productHelper->adjustEngineGroupType(engineGroupType);
+        EXPECT_EQ(engineGroupTypeUnchanged, engineGroupType);
+    }
+}

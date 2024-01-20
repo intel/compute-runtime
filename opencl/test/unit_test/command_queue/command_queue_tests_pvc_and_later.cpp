@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -206,7 +206,12 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQue
     MockClDevice clDevice{device};
     MockContext context{&clDevice};
 
-    const auto familyIndex = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::linkedCopy);
+    const auto &productHelper = device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getProductHelper();
+    auto engineGroupType = EngineGroupType::linkedCopy;
+    if (aub_stream::EngineType::ENGINE_BCS != productHelper.getDefaultCopyEngine()) {
+        engineGroupType = EngineGroupType::copy;
+    }
+    const auto familyIndex = device->getEngineGroupIndexFromEngineGroupType(engineGroupType);
     cl_command_queue_properties queueProperties[5] = {
         CL_QUEUE_FAMILY_INTEL,
         familyIndex,
@@ -574,9 +579,14 @@ struct BcsCsrSelectionCommandQueueTests : ::testing::Test {
     }
 
     std::unique_ptr<MockCommandQueue> createQueueWithLinkBcsSelectedWithQueueFamilies(size_t linkBcsIndex) {
+        const auto &productHelper = device->getRootDeviceEnvironment().getProductHelper();
+        auto engineGroupType = EngineGroupType::linkedCopy;
+        if (aub_stream::EngineType::ENGINE_BCS != productHelper.getDefaultCopyEngine()) {
+            engineGroupType = EngineGroupType::copy;
+        }
         cl_command_queue_properties queueProperties[5] = {};
         queueProperties[0] = CL_QUEUE_FAMILY_INTEL;
-        queueProperties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::linkedCopy);
+        queueProperties[1] = device->getEngineGroupIndexFromEngineGroupType(engineGroupType);
         queueProperties[2] = CL_QUEUE_INDEX_INTEL;
         queueProperties[3] = linkBcsIndex;
         auto queue = createQueue(queueProperties);
