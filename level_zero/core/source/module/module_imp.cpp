@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -531,15 +531,14 @@ NEO::Zebin::Debug::Segments ModuleImp::getZebinSegments() {
 
 ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
     bool linkageSuccessful = true;
-    ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-
-    if (result = this->initializeTranslationUnit(desc, neoDevice); result != ZE_RESULT_SUCCESS) {
+    ze_result_t result = this->initializeTranslationUnit(desc, neoDevice);
+    this->updateBuildLog(neoDevice);
+    if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    this->updateBuildLog(neoDevice);
     this->verifyDebugCapabilities();
-    if (result = this->checkIfBuildShouldBeFailed(neoDevice); result != ZE_RESULT_SUCCESS) {
-        return result;
+    if (this->shouldBuildBeFailed(neoDevice)) {
+        return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
     if (result = this->initializeKernelImmutableDatas(); result != ZE_RESULT_SUCCESS) {
         return result;
@@ -741,19 +740,15 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
     }
 }
 
-inline ze_result_t ModuleImp::checkIfBuildShouldBeFailed(NEO::Device *neoDevice) {
+inline bool ModuleImp::shouldBuildBeFailed(NEO::Device *neoDevice) {
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(translationUnit->programInfo.kernelInfos, false);
     auto isUserKernel = (type == ModuleType::user);
     auto isGeneratedByIgc = translationUnit->isGeneratedByIgc;
-    auto failBuildProgram = containsStatefulAccess &&
-                            isUserKernel &&
-                            NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(rootDeviceEnvironment) &&
-                            isGeneratedByIgc;
-    if (failBuildProgram) {
-        return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-    }
-    return ZE_RESULT_SUCCESS;
+    return containsStatefulAccess &&
+           isUserKernel &&
+           NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(rootDeviceEnvironment) &&
+           isGeneratedByIgc;
 }
 
 ze_result_t ModuleImp::initializeKernelImmutableDatas() {

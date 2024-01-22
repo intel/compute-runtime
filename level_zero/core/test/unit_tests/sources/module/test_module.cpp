@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2840,6 +2840,22 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
     EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenModuleInitializationEvenWhenTranslationUnitInitializationFailsThenBuildLogIsAlwaysUpdated) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::debugManager.flags.RebuildPrecompiledKernels.set(true);
+
+    ze_module_desc_t moduleDesc = {};
+    std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+    Mock<Module> module(device, moduleBuildLog.get(), ModuleType::user);
+    module.initializeTranslationUnitResult = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    module.initializeTranslationUnitCallBase = false;
+
+    ze_result_t result = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_MODULE_BUILD_FAILURE);
+    EXPECT_EQ(module.initializeTranslationUnitCalled, 1u);
+    EXPECT_EQ(module.updateBuildLogCalled, 1u);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenRebuildFlagWhenCreatingModuleFromNativeBinaryThenModuleRecompilationWarningIsIssued) {

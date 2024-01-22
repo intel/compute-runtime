@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,7 +134,7 @@ struct ModuleImp : public Module {
     bool verifyBuildOptions(std::string buildOptions) const;
     bool moveOptLevelOption(std::string &dstOptionsSet, std::string &srcOptionSet);
     bool moveProfileFlagsOption(std::string &dstOptionsSet, std::string &srcOptionSet);
-    void updateBuildLog(NEO::Device *neoDevice);
+    MOCKABLE_VIRTUAL void updateBuildLog(NEO::Device *neoDevice);
 
     Device *getDevice() const override { return device; }
 
@@ -162,7 +162,7 @@ struct ModuleImp : public Module {
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice);
-    ze_result_t checkIfBuildShouldBeFailed(NEO::Device *neoDevice);
+    bool shouldBuildBeFailed(NEO::Device *neoDevice);
     ze_result_t allocateKernelImmutableDatas(size_t kernelsCount);
     ze_result_t initializeKernelImmutableDatas();
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);

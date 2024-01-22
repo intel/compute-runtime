@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,6 +99,8 @@ struct Mock<Module> : public Module {
                      (uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *phLinkLog));
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_module_properties_t * pModuleProperties));
     ADDMETHOD_NOBASE(getGlobalPointer, ze_result_t, ZE_RESULT_SUCCESS, (const char *pGlobalName, size_t *pSize, void **pPtr));
+    ADDMETHOD(initializeTranslationUnit, ze_result_t, true, ZE_RESULT_SUCCESS, (const ze_module_desc_t *desc, NEO::Device *neoDevice), (desc, neoDevice));
+    ADDMETHOD_NOBASE_VOIDRETURN(updateBuildLog, (NEO::Device * neoDevice));
     ADDMETHOD(allocateKernelsIsaMemory, NEO::GraphicsAllocation *, true, nullptr, (size_t isaSize), (isaSize));
     ADDMETHOD(computeKernelIsaAllocationAlignedSizeWithPadding, size_t, true, 0ul, (size_t isaSize), (isaSize));
 };
