@@ -579,11 +579,6 @@ else()
   set(NEO_TESTS_LISTENER_OPTION "--enable_default_listener")
 endif()
 
-# Put profiling enable flag into define
-if(KMD_PROFILING)
-  add_definitions(-DKMD_PROFILING=${KMD_PROFILING})
-endif()
-
 if(MSVC)
   # Force to treat warnings as errors
   if(NOT CMAKE_CXX_FLAGS MATCHES "/WX")

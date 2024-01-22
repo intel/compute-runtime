@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,6 @@
 
 #pragma once
 #include <cstdint>
-
-#ifndef KMD_PROFILING
-#define KMD_PROFILING 0
-#endif
 
 namespace NEO {
 enum CommandStreamReceiverType {

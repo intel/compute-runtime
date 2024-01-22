@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,23 +95,4 @@ class PerfProfiler {
     std::unique_ptr<std::ostream> sysLogFile;
     std::vector<SystemLog> systemLogs;
 };
-
-#if KMD_PROFILING == 1
-
-extern thread_local PerfProfiler *gPerfProfiler;
-
-struct PerfProfilerApiWrapper {
-    PerfProfilerApiWrapper(const char *funcName)
-        : funcName(funcName) {
-        PerfProfiler::create();
-        gPerfProfiler->apiEnter();
-    }
-
-    ~PerfProfilerApiWrapper() {
-        gPerfProfiler->apiLeave(funcName);
-    }
-
-    const char *funcName;
-};
-#endif
 }; // namespace NEO
