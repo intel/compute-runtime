@@ -111,7 +111,7 @@ struct WaitPkgEnabledFixture : public WaitPkgFixture {
 using WaitPkgTest = Test<WaitPkgFixture>;
 using WaitPkgEnabledTest = Test<WaitPkgEnabledFixture>;
 
-TEST_F(WaitPkgTest, givenDefaultSettingsAndWaitpkgSupportTrueWhenWaitInitializedThenWaitPkgNotEnabled) {
+TEST_F(WaitPkgTest, givenDefaultSettingsAndWaitpkgSupportTrueWhenWaitInitializedThenWaitPkgEnabled) {
     CpuInfo::cpuidFunc = mockCpuidEnableAll;
 
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
@@ -124,10 +124,10 @@ TEST_F(WaitPkgTest, givenDefaultSettingsAndWaitpkgSupportTrueWhenWaitInitialized
     WaitUtils::waitpkgSupport = true;
 
     WaitUtils::init();
-    EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
+    EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
-    EXPECT_FALSE(WaitUtils::waitpkgUse);
+    EXPECT_TRUE(WaitUtils::waitpkgUse);
 }
 
 TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportFalseWhenWaitInitializedThenWaitPkgNotEnabled) {

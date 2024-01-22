@@ -16,7 +16,7 @@ namespace WaitUtils {
 
 constexpr uint64_t defaultCounterValue = 10000;
 constexpr uint32_t defaultControlValue = 0;
-constexpr bool defaultEnableWaitPkg = false;
+constexpr bool defaultEnableWaitPkg = true;
 
 uint64_t waitpkgCounterValue = defaultCounterValue;
 uint32_t waitpkgControlValue = defaultControlValue;
