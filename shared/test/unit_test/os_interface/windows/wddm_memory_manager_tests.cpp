@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1045,6 +1045,32 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndSmallSizeWhenAskedTo
     auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
     EXPECT_NE(nullptr, allocation);
     EXPECT_FALSE(memoryManager->allocateHugeGraphicsMemoryCalled);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenRenderCompressBufferEnabledAndPrefferCompressionIsTrueThenGmmHasCompressionEnabled) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    AllocationData allocationData;
+    allocationData.size = 4096u;
+    allocationData.flags.preferCompressed = true;
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_TRUE(allocation->getDefaultGmm()->isCompressionEnabled);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenRenderCompressBufferEnabledAndPrefferCompressionIsFalseThenGmmHasCompressionDisabled) {
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
+    AllocationData allocationData;
+    allocationData.size = 4096u;
+    allocationData.flags.preferCompressed = false;
+    auto allocation = memoryManager->allocateMemoryByKMD(allocationData);
+    EXPECT_FALSE(allocation->getDefaultGmm()->isCompressionEnabled);
     memoryManager->freeGraphicsMemory(allocation);
 }
 
