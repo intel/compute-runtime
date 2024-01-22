@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,6 +65,8 @@ inline constexpr ConstStringRef roundRobin("round_robin");
 inline constexpr ConstStringRef roundRobinStall("round_robin_stall");
 } // namespace ThreadSchedulingMode
 inline constexpr ConstStringRef indirectStatelessCount("indirect_stateless_count");
+inline constexpr ConstStringRef privateSize("private_size");
+inline constexpr ConstStringRef spillSize("spill_size");
 } // namespace ExecutionEnv
 
 namespace Attributes {
@@ -342,6 +344,8 @@ using WorkgroupWalkOrderDimensionsT = int32_t[3];
 using ThreadSchedulingModeT = ThreadSchedulingMode;
 using IndirectStatelessCountT = int32_t;
 using HasSampleT = bool;
+using PrivateSizeT = int32_t;
+using SpillSizeT = int32_t;
 
 namespace Defaults {
 inline constexpr BarrierCountT barrierCount = 0;
@@ -371,6 +375,8 @@ inline constexpr WorkgroupWalkOrderDimensionsT workgroupWalkOrderDimensions = {0
 inline constexpr ThreadSchedulingModeT threadSchedulingMode = ThreadSchedulingModeUnknown;
 inline constexpr IndirectStatelessCountT indirectStatelessCount = 0;
 inline constexpr HasSampleT hasSample = false;
+inline constexpr PrivateSizeT privateSize = 0;
+inline constexpr SpillSizeT spillSize = 0;
 } // namespace Defaults
 
 inline constexpr ConstStringRef required[] = {
@@ -404,6 +410,8 @@ struct ExecutionEnvBaseT {
     ThreadSchedulingModeT threadSchedulingMode = Defaults::threadSchedulingMode;
     IndirectStatelessCountT indirectStatelessCount = Defaults::indirectStatelessCount;
     HasSampleT hasSample = Defaults::hasSample;
+    PrivateSizeT privateSize = Defaults::privateSize;
+    SpillSizeT spillSize = Defaults::spillSize;
 };
 
 struct ExperimentalPropertiesBaseT {

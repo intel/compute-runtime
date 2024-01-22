@@ -17,7 +17,7 @@ struct KernelInfo;
 struct ProgramInfo;
 
 namespace Zebin::ZeInfo {
-inline constexpr NEO::Zebin::ZeInfo::Types::Version zeInfoDecoderVersion{1, 38};
+inline constexpr NEO::Zebin::ZeInfo::Types::Version zeInfoDecoderVersion{1, 39};
 
 template <typename T>
 bool readEnumChecked(ConstStringRef enumString, T &outValue, ConstStringRef kernelName, std::string &outErrReason);
@@ -63,7 +63,7 @@ DecodeError validateZeInfoVersion(const Types::Version &receivedZeInfoVersion, s
 
 DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &functionNd, std::string &outErrReason, std::string &outWarning);
 
-DecodeError decodeZeInfoVersion(Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning);
+DecodeError decodeZeInfoVersion(Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning, Types::Version &srcZeInfoVersion);
 DecodeError readZeInfoVersionFromZeInfo(Types::Version &dst,
                                         NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &versionNd, std::string &outErrReason, std::string &outWarning);
 
@@ -71,13 +71,13 @@ DecodeError decodeZeInfoGlobalHostAccessTable(ProgramInfo &dst, Yaml::YamlParser
 
 DecodeError decodeZeInfoFunctions(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning);
 
-DecodeError decodeZeInfoKernels(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning);
-DecodeError decodeZeInfoKernelEntry(KernelDescriptor &dst, Yaml::YamlParser &yamlParser, const Yaml::Node &kernelNd, uint32_t grfSize, uint32_t minScratchSpaceSize, std::string &outErrReason, std::string &outWarning);
+DecodeError decodeZeInfoKernels(ProgramInfo &dst, Yaml::YamlParser &parser, const ZeInfoSections &zeInfoSections, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion);
+DecodeError decodeZeInfoKernelEntry(KernelDescriptor &dst, Yaml::YamlParser &yamlParser, const Yaml::Node &kernelNd, uint32_t grfSize, uint32_t minScratchSpaceSize, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion);
 
 using KernelExecutionEnvBaseT = Types::Kernel::ExecutionEnv::ExecutionEnvBaseT;
-DecodeError decodeZeInfoKernelExecutionEnvironment(KernelDescriptor &dst, Yaml::YamlParser &parser, const ZeInfoKernelSections &kernelSections, std::string &outErrReason, std::string &outWarning);
+DecodeError decodeZeInfoKernelExecutionEnvironment(KernelDescriptor &dst, Yaml::YamlParser &parser, const ZeInfoKernelSections &kernelSections, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion);
 DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const Yaml::Node &node, KernelExecutionEnvBaseT &outExecEnv, ConstStringRef context, std::string &outErrReason, std::string &outWarning);
-void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecutionEnvBaseT &execEnv);
+void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecutionEnvBaseT &execEnv, const Types::Version &srcZeInfoVersion);
 
 using KernelAttributesBaseT = Types::Kernel::Attributes::AttributesBaseT;
 DecodeError decodeZeInfoKernelUserAttributes(KernelDescriptor &dst, Yaml::YamlParser &parser, const ZeInfoKernelSections &kernelSections, std::string &outErrReason, std::string &outWarning);
@@ -109,9 +109,9 @@ DecodeError populateKernelInlineSampler(KernelDescriptor &dst, const KernelInlin
 
 using KernelPerThreadMemoryBufferBaseT = Types::Kernel::PerThreadMemoryBuffer::PerThreadMemoryBufferBaseT;
 using KernelPerThreadMemoryBuffers = StackVec<KernelPerThreadMemoryBufferBaseT, 8>;
-DecodeError decodeZeInfoKernelPerThreadMemoryBuffers(KernelDescriptor &dst, Yaml::YamlParser &parser, const ZeInfoKernelSections &kernelSections, const uint32_t minScratchSpaceSize, std::string &outErrReason, std::string &outWarning);
+DecodeError decodeZeInfoKernelPerThreadMemoryBuffers(KernelDescriptor &dst, Yaml::YamlParser &parser, const ZeInfoKernelSections &kernelSections, const uint32_t minScratchSpaceSize, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion);
 DecodeError readZeInfoPerThreadMemoryBuffers(const Yaml::YamlParser &parser, const Yaml::Node &node, KernelPerThreadMemoryBuffers &outPerThreadMemoryBuffers, ConstStringRef context, std::string &outErrReason, std::string &outWarning);
-DecodeError populateKernelPerThreadMemoryBuffer(KernelDescriptor &dst, const KernelPerThreadMemoryBufferBaseT &src, const uint32_t minScratchSpaceSize, std::string &outErrReason, std::string &outWarning);
+DecodeError populateKernelPerThreadMemoryBuffer(KernelDescriptor &dst, const KernelPerThreadMemoryBufferBaseT &src, const uint32_t minScratchSpaceSize, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion);
 
 using KernelExperimentalPropertiesBaseT = Types::Kernel::ExecutionEnv::ExperimentalPropertiesBaseT;
 DecodeError decodeZeInfoKernelExperimentalProperties(KernelDescriptor &dst, Yaml::YamlParser &parser, const ZeInfoKernelSections &kernelSections, std::string &outErrReason, std::string &outWarning);
@@ -130,6 +130,13 @@ void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMis
 
 void generateSSHWithBindingTable(KernelDescriptor &dst);
 void generateDSH(KernelDescriptor &dst);
+
+inline bool isAtLeastZeInfoVersion(const Types::Version &srcVersion, const Types::Version &expectedVersion) {
+    return srcVersion.minor >= expectedVersion.minor;
+}
+
+inline bool isScratchMemoryUsageDefinedInExecutionEnvironment(const Types::Version &srcVersion) { return isAtLeastZeInfoVersion(srcVersion, {1, 39}); }
+
 } // namespace Zebin::ZeInfo
 
 } // namespace NEO

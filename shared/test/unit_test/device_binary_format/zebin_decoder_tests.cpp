@@ -38,6 +38,10 @@ class DecodeZeInfoKernelEntryFixture {
     }
 
     DecodeError decodeZeInfoKernelEntry(ConstStringRef zeinfo) {
+        return decodeZeInfoKernelEntryForSpecificVersion(zeinfo, NEO::Zebin::ZeInfo::zeInfoDecoderVersion);
+    }
+
+    DecodeError decodeZeInfoKernelEntryForSpecificVersion(ConstStringRef zeinfo, const NEO::Zebin::ZeInfo::Types::Version &zeInfoVersion) {
         kernelDescriptor = std::make_unique<KernelDescriptor>();
         yamlParser = std::make_unique<NEO::Yaml::YamlParser>();
         errors.clear();
@@ -50,7 +54,7 @@ class DecodeZeInfoKernelEntryFixture {
 
         auto &kernelNode = *yamlParser->createChildrenRange(*yamlParser->findNodeWithKeyDfs("kernels")).begin();
         return NEO::Zebin::ZeInfo::decodeZeInfoKernelEntry(*kernelDescriptor, *yamlParser, kernelNode,
-                                                           grfSize, minScratchSpaceSize, errors, warnings);
+                                                           grfSize, minScratchSpaceSize, errors, warnings, zeInfoVersion);
     }
 
   protected:
@@ -65,6 +69,13 @@ class DecodeZeInfoKernelEntryFixture {
     std::unique_ptr<Yaml::YamlParser> yamlParser;
 };
 using namespace NEO::Zebin;
+
+TEST(ZeInfoVersionSupportTest, whenCheckingSupportedZeInfoVersionThenProperValueIsReturned) {
+    ZeInfo::Types::Version srcZeInfoVersion{3, 14};
+    EXPECT_TRUE(ZeInfo::isAtLeastZeInfoVersion(srcZeInfoVersion, {3, 14}));
+    EXPECT_FALSE(ZeInfo::isAtLeastZeInfoVersion(srcZeInfoVersion, {3, 15}));
+    EXPECT_TRUE(ZeInfo::isAtLeastZeInfoVersion(srcZeInfoVersion, {3, 13}));
+}
 
 TEST(ZebinValidateTargetTest, givenTargetDeviceCreatedUsingHelperFunctionWhenValidatingAgainstAdjustedHwInfoForIgcThenSuccessIsReturned) {
     MockExecutionEnvironment executionEnvironment;
@@ -3588,6 +3599,8 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenMinimalExecutionEnvThenPopulateKernelDe
     EXPECT_EQ(kernelDescriptor.kernelAttributes.workgroupWalkOrder[0], static_cast<uint8_t>(Defaults::workgroupWalkOrderDimensions[0]));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.workgroupWalkOrder[1], static_cast<uint8_t>(Defaults::workgroupWalkOrderDimensions[1]));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.workgroupWalkOrder[2], static_cast<uint8_t>(Defaults::workgroupWalkOrderDimensions[2]));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.privateScratchMemorySize, static_cast<uint32_t>(Defaults::privateSize));
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.spillFillScratchMemorySize, static_cast<uint32_t>(Defaults::spillSize));
     EXPECT_EQ(kernelDescriptor.kernelMetadata.requiredSubGroupSize, static_cast<uint8_t>(Defaults::requiredSubGroupSize));
 }
 
@@ -4039,6 +4052,7 @@ kernels:
     - name : some_kernel
       execution_env:   
         simd_size: 8
+        spill_size: 2048
       per_thread_memory_buffers: 
           - type:            scratch
             usage:           spill_fill_space
@@ -4060,6 +4074,7 @@ kernels:
     - name : some_kernel
       execution_env:   
         simd_size: 8
+        private_size: 2048
       per_thread_memory_buffers: 
           - type:            scratch
             usage:           private_space
@@ -4076,23 +4091,58 @@ kernels:
     EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.privateScratchMemorySize);
 }
 
-TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferOfSizeSmallerThanMinimalWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryForSpillAndPrivateDefinedInSeparateFieldsThenProperFieldsInDescriptorAreSet) {
     ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
       execution_env:   
         simd_size: 8
+        private_size: 256
+        spill_size: 512
       per_thread_memory_buffers: 
           - type:            scratch
-            usage:           private_space
-            size:            512
+            usage:           single_space
+            size:            1024
+          - type:            scratch
+            usage:           single_space
+            size:            2048
+            slot:            1
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_EQ(1024U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
-    EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ(256U, kernelDescriptor->kernelAttributes.privateScratchMemorySize);
+    EXPECT_EQ(512U, kernelDescriptor->kernelAttributes.spillFillScratchMemorySize);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryForSpillAndPrivateDefinedInOlderZeInfoThenFallbackToLegacySlotMeaning) {
+    ConstStringRef zeinfo = R"===(
+kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+        private_size: 256
+        spill_size: 512
+      per_thread_memory_buffers: 
+          - type:            scratch
+            usage:           single_space
+            size:            1024
+          - type:            scratch
+            usage:           single_space
+            size:            2048
+            slot:            1
+)===";
+    auto err = decodeZeInfoKernelEntryForSpecificVersion(zeinfo, {1, 38});
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_EQ(1024U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.privateScratchMemorySize);
+    EXPECT_EQ(1024U, kernelDescriptor->kernelAttributes.spillFillScratchMemorySize);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferOfSizeBiggerThanMinimalWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
