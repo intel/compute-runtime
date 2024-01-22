@@ -28,6 +28,7 @@ struct KernelHelperMaxWorkGroupsTests : ::testing::Test {
     uint32_t numberOfBarriers = 0;
     uint32_t workDim = 3;
     uint32_t grf = 128;
+    uint32_t numSubdevices = 1;
     size_t lws[3] = {10, 10, 10};
 
     void SetUp() override {
@@ -45,7 +46,7 @@ struct KernelHelperMaxWorkGroupsTests : ::testing::Test {
         hwInfo->gtSystemInfo.DualSubSliceCount = dssCount;
         hwInfo->capabilityTable.slmSize = (availableSlm / MemoryConstants::kiloByte) / dssCount;
 
-        return KernelHelper::getMaxWorkGroupCount(*rootDeviceEnvironment, descriptor, usedSlm, workDim, lws, engineType, false);
+        return KernelHelper::getMaxWorkGroupCount(*rootDeviceEnvironment, descriptor, numSubdevices, usedSlm, workDim, lws, engineType, false);
     }
 
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
@@ -67,6 +68,22 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenDebugFlagSetWhenGetMaxWorkGroupCount
     debugManager.flags.OverrideMaxWorkGroupCount.set(123);
 
     EXPECT_EQ(123u, getMaxWorkGroupCount());
+}
+
+TEST_F(KernelHelperMaxWorkGroupsTests, givenMultipleSubdevicesWenCalculatingMaxWorkGroupsCountTenMultiply) {
+    auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
+
+    auto baseCount = getMaxWorkGroupCount();
+
+    numSubdevices = 4;
+
+    auto countWithSubdevices = getMaxWorkGroupCount();
+
+    if (helper.singleTileExecImplicitScalingRequired(true)) {
+        EXPECT_EQ(baseCount, countWithSubdevices);
+    } else {
+        EXPECT_EQ(baseCount * numSubdevices, countWithSubdevices);
+    }
 }
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToBarriersCount) {

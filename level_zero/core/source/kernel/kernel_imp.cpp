@@ -8,6 +8,7 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
 #include "shared/source/assert_handler/assert_handler.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -482,8 +483,18 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
     const uint32_t workDim = 3;
     const size_t localWorkSize[] = {groupSize[0], groupSize[1], groupSize[2]};
 
+    uint32_t numSubDevicesForExecution = 1;
+
+    bool platformImplicitScaling = helper.platformSupportsImplicitScaling(rootDeviceEnvironment);
+    auto deviceBitfield = module->getDevice()->getNEODevice()->getDeviceBitfield();
+
+    if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling)) {
+        numSubDevicesForExecution = static_cast<uint32_t>(deviceBitfield.count());
+    }
+
     *totalGroupCount = NEO::KernelHelper::getMaxWorkGroupCount(rootDeviceEnvironment,
                                                                descriptor,
+                                                               numSubDevicesForExecution,
                                                                usedSlmSize,
                                                                workDim,
                                                                localWorkSize,

@@ -447,6 +447,26 @@ HWTEST_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenNoBarriersOrSlmUsed
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
+HWTEST_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenMultiTileWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithSimd) {
+    DebugManagerStateRestore restore;
+
+    neoDevice->deviceBitfield = 0b1;
+    auto baseCount = getMaxWorkGroupCount();
+
+    debugManager.flags.EnableImplicitScaling.set(1);
+    neoDevice->deviceBitfield = 0b11;
+
+    auto countWithSubDevices = getMaxWorkGroupCount();
+
+    auto &helper = neoDevice->getGfxCoreHelper();
+
+    if (helper.singleTileExecImplicitScalingRequired(true)) {
+        EXPECT_EQ(baseCount, countWithSubDevices);
+    } else {
+        EXPECT_EQ(baseCount * 2, countWithSubDevices);
+    }
+}
+
 HWTEST_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenBarriersWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToBarriersCount) {
     usesBarriers = 1;
     auto expected = dssCount * (maxBarrierCount / usesBarriers);

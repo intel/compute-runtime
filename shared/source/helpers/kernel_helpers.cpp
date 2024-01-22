@@ -20,7 +20,7 @@
 
 namespace NEO {
 
-uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDeviceEnvironment, const KernelDescriptor &kernelDescriptor,
+uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDeviceEnvironment, const KernelDescriptor &kernelDescriptor, uint32_t numSubDevices,
                                             uint32_t usedSlmSize, uint32_t workDim, const size_t *localWorkSize, EngineGroupType engineGroupType, bool isEngineInstanced) {
     if (debugManager.flags.OverrideMaxWorkGroupCount.get() != -1) {
         return static_cast<uint32_t>(debugManager.flags.OverrideMaxWorkGroupCount.get());
@@ -59,7 +59,13 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
         maxWorkGroupsCount = std::min(maxWorkGroupsCount, maxWorkGroupsCountDueToSlm);
     }
 
-    return helper.adjustMaxWorkGroupCount(maxWorkGroupsCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced);
+    maxWorkGroupsCount = helper.adjustMaxWorkGroupCount(maxWorkGroupsCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced);
+
+    if (!helper.singleTileExecImplicitScalingRequired(true)) {
+        maxWorkGroupsCount *= numSubDevices;
+    }
+
+    return maxWorkGroupsCount;
 }
 
 KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device) {

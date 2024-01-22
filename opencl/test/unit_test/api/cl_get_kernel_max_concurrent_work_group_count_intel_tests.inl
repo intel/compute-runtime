@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,6 +81,33 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenVariousInputWhenGetting
     EXPECT_EQ(CL_SUCCESS, retVal);
     expectedMaxConcurrentWorkGroupCount = pKernelWithExecutionEnvironmentPatch->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
     EXPECT_EQ(expectedMaxConcurrentWorkGroupCount, maxConcurrentWorkGroupCount);
+}
+
+TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenMultiTileWhenGettingMaxConcurrentWorkGroupCountThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore restore;
+    auto &mockDevice = static_cast<MockDevice &>(pDevice->getDevice());
+
+    cl_uint workDim = 3;
+    size_t localWorkSize[] = {8, 8, 8};
+
+    const_cast<KernelInfo &>(pKernel->getKernelInfo()).kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
+
+    mockDevice.deviceBitfield = 0b1;
+
+    auto baseCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
+
+    debugManager.flags.EnableImplicitScaling.set(1);
+    mockDevice.deviceBitfield = 0b11;
+
+    auto countWithSubDevices = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
+
+    auto &helper = pDevice->getGfxCoreHelper();
+
+    if (helper.singleTileExecImplicitScalingRequired(true)) {
+        EXPECT_EQ(baseCount, countWithSubDevices);
+    } else {
+        EXPECT_EQ(baseCount * 2, countWithSubDevices);
+    }
 }
 
 } // namespace ULT

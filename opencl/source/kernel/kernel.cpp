@@ -8,6 +8,7 @@
 #include "opencl/source/kernel/kernel.h"
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -1132,8 +1133,18 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
 
     auto usedSlmSize = helper.alignSlmSize(slmTotalSize);
 
+    uint32_t numSubDevicesForExecution = 1;
+
+    bool platformImplicitScaling = helper.platformSupportsImplicitScaling(rootDeviceEnvironment);
+    auto deviceBitfield = commandQueue->getClDevice().getDeviceBitfield();
+
+    if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling)) {
+        numSubDevicesForExecution = static_cast<uint32_t>(deviceBitfield.count());
+    }
+
     auto maxWorkGroupCount = KernelHelper::getMaxWorkGroupCount(rootDeviceEnvironment,
                                                                 kernelInfo.kernelDescriptor,
+                                                                numSubDevicesForExecution,
                                                                 usedSlmSize,
                                                                 workDim,
                                                                 localWorkSize,
