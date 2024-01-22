@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -547,7 +547,8 @@ void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpected
     uint32_t expectedDcFlush = 0;
     if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
         // 1st dc flush after cross-tile sync, 2nd dc flush for signal scope event
-        expectedDcFlush = 2;
+        expectedDcFlush = NEO::ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired() ? 1 : 0;
+        expectedDcFlush++;
     }
 
     EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
