@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,8 +47,8 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     Device *device;
     NEO::BuiltIns *builtInsLib;
 
-    std::future<void> initAsync = {};
     bool initAsyncComplete = true;
+    std::atomic_bool initAsync = false;
 };
 struct BuiltinFunctionsLibImpl::BuiltinData {
     MOCKABLE_VIRTUAL ~BuiltinData();
