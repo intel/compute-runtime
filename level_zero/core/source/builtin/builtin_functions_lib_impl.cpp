@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -184,7 +184,14 @@ void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
 BuiltinFunctionsLibImpl::BuiltinFunctionsLibImpl(Device *device, NEO::BuiltIns *builtInsLib) : device(device), builtInsLib(builtInsLib) {
     if (initBuiltinsAsyncEnabled(device)) {
         this->initAsyncComplete = false;
-        this->initAsync = std::async(std::launch::async, &BuiltinFunctionsLibImpl::initBuiltinKernel, this, Builtin::FillBufferImmediate);
+
+        auto initFunc = [this]() {
+            this->initBuiltinKernel(Builtin::FillBufferImmediate);
+            this->initAsync.store(true);
+        };
+
+        std::thread initAsyncThread(initFunc);
+        initAsyncThread.detach();
     }
 }
 
@@ -269,7 +276,8 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
 
 void BuiltinFunctionsLibImpl::ensureInitCompletion() {
     if (!this->initAsyncComplete) {
-        this->initAsync.wait();
+        while (!this->initAsync.load()) {
+        }
         this->initAsyncComplete = true;
     }
 }
