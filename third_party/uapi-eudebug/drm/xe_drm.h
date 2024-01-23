@@ -189,8 +189,6 @@ struct drm_xe_user_extension {
 	__u32 pad;
 };
 
-typedef drm_xe_user_extension xe_user_extension;
-
 /**
  * struct drm_xe_ext_set_property - Generic set property extension
  *

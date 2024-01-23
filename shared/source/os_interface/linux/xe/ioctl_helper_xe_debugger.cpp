@@ -66,11 +66,11 @@ void *IoctlHelperXe::allocateDebugMetadata() {
 }
 
 void *IoctlHelperXe::freeDebugMetadata(void *metadata) {
-    xe_user_extension *ext = static_cast<xe_user_extension *>(metadata);
-    xe_user_extension *prev = nullptr;
-    xe_user_extension *newRoot = nullptr;
+    drm_xe_user_extension *ext = static_cast<drm_xe_user_extension *>(metadata);
+    drm_xe_user_extension *prev = nullptr;
+    drm_xe_user_extension *newRoot = nullptr;
     while (ext) {
-        xe_user_extension *temp = reinterpret_cast<xe_user_extension *>(ext->next_extension);
+        drm_xe_user_extension *temp = reinterpret_cast<drm_xe_user_extension *>(ext->next_extension);
         if (ext->name == DRM_XE_VM_EXTENSION_SET_DEBUG_METADATA) {
             if (prev) {
                 prev->next_extension = ext->next_extension;
