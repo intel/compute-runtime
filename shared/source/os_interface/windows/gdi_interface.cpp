@@ -25,7 +25,6 @@ Gdi::~Gdi() {
     if constexpr (GdiLogging::gdiLoggingSupport) {
         GdiLogging::close();
     }
-    this->profiler.printGdiTimes();
 }
 
 bool Gdi::setupHwQueueProcAddresses() {

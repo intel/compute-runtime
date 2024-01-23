@@ -8,6 +8,10 @@
 #pragma once
 #include <cstdint>
 
+#ifndef KMD_PROFILING
+#define KMD_PROFILING 0
+#endif
+
 namespace NEO {
 enum CommandStreamReceiverType {
     // Use receiver for real HW
