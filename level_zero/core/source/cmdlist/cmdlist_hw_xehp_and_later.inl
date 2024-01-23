@@ -123,10 +123,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             ", Group count: ", threadGroupDimensions.groupCountX, ", ", threadGroupDimensions.groupCountY, ", ", threadGroupDimensions.groupCountZ,
             ", SIMD: ", kernelInfo->getMaxSimdSize());
 
-    commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
-    commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
+    bool needScratchSpace = false;
+    for (uint32_t slotId = 0u; slotId < 2; slotId++) {
+        commandListPerThreadScratchSize[slotId] = std::max<uint32_t>(commandListPerThreadScratchSize[slotId], kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId]);
+        if (commandListPerThreadScratchSize[slotId] > 0) {
+            needScratchSpace = true;
+        }
+    }
 
-    if ((this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) && (commandListPerThreadScratchSize != 0 || commandListPerThreadPrivateScratchSize != 0)) {
+    if ((this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) && needScratchSpace) {
         commandContainer.prepareBindfulSsh();
     }
 

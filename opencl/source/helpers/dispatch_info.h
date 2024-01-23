@@ -39,8 +39,7 @@ class DispatchInfo {
     void setClDevice(ClDevice *device) { pClDevice = device; }
     bool usesSlm() const;
     bool usesStatelessPrintfSurface() const;
-    uint32_t getRequiredScratchSize() const;
-    uint32_t getRequiredPrivateScratchSize() const;
+    uint32_t getRequiredScratchSize(uint32_t slotId) const;
     void setKernel(Kernel *kernel) { this->kernel = kernel; }
     Kernel *getKernel() const { return kernel; }
     uint32_t getDim() const { return dim; }
@@ -115,18 +114,10 @@ struct MultiDispatchInfo {
         return false;
     }
 
-    uint32_t getRequiredScratchSize() const {
+    uint32_t getRequiredScratchSize(uint32_t slotId) const {
         uint32_t ret = 0;
         for (const auto &dispatchInfo : dispatchInfos) {
-            ret = std::max(ret, dispatchInfo.getRequiredScratchSize());
-        }
-        return ret;
-    }
-
-    uint32_t getRequiredPrivateScratchSize() const {
-        uint32_t ret = 0;
-        for (const auto &dispatchInfo : dispatchInfos) {
-            ret = std::max(ret, dispatchInfo.getRequiredPrivateScratchSize());
+            ret = std::max(ret, dispatchInfo.getRequiredScratchSize(slotId));
         }
         return ret;
     }

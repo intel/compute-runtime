@@ -179,7 +179,7 @@ class CommandStreamReceiver {
     bool getBtdCommandDirty() const { return btdCommandDirty; }
     bool isRayTracingStateProgramingNeeded(Device &device) const;
 
-    void setRequiredScratchSizes(uint32_t newRequiredScratchSize, uint32_t newRequiredPrivateScratchSize);
+    void setRequiredScratchSizes(uint32_t newRequiredScratchSlot0Size, uint32_t newRequiredPrivateScratchSlot1Size);
     GraphicsAllocation *getScratchAllocation();
     GraphicsAllocation *getDebugSurfaceAllocation() const { return debugSurface; }
     GraphicsAllocation *allocateDebugSurface(size_t size);
@@ -534,8 +534,8 @@ class CommandStreamReceiver {
     uint32_t latestSentStatelessMocsConfig = 0;
     uint64_t lastSentSliceCount = QueueSliceCount::defaultSliceCount;
 
-    uint32_t requiredScratchSize = 0;
-    uint32_t requiredPrivateScratchSize = 0;
+    uint32_t requiredScratchSlot0Size = 0;
+    uint32_t requiredScratchSlot1Size = 0;
     uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::notSet;
     KernelExecutionType lastKernelExecutionType = KernelExecutionType::defaultType;
     MemoryCompressionState lastMemoryCompressionState = MemoryCompressionState::notApplicable;

@@ -34,7 +34,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed, NEO::StreamProperties *streamProperties);
     size_t estimateStateBaseAddressCmdSize();
-    MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
+    MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
 
     MOCKABLE_VIRTUAL size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool &isFrontEndStateDirty, int32_t engineInstanced, CommandList *commandList,
                                                                            NEO::StreamProperties &csrState,
@@ -51,8 +51,8 @@ struct CommandQueueHw : public CommandQueueImp {
     MOCKABLE_VIRTUAL void handleScratchSpace(NEO::HeapContainer &heapContainer,
                                              NEO::ScratchSpaceController *scratchController,
                                              bool &gsbaState, bool &frontEndState,
-                                             uint32_t perThreadScratchSpaceSize,
-                                             uint32_t perThreadPrivateScratchSize);
+                                             uint32_t perThreadScratchSpaceSlot0Size,
+                                             uint32_t perThreadScratchSpaceSlot1Size);
 
     bool getPreemptionCmdProgramming() override;
     void patchCommands(CommandList &commandList, uint64_t scratchAddress);
@@ -84,8 +84,8 @@ struct CommandQueueHw : public CommandQueueImp {
 
         NEO::PreemptionMode preemptionMode{};
         NEO::PreemptionMode statePreemption{};
-        uint32_t perThreadScratchSpaceSize = 0;
-        uint32_t perThreadPrivateScratchSize = 0;
+        uint32_t perThreadScratchSpaceSlot0Size = 0;
+        uint32_t perThreadScratchSpaceSlot1Size = 0;
         int32_t engineInstanced = -1;
         UnifiedMemoryControls unifiedMemoryControls{};
 

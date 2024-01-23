@@ -566,17 +566,17 @@ FlushStamp CommandStreamReceiver::obtainCurrentFlushStamp() const {
     return flushStamp->peekStamp();
 }
 
-void CommandStreamReceiver::setRequiredScratchSizes(uint32_t newRequiredScratchSize, uint32_t newRequiredPrivateScratchSize) {
-    if (newRequiredScratchSize > requiredScratchSize) {
-        requiredScratchSize = newRequiredScratchSize;
+void CommandStreamReceiver::setRequiredScratchSizes(uint32_t newRequiredScratchSlot0Size, uint32_t newRequiredScratchSlot1Size) {
+    if (newRequiredScratchSlot0Size > requiredScratchSlot0Size) {
+        requiredScratchSlot0Size = newRequiredScratchSlot0Size;
     }
-    if (newRequiredPrivateScratchSize > requiredPrivateScratchSize) {
-        requiredPrivateScratchSize = newRequiredPrivateScratchSize;
+    if (newRequiredScratchSlot1Size > requiredScratchSlot1Size) {
+        requiredScratchSlot1Size = newRequiredScratchSlot1Size;
     }
 }
 
 GraphicsAllocation *CommandStreamReceiver::getScratchAllocation() {
-    return scratchSpaceController->getScratchSpaceAllocation();
+    return scratchSpaceController->getScratchSpaceSlot0Allocation();
 }
 
 void CommandStreamReceiver::overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) {

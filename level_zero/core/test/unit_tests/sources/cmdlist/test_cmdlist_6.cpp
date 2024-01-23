@@ -2528,7 +2528,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     void *scratchSurfaceStateBuffer = ptrOffset(surfaceStateHeapAlloc->getUnderlyingBuffer(), expectedScratchOffset);
     auto scratchSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(scratchSurfaceStateBuffer);
 
-    auto scratchAllocation = scratchSpaceController->getScratchSpaceAllocation();
+    auto scratchAllocation = scratchSpaceController->getScratchSpaceSlot0Allocation();
     EXPECT_EQ(scratchAllocation->getGpuAddress(), scratchSurfaceState->getSurfaceBaseAddress());
 }
 
@@ -2582,7 +2582,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     void *scratchSurfaceStateBuffer = ptrOffset(surfaceStateHeapAlloc->getUnderlyingBuffer(), expectedScratchOffset);
     auto scratchSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(scratchSurfaceStateBuffer);
 
-    auto scratchAllocation = scratchSpaceController->getScratchSpaceAllocation();
+    auto scratchAllocation = scratchSpaceController->getScratchSpaceSlot0Allocation();
     EXPECT_EQ(scratchAllocation->getGpuAddress(), scratchSurfaceState->getSurfaceBaseAddress());
 }
 

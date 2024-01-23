@@ -798,7 +798,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenScratchSizeIsGreaterThanMaxScrat
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
     pKernelInfo->setPrivateMemory(0x100, false, 0, 0, 0);
-    pKernelInfo->setPerThreadScratchSize(maxScratchSize + 100, 0);
+    pKernelInfo->kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = maxScratchSize + 100;
 
     MockContext context;
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
@@ -2895,22 +2895,16 @@ TEST(KernelTest, givenNotAllArgumentsAreBuffersButAllBuffersAreStatefulWhenIniti
     EXPECT_TRUE(kernel.mockKernel->allBufferArgsStateful);
 }
 
-TEST(KernelTest, givenKernelRequiringPrivateScratchSpaceWhenGettingSizeForPrivateScratchSpaceThenCorrectSizeIsReturned) {
+TEST(KernelTest, givenKernelRequiringTwoSlotScratchSpaceWhenGettingSizeForScratchSpaceThenCorrectSizeIsReturned) {
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
 
     MockKernelWithInternals mockKernel(*device);
-    mockKernel.kernelInfo.setPerThreadScratchSize(512u, 0);
-    mockKernel.kernelInfo.setPerThreadScratchSize(1024u, 1);
-
-    EXPECT_EQ(1024u, mockKernel.mockKernel->getPrivateScratchSize());
-}
-
-TEST(KernelTest, givenKernelWithoutMediaVfeStateSlot1WhenGettingSizeForPrivateScratchSpaceThenCorrectSizeIsReturned) {
-    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
-
-    MockKernelWithInternals mockKernel(*device);
-
-    EXPECT_EQ(0u, mockKernel.mockKernel->getPrivateScratchSize());
+    EXPECT_EQ(0u, mockKernel.mockKernel->getScratchSize(0u));
+    EXPECT_EQ(0u, mockKernel.mockKernel->getScratchSize(1u));
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 512u;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[1] = 1024u;
+    EXPECT_EQ(512u, mockKernel.mockKernel->getScratchSize(0u));
+    EXPECT_EQ(1024u, mockKernel.mockKernel->getScratchSize(1u));
 }
 
 TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledWhenPatchWithImplicitSurfaceCalledThenPatchInfoDataIsCollected) {

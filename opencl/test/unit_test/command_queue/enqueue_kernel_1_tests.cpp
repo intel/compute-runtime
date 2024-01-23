@@ -657,7 +657,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameScra
     uint32_t scratchSize = 4096u;
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
 
     auto sizeToProgram = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(scratchSize);
 
@@ -691,14 +691,14 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueingKernelThatRequirePrivateScratchThenPri
     csr.getMemoryManager()->setForce32BitAllocations(false);
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
-    uint32_t privateScratchSize = 4096u;
+    uint32_t scratchSizeSlot1 = 4096u;
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.setPerThreadScratchSize(privateScratchSize, 1);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[1] = scratchSizeSlot1;
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_EQ(privateScratchSize, csr.requiredPrivateScratchSize);
+    EXPECT_EQ(scratchSizeSlot1, csr.requiredScratchSlot1Size);
 }
 
 HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteWhenSbaIsBeingProgrammedThenConstPolicyIsChoosen) {

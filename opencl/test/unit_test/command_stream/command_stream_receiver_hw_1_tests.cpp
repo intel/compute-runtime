@@ -485,8 +485,8 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenScratchAl
     scratchController->setRequiredScratchSpace(reinterpret_cast<void *>(0x2000), 0u, 0u, 0u, 0u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
     EXPECT_FALSE(cfeStateDirty);
     EXPECT_FALSE(stateBaseAddressDirty);
-    EXPECT_EQ(nullptr, scratchController->getScratchSpaceAllocation());
-    EXPECT_EQ(nullptr, scratchController->getPrivateScratchSpaceAllocation());
+    EXPECT_EQ(nullptr, scratchController->getScratchSpaceSlot0Allocation());
+    EXPECT_EQ(nullptr, scratchController->getScratchSpaceSlot1Allocation());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddressIsReturned) {
@@ -501,7 +501,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddre
     scratchController->setRequiredScratchSpace(surfaceHeap.get(), 0u, 0x1000u, 0u, 0u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
 
     uint64_t expectedScratchAddress = 0xAAABBBCCCDDD000ull;
-    auto scratchAllocation = scratchController->getScratchSpaceAllocation();
+    auto scratchAllocation = scratchController->getScratchSpaceSlot0Allocation();
     auto gmmHelper = pDevice->getGmmHelper();
     auto canonizedGpuAddress = gmmHelper->canonize(expectedScratchAddress);
     scratchAllocation->setCpuPtrAndGpuAddress(scratchAllocation->getUnderlyingBuffer(), canonizedGpuAddress);
@@ -513,7 +513,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenGshAddres
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto scratchController = commandStreamReceiver->getScratchSpaceController();
 
-    EXPECT_EQ(nullptr, scratchController->getScratchSpaceAllocation());
+    EXPECT_EQ(nullptr, scratchController->getScratchSpaceSlot0Allocation());
     EXPECT_EQ(0u, scratchController->calculateNewGSH());
 }
 

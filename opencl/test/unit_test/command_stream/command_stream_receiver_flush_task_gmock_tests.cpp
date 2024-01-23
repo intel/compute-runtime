@@ -289,7 +289,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
     mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 0u, 10u, 0u, 1u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, vfeStateDirty);
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    mockCsr->requiredScratchSize = 0x200000;
+    mockCsr->requiredScratchSlot0Size = 0x200000;
 
     mockCsr->programVFEState(commandStream, flags, 10);
     ASSERT_EQ(1u, mockCsr->getFlatBatchBufferHelper().getPatchInfoCollection().size());
@@ -310,7 +310,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
     mockCsr->getScratchSpaceController()->setRequiredScratchSpace(nullptr, 0u, 10u, 0u, 1u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, vfeStateDirty);
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    mockCsr->requiredScratchSize = 0x200000;
+    mockCsr->requiredScratchSlot0Size = 0x200000;
 
     mockCsr->programVFEState(commandStream, flags, 10);
     EXPECT_EQ(0u, mockCsr->getFlatBatchBufferHelper().getPatchInfoCollection().size());
@@ -327,7 +327,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
     mockCsr->overwriteFlatBatchBufferHelper(new MockFlatBatchBufferHelper<FamilyType>(*pDevice->executionEnvironment));
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    mockCsr->requiredScratchSize = 0x200000;
+    mockCsr->requiredScratchSlot0Size = 0x200000;
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(DeviceBitfield(8)));
     mockCsr->setupContext(osContext);
 

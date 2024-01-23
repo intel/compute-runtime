@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,6 +88,11 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateLocalSu
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchMediaVFEState &token, uint32_t slot) {
     UNRECOVERABLE_IF(slot >= 2U);
     dst.kernelAttributes.perThreadScratchSize[slot] = token.PerThreadScratchSpace;
+    if (slot == 0) {
+        dst.kernelAttributes.spillFillScratchMemorySize = token.PerThreadScratchSpace;
+    } else if (slot == 1) {
+        dst.kernelAttributes.privateScratchMemorySize = token.PerThreadScratchSpace;
+    }
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchThreadPayload &token) {

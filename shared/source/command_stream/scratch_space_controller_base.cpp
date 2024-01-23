@@ -26,19 +26,19 @@ ScratchSpaceControllerBase::ScratchSpaceControllerBase(uint32_t rootDeviceIndex,
 
 void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
                                                          uint32_t scratchSlot,
-                                                         uint32_t requiredPerThreadScratchSize,
-                                                         uint32_t requiredPerThreadPrivateScratchSize,
+                                                         uint32_t requiredPerThreadScratchSizeSlot0,
+                                                         uint32_t requiredPerThreadScratchSizeSlot1,
                                                          TaskCountType currentTaskCount,
                                                          OsContext &osContext,
                                                          bool &stateBaseAddressDirty,
                                                          bool &vfeStateDirty) {
-    size_t requiredScratchSizeInBytes = requiredPerThreadScratchSize * computeUnitsUsedForScratch;
-    if (requiredScratchSizeInBytes && (scratchSizeBytes < requiredScratchSizeInBytes)) {
-        if (scratchAllocation) {
-            scratchAllocation->updateTaskCount(currentTaskCount, osContext.getContextId());
-            csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
+    size_t requiredScratchSizeInBytes = requiredPerThreadScratchSizeSlot0 * computeUnitsUsedForScratch;
+    if (requiredScratchSizeInBytes && (scratchSlot0SizeInBytes < requiredScratchSizeInBytes)) {
+        if (scratchSlot0Allocation) {
+            scratchSlot0Allocation->updateTaskCount(currentTaskCount, osContext.getContextId());
+            csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot0Allocation), TEMPORARY_ALLOCATION);
         }
-        scratchSizeBytes = requiredScratchSizeInBytes;
+        scratchSlot0SizeInBytes = requiredScratchSizeInBytes;
         createScratchSpaceAllocation();
         vfeStateDirty = true;
         force32BitAllocation = getMemoryManager()->peekForce32BitAllocations();
@@ -49,14 +49,14 @@ void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
 }
 
 void ScratchSpaceControllerBase::createScratchSpaceAllocation() {
-    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, scratchSizeBytes, AllocationType::scratchSurface, this->csrAllocationStorage.getDeviceBitfield()});
-    UNRECOVERABLE_IF(scratchAllocation == nullptr);
+    scratchSlot0Allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, scratchSlot0SizeInBytes, AllocationType::scratchSurface, this->csrAllocationStorage.getDeviceBitfield()});
+    UNRECOVERABLE_IF(scratchSlot0Allocation == nullptr);
 }
 
 uint64_t ScratchSpaceControllerBase::calculateNewGSH() {
     uint64_t gsh = 0;
-    if (scratchAllocation) {
-        gsh = scratchAllocation->getGpuAddress() - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
+    if (scratchSlot0Allocation) {
+        gsh = scratchSlot0Allocation->getGpuAddress() - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
     }
     return gsh;
 }
@@ -65,8 +65,8 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
     // for 64 bit, scratch space pointer is being programmed as "General State Base Address - scratchSpaceOffsetFor64bit"
     //             and "0 + scratchSpaceOffsetFor64bit" is being programmed in Media VFE state
     uint64_t scratchAddress = 0;
-    if (scratchAllocation) {
-        scratchAddress = scratchAllocation->getGpuAddressToPatch();
+    if (scratchSlot0Allocation) {
+        scratchAddress = scratchSlot0Allocation->getGpuAddressToPatch();
         if (is64bit && !getMemoryManager()->peekForce32BitAllocations()) {
             // this is to avoid scractch allocation offset "0"
             scratchAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
@@ -85,8 +85,8 @@ void ScratchSpaceControllerBase::reserveHeap(IndirectHeap::Type heapType, Indire
 
 void ScratchSpaceControllerBase::programHeaps(HeapContainer &heapContainer,
                                               uint32_t offset,
-                                              uint32_t requiredPerThreadScratchSize,
-                                              uint32_t requiredPerThreadPrivateScratchSize,
+                                              uint32_t requiredPerThreadScratchSizeSlot0,
+                                              uint32_t requiredPerThreadScratchSizeSlot1,
                                               TaskCountType currentTaskCount,
                                               OsContext &osContext,
                                               bool &stateBaseAddressDirty,
@@ -94,8 +94,8 @@ void ScratchSpaceControllerBase::programHeaps(HeapContainer &heapContainer,
 }
 
 void ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
-                                                                       uint32_t requiredPerThreadScratchSize,
-                                                                       uint32_t requiredPerThreadPrivateScratchSize,
+                                                                       uint32_t requiredPerThreadScratchSizeSlot0,
+                                                                       uint32_t requiredPerThreadScratchSizeSlot1,
                                                                        TaskCountType currentTaskCount,
                                                                        OsContext &osContext,
                                                                        bool &stateBaseAddressDirty,

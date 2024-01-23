@@ -211,12 +211,8 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     Program *getProgram() const { return program; }
 
-    uint32_t getScratchSize() {
-        return kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
-    }
-
-    uint32_t getPrivateScratchSize() {
-        return kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
+    uint32_t getScratchSize(uint32_t slotId) {
+        return kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId];
     }
 
     bool usesSyncBuffer() const;

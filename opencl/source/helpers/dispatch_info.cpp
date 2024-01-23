@@ -20,12 +20,8 @@ bool DispatchInfo::usesStatelessPrintfSurface() const {
     return (kernel == nullptr) ? false : kernel->hasPrintfOutput();
 }
 
-uint32_t DispatchInfo::getRequiredScratchSize() const {
-    return (kernel == nullptr) ? 0 : kernel->getScratchSize();
-}
-
-uint32_t DispatchInfo::getRequiredPrivateScratchSize() const {
-    return (kernel == nullptr) ? 0 : kernel->getPrivateScratchSize();
+uint32_t DispatchInfo::getRequiredScratchSize(uint32_t slotId) const {
+    return (kernel == nullptr) ? 0 : kernel->getScratchSize(slotId);
 }
 
 MultiDispatchInfo::~MultiDispatchInfo() {

@@ -333,14 +333,14 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEndAndClearDirtyFlag(
     }
     auto scratchSpaceController = this->csr->getScratchSpaceController();
     programFrontEnd(scratchSpaceController->getScratchPatchAddress(),
-                    scratchSpaceController->getPerThreadScratchSpaceSize(),
+                    scratchSpaceController->getPerThreadScratchSpaceSizeSlot0(),
                     cmdStream,
                     csrState);
     ctx.frontEndStateDirty = false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &cmdStream, NEO::StreamProperties &streamProperties) {
+void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &cmdStream, NEO::StreamProperties &streamProperties) {
     UNRECOVERABLE_IF(csr == nullptr);
     auto &hwInfo = device->getHwInfo();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
@@ -349,7 +349,7 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEnd(uint64_t scratchAddress, uin
     auto pVfeState = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(&cmdStream, hwInfo, engineGroupType);
     NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState,
                                                     device->getNEODevice()->getRootDeviceEnvironment(),
-                                                    perThreadScratchSpaceSize,
+                                                    perThreadScratchSpaceSlot0Size,
                                                     scratchAddress,
                                                     device->getMaxNumHwThreads(),
                                                     streamProperties);
@@ -543,11 +543,11 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         auto &commandContainer = commandList->getCmdContainer();
 
         if (!isCopyOnlyCommandQueue) {
-            ctx.perThreadScratchSpaceSize = std::max(ctx.perThreadScratchSpaceSize, commandList->getCommandListPerThreadScratchSize());
-            ctx.perThreadPrivateScratchSize = std::max(ctx.perThreadPrivateScratchSize, commandList->getCommandListPerThreadPrivateScratchSize());
+            ctx.perThreadScratchSpaceSlot0Size = std::max(ctx.perThreadScratchSpaceSlot0Size, commandList->getCommandListPerThreadScratchSize(0u));
+            ctx.perThreadScratchSpaceSlot1Size = std::max(ctx.perThreadScratchSpaceSlot1Size, commandList->getCommandListPerThreadScratchSize(1u));
 
             if (commandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::privateHeaps) {
-                if (commandList->getCommandListPerThreadScratchSize() != 0 || commandList->getCommandListPerThreadPrivateScratchSize() != 0) {
+                if (commandList->getCommandListPerThreadScratchSize(0u) != 0 || commandList->getCommandListPerThreadScratchSize(1u) != 0) {
                     if (commandContainer.getIndirectHeap(NEO::HeapType::surfaceState) != nullptr) {
                         heapContainer.push_back(commandContainer.getIndirectHeap(NEO::HeapType::surfaceState)->getGraphicsAllocation());
                     }
@@ -668,7 +668,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFla
     handleScratchSpace(this->heapContainer,
                        scratchController,
                        ctx.gsbaStateDirty, ctx.frontEndStateDirty,
-                       ctx.perThreadScratchSpaceSize, ctx.perThreadPrivateScratchSize);
+                       ctx.perThreadScratchSpaceSlot0Size, ctx.perThreadScratchSpaceSlot1Size);
     ctx.gsbaStateDirty |= this->csr->getGSBAStateDirty();
     ctx.scratchGsba = scratchController->calculateNewGSH();
 
@@ -1012,7 +1012,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStartSecondaryBa
                     auto scratchSpaceController = this->csr->getScratchSpaceController();
                     ctx.cmdListBeginState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(returnPoints[returnPointIdx].configSnapshot.frontEndState);
                     programFrontEnd(scratchSpaceController->getScratchPatchAddress(),
-                                    scratchSpaceController->getPerThreadScratchSpaceSize(),
+                                    scratchSpaceController->getPerThreadScratchSpaceSizeSlot0(),
                                     commandStream,
                                     ctx.cmdListBeginState);
                     NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&commandStream,

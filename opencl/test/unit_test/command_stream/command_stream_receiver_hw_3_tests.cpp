@@ -16,7 +16,7 @@
 
 using namespace NEO;
 struct MockScratchSpaceController : ScratchSpaceControllerBase {
-    using ScratchSpaceControllerBase::privateScratchAllocation;
+    using ScratchSpaceControllerBase::scratchSlot1Allocation;
     using ScratchSpaceControllerBase::ScratchSpaceControllerBase;
 };
 
@@ -24,8 +24,8 @@ using ScratchSpaceControllerTest = Test<ClDeviceFixture>;
 
 TEST_F(ScratchSpaceControllerTest, whenScratchSpaceControllerIsDestroyedThenItReleasePrivateScratchSpaceAllocation) {
     MockScratchSpaceController scratchSpaceController(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *pDevice->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-    scratchSpaceController.privateScratchAllocation = pDevice->getExecutionEnvironment()->memoryManager->allocateGraphicsMemoryInPreferredPool(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize}, nullptr);
-    EXPECT_NE(nullptr, scratchSpaceController.privateScratchAllocation);
+    scratchSpaceController.scratchSlot1Allocation = pDevice->getExecutionEnvironment()->memoryManager->allocateGraphicsMemoryInPreferredPool(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize}, nullptr);
+    EXPECT_NE(nullptr, scratchSpaceController.scratchSlot1Allocation);
     // no memory leak is expected
 }
 

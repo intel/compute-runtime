@@ -21,22 +21,22 @@ using namespace NEO;
 class MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHPAndLater {
   public:
     using ScratchSpaceControllerXeHPAndLater::bindlessSS;
-    using ScratchSpaceControllerXeHPAndLater::scratchAllocation;
+    using ScratchSpaceControllerXeHPAndLater::scratchSlot0Allocation;
     using ScratchSpaceControllerXeHPAndLater::singleSurfaceStateSize;
 
     MockScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
                                            ExecutionEnvironment &environment,
                                            InternalAllocationStorage &allocationStorage) : ScratchSpaceControllerXeHPAndLater(rootDeviceIndex, environment, allocationStorage) {
-        scratchAllocation = &alloc;
+        scratchSlot0Allocation = &alloc;
     }
     ~MockScratchSpaceControllerXeHPAndLater() override {
-        scratchAllocation = nullptr;
+        scratchSlot0Allocation = nullptr;
     }
     void programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation) override {
         wasProgramSurfaceStateAtPtrCalled = true;
     }
-    void prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
-                                  uint32_t requiredPerThreadPrivateScratchSize,
+    void prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
+                                  uint32_t requiredPerThreadScratchSizeSlot1,
                                   TaskCountType currentTaskCount,
                                   OsContext &osContext,
                                   bool &stateBaseAddressDirty,

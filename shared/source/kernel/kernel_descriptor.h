@@ -54,6 +54,8 @@ struct KernelDescriptor {
         uint32_t perHwThreadPrivateMemorySize = 0U;
         uint32_t perThreadSystemThreadSurfaceSize = 0U;
         uint32_t numThreadsRequired = 0u;
+        uint32_t spillFillScratchMemorySize = 0u;
+        uint32_t privateScratchMemorySize = 0u;
         ThreadArbitrationPolicy threadArbitrationPolicy = NotPresent;
         uint16_t requiredWorkgroupSize[3] = {0U, 0U, 0U};
         uint16_t crossThreadDataSize = 0U;

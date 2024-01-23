@@ -30,9 +30,9 @@ ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t 
     auto &gfxCoreHelper = environment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     singleSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
     if (debugManager.flags.EnablePrivateScratchSlot1.get() != -1) {
-        privateScratchSpaceSupported = !!debugManager.flags.EnablePrivateScratchSlot1.get();
+        twoSlotScratchSpaceSupported = !!debugManager.flags.EnablePrivateScratchSlot1.get();
     }
-    if (privateScratchSpaceSupported) {
+    if (twoSlotScratchSpaceSupported) {
         ScratchSpaceControllerXeHPAndLater::stateSlotsCount *= 2;
     }
 }
@@ -40,7 +40,7 @@ ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t 
 void ScratchSpaceControllerXeHPAndLater::setNewSshPtr(void *newSsh, bool &cfeDirty, bool changeId) {
     if (surfaceStateHeap != newSsh) {
         surfaceStateHeap = static_cast<char *>(newSsh);
-        if (scratchAllocation == nullptr) {
+        if (scratchSlot0Allocation == nullptr) {
             cfeDirty = false;
         } else {
             if (changeId) {
@@ -54,15 +54,15 @@ void ScratchSpaceControllerXeHPAndLater::setNewSshPtr(void *newSsh, bool &cfeDir
 
 void ScratchSpaceControllerXeHPAndLater::setRequiredScratchSpace(void *sshBaseAddress,
                                                                  uint32_t offset,
-                                                                 uint32_t requiredPerThreadScratchSize,
-                                                                 uint32_t requiredPerThreadPrivateScratchSize,
+                                                                 uint32_t requiredPerThreadScratchSizeSlot0,
+                                                                 uint32_t requiredPerThreadScratchSizeSlot1,
                                                                  TaskCountType currentTaskCount,
                                                                  OsContext &osContext,
                                                                  bool &stateBaseAddressDirty,
                                                                  bool &vfeStateDirty) {
     setNewSshPtr(sshBaseAddress, vfeStateDirty, offset == 0 ? true : false);
     bool scratchSurfaceDirty = false;
-    prepareScratchAllocation(requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
+    prepareScratchAllocation(requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
         vfeStateDirty = true;
         updateSlots = true;
@@ -75,7 +75,7 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceState() {
         slotId++;
     }
     UNRECOVERABLE_IF(slotId >= stateSlotsCount);
-    UNRECOVERABLE_IF(scratchAllocation == nullptr && privateScratchAllocation == nullptr);
+    UNRECOVERABLE_IF(scratchSlot0Allocation == nullptr && scratchSlot1Allocation == nullptr);
 
     void *surfaceStateForScratchAllocation = ptrOffset(static_cast<void *>(surfaceStateHeap), getOffsetToSurfaceState(slotId + sshOffset));
     programSurfaceStateAtPtr(surfaceStateForScratchAllocation);
@@ -84,23 +84,23 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceState() {
 void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation) {
     auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     uint64_t scratchAllocationAddress = 0u;
-    if (scratchAllocation) {
-        scratchAllocationAddress = scratchAllocation->getGpuAddress();
+    if (scratchSlot0Allocation) {
+        scratchAllocationAddress = scratchSlot0Allocation->getGpuAddress();
     }
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
                                                           surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
                                                           perThreadScratchSize, nullptr, false, scratchType, false, true);
 
-    if (privateScratchSpaceSupported) {
-        void *surfaceStateForPrivateScratchAllocation = ptrOffset(surfaceStateForScratchAllocation, singleSurfaceStateSize);
-        uint64_t privateScratchAllocationAddress = 0u;
+    if (twoSlotScratchSpaceSupported) {
+        void *surfaceStateForSlot1Allocation = ptrOffset(surfaceStateForScratchAllocation, singleSurfaceStateSize);
+        uint64_t scratchSlot1AllocationAddress = 0u;
 
-        if (privateScratchAllocation) {
-            privateScratchAllocationAddress = privateScratchAllocation->getGpuAddress();
+        if (scratchSlot1Allocation) {
+            scratchSlot1AllocationAddress = scratchSlot1Allocation->getGpuAddress();
         }
         gfxCoreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
-                                                              surfaceStateForPrivateScratchAllocation, computeUnitsUsedForScratch,
-                                                              privateScratchAllocationAddress, 0, perThreadPrivateScratchSize, nullptr, false,
+                                                              surfaceStateForSlot1Allocation, computeUnitsUsedForScratch,
+                                                              scratchSlot1AllocationAddress, 0, perThreadScratchSpaceSlot1Size, nullptr, false,
                                                               scratchType, false, true);
     }
 }
@@ -110,7 +110,7 @@ uint64_t ScratchSpaceControllerXeHPAndLater::calculateNewGSH() {
 }
 uint64_t ScratchSpaceControllerXeHPAndLater::getScratchPatchAddress() {
     uint64_t scratchAddress = 0u;
-    if (scratchAllocation || privateScratchAllocation) {
+    if (scratchSlot0Allocation || scratchSlot1Allocation) {
         scratchAddress = static_cast<uint64_t>(getOffsetToSurfaceState(slotId + sshOffset));
     }
     return scratchAddress;
@@ -118,7 +118,7 @@ uint64_t ScratchSpaceControllerXeHPAndLater::getScratchPatchAddress() {
 
 size_t ScratchSpaceControllerXeHPAndLater::getOffsetToSurfaceState(uint32_t requiredSlotCount) const {
     auto offset = requiredSlotCount * singleSurfaceStateSize;
-    if (privateScratchSpaceSupported) {
+    if (twoSlotScratchSpaceSupported) {
         offset *= 2;
     }
     return offset;
@@ -131,17 +131,17 @@ void ScratchSpaceControllerXeHPAndLater::reserveHeap(IndirectHeap::Type heapType
 }
 
 void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
-                                                                               uint32_t requiredPerThreadScratchSize,
-                                                                               uint32_t requiredPerThreadPrivateScratchSize,
+                                                                               uint32_t requiredPerThreadScratchSizeSlot0,
+                                                                               uint32_t requiredPerThreadScratchSizeSlot1,
                                                                                TaskCountType currentTaskCount,
                                                                                OsContext &osContext,
                                                                                bool &stateBaseAddressDirty,
                                                                                bool &vfeStateDirty,
                                                                                NEO::CommandStreamReceiver *csr) {
     bool scratchSurfaceDirty = false;
-    prepareScratchAllocation(requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
+    prepareScratchAllocation(requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
-        bindlessSS = heapsHelper->allocateSSInHeap(singleSurfaceStateSize * (privateScratchSpaceSupported ? 2 : 1), scratchAllocation, BindlessHeapsHelper::specialSsh);
+        bindlessSS = heapsHelper->allocateSSInHeap(singleSurfaceStateSize * (twoSlotScratchSpaceSupported ? 2 : 1), scratchSlot0Allocation, BindlessHeapsHelper::specialSsh);
         programSurfaceStateAtPtr(bindlessSS.ssPtr);
         vfeStateDirty = true;
     }
@@ -150,62 +150,62 @@ void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(B
     }
 }
 
-void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
-                                                                  uint32_t requiredPerThreadPrivateScratchSize,
+void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
+                                                                  uint32_t requiredPerThreadScratchSizeSlot1,
                                                                   TaskCountType currentTaskCount,
                                                                   OsContext &osContext,
                                                                   bool &stateBaseAddressDirty,
                                                                   bool &scratchSurfaceDirty,
                                                                   bool &vfeStateDirty) {
-    uint32_t requiredPerThreadScratchSizeAlignedUp = requiredPerThreadScratchSize;
-    if (!Math::isPow2(requiredPerThreadScratchSizeAlignedUp)) {
-        requiredPerThreadScratchSizeAlignedUp = Math::nextPowerOfTwo(requiredPerThreadScratchSize);
+    uint32_t requiredPerThreadScratchSizeSlot0AlignedUp = requiredPerThreadScratchSizeSlot0;
+    if (!Math::isPow2(requiredPerThreadScratchSizeSlot0AlignedUp)) {
+        requiredPerThreadScratchSizeSlot0AlignedUp = Math::nextPowerOfTwo(requiredPerThreadScratchSizeSlot0);
     }
-    size_t requiredScratchSizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeAlignedUp) * computeUnitsUsedForScratch;
+    size_t requiredScratchSizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeSlot0AlignedUp) * computeUnitsUsedForScratch;
     scratchSurfaceDirty = false;
     auto multiTileCapable = osContext.getNumSupportedDevices() > 1;
-    if (scratchSizeBytes < requiredScratchSizeInBytes) {
-        if (scratchAllocation) {
-            scratchAllocation->updateTaskCount(currentTaskCount, osContext.getContextId());
-            csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
+    if (scratchSlot0SizeInBytes < requiredScratchSizeInBytes) {
+        if (scratchSlot0Allocation) {
+            scratchSlot0Allocation->updateTaskCount(currentTaskCount, osContext.getContextId());
+            csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot0Allocation), TEMPORARY_ALLOCATION);
         }
         scratchSurfaceDirty = true;
-        scratchSizeBytes = requiredScratchSizeInBytes;
-        perThreadScratchSize = requiredPerThreadScratchSizeAlignedUp;
-        AllocationProperties properties{this->rootDeviceIndex, true, scratchSizeBytes, AllocationType::scratchSurface, multiTileCapable, false, osContext.getDeviceBitfield()};
-        scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        scratchSlot0SizeInBytes = requiredScratchSizeInBytes;
+        perThreadScratchSize = requiredPerThreadScratchSizeSlot0AlignedUp;
+        AllocationProperties properties{this->rootDeviceIndex, true, scratchSlot0SizeInBytes, AllocationType::scratchSurface, multiTileCapable, false, osContext.getDeviceBitfield()};
+        scratchSlot0Allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }
-    if (privateScratchSpaceSupported) {
-        uint32_t requiredPerThreadPrivateScratchSizeAlignedUp = requiredPerThreadPrivateScratchSize;
-        if (!Math::isPow2(requiredPerThreadPrivateScratchSizeAlignedUp)) {
-            requiredPerThreadPrivateScratchSizeAlignedUp = Math::nextPowerOfTwo(requiredPerThreadPrivateScratchSize);
+    if (twoSlotScratchSpaceSupported) {
+        uint32_t requiredPerThreadScratchSizeSlot1AlignedUp = requiredPerThreadScratchSizeSlot1;
+        if (!Math::isPow2(requiredPerThreadScratchSizeSlot1AlignedUp)) {
+            requiredPerThreadScratchSizeSlot1AlignedUp = Math::nextPowerOfTwo(requiredPerThreadScratchSizeSlot1);
         }
-        size_t requiredPrivateScratchSizeInBytes = static_cast<size_t>(requiredPerThreadPrivateScratchSizeAlignedUp) * computeUnitsUsedForScratch;
-        if (privateScratchSizeBytes < requiredPrivateScratchSizeInBytes) {
-            if (privateScratchAllocation) {
-                privateScratchAllocation->updateTaskCount(currentTaskCount, osContext.getContextId());
-                csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(privateScratchAllocation), TEMPORARY_ALLOCATION);
+        size_t requiredScratchSlot1SizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeSlot1AlignedUp) * computeUnitsUsedForScratch;
+        if (scratchSlot1SizeInBytes < requiredScratchSlot1SizeInBytes) {
+            if (scratchSlot1Allocation) {
+                scratchSlot1Allocation->updateTaskCount(currentTaskCount, osContext.getContextId());
+                csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot1Allocation), TEMPORARY_ALLOCATION);
             }
-            privateScratchSizeBytes = requiredPrivateScratchSizeInBytes;
-            perThreadPrivateScratchSize = requiredPerThreadPrivateScratchSizeAlignedUp;
+            scratchSlot1SizeInBytes = requiredScratchSlot1SizeInBytes;
+            perThreadScratchSpaceSlot1Size = requiredPerThreadScratchSizeSlot1AlignedUp;
             scratchSurfaceDirty = true;
-            AllocationProperties properties{this->rootDeviceIndex, true, privateScratchSizeBytes, AllocationType::privateSurface, multiTileCapable, false, osContext.getDeviceBitfield()};
-            privateScratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+            AllocationProperties properties{this->rootDeviceIndex, true, scratchSlot1SizeInBytes, AllocationType::scratchSurface, multiTileCapable, false, osContext.getDeviceBitfield()};
+            scratchSlot1Allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
         }
     }
 }
 
 void ScratchSpaceControllerXeHPAndLater::programHeaps(HeapContainer &heapContainer,
                                                       uint32_t scratchSlot,
-                                                      uint32_t requiredPerThreadScratchSize,
-                                                      uint32_t requiredPerThreadPrivateScratchSize,
+                                                      uint32_t requiredPerThreadScratchSizeSlot0,
+                                                      uint32_t requiredPerThreadScratchSizeSlot1,
                                                       TaskCountType currentTaskCount,
                                                       OsContext &osContext,
                                                       bool &stateBaseAddressDirty,
                                                       bool &vfeStateDirty) {
     sshOffset = scratchSlot;
     updateSlots = false;
-    setRequiredScratchSpace(heapContainer[0]->getUnderlyingBuffer(), sshOffset, requiredPerThreadScratchSize, requiredPerThreadPrivateScratchSize, currentTaskCount, osContext, stateBaseAddressDirty, vfeStateDirty);
+    setRequiredScratchSpace(heapContainer[0]->getUnderlyingBuffer(), sshOffset, requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, currentTaskCount, osContext, stateBaseAddressDirty, vfeStateDirty);
 
     for (uint32_t i = 1; i < heapContainer.size(); ++i) {
         surfaceStateHeap = static_cast<char *>(heapContainer[i]->getUnderlyingBuffer());

@@ -122,12 +122,12 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &heapContainer,
                                                        NEO::ScratchSpaceController *scratchController,
                                                        bool &gsbaState, bool &frontEndState,
-                                                       uint32_t perThreadScratchSpaceSize, uint32_t perThreadPrivateScratchSize) {
+                                                       uint32_t perThreadScratchSpaceSlot0Size, uint32_t perThreadScratchSpaceSlot1Size) {
 
-    if (perThreadScratchSpaceSize > 0) {
-        scratchController->setRequiredScratchSpace(nullptr, 0u, perThreadScratchSpaceSize, 0u, csr->peekTaskCount(),
+    if (perThreadScratchSpaceSlot0Size > 0) {
+        scratchController->setRequiredScratchSpace(nullptr, 0u, perThreadScratchSpaceSlot0Size, 0u, csr->peekTaskCount(),
                                                    csr->getOsContext(), gsbaState, frontEndState);
-        auto scratchAllocation = scratchController->getScratchSpaceAllocation();
+        auto scratchAllocation = scratchController->getScratchSpaceSlot0Allocation();
         csr->makeResident(*scratchAllocation);
     }
 }

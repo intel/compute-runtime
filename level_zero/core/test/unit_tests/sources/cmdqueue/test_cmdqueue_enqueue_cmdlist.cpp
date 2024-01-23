@@ -369,15 +369,15 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
                                                           false,
                                                           returnValue));
 
-    CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(512u);
-    CommandList::fromHandle(commandLists[1])->setCommandListPerThreadScratchSize(1024u);
+    CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(0u, 512u);
+    CommandList::fromHandle(commandLists[1])->setCommandListPerThreadScratchSize(0u, 1024u);
 
     ASSERT_NE(nullptr, commandQueue);
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(1024u, neoDevice->getDefaultEngine().commandStreamReceiver->getScratchSpaceController()->getPerThreadScratchSpaceSize());
+    EXPECT_EQ(1024u, neoDevice->getDefaultEngine().commandStreamReceiver->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
@@ -395,15 +395,15 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsT
 
     CommandList::fromHandle(commandLists[0])->reset();
     CommandList::fromHandle(commandLists[1])->reset();
-    CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(2048u);
-    CommandList::fromHandle(commandLists[1])->setCommandListPerThreadScratchSize(1024u);
+    CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(0u, 2048u);
+    CommandList::fromHandle(commandLists[1])->setCommandListPerThreadScratchSize(0u, 1024u);
 
     ASSERT_NE(nullptr, commandQueue);
     usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(2048u, neoDevice->getDefaultEngine().commandStreamReceiver->getScratchSpaceController()->getPerThreadScratchSpaceSize());
+    EXPECT_EQ(2048u, neoDevice->getDefaultEngine().commandStreamReceiver->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);

@@ -1667,6 +1667,6 @@ HWTEST_F(GfxCoreHelperTest, givenCooperativeKernelWhenAskingForSingleTileDispatc
 HWTEST2_F(GfxCoreHelperTest, whenPrivateScratchSizeIsDefinedThenItIsReturnedAsKernelPrivateMemorySize, IsAtLeastXeHpCore) {
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = 0x100u;
-    kernelDescriptor.kernelAttributes.perThreadScratchSize[1] = 0x200u;
+    kernelDescriptor.kernelAttributes.privateScratchMemorySize = 0x200u;
     EXPECT_EQ(0x200u, getHelper<GfxCoreHelper>().getKernelPrivateMemSize(kernelDescriptor));
 }

@@ -888,9 +888,10 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
 
 TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenContextProvidesProperHint) {
 
-    auto scratchSize = zeroSized ? 0 : 1024;
+    auto spillSize = zeroSized ? 0 : 1024;
     MockKernelWithInternals mockKernel(context->getDevices(), context);
-    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
+
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.spillFillScratchMemorySize = spillSize;
 
     uint32_t computeUnitsForScratch[] = {0x10, 0x20};
     auto pClDevice = &mockKernel.mockKernel->getDevice();
@@ -899,7 +900,7 @@ TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenConte
 
     mockKernel.mockKernel->initialize();
 
-    auto expectedSize = scratchSize * pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
+    auto expectedSize = spillSize * pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[REGISTER_PRESSURE_TOO_HIGH],
              mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), expectedSize);
     EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));

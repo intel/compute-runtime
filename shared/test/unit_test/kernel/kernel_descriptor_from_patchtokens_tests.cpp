@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -240,7 +240,9 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     kernelTokens.tokens.mediaVfeState[1] = &mediaVfeState1;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_EQ(mediaVfeState0.PerThreadScratchSpace, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ(mediaVfeState0.PerThreadScratchSpace, kernelDescriptor.kernelAttributes.spillFillScratchMemorySize);
     EXPECT_EQ(mediaVfeState1.PerThreadScratchSpace, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
+    EXPECT_EQ(mediaVfeState1.PerThreadScratchSpace, kernelDescriptor.kernelAttributes.privateScratchMemorySize);
     kernelTokens.tokens.mediaVfeState[0] = nullptr;
     kernelTokens.tokens.mediaVfeState[1] = nullptr;
 
