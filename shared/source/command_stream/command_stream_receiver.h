@@ -447,6 +447,9 @@ class CommandStreamReceiver {
         return this->resourcesInitialized;
     }
 
+    uint32_t getRequiredScratchSlot0Size() { return requiredScratchSlot0Size; }
+    uint32_t getRequiredScratchSlot1Size() { return requiredScratchSlot1Size; }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

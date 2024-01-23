@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
@@ -111,8 +112,34 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     if constexpr (heaplessModeEnabled) {
         auto scratchAllocation = queueCsr.getScratchAllocation();
+        auto scratchSpaceController = queueCsr.getScratchSpaceController();
         if (scratchAllocation) {
-            scratchAddress = scratchAllocation->getGpuAddress();
+            scratchAddress = ssh.getGpuBase() + scratchSpaceController->getScratchPatchAddress();
+        } else {
+            auto requiredScratchSlot0Size = queueCsr.getRequiredScratchSlot0Size();
+            auto requiredScratchSlot1Size = queueCsr.getRequiredScratchSlot1Size();
+            bool stateBaseAddressDirty = false;
+            bool checkVfeStateDirty = false;
+
+            if (requiredScratchSlot0Size || requiredScratchSlot1Size) {
+
+                scratchSpaceController->setRequiredScratchSpace(ssh.getCpuBase(),
+                                                                0u,
+                                                                requiredScratchSlot0Size,
+                                                                requiredScratchSlot1Size,
+                                                                queueCsr.peekTaskCount(), queueCsr.getOsContext(),
+                                                                stateBaseAddressDirty,
+                                                                checkVfeStateDirty);
+
+                if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
+                    queueCsr.makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
+                }
+                if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
+                    queueCsr.makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
+                }
+
+                scratchAddress = ssh.getGpuBase() + scratchSpaceController->getScratchPatchAddress();
+            }
         }
     }
 

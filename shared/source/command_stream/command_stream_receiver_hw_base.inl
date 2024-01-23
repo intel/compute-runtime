@@ -446,23 +446,25 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool stateBaseAddressDirty = false;
 
     bool checkVfeStateDirty = false;
-    if (ssh && (requiredScratchSlot0Size || requiredScratchSlot1Size)) {
-        scratchSpaceController->setRequiredScratchSpace(ssh->getCpuBase(),
-                                                        0u,
-                                                        requiredScratchSlot0Size,
-                                                        requiredScratchSlot1Size,
-                                                        this->taskCount,
-                                                        *this->osContext,
-                                                        stateBaseAddressDirty,
-                                                        checkVfeStateDirty);
-        if (checkVfeStateDirty) {
-            setMediaVFEStateDirty(true);
-        }
-        if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
-            makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
-        }
-        if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
-            makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
+    if (heaplessModeEnabled == false) {
+        if (ssh && (requiredScratchSlot0Size || requiredScratchSlot1Size)) {
+            scratchSpaceController->setRequiredScratchSpace(ssh->getCpuBase(),
+                                                            0u,
+                                                            requiredScratchSlot0Size,
+                                                            requiredScratchSlot1Size,
+                                                            this->taskCount,
+                                                            *this->osContext,
+                                                            stateBaseAddressDirty,
+                                                            checkVfeStateDirty);
+            if (checkVfeStateDirty) {
+                setMediaVFEStateDirty(true);
+            }
+            if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
+                makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
+            }
+            if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
+                makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
+            }
         }
     }
 
