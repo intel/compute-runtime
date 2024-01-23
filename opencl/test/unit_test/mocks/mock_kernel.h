@@ -353,18 +353,18 @@ class MockKernelWithInternals {
     operator MockKernel *() {
         return mockKernel;
     }
-    alignas(64) char sshLocal[128];
-    alignas(64) char dshLocal[128];
-    char crossThreadData[256];
-    uint32_t kernelIsa[32];
-    MockKernelInfo kernelInfo;
 
     MockMultiDeviceKernel *mockMultiDeviceKernel = nullptr;
     MockKernel *mockKernel;
     MockProgram *mockProgram;
     Context *mockContext;
     KernelInfoContainer kernelInfos;
+    MockKernelInfo kernelInfo;
     SKernelBinaryHeaderCommon kernelHeader = {};
+    uint32_t kernelIsa[32];
+    char crossThreadData[256];
+    alignas(64) char sshLocal[128];
+    alignas(64) char dshLocal[128];
     std::vector<Kernel::SimpleKernelArgInfo> defaultKernelArguments;
 };
 class MockDebugKernel : public MockKernel {

@@ -279,7 +279,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::mediaVfeStateDirty;
     using CommandStreamReceiver::nTo1SubmissionModelEnabled;
     using CommandStreamReceiver::pageTableManagerInitialized;
-    using CommandStreamReceiver::requiredScratchSlot0Size;
+    using CommandStreamReceiver::requiredScratchSize;
     using CommandStreamReceiver::sbaSupportFlags;
     using CommandStreamReceiver::streamProperties;
     using CommandStreamReceiver::tagAddress;

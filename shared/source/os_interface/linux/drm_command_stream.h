@@ -28,7 +28,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     using BaseClass::makeResident;
     using BaseClass::mediaVfeStateDirty;
     using BaseClass::osContext;
-    using BaseClass::requiredScratchSlot0Size;
+    using BaseClass::requiredScratchSize;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAddress;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::getTagAllocation;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::latestSentTaskCount;

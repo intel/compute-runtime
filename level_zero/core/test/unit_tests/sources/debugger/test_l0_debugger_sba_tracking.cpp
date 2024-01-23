@@ -138,7 +138,7 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequired
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle()};
-    CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(0u, 4096);
+    CommandList::fromHandle(commandLists[0])->setCommandListPerThreadScratchSize(4096);
     CommandList::fromHandle(commandLists[0])->close();
 
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);

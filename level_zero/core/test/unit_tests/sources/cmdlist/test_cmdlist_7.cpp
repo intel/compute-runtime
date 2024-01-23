@@ -611,23 +611,23 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(scratchPerThreadSize, commandList->getCommandListPerThreadScratchSize(0u));
+    EXPECT_EQ(scratchPerThreadSize, commandList->getCommandListPerThreadScratchSize());
 
     auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-    EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSlot0Size);
+    EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSize);
     commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests,
           givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillAndPrivateScratchSpaceThenExpectCsrHasCorrectValuesSet, IsAtLeastXeHpCore) {
-    constexpr uint32_t scratch0PerThreadSize = 0x200;
-    constexpr uint32_t scratch1PerThreadSize = 0x100;
+    constexpr uint32_t scratchPerThreadSize = 0x200;
+    constexpr uint32_t privateScratchPerThreadSize = 0x100;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
-    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratch0PerThreadSize;
-    kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = scratch1PerThreadSize;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratchPerThreadSize;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = privateScratchPerThreadSize;
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
     auto kernel = std::make_unique<MockKernel>(module.get());
@@ -660,12 +660,12 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(scratch0PerThreadSize, commandList->getCommandListPerThreadScratchSize(0u));
-    EXPECT_EQ(scratch1PerThreadSize, commandList->getCommandListPerThreadScratchSize(1u));
+    EXPECT_EQ(scratchPerThreadSize, commandList->getCommandListPerThreadScratchSize());
+    EXPECT_EQ(privateScratchPerThreadSize, commandList->getCommandListPerThreadPrivateScratchSize());
 
     auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-    EXPECT_EQ(scratch0PerThreadSize, ultCsr->requiredScratchSlot0Size);
-    EXPECT_EQ(scratch1PerThreadSize, ultCsr->requiredScratchSlot1Size);
+    EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSize);
+    EXPECT_EQ(privateScratchPerThreadSize, ultCsr->requiredPrivateScratchSize);
     commandList->cmdQImmediate = nullptr;
 }
 
@@ -674,14 +674,14 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EventWaitOnHost.set(1);
 
-    constexpr uint32_t scratch0PerThreadSize = 0x200;
-    constexpr uint32_t scratch1PerThreadSize = 0x100;
+    constexpr uint32_t scratchPerThreadSize = 0x200;
+    constexpr uint32_t privateScratchPerThreadSize = 0x100;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
-    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratch0PerThreadSize;
-    kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = scratch1PerThreadSize;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratchPerThreadSize;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = privateScratchPerThreadSize;
     createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
     auto kernel = std::make_unique<MockKernel>(module.get());

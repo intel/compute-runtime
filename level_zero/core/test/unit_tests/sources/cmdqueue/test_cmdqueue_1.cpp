@@ -1089,12 +1089,12 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
     void handleScratchSpace(NEO::HeapContainer &heapContainer,
                             NEO::ScratchSpaceController *scratchController,
                             bool &gsbaState, bool &frontEndState,
-                            uint32_t perThreadScratchSpaceSlot0Size,
-                            uint32_t perThreadScratchSpaceSlot1Size) override {
+                            uint32_t perThreadScratchSpaceSize,
+                            uint32_t perThreadPrivateScratchSize) override {
         this->mockHeapContainer = heapContainer;
     }
 
-    void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties) override {
+    void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties) override {
         return;
     }
 };
@@ -1108,7 +1108,7 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-    commandList->setCommandListPerThreadScratchSize(0u, 100u);
+    commandList->setCommandListPerThreadScratchSize(100u);
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
@@ -1207,7 +1207,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-    commandList->setCommandListPerThreadScratchSize(0u, 100u);
+    commandList->setCommandListPerThreadScratchSize(100u);
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
@@ -1234,7 +1234,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-    commandList->setCommandListPerThreadScratchSize(1u, 100u);
+    commandList->setCommandListPerThreadPrivateScratchSize(100u);
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
@@ -1265,7 +1265,7 @@ HWTEST2_F(ExecuteCommandListTests, givenBindlessHelperWhenCommandListIsExecutedO
     commandQueue->initialize(false, false, false);
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-    commandList->setCommandListPerThreadScratchSize(0u, 100u);
+    commandList->setCommandListPerThreadScratchSize(100u);
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
@@ -1418,10 +1418,10 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
                                              returnValue);
     auto commandList0 = new CommandListCoreFamily<gfxCoreFamily>();
     commandList0->initialize(device, NEO::EngineGroupType::compute, 0u);
-    commandList0->setCommandListPerThreadScratchSize(0u, 0u);
+    commandList0->setCommandListPerThreadScratchSize(0u);
     auto commandList1 = new CommandListCoreFamily<gfxCoreFamily>();
     commandList1->initialize(device, NEO::EngineGroupType::compute, 0u);
-    commandList1->setCommandListPerThreadScratchSize(0u, 0u);
+    commandList1->setCommandListPerThreadScratchSize(0u);
     auto commandListHandle0 = commandList0->toHandle();
     commandList0->close();
     auto commandListHandle1 = commandList1->toHandle();
@@ -1458,9 +1458,9 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
                                                           false,
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
-    commandList0->setCommandListPerThreadScratchSize(0u, 0u);
+    commandList0->setCommandListPerThreadScratchSize(0u);
     auto commandList1 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
-    commandList1->setCommandListPerThreadScratchSize(0u, 0u);
+    commandList1->setCommandListPerThreadScratchSize(0u);
     auto commandListHandle0 = commandList0->toHandle();
     commandList0->close();
     auto commandListHandle1 = commandList1->toHandle();
@@ -1503,17 +1503,17 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     auto commandList1 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
-    commandList0->setCommandListPerThreadScratchSize(0u, 512u);
-    commandList1->setCommandListPerThreadScratchSize(0u, 0u);
+    commandList0->setCommandListPerThreadScratchSize(512u);
+    commandList1->setCommandListPerThreadScratchSize(0u);
     auto commandListHandle0 = commandList0->toHandle();
     commandList0->close();
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
     commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
@@ -1528,10 +1528,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     ASSERT_EQ(1u, gsbaStates.size());
 
     commandList0->reset();
-    commandList0->setCommandListPerThreadScratchSize(0u, 0u);
+    commandList0->setCommandListPerThreadScratchSize(0u);
     commandList0->close();
     commandList1->reset();
-    commandList1->setCommandListPerThreadScratchSize(0u, 0u);
+    commandList1->setCommandListPerThreadScratchSize(0u);
     commandList1->close();
 
     auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
@@ -1544,9 +1544,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            returnValue));
 
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
@@ -1581,17 +1581,17 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     auto commandList1 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
-    commandList0->setCommandListPerThreadScratchSize(0u, 0u);
-    commandList1->setCommandListPerThreadScratchSize(0u, 512u);
+    commandList0->setCommandListPerThreadScratchSize(0u);
+    commandList1->setCommandListPerThreadScratchSize(512u);
     auto commandListHandle0 = commandList0->toHandle();
     commandList0->close();
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
     commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
@@ -1606,10 +1606,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     ASSERT_EQ(2u, gsbaStates.size());
 
     commandList0->reset();
-    commandList0->setCommandListPerThreadScratchSize(0u, 512u);
+    commandList0->setCommandListPerThreadScratchSize(512u);
     commandList0->close();
     commandList1->reset();
-    commandList1->setCommandListPerThreadScratchSize(0u, 0u);
+    commandList1->setCommandListPerThreadScratchSize(0u);
     commandList1->close();
 
     auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
@@ -1622,9 +1622,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            returnValue));
 
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
@@ -1659,17 +1659,17 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     auto commandList1 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
-    commandList0->setCommandListPerThreadScratchSize(0u, 512u);
-    commandList1->setCommandListPerThreadScratchSize(0u, 512u);
+    commandList0->setCommandListPerThreadScratchSize(512u);
+    commandList1->setCommandListPerThreadScratchSize(512u);
     auto commandListHandle0 = commandList0->toHandle();
     commandList0->close();
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
     commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
@@ -1684,10 +1684,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     ASSERT_EQ(1u, gsbaStates.size());
 
     commandList0->reset();
-    commandList0->setCommandListPerThreadScratchSize(0u, 1024u);
+    commandList0->setCommandListPerThreadScratchSize(1024u);
     commandList0->close();
     commandList1->reset();
-    commandList1->setCommandListPerThreadScratchSize(0u, 1024u);
+    commandList1->setCommandListPerThreadScratchSize(1024u);
     commandList1->close();
 
     auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
@@ -1700,9 +1700,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            returnValue));
 
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
@@ -1737,17 +1737,17 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     auto commandList1 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
-    commandList0->setCommandListPerThreadScratchSize(0u, 0u);
-    commandList1->setCommandListPerThreadScratchSize(0u, 512u);
+    commandList0->setCommandListPerThreadScratchSize(0u);
+    commandList1->setCommandListPerThreadScratchSize(512u);
     auto commandListHandle0 = commandList0->toHandle();
     commandList0->close();
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
     commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
@@ -1762,10 +1762,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     ASSERT_EQ(2u, gsbaStates.size());
 
     commandList0->reset();
-    commandList0->setCommandListPerThreadScratchSize(0u, 1024u);
+    commandList0->setCommandListPerThreadScratchSize(1024u);
     commandList0->close();
     commandList1->reset();
-    commandList1->setCommandListPerThreadScratchSize(0u, 2048u);
+    commandList1->setCommandListPerThreadScratchSize(2048u);
     commandList1->close();
 
     auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
@@ -1777,9 +1777,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            false,
                                                            returnValue));
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
+    EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSize());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
@@ -1813,17 +1813,17 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                           returnValue));
     auto commandList0 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     auto commandList1 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
-    commandList0->setCommandListPerThreadScratchSize(1u, 0u);
-    commandList1->setCommandListPerThreadScratchSize(1u, 512u);
+    commandList0->setCommandListPerThreadPrivateScratchSize(0u);
+    commandList1->setCommandListPerThreadPrivateScratchSize(512u);
     auto commandListHandle0 = commandList0->toHandle();
     commandList0->close();
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
     commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
+    EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
+    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
@@ -1836,10 +1836,10 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     ASSERT_EQ(2u, mediaVfeStates.size());
 
     commandList0->reset();
-    commandList0->setCommandListPerThreadScratchSize(1u, 1024u);
+    commandList0->setCommandListPerThreadPrivateScratchSize(1024u);
     commandList0->close();
     commandList1->reset();
-    commandList1->setCommandListPerThreadScratchSize(1u, 2048u);
+    commandList1->setCommandListPerThreadPrivateScratchSize(2048u);
     commandList1->close();
 
     auto commandQueue1 = whiteboxCast(CommandQueue::create(productFamily,
@@ -1851,9 +1851,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            false,
                                                            returnValue));
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false);
-    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
+    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false);
-    EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
+    EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadPrivateScratchSize());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
 
@@ -1885,7 +1885,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
                                                           false,
                                                           returnValue));
     auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
-    commandList->setCommandListPerThreadScratchSize(1u, 0u);
+    commandList->setCommandListPerThreadPrivateScratchSize(0u);
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
@@ -1930,7 +1930,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
                                                           false,
                                                           returnValue));
     auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
-    commandList->setCommandListPerThreadScratchSize(1u, 0u);
+    commandList->setCommandListPerThreadPrivateScratchSize(0u);
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 

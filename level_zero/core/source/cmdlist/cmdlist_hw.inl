@@ -117,8 +117,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
         unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
         commandListPreemptionMode = device->getDevicePreemptionMode();
-        commandListPerThreadScratchSize[0] = 0u;
-        commandListPerThreadScratchSize[1] = 0u;
+        commandListPerThreadScratchSize = 0u;
+        commandListPerThreadPrivateScratchSize = 0u;
         requiredStreamState.resetState();
         finalStreamState.resetState();
         containsAnyKernel = false;

@@ -184,13 +184,20 @@ struct CommandList : _ze_command_list_handle_t {
 
     inline ze_command_list_handle_t toHandle() { return this; }
 
-    uint32_t getCommandListPerThreadScratchSize(uint32_t slotId) const {
-        return commandListPerThreadScratchSize[slotId];
+    uint32_t getCommandListPerThreadScratchSize() const {
+        return commandListPerThreadScratchSize;
     }
 
-    void setCommandListPerThreadScratchSize(uint32_t slotId, uint32_t size) {
-        UNRECOVERABLE_IF(slotId > 1);
-        commandListPerThreadScratchSize[slotId] = size;
+    void setCommandListPerThreadScratchSize(uint32_t size) {
+        commandListPerThreadScratchSize = size;
+    }
+
+    uint32_t getCommandListPerThreadPrivateScratchSize() const {
+        return commandListPerThreadPrivateScratchSize;
+    }
+
+    void setCommandListPerThreadPrivateScratchSize(uint32_t size) {
+        commandListPerThreadPrivateScratchSize = size;
     }
 
     uint32_t getCommandListSLMEnable() const {
@@ -383,7 +390,8 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
 
     CommandListType cmdListType = CommandListType::typeRegular;
-    uint32_t commandListPerThreadScratchSize[2]{};
+    uint32_t commandListPerThreadScratchSize = 0u;
+    uint32_t commandListPerThreadPrivateScratchSize = 0u;
     uint32_t partitionCount = 1;
     uint32_t defaultMocsIndex = 0;
 

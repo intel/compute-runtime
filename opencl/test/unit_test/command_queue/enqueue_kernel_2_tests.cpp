@@ -318,7 +318,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     auto scratchSize = GetParam().scratchSize;
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
+    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
     uint32_t sizeToProgram = (scratchSize / static_cast<uint32_t>(MemoryConstants::kiloByte));
     uint32_t bitValue = 0u;
@@ -373,7 +373,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     }
 
     scratchSize *= 2;
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
+    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
     auto itorfirstBBEnd = find<typename FamilyType::MI_BATCH_BUFFER_END *>(itorWalker, cmdList.end());
     ASSERT_NE(cmdList.end(), itorfirstBBEnd);
@@ -447,18 +447,18 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
     auto mockCsr = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    uint32_t scratchSizeSlot0 = 1024u;
+    uint32_t scratchSize = 1024u;
 
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSizeSlot0;
+    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
-    uint32_t sizeToProgram = (scratchSizeSlot0 / static_cast<uint32_t>(MemoryConstants::kiloByte));
+    uint32_t sizeToProgram = (scratchSize / static_cast<uint32_t>(MemoryConstants::kiloByte));
     uint32_t bitValue = 0u;
     while (sizeToProgram >>= 1) {
         bitValue++;
     }
 
-    auto valueToProgram = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(scratchSizeSlot0);
+    auto valueToProgram = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(scratchSize);
     EXPECT_EQ(bitValue, valueToProgram);
 
     enqueueKernel<FamilyType, false>(mockKernel);
@@ -468,8 +468,8 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
     EXPECT_TRUE(mockCsr->isMadeResident(graphicsAllocation));
 
     // Enqueue With ScratchSize bigger than previous
-    scratchSizeSlot0 = 8192;
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSizeSlot0;
+    scratchSize = 8192;
+    mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
     enqueueKernel<FamilyType, false>(mockKernel);
 
@@ -490,7 +490,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
         auto scratchSize = 1024;
 
         MockKernelWithInternals mockKernel(*pClDevice);
-        mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
+        mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
         enqueueKernel<FamilyType>(mockKernel);
         auto graphicsAllocation = csr->getScratchAllocation();
@@ -519,7 +519,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
         // now re-try to see if SBA is not programmed
 
         scratchSize *= 2;
-        mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = scratchSize;
+        mockKernel.kernelInfo.setPerThreadScratchSize(scratchSize, 0);
 
         enqueueKernel<FamilyType>(mockKernel);
 

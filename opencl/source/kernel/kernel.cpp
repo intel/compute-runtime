@@ -620,7 +620,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         break;
 
     case CL_KERNEL_SPILL_MEM_SIZE_INTEL:
-        scratchSize = kernelDescriptor.kernelAttributes.spillFillScratchMemorySize;
+        scratchSize = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
         srcSize = sizeof(scratchSize);
         pSrc = &scratchSize;
         break;
@@ -1848,7 +1848,7 @@ void Kernel::provideInitializationHints() {
                                         kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(),
                                         privateSurfaceSize);
     }
-    auto scratchSize = kernelInfo.kernelDescriptor.kernelAttributes.spillFillScratchMemorySize *
+    auto scratchSize = kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] *
                        pClDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * kernelInfo.getMaxSimdSize();
     if (scratchSize > 0) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, REGISTER_PRESSURE_TOO_HIGH,

@@ -2852,8 +2852,8 @@ struct MockRequiredScratchSpaceController : public ScratchSpaceControllerBase {
                                        InternalAllocationStorage &allocationStorage) : ScratchSpaceControllerBase(rootDeviceIndex, environment, allocationStorage) {}
     void setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t scratchSlot,
-                                 uint32_t requiredPerThreadScratchSizeSlot0,
-                                 uint32_t requiredPerThreadScratchSizeSlot1,
+                                 uint32_t requiredPerThreadScratchSize,
+                                 uint32_t requiredPerThreadPrivateScratchSize,
                                  TaskCountType currentTaskCount,
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
@@ -3925,7 +3925,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     size_t expectedScratchOffset = 2 * sizeof(RENDER_SURFACE_STATE);
     EXPECT_EQ(expectedScratchOffset, frontEndCmd->getScratchSpaceBuffer());
 
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getScratchSpaceController()->getScratchSpaceSlot0Allocation()));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getScratchSpaceController()->getScratchSpaceAllocation()));
 
     commandStreamReceiver.setRequiredScratchSizes(0x400, 0);
 
@@ -3979,7 +3979,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     constexpr size_t expectedScratchOffset = 2 * sizeof(RENDER_SURFACE_STATE);
     EXPECT_EQ(expectedScratchOffset, frontEndCmd->getScratchSpaceBuffer());
 
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getScratchSpaceController()->getScratchSpaceSlot1Allocation()));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getScratchSpaceController()->getPrivateScratchSpaceAllocation()));
 }
 
 HWTEST2_F(CommandStreamReceiverHwTest,
@@ -4511,9 +4511,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
     bool stateBaseAddressDirty = false;
     scratchController->setRequiredScratchSpace(surfaceState, 0u, 0u, misalignedSizeForPrivateScratch, 0u,
                                                *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
-    EXPECT_NE(scratchController->scratchSlot1SizeInBytes, misalignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
-    EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, alignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
-    EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, scratchController->getScratchSpaceSlot1Allocation()->getUnderlyingBufferSize());
+    EXPECT_NE(scratchController->privateScratchSizeBytes, misalignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
+    EXPECT_EQ(scratchController->privateScratchSizeBytes, alignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
+    EXPECT_EQ(scratchController->privateScratchSizeBytes, scratchController->getPrivateScratchSpaceAllocation()->getUnderlyingBufferSize());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushRequiredWhenProgramStallingPostSyncCommandsForBarrierCalledThenDcFlushSet) {

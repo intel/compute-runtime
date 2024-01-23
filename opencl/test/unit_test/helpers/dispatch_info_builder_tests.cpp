@@ -38,7 +38,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
         pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
 
-        pKernelInfo->kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 1024;
+        pKernelInfo->setPerThreadScratchSize(1024, 0);
         pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
 
         pKernelInfo->addArgBuffer(0, 0x10, sizeof(void *));

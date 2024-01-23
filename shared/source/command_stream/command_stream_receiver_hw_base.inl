@@ -269,13 +269,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     flushData.stateComputeModeFullConfigurationNeeded = getStateComputeModeDirty();
     flushData.stateBaseAddressFullConfigurationNeeded = getGSBAStateDirty();
 
-    if (dispatchFlags.sshCpuBase != nullptr && (this->requiredScratchSlot0Size > 0 || this->requiredScratchSlot1Size > 0)) {
+    if (dispatchFlags.sshCpuBase != nullptr && (this->requiredScratchSize > 0 || this->requiredPrivateScratchSize > 0)) {
         bool checkFeStateDirty = false;
         bool checkSbaStateDirty = false;
         scratchSpaceController->setRequiredScratchSpace(dispatchFlags.sshCpuBase,
                                                         0u,
-                                                        this->requiredScratchSlot0Size,
-                                                        this->requiredScratchSlot1Size,
+                                                        this->requiredScratchSize,
+                                                        this->requiredPrivateScratchSize,
                                                         this->taskCount,
                                                         *this->osContext,
                                                         checkSbaStateDirty,
@@ -283,11 +283,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
         flushData.frontEndFullConfigurationNeeded |= checkFeStateDirty;
         flushData.stateBaseAddressFullConfigurationNeeded |= checkSbaStateDirty;
 
-        if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
-            makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
+        if (scratchSpaceController->getScratchSpaceAllocation()) {
+            makeResident(*scratchSpaceController->getScratchSpaceAllocation());
         }
-        if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
-            makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
+        if (scratchSpaceController->getPrivateScratchSpaceAllocation()) {
+            makeResident(*scratchSpaceController->getPrivateScratchSpaceAllocation());
         }
     }
 
@@ -446,11 +446,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool stateBaseAddressDirty = false;
 
     bool checkVfeStateDirty = false;
-    if (ssh && (requiredScratchSlot0Size || requiredScratchSlot1Size)) {
+    if (ssh && (requiredScratchSize || requiredPrivateScratchSize)) {
         scratchSpaceController->setRequiredScratchSpace(ssh->getCpuBase(),
                                                         0u,
-                                                        requiredScratchSlot0Size,
-                                                        requiredScratchSlot1Size,
+                                                        requiredScratchSize,
+                                                        requiredPrivateScratchSize,
                                                         this->taskCount,
                                                         *this->osContext,
                                                         stateBaseAddressDirty,
@@ -458,11 +458,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (checkVfeStateDirty) {
             setMediaVFEStateDirty(true);
         }
-        if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
-            makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
+        if (scratchSpaceController->getScratchSpaceAllocation()) {
+            makeResident(*scratchSpaceController->getScratchSpaceAllocation());
         }
-        if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
-            makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
+        if (scratchSpaceController->getPrivateScratchSpaceAllocation()) {
+            makeResident(*scratchSpaceController->getPrivateScratchSpaceAllocation());
         }
     }
 
@@ -1036,7 +1036,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
         auto pVfeState = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csr, hwInfo, engineGroupType);
         PreambleHelper<GfxFamily>::programVfeState(
-            pVfeState, peekRootDeviceEnvironment(), requiredScratchSlot0Size, getScratchPatchAddress(),
+            pVfeState, peekRootDeviceEnvironment(), requiredScratchSize, getScratchPatchAddress(),
             maxFrontEndThreads, streamProperties);
         auto commandOffset = PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(&csr, pVfeState);
 
@@ -1757,10 +1757,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::reprogramStateBaseAddress(const 
 
     uint64_t newGshBase = 0;
     gsbaFor32BitProgrammed = false;
-    if (is64bit && scratchSpaceController->getScratchSpaceSlot0Allocation() && !force32BitAllocations) {
+    if (is64bit && scratchSpaceController->getScratchSpaceAllocation() && !force32BitAllocations) {
         newGshBase = scratchSpaceController->calculateNewGSH();
     } else if (is64bit && force32BitAllocations && dispatchFlags.gsba32BitRequired) {
-        bool useLocalMemory = scratchSpaceController->getScratchSpaceSlot0Allocation() ? scratchSpaceController->getScratchSpaceSlot0Allocation()->isAllocatedInLocalMemoryPool() : false;
+        bool useLocalMemory = scratchSpaceController->getScratchSpaceAllocation() ? scratchSpaceController->getScratchSpaceAllocation()->isAllocatedInLocalMemoryPool() : false;
         newGshBase = getMemoryManager()->getExternalHeapBaseAddress(rootDeviceIndex, useLocalMemory);
         gsbaFor32BitProgrammed = true;
     }
@@ -1950,7 +1950,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushFrontEndCommand(I
         auto feStateCmdSpace = PreambleHelper<GfxFamily>::getSpaceForVfeState(&csrStream, peekHwInfo(), engineGroupType);
         PreambleHelper<GfxFamily>::programVfeState(feStateCmdSpace,
                                                    peekRootDeviceEnvironment(),
-                                                   requiredScratchSlot0Size,
+                                                   requiredScratchSize,
                                                    getScratchPatchAddress(),
                                                    device.getDeviceInfo().maxFrontEndThreads,
                                                    this->streamProperties);

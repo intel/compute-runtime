@@ -34,16 +34,16 @@ class ScratchSpaceController : NonCopyableOrMovableClass {
     ScratchSpaceController(uint32_t rootDeviceIndex, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage);
     virtual ~ScratchSpaceController();
 
-    MOCKABLE_VIRTUAL GraphicsAllocation *getScratchSpaceSlot0Allocation() {
-        return scratchSlot0Allocation;
+    MOCKABLE_VIRTUAL GraphicsAllocation *getScratchSpaceAllocation() {
+        return scratchAllocation;
     }
-    GraphicsAllocation *getScratchSpaceSlot1Allocation() {
-        return scratchSlot1Allocation;
+    GraphicsAllocation *getPrivateScratchSpaceAllocation() {
+        return privateScratchAllocation;
     }
     virtual void setRequiredScratchSpace(void *sshBaseAddress,
                                          uint32_t scratchSlot,
-                                         uint32_t requiredPerThreadScratchSizeSlot0,
-                                         uint32_t requiredPerThreadScratchSizeSlot1,
+                                         uint32_t requiredPerThreadScratchSize,
+                                         uint32_t requiredPerThreadPrivateScratchSize,
                                          TaskCountType currentTaskCount,
                                          OsContext &osContext,
                                          bool &stateBaseAddressDirty,
@@ -51,25 +51,25 @@ class ScratchSpaceController : NonCopyableOrMovableClass {
 
     virtual uint64_t calculateNewGSH() = 0;
     virtual uint64_t getScratchPatchAddress() = 0;
-    inline uint32_t getPerThreadScratchSpaceSizeSlot0() {
-        return static_cast<uint32_t>(scratchSlot0SizeInBytes / computeUnitsUsedForScratch);
+    inline uint32_t getPerThreadScratchSpaceSize() {
+        return static_cast<uint32_t>(scratchSizeBytes / computeUnitsUsedForScratch);
     }
-    inline uint32_t getPerThreadScratchSizeSlot1() {
-        return static_cast<uint32_t>(scratchSlot1SizeInBytes / computeUnitsUsedForScratch);
+    inline uint32_t getPerThreadPrivateScratchSize() {
+        return static_cast<uint32_t>(privateScratchSizeBytes / computeUnitsUsedForScratch);
     }
 
     virtual void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) = 0;
     virtual void programHeaps(HeapContainer &heapContainer,
                               uint32_t scratchSlot,
-                              uint32_t requiredPerThreadScratchSizeSlot0,
-                              uint32_t requiredPerThreadScratchSizeSlot1,
+                              uint32_t requiredPerThreadScratchSize,
+                              uint32_t requiredPerThreadPrivateScratchSize,
                               TaskCountType currentTaskCount,
                               OsContext &osContext,
                               bool &stateBaseAddressDirty,
                               bool &vfeStateDirty) = 0;
     virtual void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
-                                                       uint32_t requiredPerThreadScratchSizeSlot0,
-                                                       uint32_t requiredPerThreadScratchSizeSlot1,
+                                                       uint32_t requiredPerThreadScratchSize,
+                                                       uint32_t requiredPerThreadPrivateScratchSize,
                                                        TaskCountType currentTaskCount,
                                                        OsContext &osContext,
                                                        bool &stateBaseAddressDirty,
@@ -81,11 +81,11 @@ class ScratchSpaceController : NonCopyableOrMovableClass {
 
     const uint32_t rootDeviceIndex;
     ExecutionEnvironment &executionEnvironment;
-    GraphicsAllocation *scratchSlot0Allocation = nullptr;
-    GraphicsAllocation *scratchSlot1Allocation = nullptr;
+    GraphicsAllocation *scratchAllocation = nullptr;
+    GraphicsAllocation *privateScratchAllocation = nullptr;
     InternalAllocationStorage &csrAllocationStorage;
-    size_t scratchSlot0SizeInBytes = 0;
-    size_t scratchSlot1SizeInBytes = 0;
+    size_t scratchSizeBytes = 0;
+    size_t privateScratchSizeBytes = 0;
     bool force32BitAllocation = false;
     uint32_t computeUnitsUsedForScratch = 0;
 };

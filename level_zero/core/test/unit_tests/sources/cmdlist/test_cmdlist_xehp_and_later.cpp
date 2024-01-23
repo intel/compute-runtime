@@ -2143,7 +2143,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
 
     EXPECT_EQ(0u, frontEndCmd->getScratchSpaceBuffer());
 
-    EXPECT_EQ(nullptr, csrImmediate.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+    EXPECT_EQ(nullptr, csrImmediate.getScratchSpaceController()->getScratchSpaceAllocation());
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x100;
 
@@ -2164,7 +2164,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     constexpr size_t expectedScratchOffset = 2 * sizeof(RENDER_SURFACE_STATE);
     EXPECT_EQ(expectedScratchOffset, frontEndCmd->getScratchSpaceBuffer());
 
-    auto scratchAllocation = csrImmediate.getScratchSpaceController()->getScratchSpaceSlot0Allocation();
+    auto scratchAllocation = csrImmediate.getScratchSpaceController()->getScratchSpaceAllocation();
     ASSERT_NE(nullptr, scratchAllocation);
 
     EXPECT_TRUE(csrImmediate.isMadeResident(scratchAllocation));

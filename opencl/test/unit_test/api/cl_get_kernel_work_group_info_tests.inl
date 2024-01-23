@@ -74,14 +74,16 @@ TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
 
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
-TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceForSpillWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
+TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
-    auto spillMemorySize = 1024u;
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.spillFillScratchMemorySize = spillMemorySize;
+    mockKernel.kernelInfo.setPerThreadScratchSize(1024, 0);
+
+    cl_ulong scratchSpaceSize = static_cast<cl_ulong>(mockKernel.mockKernel->getScratchSize());
+    EXPECT_EQ(scratchSpaceSize, 1024u);
 
     retVal = clGetKernelWorkGroupInfo(
         mockKernel.mockMultiDeviceKernel,
@@ -93,7 +95,7 @@ TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceForSpillWh
 
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(paramValueSizeRet, sizeof(cl_ulong));
-    EXPECT_EQ(paramValue, spillMemorySize);
+    EXPECT_EQ(paramValue, scratchSpaceSize);
 }
 
 using matcher = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;

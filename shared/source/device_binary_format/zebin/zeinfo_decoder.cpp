@@ -1540,12 +1540,7 @@ DecodeError populateKernelPerThreadMemoryBuffer(KernelDescriptor &dst, const Ker
         dst.kernelAttributes.perHwThreadPrivateMemorySize = size;
         break;
     case AllocationTypeScratch:
-
-        if (src.slot == 0) {
-            dst.kernelAttributes.spillFillScratchMemorySize = src.size;
-        } else if (src.slot == 1) {
-            dst.kernelAttributes.privateScratchMemorySize = src.size;
-        } else {
+        if (src.slot > 1) {
             outErrReason.append("DeviceBinaryFormat::zebin : Invalid scratch buffer slot " + std::to_string(src.slot) + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 0 or 1.\n");
             return DecodeError::invalidBinary;
         }

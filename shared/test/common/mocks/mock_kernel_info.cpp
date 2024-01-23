@@ -175,6 +175,9 @@ void MockKernelInfo::setSamplerTable(DynamicStateHeapOffset borderColor, uint8_t
     samplerTable.tableOffset = tableOffset;
 }
 
+void MockKernelInfo::setPerThreadScratchSize(uint32_t perThreadScratchSize, uint32_t slot) {
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[slot] = perThreadScratchSize;
+}
 void MockKernelInfo::setLocalIds(const std::array<uint8_t, 3> &localIds) {
     kernelDescriptor.kernelAttributes.numLocalIdChannels = localIds[0] + localIds[1] + localIds[2];
     kernelDescriptor.kernelAttributes.localId[0] = localIds[0];

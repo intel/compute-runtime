@@ -840,8 +840,8 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
 
         void programHeaps(HeapContainer &heapContainer,
                           uint32_t scratchSlot,
-                          uint32_t requiredPerThreadScratchSizeSlot0,
-                          uint32_t requiredPerThreadScratchSizeSlot1,
+                          uint32_t requiredPerThreadScratchSize,
+                          uint32_t requiredPerThreadPrivateScratchSize,
                           TaskCountType currentTaskCount,
                           OsContext &osContext,
                           bool &stateBaseAddressDirty,
@@ -850,7 +850,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
             programHeapsCalled = true;
         }
 
-        NEO::GraphicsAllocation *getScratchSpaceSlot0Allocation() override {
+        NEO::GraphicsAllocation *getScratchSpaceAllocation() override {
             return scratchAllocation;
         }
 
@@ -895,7 +895,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
 HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHeapContainerIsZeroSizeThenNoFunctionIsCalled, Platforms) {
     class MockScratchSpaceControllerXeHPAndLater : public NEO::ScratchSpaceControllerXeHPAndLater {
       public:
-        using NEO::ScratchSpaceControllerXeHPAndLater::scratchSlot0Allocation;
+        using NEO::ScratchSpaceControllerXeHPAndLater::scratchAllocation;
         bool programHeapsCalled = false;
         MockScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
                                                NEO::ExecutionEnvironment &environment,
@@ -903,8 +903,8 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
 
         void programHeaps(HeapContainer &heapContainer,
                           uint32_t scratchSlot,
-                          uint32_t requiredPerThreadScratchSizeSlot0,
-                          uint32_t requiredPerThreadScratchSizeSlot1,
+                          uint32_t requiredPerThreadScratchSize,
+                          uint32_t requiredPerThreadPrivateScratchSize,
                           TaskCountType currentTaskCount,
                           OsContext &osContext,
                           bool &stateBaseAddressDirty,
@@ -937,11 +937,11 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
     NEO::GraphicsAllocation graphicsAllocation(1u, NEO::AllocationType::buffer, nullptr, 0u, 0u, 0u, MemoryPool::system4KBPages, 0u);
 
     auto scratch = static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get());
-    scratch->scratchSlot0Allocation = &graphicsAllocation;
+    scratch->scratchAllocation = &graphicsAllocation;
     commandQueueHw->handleScratchSpace(heapContainer, scratchController.get(), gsbaStateDirty, frontEndStateDirty, 0x1000, 0u);
 
     EXPECT_FALSE(scratch->programHeapsCalled);
-    scratch->scratchSlot0Allocation = nullptr;
+    scratch->scratchAllocation = nullptr;
 }
 
 HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorrectlyPatched, IsAtLeastXeHpCore) {

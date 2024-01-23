@@ -202,6 +202,6 @@ bool GfxCoreHelperHw<Family>::largeGrfModeSupported() const {
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const {
     const auto &kernelAttributes = kernelDescriptor.kernelAttributes;
-    return (kernelAttributes.privateScratchMemorySize > 0) ? kernelAttributes.privateScratchMemorySize : kernelAttributes.perHwThreadPrivateMemorySize;
+    return (kernelAttributes.perThreadScratchSize[1] > 0) ? kernelAttributes.perThreadScratchSize[1] : kernelAttributes.perHwThreadPrivateMemorySize;
 }
 } // namespace NEO

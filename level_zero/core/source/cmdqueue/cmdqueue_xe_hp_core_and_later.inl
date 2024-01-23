@@ -137,28 +137,28 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHeaps,
                                                        NEO::ScratchSpaceController *scratchController,
                                                        bool &gsbaState, bool &frontEndState,
-                                                       uint32_t perThreadScratchSpaceSlot0Size, uint32_t perThreadScratchSpaceSlot1Size) {
-    if (perThreadScratchSpaceSlot0Size > 0 || perThreadScratchSpaceSlot1Size > 0) {
+                                                       uint32_t perThreadScratchSpaceSize, uint32_t perThreadPrivateScratchSize) {
+    if (perThreadScratchSpaceSize > 0 || perThreadPrivateScratchSize > 0) {
         if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
             auto globalStatelessHeapAllocation = csr->getGlobalStatelessHeapAllocation();
-            scratchController->setRequiredScratchSpace(globalStatelessHeapAllocation->getUnderlyingBuffer(), 0, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size, csr->peekTaskCount(),
+            scratchController->setRequiredScratchSpace(globalStatelessHeapAllocation->getUnderlyingBuffer(), 0, perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                                        csr->getOsContext(), gsbaState, frontEndState);
         }
         if (sshHeaps.size() > 0) {
             uint32_t offsetIndex = maxPtssIndex * csr->getOsContext().getEngineType() + 1u;
-            scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size, csr->peekTaskCount(),
+            scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSize, perThreadPrivateScratchSize, csr->peekTaskCount(),
                                             csr->getOsContext(), gsbaState, frontEndState);
         }
 
-        auto scratch0Allocation = scratchController->getScratchSpaceSlot0Allocation();
-        if (scratch0Allocation != nullptr) {
-            csr->makeResident(*scratch0Allocation);
+        auto scratchAllocation = scratchController->getScratchSpaceAllocation();
+        if (scratchAllocation != nullptr) {
+            csr->makeResident(*scratchAllocation);
         }
 
-        auto scratch1Allocation = scratchController->getScratchSpaceSlot1Allocation();
+        auto privateScratchAllocation = scratchController->getPrivateScratchSpaceAllocation();
 
-        if (scratch1Allocation != nullptr) {
-            csr->makeResident(*scratch1Allocation);
+        if (privateScratchAllocation != nullptr) {
+            csr->makeResident(*privateScratchAllocation);
         }
     }
 }

@@ -1560,8 +1560,8 @@ TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     auto expectedPrivateSize = 0x200u;
 
     auto &kernelDescriptor = const_cast<KernelDescriptor &>(kernel->getKernelDescriptor());
-    kernelDescriptor.kernelAttributes.spillFillScratchMemorySize = expectedSpillSize;
-    kernelDescriptor.kernelAttributes.privateScratchMemorySize = expectedPrivateSize;
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = expectedSpillSize;
+    kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = expectedPrivateSize;
 
     ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -1580,7 +1580,7 @@ TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     EXPECT_EQ(maxNumSubgroups, kernelProperties.maxNumSubgroups);
 
     EXPECT_EQ(sizeof(float) * 16U, kernelProperties.localMemSize);
-    EXPECT_EQ(device->getGfxCoreHelper().getKernelPrivateMemSize(kernelDescriptor), kernelProperties.privateMemSize);
+    EXPECT_EQ(expectedPrivateSize, kernelProperties.privateMemSize);
     EXPECT_EQ(expectedSpillSize, kernelProperties.spillMemSize);
 
     uint8_t zeroKid[ZE_MAX_KERNEL_UUID_SIZE];
@@ -1603,8 +1603,8 @@ HWTEST2_F(KernelPropertiesTests, givenKernelWithPrivateScratchMemoryThenProperPr
     auto expectedPrivateSize = 0x200u;
 
     auto &kernelDescriptor = const_cast<KernelDescriptor &>(kernel->getKernelDescriptor());
-    kernelDescriptor.kernelAttributes.spillFillScratchMemorySize = expectedSpillSize;
-    kernelDescriptor.kernelAttributes.privateScratchMemorySize = expectedPrivateSize;
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = expectedSpillSize;
+    kernelDescriptor.kernelAttributes.perThreadScratchSize[1] = expectedPrivateSize;
     kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = 0xDEAD;
 
     ze_result_t res = kernel->getProperties(&kernelProperties);
