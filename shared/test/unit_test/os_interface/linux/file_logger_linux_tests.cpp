@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/logger_tests.h"
 
@@ -29,12 +30,19 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
 
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
+
+    allocation.setGmm(new MockGmm(gmmHelper), 0);
+
+    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
+    allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
+
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
     allocation.setCpuPtrAndGpuAddress(&allocation, canonizedGpuAddress);
 
     MockBufferObject bo(0u, &drm);
     bo.handle.setBoHandle(4);
+    bo.setPatIndex(5u);
 
     allocation.bufferObjects[0] = &bo;
 
@@ -80,12 +88,19 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
 
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
+
+    allocation.setGmm(new MockGmm(gmmHelper), 0);
+
+    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
+    allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
+
     auto canonizedGpuAddress = gmmHelper->canonize(0x12345);
 
     allocation.setCpuPtrAndGpuAddress(&allocation, canonizedGpuAddress);
 
     MockBufferObject bo(0u, &drm);
     bo.handle.setBoHandle(4);
+    bo.setPatIndex(5u);
 
     allocation.bufferObjects[0] = &bo;
 
@@ -130,8 +145,14 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     EXPECT_FALSE(logFileCreated);
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
 
-    fileLogger.logAllocation(&allocation);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
 
+    allocation.setGmm(new MockGmm(gmmHelper), 0);
+
+    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
+    allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
+    fileLogger.logAllocation(&allocation);
     std::thread::id thisThread = std::this_thread::get_id();
 
     std::stringstream threadIDCheck;
@@ -160,7 +181,6 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     EXPECT_FALSE(logFileCreated);
 
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
-
     fileLogger.logAllocation(&allocation);
 
     std::thread::id thisThread = std::this_thread::get_id();

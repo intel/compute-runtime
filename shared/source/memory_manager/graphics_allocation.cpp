@@ -69,6 +69,10 @@ std::string GraphicsAllocation::getAllocationInfoString() const {
     return "";
 }
 
+std::string GraphicsAllocation::getPatIndexInfoString() const {
+    return "";
+}
+
 uint32_t GraphicsAllocation::getUsedPageSize() const {
     switch (this->memoryPool) {
     case MemoryPool::system64KBPages:

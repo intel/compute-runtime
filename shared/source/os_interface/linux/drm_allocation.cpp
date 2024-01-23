@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/residency.h"
@@ -41,6 +42,22 @@ std::string DrmAllocation::getAllocationInfoString() const {
         if (bo != nullptr) {
             ss << " Handle: " << bo->peekHandle();
         }
+    }
+    return ss.str();
+}
+
+std::string DrmAllocation::getPatIndexInfoString() const {
+    std::stringstream ss;
+
+    auto bo = getBO();
+    if (bo) {
+        ss << " PATIndex: " << bo->peekPatIndex() << ",";
+    }
+    auto gmm = getDefaultGmm();
+    if (gmm) {
+        ss << " Gmm resource usage: "
+           << "[ " << gmm->getUsageTypeString() << " ],";
+        ss << " Cacheable: " << gmm->resourceParams.Flags.Info.Cacheable;
     }
     return ss.str();
 }

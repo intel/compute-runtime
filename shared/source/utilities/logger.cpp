@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,6 +113,7 @@ void FileLogger<debugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
         ss << " GPU address: 0x" << std::hex << graphicsAllocation->getGpuAddress() << " - 0x" << std::hex << graphicsAllocation->getGpuAddress() + graphicsAllocation->getUnderlyingBufferSize() - 1;
 
         ss << graphicsAllocation->getAllocationInfoString();
+        ss << graphicsAllocation->getPatIndexInfoString();
         ss << std::endl;
         auto str = ss.str();
         if (logAllocationStdout) {

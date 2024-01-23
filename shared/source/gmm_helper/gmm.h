@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,6 +69,8 @@ class Gmm {
 
     GMM_RESCREATE_PARAMS resourceParams = {};
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
+
+    const char *getUsageTypeString();
 
     bool isCompressionEnabled = false;
 

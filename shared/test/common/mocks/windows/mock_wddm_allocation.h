@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ class MockWddmAllocation : public WddmAllocation {
         for (uint32_t i = 0; i < getNumGmms(); i++) {
             delete getGmm(i);
         }
+        setGmm(nullptr, 0);
         gmms.resize(0);
     }
     ~MockWddmAllocation() override {
@@ -38,6 +39,7 @@ class MockWddmAllocation : public WddmAllocation {
         handles.resize(newSize);
     }
     using WddmAllocation::cpuPtr;
+    using WddmAllocation::gmms;
     using WddmAllocation::handles;
     using WddmAllocation::memoryPool;
     using WddmAllocation::size;

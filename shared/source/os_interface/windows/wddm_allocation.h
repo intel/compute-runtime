@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,6 +103,7 @@ class WddmAllocation : public GraphicsAllocation {
     void setCpuAddress(void *cpuPtr) { this->cpuPtr = cpuPtr; }
 
     std::string getAllocationInfoString() const override;
+    std::string getPatIndexInfoString() const override;
     uint64_t &getGpuAddressToModify() { return gpuAddress; }
 
     // OS assigned fields
