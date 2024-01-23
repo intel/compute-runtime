@@ -27,6 +27,20 @@
 
 using namespace NEO;
 
+TEST(IoctlHelperXeTest, whenCallingDebuggerOpenIoctlThenProperValueIsReturned) {
+    int ret;
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto mockXeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+
+    drm.reset();
+    drm_xe_eudebug_connect test = {};
+
+    ret = mockXeIoctlHelper->ioctl(DrmIoctl::debuggerOpen, &test);
+    EXPECT_EQ(ret, drm.debuggerOpenRetval);
+}
+
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetIoctForDebuggerThenCorrectValueReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};

@@ -1132,6 +1132,9 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         xeLog(" -> IoctlHelperXe::ioctl GemCreate h=0x%x s=0x%lx p=0x%x f=0x%x r=%d\n",
               gemCreate->handle, gemCreate->size, gemCreate->flags, ret);
     } break;
+    case DrmIoctl::debuggerOpen: {
+        ret = debuggerOpenIoctl(request, arg);
+    } break;
     default:
         xeLog("Not handled 0x%x\n", request);
         UNRECOVERABLE_IF(true);

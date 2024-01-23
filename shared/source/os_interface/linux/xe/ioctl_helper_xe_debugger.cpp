@@ -30,6 +30,14 @@ unsigned int IoctlHelperXe::getIoctlRequestValueDebugger(DrmIoctl ioctlRequest) 
     }
 }
 
+int IoctlHelperXe::debuggerOpenIoctl(DrmIoctl request, void *arg) {
+    drm_xe_eudebug_connect *connect = static_cast<drm_xe_eudebug_connect *>(arg);
+    auto ret = IoctlHelper::ioctl(request, arg);
+    xeLog(" -> IoctlHelperXe::ioctl debuggerOpen pid=%llu r=%d\n",
+          connect->pid, ret);
+    return ret;
+}
+
 void *IoctlHelperXe::allocateDebugMetadata() {
     drm_xe_ext_vm_set_debug_metadata *prev = nullptr;
     drm_xe_ext_vm_set_debug_metadata *xeMetadataRoot = nullptr;

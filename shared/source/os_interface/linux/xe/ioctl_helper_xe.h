@@ -147,6 +147,7 @@ class IoctlHelperXe : public IoctlHelper {
     void xeShowBindTable();
     void updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size);
     void *allocateDebugMetadata();
+    int debuggerOpenIoctl(DrmIoctl request, void *arg);
     void *freeDebugMetadata(void *metadata);
     int getRunaloneExtProperty();
 
