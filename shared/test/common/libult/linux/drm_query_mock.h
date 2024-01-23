@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,8 +28,8 @@ class DrmQueryMock : public DrmMock {
         contextDebugSupported,
     };
 
-    void getPrelimEuDebug(int &prelimEuDebug) override {
-        prelimEuDebug = prelimEuDebugValue;
+    int getEuDebugSysFsEnable() override {
+        return prelimEuDebugValue;
     }
     int prelimEuDebugValue = 0;
 

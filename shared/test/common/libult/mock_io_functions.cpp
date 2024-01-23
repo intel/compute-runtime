@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ size_t mockFreadReturn = 0;
 uint32_t mockFwriteCalled = 0;
 size_t mockFwriteReturn = 0;
 char *mockFwriteBuffer = nullptr;
+char *mockFreadBuffer = nullptr;
 bool mockVfptrinfUseStdioFunction = false;
 
 const char *openCLDriverName = "igdrcl.dll";

@@ -28,8 +28,10 @@
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
+#include <fstream>
 #include <iostream>
 #include <new>
+#include <sstream>
 #include <sys/ioctl.h>
 
 namespace NEO {
@@ -1069,6 +1071,20 @@ uint32_t IoctlHelperPrelim20::notifyFirstCommandQueueCreated(const void *data, s
 
 void IoctlHelperPrelim20::notifyLastCommandQueueDestroyed(uint32_t handle) {
     unregisterResource(handle);
+}
+
+int IoctlHelperPrelim20::getEuDebugSysFsEnable() {
+    char enabledEuDebug = '0';
+    std::string sysFsPciPath = drm.getSysFsPciPath();
+    std::string euDebugPath = sysFsPciPath + "/prelim_enable_eu_debug";
+
+    FILE *fileDescriptor = IoFunctions::fopenPtr(euDebugPath.c_str(), "r");
+    if (fileDescriptor) {
+        [[maybe_unused]] auto bytesRead = IoFunctions::freadPtr(&enabledEuDebug, 1, 1, fileDescriptor);
+        IoFunctions::fclosePtr(fileDescriptor);
+    }
+
+    return enabledEuDebug - '0';
 }
 
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));

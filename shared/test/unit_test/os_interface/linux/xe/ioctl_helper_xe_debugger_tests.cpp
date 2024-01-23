@@ -5,16 +5,20 @@
  *
  */
 
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/debug_mock_drm_xe.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -212,4 +216,46 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnTrueWhenCreate
     EXPECT_EQ(ext.base.next_extension, 0ULL);
     EXPECT_EQ(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE));
     EXPECT_EQ(ext.value, 1ULL);
+}
+
+TEST(IoctlHelperXeTest, GivenXeDriverThenDebugAttachReturnsTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    EXPECT_TRUE(xeIoctlHelper->isDebugAttachAvailable());
+}
+
+TEST(IoctlHelperXeTest, givenXeEnableEuDebugThenReturnCorrectValue) {
+
+    VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFwriteReturn);
+    VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+
+    buffer[0] = '1';
+    int enableEuDebug = xeIoctlHelper->getEuDebugSysFsEnable();
+    EXPECT_EQ(1, enableEuDebug);
+
+    buffer[0] = '0';
+    enableEuDebug = xeIoctlHelper->getEuDebugSysFsEnable();
+    EXPECT_EQ(0, enableEuDebug);
+}
+
+TEST(IoctlHelperXeTest, givenXeEnableEuDebugWithInvalidPathThenReturnCorrectValue) {
+    VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFwriteReturn);
+    VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+
+    buffer[0] = '1';
+    VariableBackup<FILE *> mockFopenReturnBackup(&IoFunctions::mockFopenReturned, nullptr);
+    int enableEuDebug = xeIoctlHelper->getEuDebugSysFsEnable();
+
+    EXPECT_EQ(0, enableEuDebug);
 }

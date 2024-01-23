@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -274,7 +274,7 @@ TEST(SoftwareTagsBXMLTests, givenDumpSWTagsBXMLWhenConstructingBXMLThenAFileIsDu
     EXPECT_GE(IoFunctions::mockFwriteReturn, bxml1.str.size());
     EXPECT_STREQ(buffer.get(), bxml1.str.c_str());
 
-    VariableBackup<FILE *> backup(&IoFunctions::mockFopenReturned, nullptr);
+    VariableBackup<FILE *> backup(&IoFunctions::mockFopenReturned, static_cast<FILE *>(nullptr));
 
     SWTagBXML bxml2;
 

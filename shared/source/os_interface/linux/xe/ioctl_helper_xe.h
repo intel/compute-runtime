@@ -100,6 +100,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool isContextDebugSupported() override;
     int setContextDebugFlag(uint32_t drmContextId) override;
     bool isDebugAttachAvailable() override;
+    int getEuDebugSysFsEnable() override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     unsigned int getIoctlRequestValueDebugger(DrmIoctl ioctlRequest) const;
     int getDrmParamValue(DrmParam drmParam) const override;

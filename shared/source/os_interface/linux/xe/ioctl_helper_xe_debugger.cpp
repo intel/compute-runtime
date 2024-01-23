@@ -5,10 +5,14 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
 #include "uapi-eudebug/drm/xe_drm.h"
 #include "uapi-eudebug/drm/xe_drm_tmp.h"
+
+#include <fstream>
+#include <sstream>
 
 #define STRINGIFY_ME(X) return #X
 #define RETURN_ME(X) return X
@@ -106,6 +110,20 @@ void IoctlHelperXe::addDebugMetadata(DrmResourceClass type, uint64_t *offset, ui
 
 int IoctlHelperXe::getRunaloneExtProperty() {
     return DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE;
+}
+
+int IoctlHelperXe::getEuDebugSysFsEnable() {
+    char enabledEuDebug = '0';
+    std::string sysFsPciPath = drm.getSysFsPciPath();
+    std::string euDebugPath = sysFsPciPath + "/device/enable_eudebug";
+
+    FILE *fileDescriptor = IoFunctions::fopenPtr(euDebugPath.c_str(), "r");
+    if (fileDescriptor) {
+        [[maybe_unused]] auto bytesRead = IoFunctions::freadPtr(&enabledEuDebug, 1, 1, fileDescriptor);
+        IoFunctions::fclosePtr(fileDescriptor);
+    }
+
+    return enabledEuDebug - '0';
 }
 
 } // namespace NEO

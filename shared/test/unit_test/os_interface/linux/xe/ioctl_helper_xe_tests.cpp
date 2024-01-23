@@ -317,8 +317,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(0, xeIoctlHelper->setContextDebugFlag(0));
 
-    EXPECT_FALSE(xeIoctlHelper->isDebugAttachAvailable());
-
     // Default no translation:
     verifyDrmGetParamValue(static_cast<int>(DrmParam::execRender), DrmParam::execRender);
     // test exception:

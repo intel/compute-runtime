@@ -126,7 +126,7 @@ class Drm : public DriverModel {
     void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo);
     void setupCacheInfo(const HardwareInfo &hwInfo);
     MOCKABLE_VIRTUAL void getPrelimVersion(std::string &prelimVersion);
-    MOCKABLE_VIRTUAL void getPrelimEuDebug(int &prelimEuDebug);
+    MOCKABLE_VIRTUAL int getEuDebugSysFsEnable();
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
     bool isGpuHangDetected(OsContext &osContext) override;

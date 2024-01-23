@@ -57,6 +57,10 @@ class DrmMockXeDebug : public DrmMockCustom {
         return static_cast<unsigned int>(DrmParam::execDefault);
     }
 
+    void setPciPath(const char *pciPath) {
+        hwDeviceId = std::make_unique<HwDeviceIdDrm>(getFileDescriptor(), pciPath);
+    }
+
     int ioctl(DrmIoctl request, void *arg) override {
         int ret = -1;
         ioctlCalled = true;

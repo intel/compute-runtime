@@ -866,7 +866,7 @@ int IoctlHelperXe::setContextDebugFlag(uint32_t drmContextId) {
 }
 
 bool IoctlHelperXe::isDebugAttachAvailable() {
-    return false;
+    return true;
 }
 
 int IoctlHelperXe::getDrmParamValue(DrmParam drmParam) const {

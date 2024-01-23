@@ -172,6 +172,7 @@ class IoctlHelper {
 
     virtual uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size) { return 0; }
     virtual void notifyLastCommandQueueDestroyed(uint32_t handle) { return; }
+    virtual int getEuDebugSysFsEnable() { return false; }
 
   protected:
     Drm &drm;
@@ -353,6 +354,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     }
     uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size) override;
     void notifyLastCommandQueueDestroyed(uint32_t handle) override;
+    int getEuDebugSysFsEnable() override;
 
   protected:
     bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);

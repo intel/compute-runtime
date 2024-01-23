@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,7 @@ extern size_t mockFreadReturn;
 extern uint32_t mockFwriteCalled;
 extern size_t mockFwriteReturn;
 extern char *mockFwriteBuffer;
+extern char *mockFreadBuffer;
 extern bool mockVfptrinfUseStdioFunction;
 
 extern std::unordered_map<std::string, std::string> *mockableEnvValues;
@@ -84,6 +85,9 @@ inline void mockRewind(FILE *stream) {
 
 inline size_t mockFread(void *ptr, size_t size, size_t count, FILE *stream) {
     mockFreadCalled++;
+    if (mockFreadBuffer) {
+        memcpy_s(ptr, mockFreadReturn, mockFreadBuffer, size * count);
+    }
     return mockFreadReturn;
 }
 

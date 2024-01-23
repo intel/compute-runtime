@@ -16,10 +16,12 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -129,6 +131,29 @@ TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOn
         EXPECT_EQ(ioctlValue, ioctlHelper.vmUnbind(vmBindParams));
         EXPECT_EQ(1u, drm.context.vmUnbindCalled);
     }
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugThenReturnCorrectValue) {
+    VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFwriteReturn);
+    VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
+
+    buffer[0] = '1';
+    int prelimEnableEuDebug = drm->getEuDebugSysFsEnable();
+
+    EXPECT_EQ(1, prelimEnableEuDebug);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugWithInvalidPathThenReturnDefaultValue) {
+    VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFwriteReturn);
+    VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
+
+    buffer[0] = '1';
+    VariableBackup<FILE *> mockFopenReturnBackup(&IoFunctions::mockFopenReturned, nullptr);
+    int prelimEnableEuDebug = drm->getEuDebugSysFsEnable();
+
+    EXPECT_EQ(0, prelimEnableEuDebug);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) {
