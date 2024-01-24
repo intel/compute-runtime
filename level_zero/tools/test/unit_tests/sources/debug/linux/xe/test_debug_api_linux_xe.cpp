@@ -559,6 +559,88 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventDestroyFlagWhenHandleE
     EXPECT_EQ(session->clientHandleClosed, client2.client_handle);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugVmEventWithEventCreateFlagWhenHandleEventThenNewVmIdsIsCreated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    drm_xe_eudebug_event_client client1;
+    client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client1.client_handle = 0x123456789;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
+
+    drm_xe_eudebug_event_vm vm1;
+    drm_xe_eudebug_event_vm vm2;
+    vm1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    vm1.base.type = DRM_XE_EUDEBUG_EVENT_VM;
+    vm1.client_handle = 0x123456789;
+    vm1.vm_handle = 0x123;
+    vm2.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    vm2.base.type = DRM_XE_EUDEBUG_EVENT_VM;
+    vm2.client_handle = 0x123456789;
+    vm2.vm_handle = 0x124;
+
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vm1));
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vm2));
+    ASSERT_EQ(session->clientHandleToConnection[client1.client_handle]->vmIds.size(), 2u);
+    auto it1 = session->clientHandleToConnection[client1.client_handle]->vmIds.find(vm1.vm_handle);
+    EXPECT_NE(it1, session->clientHandleToConnection[client1.client_handle]->vmIds.end());
+    auto it2 = session->clientHandleToConnection[client1.client_handle]->vmIds.find(vm2.vm_handle);
+    EXPECT_NE(it2, session->clientHandleToConnection[client1.client_handle]->vmIds.end());
+
+    // Check for wrong vmId
+    auto it3 = session->clientHandleToConnection[client1.client_handle]->vmIds.find(0x123456);
+    EXPECT_EQ(it3, session->clientHandleToConnection[client1.client_handle]->vmIds.end());
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEuDebugVmEventWithEventDestroyFlagWhenHandleEventThenVmIdsIsRemoved) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    drm_xe_eudebug_event_client client1;
+    client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client1.client_handle = 0x123456789;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
+
+    drm_xe_eudebug_event_vm vm1;
+    vm1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    vm1.base.type = DRM_XE_EUDEBUG_EVENT_VM;
+    vm1.client_handle = 0x123456789;
+    vm1.vm_handle = 0x123;
+
+    drm_xe_eudebug_event_vm vm2;
+    vm2.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    vm2.base.type = DRM_XE_EUDEBUG_EVENT_VM;
+    vm2.client_handle = 0x123456789;
+    vm2.vm_handle = 0x124;
+
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vm1));
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vm2));
+    ASSERT_EQ(session->clientHandleToConnection[client1.client_handle]->vmIds.size(), 2u);
+    auto it1 = session->clientHandleToConnection[client1.client_handle]->vmIds.find(vm1.vm_handle);
+    EXPECT_NE(it1, session->clientHandleToConnection[client1.client_handle]->vmIds.end());
+    auto it2 = session->clientHandleToConnection[client1.client_handle]->vmIds.find(vm2.vm_handle);
+    EXPECT_NE(it2, session->clientHandleToConnection[client1.client_handle]->vmIds.end());
+
+    drm_xe_eudebug_event_vm vm3;
+    vm3.base.flags = DRM_XE_EUDEBUG_EVENT_DESTROY;
+    vm3.base.type = DRM_XE_EUDEBUG_EVENT_VM;
+    vm3.client_handle = 0x123456789;
+    vm3.vm_handle = 0x124;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vm3));
+    auto it3 = session->clientHandleToConnection[client1.client_handle]->vmIds.find(vm2.vm_handle);
+    EXPECT_EQ(it3, session->clientHandleToConnection[client1.client_handle]->vmIds.end());
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventCreateFlagWhenHandleEventThenExecQueueIsCreated) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

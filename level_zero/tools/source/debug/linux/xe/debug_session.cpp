@@ -209,6 +209,23 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
 
     } break;
 
+    case DRM_XE_EUDEBUG_EVENT_VM: {
+        drm_xe_eudebug_event_vm *vm = reinterpret_cast<drm_xe_eudebug_event_vm *>(event);
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_VM flags = %u size = %lu client_handle = %llu vm_handle = %llu\n",
+                                (uint16_t)event->flags, (uint32_t)event->len, (uint64_t)vm->client_handle, (uint64_t)vm->vm_handle);
+
+        if (event->flags & DRM_XE_EUDEBUG_EVENT_CREATE) {
+            UNRECOVERABLE_IF(clientHandleToConnection.find(vm->client_handle) == clientHandleToConnection.end());
+            clientHandleToConnection[vm->client_handle]->vmIds.emplace(static_cast<uint64_t>(vm->vm_handle));
+        }
+
+        if (event->flags & DRM_XE_EUDEBUG_EVENT_DESTROY) {
+            UNRECOVERABLE_IF(clientHandleToConnection.find(vm->client_handle) == clientHandleToConnection.end());
+            clientHandleToConnection[vm->client_handle]->vmIds.erase(static_cast<uint64_t>(vm->vm_handle));
+        }
+    } break;
+
     case DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE: {
         drm_xe_eudebug_event_exec_queue *execQueue = reinterpret_cast<drm_xe_eudebug_event_exec_queue *>(event);
 
@@ -229,7 +246,7 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
         }
 
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE flags = %u len = %lu client_handle = %llu\
-                                vm_handle = %llu exec_queue_handle = %llu engine_class = %u\n",
+        vm_handle = %llu exec_queue_handle = %llu engine_class = %u\n",
                                 (uint16_t)event->flags, (uint32_t)event->len, (uint64_t)execQueue->client_handle, (uint64_t)execQueue->vm_handle,
                                 (uint64_t)execQueue->exec_queue_handle, (uint16_t)execQueue->engine_class);
     } break;

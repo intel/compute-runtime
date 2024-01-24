@@ -151,6 +151,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         std::unordered_map<ExecQueueHandle, ExecQueueParams> execQueues;
         std::unordered_map<uint64_t, uint64_t> lrcHandleToVmHandle;
         std::unordered_map<uint64_t, BindInfo> vmToModuleDebugAreaBindInfo;
+        std::unordered_set<uint64_t> vmIds;
     };
 
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
