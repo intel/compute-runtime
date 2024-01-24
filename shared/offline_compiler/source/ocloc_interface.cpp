@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,7 +147,6 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
 
     if (retVal != OCLOC_SUCCESS) {
         printOclocOptionsReadFromFile(*argHelper, pCompiler.get());
-        printOclocCmdLine(*argHelper, args);
     }
     return retVal;
 };

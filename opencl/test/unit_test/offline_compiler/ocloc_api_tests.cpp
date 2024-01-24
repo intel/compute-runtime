@@ -191,7 +191,7 @@ TEST(OclocApiTests, GivenNoQueryWhenQueryingThenErrorIsReturned) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
-    EXPECT_STREQ("Error: Invalid command line. Expected ocloc query <argument>. See ocloc query --help\n", output.c_str());
+    EXPECT_STREQ("Error: Invalid command line. Expected ocloc query <argument>. See ocloc query --help\nCommand was: ocloc query\n", output.c_str());
 }
 
 TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
@@ -208,7 +208,7 @@ TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
-    EXPECT_STREQ("Error: Invalid command line.\nUnknown argument unknown_query\n", output.c_str());
+    EXPECT_STREQ("Error: Invalid command line.\nUnknown argument unknown_query\nCommand was: ocloc query unknown_query\n", output.c_str());
 }
 
 TEST(OclocApiTests, givenNoAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
@@ -224,7 +224,7 @@ TEST(OclocApiTests, givenNoAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
-    EXPECT_STREQ("Error: Invalid command line. Expected ocloc ids <acronym>.\n", output.c_str());
+    EXPECT_STREQ("Error: Invalid command line. Expected ocloc ids <acronym>.\nCommand was: ocloc ids\n", output.c_str());
 }
 
 TEST(OclocApiTests, givenUnknownAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
@@ -241,7 +241,7 @@ TEST(OclocApiTests, givenUnknownAcronymWhenIdsCommandIsInvokeThenErrorIsReported
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, OCLOC_INVALID_COMMAND_LINE);
-    EXPECT_STREQ("Error: Invalid command line. Unknown acronym unk.\n", output.c_str());
+    EXPECT_STREQ("Error: Invalid command line. Unknown acronym unk.\nCommand was: ocloc ids unk\n", output.c_str());
 }
 
 TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
@@ -732,7 +732,7 @@ TEST(OclocApiTests, GivenNonexistentFileWhenValidateIsInvokedThenErrorIsPrinted)
     const auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(-1, retVal);
 
-    const std::string expectedErrorMessage{"Error : Input file missing : some_special_nonexistent_file.gen\n"};
+    const std::string expectedErrorMessage{"Error : Input file missing : some_special_nonexistent_file.gen\nCommand was: ocloc validate -file some_special_nonexistent_file.gen\n"};
     EXPECT_EQ(expectedErrorMessage, output);
 }
 
@@ -806,7 +806,7 @@ TEST(OclocApiTests, GivenInvalidParameterWhenLinkingThenErrorIsReturned) {
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
 
     const std::string expectedInitError{"Invalid option (arg 2): --dummy_param\n"};
-    const std::string expectedExecuteError{"Error: Linker cannot be executed due to unsuccessful initialization!\n"};
+    const std::string expectedExecuteError{"Error: Linker cannot be executed due to unsuccessful initialization!\nCommand was: ocloc link --dummy_param\n"};
     const std::string expectedErrorMessage = expectedInitError + expectedExecuteError;
     EXPECT_EQ(expectedErrorMessage, output);
 }
@@ -824,7 +824,7 @@ TEST(OclocApiTests, GivenInvalidCommandLineWhenConcatenatingThenErrorIsReturned)
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
     const std::string emptyCommandLineError = "No files to concatenate were provided.\n";
-    const std::string expectedErrorMessage = emptyCommandLineError + NEO::OclocConcat::helpMessage.str();
+    const std::string expectedErrorMessage = emptyCommandLineError + NEO::OclocConcat::helpMessage.str() + "Command was: ocloc concat\n";
     EXPECT_EQ(expectedErrorMessage, output);
 }
 
@@ -907,4 +907,27 @@ TEST(OclocApiTests, GivenValidCommandLineAndFatBinariesWhenConcatenatingThenNewF
     EXPECT_TRUE(hasFatBinary1);
     EXPECT_TRUE(hasFatBinary2);
     oclocFreeOutput(&numOutputs, &outputData, &outputLen, &outputName);
+}
+
+TEST(OclocApiTests, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
+    std::string clFileName(clFiles + "copybuffer.cl");
+    const char *argv[] = {
+        "ocloc",
+        "-file",
+        clFileName.c_str(),
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-v"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_NE(std::string::npos, output.find("Command was: ocloc -file "s + clFileName.c_str() + " -device "s + argv[4] + " -v")) << output;
+    EXPECT_NE(std::string::npos, output.find("Build succeeded.\n"));
 }

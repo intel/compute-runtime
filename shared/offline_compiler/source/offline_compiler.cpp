@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1014,6 +1014,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("-qq" == currArg) {
             argHelper->getPrinterRef().setSuppressMessages(true);
             quiet = true;
+        } else if ("-v" == currArg) {
+            argHelper->setVerbose(true);
         } else if ("-spv_only" == currArg) {
             onlySpirV = true;
         } else if ("-output_no_suffix" == currArg) {
@@ -1322,6 +1324,8 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   -q                                        Will silence output messages (except errors).
 
   -qq                                       Will silence most of output messages.
+
+  -v                                        Verbose mode.
 
   -spv_only                                 Will generate only spirV file.
 

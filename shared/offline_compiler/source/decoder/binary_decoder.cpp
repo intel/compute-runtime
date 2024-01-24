@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,7 +282,7 @@ void BinaryDecoder::parseTokens() {
 }
 
 void BinaryDecoder::printHelp() {
-    argHelper->printf(R"===(Disassembles Intel Compute GPU device binary files.
+    argHelper->printf(R"OCLOC_HELP(Disassembles Intel Compute GPU device binary files.
 Output of such operation is a set of files that can be later used to
 reassemble back a valid Intel Compute GPU device binary (using ocloc 'asm'
 command). This set of files contains:
@@ -325,12 +325,14 @@ Usage: ocloc disasm -file <file> [-patch <patchtokens_dir>] [-dump <dump_dir>] [
   -ignore_isa_padding       Ignores Kernel Heap padding - Kernel Heap binary
                             will be saved without padding.
 
+  -v                        Verbose mode.
+
   --help                    Print this usage message.
 
 Examples:
   Disassemble Intel Compute GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
-)===",
+)OCLOC_HELP",
                       argHelper->createStringForArgs(argHelper->productConfigHelper->getDeviceAcronyms()).c_str());
 }
 
@@ -551,6 +553,8 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
         } else if ("-q" == currArg) {
             argHelper->getPrinterRef().setSuppressMessages(true);
             iga->setMessagePrinter(argHelper->getPrinterRef());
+        } else if ("-v" == currArg) {
+            argHelper->setVerbose(true);
         } else {
             argHelper->printf("Unknown argument %s\n", currArg.c_str());
             return -1;

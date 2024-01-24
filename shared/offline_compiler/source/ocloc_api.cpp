@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                 const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
                 const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
                 uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
-    auto helper = std::make_unique<OclocArgHelper>(
+    auto argHelper = std::make_unique<OclocArgHelper>(
         numSources, dataSources, lenSources, nameSources,
         numInputHeaders, dataInputHeaders, lenInputHeaders, nameInputHeaders,
         numOutputs, dataOutputs, lenOutputs, nameOutputs);
@@ -28,32 +28,40 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
 
     try {
         if (numArgs <= 1 || NEO::ConstStringRef("-h") == args[1] || NEO::ConstStringRef("--help") == args[1]) {
-            printHelp(*helper);
+            printHelp(*argHelper);
             return OCLOC_SUCCESS;
         }
         auto &command = args[1];
+        int retVal = -0;
         if (command == CommandNames::disassemble) {
-            return Commands::disassemble(helper.get(), args);
+            retVal = Commands::disassemble(argHelper.get(), args);
         } else if (command == CommandNames::assemble) {
-            return Commands::assemble(helper.get(), args);
+            retVal = Commands::assemble(argHelper.get(), args);
         } else if (command == CommandNames::multi) {
-            return Commands::multi(helper.get(), args);
+            retVal = Commands::multi(argHelper.get(), args);
         } else if (command == CommandNames::validate) {
-            return Commands::validate(helper.get(), args);
+            retVal = Commands::validate(argHelper.get(), args);
         } else if (command == CommandNames::query) {
-            return Commands::query(helper.get(), args);
+            retVal = Commands::query(argHelper.get(), args);
         } else if (command == CommandNames::ids) {
-            return Commands::ids(helper.get(), args);
+            retVal = Commands::ids(argHelper.get(), args);
         } else if (command == CommandNames::link) {
-            return Commands::link(helper.get(), args);
+            retVal = Commands::link(argHelper.get(), args);
         } else if (command == CommandNames::concat) {
-            return Commands::concat(helper.get(), args);
+            retVal = Commands::concat(argHelper.get(), args);
         } else {
-            return Commands::compile(helper.get(), args);
+            retVal = Commands::compile(argHelper.get(), args);
         }
+
+        if (retVal != OCLOC_SUCCESS) {
+            printOclocCmdLine(*argHelper, args);
+        } else if (argHelper->isVerbose()) {
+            printOclocCmdLine(*argHelper, args);
+        }
+        return retVal;
     } catch (const std::exception &e) {
-        helper->printf("%s\n", e.what());
-        printOclocCmdLine(*helper, args);
+        argHelper->printf("%s\n", e.what());
+        printOclocCmdLine(*argHelper, args);
         return -1;
     }
 }

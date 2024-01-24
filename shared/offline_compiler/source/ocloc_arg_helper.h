@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,8 @@ class OclocArgHelper {
         outputs.push_back(std::make_unique<Output>(filename, data, size));
     }
 
+    bool verbose = false;
+
   public:
     OclocArgHelper();
     OclocArgHelper(const uint32_t numSources, const uint8_t **dataSources,
@@ -90,6 +92,14 @@ class OclocArgHelper {
     }
     const std::vector<Source> &getHeaders() const {
         return headers;
+    }
+
+    bool isVerbose() const {
+        return verbose;
+    }
+
+    void setVerbose(bool verbose) {
+        this->verbose = verbose;
     }
 
     MOCKABLE_VIRTUAL void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize);
