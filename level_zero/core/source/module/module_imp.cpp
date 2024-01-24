@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/module/module_imp.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
@@ -37,6 +38,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_initialization.h"
 
@@ -1540,6 +1542,19 @@ ze_result_t ModuleImp::destroy() {
 
     auto tempHandle = debugModuleHandle;
     auto tempDevice = device;
+
+    auto rootDeviceIndex = getDevice()->getNEODevice()->getRootDeviceIndex();
+    auto &executionEnvironment = getDevice()->getNEODevice()->getRootDeviceEnvironment().executionEnvironment;
+
+    for (const auto &kernelImmData : this->kernelImmDatas) {
+        for (auto &engine : executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+            auto contextId = engine.osContext->getContextId();
+            if (kernelImmData->getIsaGraphicsAllocation()->isUsedByOsContext(contextId)) {
+                engine.commandStreamReceiver->registerInstructionCacheFlush();
+            }
+        }
+    }
+
     delete this;
 
     if (tempDevice->getL0Debugger() && tempHandle != 0) {

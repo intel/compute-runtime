@@ -4729,6 +4729,25 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperWh
     EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenRequiresInstructionCacheFlushWhenFlushImmediateThenInstructionCacheInvalidateEnableIsSent) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.registerInstructionCacheFlush();
+
+    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto pcCmd = hwParserCsr.getCommand<PIPE_CONTROL>();
+    ASSERT_NE(nullptr, pcCmd);
+
+    EXPECT_TRUE(pcCmd->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(commandStreamReceiver.requiresInstructionCacheFlush);
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, GivenFlushIsBlockingWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.recordFlusheBatchBuffer = true;

@@ -49,6 +49,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::osContext;
     using CommandStreamReceiver::ownershipMutex;
     using CommandStreamReceiver::preemptionAllocation;
+    using CommandStreamReceiver::requiresInstructionCacheFlush;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::tagsMultiAllocation;
     using CommandStreamReceiver::taskCount;
@@ -183,6 +184,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     GraphicsAllocation *getClearColorAllocation() override { return nullptr; }
     void makeResident(GraphicsAllocation &gfxAllocation) override {
         makeResidentCalledTimes++;
+        if (makeResidentParentCall) {
+            return CommandStreamReceiver::makeResident(gfxAllocation);
+        }
     }
 
     std::unique_lock<CommandStreamReceiver::MutexType> obtainHostPtrSurfaceCreationLock() override {
@@ -220,6 +224,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool programHardwareContextCalled = false;
     bool createPreemptionAllocationReturn = true;
     bool createPreemptionAllocationParentCall = false;
+    bool makeResidentParentCall = false;
     bool programComputeBarrierCommandCalled = false;
     bool programStallingCommandsForBarrierCalled = false;
     std::optional<bool> isGpuHangDetectedReturnValue{};

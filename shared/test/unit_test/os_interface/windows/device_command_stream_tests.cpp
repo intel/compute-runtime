@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::getCS;
     using CommandStreamReceiver::globalFenceAllocation;
+    using CommandStreamReceiver::requiresInstructionCacheFlush;
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;

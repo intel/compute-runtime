@@ -135,6 +135,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(neoDevice->getRootDeviceEnvironment(), false);
     }
 
+    if (this->csr->isInstructionCacheFlushRequired()) {
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForInstructionCacheFlush();
+    }
+
     this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
 
     NEO::LinearStream child(nullptr);
@@ -225,6 +229,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->programLastCommandListReturnBbStart(child, ctx);
     this->assignCsrTaskCountToFenceIfAvailable(hFence);
     this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, child);
+
+    if (this->csr->isInstructionCacheFlushRequired()) {
+        NEO::MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(child);
+        this->csr->setInstructionCacheFlushed();
+    }
 
     auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, child);
 

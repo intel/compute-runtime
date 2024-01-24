@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
@@ -17,7 +18,9 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
 namespace L0 {
 namespace ult {
 
@@ -73,6 +76,36 @@ TEST_F(ModuleTests, whenCreatingAutoGrfBuildOptionsThenOptionsParsedCorrectly) {
     module.createBuildOptions(BuildOptions::optAutoGrf.data(), buildOptions, internalBuildOptions);
 
     EXPECT_TRUE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::autoGrf));
+}
+
+TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstructionCacheFlushInCsrThatUsedTheAllocation) {
+    const uint32_t rootDeviceIndex = 0u;
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
+
+    MockCommandStreamReceiver *mockCommandStreamReceiver = new MockCommandStreamReceiver(*neoMockDevice->executionEnvironment, neoMockDevice->getRootDeviceIndex(), neoMockDevice->getDeviceBitfield());
+    mockCommandStreamReceiver->makeResidentParentCall = true;
+
+    neoMockDevice->resetCommandStreamReceiver(mockCommandStreamReceiver);
+
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    auto module = new MockModule{&deviceImp, nullptr, ModuleType::user};
+    module->translationUnit.reset(new MockModuleTranslationUnit{&deviceImp});
+
+    auto kernelInfo = new KernelInfo{};
+    kernelInfo->heapInfo.pKernelHeap = reinterpret_cast<const void *>(0xdeadbeef0000);
+    kernelInfo->heapInfo.kernelHeapSize = static_cast<uint32_t>(0x40);
+    module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+
+    module->initializeKernelImmutableDatas();
+    auto &kernelImmDatas = module->getKernelImmutableDataVector();
+    auto csr = deviceImp.getNEODevice()->getEngine(0).commandStreamReceiver;
+    csr->makeResident(*kernelImmDatas[0]->getIsaParentAllocation());
+
+    module->destroy();
+
+    EXPECT_TRUE(mockCommandStreamReceiver->requiresInstructionCacheFlush);
 }
 
 TEST(ModuleBuildLog, WhenCreatingModuleBuildLogThenNonNullPointerReturned) {

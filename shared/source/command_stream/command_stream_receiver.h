@@ -273,6 +273,14 @@ class CommandStreamReceiver {
 
     void downloadAllocation(GraphicsAllocation &gfxAllocation);
 
+    bool isInstructionCacheFlushRequired() const {
+        return requiresInstructionCacheFlush;
+    }
+
+    void setInstructionCacheFlushed() {
+        requiresInstructionCacheFlush = false;
+    }
+
     void registerInstructionCacheFlush() {
         auto mutex = obtainUniqueOwnership();
         requiresInstructionCacheFlush = true;

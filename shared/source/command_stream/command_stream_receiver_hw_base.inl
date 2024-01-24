@@ -304,12 +304,21 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
         flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
     }
 
+    if (requiresInstructionCacheFlush) {
+        flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForInstructionCacheFlush();
+    }
+
     auto &csrCommandStream = getCS(flushData.estimatedSize);
     flushData.csrStartOffset = csrCommandStream.getUsed();
 
     if (stateCacheFlushRequired) {
         device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
         MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(csrCommandStream, device.getRootDeviceEnvironment());
+    }
+
+    if (requiresInstructionCacheFlush) {
+        MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(csrCommandStream);
+        requiresInstructionCacheFlush = false;
     }
 
     dispatchImmediateFlushPipelineSelectCommand(flushData, csrCommandStream);
@@ -540,9 +549,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     if (requiresInstructionCacheFlush) {
-        PipeControlArgs args;
-        args.instructionCacheInvalidateEnable = true;
-        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
+        MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(commandStreamCSR);
         requiresInstructionCacheFlush = false;
     }
 
@@ -942,7 +949,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
 
     if (requiresInstructionCacheFlush) {
-        size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+        size += MemorySynchronizationCommands<GfxFamily>::getSizeForInstructionCacheFlush();
     }
 
     if (debugManager.flags.ForcePipeControlPriorToWalker.get()) {

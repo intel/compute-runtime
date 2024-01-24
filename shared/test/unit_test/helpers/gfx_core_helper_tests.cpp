@@ -1008,6 +1008,25 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsS
     EXPECT_TRUE(pipeControl->getTlbInvalidate());
 }
 
+HWTEST_F(PipeControlHelperTests, WhenGettingPipeControSizeForInstructionCacheFlushThenReturnCorrectValue) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    size_t actualSize = MemorySynchronizationCommands<FamilyType>::getSizeForInstructionCacheFlush();
+    EXPECT_EQ(sizeof(PIPE_CONTROL), actualSize);
+}
+
+HWTEST_F(PipeControlHelperTests, WhenProgrammingInstructionCacheFlushThenExpectInstructionCacheInvalidateEnableFieldSet) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    MemorySynchronizationCommands<FamilyType>::addInstructionCacheFlush(stream);
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+    ASSERT_NE(nullptr, pipeControl);
+
+    EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
+}
+
 using ProductHelperCommonTest = Test<DeviceFixture>;
 
 HWTEST2_F(ProductHelperCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference, IsAtLeastGen12lp) {

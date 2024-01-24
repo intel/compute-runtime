@@ -459,6 +459,7 @@ struct MemorySynchronizationCommands {
     static void addFullCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setCacheFlushExtraProperties(PipeControlArgs &args);
     static void addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void addInstructionCacheFlush(LinearStream &commandStream);
 
     static size_t getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidationRequired);
     static size_t getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment);
@@ -466,6 +467,7 @@ struct MemorySynchronizationCommands {
     static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForAdditonalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForInstructionCacheFlush();
     static size_t getSizeForFullCacheFlush();
 
     static bool isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);

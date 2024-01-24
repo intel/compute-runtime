@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -828,6 +828,56 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenDirtyFlagForContextInBi
     EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
 
     EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandQueue->getCsr()->getOsContext().getContextId()));
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(commandLists[i]);
+        commandList->destroy();
+    }
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, GivenRegisterInstructionCacheFlushWhenExecutingCmdListsThenInstructionCacheInvalidateIsSent) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+
+    neoDevice->getDefaultEngine().commandStreamReceiver->registerInstructionCacheFlush();
+
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle()};
+    uint32_t numCommandLists = 1;
+    CommandList::fromHandle(commandLists[0])->close();
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pipeControls.size());
+
+    bool foundInstructionCacheInvalidate = false;
+    for (auto pipeControlIT : pipeControls) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControlIT);
+        if (pipeControl->getInstructionCacheInvalidateEnable()) {
+            foundInstructionCacheInvalidate = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(foundInstructionCacheInvalidate);
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(commandLists[i]);

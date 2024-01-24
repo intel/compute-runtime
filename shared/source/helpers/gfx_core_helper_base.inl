@@ -529,6 +529,19 @@ void MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(LinearStream &
 }
 
 template <typename GfxFamily>
+size_t MemorySynchronizationCommands<GfxFamily>::getSizeForInstructionCacheFlush() {
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
+}
+
+template <typename GfxFamily>
+void MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(LinearStream &commandStream) {
+    PipeControlArgs args;
+    args.instructionCacheInvalidateEnable = true;
+
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStream, args);
+}
+
+template <typename GfxFamily>
 const StackVec<size_t, 3> GfxCoreHelperHw<GfxFamily>::getDeviceSubGroupSizes() const {
     return {8, 16, 32};
 }
