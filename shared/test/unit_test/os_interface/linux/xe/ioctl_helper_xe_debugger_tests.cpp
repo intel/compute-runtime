@@ -242,7 +242,7 @@ TEST(IoctlHelperXeTest, GivenXeDriverThenDebugAttachReturnsTrue) {
 TEST(IoctlHelperXeTest, givenXeEnableEuDebugThenReturnCorrectValue) {
 
     VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
-    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFwriteReturn);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFreadReturn);
     VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -260,7 +260,7 @@ TEST(IoctlHelperXeTest, givenXeEnableEuDebugThenReturnCorrectValue) {
 
 TEST(IoctlHelperXeTest, givenXeEnableEuDebugWithInvalidPathThenReturnCorrectValue) {
     VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
-    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFwriteReturn);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFreadReturn);
     VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

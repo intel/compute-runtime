@@ -135,7 +135,7 @@ TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOn
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugThenReturnCorrectValue) {
     VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
-    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFwriteReturn);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFreadReturn);
     VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
 
     buffer[0] = '1';
@@ -146,7 +146,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugThenReturnCorrectValue)
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimEnableEuDebugWithInvalidPathThenReturnDefaultValue) {
     VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 1);
-    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFwriteReturn);
+    std::unique_ptr<char[]> buffer = std::make_unique<char[]>(IoFunctions::mockFreadReturn);
     VariableBackup<char *> mockFreadBufferBackup(&IoFunctions::mockFreadBuffer, buffer.get());
 
     buffer[0] = '1';
