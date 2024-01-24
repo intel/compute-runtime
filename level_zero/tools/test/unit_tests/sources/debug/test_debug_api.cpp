@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,26 +18,11 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 
 namespace L0 {
 namespace ult {
-
-struct DebugApiFixture : public DeviceFixture {
-    void setUp() {
-        DeviceFixture::setUp();
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-        mockBuiltins = new MockBuiltins();
-        mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
-    }
-
-    void tearDown() {
-        DeviceFixture::tearDown();
-    }
-
-    MockBuiltins *mockBuiltins = nullptr;
-};
 
 using DebugApiTest = Test<DebugApiFixture>;
 using MultiTileDebugApiTest = Test<MultipleDevicesWithCustomHwInfo>;
@@ -169,7 +154,7 @@ HWTEST2_F(DebugApiTest, givenDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesRe
     EXPECT_EQ(ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH, debugProperties.flags);
 }
 
-using isDebugNotSupportedProduct = IsNotWithinProducts<IGFX_DG1, IGFX_METEORLAKE>;
+using isDebugNotSupportedProduct = IsAtMostProduct<IGFX_ALDERLAKE_N>;
 HWTEST2_F(DebugApiTest, givenDeviceWhenDebugIsNotSupportedThenGetPropertiesReturnsCorrectFlag, isDebugNotSupportedProduct) {
     zet_device_debug_properties_t debugProperties = {};
     debugProperties.flags = ZET_DEVICE_DEBUG_PROPERTY_FLAG_FORCE_UINT32;

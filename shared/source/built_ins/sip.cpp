@@ -233,6 +233,7 @@ void SipKernel::freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, Mem
     for (auto &sipKernel : rootDeviceEnvironment->sipKernels) {
         if (sipKernel.get()) {
             memoryManager->freeGraphicsMemory(sipKernel->getSipAllocation());
+            sipKernel.reset();
         }
     }
 }
