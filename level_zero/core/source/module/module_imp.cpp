@@ -1081,6 +1081,7 @@ bool ModuleImp::linkBinary() {
     }
 
     Linker::KernelDescriptorsT kernelDescriptors;
+    auto &compilerProductHelper = this->device->getNEODevice()->getCompilerProductHelper();
     if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         patchedIsaTempStorage.reserve(this->kernelImmDatas.size());
         kernelDescriptors.reserve(this->kernelImmDatas.size());
@@ -1089,8 +1090,15 @@ bool ModuleImp::linkBinary() {
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
             patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize));
-            auto isaAddressToPatch = static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddressToPatch() +
-                                                            kernelImmDatas.at(i)->getIsaOffsetInParentAllocation());
+            uintptr_t isaAddressToPatch = 0;
+            if (compilerProductHelper.isHeaplessModeEnabled()) {
+                isaAddressToPatch = static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddress() +
+                                                           kernelImmDatas.at(i)->getIsaOffsetInParentAllocation());
+            } else {
+                isaAddressToPatch = static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddressToPatch() +
+                                                           kernelImmDatas.at(i)->getIsaOffsetInParentAllocation());
+            }
+
             isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), isaAddressToPatch, kernHeapInfo.kernelHeapSize});
             kernelDescriptors.push_back(&kernelInfo->kernelDescriptor);
         }
@@ -1399,6 +1407,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         auto &isaSegmentsForPatching = moduleId->isaSegmentsForPatching;
         auto &patchedIsaTempStorage = moduleId->patchedIsaTempStorage;
         uint32_t numPatchedSymbols = 0u;
+        auto &compilerProductHelper = this->device->getNEODevice()->getCompilerProductHelper();
         std::vector<std::string> unresolvedSymbolLogMessages;
         if (moduleId->translationUnit->programInfo.linkerInput && moduleId->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
             if (patchedIsaTempStorage.empty()) {
@@ -1408,8 +1417,16 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                     auto &kernHeapInfo = kernelInfo->heapInfo;
                     const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
                     patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize));
-                    auto isaAddressToPatch = static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddressToPatch() +
-                                                                    kernelImmDatas.at(i)->getIsaOffsetInParentAllocation());
+
+                    uintptr_t isaAddressToPatch = 0;
+                    if (compilerProductHelper.isHeaplessModeEnabled()) {
+                        isaAddressToPatch = static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddress() +
+                                                                   kernelImmDatas.at(i)->getIsaOffsetInParentAllocation());
+                    } else {
+                        isaAddressToPatch = static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddressToPatch() +
+                                                                   kernelImmDatas.at(i)->getIsaOffsetInParentAllocation());
+                    }
+
                     isaSegmentsForPatching.push_back(NEO::Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), isaAddressToPatch, kernHeapInfo.kernelHeapSize});
                 }
             }
