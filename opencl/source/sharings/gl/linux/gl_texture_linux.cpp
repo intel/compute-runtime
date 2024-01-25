@@ -29,6 +29,9 @@
 #include "config.h"
 #include <GL/gl.h>
 
+#include <poll.h>
+#include <unistd.h>
+
 namespace NEO {
 Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel, cl_GLuint texture,
                                         cl_int *errcodeRet) {
@@ -219,19 +222,34 @@ void GlTexture::synchronizeObject(UpdateData &updateData) {
 
     /* Prepare flush request */
     struct mesa_glinterop_export_in texIn = {};
+    struct mesa_glinterop_flush_out syncOut = {};
+    int fenceFd = -1;
 
     texIn.version = 2;
     texIn.target = this->target;
     texIn.obj = this->clGlObjectId;
     texIn.miplevel = this->miplevel;
 
+    syncOut.version = 1;
+    syncOut.fence_fd = &fenceFd;
+
     /* Call MESA interop */
-    int retValue = sharingFunctions->flushObjects(1, &texIn, nullptr);
+    int retValue = sharingFunctions->flushObjects(1, &texIn, &syncOut);
     if (retValue != MESA_GLINTEROP_SUCCESS) {
         updateData.synchronizationStatus = SynchronizeStatus::SYNCHRONIZE_ERROR;
         return;
     }
 
+    /* Wait on the fence fd */
+    struct pollfd fp = {
+        .fd = fenceFd,
+        .events = POLLIN,
+        .revents = 0,
+    };
+    poll(&fp, 1, 1000);
+    close(fenceFd);
+
+    /* Done */
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
 }
 

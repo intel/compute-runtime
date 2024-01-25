@@ -20,6 +20,9 @@
 
 #include "config.h"
 
+#include <poll.h>
+#include <unistd.h>
+
 using namespace NEO;
 
 Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, unsigned int bufferId, cl_int *errcodeRet) {
@@ -102,18 +105,33 @@ void GlBuffer::synchronizeObject(UpdateData &updateData) {
 
     /* Prepare flush request */
     struct mesa_glinterop_export_in objIn = {};
+    struct mesa_glinterop_flush_out syncOut = {};
+    int fenceFd = -1;
 
     objIn.version = 2;
     objIn.target = GL_ARRAY_BUFFER;
     objIn.obj = this->clGlObjectId;
 
+    syncOut.version = 1;
+    syncOut.fence_fd = &fenceFd;
+
     /* Call MESA interop */
-    int retValue = sharingFunctions->flushObjects(1, &objIn, nullptr);
+    int retValue = sharingFunctions->flushObjects(1, &objIn, &syncOut);
     if (retValue != MESA_GLINTEROP_SUCCESS) {
         updateData.synchronizationStatus = SynchronizeStatus::SYNCHRONIZE_ERROR;
         return;
     }
 
+    /* Wait on the fence fd */
+    struct pollfd fp = {
+        .fd = fenceFd,
+        .events = POLLIN,
+        .revents = 0,
+    };
+    poll(&fp, 1, 1000);
+    close(fenceFd);
+
+    /* Done */
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
 }
 
