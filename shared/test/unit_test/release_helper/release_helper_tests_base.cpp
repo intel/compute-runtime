@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,19 +42,6 @@ void ReleaseHelperTestsBase::whenGettingMediaFrequencyTileIndexThenFalseIsReturn
     }
 }
 
-void ReleaseHelperTestsBase::whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
-            auto allocationType = static_cast<AllocationType>(i);
-            auto preferredAllocationMethod = releaseHelper->getPreferredAllocationMethod(allocationType);
-            EXPECT_FALSE(preferredAllocationMethod.has_value());
-        }
-    }
-}
-
 void ReleaseHelperTestsBase::whenGettingMediaFrequencyTileIndexThenOneIsReturned() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
@@ -65,25 +52,6 @@ void ReleaseHelperTestsBase::whenGettingMediaFrequencyTileIndexThenOneIsReturned
         auto expectedTileIndex = 1u;
         EXPECT_TRUE(releaseHelper->getMediaFrequencyTileIndex(tileIndex));
         EXPECT_EQ(expectedTileIndex, tileIndex);
-    }
-}
-
-void ReleaseHelperTestsBase::whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
-            auto allocationType = static_cast<AllocationType>(i);
-            auto preferredAllocationMethod = releaseHelper->getPreferredAllocationMethod(allocationType);
-            if (allocationType == AllocationType::tagBuffer ||
-                allocationType == AllocationType::timestampPacketTagBuffer) {
-                EXPECT_FALSE(preferredAllocationMethod.has_value());
-            } else {
-                EXPECT_TRUE(preferredAllocationMethod.has_value());
-                EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
-            }
-        }
     }
 }
 

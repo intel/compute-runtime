@@ -839,4 +839,14 @@ aub_stream::EngineType ProductHelperHw<gfxProduct>::getDefaultCopyEngine() const
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::adjustEngineGroupType(EngineGroupType &engineGroupType) const {}
 
+template <PRODUCT_FAMILY gfxProduct>
+std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
+    return {};
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
+    return true;
+}
+
 } // namespace NEO

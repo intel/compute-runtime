@@ -164,6 +164,8 @@ class ProductHelperHw : public ProductHelper {
     std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
     void adjustEngineGroupType(EngineGroupType &engineGroupType) const override;
+    std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
+    bool isCachingOnCpuAvailable() const override;
 
     ~ProductHelperHw() override = default;
 

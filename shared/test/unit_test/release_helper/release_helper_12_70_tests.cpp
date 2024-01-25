@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,6 @@ TEST_F(ReleaseHelper1270Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_FALSE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_FALSE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
-        EXPECT_FALSE(releaseHelper->isCachingOnCpuAvailable());
         EXPECT_TRUE(releaseHelper->isDirectSubmissionSupported());
         EXPECT_TRUE(releaseHelper->isAuxSurfaceModeOverrideRequired());
         EXPECT_FALSE(releaseHelper->isRcsExposureDisabled());
@@ -67,10 +66,6 @@ TEST_F(ReleaseHelper1270Tests, whenGettingMaxPreferredSlmSizeThenSizeSizeIsLimit
 
 TEST_F(ReleaseHelper1270Tests, whenGettingMediaFrequencyTileIndexThenOneIsReturned) {
     whenGettingMediaFrequencyTileIndexThenOneIsReturned();
-}
-
-TEST_F(ReleaseHelper1270Tests, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer) {
-    whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer();
 }
 
 TEST_F(ReleaseHelper1270Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {

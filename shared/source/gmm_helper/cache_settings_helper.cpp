@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,8 +39,8 @@ bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmReso
     if (rootDeviceEnvironment.isWddmOnLinux()) {
         return false;
     }
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    if (!releaseHelper || releaseHelper->isCachingOnCpuAvailable()) {
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    if (productHelper.isCachingOnCpuAvailable()) {
         return false;
     }
     return (gmmResourceUsageType != GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER);

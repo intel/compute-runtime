@@ -868,3 +868,11 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAdjustingEnginesGroupThenDoNot
         EXPECT_EQ(engineGroupTypeUnchanged, engineGroupType);
     }
 }
+
+HWTEST_F(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned) {
+    for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
+        auto allocationType = static_cast<AllocationType>(i);
+        auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
+        EXPECT_FALSE(preferredAllocationMethod.has_value());
+    }
+}

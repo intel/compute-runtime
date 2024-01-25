@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
     DebugManagerStateRestore restore;
     debugManager.flags.EnableCpuCacheForResources.set(0);
     StorageInfo storageInfo{};
-    auto releaseHelper = getGmmHelper()->getRootDeviceEnvironment().getReleaseHelper();
+    auto &productHelper = getGmmHelper()->getRootDeviceEnvironment().getProductHelper();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = false;
     gmmRequirements.preferCompressed = false;
@@ -47,7 +47,7 @@ TEST_F(GmmTests, givenResourceUsageTypesCacheableWhenCreateGmmAndFlagEnableCpuCa
                                    GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                    GMM_RESOURCE_USAGE_OCL_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, storageInfo, gmmRequirements);
-        bool noCpuAccessPreference = releaseHelper ? !releaseHelper->isCachingOnCpuAvailable() : false;
+        bool noCpuAccessPreference = !productHelper.isCachingOnCpuAvailable();
         EXPECT_EQ(noCpuAccessPreference, CacheSettingsHelper::preferNoCpuAccess(resourceUsageType, getGmmHelper()->getRootDeviceEnvironment()));
         EXPECT_EQ(noCpuAccessPreference, gmm->getPreferNoCpuAccess());
     }
@@ -91,7 +91,7 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
     DebugManagerStateRestore restore;
     debugManager.flags.EnableCpuCacheForResources.set(false);
     StorageInfo storageInfo{};
-    auto releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = false;
     gmmRequirements.preferCompressed = false;
@@ -101,11 +101,8 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
                                           GMM_RESOURCE_USAGE_OCL_BUFFER_CONST,
                                           GMM_RESOURCE_USAGE_OCL_BUFFER}) {
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, regularResourceUsageType, storageInfo, gmmRequirements);
-        if (!releaseHelper) {
-            EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
-        } else {
-            EXPECT_EQ(releaseHelper->isCachingOnCpuAvailable(), gmm->resourceParams.Flags.Info.Cacheable);
-        }
+
+        EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), gmm->resourceParams.Flags.Info.Cacheable);
     }
 
     for (auto cpuAccessibleResourceUsageType : {GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER}) {

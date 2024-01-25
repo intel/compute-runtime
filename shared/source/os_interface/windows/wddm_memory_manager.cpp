@@ -79,8 +79,8 @@ GfxMemoryAllocationMethod WddmMemoryManager::getPreferredAllocationMethod(const 
     }
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[allocationProperties.rootDeviceIndex].get();
     UNRECOVERABLE_IF(!rootDeviceEnvironment);
-    auto releaseHelper = rootDeviceEnvironment->releaseHelper.get();
-    auto preference = releaseHelper ? releaseHelper->getPreferredAllocationMethod(allocationProperties.allocationType) : std::nullopt;
+    auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    auto preference = productHelper.getPreferredAllocationMethod(allocationProperties.allocationType);
     if (preference) {
         return *preference;
     }

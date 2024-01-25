@@ -105,4 +105,20 @@ uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
     return 1u;
 }
 
+template <>
+std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
+    switch (allocationType) {
+    case AllocationType::tagBuffer:
+    case AllocationType::timestampPacketTagBuffer:
+        return {};
+    default:
+        return GfxMemoryAllocationMethod::allocateByKmd;
+    }
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
+    return false;
+}
+
 } // namespace NEO

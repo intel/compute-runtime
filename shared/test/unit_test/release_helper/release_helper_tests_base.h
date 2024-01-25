@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,10 +22,8 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     ReleaseHelperTestsBase();
     ~ReleaseHelperTestsBase() override;
     void whenGettingMediaFrequencyTileIndexThenFalseIsReturned();
-    void whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned();
     void whenGettingMaxPreferredSlmSizeThenSizeIsNotModified();
     void whenGettingMediaFrequencyTileIndexThenOneIsReturned();
-    void whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer();
     void whenShouldAdjustCalledThenTrueReturned();
     void whenShouldAdjustCalledThenFalseReturned();
     void whenGettingSupportedNumGrfsThenValues128And256Returned();

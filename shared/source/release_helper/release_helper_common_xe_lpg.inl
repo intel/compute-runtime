@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,22 +12,6 @@ namespace NEO {
 
 template <>
 bool ReleaseHelperHw<release>::isMatrixMultiplyAccumulateSupported() const {
-    return false;
-}
-
-template <>
-std::optional<GfxMemoryAllocationMethod> ReleaseHelperHw<release>::getPreferredAllocationMethod(AllocationType allocationType) const {
-    switch (allocationType) {
-    case AllocationType::tagBuffer:
-    case AllocationType::timestampPacketTagBuffer:
-        return {};
-    default:
-        return GfxMemoryAllocationMethod::allocateByKmd;
-    }
-}
-
-template <>
-bool ReleaseHelperHw<release>::isCachingOnCpuAvailable() const {
     return false;
 }
 

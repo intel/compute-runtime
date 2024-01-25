@@ -582,11 +582,11 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
 }
 
 TEST_F(WddmMemoryManagerTests, givenForcePreferredAllocationMethodFlagSetWhenGettingPreferredAllocationMethodThenValueFlagIsReturned) {
-    auto releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->releaseHelper.get();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
     for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
         AllocationProperties allocationProperties{0u, 0u, static_cast<AllocationType>(i), {}};
-        if (releaseHelper && releaseHelper->getPreferredAllocationMethod(allocationProperties.allocationType)) {
-            EXPECT_EQ(*releaseHelper->getPreferredAllocationMethod(allocationProperties.allocationType), memoryManager->getPreferredAllocationMethod(allocationProperties));
+        if (productHelper.getPreferredAllocationMethod(allocationProperties.allocationType)) {
+            EXPECT_EQ(productHelper.getPreferredAllocationMethod(allocationProperties.allocationType), memoryManager->getPreferredAllocationMethod(allocationProperties));
         } else {
             EXPECT_EQ(preferredAllocationMethod, memoryManager->getPreferredAllocationMethod(allocationProperties));
         }
@@ -3442,12 +3442,8 @@ HWTEST_F(MockWddmMemoryManagerTest, givenEnabled64kbPagesWhenAllocationIsCreated
     EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation->getUnderlyingBufferSize());
     EXPECT_NE(0llu, graphicsAllocation->getGpuAddress());
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
-    if (releaseHelper) {
-        EXPECT_EQ(releaseHelper->isCachingOnCpuAvailable(), graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
-    } else {
-        EXPECT_TRUE(graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
-    }
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper();
+    EXPECT_EQ(productHelper.isCachingOnCpuAvailable(), graphicsAllocation->getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
 
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }

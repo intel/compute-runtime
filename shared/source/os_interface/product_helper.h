@@ -43,6 +43,8 @@ class OSInterface;
 class DriverModel;
 enum class DriverModelType;
 enum class EngineGroupType : uint32_t;
+enum class GfxMemoryAllocationMethod : uint32_t;
+enum class AllocationType;
 
 using ProductHelperCreateFunctionType = std::unique_ptr<ProductHelper> (*)();
 extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];
@@ -215,6 +217,8 @@ class ProductHelper {
     virtual std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const = 0;
     virtual aub_stream::EngineType getDefaultCopyEngine() const = 0;
     virtual void adjustEngineGroupType(EngineGroupType &engineGroupType) const = 0;
+    virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
+    virtual bool isCachingOnCpuAvailable() const = 0;
 
     virtual ~ProductHelper() = default;
 

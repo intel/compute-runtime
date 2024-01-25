@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,6 @@ namespace NEO {
 
 class ReleaseHelper;
 enum class ReleaseType;
-enum class GfxMemoryAllocationMethod : uint32_t;
-enum class AllocationType;
 
 inline constexpr uint32_t maxArchitecture = 64;
 using createReleaseHelperFunctionType = std::unique_ptr<ReleaseHelper> (*)(HardwareIpVersion hardwareIpVersion);
@@ -45,11 +43,9 @@ class ReleaseHelper {
     virtual int getProductMaxPreferredSlmSize(int preferredEnumValue) const = 0;
     virtual bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const = 0;
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
-    virtual bool isCachingOnCpuAvailable() const = 0;
     virtual bool shouldAdjustDepth() const = 0;
     virtual bool isDirectSubmissionSupported() const = 0;
     virtual bool isRcsExposureDisabled() const = 0;
-    virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
     virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
     virtual bool isBindlessAddressingDisabled() const = 0;
     virtual uint32_t getNumThreadsPerEu() const = 0;
@@ -80,11 +76,9 @@ class ReleaseHelperHw : public ReleaseHelper {
     int getProductMaxPreferredSlmSize(int preferredEnumValue) const override;
     bool getMediaFrequencyTileIndex(uint32_t &tileIndex) const override;
     bool isResolvingSubDeviceIDNeeded() const override;
-    bool isCachingOnCpuAvailable() const override;
     bool shouldAdjustDepth() const override;
     bool isDirectSubmissionSupported() const override;
     bool isRcsExposureDisabled() const override;
-    std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
     std::vector<uint32_t> getSupportedNumGrfs() const override;
     bool isBindlessAddressingDisabled() const override;
     uint32_t getNumThreadsPerEu() const override;

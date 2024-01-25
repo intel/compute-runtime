@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,3 +26,4 @@ HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenIsAdjustWalkOrde
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenGetMediaFrequencyTileIndexCallThenFalseReturn, IGFX_ARROWLAKE);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned, IGFX_ARROWLAKE);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenCheckBlitEnqueueAllowedThenReturnTrue, IGFX_ARROWLAKE);
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned, IGFX_ARROWLAKE);

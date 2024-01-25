@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -337,4 +337,22 @@ HWTEST2_F(XeLpgProductHelperTests, givenCompilerProductHelperWhenGetDefaultHwIpV
 
 HWTEST2_F(XeLpgProductHelperTests, whenCheckDirectSubmissionSupportedThenValueFromReleaseHelperIsReturned, IsXeLpg) {
     EXPECT_EQ(productHelper->isDirectSubmissionSupported(releaseHelper), releaseHelper->isDirectSubmissionSupported());
+}
+
+HWTEST2_F(XeLpgProductHelperTests, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer, IsXeLpg) {
+    for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
+        auto allocationType = static_cast<AllocationType>(i);
+        auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
+        if (allocationType == AllocationType::tagBuffer ||
+            allocationType == AllocationType::timestampPacketTagBuffer) {
+            EXPECT_FALSE(preferredAllocationMethod.has_value());
+        } else {
+            EXPECT_TRUE(preferredAllocationMethod.has_value());
+            EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
+        }
+    }
+}
+
+HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallIsCachingOnCpuAvailableThenFalseIsReturned, IsXeLpg) {
+    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
 }

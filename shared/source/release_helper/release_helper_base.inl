@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,16 +70,6 @@ bool ReleaseHelperHw<releaseType>::getMediaFrequencyTileIndex(uint32_t &tileInde
 template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
     return true;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isCachingOnCpuAvailable() const {
-    return true;
-}
-
-template <ReleaseType releaseType>
-std::optional<GfxMemoryAllocationMethod> ReleaseHelperHw<releaseType>::getPreferredAllocationMethod(AllocationType allocationType) const {
-    return {};
 }
 
 template <ReleaseType releaseType>
