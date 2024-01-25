@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -435,10 +435,10 @@ TEST_F(MemoryPropertiesHelperTests, givenDeviceHandleListWhenParsePropertiesThen
     cl_device_id deviceId2 = clDevice2;
 
     cl_mem_properties_intel properties[] = {
-        CL_DEVICE_HANDLE_LIST_KHR,
+        CL_MEM_DEVICE_HANDLE_LIST_KHR,
         reinterpret_cast<cl_mem_properties_intel>(deviceId),
         reinterpret_cast<cl_mem_properties_intel>(deviceId2),
-        CL_DEVICE_HANDLE_LIST_END_KHR,
+        CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
         0};
 
     EXPECT_TRUE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
@@ -450,9 +450,9 @@ TEST_F(MemoryPropertiesHelperTests, givenDeviceHandleListWhenParsePropertiesThen
 
 TEST_F(MemoryPropertiesHelperTests, givenDeviceHandleListWhenParsePropertiesThenAssociatedDevicesAreNotSet) {
     cl_mem_properties_intel properties[] = {
-        CL_DEVICE_HANDLE_LIST_KHR,
+        CL_MEM_DEVICE_HANDLE_LIST_KHR,
         reinterpret_cast<cl_mem_properties_intel>(&context),
-        CL_DEVICE_HANDLE_LIST_END_KHR,
+        CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
         0};
 
     EXPECT_FALSE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1763,10 +1763,10 @@ TEST(ImageTest, givenPropertiesWithClDeviceHandleListKHRWhenCreateImageThenCorre
     cl_device_id deviceId2 = clDevice2;
 
     cl_mem_properties_intel properties[] = {
-        CL_DEVICE_HANDLE_LIST_KHR,
+        CL_MEM_DEVICE_HANDLE_LIST_KHR,
         reinterpret_cast<cl_mem_properties_intel>(deviceId),
         reinterpret_cast<cl_mem_properties_intel>(deviceId2),
-        CL_DEVICE_HANDLE_LIST_END_KHR,
+        CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
         0};
 
     DebugManagerStateRestore dbgRestorer;

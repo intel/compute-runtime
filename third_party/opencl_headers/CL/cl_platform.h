@@ -516,6 +516,9 @@ typedef unsigned int cl_GLenum;
 #elif defined(__GNUC__) && ! defined(__STRICT_ANSI__)
 #define  __CL_HAS_ANON_STRUCT__ 1
 #define  __CL_ANON_STRUCT__ __extension__
+#elif defined(__clang__)
+#define  __CL_HAS_ANON_STRUCT__ 1
+#define  __CL_ANON_STRUCT__ __extension__
 #else
 #define  __CL_HAS_ANON_STRUCT__ 0
 #define  __CL_ANON_STRUCT__
