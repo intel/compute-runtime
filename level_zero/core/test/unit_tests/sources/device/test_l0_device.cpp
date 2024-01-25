@@ -811,7 +811,7 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelThenNewAllocati
     EXPECT_EQ(NEO::AllocationType::internalHostMemory, allocation->getAllocationType());
     EXPECT_EQ(rootDeviceIndex, allocation->getRootDeviceIndex());
     EXPECT_NE(allocation->getUnderlyingBuffer(), reinterpret_cast<void *>(buffer));
-    EXPECT_EQ(allocation->getUnderlyingBufferSize(), size);
+    EXPECT_EQ(alignUp(size, MemoryConstants::pageSize), allocation->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(buffer, allocation->getUnderlyingBuffer(), size));
 
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);

@@ -815,7 +815,10 @@ HWTEST_F(CommandStreamReceiverTest, givenOverrideCsrAllocationSizeWhenCreatingCo
 
     bool ret = commandStreamReceiver.createPreemptionAllocation();
     ASSERT_TRUE(ret);
-    EXPECT_EQ(static_cast<size_t>(overrideSize), commandStreamReceiver.preemptionAllocation->getUnderlyingBufferSize());
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto aligment = gfxCoreHelper.getPreemptionAllocationAlignment();
+    size_t expectedAlignedSize = alignUp(overrideSize, aligment);
+    EXPECT_EQ(expectedAlignedSize, commandStreamReceiver.preemptionAllocation->getUnderlyingBufferSize());
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenCreatingPreemptionAllocationForBcsThenNoAllocationIsCreated) {
@@ -2068,11 +2071,11 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeDoesNotExceedCurrentWhenCallin
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 100u, 0u);
     EXPECT_EQ(allocation, commandStream.getGraphicsAllocation());
-    EXPECT_EQ(128u, commandStream.getMaxAvailableSpace());
+    EXPECT_EQ(MemoryConstants::pageSize, commandStream.getMaxAvailableSpace());
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 128u, 0u);
     EXPECT_EQ(allocation, commandStream.getGraphicsAllocation());
-    EXPECT_EQ(128u, commandStream.getMaxAvailableSpace());
+    EXPECT_EQ(MemoryConstants::pageSize, commandStream.getMaxAvailableSpace());
 
     memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 }
@@ -2081,7 +2084,7 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
-    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 0u);
+    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, MemoryConstants::pageSize + 1, 0u);
     EXPECT_NE(allocation, commandStream.getGraphicsAllocation());
     memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
 }
@@ -2090,11 +2093,13 @@ TEST_F(CommandStreamReceiverTest, givenMinimumSizeExceedsCurrentWhenCallingEnsur
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
-    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 0u);
+    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, MemoryConstants::pageSize + 1, 0u);
+
     EXPECT_EQ(MemoryConstants::pageSize64k, commandStream.getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(MemoryConstants::pageSize64k, commandStream.getMaxAvailableSpace());
 
     commandStreamReceiver->ensureCommandBufferAllocation(commandStream, MemoryConstants::pageSize64k + 1u, 0u);
+
     EXPECT_EQ(2 * MemoryConstants::pageSize64k, commandStream.getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(2 * MemoryConstants::pageSize64k, commandStream.getMaxAvailableSpace());
 
@@ -2108,7 +2113,7 @@ TEST_F(CommandStreamReceiverTest, givenForceCommandBufferAlignmentWhenEnsureComm
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
-    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 0u);
+    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, MemoryConstants::pageSize + 1, 0u);
     EXPECT_EQ(2 * MemoryConstants::megaByte, commandStream.getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(2 * MemoryConstants::megaByte, commandStream.getMaxAvailableSpace());
 
@@ -2119,7 +2124,7 @@ TEST_F(CommandStreamReceiverTest, givenAdditionalAllocationSizeWhenCallingEnsure
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties({commandStreamReceiver->getRootDeviceIndex(), 128u, AllocationType::commandBuffer, pDevice->getDeviceBitfield()});
     LinearStream commandStream{allocation};
 
-    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, 129u, 350u);
+    commandStreamReceiver->ensureCommandBufferAllocation(commandStream, MemoryConstants::pageSize + 1, 350u);
     EXPECT_NE(allocation, commandStream.getGraphicsAllocation());
     EXPECT_EQ(MemoryConstants::pageSize64k, commandStream.getGraphicsAllocation()->getUnderlyingBufferSize());
     EXPECT_EQ(MemoryConstants::pageSize64k - 350u, commandStream.getMaxAvailableSpace());

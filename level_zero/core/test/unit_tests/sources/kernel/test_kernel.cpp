@@ -701,8 +701,9 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenPriv
 
     EXPECT_NE(nullptr, kernel->privateMemoryGraphicsAllocation);
 
-    size_t expectedSize = perHwThreadPrivateMemorySizeRequested *
-                          device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch;
+    size_t expectedSize = alignUp(perHwThreadPrivateMemorySizeRequested *
+                                      device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
+                                  MemoryConstants::pageSize);
     EXPECT_EQ(expectedSize, kernel->privateMemoryGraphicsAllocation->getUnderlyingBufferSize());
 }
 

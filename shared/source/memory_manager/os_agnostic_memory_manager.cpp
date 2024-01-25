@@ -27,7 +27,7 @@
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/os_context.h"
-
+#include "shared/source/os_interface/product_helper.h"
 namespace NEO {
 struct OsHandleOsAgnostic : OsHandle {
 };
@@ -62,30 +62,32 @@ bool OsAgnosticMemoryManager::is64kbPagesEnabled(const HardwareInfo *hwInfo) {
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
-    auto sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize);
+    auto alignment = alignUpNonZero(allocationData.alignment, MemoryConstants::pageSize);
+    auto sizeAligned = alignUp(allocationData.size, alignment);
     MemoryAllocation *memoryAllocation = nullptr;
 
-    if (fakeBigAllocations && allocationData.size > bigAllocation) {
+    if (fakeBigAllocations && sizeAligned > bigAllocation) {
         memoryAllocation = createMemoryAllocation(
-            allocationData.type, nullptr, reinterpret_cast<void *>(dummyAddress), dummyAddress, allocationData.size, counter,
+            allocationData.type, nullptr, reinterpret_cast<void *>(dummyAddress), dummyAddress, sizeAligned, counter,
             MemoryPool::system4KBPages, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
         counter++;
         return memoryAllocation;
     }
 
-    auto alignment = allocationData.alignment;
     if (allocationData.type == AllocationType::svmCpu) {
-        alignment = MemoryConstants::pageSize2M;
-        sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize2M);
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        alignment = productHelper.getSvmCpuAlignment();
+        sizeAligned = alignUp(allocationData.size, alignment);
     }
-
+    auto cpuAllocationSize = sizeAligned;
     if (GraphicsAllocation::isDebugSurfaceAllocationType(allocationData.type)) {
-        sizeAligned *= allocationData.storageInfo.getNumBanks();
+        cpuAllocationSize *= allocationData.storageInfo.getNumBanks();
     }
 
-    auto ptr = allocateSystemMemory(sizeAligned, alignment ? alignUp(alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
+    auto ptr = allocateSystemMemory(cpuAllocationSize, alignment);
     if (ptr != nullptr) {
-        memoryAllocation = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), allocationData.size,
+        memoryAllocation = createMemoryAllocation(allocationData.type, ptr, ptr, reinterpret_cast<uint64_t>(ptr), sizeAligned,
                                                   counter, MemoryPool::system4KBPages, allocationData.rootDeviceIndex, allocationData.flags.uncacheable, allocationData.flags.flushL3, false);
 
         if (allocationData.type == AllocationType::svmCpu) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,7 +140,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
         }
         void validateInput(const BuiltinOpParams &conf) const override {
             auto patternAllocation = conf.srcMemObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
-            EXPECT_EQ(patternSize, patternAllocation->getUnderlyingBufferSize());
+            EXPECT_EQ(MemoryConstants::pageSize, patternAllocation->getUnderlyingBufferSize());
             EXPECT_EQ(0, memcmp(pattern, patternAllocation->getUnderlyingBuffer(), patternSize));
         };
         const void *pattern;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
         aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(aubCsr->getRootDeviceIndex(), batchBuffer, sizeBatchBuffer, DispatchMode::immediateDispatch, pDevice->getDeviceBitfield()),
         [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
     EXPECT_NE(nullptr, flatBatchBuffer->getUnderlyingBuffer());
-    EXPECT_EQ(alignUp(128u + 128u, MemoryConstants::pageSize), sizeBatchBuffer);
+    size_t expectedAlignedSize = alignUp(128u, MemoryConstants::pageSize) + alignUp(128u, MemoryConstants::pageSize);
+    EXPECT_EQ(expectedAlignedSize, sizeBatchBuffer);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(chainedBatchBuffer);
