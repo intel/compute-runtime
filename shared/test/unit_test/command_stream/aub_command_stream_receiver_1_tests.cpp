@@ -217,7 +217,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndHighPriorityContextWhenOsC
     EXPECT_TRUE(aub_stream::hardwareContextFlags::highPriority & mockManager->contextFlags);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSetThenDontCreateHardwareContext) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSetThenCreateHardwareContext) {
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
@@ -229,7 +229,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSet
     EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
 
     aubCsr->setupContext(osContext);
-    EXPECT_EQ(nullptr, aubCsr->hardwareContextController.get());
+    EXPECT_NE(nullptr, aubCsr->hardwareContextController.get());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenItIsCreatedThenFileIsNotCreated) {

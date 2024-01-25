@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -582,19 +582,26 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenHardwareContextIsCreatedThenTbxSt
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenOsContextIsSetThenCreateHardwareContext) {
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(pDevice->getRootDeviceEnvironment())[0], pDevice->getDeviceBitfield()));
     std::string fileName = "";
+
     MockAubManager *mockManager = new MockAubManager();
     MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::CSR_TBX);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
-
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(fileName, false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield())));
-    EXPECT_EQ(nullptr, tbxCsr->hardwareContextController.get());
+    EngineUsage engineUsageModes[] = {EngineUsage::lowPriority, EngineUsage::regular, EngineUsage::highPriority};
 
-    tbxCsr->setupContext(osContext);
-    EXPECT_NE(nullptr, tbxCsr->hardwareContextController.get());
+    for (auto mode : engineUsageModes) {
+        auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(pDevice->getRootDeviceEnvironment())[0], pDevice->getDeviceBitfield());
+        engineDescriptor.engineTypeUsage.second = mode;
+        MockOsContext osContext(0, engineDescriptor);
+
+        std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(fileName, false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield())));
+        EXPECT_EQ(nullptr, tbxCsr->hardwareContextController.get());
+
+        tbxCsr->setupContext(osContext);
+        EXPECT_NE(nullptr, tbxCsr->hardwareContextController.get());
+    }
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenPollForCompletionImplIsCalledThenSimulatedCsrMethodIsCalled) {
