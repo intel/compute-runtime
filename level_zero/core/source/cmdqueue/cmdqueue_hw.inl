@@ -115,7 +115,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx);
 
-    this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
+    if (this->heaplessModeEnabled == false) {
+        this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
+    }
     this->setFrontEndStateProperties(ctx);
 
     linearStreamSizeEstimate += this->estimateLinearStreamSizeComplementary(ctx, commandListHandles, numCommandLists);

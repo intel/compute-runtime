@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -320,11 +321,36 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if constexpr (heaplessModeEnabled) {
+        auto requiredScratchSlot0Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
+        auto requiredScratchSlot1Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
+        uint64_t scratchAddress = 0;
+        if (requiredScratchSlot0Size > 0 || requiredScratchSlot1Size > 0) {
+            auto csr = args.device->getDefaultEngine().commandStreamReceiver;
+            auto scratchController = csr->getScratchSpaceController();
+            bool gsbaState = false;
+            bool frontEndState = false;
+            auto ssh = container.getIndirectHeap(HeapType::surfaceState);
+            scratchController->setRequiredScratchSpace(ssh->getCpuBase(), 0, requiredScratchSlot0Size, requiredScratchSlot1Size,
+                                                       csr->peekTaskCount(), csr->getOsContext(), gsbaState, frontEndState);
+
+            if (scratchController->getScratchSpaceSlot0Allocation()) {
+                csr->makeResident(*scratchController->getScratchSpaceSlot0Allocation());
+            }
+            if (scratchController->getScratchSpaceSlot1Allocation()) {
+                csr->makeResident(*scratchController->getScratchSpaceSlot1Allocation());
+            }
+
+            scratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
+        }
+
         auto inlineDataPointer = reinterpret_cast<char *>(walkerCmd.getInlineDataPointer());
         auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;
         auto heap = container.getIndirectHeap(HeapType::indirectObject);
         auto address = heap->getHeapGpuBase() + offsetThreadData;
         std::memcpy(inlineDataPointer + indirectDataPointerAddress.offset, &address, indirectDataPointerAddress.pointerSize);
+
+        auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+        std::memcpy(inlineDataPointer + scratchPointerAddress.offset, &scratchAddress, scratchPointerAddress.pointerSize);
 
     } else {
         walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
