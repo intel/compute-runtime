@@ -296,28 +296,9 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
     }
     for (size_t i = startIndex; i < cmdBufferAllocations.size(); i++) {
         if (this->reusableAllocationList) {
-            bool allocationHandled = false;
-            for (auto &engine : this->device->getMemoryManager()->getRegisteredEngines(cmdBufferAllocations[i]->getRootDeviceIndex())) {
-                auto osContextId = engine.osContext->getContextId();
-                if (cmdBufferAllocations[i]->isUsedByOsContext(osContextId) && engine.commandStreamReceiver->isAnyDirectSubmissionEnabled()) {
-                    auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-                    auto taskCount = engine.commandStreamReceiver->peekTaskCount() + 1;
-                    cmdBufferAllocations[i]->updateTaskCount(taskCount, osContextId);
-                    cmdBufferAllocations[i]->updateResidencyTaskCount(taskCount, osContextId);
-                    engine.commandStreamReceiver->flushTagUpdate();
-                    engine.commandStreamReceiver->waitForTaskCount(taskCount);
-                    allocationHandled = true;
-                }
-            }
-            if (!allocationHandled && isHandleFenceCompletionRequired) {
+            if (isHandleFenceCompletionRequired) {
                 this->device->getMemoryManager()->handleFenceCompletion(cmdBufferAllocations[i]);
             }
-
-            for (auto &engine : this->device->getMemoryManager()->getRegisteredEngines(cmdBufferAllocations[i]->getRootDeviceIndex())) {
-                auto osContextId = engine.osContext->getContextId();
-                cmdBufferAllocations[i]->releaseUsageInOsContext(osContextId);
-            }
-
             reusableAllocationList->pushFrontOne(*cmdBufferAllocations[i]);
         } else {
             this->device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);

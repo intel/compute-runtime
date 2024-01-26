@@ -202,9 +202,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
         return this->alignedPrimarySize;
     }
     void endAlignedPrimaryBuffer();
-    void setHandleFenceCompletionRequired() {
-        this->isHandleFenceCompletionRequired = true;
-    }
 
   protected:
     size_t getAlignedCmdBufferSize() const;
