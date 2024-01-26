@@ -308,7 +308,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintBOPrefetchingResult, false, "tracks the result
 DECLARE_DEBUG_VARIABLE(bool, PrintTagAllocationAddress, false, "Print tag allocation address for each engine")
 DECLARE_DEBUG_VARIABLE(bool, ProvideVerboseImplicitFlush, false, "provides verbose messages about implicit flush mechanism")
 DECLARE_DEBUG_VARIABLE(bool, PrintBlitDispatchDetails, false, "Print blit dispatch details")
-DECLARE_DEBUG_VARIABLE(bool, PrintIoctlTimes, false, "Print ioctl times")
+DECLARE_DEBUG_VARIABLE(bool, PrintKmdTimes, false, "Print ioctl times")
 DECLARE_DEBUG_VARIABLE(bool, PrintIoctlEntries, false, "Print ioctl being called")
 DECLARE_DEBUG_VARIABLE(bool, PrintUmdSharedMigration, false, "Print log message when shared allocation is being migrated by UMD")
 DECLARE_DEBUG_VARIABLE(bool, PrintImageBlitBlockCopyCmdDetails, false, "Prints XY_BLOCK_COPY_BLT command details")

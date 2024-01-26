@@ -88,7 +88,7 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
     int returnedErrno = 0;
     SYSTEM_ENTER();
     do {
-        auto measureTime = debugManager.flags.PrintIoctlTimes.get();
+        auto measureTime = debugManager.flags.PrintKmdTimes.get();
         std::chrono::steady_clock::time_point start;
         std::chrono::steady_clock::time_point end;
 
@@ -644,7 +644,7 @@ std::vector<DataType> Drm::query(uint32_t queryId, uint32_t queryItemFlags) {
 }
 
 void Drm::printIoctlStatistics() {
-    if (!debugManager.flags.PrintIoctlTimes.get()) {
+    if (!debugManager.flags.PrintKmdTimes.get()) {
         return;
     }
 
