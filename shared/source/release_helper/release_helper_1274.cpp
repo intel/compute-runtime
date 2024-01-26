@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,11 @@ bool ReleaseHelperHw<release>::isPipeControlPriorToPipelineSelectWaRequired() co
 
 template <>
 bool ReleaseHelperHw<release>::isSplitMatrixMultiplyAccumulateSupported() const {
+    return true;
+}
+
+template <>
+bool ReleaseHelperHw<release>::isDirectSubmissionSupported() const {
     return true;
 }
 
