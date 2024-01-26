@@ -3226,7 +3226,7 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
     memoryManager->freeGraphicsMemory(allocation1);
 }
 
-TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrThenGpuVaIsAlignedTo2Mb) {
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrThenAcquireGpuRangeCalled) {
     AllocationData allocationData;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
@@ -3237,10 +3237,8 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
     allocationData.hostPtr = reinterpret_cast<const void *>(0x1234);
     auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
 
-    EXPECT_EQ(static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress(), castToUint64(allocation->getReservedAddressPtr()));
-    EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress()));
-    EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(allocation->getReservedAddressSize()));
-
+    EXPECT_EQ(memoryManager->acquireGpuRangeCalledTimes, 1u);
+    EXPECT_EQ(memoryManager->acquireGpuRangeWithCustomAlignmenCalledTimes, 0u);
     memoryManager->freeGraphicsMemory(allocation);
 }
 

@@ -147,7 +147,18 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         }
         return DrmMemoryManager::obtainFdFromHandle(boHandle, rootDeviceIndex);
     }
+    uint64_t acquireGpuRange(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex) override {
+        acquireGpuRangeCalledTimes++;
+        return DrmMemoryManager::acquireGpuRange(size, rootDeviceIndex, heapIndex);
+    }
 
+    uint64_t acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment) override {
+        acquireGpuRangeWithCustomAlignmenCalledTimes++;
+        return DrmMemoryManager::acquireGpuRangeWithCustomAlignment(size, rootDeviceIndex, heapIndex, alignment);
+    }
+
+    uint32_t acquireGpuRangeCalledTimes = 0u;
+    uint32_t acquireGpuRangeWithCustomAlignmenCalledTimes = 0u;
     ExecutionEnvironment *executionEnvironment = nullptr;
 
   protected:

@@ -121,7 +121,7 @@ BufferObject *DrmMemoryManager::createRootDeviceBufferObject(uint32_t rootDevice
         if (bo) {
             if (isLimitedRange(rootDeviceIndex)) {
                 auto boSize = bo->peekSize();
-                bo->setAddress(acquireGpuRange(boSize, rootDeviceIndex, HeapIndex::heapStandard));
+                bo->setAddress(DrmMemoryManager::acquireGpuRange(boSize, rootDeviceIndex, HeapIndex::heapStandard));
                 UNRECOVERABLE_IF(boSize < bo->peekSize());
             }
         } else {
@@ -518,8 +518,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
     auto rootDeviceIndex = allocationData.rootDeviceIndex;
 
-    alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2M);
-    auto gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::heapStandard, MemoryConstants::pageSize2M);
+    auto gpuVirtualAddress = acquireGpuRange(alignedSize, rootDeviceIndex, HeapIndex::heapStandard);
     if (!gpuVirtualAddress) {
         return nullptr;
     }
