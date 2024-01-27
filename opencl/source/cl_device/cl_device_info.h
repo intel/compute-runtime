@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ struct ClDeviceInfoParam {
 
 // clang-format off
 struct ClDeviceInfo {
-    cl_name_version                                                               ilsWithVersion[1];
+    std::vector<cl_name_version>                                                  ilsWithVersion;
     StackVec<cl_name_version, 3>                                                  builtInKernelsWithVersion;
     StackVec<cl_name_version, 5>                                                  openclCAllVersions;
     OpenClCFeaturesContainer                                                      openclCFeatures;

@@ -31,7 +31,6 @@ namespace NEO {
 static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";
-static std::string spirvName = "SPIR-V";
 const char *latestConformanceVersionPassed = "v2023-05-16-00";
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
@@ -142,8 +141,7 @@ void ClDevice::initializeCaps() {
     initializeOpenclCAllVersions();
     deviceInfo.platformLP = (hwInfo.capabilityTable.supportsOcl21Features == false);
     deviceInfo.spirVersions = spirVersions.c_str();
-    deviceInfo.ilsWithVersion[0].version = CL_MAKE_VERSION(1, 2, 0);
-    strcpy_s(deviceInfo.ilsWithVersion[0].name, CL_NAME_VERSION_MAX_NAME_SIZE, spirvName.c_str());
+    initializeILsWithVersion();
 
     deviceInfo.independentForwardProgress = hwInfo.capabilityTable.supportsIndependentForwardProgress;
     deviceInfo.maxNumOfSubGroups = 0;
@@ -455,6 +453,25 @@ void ClDevice::initializeOpenclCAllVersions() {
     for (auto &ver : deviceOpenCLCVersions) {
         openClCVersion.version = CL_MAKE_VERSION(ver.major, ver.minor, 0);
         deviceInfo.openclCAllVersions.push_back(openClCVersion);
+    }
+}
+
+void ClDevice::initializeILsWithVersion() {
+    std::stringstream ilsStringStream{device.getDeviceInfo().ilVersion};
+    std::vector<std::string> ilsVector{
+        std::istream_iterator<std::string>{ilsStringStream}, std::istream_iterator<std::string>{}};
+    deviceInfo.ilsWithVersion.reserve(ilsVector.size());
+    for (auto &il : ilsVector) {
+        size_t majorVersionPos = il.find_last_of('_');
+        size_t minorVersionPos = il.find_last_of('.');
+        if (majorVersionPos != std::string::npos && minorVersionPos != std::string::npos) {
+            cl_name_version ilWithVersion;
+            uint32_t majorVersion = static_cast<uint32_t>(std::stoul(il.substr(majorVersionPos + 1)));
+            uint32_t minorVersion = static_cast<uint32_t>(std::stoul(il.substr(minorVersionPos + 1)));
+            strcpy_s(ilWithVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, il.substr(0, majorVersionPos).c_str());
+            ilWithVersion.version = CL_MAKE_VERSION(majorVersion, minorVersion, 0);
+            deviceInfo.ilsWithVersion.push_back(ilWithVersion);
+        }
     }
 }
 
