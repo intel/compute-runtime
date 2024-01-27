@@ -119,6 +119,8 @@ CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::En
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;
+        } else {
+            commandList->getCmdContainer().setHandleFenceCompletionRequired();
         }
     }
 
