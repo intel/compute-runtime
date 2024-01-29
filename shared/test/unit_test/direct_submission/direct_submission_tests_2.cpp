@@ -171,7 +171,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrSetWhenUnbloc
     EXPECT_EQ(*directSubmission.pciBarrierPtr, 0u);
 }
 
-HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetWhenCreatingDirectSubmissionThenDontEnableMiMemFenceProgramming) {
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToFalseWhenCreatingDirectSubmissionThenDontEnableMiMemFenceProgramming) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
 
@@ -182,7 +182,23 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetWhenCreatingDi
 
     EXPECT_TRUE(directSubmission.initialize(true, false));
 
+    EXPECT_FALSE(directSubmission.miMemFenceRequired);
     EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
+}
+
+HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToTrueWhenCreatingDirectSubmissionThenEnableMiMemFenceProgramming) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    EXPECT_TRUE(directSubmission.miMemFenceRequired);
+    EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
+
+    EXPECT_TRUE(directSubmission.initialize(true, false));
+
+    EXPECT_TRUE(directSubmission.systemMemoryFenceAddressSet);
+    EXPECT_TRUE(directSubmission.miMemFenceRequired);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,

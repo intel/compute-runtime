@@ -73,8 +73,8 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
     }
 
-    if (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0) {
-        miMemFenceRequired = false;
+    if (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() != -1) {
+        miMemFenceRequired = debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get();
     }
     if (debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() != -1) {
         sfenceMode = static_cast<DirectSubmissionSfenceMode>(debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get());
