@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1417,7 +1417,7 @@ namespace NEO {
 extern bool disableBindDefaultInTests;
 }
 
-TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailableInDrmWhenQueryingIsVmBindAvailableThenBindIsAvailableWhenSupported) {
+TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailableInDrmWhenQueryingIsVmBindAvailableThenBindIsAvailable) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseVmBind.set(-1);
     VariableBackup<bool> disableBindBackup(&disableBindDefaultInTests, false);
@@ -1427,11 +1427,9 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailable
     drm.context.vmBindQueryValue = 1;
     drm.context.vmBindQueryReturn = 0;
     EXPECT_FALSE(drm.bindAvailable);
-    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_EQ(drm.isVmBindAvailable(), productHelper.isNewResidencyModelSupported());
-    EXPECT_EQ(drm.bindAvailable, productHelper.isNewResidencyModelSupported());
+    EXPECT_TRUE(drm.isVmBindAvailable());
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
 
@@ -1563,7 +1561,6 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailable
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     drm.context.setPairQueryValue = 1;
     drm.context.setPairQueryReturn = 0;
@@ -1581,8 +1578,7 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailable
     EXPECT_EQ(1u, drm.context.setPairQueryCalled);
 
     EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_EQ(drm.isVmBindAvailable(), productHelper.isNewResidencyModelSupported());
-    EXPECT_EQ(drm.bindAvailable, productHelper.isNewResidencyModelSupported());
+    EXPECT_TRUE(drm.isVmBindAvailable());
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
 

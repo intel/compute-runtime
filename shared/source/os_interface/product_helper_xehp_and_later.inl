@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,11 +47,6 @@ bool ProductHelperHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hw
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isBlitterFullySupported(const HardwareInfo &hwInfo) const {
     return hwInfo.capabilityTable.blitterOperationsSupported;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isNewResidencyModelSupported() const {
-    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -1178,13 +1178,7 @@ bool Drm::isChunkingAvailable() {
 
 bool Drm::isVmBindAvailable() {
     std::call_once(checkBindOnce, [this]() {
-        int ret = ioctlHelper->isVmBindAvailable();
-
-        const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
-
-        ret &= static_cast<int>(productHelper.isNewResidencyModelSupported());
-
-        bindAvailable = ret;
+        bindAvailable = ioctlHelper->isVmBindAvailable();
 
         Drm::overrideBindSupport(bindAvailable);
 
