@@ -37,6 +37,7 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
             case CL_MEM_ALLOC_FLAGS_INTEL:
                 allocflags |= static_cast<cl_mem_alloc_flags_intel>(properties[i + 1]);
                 break;
+            case CL_MEM_DEVICE_ID_INTEL_DEPRECATED:
             case CL_MEM_DEVICE_ID_INTEL: {
                 if (deviceSet) {
                     return false;

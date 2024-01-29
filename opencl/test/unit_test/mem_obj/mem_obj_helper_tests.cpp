@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -278,6 +278,45 @@ TEST(MemObjHelperMultiTile, givenOneSubDeviceSelectedWhenParsingMemoryProperties
         MemoryProperties memoryProperties{0};
         auto deviceIdProperty = reinterpret_cast<cl_mem_properties_intel>(static_cast<cl_device_id>(pClDevice));
         cl_mem_properties_intel properties[] = {CL_MEM_DEVICE_ID_INTEL, deviceIdProperty, 0};
+        return ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocFlagsIntel,
+                                                               ClMemoryPropertiesHelper::ObjType::buffer, context);
+    };
+
+    EXPECT_TRUE(parseMemoryProperties(deviceFactory.subDevices[0], multiTileContext));
+    EXPECT_TRUE(parseMemoryProperties(deviceFactory.subDevices[0], tile0Context));
+    EXPECT_FALSE(parseMemoryProperties(deviceFactory.subDevices[0], tile1Context));
+    EXPECT_FALSE(parseMemoryProperties(deviceFactory.subDevices[0], rootContext));
+
+    EXPECT_TRUE(parseMemoryProperties(deviceFactory.subDevices[1], multiTileContext));
+    EXPECT_TRUE(parseMemoryProperties(deviceFactory.subDevices[1], tile1Context));
+    EXPECT_FALSE(parseMemoryProperties(deviceFactory.subDevices[1], tile0Context));
+    EXPECT_FALSE(parseMemoryProperties(deviceFactory.subDevices[1], rootContext));
+}
+TEST(MemObjHelperMultiTile, givenOneSubDeviceSelectedWithDeprecatedFlagWhenParsingMemoryPropertiesThenTrueIsReturnedForValidContexts) {
+    UltClDeviceFactory deviceFactory{1, 4};
+
+    cl_device_id rootDeviceId = deviceFactory.rootDevices[0];
+    MockContext rootContext(ClDeviceVector{&rootDeviceId, 1});
+
+    cl_device_id tile0Id = deviceFactory.subDevices[0];
+    MockContext tile0Context(ClDeviceVector{&tile0Id, 1});
+
+    cl_device_id tile1Id = deviceFactory.subDevices[1];
+    MockContext tile1Context(ClDeviceVector{&tile1Id, 1});
+
+    cl_device_id allDevices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
+                                 deviceFactory.subDevices[2], deviceFactory.subDevices[3]};
+    MockContext multiTileContext(ClDeviceVector{allDevices, 5});
+
+    EXPECT_EQ(deviceFactory.rootDevices[0]->getDeviceBitfield(), multiTileContext.getDevice(0)->getDeviceBitfield());
+
+    auto parseMemoryProperties = [](ClDevice *pClDevice, Context &context) -> bool {
+        cl_mem_flags flags = 0;
+        cl_mem_flags_intel flagsIntel = 0;
+        cl_mem_alloc_flags_intel allocFlagsIntel = 0;
+        MemoryProperties memoryProperties{0};
+        auto deviceIdProperty = reinterpret_cast<cl_mem_properties_intel>(static_cast<cl_device_id>(pClDevice));
+        cl_mem_properties_intel properties[] = {CL_MEM_DEVICE_ID_INTEL_DEPRECATED, deviceIdProperty, 0};
         return ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocFlagsIntel,
                                                                ClMemoryPropertiesHelper::ObjType::buffer, context);
     };
