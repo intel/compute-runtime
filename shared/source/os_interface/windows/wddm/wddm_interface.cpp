@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,4 +160,22 @@ bool WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandH
     auto status = wddm.getGdi()->submitCommandToHwQueue(&submitCommand);
     UNRECOVERABLE_IF(status != STATUS_SUCCESS);
     return status == STATUS_SUCCESS;
+}
+
+bool NEO::WddmInterface23::createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) {
+    MonitoredFence monitorFenceForResidency{};
+    auto ret = WddmInterface::createMonitoredFence(monitorFenceForResidency);
+    auto &residencyController = osContext.getResidencyController();
+    residencyController.resetMonitoredFenceParams(monitorFenceForResidency.fenceHandle,
+                                                  const_cast<uint64_t *>(monitorFenceForResidency.cpuAddress),
+                                                  monitorFenceForResidency.gpuAddress);
+
+    auto hwQueue = osContext.getHwQueue();
+    monitorFence.cpuAddress = reinterpret_cast<uint64_t *>(hwQueue.progressFenceCpuVA);
+    monitorFence.currentFenceValue = 1u;
+    monitorFence.lastSubmittedFence = 0u;
+    monitorFence.gpuAddress = hwQueue.progressFenceGpuVA;
+    monitorFence.fenceHandle = hwQueue.progressFenceHandle;
+
+    return ret;
 }

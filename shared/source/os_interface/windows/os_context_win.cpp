@@ -108,7 +108,9 @@ bool OsContextWin::isDirectSubmissionSupported() const {
 OsContextWin::~OsContextWin() {
     if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
         wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);
-        wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence());
+        if (residencyController.getMonitoredFence().fenceHandle != hardwareQueue.progressFenceHandle) {
+            wddm.getWddmInterface()->destroyMonitorFence(residencyController.getMonitoredFence().fenceHandle);
+        }
         wddm.destroyContext(wddmContextHandle);
     }
 }

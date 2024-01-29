@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,6 +109,14 @@ TEST_F(Wddm23Tests, whenObjectIsDestructedThenDestroyHwQueue) {
     EXPECT_EQ(hwQueue, getDestroyHwQueueDataFcn()->hHwQueue);
 }
 
+TEST_F(Wddm23Tests, whencreateMonitoredFenceForDirectSubmissionThenObtainHwQueueFenceAndReplaceResidencyControllerWithNewFence) {
+    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().fenceHandle, osContext->getHwQueue().progressFenceHandle);
+    MonitoredFence fence{};
+    wddm->getWddmInterface()->createMonitoredFenceForDirectSubmission(fence, *osContext);
+    EXPECT_EQ(osContext->getHwQueue().progressFenceHandle, fence.fenceHandle);
+    EXPECT_NE(osContext->getResidencyController().getMonitoredFence().fenceHandle, osContext->getHwQueue().progressFenceHandle);
+}
+
 TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpdateMonitoredFence) {
     uint64_t cmdBufferAddress = 123;
     size_t cmdSize = 456;
@@ -196,9 +204,9 @@ TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhe
     EXPECT_EQ(1u, wddm->waitOnGPUResult.called);
 }
 
-TEST_F(Wddm23Tests, givenDestructionOsContextWinWhenCallingDestroyMonitorFenceThenDoNotCallGdiDestroy) {
+TEST_F(Wddm23Tests, givenDestructionOsContextWinWhenCallingDestroyMonitorFenceThenDoNotCallDestroy) {
     osContext.reset(nullptr);
-    EXPECT_EQ(1u, wddmMockInterface->destroyMonitorFenceCalled);
+    EXPECT_EQ(0u, wddmMockInterface->destroyMonitorFenceCalled);
     EXPECT_EQ(0u, getDestroySynchronizationObjectDataFcn()->hSyncObject);
 }
 

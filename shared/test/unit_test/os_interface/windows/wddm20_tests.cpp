@@ -346,6 +346,14 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenCpuValueDifferentThanGpuHangIndicationWhe
     EXPECT_FALSE(wddm->isGpuHangDetected(*osContext));
 }
 
+TEST_F(Wddm20WithMockGdiDllTests, whencreateMonitoredFenceForDirectSubmissionThenCreateFence) {
+    MonitoredFence fence{};
+    wddm->getWddmInterface()->createMonitoredFenceForDirectSubmission(fence, *osContext);
+    EXPECT_EQ(wddmMockInterface->createMonitoredFenceCalled, 1u);
+    EXPECT_NE(osContext->getHwQueue().progressFenceHandle, fence.fenceHandle);
+    wddm->getWddmInterface()->destroyMonitorFence(fence);
+}
+
 TEST_F(Wddm20WithMockGdiDllTests, GivenGpuHangIndicationWhenCheckingForGpuHangThenTrueIsReturned) {
     auto fenceCpuAddress = osContext->getResidencyController().getMonitoredFence().cpuAddress;
     VariableBackup<volatile uint64_t> backupWddmMonitorFence(fenceCpuAddress);

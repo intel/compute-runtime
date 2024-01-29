@@ -20,5 +20,6 @@ class WddmMockInterface : public WddmInterface {
     ADDMETHOD_NOBASE_VOIDRETURN(destroyMonitorFence, (MonitoredFence & monitorFence));
     ADDMETHOD_NOBASE(hwQueuesSupported, bool, false, ());
     ADDMETHOD_NOBASE(submit, bool, true, (uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments));
+    ADDMETHOD_NOBASE(createMonitoredFenceForDirectSubmission, bool, true, (MonitoredFence & monitorFence, OsContextWin &osContext));
 };
 } // namespace NEO

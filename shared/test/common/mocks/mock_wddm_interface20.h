@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,11 @@ class WddmMockInterface20 : public WddmInterface20 {
         WddmInterface20::destroyMonitorFence(monitorFence);
     }
 
+    void destroyMonitorFence(D3DKMT_HANDLE fenceHandle) override {
+        destroyMonitorFenceCalled++;
+        WddmInterface::destroyMonitorFence(fenceHandle);
+    }
+
     bool createMonitoredFence(MonitoredFence &monitorFence) override {
         createMonitoredFenceCalled++;
         if (createMonitoredFenceCalledFail) {
@@ -27,6 +32,10 @@ class WddmMockInterface20 : public WddmInterface20 {
         }
         return WddmInterface::createMonitoredFence(monitorFence);
     }
+
+    bool createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) override {
+        return createMonitoredFence(monitorFence);
+    };
 
     uint32_t destroyMonitorFenceCalled = 0;
     uint32_t createMonitoredFenceCalled = 0;

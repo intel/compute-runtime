@@ -86,10 +86,7 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
-    // for now only WDDM2.0
-    UNRECOVERABLE_IF(wddm->getWddmVersion() != WddmVersion::wddm20);
-
-    bool ret = wddm->getWddmInterface()->createMonitoredFence(ringFence);
+    bool ret = wddm->getWddmInterface()->createMonitoredFenceForDirectSubmission(ringFence, *this->osContextWin);
     ringFence.currentFenceValue = 1;
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS resource allocation finished with: %d\n", ret);
     return ret;

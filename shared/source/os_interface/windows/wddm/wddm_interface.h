@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,10 +27,11 @@ class WddmInterface {
     virtual void destroyHwQueue(D3DKMT_HANDLE hwQueue) = 0;
     virtual bool createMonitoredFence(OsContextWin &osContext) = 0;
     MOCKABLE_VIRTUAL bool createMonitoredFence(MonitoredFence &monitorFence);
-    void destroyMonitorFence(D3DKMT_HANDLE fenceHandle);
+    MOCKABLE_VIRTUAL void destroyMonitorFence(D3DKMT_HANDLE fenceHandle);
     virtual void destroyMonitorFence(MonitoredFence &monitorFence) = 0;
     virtual bool hwQueuesSupported() = 0;
     virtual bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) = 0;
+    virtual bool createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) = 0;
     Wddm &wddm;
 };
 
@@ -43,6 +44,9 @@ class WddmInterface20 : public WddmInterface {
     void destroyMonitorFence(MonitoredFence &monitorFence) override;
     bool hwQueuesSupported() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
+    bool createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) override {
+        return WddmInterface::createMonitoredFence(monitorFence);
+    };
 };
 
 class WddmInterface23 : public WddmInterface {
@@ -54,5 +58,6 @@ class WddmInterface23 : public WddmInterface {
     void destroyMonitorFence(MonitoredFence &monitorFence) override;
     bool hwQueuesSupported() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
+    bool createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) override;
 };
 } // namespace NEO
