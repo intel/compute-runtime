@@ -20,8 +20,8 @@ namespace SysCalls {
 extern bool pathExistsMock;
 }
 
-struct ClCompilerCacheLinuxTest : public ::testing::Test {
-    ClCompilerCacheLinuxTest() {}
+struct L0CompilerCacheLinuxTest : public ::testing::Test {
+    L0CompilerCacheLinuxTest() {}
 
     void SetUp() override {
     }
@@ -35,14 +35,14 @@ struct ClCompilerCacheLinuxTest : public ::testing::Test {
 
 namespace LegacyPathWorksIfNewEnvIsSetToDisabled {
 bool pathExistsMock(const std::string &path) {
-    if (path.find("cl_cache") != path.npos)
+    if (path.find("l0_cache") != path.npos)
         return true;
 
     return false;
 }
 } // namespace LegacyPathWorksIfNewEnvIsSetToDisabled
 
-TEST_F(ClCompilerCacheLinuxTest, GivenDefaultClCacheConfigWithPathExistsAndNewEnvSetToDisabledThenValuesAreProperlyPopulated) {
+TEST_F(L0CompilerCacheLinuxTest, GivenDefaultL0CacheConfigWithPathExistsAndNewEnvSetToDisabledThenValuesAreProperlyPopulated) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(0);
 
@@ -50,8 +50,8 @@ TEST_F(ClCompilerCacheLinuxTest, GivenDefaultClCacheConfigWithPathExistsAndNewEn
     VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, LegacyPathWorksIfNewEnvIsSetToDisabled::pathExistsMock);
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    EXPECT_STREQ("cl_cache", cacheConfig.cacheDir.c_str());
-    EXPECT_STREQ(".cl_cache", cacheConfig.cacheFileExtension.c_str());
+    EXPECT_STREQ("l0_cache", cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(".l0_cache", cacheConfig.cacheFileExtension.c_str());
     EXPECT_TRUE(cacheConfig.enabled);
 }
 
@@ -61,7 +61,7 @@ bool pathExistsMock(const std::string &path) {
 }
 } // namespace NewEnvIsDisabledAndLegacyPathDoesNotExist
 
-TEST_F(ClCompilerCacheLinuxTest, GivenDefaultClCacheConfigWithNotExistingPathAndNewEnvSetToDisabledThenValuesAreProperlyPopulated) {
+TEST_F(L0CompilerCacheLinuxTest, GivenDefaultL0CacheConfigWithNotExistingPathAndNewEnvSetToDisabledThenValuesAreProperlyPopulated) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(0);
 
@@ -69,8 +69,8 @@ TEST_F(ClCompilerCacheLinuxTest, GivenDefaultClCacheConfigWithNotExistingPathAnd
     VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, NewEnvIsDisabledAndLegacyPathDoesNotExist::pathExistsMock);
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    EXPECT_STREQ("cl_cache", cacheConfig.cacheDir.c_str());
-    EXPECT_STREQ(".cl_cache", cacheConfig.cacheFileExtension.c_str());
+    EXPECT_STREQ("l0_cache", cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(".l0_cache", cacheConfig.cacheFileExtension.c_str());
     EXPECT_FALSE(cacheConfig.enabled);
 }
 
@@ -83,7 +83,7 @@ bool pathExistsMock(const std::string &path) {
 }
 } // namespace AllVariablesCorrectlySet
 
-TEST_F(ClCompilerCacheLinuxTest, GivenAllEnvVarWhenProperlySetThenProperConfigIsReturned) {
+TEST_F(L0CompilerCacheLinuxTest, GivenAllEnvVarWhenProperlySetThenProperConfigIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -95,7 +95,7 @@ TEST_F(ClCompilerCacheLinuxTest, GivenAllEnvVarWhenProperlySetThenProperConfigIs
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "ult/directory/");
 }
@@ -106,7 +106,7 @@ bool pathExistsMock(const std::string &path) {
 }
 } // namespace NonExistingPathIsSet
 
-TEST_F(ClCompilerCacheLinuxTest, GivenNonExistingPathWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
+TEST_F(L0CompilerCacheLinuxTest, GivenNonExistingPathWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -133,7 +133,7 @@ bool pathExistsMock(const std::string &path) {
 }
 } // namespace XDGEnvPathIsSet
 
-TEST_F(ClCompilerCacheLinuxTest, GivenXdgCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
+TEST_F(L0CompilerCacheLinuxTest, GivenXdgCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -145,12 +145,12 @@ TEST_F(ClCompilerCacheLinuxTest, GivenXdgCachePathSetWhenGetCompilerCacheConfigT
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "xdg/directory/neo_compiler_cache");
 }
 
-TEST_F(ClCompilerCacheLinuxTest, GivenXdgCachePathWithoutTrailingSlashSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
+TEST_F(L0CompilerCacheLinuxTest, GivenXdgCachePathWithoutTrailingSlashSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -162,7 +162,7 @@ TEST_F(ClCompilerCacheLinuxTest, GivenXdgCachePathWithoutTrailingSlashSetWhenGet
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "xdg/directory/neo_compiler_cache");
 }
@@ -179,7 +179,7 @@ bool pathExistsMock(const std::string &path) {
 }
 } // namespace HomeEnvPathIsSet
 
-TEST_F(ClCompilerCacheLinuxTest, GivenHomeCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
+TEST_F(L0CompilerCacheLinuxTest, GivenHomeCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -191,12 +191,12 @@ TEST_F(ClCompilerCacheLinuxTest, GivenHomeCachePathSetWhenGetCompilerCacheConfig
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "home/directory/.cache/neo_compiler_cache");
 }
 
-TEST_F(ClCompilerCacheLinuxTest, GivenHomeCachePathWithoutTrailingSlashSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
+TEST_F(L0CompilerCacheLinuxTest, GivenHomeCachePathWithoutTrailingSlashSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -208,12 +208,12 @@ TEST_F(ClCompilerCacheLinuxTest, GivenHomeCachePathWithoutTrailingSlashSetWhenGe
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "home/directory/.cache/neo_compiler_cache");
 }
 
-TEST_F(ClCompilerCacheLinuxTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigThenCacheSizeIsSetToMaxSize) {
+TEST_F(L0CompilerCacheLinuxTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigThenCacheSizeIsSetToMaxSize) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(0);
@@ -225,7 +225,7 @@ TEST_F(ClCompilerCacheLinuxTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigThen
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, std::numeric_limits<size_t>::max());
     EXPECT_EQ(cacheConfig.cacheDir, "ult/directory/");
 }
@@ -248,7 +248,7 @@ int mkdirMock(const std::string &dir) {
 }
 } // namespace HomeEnvPathIsSetButDotCacheDoesNotExist
 
-TEST_F(ClCompilerCacheLinuxTest, GivenHomeCachePathSetWithoutExistingDotCacheWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
+TEST_F(L0CompilerCacheLinuxTest, GivenHomeCachePathSetWithoutExistingDotCacheWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -261,12 +261,12 @@ TEST_F(ClCompilerCacheLinuxTest, GivenHomeCachePathSetWithoutExistingDotCacheWhe
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "home/directory/.cache/neo_compiler_cache");
 }
 
-TEST_F(ClCompilerCacheLinuxTest, GivenHomeCachePathWithoutExistingDotCacheWithoutTrailingSlashSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
+TEST_F(L0CompilerCacheLinuxTest, GivenHomeCachePathWithoutExistingDotCacheWithoutTrailingSlashSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -279,7 +279,7 @@ TEST_F(ClCompilerCacheLinuxTest, GivenHomeCachePathWithoutExistingDotCacheWithou
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "home/directory/.cache/neo_compiler_cache");
 }
@@ -299,7 +299,7 @@ int mkdirMock(const std::string &dir) {
 }
 } // namespace XdgPathIsSetAndNeedToCreate
 
-TEST_F(ClCompilerCacheLinuxTest, GivenXdgEnvWhenNeoCompilerCacheNotExistsThenCreateNeoCompilerCacheFolder) {
+TEST_F(L0CompilerCacheLinuxTest, GivenXdgEnvWhenNeoCompilerCacheNotExistsThenCreateNeoCompilerCacheFolder) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -312,12 +312,12 @@ TEST_F(ClCompilerCacheLinuxTest, GivenXdgEnvWhenNeoCompilerCacheNotExistsThenCre
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "xdg/directory/neo_compiler_cache");
 }
 
-TEST_F(ClCompilerCacheLinuxTest, GivenXdgEnvWithoutTrailingSlashWhenNeoCompilerCacheNotExistsThenCreateNeoCompilerCacheFolder) {
+TEST_F(L0CompilerCacheLinuxTest, GivenXdgEnvWithoutTrailingSlashWhenNeoCompilerCacheNotExistsThenCreateNeoCompilerCacheFolder) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -330,7 +330,7 @@ TEST_F(ClCompilerCacheLinuxTest, GivenXdgEnvWithoutTrailingSlashWhenNeoCompilerC
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "xdg/directory/neo_compiler_cache");
 }
@@ -357,7 +357,7 @@ int mkdirMock(const std::string &dir) {
 }
 } // namespace XdgPathIsSetAndOtherProcessCreatesPath
 
-TEST_F(ClCompilerCacheLinuxTest, GivenXdgEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperConfigIsReturned) {
+TEST_F(L0CompilerCacheLinuxTest, GivenXdgEnvWhenOtherProcessCreatesNeoCompilerCacheFolderThenProperConfigIsReturned) {
     std::unordered_map<std::string, std::string> mockableEnvs;
     debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
     debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
@@ -372,7 +372,7 @@ TEST_F(ClCompilerCacheLinuxTest, GivenXdgEnvWhenOtherProcessCreatesNeoCompilerCa
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ".l0_cache");
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "xdg/directory/neo_compiler_cache");
     EXPECT_TRUE(XdgPathIsSetAndOtherProcessCreatesPath::mkdirCalled);

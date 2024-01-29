@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,19 +19,30 @@
 #include <string>
 
 namespace NEO {
-std::string neoCachePersistent = "NEO_CACHE_PERSISTENT";
-std::string neoCacheMaxSize = "NEO_CACHE_MAX_SIZE";
-std::string neoCacheDir = "NEO_CACHE_DIR";
 std::string clCacheDir = "cl_cache_dir";
 
 CompilerCacheConfig getDefaultCompilerCacheConfig() {
     CompilerCacheConfig ret;
     NEO::EnvironmentVariableReader envReader;
 
-    if (envReader.getSetting(neoCachePersistent.c_str(), defaultCacheEnabled()) != 0) {
+    auto neoCachePersistent = debugManager.flags.NEO_CACHE_PERSISTENT.get();
+    if (neoCachePersistent == -1) {
+        neoCachePersistent = defaultCacheEnabled();
+    }
+
+    auto neoCacheDir = debugManager.flags.NEO_CACHE_DIR.get();
+    if (neoCacheDir.compare("default") == 0) {
+        neoCacheDir = "";
+    }
+
+    auto neoCacheMaxSize = debugManager.flags.NEO_CACHE_MAX_SIZE.get();
+    if (neoCacheMaxSize == -1) {
+        neoCacheMaxSize = MemoryConstants::gigaByte;
+    }
+
+    if (neoCachePersistent != 0) {
         ret.enabled = true;
-        std::string emptyString = "";
-        ret.cacheDir = envReader.getSetting(neoCacheDir.c_str(), emptyString);
+        ret.cacheDir = neoCacheDir;
 
         if (ret.cacheDir.empty()) {
             if (!checkDefaultCacheDirSettings(ret.cacheDir, envReader)) {
@@ -47,7 +58,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
         }
 
         ret.cacheFileExtension = ".cl_cache";
-        ret.cacheSize = static_cast<size_t>(envReader.getSetting(neoCacheMaxSize.c_str(), static_cast<int64_t>(MemoryConstants::gigaByte)));
+        ret.cacheSize = static_cast<size_t>(neoCacheMaxSize);
 
         if (ret.cacheSize == 0u) {
             ret.cacheSize = std::numeric_limits<size_t>::max();
