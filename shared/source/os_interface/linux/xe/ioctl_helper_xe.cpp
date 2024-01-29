@@ -476,11 +476,22 @@ void IoctlHelperXe::updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t s
 }
 
 void IoctlHelperXe::setDefaultEngine() {
-    auto defaultEngineClass = DRM_XE_ENGINE_CLASS_COMPUTE;
+    auto defaultEngineType = drm.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.defaultEngineType;
+    uint32_t defaultEngineClass;
+
+    if (defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
+        defaultEngineClass = DRM_XE_ENGINE_CLASS_COMPUTE;
+    } else if (defaultEngineType == aub_stream::EngineType::ENGINE_RCS) {
+        defaultEngineClass = DRM_XE_ENGINE_CLASS_RENDER;
+    } else {
+        /* So far defaultEngineType is either ENGINE_RCS or ENGINE_CCS */
+        UNRECOVERABLE_IF(true);
+    }
 
     for (auto i = 0u; i < allEngines.size(); i++) {
         if (allEngines[i].engine_class == defaultEngineClass) {
             defaultEngine = xeFindMatchingEngine(defaultEngineClass, allEngines[i].engine_instance);
+            xeLog("Found default engine of class %s\n", xeGetClassName(defaultEngineClass));
             break;
         }
     }

@@ -1652,7 +1652,14 @@ TEST(IoctlHelperXeTest, whenSetDefaultEngineIsCalledThenProperEngineIsSet) {
     ASSERT_NE(nullptr, engineInfo);
 
     xeIoctlHelper->setDefaultEngine();
-    EXPECT_EQ(DRM_XE_ENGINE_CLASS_COMPUTE, xeIoctlHelper->defaultEngine->engine_class);
+    auto defaultEngineType = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.defaultEngineType;
+    if (defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
+        EXPECT_EQ(DRM_XE_ENGINE_CLASS_COMPUTE, xeIoctlHelper->defaultEngine->engine_class);
+    } else if (defaultEngineType == aub_stream::EngineType::ENGINE_RCS) {
+        EXPECT_EQ(DRM_XE_ENGINE_CLASS_RENDER, xeIoctlHelper->defaultEngine->engine_class);
+    } else {
+        EXPECT_THROW(xeIoctlHelper->setDefaultEngine(), std::exception);
+    }
 }
 
 TEST(IoctlHelperXeTest, givenNoEnginesWhenSetDefaultEngineIsCalledThenAbortIsThrown) {
