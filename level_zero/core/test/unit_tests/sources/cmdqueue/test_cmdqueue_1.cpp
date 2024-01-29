@@ -879,28 +879,6 @@ TEST_F(DeferredContextCreationDeviceCreateCommandQueueTest, givenLowPriorityEngi
     commandQueue->destroy();
 }
 
-using DeviceCreateCommandQueueTest = Test<DeviceFixture>;
-TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateImmediateCommandListThenLowPriorityCsrIsAssigned) {
-    ze_command_queue_desc_t desc{};
-    desc.ordinal = 0u;
-    desc.index = 0u;
-    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
-
-    ze_command_list_handle_t commandListHandle = {};
-
-    ze_result_t res = device->createCommandListImmediate(&desc, &commandListHandle);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    auto commandList = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle));
-
-    EXPECT_NE(commandList, nullptr);
-    EXPECT_TRUE(commandList->getCsr()->getOsContext().isLowPriority());
-    NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForLowPriority(&csr);
-    EXPECT_EQ(commandList->getCsr(), csr);
-    commandList->destroy();
-}
-
 TEST_F(DeviceCreateCommandQueueTest, givenNormalPriorityDescWhenCreateCommandQueueIsCalledWithValidArgumentThenCsrIsAssignedWithOrdinalAndIndex) {
     ze_command_queue_desc_t desc{};
     desc.ordinal = 0u;

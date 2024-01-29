@@ -303,7 +303,7 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     bool isCopyOnly = NEO::EngineHelper::isCopyOnlyEngineType(
         getEngineGroupTypeForOrdinal(commandQueueDesc.ordinal));
 
-    if (isSuitableForLowPriority(commandQueueDesc.priority, isCopyOnly)) {
+    if (commandQueueDesc.priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !isCopyOnly) {
         getCsrForLowPriority(&csr);
     } else {
         auto ret = getCsrForOrdinalAndIndexWithPriority(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority);
@@ -1676,9 +1676,6 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamRe
                 }
             }
         }
-    } else if (isSuitableForLowPriority(priority, NEO::EngineHelper::isCopyOnlyEngineType(
-                                                      getEngineGroupTypeForOrdinal(ordinal)))) {
-        return getCsrForLowPriority(csr);
     }
 
     return getCsrForOrdinalAndIndex(csr, ordinal, index);
@@ -1701,10 +1698,6 @@ ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr) {
     }
     UNRECOVERABLE_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
-}
-
-bool DeviceImp::isSuitableForLowPriority(ze_command_queue_priority_t priority, bool copyOnly) {
-    return (priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && !copyOnly);
 }
 
 DebugSession *DeviceImp::getDebugSession(const zet_debug_config_t &config) {
