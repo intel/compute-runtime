@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
@@ -42,11 +43,6 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
     double multiplier = 0;
     switch (domain) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
-
-        if (pSysmanKmdInterface->isSystemPowerBalanceAvailable() == false) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The System Power Balance is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
         result = pSysFsAccess->read(systemPowerBalance, sysPwrBalanceReading);
         if (ZE_RESULT_SUCCESS != result) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, systemPowerBalance.c_str(), getErrorCode(result));
@@ -62,7 +58,6 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
         break;
 
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
-
         result = pSysFsAccess->read(mediaFreqFactor, mediaFactorReading);
         if (ZE_RESULT_SUCCESS != result) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, mediaFreqFactor.c_str(), getErrorCode(result));
@@ -82,11 +77,6 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
         break;
 
     case ZES_ENGINE_TYPE_FLAG_COMPUTE:
-
-        if (pSysmanKmdInterface->isBaseFrequencyFactorAvailable() == false) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The Base Frequency Factor is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
         result = pSysFsAccess->read(baseFreqFactor, baseFactorReading);
         if (ZE_RESULT_SUCCESS != result) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s and returning error:0x%x \n", __FUNCTION__, baseFreqFactor.c_str(), getErrorCode(result));
@@ -111,35 +101,25 @@ ze_result_t LinuxPerformanceImp::osPerformanceGetConfig(double *pFactor) {
     return result;
 }
 
-ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
+ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double perfFactor) {
     double multiplier = 0;
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    if (pFactor < minPerformanceFactor || pFactor > maxPerformanceFactor) {
+    if (perfFactor < minPerformanceFactor || perfFactor > maxPerformanceFactor) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     switch (domain) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
-
-        if (pSysmanKmdInterface->isSystemPowerBalanceAvailable() == false) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The System Power Balance is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-        if (pFactor <= halfOfMaxPerformanceFactor) {
-            multiplier = maxSysPowerBalanceReading - std::round(pFactor * (maxSysPowerBalanceReading - defaultSysPowerBalanceReading) / halfOfMaxPerformanceFactor);
+        if (perfFactor <= halfOfMaxPerformanceFactor) {
+            multiplier = maxSysPowerBalanceReading - std::round(perfFactor * (maxSysPowerBalanceReading - defaultSysPowerBalanceReading) / halfOfMaxPerformanceFactor);
         } else {
-            multiplier = defaultSysPowerBalanceReading - std::round((pFactor - halfOfMaxPerformanceFactor) * defaultSysPowerBalanceReading / halfOfMaxPerformanceFactor);
+            multiplier = defaultSysPowerBalanceReading - std::round((perfFactor - halfOfMaxPerformanceFactor) * defaultSysPowerBalanceReading / halfOfMaxPerformanceFactor);
         }
         result = pSysFsAccess->write(systemPowerBalance, multiplier);
         break;
 
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
-
-        if (pFactor > halfOfMaxPerformanceFactor) {
-            multiplier = 1;
-        } else {
-            multiplier = 0.5;
-        }
+        pSysmanProductHelper->getMediaPerformanceFactorMultiplier(perfFactor, &multiplier);
 
         multiplier = multiplier / mediaScaleReading;
         multiplier = std::round(multiplier);
@@ -147,15 +127,10 @@ ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
         break;
 
     case ZES_ENGINE_TYPE_FLAG_COMPUTE:
-
-        if (pSysmanKmdInterface->isBaseFrequencyFactorAvailable() == false) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The Base Frequency Factor is not available and hence returns UNSUPPORTED_FEATURE \n", __FUNCTION__);
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-        if (pFactor < halfOfMaxPerformanceFactor) {
-            multiplier = 2 - (pFactor / halfOfMaxPerformanceFactor);
+        if (perfFactor < halfOfMaxPerformanceFactor) {
+            multiplier = 2 - (perfFactor / halfOfMaxPerformanceFactor);
         } else {
-            multiplier = 1 - ((pFactor - halfOfMaxPerformanceFactor) / maxPerformanceFactor);
+            multiplier = 1 - ((perfFactor - halfOfMaxPerformanceFactor) / maxPerformanceFactor);
         }
         multiplier = multiplier / baseScaleReading; // Divide by scale factor and then round off to convert from decimal to U format
         multiplier = std::round(multiplier);
@@ -179,9 +154,12 @@ ze_result_t LinuxPerformanceImp::getMediaFrequencyScaleFactor() {
 }
 
 bool LinuxPerformanceImp::isPerformanceSupported(void) {
+    if (!pSysmanProductHelper->isPerfFactorSupported()) {
+        return false;
+    }
+
     switch (domain) {
     case ZES_ENGINE_TYPE_FLAG_OTHER:
-
         if (pSysmanKmdInterface->isSystemPowerBalanceAvailable() == false) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_OTHER returns false as System Power Balance is not Available\n", __FUNCTION__);
             return false;
@@ -191,9 +169,11 @@ bool LinuxPerformanceImp::isPerformanceSupported(void) {
             return false;
         }
         break;
-
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
-
+        if (pSysmanKmdInterface->isMediaFrequencyFactorAvailable() == false) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_MEDIA returns false as Media Frequency is not Available\n", __FUNCTION__);
+            return false;
+        }
         if (pSysFsAccess->canRead(mediaFreqFactor) != ZE_RESULT_SUCCESS) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_MEDIA returns false as SysfsAccess->canRead() failed for %s\n", __FUNCTION__, mediaFreqFactor.c_str());
             return false;
@@ -202,9 +182,7 @@ bool LinuxPerformanceImp::isPerformanceSupported(void) {
             return false;
         }
         break;
-
     case ZES_ENGINE_TYPE_FLAG_COMPUTE:
-
         if (pSysmanKmdInterface->isBaseFrequencyFactorAvailable() == false) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): ZES_ENGINE_TYPE_FLAG_COMPUTE returns false as Base Frequency is not Available\n", __FUNCTION__);
             return false;
@@ -217,7 +195,6 @@ bool LinuxPerformanceImp::isPerformanceSupported(void) {
             return false;
         }
         break;
-
     default:
         return false;
         break;
@@ -228,9 +205,9 @@ bool LinuxPerformanceImp::isPerformanceSupported(void) {
 LinuxPerformanceImp::LinuxPerformanceImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId,
                                          zes_engine_type_flag_t domain) : domain(domain), subdeviceId(subdeviceId), isSubdevice(onSubdevice) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    productFamily = pLinuxSysmanImp->getProductFamily();
+    pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
+    pSysFsAccess = &pLinuxSysmanImp->getSysfsAccess();
 
     if (pSysmanKmdInterface->isBaseFrequencyFactorAvailable() == true) {
         baseFreqFactor = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceBaseFrequencyFactor, subdeviceId, true);
@@ -238,11 +215,13 @@ LinuxPerformanceImp::LinuxPerformanceImp(OsSysman *pOsSysman, ze_bool_t onSubdev
     }
 
     if (pSysmanKmdInterface->isSystemPowerBalanceAvailable() == true) {
-        systemPowerBalance = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceSystemPowerBalance, subdeviceId, true);
+        systemPowerBalance = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceSystemPowerBalance, subdeviceId, false);
     }
 
-    mediaFreqFactor = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceMediaFrequencyFactor, subdeviceId, true);
-    mediaFreqFactorScale = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale, subdeviceId, true);
+    if (pSysmanKmdInterface->isMediaFrequencyFactorAvailable() == true) {
+        mediaFreqFactor = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceMediaFrequencyFactor, subdeviceId, true);
+        mediaFreqFactorScale = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale, subdeviceId, true);
+    }
 }
 
 OsPerformance *OsPerformance::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_engine_type_flag_t domain) {

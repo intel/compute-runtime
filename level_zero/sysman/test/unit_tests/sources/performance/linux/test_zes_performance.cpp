@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/performance/linux/sysman_os_performance_imp.h"
 #include "level_zero/sysman/source/api/performance/sysman_performance.h"
 #include "level_zero/sysman/source/api/performance/sysman_performance_imp.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/performance/linux/mock_sysfs_performance.h"
 
@@ -31,12 +32,10 @@ static constexpr std::string_view xeMediaFreqFactorFileName0("device/tile0/gt0/m
 static constexpr std::string_view xeMediaFreqFactorScaleFileName0("device/tile0/gt0/media_freq_factor.scale");
 static constexpr std::string_view xeBaseFreqFactorFileName0("device/tile0/gt0/base_freq_factor");
 static constexpr std::string_view xeBaseFreqFactorScaleFileName0("device/tile0/gt0/base_freq_factor.scale");
-static constexpr std::string_view xeSysPwrBalanceFileName0("device/tile0/gt0/sys_pwr_balance");
 static constexpr std::string_view xeMediaFreqFactorFileName1("device/tile1/gt1/media_freq_factor");
 static constexpr std::string_view xeMediaFreqFactorScaleFileName1("device/tile1/gt1/media_freq_factor.scale");
 static constexpr std::string_view xeBaseFreqFactorFileName1("device/tile1/gt1/base_freq_factor");
 static constexpr std::string_view xeBaseFreqFactorScaleFileName1("device/tile1/gt1/base_freq_factor.scale");
-static constexpr std::string_view xeSysPwrBalanceFileName1("device/tile1/gt1/sys_pwr_balance");
 
 static double mockBaseFreq = 128.0;
 static double mockMediaFreq = 256.0;
@@ -58,7 +57,7 @@ static int mockOpenSuccess(const char *pathname, int flags) {
         returnValue = 3;
     } else if (strPathName == i915BaseFreqFactorScaleFileName0 || strPathName == i915BaseFreqFactorScaleFileName1 || strPathName == xeBaseFreqFactorScaleFileName0 || strPathName == xeBaseFreqFactorScaleFileName1) {
         returnValue = 4;
-    } else if (strPathName == sysPwrBalanceFileName || strPathName == xeSysPwrBalanceFileName0 || strPathName == xeSysPwrBalanceFileName1) {
+    } else if (strPathName == sysPwrBalanceFileName) {
         returnValue = 5;
     } else {
         returnValue = 0;
@@ -143,7 +142,7 @@ TEST_F(ZesPerformanceFixtureI915, GivenKmdInterfaceWhenGettingSysFsFilenamesForP
     EXPECT_STREQ(std::string(i915MediaFreqFactorScaleFileName0).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale, 0, true).c_str());
 }
 
-TEST_F(ZesPerformanceFixtureI915, GivenValidSysmanHandleWhenRetrievingPerfThenValidHandlesAreReturned) {
+HWTEST2_F(ZesPerformanceFixtureI915, GivenValidSysmanHandleWhenRetrievingPerfThenValidHandlesAreReturned, IsXeHpOrXeHpcOrXeHpgCore) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
 
@@ -165,7 +164,7 @@ TEST_F(ZesPerformanceFixtureI915, GivenValidSysmanHandleWhenRetrievingPerfThenVa
     EXPECT_EQ(count, mockI915HandleCount);
 }
 
-TEST_F(ZesPerformanceFixtureI915, GivenValidPerfHandleWhenGettingPerformancePropertiesThenValidPropertiesReturned) {
+HWTEST2_F(ZesPerformanceFixtureI915, GivenValidPerfHandleWhenGettingPerformancePropertiesThenValidPropertiesReturned, IsXeHpOrXeHpcOrXeHpgCore) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
 
@@ -193,7 +192,7 @@ TEST_F(ZesPerformanceFixtureI915, GivenBaseAndOtherDomainTypeWhenGettingPerfHand
     delete pLinuxPerformanceImp;
 }
 
-TEST_F(ZesPerformanceFixtureI915, GivenMediaDomainTypeWhenGettingPerfHandlesThenValidHandleIsRetrieved) {
+HWTEST2_F(ZesPerformanceFixtureI915, GivenMediaDomainTypeWhenGettingPerfHandlesThenValidHandleIsRetrieved, IsXeHpOrXeHpcOrXeHpgCore) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
@@ -227,28 +226,6 @@ TEST_F(ZesPerformanceFixtureI915, GivenComputeDomainTypeWhenGettingPerfHandlesTh
     pLinuxPerformanceImp->pSysmanKmdInterface = pSysmanKmdInterface.get();
     pLinuxPerformanceImp->pSysFsAccess = pSysFsAccess.get();
     EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
-    delete pLinuxPerformanceImp;
-}
-
-TEST_F(ZesPerformanceFixtureI915, GivenComputeDomainTypeWhenCallingPerformanceSetAndGetConfigThenNotSupportedIsReturned) {
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
-
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(pLinuxSysmanImp->getProductFamily());
-    auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
-    double pFactor = 0.0;
-    PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_COMPUTE);
-    pLinuxPerformanceImp->pSysmanKmdInterface = pSysmanKmdInterface.get();
-    pLinuxPerformanceImp->pSysFsAccess = pSysFsAccess.get();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPerformanceImp->osPerformanceSetConfig(pFactor));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPerformanceImp->osPerformanceGetConfig(&pFactor));
-    delete pLinuxPerformanceImp;
-
-    pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_OTHER);
-    pLinuxPerformanceImp->pSysmanKmdInterface = pSysmanKmdInterface.get();
-    pLinuxPerformanceImp->pSysFsAccess = pSysFsAccess.get();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPerformanceImp->osPerformanceSetConfig(pFactor));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPerformanceImp->osPerformanceGetConfig(&pFactor));
     delete pLinuxPerformanceImp;
 }
 
@@ -338,36 +315,68 @@ TEST_F(ZesPerformanceFixtureXe, GivenKmdInterfaceWhenGettingSysFsFilenamesForPer
     EXPECT_STREQ(std::string(xeMediaFreqFactorScaleFileName0).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale, 0, true).c_str());
     EXPECT_STREQ(std::string(xeBaseFreqFactorFileName0).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceBaseFrequencyFactor, 0, true).c_str());
     EXPECT_STREQ(std::string(xeBaseFreqFactorScaleFileName0).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceBaseFrequencyFactorScale, 0, true).c_str());
-    EXPECT_STREQ(std::string(xeSysPwrBalanceFileName0).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceSystemPowerBalance, 0, true).c_str());
+    EXPECT_STREQ(std::string(sysPwrBalanceFileName).c_str(), pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePerformanceSystemPowerBalance, 0, false).c_str());
 }
 
-TEST_F(ZesPerformanceFixtureXe, GivenComputeDomainTypeWhenGettingPerfHandlesThenCorrespondingHandlesAreRetrieved) {
-
+HWTEST2_F(ZesPerformanceFixtureXe, GivenPerfFactorDomainsWhenGettingPerfHandlesThenVerifyPerfFactorIsNotSupported, IsXeHpOrXeHpcOrXeHpgCore) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
 
-    auto pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getProductFamily());
+    std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getProductFamily());
     auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
 
+    std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysFsAccess.get());
+
     PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_COMPUTE);
-    pLinuxPerformanceImp->pSysmanKmdInterface = pSysmanKmdInterface.get();
-    pLinuxPerformanceImp->pSysFsAccess = pSysFsAccess.get();
-    EXPECT_TRUE(pLinuxPerformanceImp->isPerformanceSupported());
+    EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
     delete pLinuxPerformanceImp;
 
     pLinuxPerformanceImp = nullptr;
     pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_MEDIA);
-    pLinuxPerformanceImp->pSysmanKmdInterface = pSysmanKmdInterface.get();
-    pLinuxPerformanceImp->pSysFsAccess = pSysFsAccess.get();
-    EXPECT_TRUE(pLinuxPerformanceImp->isPerformanceSupported());
+    EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
     delete pLinuxPerformanceImp;
 
     pLinuxPerformanceImp = nullptr;
     pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_OTHER);
-    pLinuxPerformanceImp->pSysmanKmdInterface = pSysmanKmdInterface.get();
-    pLinuxPerformanceImp->pSysFsAccess = pSysFsAccess.get();
-    EXPECT_TRUE(pLinuxPerformanceImp->isPerformanceSupported());
+    EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
+    delete pLinuxPerformanceImp;
+}
+
+TEST_F(ZesPerformanceFixtureXe, GivenPerfFactorDomainsWhenGettingPerfHandlesThenVerifyPerfFactorIsNotSupported) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    struct MockSysmanProductHelperPerf : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+        MockSysmanProductHelperPerf() = default;
+        bool isPerfFactorSupported() override {
+            return false;
+        }
+    };
+
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperPerf>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getProductFamily());
+    auto pSysFsAccess = std::make_unique<MockSysFsAccessInterface>();
+
+    std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
+    VariableBackup<L0::Sysman::SysFsAccessInterface *> sysfsBackup(&pLinuxSysmanImp->pSysfsAccess, pSysFsAccess.get());
+
+    PublicLinuxPerformanceImp *pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_COMPUTE);
+    EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
+    delete pLinuxPerformanceImp;
+
+    pLinuxPerformanceImp = nullptr;
+    pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_MEDIA);
+    EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
+    delete pLinuxPerformanceImp;
+
+    pLinuxPerformanceImp = nullptr;
+    pLinuxPerformanceImp = new PublicLinuxPerformanceImp(pOsSysman, 1, 0u, ZES_ENGINE_TYPE_FLAG_OTHER);
+    EXPECT_FALSE(pLinuxPerformanceImp->isPerformanceSupported());
     delete pLinuxPerformanceImp;
 }
 

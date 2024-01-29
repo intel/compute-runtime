@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,11 @@ HWTEST2_F(SysmanProductHelperPerformanceTest, GivenMediaPerformanceFactorWhenGet
     performanceFactor = 100;
     pSysmanProductHelper->getMediaPerformanceFactorMultiplier(performanceFactor, &multiplier);
     EXPECT_EQ(1, multiplier);
+}
+
+HWTEST2_F(SysmanProductHelperPerformanceTest, GivenPerformanceModuleWhenQueryingPerfFactorSupportedThenPerfFactorIsSupported, IsXeHpOrXeHpcOrXeHpgCore) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_EQ(true, pSysmanProductHelper->isPerfFactorSupported());
 }
 
 } // namespace ult

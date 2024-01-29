@@ -32,6 +32,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Performance
     void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) override;
+    bool isPerfFactorSupported() override;
 
     // temperature
     ze_result_t getGlobalMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) override;

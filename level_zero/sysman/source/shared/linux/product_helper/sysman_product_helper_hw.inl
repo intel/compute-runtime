@@ -103,6 +103,11 @@ void SysmanProductHelperHw<gfxProduct>::getMediaPerformanceFactorMultiplier(cons
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isPerfFactorSupported() {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
     return false;
 }

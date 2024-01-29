@@ -53,6 +53,7 @@ class SysmanProductHelper {
 
     // Performance
     virtual void getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) = 0;
+    virtual bool isPerfFactorSupported() = 0;
 
     // temperature
     virtual ze_result_t getGlobalMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) = 0;

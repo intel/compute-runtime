@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/api/performance/linux/sysman_os_performance_imp_prelim.h"
+#include "level_zero/sysman/source/api/performance/linux/sysman_os_performance_imp.h"
 #include "level_zero/sysman/source/api/performance/sysman_performance.h"
 #include "level_zero/sysman/source/api/performance/sysman_performance_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
@@ -160,7 +160,7 @@ class PublicLinuxPerformanceImp : public L0::Sysman::LinuxPerformanceImp {
   public:
     PublicLinuxPerformanceImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_engine_type_flag_t domain) : L0::Sysman::LinuxPerformanceImp(pOsSysman, onSubdevice, subdeviceId, domain) {}
     using L0::Sysman::LinuxPerformanceImp::domain;
-    using L0::Sysman::LinuxPerformanceImp::pSysfsAccess;
+    using L0::Sysman::LinuxPerformanceImp::pSysmanKmdInterface;
 };
 
 } // namespace ult

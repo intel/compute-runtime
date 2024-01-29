@@ -123,8 +123,9 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenIsGroupEngineIn
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfBaseFrequencyFactorAndSystemPowerBalanceThenTrueValueIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    EXPECT_TRUE(pSysmanKmdInterface->isBaseFrequencyFactorAvailable());
-    EXPECT_TRUE(pSysmanKmdInterface->isSystemPowerBalanceAvailable());
+    EXPECT_FALSE(pSysmanKmdInterface->isBaseFrequencyFactorAvailable());
+    EXPECT_FALSE(pSysmanKmdInterface->isSystemPowerBalanceAvailable());
+    EXPECT_FALSE(pSysmanKmdInterface->isMediaFrequencyFactorAvailable());
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfFrequencyFilesThenFalseValueIsReturned) {

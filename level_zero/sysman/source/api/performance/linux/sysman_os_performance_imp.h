@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class LinuxPerformanceImp : public OsPerformance, NEO::NonCopyableOrMovableClass
     ze_result_t getErrorCode(ze_result_t result);
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysFsAccessInterface *pSysFsAccess = nullptr;
-    PRODUCT_FAMILY productFamily{};
+    SysmanProductHelper *pSysmanProductHelper = nullptr;
     zes_engine_type_flag_t domain = ZES_ENGINE_TYPE_FLAG_OTHER;
     double baseScaleReading = 0;
     double mediaScaleReading = 0;

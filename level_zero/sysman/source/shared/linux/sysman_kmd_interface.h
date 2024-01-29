@@ -115,6 +115,7 @@ class SysmanKmdInterface {
     virtual bool isGroupEngineInterfaceAvailable() const = 0;
     ze_result_t initFsAccessInterface(const NEO::Drm &drm);
     virtual bool isBaseFrequencyFactorAvailable() const = 0;
+    virtual bool isMediaFrequencyFactorAvailable() const = 0;
     virtual bool isSystemPowerBalanceAvailable() const = 0;
     FsAccessInterface *getFsAccess();
     ProcFsAccessInterface *getProcFsAccess();
@@ -181,6 +182,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
     uint32_t getEventType(const bool isIntegratedDevice) override;
     bool isBaseFrequencyFactorAvailable() const override { return false; }
+    bool isMediaFrequencyFactorAvailable() const override { return true; }
     bool isSystemPowerBalanceAvailable() const override { return false; }
     bool isDefaultFrequencyAvailable() const override { return true; }
     bool isBoostFrequencyAvailable() const override { return true; }
@@ -226,8 +228,9 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
                                              uint32_t subdeviceId) override;
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
     uint32_t getEventType(const bool isIntegratedDevice) override;
-    bool isBaseFrequencyFactorAvailable() const override { return false; }
-    bool isSystemPowerBalanceAvailable() const override { return false; }
+    bool isBaseFrequencyFactorAvailable() const override { return true; }
+    bool isMediaFrequencyFactorAvailable() const override { return true; }
+    bool isSystemPowerBalanceAvailable() const override { return true; }
     bool isDefaultFrequencyAvailable() const override { return true; }
     bool isBoostFrequencyAvailable() const override { return true; }
     bool isTdpFrequencyAvailable() const override { return true; }
@@ -272,8 +275,9 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
                                              uint32_t subdeviceId) override;
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
     uint32_t getEventType(const bool isIntegratedDevice) override;
-    bool isBaseFrequencyFactorAvailable() const override { return true; }
-    bool isSystemPowerBalanceAvailable() const override { return true; }
+    bool isBaseFrequencyFactorAvailable() const override { return false; }
+    bool isMediaFrequencyFactorAvailable() const override { return false; }
+    bool isSystemPowerBalanceAvailable() const override { return false; }
     bool isDefaultFrequencyAvailable() const override { return false; }
     bool isBoostFrequencyAvailable() const override { return false; }
     bool isTdpFrequencyAvailable() const override { return false; }
