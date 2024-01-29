@@ -63,6 +63,7 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
         EXPECT_EQ(retVal, CL_SUCCESS);
         this->setAllocationToFail(false);
         this->poolAllocator = static_cast<MockBufferPoolAllocator *>(&context->smallBufferPoolAllocator);
+        this->poolAllocator->maxPoolCount = 1u;
     }
 };
 
@@ -191,6 +192,13 @@ TEST_F(AggregatedSmallBuffersDisabledTest, givenAggregatedSmallBuffersDisabledWh
 
 using AggregatedSmallBuffersEnabledTest = AggregatedSmallBuffersTestTemplate<1>;
 
+TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenCalculateMaxPoolCountCalledThenCorrectValueIsReturned) {
+    EXPECT_EQ(81u, MockBufferPoolAllocator::calculateMaxPoolCount(8 * MemoryConstants::gigaByte, 2));
+    EXPECT_EQ(204u, MockBufferPoolAllocator::calculateMaxPoolCount(8 * MemoryConstants::gigaByte, 5));
+    EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(128 * MemoryConstants::megaByte, 2));
+    EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(64 * MemoryConstants::megaByte, 2));
+}
+
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenAllocatingMainStorageThenMakeDeviceBufferLockable) {
     EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     EXPECT_EQ(1u, poolAllocator->bufferPools.size());
@@ -310,6 +318,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndB
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndBufferPoolIsExhaustedAndAllocationsAreNotInUseAndNoBuffersFreedThenNewPoolIsCreated) {
+    this->poolAllocator->maxPoolCount = 2u;
     EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     EXPECT_EQ(1u, poolAllocator->bufferPools.size());
     EXPECT_NE(nullptr, poolAllocator->bufferPools[0].mainStorage.get());
@@ -334,6 +343,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndB
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndBufferPoolIsExhaustedAndAllocationsAreInUseThenNewPoolIsCreated) {
+    this->poolAllocator->maxPoolCount = 2u;
     EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     EXPECT_EQ(1u, poolAllocator->bufferPools.size());
     EXPECT_NE(nullptr, poolAllocator->bufferPools[0].mainStorage.get());
@@ -358,18 +368,19 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndB
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndBufferPoolIsExhaustedAndAllocationsAreInUseAndPoolLimitIsReachedThenNewPoolIsNotCreated) {
+    this->poolAllocator->maxPoolCount = 2u;
     EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     EXPECT_EQ(1u, poolAllocator->bufferPools.size());
     EXPECT_NE(nullptr, poolAllocator->bufferPools[0].mainStorage.get());
 
-    constexpr auto buffersToCreate = (PoolAllocator::aggregatedSmallBuffersPoolSize / PoolAllocator::smallBufferThreshold) * PoolAllocator::maxPoolCount;
+    const std::vector<std::unique_ptr<Buffer>>::size_type buffersToCreate = (PoolAllocator::aggregatedSmallBuffersPoolSize / PoolAllocator::smallBufferThreshold) * poolAllocator->maxPoolCount;
     std::vector<std::unique_ptr<Buffer>> buffers(buffersToCreate);
     for (auto i = 0u; i < buffersToCreate; ++i) {
         buffers[i].reset(Buffer::create(context.get(), flags, size, hostPtr, retVal));
         EXPECT_EQ(retVal, CL_SUCCESS);
     }
-    EXPECT_EQ(PoolAllocator::maxPoolCount, poolAllocator->bufferPools.size());
-    for (auto i = 0u; i < PoolAllocator::maxPoolCount; ++i) {
+    EXPECT_EQ(poolAllocator->maxPoolCount, poolAllocator->bufferPools.size());
+    for (auto i = 0u; i < poolAllocator->maxPoolCount; ++i) {
         EXPECT_EQ(PoolAllocator::aggregatedSmallBuffersPoolSize, poolAllocator->bufferPools[i].chunkAllocator->getUsedSize());
     }
     EXPECT_EQ(1u, mockMemoryManager->allocInUseCalled);
@@ -379,7 +390,7 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndB
     std::unique_ptr<Buffer> bufferAfterExhaustMustFail(Buffer::create(context.get(), flags, size, hostPtr, retVal));
     EXPECT_EQ(nullptr, bufferAfterExhaustMustFail.get());
     EXPECT_NE(retVal, CL_SUCCESS);
-    EXPECT_EQ(PoolAllocator::maxPoolCount, poolAllocator->bufferPools.size());
+    EXPECT_EQ(poolAllocator->maxPoolCount, poolAllocator->bufferPools.size());
     EXPECT_EQ(3u, mockMemoryManager->allocInUseCalled);
 }
 

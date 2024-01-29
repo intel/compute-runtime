@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,8 +86,13 @@ class Context : public BaseObject<_cl_context> {
                                   size_t requestedSize,
                                   void *hostPtr,
                                   cl_int &errcodeRet);
+        static inline size_t calculateMaxPoolCount(uint64_t totalMemory, size_t percentOfMemory) {
+            const auto maxPoolCount = static_cast<size_t>(totalMemory * (percentOfMemory / 100.0) / BufferPoolAllocator::aggregatedSmallBuffersPoolSize);
+            return maxPoolCount ? maxPoolCount : 1u;
+        }
 
         Context *context{nullptr};
+        size_t maxPoolCount{1u};
     };
 
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;

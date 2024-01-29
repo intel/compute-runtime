@@ -29,7 +29,6 @@ struct SmallBuffersParams {
     static constexpr auto smallBufferThreshold = 1 * MemoryConstants::megaByte;
     static constexpr auto chunkAlignment = MemoryConstants::pageSize64k;
     static constexpr auto startingOffset = chunkAlignment;
-    static constexpr auto maxPoolCount = 2u;
 };
 
 template <typename PoolT, typename BufferType, typename BufferParentType = BufferType>
@@ -42,7 +41,6 @@ struct AbstractBuffersPool : public SmallBuffersParams<PoolT>, public NonCopyabl
     using Params = SmallBuffersParams<PoolT>;
     using Params::aggregatedSmallBuffersPoolSize;
     using Params::chunkAlignment;
-    using Params::maxPoolCount;
     using Params::smallBufferThreshold;
     using Params::startingOffset;
     using AllocsVecCRef = const StackVec<NEO::GraphicsAllocation *, 1> &;
@@ -77,7 +75,6 @@ class AbstractBuffersAllocator : public SmallBuffersParams<BuffersPoolType> {
     using Params = SmallBuffersParams<BuffersPoolType>;
     using Params::aggregatedSmallBuffersPoolSize;
     using Params::chunkAlignment;
-    using Params::maxPoolCount;
     using Params::smallBufferThreshold;
     using Params::startingOffset;
     static_assert(aggregatedSmallBuffersPoolSize > smallBufferThreshold, "Largest allowed buffer needs to fit in pool");

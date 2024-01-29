@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,9 @@ class MockContext : public Context {
     class MockBufferPoolAllocator : public BufferPoolAllocator {
       public:
         using BufferPoolAllocator::bufferPools;
+        using BufferPoolAllocator::calculateMaxPoolCount;
         using BufferPoolAllocator::isAggregatedSmallBuffersEnabled;
+        using BufferPoolAllocator::maxPoolCount;
     };
 
   private:
