@@ -47,34 +47,8 @@ TEST(GdiInterface, givenGdiOverridePathWhenGdiInterfaceIsCalledThenOverridePathI
     Os::gdiDllName = oldName;
 }
 
-TEST(GdiInterface, givenPrintKmdTimesWhenCallThkWrapperThenRecordTime) {
-    if (!GdiLogging::gdiLoggingSupport) {
-        GTEST_SKIP();
-    }
-
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.PrintKmdTimes.set(1);
-
-    auto gdi = std::make_unique<Gdi>();
-    EXPECT_TRUE(gdi->isInitialized());
-
-    testing::internal::CaptureStdout();
-
-    D3DKMT_OPENADAPTERFROMLUID param = {};
-    gdi->openAdapterFromLuid(&param);
-    gdi->openAdapterFromLuid(&param);
-    D3DKMT_CLOSEADAPTER closeAdapter = {};
-    closeAdapter.hAdapter = param.hAdapter;
-    gdi->closeAdapter(&closeAdapter);
-
-    gdi.reset();
-    auto output = testing::internal::GetCapturedStdout();
-    EXPECT_TRUE(output.find("\n--- Gdi statistics ---\n") != std::string::npos);
-}
-
 TEST(ThkWrapperTest, givenThkWrapperWhenConstructedThenmFuncIsInitialized) {
-    GdiProfiler profiler{};
-    NEO::ThkWrapper<void *> wrapper(profiler, "nullptr", 0u);
+    NEO::ThkWrapper<void *> wrapper;
     EXPECT_EQ(nullptr, wrapper.mFunc);
 }
 
