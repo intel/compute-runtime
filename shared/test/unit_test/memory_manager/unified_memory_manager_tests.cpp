@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -346,6 +346,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenUnifiedMemoryAllocationsAr
         if (alignment != 0) {
             EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
         }
+        EXPECT_EQ(svmManager->getSVMAlloc(ptr)->pageSizeForAlignment, MemoryConstants::pageSize64k);
         svmManager->freeSVMAlloc(ptr);
     } while (alignment != 0);
 }
@@ -371,6 +372,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenHostUnifiedMemoryAllocatio
         if (alignment != 0) {
             EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
         }
+        EXPECT_EQ(svmManager->getSVMAlloc(ptr)->pageSizeForAlignment, MemoryConstants::pageSize);
         svmManager->freeSVMAlloc(ptr);
     } while (alignment != 0);
 }
@@ -400,6 +402,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocat
         if (alignment != 0) {
             EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
         }
+        EXPECT_EQ(svmManager->getSVMAlloc(ptr)->pageSizeForAlignment, MemoryConstants::pageSize64k);
         svmManager->freeSVMAlloc(ptr);
     } while (alignment != 0);
 }
