@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 namespace L0 {
@@ -24,7 +25,8 @@ const std::string LinuxDiagnosticsImp::invalidateLmemFile("invalidate_lmem_mmaps
 const std::string LinuxDiagnosticsImp::quiescentGpuFile("quiesce_gpu");
 void OsDiagnostics::getSupportedDiagTestsFromFW(void *pOsSysman, std::vector<std::string> &supportedDiagTests) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    if (IGFX_PVC == pLinuxSysmanImp->getProductFamily()) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    if (pSysmanProductHelper->isDiagnosticsSupported()) {
         FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
         if (pFwInterface != nullptr) {
             static_cast<FirmwareUtil *>(pFwInterface)->fwSupportedDiagTests(supportedDiagTests);
