@@ -31,7 +31,10 @@ MemoryInfo::MemoryInfo(const RegionContainer &regionInfo, const Drm &inputDrm)
                      return (memoryRegionInfo.region.memoryClass == memoryClassDevice);
                  });
 
-    memPolicySupported = Linux::NumaLibrary::init() && DebugManager.flags.EnableHostAllocationMemPolicy.get();
+    memPolicySupported = false;
+    if (DebugManager.flags.EnableHostAllocationMemPolicy.get()) {
+        memPolicySupported = Linux::NumaLibrary::init();
+    }
     memPolicyMode = DebugManager.flags.OverrideHostAllocationMemPolicyMode.get();
 }
 
