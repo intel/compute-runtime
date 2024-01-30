@@ -713,26 +713,9 @@ TEST(MemoryInfo, givenMemoryInfoWithMemoryPolicyDisabledAndValidOsLibraryWhenCal
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    // setup numa library in MemoryInfo
-    WhiteBoxNumaLibrary::GetMemPolicyPtr memPolicyHandler =
-        [](int *, unsigned long[], unsigned long, void *, unsigned long) -> long { return -1; };
-    WhiteBoxNumaLibrary::NumaAvailablePtr numaAvailableHandler =
-        [](void) -> int { return 0; };
-    WhiteBoxNumaLibrary::NumaMaxNodePtr numaMaxNodeHandler =
-        [](void) -> int { return 4; };
-    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
-    MockOsLibraryCustom *osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
-    // register proc pointers
-    osLibrary->procMap[std::string(WhiteBoxNumaLibrary::procGetMemPolicyStr)] = reinterpret_cast<void *>(memPolicyHandler);
-    osLibrary->procMap[std::string(WhiteBoxNumaLibrary::procNumaAvailableStr)] = reinterpret_cast<void *>(numaAvailableHandler);
-    osLibrary->procMap[std::string(WhiteBoxNumaLibrary::procNumaMaxNodeStr)] = reinterpret_cast<void *>(numaMaxNodeHandler);
-    WhiteBoxNumaLibrary::osLibraryLoadFunction = MockOsLibraryCustom::load;
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
     ASSERT_FALSE(memoryInfo->isMemPolicySupported());
-
-    MockOsLibrary::loadLibraryNewObject = nullptr;
-    WhiteBoxNumaLibrary::osLibrary.reset();
 }
 TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithChunkingButSizeLessThanAllowedThenExceptionIsThrown) {
     DebugManagerStateRestore restorer;
