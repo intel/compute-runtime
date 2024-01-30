@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,11 +147,11 @@ uint64_t HeapAllocator::getFromFreedChunks(size_t size, std::vector<HeapChunk> &
             DEBUG_BREAK_IF(!(size <= sizeThreshold || (size > sizeThreshold && sizeDelta > sizeThreshold)));
 
             auto ptr = freedChunks[bestFitIndex].ptr + sizeDelta;
-            freedChunks[bestFitIndex].size = sizeDelta;
-
             if (!isAligned(ptr, requiredAlignment)) {
                 return 0llu;
             }
+
+            freedChunks[bestFitIndex].size = sizeDelta;
             return ptr;
         }
     }

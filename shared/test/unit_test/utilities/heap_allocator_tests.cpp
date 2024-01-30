@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -198,6 +198,31 @@ TEST(HeapAllocatorTest, GivenMoreThanTwiceBiggerSizeChunksInFreedChunksWhenGetIs
 
     EXPECT_EQ(ptrExpected, ptrReturned);
     EXPECT_EQ(2u, freedChunks.size());
+}
+
+TEST(HeapAllocatorTest, GivenMoreThanTwiceBiggerSizeChunksInFreedChunksWhenGetIsCalledAndAlignmentDoesNotThenChuksSizeDoesNotChange) {
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+    auto pLowerBound = ptrBase;
+
+    auto allocAlign = 8162u;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+
+    std::vector<HeapChunk> freedChunks;
+    size_t requestedSize = 2 * 4096;
+    size_t sizeChunk1 = 9 * 4096;
+    size_t sizeChunk2 = 3 * 4096;
+
+    freedChunks.emplace_back(pLowerBound, sizeChunk1);
+    pLowerBound += sizeChunk1;
+    freedChunks.emplace_back(pLowerBound, sizeChunk2);
+
+    EXPECT_EQ(2u, freedChunks.size());
+
+    heapAllocator->getFromFreedChunks(requestedSize, freedChunks, allocAlign);
+    EXPECT_EQ(freedChunks[0].size, sizeChunk1);
+    EXPECT_EQ(freedChunks[1].size, sizeChunk2);
 }
 
 TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToLeftBoundaryOfIncomingChunkWhenStoreIsCalledThenChunkIsMerged) {
