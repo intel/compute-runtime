@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,4 +33,10 @@ template <>
 bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
     return true;
 }
+
+template <>
+bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
+    return false;
+}
+
 } // namespace NEO
