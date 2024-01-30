@@ -9,3 +9,8 @@
 
 dependenciesRevision='b84a8dace09da83bf07c0a336a70a197cf839949-2262'
 kernelVersion='dev-5339'
+buildConfig = [
+	'master-build': ['gcc7', 'gcc8', 'gcc9', 'gcc11'],
+	'master-gate': ['gcc7', 'gcc8', 'gcc9', 'gcc10', 'gcc11', 'gcc12', 'gcc13'],
+	'branch': 'master',
+]
