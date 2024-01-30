@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -766,6 +766,11 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredSsh(const KernelInfo &kernel
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::getDefaultDshAlignment() {
     return EncodeStates<Family>::alignIndirectStatePointer;
+}
+
+template <typename Family>
+template <bool isHeapless>
+void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr) {
 }
 
 template <typename Family>

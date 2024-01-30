@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,6 +63,14 @@ class CommandEncodeStatesFixture : public DeviceFixture {
     KernelInfo kernelInfo;
     std::unique_ptr<MyMockCommandContainer> cmdContainer;
     NEO::L1CachePolicy l1CachePolicyData;
+};
+
+struct ScratchProgrammingFixture : public NEO::DeviceFixture {
+    void setUp();
+    void tearDown();
+
+    IndirectHeap *ssh = nullptr;
+    void *sshBuffer = nullptr;
 };
 
 } // namespace NEO

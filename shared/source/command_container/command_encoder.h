@@ -184,6 +184,9 @@ struct EncodeDispatchKernel {
         using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
         return BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE;
     }
+
+    template <bool isHeapless>
+    static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr);
 };
 
 template <typename GfxFamily>

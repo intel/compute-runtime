@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,10 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 #include "shared/source/indirect_heap/heap_size.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 namespace NEO {
 
@@ -70,6 +72,25 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
     };
 
     return args;
+}
+
+void ScratchProgrammingFixture::setUp() {
+    NEO::DeviceFixture::setUp();
+    size_t sizeStream = 512;
+    size_t alignmentStream = 0x1000;
+    ssh = new IndirectHeap{nullptr};
+    sshBuffer = alignedMalloc(sizeStream, alignmentStream);
+    ASSERT_NE(nullptr, sshBuffer);
+    ssh->replaceBuffer(sshBuffer, sizeStream);
+    auto graphicsAllocation = new MockGraphicsAllocation(sshBuffer, sizeStream);
+    ssh->replaceGraphicsAllocation(graphicsAllocation);
+}
+
+void ScratchProgrammingFixture::tearDown() {
+    delete ssh->getGraphicsAllocation();
+    delete ssh;
+    alignedFree(sshBuffer);
+    NEO::DeviceFixture::tearDown();
 }
 
 } // namespace NEO

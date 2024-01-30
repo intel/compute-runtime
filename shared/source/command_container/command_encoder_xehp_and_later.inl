@@ -321,27 +321,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if constexpr (heaplessModeEnabled) {
+
         auto requiredScratchSlot0Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
         auto requiredScratchSlot1Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
-        uint64_t scratchAddress = 0;
-        if (requiredScratchSlot0Size > 0 || requiredScratchSlot1Size > 0) {
-            auto csr = args.device->getDefaultEngine().commandStreamReceiver;
-            auto scratchController = csr->getScratchSpaceController();
-            bool gsbaState = false;
-            bool frontEndState = false;
-            auto ssh = container.getIndirectHeap(HeapType::surfaceState);
-            scratchController->setRequiredScratchSpace(ssh->getCpuBase(), 0, requiredScratchSlot0Size, requiredScratchSlot1Size,
-                                                       csr->peekTaskCount(), csr->getOsContext(), gsbaState, frontEndState);
+        auto csr = args.device->getDefaultEngine().commandStreamReceiver;
+        auto ssh = container.getIndirectHeap(HeapType::surfaceState);
 
-            if (scratchController->getScratchSpaceSlot0Allocation()) {
-                csr->makeResident(*scratchController->getScratchSpaceSlot0Allocation());
-            }
-            if (scratchController->getScratchSpaceSlot1Allocation()) {
-                csr->makeResident(*scratchController->getScratchSpaceSlot1Allocation());
-            }
+        uint64_t scratchAddress = 0u;
 
-            scratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
-        }
+        EncodeDispatchKernel<Family>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr);
 
         auto inlineDataPointer = reinterpret_cast<char *>(walkerCmd.getInlineDataPointer());
         auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;

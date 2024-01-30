@@ -107,41 +107,12 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                                                 numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
                                                                                 localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
 
+    auto requiredScratchSlot0Size = queueCsr.getRequiredScratchSlot0Size();
+    auto requiredScratchSlot1Size = queueCsr.getRequiredScratchSlot1Size();
+    uint64_t scratchAddress = 0u;
+    EncodeDispatchKernel<GfxFamily>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, queueCsr);
+
     auto interfaceDescriptor = &walkerCmd.getInterfaceDescriptor();
-    uint64_t scratchAddress = 0;
-
-    if constexpr (heaplessModeEnabled) {
-        auto scratchAllocation = queueCsr.getScratchAllocation();
-        auto scratchSpaceController = queueCsr.getScratchSpaceController();
-        if (scratchAllocation) {
-            scratchAddress = ssh.getGpuBase() + scratchSpaceController->getScratchPatchAddress();
-        } else {
-            auto requiredScratchSlot0Size = queueCsr.getRequiredScratchSlot0Size();
-            auto requiredScratchSlot1Size = queueCsr.getRequiredScratchSlot1Size();
-            bool stateBaseAddressDirty = false;
-            bool checkVfeStateDirty = false;
-
-            if (requiredScratchSlot0Size || requiredScratchSlot1Size) {
-
-                scratchSpaceController->setRequiredScratchSpace(ssh.getCpuBase(),
-                                                                0u,
-                                                                requiredScratchSlot0Size,
-                                                                requiredScratchSlot1Size,
-                                                                queueCsr.peekTaskCount(), queueCsr.getOsContext(),
-                                                                stateBaseAddressDirty,
-                                                                checkVfeStateDirty);
-
-                if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
-                    queueCsr.makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
-                }
-                if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
-                    queueCsr.makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
-                }
-
-                scratchAddress = ssh.getGpuBase() + scratchSpaceController->getScratchPatchAddress();
-            }
-        }
-    }
 
     HardwareCommandsHelper<GfxFamily>::template sendIndirectState<WalkerType, InterfaceDescriptorType>(
         commandStream,
