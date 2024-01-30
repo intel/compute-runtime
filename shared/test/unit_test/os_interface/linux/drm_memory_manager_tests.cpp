@@ -3226,11 +3226,12 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
     memoryManager->freeGraphicsMemory(allocation1);
 }
 
-TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrThenAcquireGpuRangeCalled) {
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWithLimitedRangeWhenAllocateGraphicsMemoryForNonSvmHostPtrThenAcquireGpuRangeCalled) {
     AllocationData allocationData;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
-
+    memoryManager->isLimitedRangeCallBase = false;
+    memoryManager->isLimitedRangeResult = true;
     memoryManager->forceLimitedRangeAllocator(0xFFFFFFFFF);
 
     allocationData.size = 2 * MemoryConstants::kiloByte;
@@ -3239,6 +3240,37 @@ TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWhenAllocateGraphicsMemoryFor
 
     EXPECT_EQ(memoryManager->acquireGpuRangeCalledTimes, 1u);
     EXPECT_EQ(memoryManager->acquireGpuRangeWithCustomAlignmenCalledTimes, 0u);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWithoutLimitedRangeWhenAllocateGraphicsMemoryForNonSvmHostPtrThenAcquireGpuRangeWithCustomRangeCalled) {
+    AllocationData allocationData;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    memoryManager->isLimitedRangeCallBase = false;
+    memoryManager->isLimitedRangeResult = false;
+
+    allocationData.size = 2 * MemoryConstants::kiloByte;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x1234);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+
+    EXPECT_EQ(memoryManager->acquireGpuRangeCalledTimes, 0u);
+    EXPECT_EQ(memoryManager->acquireGpuRangeWithCustomAlignmenCalledTimes, 1u);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenDrmMemoryManagerWithoutLimitedRangeWhenAllocateGraphicsMemoryForNonSvmHostPtrThen2MBAlignmentUsed) {
+    AllocationData allocationData;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+    memoryManager->isLimitedRangeCallBase = false;
+    memoryManager->isLimitedRangeResult = false;
+
+    allocationData.size = 2 * MemoryConstants::kiloByte;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x1234);
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+
+    EXPECT_EQ(memoryManager->acquireGpuRangeWithCustomAlignmenPassedAlignment, MemoryConstants::pageSize2M);
     memoryManager->freeGraphicsMemory(allocation);
 }
 

@@ -517,12 +517,17 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     auto realAllocationSize = alignedSize;
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
     auto rootDeviceIndex = allocationData.rootDeviceIndex;
+    uint64_t gpuVirtualAddress = 0;
+    if (this->isLimitedRange(allocationData.rootDeviceIndex)) {
+        gpuVirtualAddress = acquireGpuRange(alignedSize, rootDeviceIndex, HeapIndex::heapStandard);
+    } else {
+        alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2M);
+        gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::heapStandard, MemoryConstants::pageSize2M);
+    }
 
-    auto gpuVirtualAddress = acquireGpuRange(alignedSize, rootDeviceIndex, HeapIndex::heapStandard);
     if (!gpuVirtualAddress) {
         return nullptr;
     }
-
     std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(alignedPtr), realAllocationSize, rootDeviceIndex));
     if (!bo) {
         releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);

@@ -164,7 +164,7 @@ class MemoryManager {
     MOCKABLE_VIRTUAL uint64_t getInternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory);
     uint64_t getExternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory);
 
-    bool isLimitedRange(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL bool isLimitedRange(uint32_t rootDeviceIndex);
 
     bool peek64kbPagesEnabled(uint32_t rootDeviceIndex) const;
     bool peekForce32BitAllocations() const { return force32bitAllocations; }

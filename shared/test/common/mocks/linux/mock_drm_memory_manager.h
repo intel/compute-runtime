@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <atomic>
 
@@ -30,6 +31,7 @@ class DrmGemCloseWorker;
 
 class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
   public:
+    using BaseClass = MemoryManagerCreate<DrmMemoryManager>;
     using DrmMemoryManager::acquireGpuRange;
     using DrmMemoryManager::alignmentSelector;
     using DrmMemoryManager::allocateGraphicsMemory;
@@ -154,11 +156,14 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
 
     uint64_t acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment) override {
         acquireGpuRangeWithCustomAlignmenCalledTimes++;
+        acquireGpuRangeWithCustomAlignmenPassedAlignment = alignment;
         return DrmMemoryManager::acquireGpuRangeWithCustomAlignment(size, rootDeviceIndex, heapIndex, alignment);
     }
+    ADDMETHOD(isLimitedRange, bool, true, false, (uint32_t rootDeviceIndex), (rootDeviceIndex));
 
     uint32_t acquireGpuRangeCalledTimes = 0u;
     uint32_t acquireGpuRangeWithCustomAlignmenCalledTimes = 0u;
+    size_t acquireGpuRangeWithCustomAlignmenPassedAlignment = 0u;
     ExecutionEnvironment *executionEnvironment = nullptr;
 
   protected:
