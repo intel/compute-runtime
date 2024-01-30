@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,15 @@
 #include <string.h>
 #include <unistd.h>
 #endif // defined(_WIN32) || defined(_WIN64)
+#include <mutex>
 #include <vector>
-
 bool verbose = true;
+
+typedef struct {
+    zes_firmware_handle_t firmwareHandle;
+    std::mutex firmwareProgressMutex;
+    bool flashComplete;
+} FirmwareFlashInfo;
 
 std::string getErrorString(ze_result_t error) {
     static const std::map<ze_result_t, std::string> mgetErrorString{
@@ -1061,12 +1067,42 @@ void testSysmanMemory(ze_device_handle_t &device) {
         }
     }
 }
+
+static void trackFirmwareFlashProgress(FirmwareFlashInfo *flashData) {
+    bool loopContinue = true;
+    uint32_t progressPercent = 0;
+    do {
+        progressPercent = 0;
+        ze_result_t result = zesFirmwareGetFlashProgress(flashData->firmwareHandle, &progressPercent);
+        if (result != ZE_RESULT_SUCCESS) {
+            break;
+        }
+        printf("\rFirmware Flash Progress: %d %%", progressPercent);
+        fflush(stdout);
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        flashData->firmwareProgressMutex.lock();
+        loopContinue = !flashData->flashComplete;
+        flashData->firmwareProgressMutex.unlock();
+
+    } while (loopContinue);
+    progressPercent = 0;
+    ze_result_t result = zesFirmwareGetFlashProgress(flashData->firmwareHandle, &progressPercent);
+    if (result != ZE_RESULT_SUCCESS) {
+        return;
+    }
+    printf("\rFirmware Flash Progress: %d %%\n", progressPercent);
+    fflush(stdout);
+}
+
 void testSysmanFirmware(ze_device_handle_t &device, std::string imagePath) {
     std::cout << std::endl
               << " ----  firmware tests ---- " << std::endl;
     uint32_t count = 0;
     std::ifstream imageFile;
     uint64_t imgSize = 0;
+    FirmwareFlashInfo flashData{};
     if (imagePath.size() != 0) {
         struct stat statBuf;
         auto status = stat(imagePath.c_str(), &statBuf);
@@ -1096,7 +1132,17 @@ void testSysmanFirmware(ze_device_handle_t &device, std::string imagePath) {
         if (imagePath.size() != 0 && imgSize > 0) {
             std::vector<char> img(imgSize);
             imageFile.read(img.data(), imgSize);
+
+            flashData.flashComplete = false;
+            flashData.firmwareHandle = handle;
+            std::thread thread(trackFirmwareFlashProgress, &flashData);
+
             VALIDATECALL(zesFirmwareFlash(handle, img.data(), static_cast<uint32_t>(imgSize)));
+
+            flashData.firmwareProgressMutex.lock();
+            flashData.flashComplete = true;
+            flashData.firmwareProgressMutex.unlock();
+            thread.join();
 
             VALIDATECALL(zesFirmwareGetProperties(handle, &fwProperties));
             if (verbose) {
@@ -1108,6 +1154,7 @@ void testSysmanFirmware(ze_device_handle_t &device, std::string imagePath) {
         }
     }
 }
+
 void testSysmanReset(ze_device_handle_t &device, bool force) {
     std::cout << std::endl
               << " ----  Reset test (force = " << (force ? "true" : "false") << ") ---- " << std::endl;

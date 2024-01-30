@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ class FirmwareUtil {
     virtual ze_result_t fwDeviceInit() = 0;
     virtual ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) = 0;
     virtual ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) = 0;
+    virtual ze_result_t getFlashFirmwareProgress(uint32_t *pCompletionPercent) = 0;
     virtual ze_result_t fwIfrApplied(bool &ifrStatus) = 0;
     virtual ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) = 0;
     virtual ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) = 0;

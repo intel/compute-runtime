@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -434,6 +434,43 @@ TEST(FwGetMemHealthIndicatorTest, GivenFwGetHealthIndicatorProcAddrIsNullWhenMem
 
     delete pFwUtilImp->libraryHandle;
     pFwUtilImp->libraryHandle = nullptr;
+    delete pFwUtilImp;
+}
+
+TEST(FwUtilImpProgressTest, GivenFirmwareUtilImpWhenSettingFirmwareProgressPercentThenCorrectProgressIsReturned) {
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    uint32_t mockProgressPercent = 55;
+    pFwUtilImp->flashProgress.completionPercent = mockProgressPercent;
+    uint32_t percent = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFwUtilImp->getFlashFirmwareProgress(&percent));
+    EXPECT_EQ(mockProgressPercent, percent);
+    delete pFwUtilImp;
+}
+
+TEST(FwUtilImpProgressTest, GivenFirmwareUtilImpWhenSettingProgressThroughCallbackThenCorrectProgressIsReturned) {
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    uint32_t mockDone = 55;
+    uint32_t mockTotal = 100;
+
+    firmwareFlashProgressFunc(mockDone, mockTotal, &pFwUtilImp->flashProgress);
+
+    uint32_t percent = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFwUtilImp->getFlashFirmwareProgress(&percent));
+    uint32_t percentCalculation = (uint32_t)((mockDone * 100) / mockTotal);
+    EXPECT_EQ(percentCalculation, percent);
+    delete pFwUtilImp;
+}
+
+TEST(FwUtilImpProgressTest, GivenFirmwareUtilImpAndNullContextWhenSettingProgressThroughCallbackThenZeroProgressIsReturned) {
+    L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
+    uint32_t mockDone = 55;
+    uint32_t mockTotal = 100;
+
+    firmwareFlashProgressFunc(mockDone, mockTotal, nullptr);
+
+    uint32_t percent = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pFwUtilImp->getFlashFirmwareProgress(&percent));
+    EXPECT_EQ((uint32_t)0, percent);
     delete pFwUtilImp;
 }
 

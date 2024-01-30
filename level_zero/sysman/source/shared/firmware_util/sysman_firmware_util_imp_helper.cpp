@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -203,11 +203,6 @@ ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_re
     return ZE_RESULT_SUCCESS;
 }
 
-static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
-    uint32_t percent = (done * 100) / total;
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
-}
-
 ze_result_t FirmwareUtilImp::pscGetVersion(std::string &fwVersion) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -219,7 +214,7 @@ ze_result_t FirmwareUtilImp::fwFlashIafPsc(void *pImage, uint32_t size) {
     if (iafPscUpdate == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    int ret = iafPscUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, progressFunc, nullptr);
+    int ret = iafPscUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, &flashProgress);
     if (ret != IGSC_SUCCESS) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -227,6 +222,10 @@ ze_result_t FirmwareUtilImp::fwFlashIafPsc(void *pImage, uint32_t size) {
 }
 
 ze_result_t FirmwareUtilImp::flashFirmware(std::string fwType, void *pImage, uint32_t size) {
+    flashProgress.fwProgressLock.lock();
+    flashProgress.completionPercent = 0;
+    flashProgress.fwProgressLock.unlock();
+
     if (fwType == deviceSupportedFirmwareTypes[0]) { // GSC
         return fwFlashGSC(pImage, size);
     }

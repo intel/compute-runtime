@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,6 +103,13 @@ extern pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
 extern pIgscGetEccConfig getEccConfig;
 extern pIgscSetEccConfig setEccConfig;
 
+extern void firmwareFlashProgressFunc(uint32_t done, uint32_t total, void *ctx);
+
+typedef struct {
+    uint32_t completionPercent;
+    std::mutex fwProgressLock;
+} FlashProgressInfo;
+
 class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
   public:
     FirmwareUtilImp(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function);
@@ -110,6 +117,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwDeviceInit() override;
     ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) override;
     ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) override;
+    ze_result_t getFlashFirmwareProgress(uint32_t *pCompletionPercent) override;
     ze_result_t fwIfrApplied(bool &ifrStatus) override;
     ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) override;
     ze_result_t fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) override;
@@ -126,6 +134,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     bool loadEntryPointsExt();
 
     NEO::OsLibrary *libraryHandle = nullptr;
+    FlashProgressInfo flashProgress{};
 
   protected:
     ze_result_t getFirstDevice(igsc_device_info *);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,10 @@ void WddmFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties) 
 
 ze_result_t WddmFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
     return pFwInterface->flashFirmware(osFwType, pImage, size);
+}
+
+ze_result_t WddmFirmwareImp::osGetFirmwareFlashProgress(uint32_t *pCompletionPercent) {
+    return pFwInterface->getFlashFirmwareProgress(pCompletionPercent);
 }
 
 WddmFirmwareImp::WddmFirmwareImp(OsSysman *pOsSysman, const std::string &fwType) : osFwType(fwType) {

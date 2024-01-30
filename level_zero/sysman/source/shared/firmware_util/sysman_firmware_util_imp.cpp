@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,12 +57,23 @@ bool FirmwareUtilImp::loadEntryPoints() {
     return ok;
 }
 
-static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
-    uint32_t percent = (done * 100) / total;
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
+void firmwareFlashProgressFunc(uint32_t done, uint32_t total, void *ctx) {
+    if (ctx != nullptr) {
+        uint32_t percent = (done * 100) / total;
+        FlashProgressInfo *pFlashProgress = static_cast<FlashProgressInfo *>(ctx);
+        const std::lock_guard<std::mutex> lock(pFlashProgress->fwProgressLock);
+        pFlashProgress->completionPercent = percent;
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
+    }
 }
 
 FirmwareUtilImp::OsLibraryLoadPtr FirmwareUtilImp::osLibraryLoadFunction(NEO::OsLibrary::load);
+
+ze_result_t FirmwareUtilImp::getFlashFirmwareProgress(uint32_t *pCompletionPercent) {
+    const std::lock_guard<std::mutex> lock(flashProgress.fwProgressLock);
+    *pCompletionPercent = flashProgress.completionPercent;
+    return ZE_RESULT_SUCCESS;
+}
 
 ze_result_t FirmwareUtilImp::getFirstDevice(igsc_device_info *info) {
     igsc_device_iterator *iter;
@@ -148,7 +159,7 @@ ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
 
 ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
-    int ret = deviceFwUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, progressFunc, nullptr);
+    int ret = deviceFwUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, &flashProgress);
     if (ret != IGSC_SUCCESS) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -169,10 +180,10 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     if (opromImgType & IGSC_OPROM_DATA) {
-        retData = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_DATA, opromImg, progressFunc, nullptr);
+        retData = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_DATA, opromImg, firmwareFlashProgressFunc, &flashProgress);
     }
     if (opromImgType & IGSC_OPROM_CODE) {
-        retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, progressFunc, nullptr);
+        retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, firmwareFlashProgressFunc, &flashProgress);
     }
     if ((retData != IGSC_SUCCESS) && (retCode != IGSC_SUCCESS)) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
