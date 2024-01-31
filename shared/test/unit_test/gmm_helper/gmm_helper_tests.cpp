@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -684,17 +684,17 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
         auto allocationType = static_cast<AllocationType>(i);
-
+        auto uncachedGmmUsageType = productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
         for (auto forceUncached : {true, false}) {
             auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, productHelper);
             auto expectedUsage = GMM_RESOURCE_USAGE_UNKNOWN;
 
             switch (allocationType) {
             case AllocationType::constantSurface:
-                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
                 break;
             case AllocationType::image:
-                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_IMAGE;
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_IMAGE;
                 break;
             case AllocationType::preemption:
                 expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER;
@@ -705,7 +705,7 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
                 break;
             case AllocationType::gpuTimestampDeviceBuffer:
             case AllocationType::timestampPacketTagBuffer:
-                expectedUsage = (forceUncached || productHelper.isDcFlushAllowed()) ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED
+                expectedUsage = (forceUncached || productHelper.isDcFlushAllowed()) ? uncachedGmmUsageType
                                                                                     : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
             case AllocationType::bufferHostMemory:
@@ -714,10 +714,10 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
             case AllocationType::fillPattern:
             case AllocationType::svmCpu:
             case AllocationType::svmZeroCopy:
-                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
             default:
-                expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
             }
 
@@ -736,8 +736,11 @@ TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenRetur
         auto allocationType = static_cast<AllocationType>(i);
 
         auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper);
-        auto expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
 
+        auto expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+        if (productHelper.isNewCoherencyModelSupported()) {
+            expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+        }
         if (allocationType == AllocationType::preemption) {
             expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
 
@@ -786,8 +789,11 @@ TEST(GmmTest, givenConstSurfaceWhenDebugFlagIsSetThenReturnUncachedType) {
     debugManager.flags.ForceL1Caching.set(false);
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
+    auto expectedUncachedGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedUncachedGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+    }
+    EXPECT_EQ(expectedUncachedGmmUsageType,
               CacheSettingsHelper::getGmmUsageType(AllocationType::constantSurface, false, productHelper));
 }
 
@@ -801,14 +807,17 @@ TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncac
     constexpr int64_t imageMask = 1 << (static_cast<int64_t>(AllocationType::image) - 1);
 
     debugManager.flags.ForceUncachedGmmUsageType.set(bufferMask | imageMask);
-
-    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
+    auto expectedUncachedGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedUncachedGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+    }
+    EXPECT_EQ(expectedUncachedGmmUsageType,
               CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper));
 
-    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
+    EXPECT_EQ(expectedUncachedGmmUsageType,
               CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper));
 
-    EXPECT_NE(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
+    EXPECT_NE(expectedUncachedGmmUsageType,
               CacheSettingsHelper::getGmmUsageType(AllocationType::bufferHostMemory, false, productHelper));
 }
 
@@ -817,6 +826,10 @@ TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncach
     debugManager.flags.DisableCachingForStatefulBufferAccess.set(true);
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto expectedUncachedGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedUncachedGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+    }
     for (auto allocType : {AllocationType::buffer,
                            AllocationType::bufferHostMemory,
                            AllocationType::externalHostPtr,
@@ -829,7 +842,7 @@ TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncach
                            AllocationType::svmZeroCopy,
                            AllocationType::unifiedSharedMemory}) {
 
-        EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, CacheSettingsHelper::getGmmUsageType(allocType, false, productHelper));
+        EXPECT_EQ(expectedUncachedGmmUsageType, CacheSettingsHelper::getGmmUsageType(allocType, false, productHelper));
     }
 }
 

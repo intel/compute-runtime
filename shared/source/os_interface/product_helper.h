@@ -218,6 +218,7 @@ class ProductHelper {
     virtual void adjustEngineGroupType(EngineGroupType &engineGroupType) const = 0;
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
     virtual bool isCachingOnCpuAvailable() const = 0;
+    virtual bool isNewCoherencyModelSupported() const = 0;
 
     virtual ~ProductHelper() = default;
 

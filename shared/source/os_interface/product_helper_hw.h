@@ -165,6 +165,7 @@ class ProductHelperHw : public ProductHelper {
     void adjustEngineGroupType(EngineGroupType &engineGroupType) const override;
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
     bool isCachingOnCpuAvailable() const override;
+    bool isNewCoherencyModelSupported() const override;
 
     ~ProductHelperHw() override = default;
 

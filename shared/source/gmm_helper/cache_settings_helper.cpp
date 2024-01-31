@@ -26,7 +26,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType
     }
 
     if (forceUncached || debugManager.flags.ForceAllResourcesUncached.get()) {
-        return getDefaultUsageTypeWithCachingDisabled(allocationType);
+        return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
     } else {
         return getDefaultUsageTypeWithCachingEnabled(allocationType, productHelper);
     }
@@ -54,12 +54,12 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::internalHeap:
     case AllocationType::linearStream:
         if (debugManager.flags.DisableCachingForHeaps.get()) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType);
+            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
         return GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
     case AllocationType::constantSurface:
         if (debugManager.flags.ForceL1Caching.get() == 0) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType);
+            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
     case AllocationType::buffer:
@@ -68,7 +68,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::unifiedSharedMemory:
     case AllocationType::externalHostPtr:
         if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType);
+            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
     case AllocationType::bufferHostMemory:
@@ -78,13 +78,13 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::svmCpu:
     case AllocationType::svmZeroCopy:
         if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType);
+            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     case AllocationType::gpuTimestampDeviceBuffer:
     case AllocationType::timestampPacketTagBuffer:
         if (productHelper.isDcFlushAllowed()) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType);
+            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
     default:
@@ -92,7 +92,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     }
 }
 
-GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType) {
+GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const ProductHelper &productHelper) {
     switch (allocationType) {
     case AllocationType::preemption:
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
@@ -100,7 +100,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::linearStream:
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
     default:
-        return GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+        return productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
 }
 

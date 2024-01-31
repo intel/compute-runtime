@@ -32,6 +32,6 @@ struct CacheSettingsHelper {
 
   protected:
     static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper);
-    static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType);
+    static GMM_RESOURCE_USAGE_TYPE_ENUM getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const ProductHelper &productHelper);
 };
 } // namespace NEO

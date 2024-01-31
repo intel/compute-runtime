@@ -121,4 +121,9 @@ bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
     return false;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
+    return true;
+}
+
 } // namespace NEO
