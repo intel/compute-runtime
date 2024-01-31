@@ -1651,15 +1651,14 @@ TEST(IoctlHelperXeTest, whenSetDefaultEngineIsCalledThenProperEngineIsSet) {
     auto engineInfo = xeIoctlHelper->createEngineInfo(true);
     ASSERT_NE(nullptr, engineInfo);
 
-    xeIoctlHelper->setDefaultEngine();
-    auto defaultEngineType = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.defaultEngineType;
-    if (defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
-        EXPECT_EQ(DRM_XE_ENGINE_CLASS_COMPUTE, xeIoctlHelper->defaultEngine->engine_class);
-    } else if (defaultEngineType == aub_stream::EngineType::ENGINE_RCS) {
-        EXPECT_EQ(DRM_XE_ENGINE_CLASS_RENDER, xeIoctlHelper->defaultEngine->engine_class);
-    } else {
-        EXPECT_THROW(xeIoctlHelper->setDefaultEngine(), std::exception);
-    }
+    xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_CCS);
+    EXPECT_EQ(DRM_XE_ENGINE_CLASS_COMPUTE, xeIoctlHelper->defaultEngine->engine_class);
+    xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_RCS);
+    EXPECT_EQ(DRM_XE_ENGINE_CLASS_RENDER, xeIoctlHelper->defaultEngine->engine_class);
+
+    EXPECT_THROW(xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_BCS), std::exception);
+    EXPECT_THROW(xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_VCS), std::exception);
+    EXPECT_THROW(xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_VECS), std::exception);
 }
 
 TEST(IoctlHelperXeTest, givenNoEnginesWhenSetDefaultEngineIsCalledThenAbortIsThrown) {
@@ -1667,7 +1666,8 @@ TEST(IoctlHelperXeTest, givenNoEnginesWhenSetDefaultEngineIsCalledThenAbortIsThr
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
-    EXPECT_THROW(xeIoctlHelper->setDefaultEngine(), std::exception);
+    auto defaultEngineType = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.defaultEngineType;
+    EXPECT_THROW(xeIoctlHelper->setDefaultEngine(defaultEngineType), std::exception);
 }
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeAndDebugOverrideEnabledWhenGetCpuCachingModeCalledThenOverriddenValueIsReturned) {

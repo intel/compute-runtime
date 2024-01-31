@@ -244,7 +244,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
         multiTileArchInfo.TileMask = static_cast<uint8_t>(multiTileMask.to_ulong());
     }
 
-    setDefaultEngine();
+    setDefaultEngine(drm.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.defaultEngineType);
 
     return std::make_unique<EngineInfo>(&drm, enginesPerTile);
 }
@@ -475,8 +475,7 @@ void IoctlHelperXe::updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t s
     bindInfo.push_back(b);
 }
 
-void IoctlHelperXe::setDefaultEngine() {
-    auto defaultEngineType = drm.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.defaultEngineType;
+void IoctlHelperXe::setDefaultEngine(const aub_stream::EngineType &defaultEngineType) {
     uint32_t defaultEngineClass;
 
     if (defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {

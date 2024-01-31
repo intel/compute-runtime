@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include <bitset>
@@ -158,7 +159,7 @@ class IoctlHelperXe : public IoctlHelper {
         uint64_t value;
     };
 
-    void setDefaultEngine();
+    void setDefaultEngine(const aub_stream::EngineType &defaultEngineType);
 
     int chipsetId = 0;
     int revId = 0;
