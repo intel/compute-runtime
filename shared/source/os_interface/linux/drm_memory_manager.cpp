@@ -451,7 +451,9 @@ GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const Alloca
                                         bo->peekAddress(),
                                         cSize,
                                         MemoryPool::system4KBPages);
-    allocation->setUsmHostAllocation(true);
+    if (debugManager.flags.EnableHostAllocationMemPolicy.get()) {
+        allocation->setUsmHostAllocation(true);
+    }
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), cSize);
     bo.release();
 
@@ -1734,7 +1736,9 @@ inline std::unique_ptr<DrmAllocation> DrmMemoryManager::makeDrmAllocation(const 
     allocation->storageInfo = allocationData.storageInfo;
     allocation->setFlushL3Required(allocationData.flags.flushL3);
     allocation->setUncacheable(allocationData.flags.uncacheable);
-    allocation->setUsmHostAllocation(allocationData.flags.isUSMHostAllocation);
+    if (debugManager.flags.EnableHostAllocationMemPolicy.get()) {
+        allocation->setUsmHostAllocation(allocationData.flags.isUSMHostAllocation);
+    }
 
     return allocation;
 }
