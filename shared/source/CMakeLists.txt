@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,7 +18,7 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
               ${CORE_SOURCES}
   )
   if(${MOCKABLE})
-    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual DEFAULT_TEST_PLATFORM=${DEFAULT_TESTED_PLATFORM} DEFAULT_TEST_FAMILY_NAME=${DEFAULT_TESTED_FAMILY_NAME} ${TESTED_CORE_FLAGS_DEFINITONS})
+    target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual MOCKABLE= DEFAULT_TEST_PLATFORM=${DEFAULT_TESTED_PLATFORM} DEFAULT_TEST_FAMILY_NAME=${DEFAULT_TESTED_FAMILY_NAME} ${TESTED_CORE_FLAGS_DEFINITONS})
   else()
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
   endif()

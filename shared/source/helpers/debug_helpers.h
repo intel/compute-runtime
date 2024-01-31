@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,12 @@
     }
 
 #define UNREACHABLE(...) std::abort()
+
+#ifdef MOCKABLE
+#define OPTIONAL_UNRECOVERABLE_IF(expression) UNRECOVERABLE_IF(expression)
+#else
+#define OPTIONAL_UNRECOVERABLE_IF(expression) (void)0
+#endif
 
 #ifndef DEBUG_BREAK_IF
 #ifdef _DEBUG
