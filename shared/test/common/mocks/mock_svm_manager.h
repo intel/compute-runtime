@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,8 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     using SVMAllocsManager::svmMapOperations;
     using SVMAllocsManager::usmDeviceAllocationsCache;
     using SVMAllocsManager::usmDeviceAllocationsCacheEnabled;
+    using SVMAllocsManager::usmHostAllocationsCache;
+    using SVMAllocsManager::usmHostAllocationsCacheEnabled;
 
     void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, SvmAllocationData &svmData) override {
         SVMAllocsManager::prefetchMemory(device, commandStreamReceiver, svmData);

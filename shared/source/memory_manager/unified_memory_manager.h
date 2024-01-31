@@ -205,6 +205,7 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData);
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
     void trimUSMDeviceAllocCache();
+    void trimUSMHostAllocCache();
     void insertSVMAlloc(const SvmAllocationData &svmData);
     void removeSVMAlloc(const SvmAllocationData &svmData);
     size_t getNumAllocs() const { return svmAllocs.getNumAllocs(); }
@@ -242,6 +243,7 @@ class SVMAllocsManager {
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
 
     void initUsmDeviceAllocationsCache();
+    void initUsmHostAllocationsCache();
     void freeSVMData(SvmAllocationData *svmData);
 
     SortedVectorBasedAllocationTracker svmAllocs;
@@ -252,6 +254,8 @@ class SVMAllocsManager {
     std::mutex mtxForIndirectAccess;
     bool multiOsContextSupport;
     SvmAllocationCache usmDeviceAllocationsCache;
+    SvmAllocationCache usmHostAllocationsCache;
     bool usmDeviceAllocationsCacheEnabled = false;
+    bool usmHostAllocationsCacheEnabled = false;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ struct ApiSpecificConfig {
     static bool getGlobalBindlessHeapConfiguration();
     static bool getBindlessMode(const ReleaseHelper *);
     static bool isDeviceAllocationCacheEnabled();
+    static bool isHostAllocationCacheEnabled();
     static ApiType getApiType();
     static std::string getName();
     static uint64_t getReducedMaxAllocSize(uint64_t maxAllocSize);

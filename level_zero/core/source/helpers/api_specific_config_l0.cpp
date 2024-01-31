@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,10 @@ bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *releaseHelper) {
 }
 
 bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
+    return false;
+}
+
+bool ApiSpecificConfig::isHostAllocationCacheEnabled() {
     return false;
 }
 

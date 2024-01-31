@@ -173,6 +173,14 @@ SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager, bool multiOsCon
     if (this->usmDeviceAllocationsCacheEnabled) {
         this->initUsmDeviceAllocationsCache();
     }
+
+    this->usmHostAllocationsCacheEnabled = NEO::ApiSpecificConfig::isHostAllocationCacheEnabled();
+    if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
+        this->usmHostAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableHostAllocationCache.get();
+    }
+    if (this->usmHostAllocationsCacheEnabled) {
+        this->initUsmHostAllocationsCache();
+    }
 }
 
 SVMAllocsManager::~SVMAllocsManager() = default;
@@ -221,13 +229,26 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.flags.isUSMDeviceAllocation = false;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
 
+    if (this->usmHostAllocationsCacheEnabled) {
+        void *allocationFromCache = this->usmHostAllocationsCache.get(size, memoryProperties, this);
+        if (allocationFromCache) {
+            return allocationFromCache;
+        }
+    }
+
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndicesVector.begin(), rootDeviceIndicesVector.end(), std::less<uint32_t const>());
     SvmAllocationData allocData(maxRootDeviceIndex);
     void *externalHostPointer = reinterpret_cast<void *>(memoryProperties.allocationFlags.hostptr);
 
     void *usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalHostPointer);
     if (!usmPtr) {
-        return nullptr;
+        if (this->usmHostAllocationsCacheEnabled) {
+            this->trimUSMHostAllocCache();
+            usmPtr = memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndicesVector, unifiedMemoryProperties, allocData.gpuAllocations, externalHostPointer);
+        }
+        if (!usmPtr) {
+            return nullptr;
+        }
     }
 
     allocData.cpuAllocation = nullptr;
@@ -439,6 +460,11 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
             this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
             return true;
         }
+        if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
+            this->usmHostAllocationsCacheEnabled) {
+            this->usmHostAllocationsCache.insert(svmData->size, ptr);
+            return true;
+        }
         if (blocking) {
             this->freeSVMAllocImpl(ptr, FreePolicyType::blocking, svmData);
         } else {
@@ -460,6 +486,11 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             this->usmDeviceAllocationsCacheEnabled) {
             this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
+            return true;
+        }
+        if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
+            this->usmHostAllocationsCacheEnabled) {
+            this->usmHostAllocationsCache.insert(svmData->size, ptr);
             return true;
         }
         this->freeSVMAllocImpl(ptr, FreePolicyType::defer, svmData);
@@ -529,6 +560,10 @@ void SVMAllocsManager::freeSVMAllocDeferImpl() {
 
 void SVMAllocsManager::trimUSMDeviceAllocCache() {
     this->usmDeviceAllocationsCache.trim(this);
+}
+
+void SVMAllocsManager::trimUSMHostAllocCache() {
+    this->usmHostAllocationsCache.trim(this);
 }
 
 void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
@@ -651,6 +686,10 @@ void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
 
 void SVMAllocsManager::initUsmDeviceAllocationsCache() {
     this->usmDeviceAllocationsCache.allocations.reserve(128u);
+}
+
+void SVMAllocsManager::initUsmHostAllocationsCache() {
+    this->usmHostAllocationsCache.allocations.reserve(128u);
 }
 
 void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData) {
