@@ -10,7 +10,6 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/utilities/debug_settings_reader.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -59,11 +58,10 @@ struct CompilerCacheTest : public ::testing::Test {
     VariableBackup<HRESULT> shGetKnownFolderPathResultBackup;
     VariableBackup<size_t> createDirectoryACalledBackup;
     VariableBackup<BOOL> createDirectoryAResultBackup;
-    DebugManagerStateRestore restorer;
 };
 
 TEST_F(CompilerCacheTest, GivenDefaultClCacheConfigWithPathExistsThenValuesAreProperlyPopulated) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(0);
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
 
     bool pathExistsMock = true;
     VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
@@ -75,7 +73,7 @@ TEST_F(CompilerCacheTest, GivenDefaultClCacheConfigWithPathExistsThenValuesArePr
 }
 
 TEST_F(CompilerCacheTest, GivenDefaultClCacheConfigWithNonExistingPathThenValuesAreProperlyPopulated) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(0);
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
 
     bool pathExistsMock = false;
     VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
@@ -87,9 +85,9 @@ TEST_F(CompilerCacheTest, GivenDefaultClCacheConfigWithNonExistingPathThenValues
 }
 
 TEST_F(CompilerCacheTest, GivenAllEnvVarWhenProperlySetThenCorrectConfigIsReturned) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
-    debugManager.flags.NEO_CACHE_DIR.set("ult\\directory\\");
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
 
     bool pathExistsMock = true;
     VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
@@ -103,9 +101,9 @@ TEST_F(CompilerCacheTest, GivenAllEnvVarWhenProperlySetThenCorrectConfigIsReturn
 }
 
 TEST_F(CompilerCacheTest, GivenNonExistingPathWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
-    debugManager.flags.NEO_CACHE_DIR.set("ult\\directory\\");
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
 
     bool pathExistsMock = false;
     VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
@@ -117,8 +115,8 @@ TEST_F(CompilerCacheTest, GivenNonExistingPathWhenGetCompilerCacheConfigThenConf
 }
 
 TEST_F(CompilerCacheTest, GivenLocalAppDataCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
     SysCalls::pathExistsPaths[0] = "C:\\Users\\user1\\AppData\\Local\\NEO";
     SysCalls::pathExistsPaths[1] = "C:\\Users\\user1\\AppData\\Local\\NEO\\neo_compiler_cache";
@@ -139,8 +137,8 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataCachePathSetWhenGetCompilerCacheConfi
 }
 
 TEST_F(CompilerCacheTest, GivenNeoCacheDirNotSetAndLocalAppDataCachePathNotSetWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
     SysCalls::shGetKnownFolderPathResult = S_FALSE;
 
@@ -151,8 +149,8 @@ TEST_F(CompilerCacheTest, GivenNeoCacheDirNotSetAndLocalAppDataCachePathNotSetWh
 }
 
 TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetCompilerCacheConfigThenNeoDirectoryIsCreatedAndConfigWithEnabledCacheIsReturned) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
     SysCalls::pathExistsPaths[0] = "C:\\Users\\user1\\AppData\\Local\\NEO\\neo_compiler_cache";
     SysCalls::shGetKnownFolderPathResult = S_OK;
@@ -172,8 +170,8 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetC
 }
 
 TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetCompilerCacheConfigAndNeoDirCreationFailsThenConfigWithDisabledCacheIsReturned) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
     SysCalls::pathExistsPaths[0] = "C:\\Users\\user1\\AppData\\Local\\NEO\\neo_compiler_cache";
     SysCalls::shGetKnownFolderPathResult = S_OK;
@@ -190,8 +188,8 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetC
 }
 
 TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDirectoryWhenGetCompilerCacheConfigThenNeoCompilerCacheDirectoryIsCreatedAndConfigWithEnabledCacheIsReturned) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
     SysCalls::pathExistsPaths[0] = "C:\\Users\\user1\\AppData\\Local\\NEO";
 
@@ -212,8 +210,8 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDire
 }
 
 TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDirectoryWhenGetCompilerCacheConfigAndDirectoryCreationFailsThenConfigWithDisabledCacheIsReturned) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
     SysCalls::pathExistsPaths[0] = "C:\\Users\\user1\\AppData\\Local\\NEO";
 
@@ -232,8 +230,8 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDire
 }
 
 TEST_F(CompilerCacheTest, GivenLocalAppDataSetWhenGetCompilerCacheConfigAndNeoCompilerCacheDirectoryAlreadyExistsThenConfigWithEnabledCacheIsReturned) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(22);
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
     SysCalls::pathExistsPaths[0] = "C:\\Users\\user1\\AppData\\Local\\NEO";
 
@@ -256,9 +254,9 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetWhenGetCompilerCacheConfigAndNeoCo
 }
 
 TEST_F(CompilerCacheTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigThenCacheSizeIsSetToMaxSize) {
-    debugManager.flags.NEO_CACHE_PERSISTENT.set(1);
-    debugManager.flags.NEO_CACHE_MAX_SIZE.set(0);
-    debugManager.flags.NEO_CACHE_DIR.set("ult\\directory\\");
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_MAX_SIZE"] = "0";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
 
     SysCalls::pathExistsPaths[0] = "ult\\directory\\";
 
