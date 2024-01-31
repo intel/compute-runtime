@@ -179,15 +179,6 @@ HWTEST2_F(XeLpgHwInfoTests, GivenEmptyHwInfoForUnitTestsWhenSetupHardwareInfoIsC
     }
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned, IsXeLpg) {
-    uint64_t patIndex = 1u;
-    bool isUncached = true;
-    EXPECT_EQ(2u, productHelper->overridePatIndex(isUncached, patIndex));
-
-    isUncached = false;
-    EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex));
-}
-
 HWTEST2_F(XeLpgProductHelperTests, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned, IsXeLpg) {
     EXPECT_EQ(aub_stream::ProductFamily::Mtl, productHelper->getAubStreamProductFamily());
 }

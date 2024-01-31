@@ -79,15 +79,6 @@ bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
 }
 
 template <>
-uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint64_t patIndex) const {
-    if (isUncachedType) {
-        constexpr uint64_t uncached = 2u;
-        return uncached;
-    }
-    return patIndex;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
     return allocationData.type == AllocationType::commandBuffer;
 }
