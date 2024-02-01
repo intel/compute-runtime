@@ -23,6 +23,10 @@ unsigned int IoctlHelperXe::getIoctlRequestValueDebugger(DrmIoctl ioctlRequest) 
     switch (ioctlRequest) {
     case DrmIoctl::debuggerOpen:
         RETURN_ME(DRM_IOCTL_XE_EUDEBUG_CONNECT);
+    case DrmIoctl::metadataCreate:
+        RETURN_ME(DRM_IOCTL_XE_DEBUG_METADATA_CREATE);
+    case DrmIoctl::metadataDestroy:
+        RETURN_ME(DRM_IOCTL_XE_DEBUG_METADATA_DESTROY);
 
     default:
         UNRECOVERABLE_IF(true);
@@ -35,6 +39,22 @@ int IoctlHelperXe::debuggerOpenIoctl(DrmIoctl request, void *arg) {
     auto ret = IoctlHelper::ioctl(request, arg);
     xeLog(" -> IoctlHelperXe::ioctl debuggerOpen pid=%llu r=%d\n",
           connect->pid, ret);
+    return ret;
+}
+
+int IoctlHelperXe::debuggerMetadataCreateIoctl(DrmIoctl request, void *arg) {
+    drm_xe_debug_metadata_create *metadata = static_cast<drm_xe_debug_metadata_create *>(arg);
+    auto ret = IoctlHelper::ioctl(request, arg);
+    xeLog(" -> IoctlHelperXe::ioctl metadataCreate type=%llu user_addr=%uul len=%uul\n id=%uul ret=%d, errno=%d\n",
+          metadata->type, metadata->user_addr, metadata->len, metadata->id, ret, errno);
+    return ret;
+}
+
+int IoctlHelperXe::debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg) {
+    drm_xe_debug_metadata_destroy *metadata = static_cast<drm_xe_debug_metadata_destroy *>(arg);
+    auto ret = IoctlHelper::ioctl(request, arg);
+    xeLog(" -> IoctlHelperXe::ioctl metadataDestroy id=%llu r=%d\n",
+          metadata->id, ret);
     return ret;
 }
 
@@ -132,6 +152,34 @@ int IoctlHelperXe::getEuDebugSysFsEnable() {
     }
 
     return enabledEuDebug - '0';
+}
+
+uint32_t IoctlHelperXe::registerResource(DrmResourceClass classType, const void *data, size_t size) {
+    drm_xe_debug_metadata_create metadata = {};
+    if (classType == DrmResourceClass::elf) {
+        metadata.type = DRM_XE_DEBUG_METADATA_ELF_BINARY;
+        metadata.user_addr = reinterpret_cast<uintptr_t>(data);
+        metadata.len = size;
+    } else if (classType == DrmResourceClass::l0ZebinModule) {
+        metadata.type = DRM_XE_DEBUG_METADATA_PROGRAM_MODULE;
+        metadata.user_addr = reinterpret_cast<uintptr_t>(data);
+        metadata.len = size;
+    } else {
+        UNRECOVERABLE_IF(true);
+    }
+    [[maybe_unused]] auto retVal = IoctlHelperXe::ioctl(DrmIoctl::metadataCreate, &metadata);
+    PRINT_DEBUGGER_INFO_LOG("DRM_XE_DEBUG_METADATA_CREATE: type=%llu user_addr=%llu len=%llu id=%llu\n",
+                            metadata.type, metadata.user_addr, metadata.len, metadata.id);
+    DEBUG_BREAK_IF(retVal != 0);
+    return static_cast<uint32_t>(metadata.id);
+}
+
+void IoctlHelperXe::unregisterResource(uint32_t handle) {
+    drm_xe_debug_metadata_destroy metadata = {};
+    metadata.id = handle;
+    [[maybe_unused]] auto retVal = IoctlHelperXe::ioctl(DrmIoctl::metadataDestroy, &metadata);
+    DEBUG_BREAK_IF(retVal != 0);
+    PRINT_DEBUGGER_INFO_LOG("DRM_XE_DEBUG_METADATA_DESTROY: id=%llu\n", metadata.id);
 }
 
 } // namespace NEO

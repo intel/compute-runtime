@@ -306,3 +306,33 @@ TEST(IoctlHelperXeTest, givenXeEnableEuDebugWithInvalidPathThenReturnCorrectValu
 
     EXPECT_EQ(0, enableEuDebug);
 }
+
+TEST(IoctlHelperXeTest, givenXeRegisterResourceThenCorrectIoctlCalled) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    constexpr size_t bufferSize = 20;
+    uint8_t buffer[bufferSize];
+    auto id = xeIoctlHelper->registerResource(DrmResourceClass::elf, buffer, bufferSize);
+    EXPECT_EQ(drm.metadataID, id);
+    EXPECT_EQ(drm.metadataAddr, buffer);
+    EXPECT_EQ(drm.metadataSize, bufferSize);
+    EXPECT_EQ(drm.metadataType, static_cast<uint64_t>(DRM_XE_DEBUG_METADATA_ELF_BINARY));
+
+    drm.metadataID = 0;
+    drm.metadataAddr = nullptr;
+    drm.metadataSize = 0;
+    id = xeIoctlHelper->registerResource(DrmResourceClass::l0ZebinModule, buffer, bufferSize);
+    EXPECT_EQ(drm.metadataID, id);
+    EXPECT_EQ(drm.metadataAddr, buffer);
+    EXPECT_EQ(drm.metadataSize, bufferSize);
+    EXPECT_EQ(drm.metadataType, static_cast<uint64_t>(DRM_XE_DEBUG_METADATA_PROGRAM_MODULE));
+}
+
+TEST(IoctlHelperXeTest, givenXeunregisterResourceThenCorrectIoctlCalled) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    xeIoctlHelper->unregisterResource(0x1234);
+    EXPECT_EQ(drm.metadataID, 0x1234u);
+}

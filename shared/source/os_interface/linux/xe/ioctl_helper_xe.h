@@ -134,6 +134,8 @@ class IoctlHelperXe : public IoctlHelper {
     uint16_t getCpuCachingMode();
     void addDebugMetadata(DrmResourceClass type, uint64_t *offset, uint64_t size);
     void addDebugMetadataCookie(uint64_t cookie);
+    uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;
+    void unregisterResource(uint32_t handle) override;
 
   protected:
     const char *xeGetClassName(int className);
@@ -149,6 +151,8 @@ class IoctlHelperXe : public IoctlHelper {
     void updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size);
     void *allocateDebugMetadata();
     int debuggerOpenIoctl(DrmIoctl request, void *arg);
+    int debuggerMetadataCreateIoctl(DrmIoctl request, void *arg);
+    int debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg);
     void *freeDebugMetadata(void *metadata);
     int getRunaloneExtProperty();
 

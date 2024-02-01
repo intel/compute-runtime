@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,8 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     case DrmIoctl::primeHandleToFd:
         RETURN_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
     case DrmIoctl::debuggerOpen:
+    case DrmIoctl::metadataCreate:
+    case DrmIoctl::metadataDestroy:
         return getIoctlRequestValueDebugger(ioctlRequest);
     default:
         UNRECOVERABLE_IF(true);
@@ -80,6 +82,10 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
     case DrmIoctl::debuggerOpen:
         STRINGIFY_ME(DRM_IOCTL_XE_EUDEBUG_CONNECT);
+    case DrmIoctl::metadataCreate:
+        STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_CREATE);
+    case DrmIoctl::metadataDestroy:
+        STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_DESTROY);
     default:
         return "???";
     }

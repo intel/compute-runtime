@@ -107,6 +107,19 @@ class DrmMockXeDebug : public DrmMockCustom {
             }
             return debuggerOpenRetval;
         } break;
+        case DrmIoctl::metadataCreate: {
+            auto metadata = reinterpret_cast<drm_xe_debug_metadata_create *>(arg);
+            metadataAddr = reinterpret_cast<void *>(metadata->user_addr);
+            metadataSize = metadata->len;
+            metadataType = metadata->type;
+            metadata->id = metadataID;
+            return 0;
+        } break;
+        case DrmIoctl::metadataDestroy: {
+            auto metadata = reinterpret_cast<drm_xe_debug_metadata_destroy *>(arg);
+            metadataID = metadata->id;
+            return 0;
+        } break;
 
         default:
             break;
@@ -161,6 +174,11 @@ class DrmMockXeDebug : public DrmMockCustom {
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
     int gemVmBindReturn = 0;
+
+    uint64_t metadataID = 20;
+    void *metadataAddr = nullptr;
+    size_t metadataSize = 0;
+    uint64_t metadataType = 9999;
 
     alignas(64) std::vector<uint8_t> queryTopology;
     std::vector<drm_xe_ext_vm_set_debug_metadata> vmCreateMetadata;

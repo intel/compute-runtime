@@ -1145,6 +1145,13 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::debuggerOpen: {
         ret = debuggerOpenIoctl(request, arg);
     } break;
+    case DrmIoctl::metadataCreate: {
+        ret = debuggerMetadataCreateIoctl(request, arg);
+    } break;
+    case DrmIoctl::metadataDestroy: {
+        ret = debuggerMetadataDestroyIoctl(request, arg);
+    } break;
+
     default:
         xeLog("Not handled 0x%x\n", request);
         UNRECOVERABLE_IF(true);
