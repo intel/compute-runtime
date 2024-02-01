@@ -164,6 +164,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     ze_result_t readEventImp(drm_xe_eudebug_event *drmDebugEvent);
     int ioctl(unsigned long request, void *arg);
+    std::atomic<bool> processEntryEventGenerated = false;
 };
 
 } // namespace L0

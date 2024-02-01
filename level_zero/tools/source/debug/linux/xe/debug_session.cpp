@@ -231,6 +231,14 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
 
         if (event->flags & DRM_XE_EUDEBUG_EVENT_CREATE) {
             UNRECOVERABLE_IF(clientHandleToConnection.find(execQueue->client_handle) == clientHandleToConnection.end());
+
+            if (!processEntryEventGenerated) {
+                zet_debug_event_t debugEvent = {};
+                debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
+                pushApiEvent(debugEvent);
+                processEntryEventGenerated = true;
+            }
+
             clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].vmHandle = execQueue->vm_handle;
             clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].engineClass = execQueue->engine_class;
             for (uint16_t idx = 0; idx < execQueue->width; idx++) {
@@ -243,6 +251,21 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
                 clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle.erase(execQueue->lrc_handle[idx]);
             }
             clientHandleToConnection[execQueue->client_handle]->execQueues.erase(execQueue->exec_queue_handle);
+            {
+                bool lastExecQueue = true;
+                for (const auto &connection : clientHandleToConnection) {
+                    if (!connection.second->execQueues.empty()) {
+                        lastExecQueue = false;
+                        break;
+                    }
+                }
+                if (lastExecQueue) {
+                    zet_debug_event_t debugEvent = {};
+                    debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
+                    pushApiEvent(debugEvent);
+                    processEntryEventGenerated = false;
+                }
+            }
         }
 
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE flags = %u len = %lu client_handle = %llu\

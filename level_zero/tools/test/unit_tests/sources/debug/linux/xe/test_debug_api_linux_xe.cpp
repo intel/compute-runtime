@@ -744,5 +744,98 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     EXPECT_TRUE(session->clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle.empty());
 }
 
+TEST_F(DebugApiLinuxTestXe, whenHandleExecQueueEventThenProcessEnterAndProcessExitEventTriggeredUponFirstExecQueueCreateAndLastExecQueueDestroyRespectively) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+
+    // First client connection
+    drm_xe_eudebug_event_client client1;
+    client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client1.client_handle = 0x123456789;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
+
+    uint64_t execQueueData[sizeof(drm_xe_eudebug_event_exec_queue) / sizeof(uint64_t) + 3 * sizeof(typeOfLrcHandle)];
+    auto *lrcHandle = reinterpret_cast<typeOfLrcHandle *>(ptrOffset(execQueueData, sizeof(drm_xe_eudebug_event_exec_queue)));
+    typeOfLrcHandle lrcHandleTemp[3];
+    const uint64_t lrcHandle0 = 2;
+    const uint64_t lrcHandle1 = 3;
+    const uint64_t lrcHandle2 = 5;
+    lrcHandleTemp[0] = static_cast<typeOfLrcHandle>(lrcHandle0);
+    lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
+    lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
+
+    drm_xe_eudebug_event_exec_queue *execQueue = reinterpret_cast<drm_xe_eudebug_event_exec_queue *>(&execQueueData);
+    execQueue->base.type = DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE;
+    execQueue->base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    execQueue->client_handle = client1.client_handle;
+    execQueue->vm_handle = 0x1234;
+    execQueue->exec_queue_handle = 0x100;
+    execQueue->engine_class = DRM_XE_ENGINE_CLASS_COMPUTE;
+    execQueue->width = 3;
+    memcpy(lrcHandle, lrcHandleTemp, sizeof(lrcHandleTemp));
+    session->handleEvent(&execQueue->base); // ExecQueue create event handle for first client
+
+    zet_debug_event_t event1 = {};
+    ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event1.type);
+
+    // second client connection
+    drm_xe_eudebug_event_client client2;
+    client2.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client2.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client2.client_handle = 0x123456788;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client2));
+
+    execQueue->client_handle = client2.client_handle;
+    execQueue->vm_handle = 0x1235;
+    execQueue->exec_queue_handle = 0x101;
+    session->handleEvent(&execQueue->base); // ExecQueue1 create event handle for second client
+
+    zet_debug_event_t event2 = {};
+    result = zetDebugReadEvent(session->toHandle(), 0, &event2);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    execQueue->client_handle = client2.client_handle;
+    execQueue->vm_handle = 0x1236;
+    execQueue->exec_queue_handle = 0x102;
+    session->handleEvent(&execQueue->base); // ExecQueue2 create event handle for second client
+    result = zetDebugReadEvent(session->toHandle(), 0, &event2);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    // ExecQueue Destroy event handle
+    execQueue->base.type = DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE;
+    execQueue->base.flags = DRM_XE_EUDEBUG_EVENT_DESTROY;
+    execQueue->client_handle = client1.client_handle;
+    execQueue->vm_handle = 0x1234;
+    execQueue->exec_queue_handle = 0x100;
+    execQueue->engine_class = DRM_XE_ENGINE_CLASS_COMPUTE;
+    execQueue->width = 3;
+    session->handleEvent(&execQueue->base);
+    result = zetDebugReadEvent(session->toHandle(), 0, &event2);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    execQueue->client_handle = client2.client_handle;
+    execQueue->vm_handle = 0x1235;
+    execQueue->exec_queue_handle = 0x101;
+    session->handleEvent(&execQueue->base);
+    result = zetDebugReadEvent(session->toHandle(), 0, &event2);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    execQueue->client_handle = client2.client_handle;
+    execQueue->vm_handle = 0x1236;
+    execQueue->exec_queue_handle = 0x102;
+    session->handleEvent(&execQueue->base);
+    result = zetDebugReadEvent(session->toHandle(), 0, &event2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event2.type);
+}
+
 } // namespace ult
 } // namespace L0
