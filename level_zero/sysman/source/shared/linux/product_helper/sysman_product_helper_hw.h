@@ -58,6 +58,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Diagnostics
     bool isDiagnosticsSupported() override;
 
+    // standby
+    bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) override;
+
     ~SysmanProductHelperHw() override = default;
 
   protected:

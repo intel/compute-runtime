@@ -223,5 +223,10 @@ bool SysmanProductHelperHw<gfxProduct>::isDiagnosticsSupported() {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) {
+    return pSysmanKmdInterface->isStandbyModeControlAvailable();
+}
+
 } // namespace Sysman
 } // namespace L0

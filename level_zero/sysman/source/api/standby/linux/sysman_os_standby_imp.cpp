@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
@@ -24,23 +25,13 @@ ze_result_t LinuxStandbyImp::osStandbyGetProperties(zes_standby_properties_t &pr
 }
 
 bool LinuxStandbyImp::isStandbySupported(void) {
-    auto rel = pSysfsAccess->canRead(standbyModeFile);
-    if (ZE_RESULT_SUCCESS == rel) {
+    if ((!standbyModeFile.empty()) && (ZE_RESULT_SUCCESS == pSysfsAccess->canRead(standbyModeFile))) {
         return true;
-    } else {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <can't read file %s> <error: 0x%x>\n", __func__, standbyModeFile.c_str(), rel);
-        return false;
     }
-    return true;
+    return false;
 }
 
 ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
-
-    if (pSysmanKmdInterface->isStandbyModeControlAvailable() == false) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     int currentMode = -1;
     ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
     if (ZE_RESULT_SUCCESS != result) {
@@ -64,11 +55,6 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
 }
 
 ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
-
-    if (pSysmanKmdInterface->isStandbyModeControlAvailable() == false) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     if (ZES_STANDBY_PROMO_MODE_DEFAULT == mode) {
         result = pSysfsAccess->write(standbyModeFile, standbyModeDefault);
@@ -92,18 +78,16 @@ void LinuxStandbyImp::init() {
         baseDirectoryExists = true;
     }
 
-    auto standbyModeControlStatus = pSysmanKmdInterface->isStandbyModeControlAvailable();
-    if (standbyModeControlStatus == true) {
+    if (pSysmanProductHelper->isStandbySupported(pSysmanKmdInterface)) {
         standbyModeFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameStandbyModeControl, subdeviceId, baseDirectoryExists);
-    } else {
-        standbyModeFile = "";
     }
 }
 
 LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
+    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     init();
 }
 

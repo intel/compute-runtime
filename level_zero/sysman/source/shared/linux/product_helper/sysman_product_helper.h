@@ -79,6 +79,9 @@ class SysmanProductHelper {
     // Diagnostics
     virtual bool isDiagnosticsSupported() = 0;
 
+    // standby
+    virtual bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) = 0;
+
     virtual ~SysmanProductHelper() = default;
 
   protected:
