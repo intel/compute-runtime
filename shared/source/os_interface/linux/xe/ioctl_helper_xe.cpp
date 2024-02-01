@@ -1225,13 +1225,15 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
 
     struct drm_xe_ext_set_property ext {};
     auto &gfxCoreHelper = drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    if (gfxCoreHelper.isRunaloneModeRequired(drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode())) {
-        ext.base.next_extension = 0;
-        ext.base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
-        ext.property = getRunaloneExtProperty();
-        ext.value = 1;
+    if ((engine[0].engine_class == DRM_XE_ENGINE_CLASS_RENDER) || (engine[0].engine_class == DRM_XE_ENGINE_CLASS_COMPUTE)) {
+        if (gfxCoreHelper.isRunaloneModeRequired(drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode())) {
+            ext.base.next_extension = 0;
+            ext.base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
+            ext.property = getRunaloneExtProperty();
+            ext.value = 1;
 
-        create.extensions = castToUint64(&ext);
+            create.extensions = castToUint64(&ext);
+        }
     }
 
     int ret = IoctlHelper::ioctl(DrmIoctl::gemContextCreateExt, &create);

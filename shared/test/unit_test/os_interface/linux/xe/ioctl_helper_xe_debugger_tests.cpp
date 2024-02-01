@@ -232,6 +232,39 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnTrueWhenCreate
     EXPECT_EQ(ext.value, 1ULL);
 }
 
+HWTEST_F(IoctlHelperXeTestFixture, GivenContextCreatedForCopyEngineWhenCreateDrmContextThenRunAloneContextIsNotRequested) {
+    DebugManagerStateRestore restorer;
+    struct MockGfxCoreHelperHw : NEO::GfxCoreHelperHw<FamilyType> {
+        bool isRunaloneModeRequired(DebuggingMode debuggingMode) const override {
+            return true;
+        }
+    };
+
+    class DrmMockXeDebugTest : public DrmMockXeDebug {
+      public:
+        DrmMockXeDebugTest(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXeDebug(rootDeviceEnvironment){};
+        unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) override {
+            return static_cast<unsigned int>(DrmParam::execBlt);
+        }
+    };
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto raiiFactory = RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw>(rootDeviceEnvironment);
+    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
+    DrmMockXeDebugTest drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    auto engineInfo = xeIoctlHelper->createEngineInfo(false);
+    ASSERT_NE(nullptr, engineInfo);
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    xeIoctlHelper->createDrmContext(drm, osContext, 0, 0);
+
+    auto ext = drm.receivedContextCreateSetParam;
+    EXPECT_NE(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE));
+}
+
 TEST(IoctlHelperXeTest, GivenXeDriverThenDebugAttachReturnsTrue) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
