@@ -1201,15 +1201,25 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         return static_cast<uint64_t>(debugManager.flags.OverridePatIndex.get());
     }
 
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
+    GMM_RESOURCE_USAGE_TYPE usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper);
+    auto isUncachedType = CacheSettingsHelper::isUncachedType(usageType);
+
+    if (isUncachedType && debugManager.flags.OverridePatIndexForUncachedTypes.get() != -1) {
+        return static_cast<uint64_t>(debugManager.flags.OverridePatIndexForUncachedTypes.get());
+    }
+
+    if (!isUncachedType && debugManager.flags.OverridePatIndexForCachedTypes.get() != -1) {
+        return static_cast<uint64_t>(debugManager.flags.OverridePatIndexForCachedTypes.get());
+    }
+
     if (!this->vmBindPatIndexProgrammingSupported) {
         return CommonConstants::unsupportedPatIndex;
     }
 
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    auto &productHelper = rootDeviceEnvironment.getProductHelper();
 
     GMM_RESOURCE_INFO *resourceInfo = nullptr;
-    GMM_RESOURCE_USAGE_TYPE usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper);
     bool cachable = !CacheSettingsHelper::isUncachedType(usageType);
     bool compressed = false;
 
@@ -1221,7 +1231,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     }
 
     uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cachable);
-    patIndex = productHelper.overridePatIndex(CacheSettingsHelper::isUncachedType(usageType), patIndex);
+    patIndex = productHelper.overridePatIndex(isUncachedType, patIndex);
 
     UNRECOVERABLE_IF(patIndex == static_cast<uint64_t>(GMM_PAT_ERROR));
 

@@ -4763,6 +4763,62 @@ TEST_F(DrmAllocationTests, givenBoWhenMarkingForCaptureThenBosAreMarked) {
     EXPECT_TRUE(bo.isMarkedForCapture());
 }
 
+TEST_F(DrmAllocationTests, givenUncachedTypeWhenForceOverridePatIndexForUncachedTypesThenForcedByFlagPatIndexIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceAllResourcesUncached.set(1);
+    uint64_t patIndex = 8u;
+    debugManager.flags.OverridePatIndexForUncachedTypes.set(static_cast<int32_t>(patIndex));
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+
+    EXPECT_EQ(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
+}
+
+TEST_F(DrmAllocationTests, givenCachedTypeWhenForceOverridePatIndexForUncachedTypesThenPatIndexIsNotOverrideByFlag) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceAllResourcesUncached.set(0);
+    uint64_t patIndex = 8u;
+    debugManager.flags.OverridePatIndexForUncachedTypes.set(static_cast<int32_t>(patIndex));
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+
+    EXPECT_NE(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
+}
+
+TEST_F(DrmAllocationTests, givenUncachedTypeWhenForceOverridePatIndexForCachedTypesThenPatIndexIsNotOverrideByFlag) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceAllResourcesUncached.set(1);
+    uint64_t patIndex = 8u;
+    debugManager.flags.OverridePatIndexForCachedTypes.set(static_cast<int32_t>(patIndex));
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+
+    EXPECT_NE(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
+}
+
+TEST_F(DrmAllocationTests, givenCachedTypeWhenForceOverridePatIndexForCachedTypesThenForcedByFlagPatIndexIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceAllResourcesUncached.set(0);
+    uint64_t patIndex = 8u;
+    debugManager.flags.OverridePatIndexForCachedTypes.set(static_cast<int32_t>(patIndex));
+
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+
+    EXPECT_EQ(patIndex, drm.getPatIndex(allocation.getDefaultGmm(), allocation.getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false));
+}
+
 TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCacheRegionThenSetRegionInBufferObject) {
 
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
