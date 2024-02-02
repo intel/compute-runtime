@@ -617,10 +617,6 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
     }
     residencyContainer[argIndex] = image->getAllocation();
 
-    if (image->getImplicitArgsAllocation()) {
-        this->residencyContainer.push_back(image->getImplicitArgsAllocation());
-    }
-
     return ZE_RESULT_SUCCESS;
 }
 
