@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -96,6 +96,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_ip_version.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_mapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_walk_order.h

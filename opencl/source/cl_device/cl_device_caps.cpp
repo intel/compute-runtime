@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/hw_info_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 
@@ -114,13 +115,9 @@ void ClDevice::initializeCaps() {
     deviceInfo.vendor = vendor.c_str();
     deviceInfo.profile = profile.c_str();
     enabledClVersion = hwInfo.capabilityTable.clVersionSupport;
-    ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
+    ocl21FeaturesEnabled = HwInfoHelper::checkIfOcl21FeaturesEnabledOrEnforced(hwInfo);
     if (debugManager.flags.ForceOCLVersion.get() != 0) {
         enabledClVersion = debugManager.flags.ForceOCLVersion.get();
-        ocl21FeaturesEnabled = (enabledClVersion == 21);
-    }
-    if (debugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
-        ocl21FeaturesEnabled = debugManager.flags.ForceOCL21FeaturesSupport.get();
     }
     switch (enabledClVersion) {
     case 30:

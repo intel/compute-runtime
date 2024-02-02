@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/hw_info_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
@@ -93,14 +94,11 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     }
 
     auto enabledClVersion = hwInfo.capabilityTable.clVersionSupport;
-    auto ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
     if (debugManager.flags.ForceOCLVersion.get() != 0) {
         enabledClVersion = debugManager.flags.ForceOCLVersion.get();
-        ocl21FeaturesEnabled = (enabledClVersion == 21);
     }
-    if (debugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
-        ocl21FeaturesEnabled = debugManager.flags.ForceOCL21FeaturesSupport.get();
-    }
+    auto ocl21FeaturesEnabled = HwInfoHelper::checkIfOcl21FeaturesEnabledOrEnforced(hwInfo);
+
     if (ocl21FeaturesEnabled) {
 
         if (hwInfo.capabilityTable.supportsMediaBlock) {

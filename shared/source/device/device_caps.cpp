@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/hw_info_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -45,13 +46,7 @@ void Device::initializeCaps() {
     auto &gfxCoreHelper = this->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
     auto releaseHelper = this->getRootDeviceEnvironment().getReleaseHelper();
 
-    bool ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
-    if (debugManager.flags.ForceOCLVersion.get() != 0) {
-        ocl21FeaturesEnabled = (debugManager.flags.ForceOCLVersion.get() == 21);
-    }
-    if (debugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
-        ocl21FeaturesEnabled = debugManager.flags.ForceOCL21FeaturesSupport.get();
-    }
+    bool ocl21FeaturesEnabled = HwInfoHelper::checkIfOcl21FeaturesEnabledOrEnforced(hwInfo);
     if (ocl21FeaturesEnabled) {
         addressing32bitAllowed = false;
     }
