@@ -1545,9 +1545,10 @@ TEST(IoctlHelperXeTest, whenXeShowBindTableIsCalledThenBindLogsArePrinted) {
 
     ::testing::internal::CaptureStderr();
 
-    debugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.PrintXeLogs.set(true);
     xeIoctlHelper->xeShowBindTable();
-    debugManager.flags.PrintDebugMessages.set(false);
+    debugManager.flags.PrintXeLogs.set(false);
+
     std::string output = testing::internal::GetCapturedStderr();
     std::string expectedOutput = R"(show bind: (<index> <handle> <userptr> <addr> <size>)
    0 x00000001 x0000000000000002 x0000000000000003 x0000000000000004

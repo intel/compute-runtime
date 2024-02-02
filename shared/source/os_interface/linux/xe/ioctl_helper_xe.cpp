@@ -1161,7 +1161,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
 }
 
 void IoctlHelperXe::xeShowBindTable() {
-    if (debugManager.flags.PrintDebugMessages.get()) {
+    if (debugManager.flags.PrintXeLogs.get()) {
         std::unique_lock<std::mutex> lock(xeLock);
         xeLog("show bind: (<index> <handle> <userptr> <addr> <size>)\n", "");
         for (unsigned int i = 0; i < bindInfo.size(); i++) {

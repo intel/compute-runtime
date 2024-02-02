@@ -209,7 +209,7 @@ class IoctlHelperXe : public IoctlHelper {
 
 template <typename... XeLogArgs>
 void IoctlHelperXe::xeLog(XeLogArgs &&...args) const {
-    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, args...);
+    PRINT_DEBUG_STRING(debugManager.flags.PrintXeLogs.get(), stderr, args...);
 }
 
 } // namespace NEO
