@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,6 +64,36 @@ ze_result_t zeCommandListAppendQueryKernelTimestamps(
     return L0::CommandList::fromHandle(hCommandList)->appendQueryKernelTimestamps(numEvents, phEvents, dstptr, pOffsets, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
+ze_result_t zeCommandListGetDeviceHandle(
+    ze_command_list_handle_t hCommandList,
+    ze_device_handle_t *phDevice) {
+    return L0::CommandList::fromHandle(hCommandList)->getDeviceHandle(phDevice);
+}
+
+ze_result_t zeCommandListGetContextHandle(
+    ze_command_list_handle_t hCommandList,
+    ze_context_handle_t *phContext) {
+    return L0::CommandList::fromHandle(hCommandList)->getContextHandle(phContext);
+}
+
+ze_result_t zeCommandListGetOrdinal(
+    ze_command_list_handle_t hCommandList,
+    uint32_t *pOrdinal) {
+    return L0::CommandList::fromHandle(hCommandList)->getOrdinal(pOrdinal);
+}
+
+ze_result_t zeCommandListImmediateGetIndex(
+    ze_command_list_handle_t hCommandListImmediate,
+    uint32_t *pIndex) {
+    return L0::CommandList::fromHandle(hCommandListImmediate)->getImmediateIndex(pIndex);
+}
+
+ze_result_t zeCommandListIsImmediate(
+    ze_command_list_handle_t hCommandList,
+    ze_bool_t *pIsImmediate) {
+    return L0::CommandList::fromHandle(hCommandList)->isImmediate(pIsImmediate);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -121,5 +151,45 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendWriteGlobalTimestamp(
         hSignalEvent,
         numWaitEvents,
         phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetDeviceHandle(
+    ze_command_list_handle_t hCommandList,
+    ze_device_handle_t *phDevice) {
+    return L0::zeCommandListGetDeviceHandle(
+        hCommandList,
+        phDevice);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetContextHandle(
+    ze_command_list_handle_t hCommandList,
+    ze_context_handle_t *phContext) {
+    return L0::zeCommandListGetContextHandle(
+        hCommandList,
+        phContext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetOrdinal(
+    ze_command_list_handle_t hCommandList,
+    uint32_t *pOrdinal) {
+    return L0::zeCommandListGetOrdinal(
+        hCommandList,
+        pOrdinal);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateGetIndex(
+    ze_command_list_handle_t hCommandListImmediate,
+    uint32_t *pIndex) {
+    return L0::zeCommandListImmediateGetIndex(
+        hCommandListImmediate,
+        pIndex);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsImmediate(
+    ze_command_list_handle_t hCommandList,
+    ze_bool_t *pIsImmediate) {
+    return L0::zeCommandListIsImmediate(
+        hCommandList,
+        pIsImmediate);
 }
 }

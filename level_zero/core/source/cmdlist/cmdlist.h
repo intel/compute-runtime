@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@
 #include <level_zero/zet_api.h>
 
 #include <map>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -170,6 +171,12 @@ struct CommandList : _ze_command_list_handle_t {
                                             uint64_t data) = 0;
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
 
+    virtual ze_result_t getDeviceHandle(ze_device_handle_t *phDevice) = 0;
+    virtual ze_result_t getContextHandle(ze_context_handle_t *phContext) = 0;
+    virtual ze_result_t getOrdinal(uint32_t *pOrdinal) = 0;
+    virtual ze_result_t getImmediateIndex(uint32_t *pIndex) = 0;
+    virtual ze_result_t isImmediate(ze_bool_t *pIsImmediate) = 0;
+
     static CommandList *create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType,
                                ze_command_list_flags_t flags, ze_result_t &resultValue,
                                bool internalUsage);
@@ -199,6 +206,7 @@ struct CommandList : _ze_command_list_handle_t {
     void setCommandListPerThreadPrivateScratchSize(uint32_t size) {
         commandListPerThreadPrivateScratchSize = size;
     }
+    void setOrdinal(uint32_t ord) { ordinal = ord; }
 
     uint32_t getCommandListSLMEnable() const {
         return commandListSLMEnabled;
@@ -384,6 +392,7 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
     NEO::EngineGroupType engineGroupType = NEO::EngineGroupType::maxEngineGroups;
     NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+    std::optional<uint32_t> ordinal = std::nullopt;
 
     uint32_t cmdListType = CommandListType::typeRegular;
     uint32_t commandListPerThreadScratchSize = 0u;

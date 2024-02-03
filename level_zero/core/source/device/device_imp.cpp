@@ -226,7 +226,9 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto createCommandList = getCmdListCreateFunc(desc);
     *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, false);
-
+    if (returnValue == ZE_RESULT_SUCCESS) {
+        CommandList::fromHandle(*commandList)->setOrdinal(desc->commandQueueGroupOrdinal);
+    }
     return returnValue;
 }
 
@@ -238,7 +240,6 @@ ze_result_t DeviceImp::createInternalCommandList(const ze_command_list_desc_t *d
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto createCommandList = getCmdListCreateFunc(desc);
     *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, true);
-
     return returnValue;
 }
 
@@ -256,6 +257,9 @@ ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t 
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     *phCommandList = CommandList::createImmediate(productFamily, this, &commandQueueDesc, false, engineGroupType, returnValue);
+    if (returnValue == ZE_RESULT_SUCCESS) {
+        CommandList::fromHandle(*phCommandList)->setOrdinal(desc->ordinal);
+    }
 
     return returnValue;
 }

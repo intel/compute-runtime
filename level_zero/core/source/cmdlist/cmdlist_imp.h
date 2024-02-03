@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,13 @@ struct CommandListImp : public CommandList {
     ze_result_t appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) override;
     ze_result_t appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery, ze_event_handle_t hSignalEvent,
                                      uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+
+    ze_result_t getDeviceHandle(ze_device_handle_t *phDevice) override;
+    ze_result_t getContextHandle(ze_context_handle_t *phContext) override;
+    ze_result_t getOrdinal(uint32_t *pOrdinal) override;
+    ze_result_t getImmediateIndex(uint32_t *pIndex) override;
+    ze_result_t isImmediate(ze_bool_t *pIsImmediate) override;
+
     virtual void appendMultiPartitionPrologue(uint32_t partitionDataSize) = 0;
     virtual void appendMultiPartitionEpilogue() = 0;
 
