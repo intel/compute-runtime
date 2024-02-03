@@ -48,6 +48,10 @@ TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIs
     EXPECT_EQ(Context::fromHandle(CommandList::fromHandle(hCommandList)->getCmdListContext()), context);
 
     L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
+    ze_context_handle_t hContext;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->getContextHandle(&hContext));
+    EXPECT_EQ(context, hContext);
+
     commandList->destroy();
 }
 
@@ -111,7 +115,10 @@ TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
 
+    ze_device_handle_t hDevice;
     EXPECT_EQ(device, commandList->getDevice());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->getDeviceHandle(&hDevice));
+    EXPECT_EQ(device->toHandle(), hDevice);
     ASSERT_GT(commandList->getCmdContainer().getCmdBufferAllocations().size(), 0u);
 
     auto numAllocations = 0u;

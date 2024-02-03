@@ -89,6 +89,15 @@ TEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCommandList
     ASSERT_EQ(nullptr, commandList);
 }
 
+TEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCreateCommandListFromDeviceThenOutOfDeviceMemoryErrorIsReturned) {
+    ze_command_list_handle_t commandList = nullptr;
+    ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    memoryManager->forceFailureInPrimaryAllocation = true;
+    auto returnValue = device->createCommandList(&desc, &commandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
+    ASSERT_EQ(nullptr, commandList);
+}
+
 using CommandListCreateNegativeStateBaseAddressTest = Test<CommandListCreateNegativeFixture<1>>;
 
 HWTEST2_F(CommandListCreateNegativeStateBaseAddressTest,

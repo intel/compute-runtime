@@ -153,6 +153,67 @@ TEST_F(CommandListCreate, givenOrdinalBiggerThanAvailableEnginesWhenCreatingComm
     EXPECT_EQ(nullptr, commandList);
 }
 
+TEST_F(CommandListCreate, givenCommandListWithValidOrdinalWhenCallingGetOrdinalThenSuccessIsReturned) {
+    auto availableEngineGroups = neoDevice->getRegularEngineGroups();
+    ze_command_list_handle_t commandList = nullptr;
+    for (uint32_t engineGroup = 0; engineGroup < availableEngineGroups.size(); engineGroup++) {
+        ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+        desc.commandQueueGroupOrdinal = engineGroup;
+        auto returnValue = device->createCommandList(&desc, &commandList);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        EXPECT_NE(nullptr, commandList);
+
+        auto whiteboxCommandList = static_cast<CommandList *>(CommandList::fromHandle(commandList));
+        uint32_t ordinal = 0;
+        whiteboxCommandList->getOrdinal(&ordinal);
+        EXPECT_EQ(engineGroup, ordinal);
+
+        whiteboxCommandList->destroy();
+    }
+}
+
+TEST_F(CommandListCreate, givenCommandListWhenCallingImmediateCommandListIndexThenInvalidArgumentIsReturned) {
+    ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    ze_command_list_handle_t commandList = nullptr;
+
+    auto returnValue = device->createCommandList(&desc, &commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    auto whiteboxCommandList = static_cast<CommandList *>(CommandList::fromHandle(commandList));
+
+    uint32_t index = 4;
+    ze_bool_t isImmediate = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, whiteboxCommandList->isImmediate(&isImmediate));
+    EXPECT_FALSE(static_cast<bool>(isImmediate));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, whiteboxCommandList->getImmediateIndex(&index));
+    EXPECT_EQ(4u, index);
+
+    whiteboxCommandList->destroy();
+}
+
+TEST_F(CommandListCreate, givenImmediateCommandListWhenCallingImmediateCommandListIndexThenValidIndexIsReturned) {
+    ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    ze_command_list_handle_t commandList = nullptr;
+
+    auto returnValue = device->createCommandListImmediate(&desc, &commandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    auto whiteboxCommandList = static_cast<CommandList *>(CommandList::fromHandle(commandList));
+
+    uint32_t index = 4, cmdQIndex = 2;
+    ze_bool_t isImmediate = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, whiteboxCommandList->isImmediate(&isImmediate));
+    EXPECT_TRUE(static_cast<bool>(isImmediate));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, whiteboxCommandList->getImmediateIndex(&index));
+    EXPECT_NE(nullptr, whiteboxCommandList->cmdQImmediate);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, whiteboxCommandList->cmdQImmediate->getIndex(&cmdQIndex));
+    EXPECT_EQ(cmdQIndex, index);
+
+    whiteboxCommandList->destroy();
+}
+
 TEST_F(CommandListCreate, givenQueueFlagsWhenCreatingImmediateCommandListThenDontCopyFlags) {
     ze_command_queue_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     desc.flags = ZE_COMMAND_QUEUE_FLAG_EXPLICIT_ONLY;

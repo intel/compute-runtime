@@ -125,6 +125,33 @@ CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::En
     return commandList;
 }
 
+ze_result_t CommandListImp::getDeviceHandle(ze_device_handle_t *phDevice) {
+    *phDevice = getDevice()->toHandle();
+    return ZE_RESULT_SUCCESS;
+}
+ze_result_t CommandListImp::getContextHandle(ze_context_handle_t *phContext) {
+    *phContext = getCmdListContext();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t CommandListImp::getOrdinal(uint32_t *pOrdinal) {
+    UNRECOVERABLE_IF(ordinal == std::nullopt);
+    *pOrdinal = ordinal.value();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t CommandListImp::getImmediateIndex(uint32_t *pIndex) {
+    if (isImmediateType()) {
+        return cmdQImmediate->getIndex(pIndex);
+    }
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
+ze_result_t CommandListImp::isImmediate(ze_bool_t *pIsImmediate) {
+    *pIsImmediate = isImmediateType();
+    return ZE_RESULT_SUCCESS;
+}
+
 CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device,
                                           const ze_command_queue_desc_t *desc,
                                           bool internalUsage, NEO::EngineGroupType engineGroupType,
