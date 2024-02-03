@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
                                         void *phCommands,
                                         ze_fence_handle_t hFence) = 0;
     virtual ze_result_t synchronize(uint64_t timeout) = 0;
+    virtual ze_result_t getOrdinal(uint32_t *pOrdinal) = 0;
+    virtual ze_result_t getIndex(uint32_t *pIndex) = 0;
 
     static CommandQueue *create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
                                 const ze_command_queue_desc_t *desc, bool isCopyOnly, bool isInternal, bool immediateCmdListQueue, ze_result_t &resultValue);

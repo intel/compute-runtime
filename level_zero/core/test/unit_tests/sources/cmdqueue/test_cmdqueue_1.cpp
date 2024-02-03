@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2199,6 +2199,56 @@ TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForNonInte
     auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
     EXPECT_NE(commandQueue->getCsr(), internalCsr);
     commandQueue->destroy();
+}
+
+TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForValidOrdinalAndIndexThenGetOrdinalReturnsCorrectOrdinal) {
+    auto &engineGroups = neoDevice->getRegularEngineGroups();
+    auto internalEngine = neoDevice->getInternalEngine();
+    auto internalCsr = internalEngine.commandStreamReceiver;
+    for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
+        for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
+            ze_command_queue_desc_t desc{};
+            desc.ordinal = ordinal;
+            desc.index = index;
+
+            ze_command_queue_handle_t commandQueueHandle = {};
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &commandQueueHandle));
+            auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+            EXPECT_NE(commandQueue->getCsr(), internalCsr);
+
+            uint32_t commandQueueOrdinal = 0u;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->getOrdinal(&commandQueueOrdinal));
+            EXPECT_EQ(desc.ordinal, commandQueueOrdinal);
+
+            commandQueue->destroy();
+        }
+    }
+}
+
+TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForValidOrdinalAndIndexThenGetIndexReturnsCorrectIndex) {
+    auto &engineGroups = neoDevice->getRegularEngineGroups();
+    auto internalEngine = neoDevice->getInternalEngine();
+    auto internalCsr = internalEngine.commandStreamReceiver;
+    for (uint32_t ordinal = 0; ordinal < engineGroups.size(); ordinal++) {
+        for (uint32_t index = 0; index < engineGroups[ordinal].engines.size(); index++) {
+            ze_command_queue_desc_t desc{};
+            desc.ordinal = ordinal;
+            desc.index = index;
+
+            ze_command_queue_handle_t commandQueueHandle = {};
+
+            EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &commandQueueHandle));
+            auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+            EXPECT_NE(commandQueue->getCsr(), internalCsr);
+
+            uint32_t commandQueueIndex = 0u;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->getIndex(&commandQueueIndex));
+            EXPECT_EQ(desc.index, commandQueueIndex);
+
+            commandQueue->destroy();
+        }
+    }
 }
 
 } // namespace ult
