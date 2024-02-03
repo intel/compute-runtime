@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -354,6 +354,16 @@ void CommandQueueImp::makeResidentAndMigrate(bool performMigration, const NEO::R
             pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
         }
     }
+}
+
+ze_result_t CommandQueueImp::getOrdinal(uint32_t *pOrdinal) {
+    *pOrdinal = desc.ordinal;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t CommandQueueImp::getIndex(uint32_t *pIndex) {
+    *pIndex = desc.index;
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0
