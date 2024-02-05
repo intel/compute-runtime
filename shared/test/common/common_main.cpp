@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
@@ -144,6 +145,8 @@ int main(int argc, char **argv) {
     std::string dumpTestStatsFileName = "";
     applyWorkarounds();
     applyCommonWorkarounds();
+    CpuInfo::cpuidexFunc = [](int *, int, int) -> void {};
+    CpuInfo::cpuidFunc = [](int[4], int) -> void {};
 
 #if defined(__linux__)
     if (getenv("IGDRCL_TEST_SELF_EXEC") == nullptr) {
