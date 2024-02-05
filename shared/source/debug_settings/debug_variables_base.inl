@@ -166,7 +166,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableHwGenerationLocalIds, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, WalkerPartitionPreferHighestDimension, -1, "-1: default, 0: prefer biggest dimension, 1: prefer Z over Y over X if they divide partition count evenly")
 DECLARE_DEBUG_VARIABLE(int32_t, SetMinimalPartitionSize, -1, "-1 default value set to 512 workgroups, 0 - disabled, >0 - minimal partition size in workgroups (should be power of 2)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideBlitterTargetMemory, -1, "-1:default 0: overwrites to System 1: overwrites to Local")
-DECLARE_DEBUG_VARIABLE(int32_t, OverrideBlitterMocs, -1, "-1: default, 0: Uncached, 1: Cached")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideBlitterMocs, -1, "-1: default, >=0 Override MOCS value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePostSyncMocs, -1, "-1: default, >=0 Override post sync mocs with value")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableImmediateVmBindExt, -1, "Use immediate bind extension to a new residency model on Linux (requires kernel support), -1: default (enabled with direct submission), 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceExecutionTile, -1, "-1: default, 0+: given tile is chosen as submission, must be used with EnableWalkerPartition = 0.")

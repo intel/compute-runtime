@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,8 +130,8 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
 
     auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
 
-    if (debugManager.flags.OverrideBlitterMocs.get() == 1) {
-        mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
+        mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());
     }
 
     blitCmd.setDestinationMOCS(mocs);

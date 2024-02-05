@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,7 +84,8 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSetMocsToValueOfDebugKey) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.OverrideBlitterMocs.set(0u);
+    uint32_t expectedMocs = 0;
+    debugManager.flags.OverrideBlitterMocs.set(expectedMocs);
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     auto &bcsEngine = clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
@@ -105,8 +106,6 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenBufferWhenProgrammingBltCommandThenSe
 
     auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
     EXPECT_NE(nullptr, bltCmd);
-
-    auto expectedMocs = clDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
 
     EXPECT_EQ(expectedMocs, bltCmd->getDestinationMOCS());
     EXPECT_EQ(expectedMocs, bltCmd->getSourceMOCS());

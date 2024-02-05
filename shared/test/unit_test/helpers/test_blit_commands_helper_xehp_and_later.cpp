@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,9 +121,9 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionAndDebugFlagSetWhenAppendBlitC
 HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForFillBufferThenDebugMocksValueIsSet, BlitPlatforms) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
-    uint32_t mockValue = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    ;
-    debugManager.flags.OverrideBlitterMocs.set(1);
+    uint32_t mockValue = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) + 1;
+
+    debugManager.flags.OverrideBlitterMocs.set(mockValue);
 
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,

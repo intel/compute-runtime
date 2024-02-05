@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -164,7 +164,8 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenTransferLargerThenHalfOfL3WhenItIsPro
 
 XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSetMocsToValueOfDebugKey) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.OverrideBlitterMocs.set(0u);
+    uint32_t expectedMocs = 0;
+    debugManager.flags.OverrideBlitterMocs.set(expectedMocs);
     using MEM_COPY = typename FamilyType::MEM_COPY;
     MockGraphicsAllocation clearColorAlloc;
 
@@ -186,8 +187,6 @@ XE_HPC_CORETEST_F(BlitXeHpcCoreTests, givenBufferWhenProgrammingBltCommandThenSe
     auto itorBltCmd = find<MEM_COPY *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     ASSERT_NE(hwParser.cmdList.end(), itorBltCmd);
     MEM_COPY *bltCmd = (MEM_COPY *)*itorBltCmd;
-
-    auto expectedMocs = clDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
 
     EXPECT_EQ(expectedMocs, bltCmd->getDestinationMOCS());
     EXPECT_EQ(expectedMocs, bltCmd->getSourceMOCS());
