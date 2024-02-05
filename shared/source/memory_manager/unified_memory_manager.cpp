@@ -42,9 +42,14 @@ void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData
     allocations.erase(iter);
 }
 
-void SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr) {
+bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr) {
     std::lock_guard<std::mutex> lock(this->mtx);
+    if (size + this->totalSize > this->maxSize) {
+        return false;
+    }
     allocations.emplace(std::lower_bound(allocations.begin(), allocations.end(), size), size, ptr);
+    this->totalSize += size;
+    return true;
 }
 
 void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, SVMAllocsManager *svmAllocsManager) {
@@ -58,6 +63,7 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
         if (svmAllocData->device == unifiedMemoryProperties.device &&
             svmAllocData->allocationFlagsProperty.allFlags == unifiedMemoryProperties.allocationFlags.allFlags &&
             svmAllocData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags) {
+            totalSize -= allocationIter->allocationSize;
             allocations.erase(allocationIter);
             return allocationPtr;
         }
@@ -73,6 +79,7 @@ void SVMAllocsManager::SvmAllocationCache::trim(SVMAllocsManager *svmAllocsManag
         svmAllocsManager->freeSVMAllocImpl(cachedAllocationInfo.allocation, FreePolicyType::none, svmData);
     }
     this->allocations.clear();
+    this->totalSize = 0u;
 }
 
 SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *ptr) {
@@ -166,21 +173,6 @@ void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &co
 
 SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager, bool multiOsContextSupport)
     : memoryManager(memoryManager), multiOsContextSupport(multiOsContextSupport) {
-    this->usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled();
-    if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
-        this->usmDeviceAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
-    }
-    if (this->usmDeviceAllocationsCacheEnabled) {
-        this->initUsmDeviceAllocationsCache();
-    }
-
-    this->usmHostAllocationsCacheEnabled = NEO::ApiSpecificConfig::isHostAllocationCacheEnabled();
-    if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
-        this->usmHostAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableHostAllocationCache.get();
-    }
-    if (this->usmHostAllocationsCacheEnabled) {
-        this->initUsmHostAllocationsCache();
-    }
 }
 
 SVMAllocsManager::~SVMAllocsManager() = default;
@@ -457,13 +449,15 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     if (svmData) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             this->usmDeviceAllocationsCacheEnabled) {
-            this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
-            return true;
+            if (this->usmDeviceAllocationsCache.insert(svmData->size, ptr)) {
+                return true;
+            }
         }
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
             this->usmHostAllocationsCacheEnabled) {
-            this->usmHostAllocationsCache.insert(svmData->size, ptr);
-            return true;
+            if (this->usmHostAllocationsCache.insert(svmData->size, ptr)) {
+                return true;
+            }
         }
         if (blocking) {
             this->freeSVMAllocImpl(ptr, FreePolicyType::blocking, svmData);
@@ -485,13 +479,15 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
     if (svmData) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             this->usmDeviceAllocationsCacheEnabled) {
-            this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
-            return true;
+            if (this->usmDeviceAllocationsCache.insert(svmData->size, ptr)) {
+                return true;
+            }
         }
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
             this->usmHostAllocationsCacheEnabled) {
-            this->usmHostAllocationsCache.insert(svmData->size, ptr);
-            return true;
+            if (this->usmHostAllocationsCache.insert(svmData->size, ptr)) {
+                return true;
+            }
         }
         this->freeSVMAllocImpl(ptr, FreePolicyType::defer, svmData);
         return true;
@@ -684,12 +680,42 @@ void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
     }
 }
 
-void SVMAllocsManager::initUsmDeviceAllocationsCache() {
+void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
     this->usmDeviceAllocationsCache.allocations.reserve(128u);
+    const auto totalDeviceMemory = device.getGlobalMemorySize(static_cast<uint32_t>(device.getDeviceBitfield().to_ulong()));
+    auto fractionOfTotalMemoryForRecycling = 0.02;
+    if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
+        fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableDeviceAllocationCache.get());
+    }
+    this->usmDeviceAllocationsCache.maxSize = static_cast<size_t>(fractionOfTotalMemoryForRecycling * totalDeviceMemory);
 }
 
 void SVMAllocsManager::initUsmHostAllocationsCache() {
     this->usmHostAllocationsCache.allocations.reserve(128u);
+    const auto totalSystemMemory = this->memoryManager->getSystemSharedMemory(0u);
+    auto fractionOfTotalMemoryForRecycling = 0.02;
+    if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
+        fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableHostAllocationCache.get());
+    }
+    this->usmHostAllocationsCache.maxSize = static_cast<size_t>(fractionOfTotalMemoryForRecycling * totalSystemMemory);
+}
+
+void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
+    this->usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled();
+    if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
+        this->usmDeviceAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
+    }
+    if (this->usmDeviceAllocationsCacheEnabled) {
+        this->initUsmDeviceAllocationsCache(device);
+    }
+
+    this->usmHostAllocationsCacheEnabled = NEO::ApiSpecificConfig::isHostAllocationCacheEnabled();
+    if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
+        this->usmHostAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableHostAllocationCache.get();
+    }
+    if (this->usmHostAllocationsCacheEnabled) {
+        this->initUsmHostAllocationsCache();
+    }
 }
 
 void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData) {

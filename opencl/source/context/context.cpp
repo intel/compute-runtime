@@ -277,6 +277,7 @@ bool Context::createImpl(const cl_context_properties *properties,
         if (anySvmSupport) {
             this->svmAllocsManager = new SVMAllocsManager(this->memoryManager,
                                                           this->areMultiStorageAllocationsPreferred());
+            this->svmAllocsManager->initUsmAllocationsCaches(device->getDevice());
         }
     }
 

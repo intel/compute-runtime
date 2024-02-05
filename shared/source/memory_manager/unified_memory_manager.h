@@ -153,11 +153,13 @@ class SVMAllocsManager {
     };
 
     struct SvmAllocationCache {
-        void insert(size_t size, void *);
+        bool insert(size_t size, void *);
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, SVMAllocsManager *svmAllocsManager);
         void trim(SVMAllocsManager *svmAllocsManager);
         std::vector<SvmCacheAllocationInfo> allocations;
         std::mutex mtx;
+        size_t maxSize = 0;
+        size_t totalSize = 0;
     };
 
     enum class FreePolicyType : uint32_t {
@@ -234,6 +236,8 @@ class SVMAllocsManager {
     using NonGpuDomainAllocsContainer = std::vector<void *>;
     NonGpuDomainAllocsContainer nonGpuDomainAllocs;
 
+    void initUsmAllocationsCaches(Device &device);
+
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
                                       const RootDeviceIndicesContainer &rootDeviceIndices,
@@ -242,7 +246,7 @@ class SVMAllocsManager {
 
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
 
-    void initUsmDeviceAllocationsCache();
+    void initUsmDeviceAllocationsCache(Device &device);
     void initUsmHostAllocationsCache();
     void freeSVMData(SvmAllocationData *svmData);
 
