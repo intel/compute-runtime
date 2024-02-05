@@ -217,7 +217,7 @@ void OclocArgHelper::saveOutput(const std::string &filename, const std::ostream 
     std::stringstream ss;
     ss << stream.rdbuf();
     if (outputEnabled()) {
-        addOutput(filename, ss.str().c_str(), ss.str().length());
+        addOutput(filename, ss.str().c_str(), ss.str().length()+1);
     } else {
         std::ofstream file(filename);
         file << ss.str();
