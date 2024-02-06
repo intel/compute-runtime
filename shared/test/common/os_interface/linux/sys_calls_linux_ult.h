@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,6 +69,9 @@ extern int mkstempCalled;
 extern int renameCalled;
 extern int pathFileExistsCalled;
 extern int flockCalled;
+extern int fsyncCalled;
+extern int fsyncArgPassed;
+extern int fsyncRetVal;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;

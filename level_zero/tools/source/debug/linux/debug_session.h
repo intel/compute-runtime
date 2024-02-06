@@ -38,6 +38,10 @@ struct DebugSessionLinux : DebugSessionImp {
     MOCKABLE_VIRTUAL float getThreadStartLimitTime() {
         return 0.5;
     }
+    virtual int openVmFd(uint64_t vmHandle, bool readOnly) = 0;
+    virtual int flushVmCache(int vmfd) { return 0; };
+    ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;
+    ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override;
 
     ThreadHelper internalEventThread;
     std::mutex internalEventThreadMutex;
@@ -54,6 +58,9 @@ struct DebugSessionLinux : DebugSessionImp {
         virtual int ioctl(int fd, unsigned long request, void *arg) {
             return 0;
         };
+        MOCKABLE_VIRTUAL int fsync(int fd) {
+            return NEO::SysCalls::fsync(fd);
+        }
         MOCKABLE_VIRTUAL int poll(pollfd *pollFd, unsigned long int numberOfFds, int timeout) {
             return NEO::SysCalls::poll(pollFd, numberOfFds, timeout);
         }
@@ -87,5 +94,6 @@ struct DebugSessionLinux : DebugSessionImp {
     MOCKABLE_VIRTUAL bool checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc);
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
     ze_result_t interruptImp(uint32_t deviceIndex) override;
+    std::unique_ptr<IoctlHandler> ioctlHandler;
 };
 } // namespace L0

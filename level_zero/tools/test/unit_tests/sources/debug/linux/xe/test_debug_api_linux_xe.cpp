@@ -54,6 +54,9 @@ extern uint32_t preadFuncCalled;
 extern uint32_t pwriteFuncCalled;
 extern uint32_t mmapFuncCalled;
 extern uint32_t munmapFuncCalled;
+extern int fsyncCalled;
+extern int fsyncArgPassed;
+extern int fsyncRetVal;
 } // namespace SysCalls
 } // namespace NEO
 
@@ -848,6 +851,59 @@ TEST_F(DebugApiLinuxTestXe, whenHandleExecQueueEventThenProcessEnterAndProcessEx
     result = zetDebugReadEvent(session->toHandle(), 0, &event2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event2.type);
+}
+
+TEST_F(DebugApiLinuxTestXe, WhenCallingReadAndWriteGpuMemoryThenFsyncIsCalledTwice) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+    auto retVal = session->readGpuMemory(7, output, bufferSize, 0x23000);
+    EXPECT_EQ(0, retVal);
+    EXPECT_EQ(handler->fsyncCalled, 2);
+
+    handler->pwriteRetVal = bufferSize;
+    retVal = session->writeGpuMemory(7, output, bufferSize, 0x23000);
+    EXPECT_EQ(0, retVal);
+    EXPECT_EQ(handler->fsyncCalled, 4);
+}
+
+TEST_F(DebugApiLinuxTestXe, WhenCallingReadOrWriteGpuMemoryAndFsyncFailsThenErrorIsReturned) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    handler->fsyncRetVal = -1;
+    char output[bufferSize];
+    handler->preadRetVal = bufferSize;
+    handler->numFsyncToSucceed = 0;
+    auto retVal = session->readGpuMemory(7, output, bufferSize, 0x23000);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+    EXPECT_EQ(handler->fsyncCalled, 1);
+
+    handler->pwriteRetVal = bufferSize;
+    handler->numFsyncToSucceed = 0;
+    retVal = session->writeGpuMemory(7, output, bufferSize, 0x23000);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+    EXPECT_EQ(handler->fsyncCalled, 2);
+
+    handler->numFsyncToSucceed = 1;
+    retVal = session->readGpuMemory(7, output, bufferSize, 0x23000);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+    EXPECT_EQ(handler->fsyncCalled, 4);
+
+    handler->numFsyncToSucceed = 1;
+    retVal = session->writeGpuMemory(7, output, bufferSize, 0x23000);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
+    EXPECT_EQ(handler->fsyncCalled, 6);
 }
 
 } // namespace ult

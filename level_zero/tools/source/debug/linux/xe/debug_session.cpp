@@ -8,7 +8,9 @@
 #include "level_zero/tools/source/debug/linux/xe/debug_session.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
@@ -278,6 +280,25 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", (uint16_t)event->type, (uint16_t)event->flags, (uint32_t)event->len);
         break;
     }
+}
+
+int DebugSessionLinuxXe::openVmFd(uint64_t vmHandle, [[maybe_unused]] bool readOnly) {
+    drm_xe_eudebug_vm_open vmOpen = {
+        .extensions = 0,
+        .client_handle = clientHandle,
+        .vm_handle = vmHandle,
+        .flags = 0,
+        .timeout_ns = 5000000000u};
+
+    return ioctl(DRM_XE_EUDEBUG_IOCTL_VM_OPEN, &vmOpen);
+}
+
+int DebugSessionLinuxXe::flushVmCache(int vmfd) {
+    int retVal = ioctlHandler->fsync(vmfd);
+    if (retVal != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("Failed to fsync VM fd=%d errno=%d\n", vmfd, errno);
+    }
+    return retVal;
 }
 
 } // namespace L0

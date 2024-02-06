@@ -83,7 +83,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         uint64_t size = 0;
     };
 
-    std::unique_ptr<IoctlHandlerXe> ioctlHandler;
     uint32_t xeDebuggerVersion = 0;
 
   protected:
@@ -118,15 +117,8 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
-        UNRECOVERABLE_IF(true);
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override {
-        UNRECOVERABLE_IF(true);
-        return ZE_RESULT_SUCCESS;
-    }
+    int openVmFd(uint64_t vmHandle, bool readOnly) override;
+    int flushVmCache(int vmfd) override;
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
         UNRECOVERABLE_IF(true);

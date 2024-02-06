@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,8 +57,8 @@ int mkdir(const std::string &path) {
     return ::mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
 
-int close(int fileDescriptor) {
-    return ::close(fileDescriptor);
+int close(int fd) {
+    return ::close(fd);
 }
 int open(const char *file, int flags) {
     return ::open(file, flags);
@@ -66,6 +66,11 @@ int open(const char *file, int flags) {
 int openWithMode(const char *file, int flags, int mode) {
     return ::open(file, flags, mode);
 }
+
+int fsync(int fd) {
+    return ::fsync(fd);
+}
+
 int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
     return ::ioctl(fileDescriptor, request, arg);
 }

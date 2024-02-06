@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,7 +89,7 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenCallingFunctionsThe
     EXPECT_EQ(0x567000u, sbaGpuVa);
     EXPECT_EQ(rootSbaGpuVa, sbaGpuVa);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     session->ioctl(0, nullptr);
@@ -189,7 +189,7 @@ TEST_F(TileAttachTest, GivenTileAttachEnabledAndMultitileDeviceWhenInitializingD
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
 
     prelim_drm_i915_debug_event_client clientCreate = {};
@@ -342,7 +342,7 @@ TEST_F(TileAttachTest, givenCmdQsCreatedAndDestroyedWhenReadingEventsThenProcess
     readUuid.payload_size = sizeof(NEO::DebuggerL0::CommandQueueNotification);
     readUuid.handle = uuid.handle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
     handler->returnUuid = &readUuid;
 
@@ -419,7 +419,7 @@ TEST_F(TileAttachTest, givenDetachedRootSessionWhenAttchingTileThenDetachedEvent
 
 TEST_F(TileAttachTest, givenPollReturnsErrorAndEinvalWhenReadingEventsThenProcessDetachedEventForAllTilesIsReturned) {
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
     handler->pollRetVal = -1;
     errno = EINVAL;
@@ -539,7 +539,7 @@ TEST_F(TileAttachTest, GivenIsaWhenReadingOrWritingMemoryThenMemoryIsReadAndWrit
 
     addIsaVmBindEvent(rootSession, vm0, true, true);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
@@ -586,7 +586,7 @@ TEST_F(TileAttachTest, GivenElfAddressWhenReadMemoryCalledTheElfMemoryIsRead) {
 
     zetDebugAttach(neoDevice->getSubDevice(0)->getSpecializedDevice<L0::Device>()->toHandle(), &config, &debugSession0);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
     rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->elfMap[elfVa] = elfUUID;
 
@@ -613,7 +613,7 @@ TEST_F(TileAttachTest, WhenCallingReadWriteMemoryforASingleThreadThenMemoryIsRea
 
     addIsaVmBindEvent(rootSession, vm0, true, true);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     zet_debug_memory_space_desc_t desc;
@@ -780,7 +780,7 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
     DebugSessionLinuxi915::BindInfo cssaInfo = {reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()), rootSession->stateSaveAreaHeader.size()};
     rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
     handler->setPreadMemory(rootSession->stateSaveAreaHeader.data(), rootSession->stateSaveAreaHeader.size(), reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()));
 
@@ -839,7 +839,7 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingPageFaultEventThenStoppedT
     DebugSessionLinuxi915::BindInfo cssaInfo = {reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()), rootSession->stateSaveAreaHeader.size()};
     rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
     handler->setPreadMemory(rootSession->stateSaveAreaHeader.data(), rootSession->stateSaveAreaHeader.size(), reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()));
 
@@ -886,7 +886,7 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingPageFaultEventThenStoppedT
 }
 
 TEST_F(TileAttachTest, GivenBlockingOnCpuDetachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenNoAckIoctlIsCalled) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     EXPECT_FALSE(rootSession->blockOnFenceMode);
@@ -907,7 +907,7 @@ TEST_F(TileAttachTest, GivenBlockingOnCpuDetachedTileAndZebinModulesWithEventsTo
 }
 
 TEST_F(TileAttachTest, GivenBlockingOnCpuAttachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenLastEventIsAcked) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     EXPECT_FALSE(rootSession->blockOnFenceMode);
@@ -932,7 +932,7 @@ TEST_F(TileAttachTest, GivenBlockingOnCpuAttachedTileAndZebinModulesWithEventsTo
 }
 
 TEST_F(TileAttachTest, GivenTileAttachedAndIsaWithOsEventToAckWhenDetachingTileThenAllEventsAreAcked) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     rootSession->tileSessions[0].second = true;
@@ -953,7 +953,7 @@ TEST_F(TileAttachTest, GivenTileAttachedAndIsaWithOsEventToAckWhenDetachingTileT
 }
 
 TEST_F(TileAttachTest, GivenBlockingOnCpuAndZebinModuleEventWithoutAckWhenHandlingEventThenNoEventsToAckAdded) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     EXPECT_FALSE(rootSession->blockOnFenceMode);
@@ -973,7 +973,7 @@ TEST_F(TileAttachTest, GivenBlockingOnCpuAndZebinModuleEventWithoutAckWhenHandli
 using TileAttachBlockOnFenceTest = Test<TileAttachFixture<true>>;
 
 TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceDetachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenNoAckIoctlIsCalled) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     EXPECT_TRUE(rootSession->blockOnFenceMode);
@@ -993,7 +993,7 @@ TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceDetachedTileAndZebinModul
 }
 
 TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModulesWithEventsToAckWhenDetachingTileThenAllEventsAreAcked) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     EXPECT_TRUE(rootSession->blockOnFenceMode);
@@ -1021,7 +1021,7 @@ TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModul
 }
 
 TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModulesWithEventsToAckWhenModuleLoadEventIsAckedThenAllNewEventsAreAutoAcked) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     EXPECT_TRUE(rootSession->blockOnFenceMode);
@@ -1061,7 +1061,7 @@ TEST_F(TileAttachBlockOnFenceTest, GivenBlockingOnFenceAttachedTileAndZebinModul
 }
 
 TEST_F(TileAttachBlockOnFenceTest, GivenMultipleVmBindEventsForFirstZebinSegmentWhenHandlingEventThenLoadEventIsNotTriggered) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     EXPECT_TRUE(rootSession->blockOnFenceMode);
@@ -1119,11 +1119,11 @@ TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoa
     rootSession->tileSessions[0].second = true;
     tileSessions[0]->isAttached = true;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     for (uint32_t tile = 0; tile < 2; tile++) {
-        auto handler = new MockIoctlHandler;
+        auto handler = new MockIoctlHandlerI915;
         rootSession->ioctlHandler.reset(handler);
 
         uint64_t vmHandle = 0;
@@ -1267,7 +1267,7 @@ TEST_F(TileAttachTest, GivenEventWithL0ZebinModuleWhenHandlingEventThenModuleLoa
 }
 
 TEST_F(TileAttachTest, GivenZebinModuleVmBindForModuleFromDifferentTileThenVmBindIsAutoacked) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     rootSession->ioctlHandler.reset(handler);
 
     auto &isaUuidData = rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap.find(isaUUID)->second;

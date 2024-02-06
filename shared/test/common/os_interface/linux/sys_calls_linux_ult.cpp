@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,9 @@ int flockCalled = 0;
 int opendirCalled = 0;
 int readdirCalled = 0;
 int closedirCalled = 0;
+int fsyncCalled = 0;
+int fsyncArgPassed = 0;
+int fsyncRetVal = 0;
 
 std::vector<void *> mmapVector(64);
 std::vector<void *> mmapCapturedExtendedPointers(64);
@@ -129,6 +132,12 @@ int close(int fileDescriptor) {
     closeFuncCalled++;
     closeFuncArgPassed = fileDescriptor;
     return closeFuncRetVal;
+}
+
+int fsync(int fd) {
+    fsyncCalled++;
+    fsyncArgPassed = fd;
+    return fsyncRetVal;
 }
 
 int open(const char *file, int flags) {

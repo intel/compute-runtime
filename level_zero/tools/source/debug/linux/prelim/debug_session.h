@@ -68,8 +68,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
         }
     };
 
-    std::unique_ptr<IoctlHandleri915> ioctlHandler;
-
     using ContextHandle = uint64_t;
 
     struct ContextParams {
@@ -222,9 +220,8 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     bool readModuleDebugArea() override;
     ze_result_t readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) override;
     void readStateSaveAreaHeader() override;
+    int openVmFd(uint64_t vmHandle, bool readOnly) override;
 
-    ze_result_t readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) override;
-    ze_result_t writeGpuMemory(uint64_t vmHandle, const char *input, size_t size, uint64_t gpuVa) override;
     ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle);
     bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status);
 

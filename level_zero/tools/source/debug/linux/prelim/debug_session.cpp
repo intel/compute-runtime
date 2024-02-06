@@ -90,130 +90,14 @@ int DebugSessionLinuxi915::ioctl(unsigned long request, void *arg) {
     return ioctlHandler->ioctl(fd, request, arg);
 }
 
-ze_result_t DebugSessionLinuxi915::readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) {
+int DebugSessionLinuxi915::openVmFd(uint64_t vmHandle, bool readOnly) {
+    uint64_t flags = static_cast<decltype(prelim_drm_i915_debug_vm_open::flags)>(readOnly ? PRELIM_I915_DEBUG_VM_OPEN_READ_ONLY : PRELIM_I915_DEBUG_VM_OPEN_READ_WRITE);
     prelim_drm_i915_debug_vm_open vmOpen = {
         .client_handle = static_cast<decltype(prelim_drm_i915_debug_vm_open::client_handle)>(clientHandle),
         .handle = static_cast<decltype(prelim_drm_i915_debug_vm_open::handle)>(vmHandle),
-        .flags = PRELIM_I915_DEBUG_VM_OPEN_READ_ONLY};
+        .flags = flags};
 
-    int vmDebugFd = ioctl(PRELIM_I915_DEBUG_IOCTL_VM_OPEN, &vmOpen);
-    if (vmDebugFd < 0) {
-        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_VM_OPEN failed = %d\n", vmDebugFd);
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    int64_t retVal = 0;
-    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-    gpuVa = gmmHelper->decanonize(gpuVa);
-
-    if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
-        uint64_t alignedMem = alignDown(gpuVa, MemoryConstants::pageSize);
-        uint64_t alignedDiff = gpuVa - alignedMem;
-        uint64_t alignedSize = size + alignedDiff;
-
-        void *mappedPtr = ioctlHandler->mmap(NULL, alignedSize, PROT_READ, MAP_SHARED, vmDebugFd, alignedMem);
-
-        if (mappedPtr == MAP_FAILED) {
-            PRINT_DEBUGGER_ERROR_LOG("Reading memory failed, errno = %d\n", errno);
-            retVal = -1;
-        } else {
-            char *realSourceVA = static_cast<char *>(mappedPtr) + alignedDiff;
-            retVal = memcpy_s(output, size, static_cast<void *>(realSourceVA), size);
-            ioctlHandler->munmap(mappedPtr, alignedSize);
-        }
-    } else {
-        size_t pendingSize = size;
-        uint8_t retry = 0;
-        const uint8_t maxRetries = 3;
-        size_t retrySize = size;
-        do {
-            PRINT_DEBUGGER_MEM_ACCESS_LOG("Reading (pread) memory from gpu va = %#" PRIx64 ", size = %zu\n", gpuVa, pendingSize);
-            retVal = ioctlHandler->pread(vmDebugFd, output, pendingSize, gpuVa);
-            output += retVal;
-            gpuVa += retVal;
-            pendingSize -= retVal;
-            if (retVal == 0) {
-                if (pendingSize < retrySize) {
-                    retry = 0;
-                }
-                retry++;
-                retrySize = pendingSize;
-            }
-        } while (((retVal == 0) && (retry < maxRetries)) || ((retVal > 0) && (pendingSize > 0)));
-
-        if (retVal < 0) {
-            PRINT_DEBUGGER_ERROR_LOG("Reading memory failed, errno = %d\n", errno);
-        }
-
-        retVal = pendingSize;
-    }
-
-    NEO::SysCalls::close(vmDebugFd);
-
-    return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
-}
-
-ze_result_t DebugSessionLinuxi915::writeGpuMemory(uint64_t vmHandle, const char *input, size_t size, uint64_t gpuVa) {
-    prelim_drm_i915_debug_vm_open vmOpen = {
-        .client_handle = static_cast<decltype(prelim_drm_i915_debug_vm_open::client_handle)>(clientHandle),
-        .handle = static_cast<decltype(prelim_drm_i915_debug_vm_open::handle)>(vmHandle),
-        .flags = PRELIM_I915_DEBUG_VM_OPEN_READ_WRITE};
-
-    int vmDebugFd = ioctl(PRELIM_I915_DEBUG_IOCTL_VM_OPEN, &vmOpen);
-    if (vmDebugFd < 0) {
-        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_VM_OPEN failed = %d\n", vmDebugFd);
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    int64_t retVal = 0;
-    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-    gpuVa = gmmHelper->decanonize(gpuVa);
-
-    if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
-        uint64_t alignedMem = alignDown(gpuVa, MemoryConstants::pageSize);
-        uint64_t alignedDiff = gpuVa - alignedMem;
-        uint64_t alignedSize = size + alignedDiff;
-
-        void *mappedPtr = ioctlHandler->mmap(NULL, alignedSize, PROT_WRITE, MAP_SHARED, vmDebugFd, alignedMem);
-
-        if (mappedPtr == MAP_FAILED) {
-            PRINT_DEBUGGER_ERROR_LOG("Writing memory failed, errno = %d\n", errno);
-            retVal = -1;
-        } else {
-            char *realDestVA = static_cast<char *>(mappedPtr) + alignedDiff;
-            retVal = memcpy_s(static_cast<void *>(realDestVA), size, input, size);
-            ioctlHandler->munmap(mappedPtr, alignedSize);
-        }
-    } else {
-        size_t pendingSize = size;
-        uint8_t retry = 0;
-        const uint8_t maxRetries = 3;
-        size_t retrySize = size;
-        do {
-            PRINT_DEBUGGER_MEM_ACCESS_LOG("Writing (pwrite) memory to gpu va = %#" PRIx64 ", size = %zu\n", gpuVa, pendingSize);
-            retVal = ioctlHandler->pwrite(vmDebugFd, input, pendingSize, gpuVa);
-            input += retVal;
-            gpuVa += retVal;
-            pendingSize -= retVal;
-            if (retVal == 0) {
-                if (pendingSize < retrySize) {
-                    retry = 0;
-                }
-                retry++;
-                retrySize = pendingSize;
-            }
-        } while (((retVal == 0) && (retry < maxRetries)) || ((retVal > 0) && (pendingSize > 0)));
-
-        if (retVal < 0) {
-            PRINT_DEBUGGER_ERROR_LOG("Writing memory failed, errno = %d\n", errno);
-        }
-
-        retVal = pendingSize;
-    }
-
-    NEO::SysCalls::close(vmDebugFd);
-
-    return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+    return ioctl(PRELIM_I915_DEBUG_IOCTL_VM_OPEN, &vmOpen);
 }
 
 ze_result_t DebugSessionLinuxi915::initialize() {

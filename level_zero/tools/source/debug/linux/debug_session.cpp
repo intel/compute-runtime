@@ -7,8 +7,11 @@
 
 #include "level_zero/tools/source/debug/debug_session.h"
 
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/sleep.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -219,6 +222,132 @@ ze_result_t DebugSessionLinux::interruptImp(uint32_t deviceIndex) {
     auto result = threadControl({}, deviceIndex, ThreadControlCmd::interruptAll, bitmask, bitmaskSize);
 
     return result == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
+}
+
+ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, size_t size, uint64_t gpuVa) {
+
+    int vmDebugFd = openVmFd(vmHandle, true);
+    if (vmDebugFd < 0) {
+        PRINT_DEBUGGER_ERROR_LOG("VM_OPEN failed = %d\n", vmDebugFd);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    int64_t retVal = 0;
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    gpuVa = gmmHelper->decanonize(gpuVa);
+    if (flushVmCache(vmDebugFd) != 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
+        uint64_t alignedMem = alignDown(gpuVa, MemoryConstants::pageSize);
+        uint64_t alignedDiff = gpuVa - alignedMem;
+        uint64_t alignedSize = size + alignedDiff;
+
+        void *mappedPtr = ioctlHandler->mmap(NULL, alignedSize, PROT_READ, MAP_SHARED, vmDebugFd, alignedMem);
+
+        if (mappedPtr == MAP_FAILED) {
+            PRINT_DEBUGGER_ERROR_LOG("Reading memory failed, errno = %d\n", errno);
+            retVal = -1;
+        } else {
+            char *realSourceVA = static_cast<char *>(mappedPtr) + alignedDiff;
+            retVal = memcpy_s(output, size, static_cast<void *>(realSourceVA), size);
+            ioctlHandler->munmap(mappedPtr, alignedSize);
+        }
+    } else {
+        size_t pendingSize = size;
+        uint8_t retry = 0;
+        const uint8_t maxRetries = 3;
+        size_t retrySize = size;
+        do {
+            PRINT_DEBUGGER_MEM_ACCESS_LOG("Reading (pread) memory from gpu va = %#" PRIx64 ", size = %zu\n", gpuVa, pendingSize);
+            retVal = ioctlHandler->pread(vmDebugFd, output, pendingSize, gpuVa);
+            output += retVal;
+            gpuVa += retVal;
+            pendingSize -= retVal;
+            if (retVal == 0) {
+                if (pendingSize < retrySize) {
+                    retry = 0;
+                }
+                retry++;
+                retrySize = pendingSize;
+            }
+        } while (((retVal == 0) && (retry < maxRetries)) || ((retVal > 0) && (pendingSize > 0)));
+
+        if (retVal < 0) {
+            PRINT_DEBUGGER_ERROR_LOG("Reading memory failed, errno = %d\n", errno);
+        }
+
+        retVal = pendingSize;
+    }
+    if (flushVmCache(vmDebugFd) != 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    NEO::SysCalls::close(vmDebugFd);
+
+    return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+}
+
+ze_result_t DebugSessionLinux::writeGpuMemory(uint64_t vmHandle, const char *input, size_t size, uint64_t gpuVa) {
+
+    int vmDebugFd = openVmFd(vmHandle, false);
+    if (vmDebugFd < 0) {
+        PRINT_DEBUGGER_ERROR_LOG("VM_OPEN failed = %d\n", vmDebugFd);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    int64_t retVal = 0;
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    gpuVa = gmmHelper->decanonize(gpuVa);
+    if (flushVmCache(vmDebugFd) != 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    if (NEO::debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
+        uint64_t alignedMem = alignDown(gpuVa, MemoryConstants::pageSize);
+        uint64_t alignedDiff = gpuVa - alignedMem;
+        uint64_t alignedSize = size + alignedDiff;
+
+        void *mappedPtr = ioctlHandler->mmap(NULL, alignedSize, PROT_WRITE, MAP_SHARED, vmDebugFd, alignedMem);
+
+        if (mappedPtr == MAP_FAILED) {
+            PRINT_DEBUGGER_ERROR_LOG("Writing memory failed, errno = %d\n", errno);
+            retVal = -1;
+        } else {
+            char *realDestVA = static_cast<char *>(mappedPtr) + alignedDiff;
+            retVal = memcpy_s(static_cast<void *>(realDestVA), size, input, size);
+            ioctlHandler->munmap(mappedPtr, alignedSize);
+        }
+    } else {
+        size_t pendingSize = size;
+        uint8_t retry = 0;
+        const uint8_t maxRetries = 3;
+        size_t retrySize = size;
+        do {
+            PRINT_DEBUGGER_MEM_ACCESS_LOG("Writing (pwrite) memory to gpu va = %#" PRIx64 ", size = %zu\n", gpuVa, pendingSize);
+            retVal = ioctlHandler->pwrite(vmDebugFd, input, pendingSize, gpuVa);
+            input += retVal;
+            gpuVa += retVal;
+            pendingSize -= retVal;
+            if (retVal == 0) {
+                if (pendingSize < retrySize) {
+                    retry = 0;
+                }
+                retry++;
+                retrySize = pendingSize;
+            }
+        } while (((retVal == 0) && (retry < maxRetries)) || ((retVal > 0) && (pendingSize > 0)));
+
+        if (retVal < 0) {
+            PRINT_DEBUGGER_ERROR_LOG("Writing memory failed, errno = %d\n", errno);
+        }
+
+        retVal = pendingSize;
+    }
+    if (flushVmCache(vmDebugFd) != 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    NEO::SysCalls::close(vmDebugFd);
+
+    return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
 } // namespace L0

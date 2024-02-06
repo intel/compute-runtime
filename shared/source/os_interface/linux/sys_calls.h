@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,8 @@
 
 namespace NEO {
 namespace SysCalls {
-int close(int fileDescriptor);
+int fsync(int fd);
+int close(int fd);
 int mkdir(const std::string &path);
 int open(const char *file, int flags);
 int openWithMode(const char *file, int flags, int mode);

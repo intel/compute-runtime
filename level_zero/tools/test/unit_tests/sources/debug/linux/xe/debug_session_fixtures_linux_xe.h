@@ -21,6 +21,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/tools/source/debug/linux/xe/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
 
 #include "common/StateSaveAreaHeader.h"
 #include "uapi-eudebug/drm/xe_drm.h"
@@ -49,10 +50,7 @@ struct DebugApiLinuxXeFixture : public DeviceFixture {
     static constexpr uint8_t bufferSize = 16;
 };
 
-struct MockIoctlHandlerXe : public L0::DebugSessionLinuxXe::IoctlHandlerXe {
-
-    using EventPair = std::pair<char *, uint64_t>;
-    using EventQueue = std::queue<EventPair>;
+struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
 
     int ioctl(int fd, unsigned long request, void *arg) override {
         ioctlCalled++;
@@ -75,25 +73,23 @@ struct MockIoctlHandlerXe : public L0::DebugSessionLinuxXe::IoctlHandlerXe {
         return ioctlRetVal;
     }
 
-    int poll(pollfd *pollFd, unsigned long int numberOfFds, int timeout) override {
-        passedTimeout = timeout;
-        pollCounter++;
-
-        if (eventQueue.empty() && pollRetVal >= 0) {
+    int fsync(int fd) override {
+        fsyncCalled++;
+        if (numFsyncToSucceed > 0) {
+            numFsyncToSucceed--;
             return 0;
         }
-        return pollRetVal;
+        return fsyncRetVal;
     }
 
     drm_xe_eudebug_event debugEventInput = {};
 
-    EventQueue eventQueue;
     int ioctlRetVal = 0;
     int debugEventRetVal = 0;
     int ioctlCalled = 0;
-    std::atomic<int> pollCounter = 0;
-    int pollRetVal = 0;
-    int passedTimeout = 0;
+    int fsyncCalled = 0;
+    int fsyncRetVal = 0;
+    int numFsyncToSucceed = 100;
 };
 
 struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {

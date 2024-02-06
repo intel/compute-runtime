@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ namespace ult {
 
 using DebugSessionLinuxCreateTest = Test<DebugApiLinuxFixture>;
 
-TEST(IoctlHandlerXe, GivenHandlerWhenPreadCalledThenSysCallIsCalled) {
+TEST(IoctlHandler, GivenHandlerWhenPreadCalledThenSysCallIsCalled) {
     L0::DebugSessionLinux::IoctlHandler handler;
     NEO::SysCalls::preadFuncCalled = 0;
     auto retVal = handler.pread(0, nullptr, 0, 0);
@@ -39,7 +39,7 @@ TEST(IoctlHandlerXe, GivenHandlerWhenPreadCalledThenSysCallIsCalled) {
     NEO::SysCalls::preadFuncCalled = 0;
 }
 
-TEST(IoctlHandlerXe, GivenHandlerWhenPwriteCalledThenSysCallIsCalled) {
+TEST(IoctlHandler, GivenHandlerWhenPwriteCalledThenSysCallIsCalled) {
     L0::DebugSessionLinux::IoctlHandler handler;
     NEO::SysCalls::pwriteFuncCalled = 0;
     auto retVal = handler.pwrite(0, nullptr, 0, 0);
@@ -49,7 +49,7 @@ TEST(IoctlHandlerXe, GivenHandlerWhenPwriteCalledThenSysCallIsCalled) {
     NEO::SysCalls::pwriteFuncCalled = 0;
 }
 
-TEST(IoctlHandlerXe, GivenHandlerWhenMmapAndMunmapCalledThenRedirectedToSysCall) {
+TEST(IoctlHandler, GivenHandlerWhenMmapAndMunmapCalledThenRedirectedToSysCall) {
     L0::DebugSessionLinux::IoctlHandler handler;
     NEO::SysCalls::mmapFuncCalled = 0;
     NEO::SysCalls::munmapFuncCalled = 0;
@@ -64,6 +64,15 @@ TEST(IoctlHandlerXe, GivenHandlerWhenMmapAndMunmapCalledThenRedirectedToSysCall)
     EXPECT_EQ(1u, NEO::SysCalls::munmapFuncCalled);
     NEO::SysCalls::mmapFuncCalled = 0;
     NEO::SysCalls::munmapFuncCalled = 0;
+}
+
+TEST(IoctlHandler, GivenHandlerWhenFsynCalledThenRedirectedToSysCall) {
+    L0::DebugSessionLinux::IoctlHandler handler;
+    NEO::SysCalls::fsyncCalled = 0;
+    auto retVal = handler.fsync(0);
+    EXPECT_EQ(0, retVal);
+    EXPECT_EQ(1, NEO::SysCalls::fsyncCalled);
+    NEO::SysCalls::fsyncCalled = 0;
 }
 
 } // namespace ult

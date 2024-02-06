@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -496,7 +496,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingResumeThenProperIoctlsAreCalled) {
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
     sessionMock->clientHandleToConnection[sessionMock->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
@@ -523,7 +523,7 @@ TEST_F(DebugApiLinuxTest, GivenStoppedThreadWhenCallingResumeThenStoppedThreadsA
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
     sessionMock->clientHandleToConnection[sessionMock->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
@@ -543,7 +543,7 @@ TEST_F(DebugApiLinuxTest, GivenStoppedThreadWhenCallingResumeThenStoppedThreadsA
 TEST_F(DebugApiLinuxTest, GivenUnknownEventWhenAcknowledgeEventCalledThenErrorUninitializedIsReturned) {
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, sessionMock);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
 
     zet_debug_session_handle_t session = sessionMock->toHandle();
@@ -577,7 +577,7 @@ TEST_F(DebugApiLinuxTest, GivenEventRequiringAckWhenAcknowledgeEventCalledThenSu
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
 
     zet_debug_session_handle_t session = sessionMock->toHandle();
@@ -686,7 +686,7 @@ TEST_F(DebugApiLinuxTest, GivenClientAndMatchingUuidEventsWhenReadingEventsThenP
     readUuid.payload_size = uuid.payload_size;
     readUuid.handle = 3;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&clientCreate), static_cast<uint64_t>(clientCreate.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&uuid), static_cast<uint64_t>(uuid.base.size)});
     handler->pollRetVal = 1;
@@ -730,7 +730,7 @@ TEST_F(DebugApiLinuxTest, GivenValidClassNameUuidWhenHandlingEventThenClientHand
     readUuid.payload_size = uuid.payload_size;
     readUuid.handle = 3;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->returnUuid = &readUuid;
     session->ioctlHandler.reset(handler);
 
@@ -765,7 +765,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueCreatedHandledThenProcessEntryEve
     readUuid.payload_size = uuid.payload_size;
     readUuid.handle = 3;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->returnUuid = &readUuid;
     session->ioctlHandler.reset(handler);
 
@@ -838,7 +838,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueWhenQueuesOnToSubdevicesCreatedAn
     readUuid.payload_size = sizeof(NEO::DebuggerL0::CommandQueueNotification);
     readUuid.handle = uuid.handle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     handler->returnUuid = &readUuid;
 
@@ -905,7 +905,7 @@ TEST_F(DebugApiLinuxTest, GivenCommandQueueDestroyedWhenHandlingEventThenExitEve
     uuid.client_handle = 10;
     uuid.handle = 4;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinuxi915::ClientConnection);
 
@@ -942,7 +942,7 @@ TEST_F(DebugApiLinuxTest, GivenDestroyClientForClientNotSavedWhenHandlingEventTh
     clientDestroy.base.size = sizeof(prelim_drm_i915_debug_event_client);
     clientDestroy.handle = 10;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinuxi915::ClientConnection);
 
@@ -1139,7 +1139,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenCallingIoctlThenIoctlHandlerIsInv
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     EXPECT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     session->ioctl(0, nullptr);
@@ -1193,7 +1193,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadOrWriteGpuMemoryThenVmOpenIoctlIsCalled
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1228,7 +1228,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadOrWriteGpuMemoryThenGpuAddressIsDecanon
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1253,7 +1253,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadGpuMemoryThenMemoryIsRead) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1278,7 +1278,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessTrueWhenCallingReadGpuMem
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1302,7 +1302,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenCallingReadGpuMe
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1337,7 +1337,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenPreadFailsThenEr
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1366,7 +1366,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteGpuMemoryThenMemoryIsWritten) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1388,7 +1388,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessTrueWhenCallingWriteGpuMe
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1408,7 +1408,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenCallingWriteGpuM
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1440,7 +1440,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessTrueWhenMmapFailesThenRea
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1462,7 +1462,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenWhenPwriteFailsT
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1488,7 +1488,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenWhenPwriteFailsT
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAThenMemoryIsRead) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1579,7 +1579,7 @@ TEST_F(DebugApiLinuxTest, GivenCanonizedAddressWhenGettingIsaVmHandleThenCorrect
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForELFThenMemoryIsRead) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1632,7 +1632,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForELFThenMemoryIsRead) {
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryforAllThreadsOnDefaultMemoryThenMemoryIsRead) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1668,7 +1668,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryforAllThreadsOnDefaultMemoryThenM
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryforASingleThreadThenMemoryIsRead) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1708,7 +1708,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryforASingleThreadThenMemoryIsRead)
 TEST_F(DebugApiLinuxTest, GivenInvalidAddressWhenCallingReadMemoryThenErrorIsReturned) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1740,7 +1740,7 @@ TEST_F(DebugApiLinuxTest, GivenInvalidAddressWhenCallingReadMemoryThenErrorIsRet
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAForExpectedFailureCasesThenErrorIsReturned) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1838,7 +1838,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAForExpectedFailureCasesThen
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForElfForExpectedFailureCasesThenErrorIsReturned) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1877,7 +1877,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForElfForExpectedFailureCasesThen
 TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForISAThenMemoryIsWritten) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1932,7 +1932,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForISAThenMemoryIsWritten) {
 TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForAllThreadsOnDefaultMemoryThenMemoryIsWritten) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -1969,7 +1969,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForAllThreadsOnDefaultMemoryThen
 TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForASignleThreadThenMemoryIsWritten) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2014,7 +2014,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForASignleThreadThenMemoryIsWrit
 TEST_F(DebugApiLinuxTest, GivenInvalidAddressWhenCallingWriteMemoryThenErrorIsReturned) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2043,7 +2043,7 @@ TEST_F(DebugApiLinuxTest, GivenInvalidAddressWhenCallingWriteMemoryThenErrorIsRe
 TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenErrorIsReturned) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2137,7 +2137,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromVmOpenWhenCallingReadGpuMemoryThenCloseI
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2158,7 +2158,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromVmOpenWhenCallingWriteGpuMemoryThenClose
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2175,7 +2175,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromMmapWhenCallingReadGpuMemoryThenCloseIsC
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2194,7 +2194,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromMmapWhenCallingWriteGpuMemoryThenCloseIs
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2233,7 +2233,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenPollReturnsZeroThenNotReadyIsRetu
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     result = session->initialize();
@@ -2253,7 +2253,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenInternalEventsThreadIsNotStartedO
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
 
     prelim_drm_i915_debug_event_client client = {};
@@ -2279,7 +2279,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClientHandleIsInvalidDuringInitia
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->debugEventRetVal = -1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::invalidClientHandle;
@@ -2301,7 +2301,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenReadEventFailsDuringInitializatio
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
     handler->debugEventRetVal = -1;
     session->ioctlHandler.reset(handler);
@@ -2328,7 +2328,7 @@ TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaThen
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2367,7 +2367,7 @@ TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaRetu
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2398,7 +2398,7 @@ TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingStateSaveAreaThenGp
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     handler->mmapRet = stateSaveAreaHeader.data();
 
@@ -2427,7 +2427,7 @@ TEST_F(DebugApiLinuxTest, GivenSizeTooSmallWhenReadingStateSaveAreThenMemoryIsNo
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     handler->mmapRet = stateSaveAreaHeader.data();
 
@@ -2452,7 +2452,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorInVmOpenWhenReadingModuleDebugAreaThenGpuMem
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
@@ -2589,7 +2589,7 @@ TEST_F(DebugApiLinuxTest, GivenInOrderClientVmContextUuidAndModuleDebugAreaEvent
     typeOfUUID uuidTemp = 3;
     memcpy(uuids, &uuidTemp, sizeof(typeOfUUID));
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(vm), static_cast<uint64_t>(vm->base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&context), static_cast<uint64_t>(context.base.size)});
@@ -2740,7 +2740,7 @@ TEST_F(DebugApiLinuxTest, GivenOutOfOrderClientVmContextUuidAndModuleDebugAreaEv
     typeOfUUID uuidTemp = 3;
     memcpy(uuids, &uuidTemp, sizeof(typeOfUUID));
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(vm), static_cast<uint64_t>(vm->base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&context), static_cast<uint64_t>(context.base.size)});
@@ -2895,7 +2895,7 @@ TEST_F(DebugApiLinuxTest, GivenAllNecessaryEventsWhenIncorrectModuleDebugAreaRea
     typeOfUUID uuidTemp = 3;
     memcpy(uuids, &uuidTemp, sizeof(typeOfUUID));
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(vm), static_cast<uint64_t>(vm->base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&context), static_cast<uint64_t>(context.base.size)});
@@ -2960,7 +2960,7 @@ TEST_F(DebugApiLinuxTest, GivenTwoClientEventsWithTheSameHandleWhenInitializingT
     client2.base.size = sizeof(prelim_drm_i915_debug_event_client);
     client2.handle = clientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&client2), static_cast<uint64_t>(client2.base.size)});
     handler->pollRetVal = 1;
@@ -2993,7 +2993,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClientCreateAndDestroyEventsReadO
     clientDestroy.base.size = sizeof(prelim_drm_i915_debug_event_client);
     clientDestroy.handle = 1;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&clientCreate), static_cast<uint64_t>(clientCreate.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&clientDestroy), static_cast<uint64_t>(clientDestroy.base.size)});
     handler->pollRetVal = 1;
@@ -3020,7 +3020,7 @@ TEST_F(DebugApiLinuxTest, GivenEventWithInvalidFlagsWhenReadingEventThenUnknownE
     clientInvalidFlag.base.size = sizeof(prelim_drm_i915_debug_event_client);
     clientInvalidFlag.handle = 1;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&clientInvalidFlag), static_cast<uint64_t>(clientInvalidFlag.base.size)});
     handler->pollRetVal = 1;
     auto eventsCount = handler->eventQueue.size();
@@ -3051,7 +3051,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionInitializationWhenNoValidEventsAreRea
     clientInvalidFlag.base.size = sizeof(prelim_drm_i915_debug_event_client);
     clientInvalidFlag.handle = 1;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&clientInvalidFlag), static_cast<uint64_t>(clientInvalidFlag.base.size)});
     handler->pollRetVal = 1;
     session->synchronousInternalEventRead = true;
@@ -3084,7 +3084,7 @@ TEST_F(DebugApiLinuxTest, GivenValidFlagsWhenReadingEventThenEventIsNotProcessed
     attEvent.lrc_handle = lrcHandle;
     attEvent.flags = 0;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&attEvent), static_cast<uint64_t>(attEvent.base.size)});
     handler->pollRetVal = 1;
 
@@ -3113,7 +3113,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndUnhandledEventTypeWhenHandlingEven
     event.flags = 0;
     event.size = sizeof(prelim_drm_i915_debug_event);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&event), static_cast<uint64_t>(event.size)});
     handler->pollRetVal = 1;
 
@@ -3167,7 +3167,7 @@ TEST_F(DebugApiLinuxTest, GivenContextCreateAndDestroyEventsWhenInitializingThen
     contextDestroy.client_handle = clientHandle;
     contextDestroy.handle = 3;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&context), static_cast<uint64_t>(context.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&context2), static_cast<uint64_t>(context2.base.size)});
@@ -3210,7 +3210,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventForClassWhenHandlingEventThenClassHandle
     readUuid.payload_size = uuid.payload_size;
     readUuid.handle = 2;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     handler->returnUuid = &readUuid;
 
@@ -3232,7 +3232,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventWithPayloadWhenHandlingEventThenReadEven
     ASSERT_NE(nullptr, session);
     session->clientHandle = DebugSessionLinuxi915::invalidClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     const char uuidString[] = "31203221-8069-5a0a-0000-55742d6ea000";
@@ -3288,7 +3288,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventWhenHandlingThenUuidIsInsertedToMap) {
     uuid.handle = 2;
     uuid.payload_size = 0;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->eventQueue.push({reinterpret_cast<char *>(&uuid), static_cast<uint64_t>(uuid.base.size)});
     handler->pollRetVal = 1;
 
@@ -3311,7 +3311,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventForL0ZebinModuleWhenHandlingEventThenKer
     ASSERT_NE(nullptr, session);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     const char uuidString[] = "31203221-8069-5a0a-0000-55742d6ea000";
@@ -3370,7 +3370,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventWithNonElfClassHandleWhenHandlingEventTh
     ASSERT_NE(nullptr, session);
     session->clientHandle = DebugSessionLinuxi915::invalidClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     const char uuidString[] = "31203221-8069-5a0a-0000-55742d6ea000";
@@ -3408,7 +3408,7 @@ TEST_F(DebugApiLinuxTest, GivenVmBindEventWithUnknownUUIDWhenHandlingEventThenEv
     ASSERT_NE(nullptr, session);
     session->clientHandle = DebugSessionLinuxi915::invalidClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint64_t sbaClassHandle = 1;
@@ -3451,7 +3451,7 @@ TEST_F(DebugApiLinuxTest, GivenVmBindEventWithUuidOfUnknownClassWhenHandlingEven
     ASSERT_NE(nullptr, session);
     session->clientHandle = DebugSessionLinuxi915::invalidClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint64_t sbaClassHandle = 1;
@@ -3496,7 +3496,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventOfKnownClassWhenHandlingEventThenGpuAddr
     ASSERT_NE(nullptr, session);
     session->clientHandle = DebugSessionLinuxi915::invalidClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint64_t sbaClassHandle = 1;
@@ -3578,7 +3578,7 @@ struct DebugApiLinuxVmBindFixture : public DebugApiLinuxPrelimFixture, public Mo
         ASSERT_NE(nullptr, session);
         session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-        handler = new MockIoctlHandler;
+        handler = new MockIoctlHandlerI915;
         session->ioctlHandler.reset(handler);
 
         session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile[vmHandleForVmBind] = 0;
@@ -3594,7 +3594,7 @@ struct DebugApiLinuxVmBindFixture : public DebugApiLinuxPrelimFixture, public Mo
 
     const uint64_t zebinModuleUUID = 9;
 
-    MockIoctlHandler *handler = nullptr;
+    MockIoctlHandlerI915 *handler = nullptr;
     std::unique_ptr<MockDebugSessionLinuxi915> session;
 };
 
@@ -3667,7 +3667,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithKnownUuidClassWhenHandlingEv
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenZeruNumUuidsWhenHandlingVmBindEventThenNoBindInfoIsStored) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint64_t sbaAddress = 0x1234000;
@@ -3687,7 +3687,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenZeruNumUuidsWhenHandlingVmBindEventThenNoBi
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenNeedsAckFlagWhenHandlingVmBindEventThenAckIsSent) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint64_t address = 0x1234000;
@@ -4958,7 +4958,7 @@ TEST_F(DebugApiLinuxTest, GivenNonClassUuidEventWithoutPayloadWhenHandlingEventT
     readUuid.payload_size = 0;
     readUuid.handle = 2;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     handler->returnUuid = &readUuid;
 
@@ -4996,7 +4996,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndFailingReadUuidEventIoctlWhenHandl
     uuid.handle = 2;
     uuid.payload_size = uuidNameSize;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     ::testing::internal::CaptureStderr();
@@ -5292,7 +5292,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForInterruptThenProperIoctlsIs
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     std::vector<EuThread::ThreadId> threads({});
 
@@ -5333,7 +5333,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromIoctlWhenCallingThreadControlForInterrup
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     std::vector<EuThread::ThreadId> threads({});
 
@@ -5357,7 +5357,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForResumeThenProperIoctlsIsCal
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     std::vector<EuThread::ThreadId> threads({});
 
@@ -5386,7 +5386,7 @@ TEST_F(DebugApiLinuxTest, GivenStoppedAndRunningThreadWhenCheckStoppedThreadsAnd
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     handler->setPreadMemory(sessionMock->stateSaveAreaHeader.data(), sessionMock->stateSaveAreaHeader.size(), 0x1000);
 
@@ -5450,7 +5450,7 @@ TEST_F(DebugApiLinuxTest, GivenStoppedThreadResumeCausingPageFaultAndFEBitSetWhe
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     handler->setPreadMemory(sessionMock->stateSaveAreaHeader.data(), sessionMock->stateSaveAreaHeader.size(), 0x1000);
 
@@ -5502,7 +5502,7 @@ TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckSt
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     EuThread::ThreadId thread = {0, 0, 0, 0, 0};
     EuThread::ThreadId thread1 = {0, 0, 0, 0, 1};
@@ -5551,7 +5551,7 @@ TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenSingleThreadPassedToCheckStopp
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     EuThread::ThreadId thread = {0, 0, 0, 0, 0};
     EuThread::ThreadId thread1 = {0, 0, 0, 0, 1};
@@ -5607,7 +5607,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromSynchronousAttScanWhenMultipleThreadsPas
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     EuThread::ThreadId thread = {0, 0, 0, 0, 0};
     EuThread::ThreadId thread1 = {0, 0, 0, 0, 1};
@@ -5659,7 +5659,7 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     ze_device_thread_t thread = {0, 0, 0, 0};
     sessionMock->ensureThreadStopped(thread);
@@ -5707,7 +5707,7 @@ TEST_F(DebugApiLinuxTest, GivenSliceALLWhenCallingResumeThenSliceIdIsNotRemapped
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     ze_device_thread_t thread = {};
     thread.slice = UINT32_MAX;
@@ -5734,7 +5734,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromIoctlWhenCallingResumeThenErrorUnknownIs
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     handler->ioctlRetVal = -1;
 
@@ -5753,7 +5753,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromIoctlWhenCallingInterruptImpThenErrorNot
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     handler->ioctlRetVal = -1;
 
@@ -5768,7 +5768,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForThreadStoppedThenProperIoct
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
 
     std::vector<EuThread::ThreadId> threads({});
@@ -6008,7 +6008,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEv
     uint64_t vmHandle = 7;
     uint64_t lrcHandle = 8;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
@@ -6152,7 +6152,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsRai
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
 
     uint64_t ctxHandle = 2;
@@ -6255,7 +6255,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenSentInterruptWhenHandlingAttEventThenAtt
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
@@ -6323,7 +6323,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenSentInterruptWhenSynchronouslyScannedAtt
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
@@ -6657,7 +6657,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenAlreadyStoppedThreadsWhenHandlingAttEven
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
@@ -6723,7 +6723,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenReadingIn
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = -1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -6747,7 +6747,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEBusyWhenReadingInt
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = -1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -6766,7 +6766,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsZeroWhenReadingInternalEven
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 0;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -6785,7 +6785,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenReadingInternalE
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -6817,7 +6817,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenEventsAvailableWhenHandlingEventsAsync
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -6847,7 +6847,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenOutOfOrderEventsForIsaWithoutAckNeeded
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -6950,7 +6950,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenReadingEventsAsy
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
@@ -6984,7 +6984,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyn
 
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     session->startAsyncThread();
@@ -7010,7 +7010,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingInte
 
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     session->startInternalEventsThread();
@@ -7034,7 +7034,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosing
 
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     session->startAsyncThread();
@@ -7078,7 +7078,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
 
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->returnTimeDiff = DebugSessionLinuxi915::interruptTimeout * 10;
     session->synchronousInternalEventRead = true;
@@ -7112,7 +7112,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
 
     session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     session->returnTimeDiff = 0;
 
@@ -7157,7 +7157,7 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxPrelimFixture {
     NEO::HardwareInfo hwInfo;
     std::unique_ptr<MockDebugSessionLinuxi915> session;
     MockBuiltins *mockBuiltins = nullptr;
-    MockIoctlHandler *ioctlHandler = nullptr;
+    MockIoctlHandlerI915 *ioctlHandler = nullptr;
     uint64_t ctxHandle = 2;
     uint64_t vmHandle = 7;
     uint64_t stateSaveAreaGpuVa = 0x123400000000;
@@ -7176,7 +7176,7 @@ TEST_F(DebugApiRegistersAccessTest, givenInvalidClientHandleWhenReadRegistersCal
 TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenReadRegistersCalledThenRegisterReadSuccessfully) {
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
 
@@ -7212,7 +7212,7 @@ TEST_F(DebugApiRegistersAccessTest, givenStateSaveAreaNotCapturedWhenReadRegiste
 TEST_F(DebugApiRegistersAccessTest, givenReadGpuMemoryFailedWhenReadRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
-    auto ioctlHandler = new MockIoctlHandler;
+    auto ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapFail = true;
     session->ioctlHandler.reset(ioctlHandler);
 
@@ -7224,7 +7224,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenReadRegistersCalled
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
     session->ioctlHandler.reset(ioctlHandler);
@@ -7238,7 +7238,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenReadRegistersCalled
 TEST_F(DebugApiRegistersAccessTest, givenReadRegistersCalledCorrectValuesRead) {
     SIP::version version = {1, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
 
@@ -7282,7 +7282,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenWriteRegistersCalle
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
     session->ioctlHandler.reset(ioctlHandler);
@@ -7312,7 +7312,7 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteGpuMemoryFailedWhenWriteRegistersC
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
     session->ioctlHandler.reset(ioctlHandler);
@@ -7326,7 +7326,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenWriteRegistersCalle
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
     session->ioctlHandler.reset(ioctlHandler);
@@ -7340,7 +7340,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenWriteRegistersCalle
 TEST_F(DebugApiRegistersAccessTest, givenWriteRegistersCalledCorrectValuesRead) {
     SIP::version version = {1, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
 
@@ -7395,7 +7395,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenThreadWhenReadingSystemRoutineIdentThen
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
 
@@ -7433,7 +7433,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFail
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
 
@@ -7469,7 +7469,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFail
 TEST_F(DebugApiRegistersAccessTest, GivenNoVmHandleWhenReadingSystemRoutineIdentThenFalseIsReturned) {
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
 
     session->ioctlHandler.reset(ioctlHandler);
 
@@ -7482,7 +7482,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenNoVmHandleWhenReadingSystemRoutineIdent
 }
 
 TEST_F(DebugApiRegistersAccessTest, GivenNoStatSaveAreaWhenReadingSystemRoutineIdentThenErrorReturned) {
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(ioctlHandler);
     EuThread thread({0, 0, 0, 0, 0});
 
@@ -7496,7 +7496,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenMemReadFailureWhenReadingSystemRoutineI
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
     session->ioctlHandler.reset(ioctlHandler);
@@ -7515,7 +7515,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenCSSANotBoundWhenReadingSystemRoutineIde
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
     session->ioctlHandler.reset(ioctlHandler);
@@ -7582,7 +7582,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead)
     SIP::version version = {1, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
 
@@ -7621,7 +7621,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
     SIP::version version = {1, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
 
@@ -7668,7 +7668,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
     SIP::version version = {1, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler = new MockIoctlHandlerI915;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
 
@@ -7726,7 +7726,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndTileAttachDisabledWhenDebug
     zet_debug_config_t config = {};
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 1);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
     session->allThreads.clear();
@@ -7751,7 +7751,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndRootAttachModeWhenDebugSess
     zet_debug_config_t config = {};
 
     auto session = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 1);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
     session->allThreads.clear();
@@ -7836,7 +7836,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThre
     SIP::version version = {2, 0, 0};
     initStateSaveArea(sessionMock->stateSaveAreaHeader, version, deviceImp);
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     sessionMock->ioctlHandler.reset(handler);
     sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
     sessionMock->clientHandleToConnection[sessionMock->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
@@ -7918,7 +7918,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
         ASSERT_NE(nullptr, session);
         session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
 
-        handler = new MockIoctlHandler;
+        handler = new MockIoctlHandlerI915;
         session->ioctlHandler.reset(handler);
 
         session->blockOnFenceMode = blockOnFence;
@@ -7931,7 +7931,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
     }
 
     void givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived() {
-        auto handler = new MockIoctlHandler;
+        auto handler = new MockIoctlHandlerI915;
         session->ioctlHandler.reset(handler);
 
         uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -7986,7 +7986,7 @@ struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFi
         EXPECT_EQ(isaGpuVa, event.info.module.load);
     }
 
-    MockIoctlHandler *handler = nullptr;
+    MockIoctlHandlerI915 *handler = nullptr;
     std::unique_ptr<MockDebugSessionLinuxi915> session;
 };
 
@@ -7994,7 +7994,7 @@ using DebugApiLinuxMultiDeviceVmBindTest = Test<DebugApiLinuxMultiDeviceVmBindFi
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8030,7 +8030,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBi
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8076,7 +8076,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBi
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8128,7 +8128,7 @@ using DebugLinuxMultiDeviceVmBindBlockOnFenceTest = Test<DebugApiLinuxMultiDevic
 
 TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
 
@@ -8176,7 +8176,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
 
 TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenAcknowledgingEventThenModuleFromBothTilesAreAcked) {
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8220,7 +8220,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
 
 TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenModuleUUIDIsNotFoundThenAcknowledgeCallsDebugBreakAndReturnsSuccess) {
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8260,7 +8260,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebi
 
 TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenZebinModuleForTileWithoutAckFlagWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterOneTileInstancesEventsReceived) {
 
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
     handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
 
@@ -8296,7 +8296,7 @@ TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenZebinModuleForTileWitho
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingIsaMemoryThenOnlyWritesAreMirrored) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8337,7 +8337,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndRe
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingMemoryFailsThenErrorIsReturned) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8369,7 +8369,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingMemor
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleIsaWithInvalidVmWhenReadingIsaMemoryThenErrorUninitializedIsReturned) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong());
@@ -8424,7 +8424,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleIsaWithInvalidVmWhenReadin
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndSingleInstanceWhenGettingIsaInfoThenIsaTrueAndErrorUninitializedIsReturned) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8471,7 +8471,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenNoIsaWhenGettingIsaInfoThenFalse
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenIsaWhenGettingIsaInfoForWrongAddressThenErrorUninitializedReturned) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8508,7 +8508,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenIsaWhenGettingIsaInfoForWrongAdd
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingWrongIsaRangeThenErrorInvalidArgReturned) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
@@ -8545,7 +8545,7 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndRe
 }
 
 TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleMemoryIsaWhenWritingAndReadingThenOnlyOneInstanceIsWrittenAndRead) {
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
 
     uint32_t devices = static_cast<uint32_t>(neoDevice->getSubDevice(1)->getDeviceBitfield().to_ulong());
@@ -8629,7 +8629,7 @@ TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotW
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
 
     auto debugSession = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{1234}, deviceImp, 10);
-    auto handler = new MockIoctlHandler;
+    auto handler = new MockIoctlHandlerI915;
     debugSession->ioctlHandler.reset(handler);
 
     vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
