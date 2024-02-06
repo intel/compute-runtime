@@ -876,3 +876,7 @@ HWTEST_F(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreference
         EXPECT_FALSE(preferredAllocationMethod.has_value());
     }
 }
+
+HWTEST_F(ProductHelperTest, whenAskingForLocalDispatchSizeThenReturnEmpty) {
+    EXPECT_EQ(0u, productHelper->getSupportedLocalDispatchSizes().size());
+}

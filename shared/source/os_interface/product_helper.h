@@ -222,6 +222,7 @@ class ProductHelper {
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
     virtual bool isCachingOnCpuAvailable() const = 0;
     virtual bool isNewCoherencyModelSupported() const = 0;
+    virtual const std::vector<uint32_t> getSupportedLocalDispatchSizes() const = 0;
 
     virtual ~ProductHelper() = default;
 
