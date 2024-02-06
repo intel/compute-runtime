@@ -29,6 +29,7 @@
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -796,9 +797,16 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES) {
             ze_float_atomic_ext_properties_t *floatProperties =
                 reinterpret_cast<ze_float_atomic_ext_properties_t *>(extendedProperties);
-            productHelper.getKernelExtendedProperties(&floatProperties->fp16Flags,
-                                                      &floatProperties->fp32Flags,
-                                                      &floatProperties->fp64Flags);
+            productHelper.getKernelExtendedProperties(hardwareInfo,
+                                                      floatProperties->fp16Flags,
+                                                      floatProperties->fp32Flags,
+                                                      floatProperties->fp64Flags);
+            static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE == FpAtomicExtFlags::globalLoadStore, "Mismatch between internal and API - specific capabilities.");
+            static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_ADD == FpAtomicExtFlags::globalAdd, "Mismatch between internal and API - specific capabilities.");
+            static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX == FpAtomicExtFlags::globalMinMax, "Mismatch between internal and API - specific capabilities.");
+            static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE == FpAtomicExtFlags::localLoadStore, "Mismatch between internal and API - specific capabilities.");
+            static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_LOCAL_ADD == FpAtomicExtFlags::localAdd, "Mismatch between internal and API - specific capabilities.");
+            static_assert(ZE_DEVICE_FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX == FpAtomicExtFlags::localMinMax, "Mismatch between internal and API - specific capabilities.");
         } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES) {
             ze_scheduling_hint_exp_properties_t *hintProperties =
                 reinterpret_cast<ze_scheduling_hint_exp_properties_t *>(extendedProperties);

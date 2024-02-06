@@ -38,10 +38,25 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) const {
-    *fp16 = (0u | FpAtomicExtFlags::globalMinMax | FpAtomicExtFlags::localMinMax | FpAtomicExtFlags::globalLoadStore | FpAtomicExtFlags::localLoadStore);
-    *fp32 = (0u | FpAtomicExtFlags::globalMinMax | FpAtomicExtFlags::localMinMax | FpAtomicExtFlags::globalAdd | FpAtomicExtFlags::localAdd | FpAtomicExtFlags::globalLoadStore | FpAtomicExtFlags::localLoadStore);
-    *fp64 = (0u | FpAtomicExtFlags::globalMinMax | FpAtomicExtFlags::localMinMax | FpAtomicExtFlags::globalAdd | FpAtomicExtFlags::localAdd | FpAtomicExtFlags::globalLoadStore | FpAtomicExtFlags::localLoadStore);
+void ProductHelperHw<gfxProduct>::getKernelFp16AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp16) const {
+    fp16 = (0u | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::getKernelFp32AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp32) const {
+    fp32 = (0u | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::getKernelFp64AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp64) const {
+    fp64 = (0u | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(const HardwareInfo &hwInfo, uint32_t &fp16, uint32_t &fp32, uint32_t &fp64) const {
+    getKernelFp16AtomicCapabilities(hwInfo, fp16);
+    getKernelFp32AtomicCapabilities(hwInfo, fp32);
+    getKernelFp64AtomicCapabilities(hwInfo, fp64);
 }
 
 template <PRODUCT_FAMILY gfxProduct>

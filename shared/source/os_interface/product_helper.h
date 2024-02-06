@@ -80,7 +80,10 @@ class ProductHelper {
     virtual uint64_t getSingleDeviceSharedMemCapabilities() const = 0;
     virtual uint64_t getCrossDeviceSharedMemCapabilities() const = 0;
     virtual uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const = 0;
-    virtual void getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) const = 0;
+    virtual void getKernelFp16AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp16) const = 0;
+    virtual void getKernelFp32AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp32) const = 0;
+    virtual void getKernelFp64AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp64) const = 0;
+    virtual void getKernelExtendedProperties(const HardwareInfo &hwInfo, uint32_t &fp16, uint32_t &fp32, uint32_t &fp64) const = 0;
     virtual std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() const = 0;
     virtual uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const = 0;
     virtual uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const = 0;

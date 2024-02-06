@@ -65,7 +65,19 @@ uint64_t ProductHelperHw<IGFX_UNKNOWN>::getSharedSystemMemCapabilities(const Har
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) const {
+void ProductHelperHw<IGFX_UNKNOWN>::getKernelFp16AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp16) const {
+}
+
+template <>
+void ProductHelperHw<IGFX_UNKNOWN>::getKernelFp32AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp32) const {
+}
+
+template <>
+void ProductHelperHw<IGFX_UNKNOWN>::getKernelFp64AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp64) const {
+}
+
+template <>
+void ProductHelperHw<IGFX_UNKNOWN>::getKernelExtendedProperties(const HardwareInfo &hwInfo, uint32_t &fp16, uint32_t &fp32, uint32_t &fp64) const {
 }
 
 template <>
