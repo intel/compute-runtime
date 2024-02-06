@@ -533,9 +533,9 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     auto ret = IoctlHelper::ioctl(DrmIoctl::gemCreate, &create);
     handle = create.handle;
 
-    xeLog(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx p=0x%x f=0x%x h=0x%x r=%d\n", __FUNCTION__,
+    xeLog(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
           mem.memoryClass, mem.memoryInstance,
-          create.vm_id, create.size, create.flags, create.placement, handle, ret);
+          create.vm_id, create.size, create.flags, create.placement, handle, create.cpu_caching, ret);
     updateBindInfo(create.handle, 0u, create.size);
     return ret;
 }
@@ -564,6 +564,9 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode();
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &create);
+
+    xeLog(" -> IoctlHelperXe::%s vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
+          create.vm_id, create.size, create.flags, create.placement, create.handle, create.cpu_caching, ret);
     DEBUG_BREAK_IF(ret != 0);
     updateBindInfo(create.handle, 0u, create.size);
     return create.handle;
@@ -594,14 +597,14 @@ int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint64_t mask, uint16_t op, u
     wait.timeout = timeout;
     wait.exec_queue_id = ctxId;
     auto retVal = IoctlHelper::ioctl(DrmIoctl::gemWaitUserFence, &wait);
-    xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x retVal=0x%x\n", __FUNCTION__, addr, value,
-          timeout, wait.flags, retVal);
+    xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x ctx=0x%x retVal=0x%x\n", __FUNCTION__, addr, value,
+          timeout, wait.flags, ctxId, retVal);
     return retVal;
 }
 
 int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
                                  uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) {
-    xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x\n", __FUNCTION__, address, value, dataWidth, timeout, flags);
+    xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x ctx=0x%x\n", __FUNCTION__, address, value, dataWidth, timeout, flags, ctxId);
     uint64_t mask;
     switch (dataWidth) {
     case static_cast<uint32_t>(Drm::ValueWidth::u64):
@@ -974,7 +977,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         d->handle = userPtrHandle++ | XE_USERPTR_FAKE_FLAG;
         updateBindInfo(d->handle, d->userPtr, d->userSize);
         ret = 0;
-        xeLog(" -> IoctlHelperXe::ioctl GemUserptrGemUserptr p=0x%llx s=0x%llx f=0x%x h=0x%x r=%d\n", d->userPtr,
+        xeLog(" -> IoctlHelperXe::ioctl GemUserptr p=0x%llx s=0x%llx f=0x%x h=0x%x r=%d\n", d->userPtr,
               d->userSize, d->flags, d->handle, ret);
         xeShowBindTable();
     } break;
@@ -1095,8 +1098,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
 
         d->vmId = ret ? 0 : args.vm_id;
         d->flags = ret ? 0 : args.flags;
-        xeVmId = d->vmId;
-        xeLog(" -> IoctlHelperXe::ioctl gemVmCreate vmid=0x%x r=%d\n", d->vmId, ret);
+        xeLog(" -> IoctlHelperXe::ioctl gemVmCreate f=0x%x vmid=0x%x r=%d\n", d->flags, d->vmId, ret);
 
     } break;
     case DrmIoctl::gemVmDestroy: {
@@ -1114,8 +1116,8 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         mmo.handle = d->handle;
         ret = IoctlHelper::ioctl(request, &mmo);
         d->offset = mmo.offset;
-        xeLog(" -> IoctlHelperXe::ioctl GemMmapOffset h=0x%x o=0x%x r=%d\n",
-              d->handle, d->offset, ret);
+        xeLog(" -> IoctlHelperXe::ioctl GemMmapOffset h=0x%x o=0x%x f=0x%x r=%d\n",
+              d->handle, d->offset, d->flags, ret);
     } break;
     case DrmIoctl::getResetStats: {
         ResetStats *d = static_cast<ResetStats *>(arg);
@@ -1127,7 +1129,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::primeFdToHandle: {
         PrimeHandle *prime = static_cast<PrimeHandle *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
-        xeLog(" ->PrimeFdToHandle  h=0x%x f=0x%x d=0x%x r=%d\n",
+        xeLog(" ->PrimeFdToHandle h=0x%x f=0x%x d=0x%x r=%d\n",
               prime->handle, prime->flags, prime->fileDescriptor, ret);
     } break;
     case DrmIoctl::primeHandleToFd: {
@@ -1139,8 +1141,8 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::gemCreate: {
         drm_xe_gem_create *gemCreate = static_cast<drm_xe_gem_create *>(arg);
         ret = IoctlHelper::ioctl(request, arg);
-        xeLog(" -> IoctlHelperXe::ioctl GemCreate h=0x%x s=0x%lx p=0x%x f=0x%x r=%d\n",
-              gemCreate->handle, gemCreate->size, gemCreate->flags, ret);
+        xeLog(" -> IoctlHelperXe::ioctl GemCreate h=0x%x s=0x%lx p=0x%x f=0x%x vmid=0x%x r=%d\n",
+              gemCreate->handle, gemCreate->size, gemCreate->placement, gemCreate->flags, gemCreate->vm_id, ret);
     } break;
     case DrmIoctl::debuggerOpen: {
         ret = debuggerOpenIoctl(request, arg);
@@ -1319,7 +1321,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
 
         ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
 
-        xeLog(" vm=%d obj=0x%x off=0x%llx range=0x%llx addr=0x%llx operation=%d(%s) flags=%d(%s) nsy=%d ret=%d\n",
+        xeLog(" vm=%d obj=0x%x off=0x%llx range=0x%llx addr=0x%llx operation=%d(%s) flags=%d(%s) nsy=%d pat=%hu ret=%d\n",
               bind.vm_id,
               bind.bind.obj,
               bind.bind.obj_offset,
@@ -1330,6 +1332,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
               bind.bind.flags,
               xeGetBindFlagsName(bind.bind.flags),
               bind.num_syncs,
+              bind.bind.pat_index,
               ret);
 
         if (ret != 0) {
@@ -1342,10 +1345,10 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
                                sync[0].timeline_value, XE_ONE_SEC);
     }
 
-    xeLog("error:  -> IoctlHelperXe::%s %s index=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx r=%d\n",
+    xeLog("error:  -> IoctlHelperXe::%s %s index=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx pat=%hu r=%d\n",
           __FUNCTION__, operation, index, vmBindParams.vmId,
           vmBindParams.handle, vmBindParams.start, vmBindParams.offset,
-          vmBindParams.length, vmBindParams.flags, ret);
+          vmBindParams.length, vmBindParams.flags, vmBindParams.patIndex, ret);
 
     return ret;
 }
