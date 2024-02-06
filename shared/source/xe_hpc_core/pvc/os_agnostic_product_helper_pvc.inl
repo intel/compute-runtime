@@ -210,7 +210,8 @@ template <>
 bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t kernelIndirectDetectionVersion) const {
     const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::zebin;
     const bool isCMKernelHeuristic = kernelDescriptor.kernelAttributes.simdSize == 1;
-    const bool indirectDetectionValid = !isPrecompiled;
+    constexpr auto minimalIndirectDetectionVersion = 2u;
+    const bool indirectDetectionValid = !isPrecompiled || kernelIndirectDetectionVersion >= minimalIndirectDetectionVersion;
     return isZebin && indirectDetectionValid && !isCMKernelHeuristic;
 }
 
