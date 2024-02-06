@@ -137,6 +137,19 @@ TEST(IoctlHandler, GivenHandlerWhenIoctlFailsWithEBUSYThenIoctlIsAgain) {
 
 using DebugApiLinuxTestXe = Test<DebugApiLinuxXeFixture>;
 
+TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForInterruptThenErrorIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+
+    EXPECT_NE(nullptr, session);
+    std::vector<EuThread::ThreadId> threads({});
+    std::unique_ptr<uint8_t[]> bitmaskOut;
+    size_t bitmaskSizeOut = 0;
+    EXPECT_EQ(-1, session->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::interrupt, bitmaskOut, bitmaskSizeOut));
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenCallingPollThenDefaultHandlerRedirectsToSysCall) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

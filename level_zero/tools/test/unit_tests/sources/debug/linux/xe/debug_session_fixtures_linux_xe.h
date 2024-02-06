@@ -126,6 +126,11 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         return DebugSessionLinuxXe::initialize();
     }
 
+    int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
+        numThreadsPassedToThreadControl = threads.size();
+        return L0::DebugSessionLinuxXe::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
+    }
+
     std::unique_ptr<uint64_t[]> getInternalEvent() override {
         getInternalEventCounter++;
         if (synchronousInternalEventRead) {
@@ -134,6 +139,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         return DebugSessionLinuxXe::getInternalEvent();
     }
 
+    size_t numThreadsPassedToThreadControl = 0;
     bool synchronousInternalEventRead = false;
     std::atomic<int> getInternalEventCounter = 0;
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;

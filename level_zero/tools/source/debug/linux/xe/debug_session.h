@@ -87,6 +87,9 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     uint32_t xeDebuggerVersion = 0;
 
   protected:
+    int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
+        return -1;
+    }
     void startAsyncThread() override;
     static void *asyncThreadFunction(void *arg);
     void handleEventsAsync();

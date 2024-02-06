@@ -74,5 +74,18 @@ struct DebugSessionLinux : DebugSessionImp {
             return NEO::SysCalls::munmap(addr, size);
         }
     };
+
+    enum class ThreadControlCmd {
+        interrupt,
+        resume,
+        stopped,
+        interruptAll
+    };
+
+    virtual int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) = 0;
+    void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override;
+    MOCKABLE_VIRTUAL bool checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc);
+    ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
+    ze_result_t interruptImp(uint32_t deviceIndex) override;
 };
 } // namespace L0

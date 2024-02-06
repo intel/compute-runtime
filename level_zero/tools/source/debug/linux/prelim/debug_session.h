@@ -153,21 +153,10 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     };
 
   protected:
-    enum class ThreadControlCmd {
-        interrupt,
-        resume,
-        stopped,
-        interruptAll
-    };
-
     MOCKABLE_VIRTUAL void handleEvent(prelim_drm_i915_debug_event *event);
     bool checkAllEventsCollected();
     std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;
     ze_result_t readEventImp(prelim_drm_i915_debug_event *drmDebugEvent);
-    ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
-    ze_result_t interruptImp(uint32_t deviceIndex) override;
-    void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override;
-    MOCKABLE_VIRTUAL bool checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc);
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
         pushApiEvent(debugEvent);
@@ -253,8 +242,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     ze_result_t writeDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc,
                                    size_t size, const void *buffer);
 
-    MOCKABLE_VIRTUAL int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize);
-
+    int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override;
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override;
     size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override;
     virtual uint64_t getSbaBufferGpuVa(uint64_t memoryHandle);
