@@ -8,11 +8,13 @@
 #include "level_zero/tools/source/debug/linux/xe/debug_session.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/linux/drm_helper.h"
 
@@ -299,6 +301,45 @@ int DebugSessionLinuxXe::flushVmCache(int vmfd) {
         PRINT_DEBUGGER_ERROR_LOG("Failed to fsync VM fd=%d errno=%d\n", vmfd, errno);
     }
     return retVal;
+}
+
+int DebugSessionLinuxXe::euControlIoctl(ThreadControlCmd threadCmd,
+                                        const NEO::EngineClassInstance *classInstance,
+                                        std::unique_ptr<uint8_t[]> &bitmask,
+                                        size_t bitmaskSize, uint64_t &seqnoOut, uint64_t &bitmaskSizeOut) {
+    struct drm_xe_eudebug_eu_control euControl = {};
+    euControl.client_handle = clientHandle;
+    euControl.ci.engine_class = classInstance->engineClass;
+    euControl.ci.engine_instance = classInstance->engineInstance;
+    euControl.bitmask_size = 0;
+    euControl.bitmask_ptr = 0;
+
+    decltype(drm_xe_eudebug_eu_control::cmd) command = 0;
+    switch (threadCmd) {
+    case ThreadControlCmd::interruptAll:
+        command = DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL;
+        break;
+    case ThreadControlCmd::resume:
+        command = DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME;
+        break;
+    case ThreadControlCmd::stopped:
+        command = DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED;
+        break;
+    default:
+        command = 0xFFFFFFFF;
+        break;
+    }
+    euControl.cmd = command;
+
+    euControl.bitmask_size = static_cast<uint32_t>(bitmaskSize);
+    euControl.bitmask_ptr = reinterpret_cast<uint64_t>(bitmask.get());
+
+    printBitmask(bitmask.get(), bitmaskSize);
+
+    auto euControlRetVal = ioctl(DRM_XE_EUDEBUG_IOCTL_EU_CONTROL, &euControl);
+    seqnoOut = euControl.seqno;
+    bitmaskSizeOut = euControl.bitmask_size;
+    return euControlRetVal;
 }
 
 } // namespace L0

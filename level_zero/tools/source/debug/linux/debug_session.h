@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -82,6 +83,7 @@ struct DebugSessionLinux : DebugSessionImp {
         }
     };
 
+  protected:
     enum class ThreadControlCmd {
         interrupt,
         resume,
@@ -89,11 +91,16 @@ struct DebugSessionLinux : DebugSessionImp {
         interruptAll
     };
 
-    virtual int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) = 0;
+    virtual int euControlIoctl(ThreadControlCmd threadCmd,
+                               const NEO::EngineClassInstance *classInstance,
+                               std::unique_ptr<uint8_t[]> &bitmask,
+                               size_t bitmaskSize, uint64_t &seqnoOut, uint64_t &bitmaskSizeOut) = 0;
+    MOCKABLE_VIRTUAL int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize);
     void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override;
     MOCKABLE_VIRTUAL bool checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc);
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
     ze_result_t interruptImp(uint32_t deviceIndex) override;
     std::unique_ptr<IoctlHandler> ioctlHandler;
+    uint64_t euControlInterruptSeqno[NEO::EngineLimits::maxHandleCount];
 };
 } // namespace L0

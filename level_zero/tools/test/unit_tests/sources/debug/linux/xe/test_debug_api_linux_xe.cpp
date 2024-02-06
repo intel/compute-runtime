@@ -140,19 +140,6 @@ TEST(IoctlHandler, GivenHandlerWhenIoctlFailsWithEBUSYThenIoctlIsAgain) {
 
 using DebugApiLinuxTestXe = Test<DebugApiLinuxXeFixture>;
 
-TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForInterruptThenErrorIsReturned) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
-
-    EXPECT_NE(nullptr, session);
-    std::vector<EuThread::ThreadId> threads({});
-    std::unique_ptr<uint8_t[]> bitmaskOut;
-    size_t bitmaskSizeOut = 0;
-    EXPECT_EQ(-1, session->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::interrupt, bitmaskOut, bitmaskSizeOut));
-}
-
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenCallingPollThenDefaultHandlerRedirectsToSysCall) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -904,6 +891,149 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingReadOrWriteGpuMemoryAndFsyncFailsThenErro
     retVal = session->writeGpuMemory(7, output, bufferSize, 0x23000);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, retVal);
     EXPECT_EQ(handler->fsyncCalled, 6);
+}
+
+TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForInterruptThenProperIoctlsIsCalled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    auto handler = new MockIoctlHandlerXe;
+    sessionMock->ioctlHandler.reset(handler);
+    std::vector<EuThread::ThreadId> threads({});
+
+    std::unique_ptr<uint8_t[]> bitmaskOut;
+    size_t bitmaskSizeOut = 0;
+
+    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::interrupt, bitmaskOut, bitmaskSizeOut);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(0xFFFFFFFF, handler->euControlArgs[0].euControl.cmd);
+    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_size);
+    auto bitMaskPtrToCheck = handler->euControlArgs[0].euControl.bitmask_ptr;
+    EXPECT_NE(0u, bitMaskPtrToCheck);
+    EXPECT_EQ(handler->euControlOutputSeqno, sessionMock->euControlInterruptSeqno[0]);
+
+    EXPECT_EQ(0u, bitmaskSizeOut);
+    EXPECT_EQ(nullptr, bitmaskOut.get());
+
+    handler->euControlOutputSeqno = handler->euControlOutputSeqno + 3;
+    handler->ioctlCalled = 0;
+    result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::interruptAll, bitmaskOut, bitmaskSizeOut);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(uint32_t(DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL), handler->euControlArgs[1].euControl.cmd);
+    EXPECT_EQ(0u, handler->euControlArgs[1].euControl.bitmask_size);
+    auto bitMaskPtrToCheck1 = handler->euControlArgs[1].euControl.bitmask_ptr;
+    EXPECT_EQ(0u, bitMaskPtrToCheck1);
+    EXPECT_EQ(handler->euControlOutputSeqno, sessionMock->euControlInterruptSeqno[0]);
+
+    EXPECT_EQ(0u, bitmaskSizeOut);
+    EXPECT_EQ(nullptr, bitmaskOut.get());
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenErrorFromIoctlWhenCallingThreadControlForInterruptThenSeqnoIsNotUpdated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    auto handler = new MockIoctlHandlerXe;
+    sessionMock->ioctlHandler.reset(handler);
+    std::vector<EuThread::ThreadId> threads({});
+
+    std::unique_ptr<uint8_t[]> bitmaskOut;
+    size_t bitmaskSizeOut = 0;
+
+    handler->ioctlRetVal = -1;
+
+    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::interruptAll, bitmaskOut, bitmaskSizeOut);
+    EXPECT_NE(0, result);
+
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(uint32_t(DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL), handler->euControlArgs[0].euControl.cmd);
+    EXPECT_NE(handler->euControlOutputSeqno, sessionMock->euControlInterruptSeqno[0]);
+}
+
+TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForResumeThenProperIoctlsIsCalled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    auto handler = new MockIoctlHandlerXe;
+    sessionMock->ioctlHandler.reset(handler);
+    std::vector<EuThread::ThreadId> threads({});
+
+    std::unique_ptr<uint8_t[]> bitmaskOut;
+    size_t bitmaskSizeOut = 0;
+
+    auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::resume, bitmaskOut, bitmaskSizeOut);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(uint32_t(DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME), handler->euControlArgs[0].euControl.cmd);
+    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_size);
+    auto bitMaskPtrToCheck = handler->euControlArgs[0].euControl.bitmask_ptr;
+    EXPECT_NE(0u, bitMaskPtrToCheck);
+
+    EXPECT_EQ(0u, bitmaskSizeOut);
+    EXPECT_EQ(nullptr, bitmaskOut.get());
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotCheckedAndEventsNotGenerated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    auto handler = new MockIoctlHandlerXe;
+    sessionMock->ioctlHandler.reset(handler);
+    EuThread::ThreadId thread = {0, 0, 0, 0, 0};
+    EuThread::ThreadId thread1 = {0, 0, 0, 0, 1};
+    EuThread::ThreadId thread2 = {0, 0, 0, 0, 2};
+    const auto memoryHandle = 1u;
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back(thread);
+    threads.push_back(thread1);
+
+    sessionMock->allThreads[thread.packed]->verifyStopped(1);
+    sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
+    sessionMock->allThreads[thread.packed]->reportAsStopped();
+    sessionMock->stoppedThreads[thread.packed] = 1;  // previously stopped
+    sessionMock->stoppedThreads[thread1.packed] = 3; // newly stopped
+    sessionMock->stoppedThreads[thread2.packed] = 3; // newly stopped
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    memset(bitmask.get(), 0, bitmaskSize);
+
+    handler->outputBitmaskSize = bitmaskSize;
+    handler->outputBitmask = std::move(bitmask);
+
+    sessionMock->checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, 0);
+
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(1u, handler->euControlArgs.size());
+    EXPECT_EQ(2u, sessionMock->numThreadsPassedToThreadControl);
+    EXPECT_EQ(uint32_t(DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED), handler->euControlArgs[0].euControl.cmd);
+
+    EXPECT_TRUE(sessionMock->allThreads[thread.packed]->isStopped());
+    EXPECT_FALSE(sessionMock->allThreads[thread1.packed]->isStopped());
+    EXPECT_FALSE(sessionMock->allThreads[thread2.packed]->isStopped());
+
+    EXPECT_EQ(0u, sessionMock->apiEvents.size());
 }
 
 } // namespace ult

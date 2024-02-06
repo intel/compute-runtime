@@ -350,4 +350,47 @@ ze_result_t DebugSessionLinux::writeGpuMemory(uint64_t vmHandle, const char *inp
     return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
+int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
+
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto classInstance = DrmHelper::getEngineInstance(connectedDevice, tile, hwInfo.capabilityTable.defaultEngineType);
+    UNRECOVERABLE_IF(!classInstance);
+
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+    bitmaskSizeOut = 0;
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+
+    if (threadCmd == ThreadControlCmd::interrupt ||
+        threadCmd == ThreadControlCmd::resume ||
+        threadCmd == ThreadControlCmd::stopped) {
+        l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    }
+
+    uint64_t seqnoRet = 0;
+    uint64_t bitmaskSizeRet = 0;
+    auto euControlRetVal = euControlIoctl(threadCmd, classInstance, bitmask, bitmaskSize, seqnoRet, bitmaskSizeRet);
+    if (euControlRetVal != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("euControl IOCTL failed: retCode: %d errno = %d threadCmd = %d\n", euControlRetVal, errno, threadCmd);
+    } else {
+        PRINT_DEBUGGER_INFO_LOG("euControl IOCTL: seqno = %llu threadCmd = %u\n", seqnoRet, threadCmd);
+    }
+
+    if (threadCmd == ThreadControlCmd::interrupt ||
+        threadCmd == ThreadControlCmd::interruptAll) {
+        if (euControlRetVal == 0) {
+            euControlInterruptSeqno[tile] = seqnoRet;
+        } else {
+            euControlInterruptSeqno[tile] = invalidHandle;
+        }
+    }
+
+    if (threadCmd == ThreadControlCmd::stopped) {
+        bitmaskOut = std::move(bitmask);
+        bitmaskSizeOut = bitmaskSizeRet;
+    }
+    return euControlRetVal;
+}
+
 } // namespace L0

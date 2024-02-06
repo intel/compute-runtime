@@ -1316,16 +1316,10 @@ uint64_t DebugSessionLinuxi915::extractVaFromUuidString(std::string &uuid) {
     return parts[0];
 }
 
-int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
-
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto classInstance = DrmHelper::getEngineInstance(connectedDevice, tile, hwInfo.capabilityTable.defaultEngineType);
-    UNRECOVERABLE_IF(!classInstance);
-
-    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
-
-    bitmaskSizeOut = 0;
-
+int DebugSessionLinuxi915::euControlIoctl(ThreadControlCmd threadCmd,
+                                          const NEO::EngineClassInstance *classInstance,
+                                          std::unique_ptr<uint8_t[]> &bitmask,
+                                          size_t bitmaskSize, uint64_t &seqnoOut, uint64_t &bitmaskSizeOut) {
     struct prelim_drm_i915_debug_eu_control euControl = {};
     euControl.client_handle = clientHandle;
     euControl.ci.engine_class = classInstance->engineClass;
@@ -1350,17 +1344,8 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
     }
     euControl.cmd = command;
 
-    std::unique_ptr<uint8_t[]> bitmask;
-    size_t bitmaskSize = 0;
-
-    if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
-        command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME ||
-        command == PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED) {
-        l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
-        euControl.bitmask_size = static_cast<uint32_t>(bitmaskSize);
-        euControl.bitmask_ptr = reinterpret_cast<uint64_t>(bitmask.get());
-    }
-
+    euControl.bitmask_size = static_cast<uint32_t>(bitmaskSize);
+    euControl.bitmask_ptr = reinterpret_cast<uint64_t>(bitmask.get());
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME) {
         applyResumeWa(bitmask.get(), bitmaskSize);
     }
@@ -1368,25 +1353,8 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
     printBitmask(bitmask.get(), bitmaskSize);
 
     auto euControlRetVal = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
-    if (euControlRetVal != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d\n", euControlRetVal, errno, command);
-    } else {
-        PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", (uint64_t)euControl.seqno, command);
-    }
-
-    if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
-        command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT_ALL) {
-        if (euControlRetVal == 0) {
-            euControlInterruptSeqno[tile] = euControl.seqno;
-        } else {
-            euControlInterruptSeqno[tile] = invalidHandle;
-        }
-    }
-
-    if (threadCmd == ThreadControlCmd::stopped) {
-        bitmaskOut = std::move(bitmask);
-        bitmaskSizeOut = euControl.bitmask_size;
-    }
+    seqnoOut = euControl.seqno;
+    bitmaskSizeOut = euControl.bitmask_size;
     return euControlRetVal;
 }
 

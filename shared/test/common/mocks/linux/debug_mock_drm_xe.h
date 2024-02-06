@@ -42,7 +42,9 @@ inline constexpr uint32_t testValueGemCreate = 0x8273;
 
 class DrmMockXeDebug : public DrmMockCustom {
   public:
-    DrmMockXeDebug(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment){};
+    DrmMockXeDebug(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
+        this->ioctlHelper = std::make_unique<IoctlHelperXe>(*this);
+    };
 
     int getErrno() override {
         if (baseErrno) {
