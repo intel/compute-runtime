@@ -11,6 +11,7 @@
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
@@ -21,12 +22,18 @@ namespace Sysman {
 
 static const std::string mtdDescriptor("/proc/mtd");
 
-ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman) {
+void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
-    std::vector<std ::string> deviceSupportedFwTypes;
+    std::vector<std ::string> deviceSupportedFwTypes = {};
+    supportedFwTypes.clear();
     if (pFwInterface != nullptr) {
-        pFwInterface->getDeviceSupportedFwTypes(deviceSupportedFwTypes);
+        auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+        pSysmanProductHelper->getDeviceSupportedFwTypes(pFwInterface, deviceSupportedFwTypes);
+    }
+
+    if (deviceSupportedFwTypes.empty()) {
+        return;
     }
 
     FsAccessInterface *pFsAccess = &pLinuxSysmanImp->getFsAccess();
@@ -34,7 +41,7 @@ ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedF
     ze_result_t result = pFsAccess->read(mtdDescriptor, mtdDescriptorStrings);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s and returning error:0x%x \n", __FUNCTION__, mtdDescriptor.c_str(), result);
-        return result;
+        return;
     }
     for (const auto &readByteLine : mtdDescriptorStrings) {
         for (const auto &fwType : deviceSupportedFwTypes) {
@@ -45,7 +52,6 @@ ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedF
             }
         }
     }
-    return ZE_RESULT_SUCCESS;
 }
 
 void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties) {

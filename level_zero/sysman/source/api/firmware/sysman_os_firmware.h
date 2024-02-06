@@ -22,7 +22,7 @@ class OsFirmware {
     virtual ze_result_t osFirmwareFlash(void *pImage, uint32_t size) = 0;
     virtual ze_result_t osGetFirmwareFlashProgress(uint32_t *pCompletionPercent) = 0;
     static std::unique_ptr<OsFirmware> create(OsSysman *pOsSysman, const std::string &fwType);
-    static ze_result_t getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman);
+    static void getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman);
     virtual ~OsFirmware() {}
 };
 } // namespace Sysman

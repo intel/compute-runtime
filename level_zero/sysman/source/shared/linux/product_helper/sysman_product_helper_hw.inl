@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
+#include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
@@ -226,6 +227,12 @@ bool SysmanProductHelperHw<gfxProduct>::isDiagnosticsSupported() {
 template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) {
     return pSysmanKmdInterface->isStandbyModeControlAvailable();
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void SysmanProductHelperHw<gfxProduct>::getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) {
+    fwTypes.clear();
+    pFwInterface->getDeviceSupportedFwTypes(fwTypes);
 }
 
 } // namespace Sysman

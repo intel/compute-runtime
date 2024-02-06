@@ -50,14 +50,13 @@ std::unique_ptr<OsFirmware> OsFirmware::create(OsSysman *pOsSysman, const std::s
     return pWddmFirmwareImp;
 }
 
-ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman) {
+void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes, OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     FirmwareUtil *pFwInterface = pWddmSysmanImp->getFwUtilInterface();
+    supportedFwTypes.clear();
     if (pFwInterface != nullptr) {
         supportedFwTypes = deviceSupportedFwTypes;
-        return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace Sysman

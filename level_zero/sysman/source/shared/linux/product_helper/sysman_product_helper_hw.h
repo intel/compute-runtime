@@ -61,6 +61,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // standby
     bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) override;
 
+    // Firmware
+    void getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) override;
+
     ~SysmanProductHelperHw() override = default;
 
   protected:
