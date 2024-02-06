@@ -77,7 +77,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
     if (allocationData.type == AllocationType::svmCpu) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        alignment = productHelper.getSvmCpuAlignment();
+        alignment = alignUpNonZero<size_t>(allocationData.alignment, productHelper.getSvmCpuAlignment());
         sizeAligned = alignUp(allocationData.size, alignment);
     }
     auto cpuAllocationSize = sizeAligned;

@@ -346,6 +346,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenUnifiedMemoryAllocationsAr
         if (alignment != 0) {
             EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
         }
+        EXPECT_EQ(svmManager->getSVMAlloc(ptr)->pageSizeForAlignment, MemoryConstants::pageSize64k);
         svmManager->freeSVMAlloc(ptr);
     } while (alignment != 0);
 }
@@ -371,6 +372,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenHostUnifiedMemoryAllocatio
         if (alignment != 0) {
             EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
         }
+        EXPECT_EQ(svmManager->getSVMAlloc(ptr)->pageSizeForAlignment, MemoryConstants::pageSize);
         svmManager->freeSVMAlloc(ptr);
     } while (alignment != 0);
 }
@@ -400,6 +402,42 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenSharedUnifiedMemoryAllocat
         if (alignment != 0) {
             EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
         }
+        EXPECT_EQ(svmManager->getSVMAlloc(ptr)->pageSizeForAlignment, MemoryConstants::pageSize64k);
+        svmManager->freeSVMAlloc(ptr);
+    } while (alignment != 0);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentWhenLocalMemoryIsEnabledThenSharedUnifiedMemoryAllocationsAreAlignedCorrectly) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableLocalMemory.set(1);
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager, false);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr->setupContext(*device->getDefaultEngine().osContext);
+
+    void *cmdQ = reinterpret_cast<void *>(0x12345);
+    auto mockPageFaultManager = new MockPageFaultManager();
+    memoryManager->pageFaultManager.reset(mockPageFaultManager);
+
+    const size_t svmCpuAlignment = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0]->getProductHelper().getSvmCpuAlignment();
+    size_t alignment = 8 * MemoryConstants::megaByte;
+    do {
+        alignment >>= 1;
+        memoryManager->validateAllocateProperties = [alignment, svmCpuAlignment](const AllocationProperties &properties) {
+            EXPECT_EQ(properties.alignment, alignUpNonZero<size_t>(alignment, std::max(MemoryConstants::pageSize64k, svmCpuAlignment)));
+        };
+        SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, alignment, rootDeviceIndices, deviceBitfields);
+        unifiedMemoryProperties.device = device;
+        auto ptr = svmManager->createSharedUnifiedMemoryAllocation(1, unifiedMemoryProperties, cmdQ);
+        EXPECT_NE(nullptr, ptr);
+        if (alignment != 0) {
+            EXPECT_EQ(reinterpret_cast<uintptr_t>(ptr) & (~(alignment - 1)), reinterpret_cast<uintptr_t>(ptr));
+        }
+        const size_t pageSizeForAlignment = std::max(MemoryConstants::pageSize64k, svmCpuAlignment);
+        EXPECT_EQ(svmManager->getSVMAlloc(ptr)->pageSizeForAlignment, pageSizeForAlignment);
         svmManager->freeSVMAlloc(ptr);
     } while (alignment != 0);
 }
