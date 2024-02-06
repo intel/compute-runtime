@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -696,11 +696,13 @@ HWTEST_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlus
     blitPropertiesContainer1.push_back(blitProperties);
     blitPropertiesContainer1.push_back(blitProperties);
     blitPropertiesContainer1.push_back(blitProperties);
+    blitPropertiesContainer1.push_back(blitProperties);
 
     auto estimatedSizeWithoutNode = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
         blitPropertiesContainer1, false, true, false, false, pDevice->getRootDeviceEnvironment());
     blitProperties.multiRootDeviceEventSync = tag;
     BlitPropertiesContainer blitPropertiesContainer2;
+    blitPropertiesContainer2.push_back(blitProperties);
     blitPropertiesContainer2.push_back(blitProperties);
     blitPropertiesContainer2.push_back(blitProperties);
     blitPropertiesContainer2.push_back(blitProperties);

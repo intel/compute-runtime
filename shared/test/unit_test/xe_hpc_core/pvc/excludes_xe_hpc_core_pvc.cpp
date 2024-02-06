@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,3 +10,4 @@
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfIsBlitSplitEnqueueWARequiredThenReturnFalse, IGFX_PVC);
 HWTEST_EXCLUDE_PRODUCT(BlitTests, GivenCpuAccessToLocalMemoryWhenGettingMaxBlitSizeThenValuesAreOverriden_BlitPlatforms, IGFX_PVC);
 HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustMaxWorkGroupCountIsCalledThenSmallerValueIsReturned, IGFX_PVC);
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnFalse, IGFX_PVC);

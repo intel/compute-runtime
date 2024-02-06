@@ -276,6 +276,36 @@ uint64_t BlitCommandsHelper<Family>::getMaxBlitHeightOverride(const RootDeviceEn
     return 0;
 }
 
+template <>
+void BlitCommandsHelper<Family>::dispatchDummyBlit(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs) {
+    using MEM_SET = typename Family::MEM_SET;
+
+    if (BlitCommandsHelper<Family>::isDummyBlitWaNeeded(waArgs)) {
+        auto blitCmd = Family::cmdInitMemSet;
+        auto &rootDeviceEnvironment = waArgs.rootDeviceEnvironment;
+
+        rootDeviceEnvironment->initDummyAllocation();
+        auto dummyAllocation = rootDeviceEnvironment->getDummyAllocation();
+        blitCmd.setDestinationStartAddress(dummyAllocation->getGpuAddress());
+
+        constexpr uint32_t memSetSize = 32 * MemoryConstants::kiloByte;
+        blitCmd.setFillWidth(memSetSize);
+        blitCmd.setDestinationPitch(memSetSize);
+
+        auto cmd = linearStream.getSpaceForCmd<MEM_SET>();
+        *cmd = blitCmd;
+        waArgs.isWaRequired = false;
+    }
+}
+
+template <>
+size_t BlitCommandsHelper<Family>::getDummyBlitSize(const EncodeDummyBlitWaArgs &waArgs) {
+    if (BlitCommandsHelper<Family>::isDummyBlitWaNeeded(waArgs)) {
+        return sizeof(typename Family::MEM_SET);
+    }
+    return 0u;
+}
+
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
 template void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer<typename Family::XY_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);

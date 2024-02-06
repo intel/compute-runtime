@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -477,7 +478,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         expectedSize));
 
     uint32_t miFlushCountFactor = 1;
-    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
         miFlushCountFactor = 2;
     }
     auto expectedMiFlushCount = packets * miFlushCountFactor;

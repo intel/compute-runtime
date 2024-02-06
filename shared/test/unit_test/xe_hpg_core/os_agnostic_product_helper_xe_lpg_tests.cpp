@@ -351,3 +351,7 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallIsCachingOnCpuAvail
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenTrueIsReturned, IsXeLpg) {
     EXPECT_TRUE(productHelper->isNewCoherencyModelSupported());
 }
+
+HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue, IsXeLpg) {
+    EXPECT_TRUE(productHelper->isDummyBlitWaRequired());
+}

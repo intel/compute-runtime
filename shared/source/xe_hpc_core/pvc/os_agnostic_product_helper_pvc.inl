@@ -74,6 +74,11 @@ bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareI
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
     return PVC::isAtMostXtA0(hwInfo);
 }

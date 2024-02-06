@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,6 +99,7 @@ struct UnitTestHelper {
     static bool expectNullDsh(const DeviceInfo &deviceInfo);
 
     static bool findStateCacheFlushPipeControl(LinearStream &csrStream);
+    static void verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator);
 };
 
 } // namespace NEO

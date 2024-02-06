@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -199,4 +199,9 @@ PVCTEST_F(GfxCoreHelperTestsPvc, GivenCooperativeEngineSupportedAndNotUsedWhenAd
         }
     }
 }
+PVCTEST_F(GfxCoreHelperTestsPvc, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue) {
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.isDummyBlitWaRequired());
+}
+
 } // namespace NEO

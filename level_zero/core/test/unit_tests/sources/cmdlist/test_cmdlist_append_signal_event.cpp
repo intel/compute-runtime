@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -614,7 +615,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     uint32_t expectedMiFlushCount = 1;
     NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
-    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
         expectedMiFlushCount = 2;
     }
 
@@ -656,7 +657,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     uint32_t expectedMiFlushCount = 1;
     NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
-    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
         expectedMiFlushCount = 2;
     }
 
@@ -700,7 +701,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     uint32_t expectedMiFlushCount = 1;
     NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
-    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
         expectedMiFlushCount = 2;
     }
 

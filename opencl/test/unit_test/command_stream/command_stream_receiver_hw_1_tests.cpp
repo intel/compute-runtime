@@ -1008,24 +1008,6 @@ HWTEST_F(BcsTests, givenImageAndBufferBlitDirectionsWhenIsImageOperationIsCalled
         EXPECT_EQ(isImageDirection, blitProperties.isImageOperation());
     }
 }
-template <typename FamilyType>
-void verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator) {
-    const auto &productHelper = rootDeviceEnvironment->getProductHelper();
-    if (productHelper.isDummyBlitWaRequired()) {
-        auto dummyBltCmd = genCmdCast<typename FamilyType::XY_COLOR_BLT *>(*(cmdIterator++));
-        EXPECT_NE(nullptr, dummyBltCmd);
-
-        auto expectedX2 = 1u;
-        auto expectedY2 = 4u;
-        uint32_t expectedPitch = 4096u;
-        auto expectedDestinationBaseAddress = rootDeviceEnvironment->getDummyAllocation()->getGpuAddress();
-
-        EXPECT_EQ(expectedDestinationBaseAddress, dummyBltCmd->getDestinationBaseAddress());
-        EXPECT_EQ(expectedX2, dummyBltCmd->getDestinationX2CoordinateRight());
-        EXPECT_EQ(expectedY2, dummyBltCmd->getDestinationY2CoordinateBottom());
-        EXPECT_EQ(expectedPitch, dummyBltCmd->getDestinationPitch());
-    }
-}
 
 struct RelaxedOrderingBcsTests : public BcsTests {
     void SetUp() override {
@@ -1245,7 +1227,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
         EXPECT_EQ(expectedWidth, bltCmd->getSourcePitch());
 
         if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
-            verifyDummyBlitWa<FamilyType>(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
+            UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
             auto miFlush = genCmdCast<typename FamilyType::MI_FLUSH_DW *>(*(cmdIterator++));
             EXPECT_NE(nullptr, miFlush);
             EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
@@ -1254,7 +1236,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
                 EXPECT_NE(nullptr, miFlush);
             }
         } else {
-            verifyDummyBlitWa<FamilyType>(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
+            UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
         }
         auto miArbCheckCmd = genCmdCast<typename FamilyType::MI_ARB_CHECK *>(*(cmdIterator++));
         EXPECT_NE(nullptr, miArbCheckCmd);
@@ -1482,7 +1464,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
         offset += (expectedWidth * expectedHeight);
 
         if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
-            verifyDummyBlitWa<FamilyType>(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
+            UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
             auto miFlush = genCmdCast<typename FamilyType::MI_FLUSH_DW *>(*(cmdIterator++));
             EXPECT_NE(nullptr, miFlush);
             EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
@@ -1491,7 +1473,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
                 EXPECT_NE(nullptr, miFlush);
             }
         } else {
-            verifyDummyBlitWa<FamilyType>(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
+            UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
         }
 
         auto miArbCheckCmd = genCmdCast<typename FamilyType::MI_ARB_CHECK *>(*(cmdIterator++));
@@ -1586,7 +1568,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
         offset += (expectedWidth * expectedHeight);
 
         if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
-            verifyDummyBlitWa<FamilyType>(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
+            UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
             auto miFlush = genCmdCast<typename FamilyType::MI_FLUSH_DW *>(*(cmdIterator++));
             EXPECT_NE(nullptr, miFlush);
             EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
@@ -1595,7 +1577,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
                 EXPECT_NE(nullptr, miFlush);
             }
         } else {
-            verifyDummyBlitWa<FamilyType>(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
+            UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
         }
         auto miArbCheckCmd = genCmdCast<typename FamilyType::MI_ARB_CHECK *>(*(cmdIterator++));
         EXPECT_NE(nullptr, miArbCheckCmd);
@@ -1680,7 +1662,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
         offset += (expectedWidth * expectedHeight);
 
         if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
-            verifyDummyBlitWa<FamilyType>(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
+            UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
             auto miFlush = genCmdCast<typename FamilyType::MI_FLUSH_DW *>(*(cmdIterator++));
             EXPECT_NE(nullptr, miFlush);
             EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
@@ -1689,7 +1671,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
                 EXPECT_NE(nullptr, miFlush);
             }
         } else {
-            verifyDummyBlitWa<FamilyType>(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
+            UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
         }
         auto miArbCheckCmd = genCmdCast<typename FamilyType::MI_ARB_CHECK *>(*(cmdIterator++));
         EXPECT_NE(nullptr, miArbCheckCmd);

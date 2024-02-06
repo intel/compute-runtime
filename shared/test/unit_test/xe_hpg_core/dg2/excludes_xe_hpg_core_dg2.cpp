@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,6 @@ HWTEST_EXCLUDE_PRODUCT(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocateKe
 HWTEST_EXCLUDE_PRODUCT(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenProgramCorrectL1CachePolicy_IsAtLeastXeHpgCore, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(XeHpgSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramWBPL1CachePolicy, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned, IGFX_DG2);
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(CommandEncodeStatesTestDg2AndLater, GivenVariousSlmTotalSizesAndSettingRevIDToDifferentValuesWhenSetAdditionalInfoIsCalledThenCorrectValuesAreSet_IsXeHpgCore, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperCommonTest, givenHwHelperWhenIsFusedEuDisabledForDpasCalledThenFalseReturned, IGFX_DG2);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperCommonTest, givenProductHelperWhenCallingIsCalculationForDisablingEuFusionWithDpasNeededThenFalseReturned, IGFX_DG2);

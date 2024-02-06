@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,11 +140,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSize
     EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(32768));
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(32769));
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
-}
-
-XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue) {
-    auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isDummyBlitWaRequired());
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCheckTimestampWaitSupportForQueuesThenReturnFalse) {

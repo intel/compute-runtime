@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -727,7 +728,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         if constexpr (copyOnly == 1) {
             uint32_t flushCmdWaFactor = 1;
             NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
-            if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
+            if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
                 flushCmdWaFactor++;
             }
 
@@ -967,7 +968,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
             uint32_t flushCmdWaFactor = 1;
             NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
-            if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
+            if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
                 flushCmdWaFactor++;
             }
 
@@ -1176,7 +1177,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         if constexpr (copyOnly == 1) {
             uint32_t flushCmdWaFactor = 1;
             NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
-            if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
+            if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
                 flushCmdWaFactor++;
             }
 
