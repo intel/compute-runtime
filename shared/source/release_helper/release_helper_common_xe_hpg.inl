@@ -33,10 +33,4 @@ template <>
 bool ReleaseHelperHw<release>::isRcsExposureDisabled() const {
     return true;
 }
-
-template <>
-bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
-    return false;
-}
-
 } // namespace NEO
