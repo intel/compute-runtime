@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ const std::string guid64BitMemoryCounters("0xb15a0ede");
 constexpr uint32_t mbpsToBytesPerSecond = 125000;
 constexpr double milliVoltsFactor = 1000.0;
 constexpr uint32_t maxRasErrorCategoryCount = 7;
+constexpr uint32_t maxRasErrorCategoryExpCount = 10;
 namespace L0 {
 struct SteadyClock {
     typedef std::chrono::duration<uint64_t, std::milli> duration;

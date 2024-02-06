@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,7 +95,7 @@ class LinuxRasSourceGt : public LinuxRasSources {
     }
     int64_t groupFd = -1;
     std::vector<int64_t> memberFds = {};
-    uint64_t initialErrorCount[maxRasErrorCategoryCount] = {0};
+    uint64_t initialErrorCount[maxRasErrorCategoryExpCount] = {0};
     uint32_t clearStatus = 0;
     std::map<zes_ras_error_category_exp_t, uint64_t> errorCategoryToEventCount;
     bool isSubdevice = false;

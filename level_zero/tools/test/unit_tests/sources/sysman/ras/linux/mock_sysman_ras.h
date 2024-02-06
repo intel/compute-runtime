@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,9 +60,9 @@ constexpr uint64_t driverEngineOther = 3u;
 constexpr uint64_t initialUncorrectableCacheErrors = 2u;
 constexpr uint64_t initialEngineReset = 2u;
 constexpr uint64_t initialProgrammingErrors = 7u;
-constexpr uint64_t initialUncorrectableNonComputeErrors = 8u;
+constexpr uint64_t initialUncorrectableNonComputeErrors = 3u;
 constexpr uint64_t initialUncorrectableFabricErrors = 8u;
-constexpr uint64_t initialUncorrectableComputeErrors = 10u;
+constexpr uint64_t initialUncorrectableComputeErrors = 7u;
 constexpr uint64_t initialCorrectableComputeErrors = 6u;
 constexpr uint64_t initialUncorrectableDriverErrors = 5u;
 
@@ -70,9 +70,9 @@ constexpr uint64_t initialUncorrectableCacheErrorsTile0 = 2u;
 constexpr uint64_t initialCorrectableCacheErrorTile0 = 2u;
 constexpr uint64_t initialEngineResetTile0 = 2u;
 constexpr uint64_t initialProgrammingErrorsTile0 = 7u;
-constexpr uint64_t initialUncorrectableNonComputeErrorsTile0 = 15u;
+constexpr uint64_t initialUncorrectableNonComputeErrorsTile0 = 10u;
 constexpr uint64_t initialCorrectableNonComputeErrorsTile0 = 2u;
-constexpr uint64_t initialUncorrectableComputeErrorsTile0 = 11u;
+constexpr uint64_t initialUncorrectableComputeErrorsTile0 = 8u;
 constexpr uint64_t initialUncorrectableFabricErrorsTile0 = 8u;
 constexpr uint64_t initialCorrectableComputeErrorsTile0 = 6u;
 constexpr uint64_t initialUncorrectableDriverErrorsTile0 = 5u;
@@ -80,7 +80,7 @@ constexpr uint64_t initialUncorrectableCacheErrorsTile1 = 1u;
 constexpr uint64_t initialEngineResetTile1 = 4u;
 constexpr uint64_t initialProgrammingErrorsTile1 = 5u;
 constexpr uint64_t initialCorrectableComputeErrorsTile1 = 7u;
-constexpr uint64_t initialUncorrectableNonComputeErrorsTile1 = 5u;
+constexpr uint64_t initialUncorrectableNonComputeErrorsTile1 = 3u;
 constexpr uint64_t initialUncorrectableFabricErrorsTile1 = 2u;
 constexpr uint64_t initialUncorrectableComputeErrorsTile1 = 6u;
 constexpr uint64_t initialUncorrectableDriverErrorsTile1 = 4u;
@@ -137,11 +137,11 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
         data[5] = driverGgtt;
         data[6] = driverRps;
         data[7] = 0;
-        data[8] = 0;
-        data[9] = fatalEuErrorCount;
-        data[10] = socFatalPsfCsc0Count;
-        data[11] = socFatalMdfiEastCount;
-        data[12] = fatalTlb;
+        data[8] = fatalEuErrorCount;
+        data[9] = socFatalPsfCsc0Count;
+        data[10] = fatalTlb;
+        data[11] = 0;
+        data[12] = socFatalMdfiEastCount;
         return 0;
     }
 
@@ -164,14 +164,14 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
         data[5] = driverGgtt;
         data[6] = driverRps;
         data[7] = 0;
-        data[8] = 0;
-        data[9] = fatalSubslice;
-        data[10] = fatalEuErrorCount;
-        data[11] = socFatalPsfCsc0Count;
-        data[12] = socFatalMdfiEastCount;
-        data[13] = nonFatalGscAonParity;
-        data[14] = nonFataGscSelfmBist;
-        data[15] = fatalTlb;
+        data[8] = fatalSubslice;
+        data[9] = fatalEuErrorCount;
+        data[10] = socFatalPsfCsc0Count;
+        data[11] = nonFatalGscAonParity;
+        data[12] = nonFataGscSelfmBist;
+        data[13] = fatalTlb;
+        data[14] = 0;
+        data[15] = socFatalMdfiEastCount;
         return 0;
     }
 
@@ -192,10 +192,10 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
         data[4] = driverMigration;
         data[5] = driverEngineOther;
         data[6] = fatalGucErrorCountTile1;
-        data[7] = socFatalMdfiWestCountTile1;
-        data[8] = socFatalPunitTile1;
-        data[9] = fatalIdiParityErrorCountTile1;
-        data[10] = fatalL3BankTile1;
+        data[7] = socFatalPunitTile1;
+        data[8] = fatalIdiParityErrorCountTile1;
+        data[9] = fatalL3BankTile1;
+        data[10] = socFatalMdfiWestCountTile1;
         return 0;
     }
 
