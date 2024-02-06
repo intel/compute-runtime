@@ -42,6 +42,21 @@ bool UnitTestHelper<Family>::getComputeDispatchAllWalkerFromFrontEndCommand(cons
     return feCmd.getComputeDispatchAllWalkerEnable();
 }
 
+template <>
+void UnitTestHelper<Family>::verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator) {
+    const auto &productHelper = rootDeviceEnvironment->getProductHelper();
+    if (productHelper.isDummyBlitWaRequired()) {
+        auto dummyBltCmd = genCmdCast<typename Family::MEM_SET *>(*(cmdIterator++));
+        EXPECT_NE(nullptr, dummyBltCmd);
+
+        uint32_t expectedSize = 32 * MemoryConstants::kiloByte;
+        auto expectedGpuBaseAddress = rootDeviceEnvironment->getDummyAllocation()->getGpuAddress();
+
+        EXPECT_EQ(expectedGpuBaseAddress, dummyBltCmd->getDestinationStartAddress());
+        EXPECT_EQ(expectedSize, dummyBltCmd->getDestinationPitch());
+        EXPECT_EQ(expectedSize, dummyBltCmd->getFillWidth());
+    }
+}
 template struct UnitTestHelper<Family>;
 
 } // namespace NEO

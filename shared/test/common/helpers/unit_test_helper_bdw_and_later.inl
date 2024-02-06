@@ -150,4 +150,8 @@ size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize(uint32_t iddCount) {
     return iddCount * sizeof(typename GfxFamily::INTERFACE_DESCRIPTOR_DATA);
 }
 
+template <typename GfxFamily>
+void UnitTestHelper<GfxFamily>::verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator) {
+}
+
 } // namespace NEO
