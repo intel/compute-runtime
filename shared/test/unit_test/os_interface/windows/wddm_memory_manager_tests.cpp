@@ -3372,6 +3372,17 @@ TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledW
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
+TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithZeroSizedAllocationThenSuccessIsReturned) {
+    wddm->init();
+    MockWddmMemoryManager memoryManager(executionEnvironment);
+
+    auto ptr = reinterpret_cast<void *>(0x1234);
+    WddmAllocation allocation{0, AllocationType::commandBuffer, ptr, castToUint64(ptr), 0, nullptr, MemoryPool::system64KBPages, 0u, 1u};
+    allocation.getHandleToModify(0u) = 1;
+
+    EXPECT_TRUE(memoryManager.validateAllocationMock(&allocation));
+}
+
 TEST_F(MockWddmMemoryManagerTest, givenCreateOrReleaseDeviceSpecificMemResourcesWhenCreatingMemoryManagerObjectThenTheseMethodsAreEmpty) {
     wddm->init();
     MockWddmMemoryManager memoryManager(executionEnvironment);

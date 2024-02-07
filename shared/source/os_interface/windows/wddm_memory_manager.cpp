@@ -811,11 +811,10 @@ bool WddmMemoryManager::isMemoryBudgetExhausted() const {
 bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
     if (alloc == nullptr)
         return false;
-    auto size = alloc->getUnderlyingBufferSize();
     if (alloc->physicalMemoryReservation && !alloc->mappedPhysicalMemoryReservation) {
         return true;
     }
-    if (alloc->getGpuAddress() == 0u || size == 0 || (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0))
+    if (alloc->getGpuAddress() == 0u || (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0))
         return false;
     return true;
 }
