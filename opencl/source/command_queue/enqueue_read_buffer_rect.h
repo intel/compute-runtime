@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,10 +54,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     bool isCpuCopyAllowed = false;
     getContext().tryGetExistingHostPtrAllocation(ptr, hostPtrSize, rootDeviceIndex, mapAllocation, memoryType, isCpuCopyAllowed);
 
-    auto eBuiltInOps = EBuiltInOps::copyBufferRect;
-    if (forceStateless(buffer->getSize())) {
-        eBuiltInOps = EBuiltInOps::copyBufferRectStateless;
-    }
+    const bool useStateless = forceStateless(buffer->getSize());
+    const bool useHeapless = this->getHeaplessModeEnabled();
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(useStateless, useHeapless);
 
     void *dstPtr = ptr;
 
@@ -103,7 +102,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     dc.direction = csrSelectionArgs.direction;
 
     MultiDispatchInfo dispatchInfo(dc);
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, builtInType, numEventsInWaitList, eventWaitList, event, blockingRead, csr);
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

@@ -354,10 +354,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         isStatelessRequired |= forceStateless(dstSvmData->size);
     }
 
-    auto builtInType = EBuiltInOps::copyBufferToBuffer;
-    if (isStatelessRequired) {
-        builtInType = EBuiltInOps::copyBufferToBufferStateless;
-    }
+    const bool useHeapless = this->getHeaplessModeEnabled();
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferToBuffer>(isStatelessRequired, useHeapless);
 
     MultiDispatchInfo dispatchInfo;
     BuiltinOpParams operationParams;
@@ -510,10 +508,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
         memcpy_s(patternAllocation->getUnderlyingBuffer(), patternSize, pattern, patternSize);
     }
 
-    auto builtInType = EBuiltInOps::fillBuffer;
-    if (forceStateless(svmData->size)) {
-        builtInType = EBuiltInOps::fillBufferStateless;
-    }
+    const bool useStateless = forceStateless(svmData->size);
+    const bool useHeapless = this->getHeaplessModeEnabled();
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::fillBuffer>(useStateless, useHeapless);
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             this->getClDevice());

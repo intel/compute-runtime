@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,14 +35,17 @@ const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
     case EBuiltInOps::copyBufferToBuffer:
         return "copy_buffer_to_buffer.builtin_kernel";
     case EBuiltInOps::copyBufferToBufferStateless:
+    case EBuiltInOps::copyBufferToBufferStatelessHeapless:
         return "copy_buffer_to_buffer_stateless.builtin_kernel";
     case EBuiltInOps::copyBufferRect:
         return "copy_buffer_rect.builtin_kernel";
     case EBuiltInOps::copyBufferRectStateless:
+    case EBuiltInOps::copyBufferRectStatelessHeapless:
         return "copy_buffer_rect_stateless.builtin_kernel";
     case EBuiltInOps::fillBuffer:
         return "fill_buffer.builtin_kernel";
     case EBuiltInOps::fillBufferStateless:
+    case EBuiltInOps::fillBufferStatelessHeapless:
         return "fill_buffer_stateless.builtin_kernel";
     case EBuiltInOps::copyBufferToImage3d:
         return "copy_buffer_to_image3d.builtin_kernel";
@@ -92,14 +95,15 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
         return deviceId.str();
     };
     const auto deviceIp = createDeviceIdFilenameComponent(hwInfo.ipVersion);
-    const auto builtinName = getBuiltinAsString(builtin);
+    const auto builtinFilename = getBuiltinAsString(builtin);
     const auto extension = BuiltinCode::getExtension(type);
-    auto getAddressingMode = [type, &productHelper, releaseHelper, builtin]() {
+    auto getAddressingModePrefix = [type, &productHelper, releaseHelper, builtin]() {
         if (type == BuiltinCode::ECodeType::binary) {
             const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
             const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
+            const bool heaplessEnabled = EBuiltInOps::isHeapless(builtin);
             if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
-                return "stateless_";
+                return heaplessEnabled ? "stateless_heapless_" : "stateless_";
             } else if (ApiSpecificConfig::getBindlessMode(releaseHelper)) {
                 return "bindless_";
             } else {
@@ -108,21 +112,21 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
         }
         return "";
     };
-    const auto addressingMode = getAddressingMode();
+    const auto addressingModePrefix = getAddressingModePrefix();
 
-    auto createBuiltinResourceName = [](ConstStringRef deviceIpPath, ConstStringRef addressingMode, ConstStringRef builtinName, ConstStringRef extension) {
+    auto createBuiltinResourceName = [](ConstStringRef deviceIpPath, ConstStringRef addressingModePrefix, ConstStringRef builtinFilename, ConstStringRef extension) {
         std::ostringstream outResourceName;
         if (false == deviceIpPath.empty()) {
             outResourceName << deviceIpPath.str() << "_";
         }
-        outResourceName << addressingMode.str() << builtinName.str() << extension.str();
+        outResourceName << addressingModePrefix.str() << builtinFilename.str() << extension.str();
         return outResourceName.str();
     };
     StackVec<std::string, 3> resourcesToLookup = {};
-    resourcesToLookup.push_back(createBuiltinResourceName(deviceIp, addressingMode, builtinName, extension));
+    resourcesToLookup.push_back(createBuiltinResourceName(deviceIp, addressingModePrefix, builtinFilename, extension));
 
     if (BuiltinCode::ECodeType::binary != type) {
-        resourcesToLookup.push_back(createBuiltinResourceName("", addressingMode, builtinName, extension));
+        resourcesToLookup.push_back(createBuiltinResourceName("", addressingModePrefix, builtinFilename, extension));
     }
     return resourcesToLookup;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,15 @@ static RegisterEmbeddedResource registerCopyBufferToBufferStatelessSrc(
 #include "shared/source/built_ins/kernels/copy_buffer_to_buffer_stateless.builtin_kernel"
         ));
 
+static RegisterEmbeddedResource registerCopyBufferToBufferStatelessHeaplessSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::copyBufferToBufferStatelessHeapless,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+        .c_str(),
+    std::string(
+#include "shared/source/built_ins/kernels/copy_buffer_to_buffer_stateless.builtin_kernel"
+        ));
+
 static RegisterEmbeddedResource registerCopyBufferRectSrc(
     createBuiltinResourceName(
         EBuiltInOps::copyBufferRect,
@@ -48,6 +57,15 @@ static RegisterEmbeddedResource registerCopyBufferRectStatelessSrc(
 #include "shared/source/built_ins/kernels/copy_buffer_rect_stateless.builtin_kernel"
         ));
 
+static RegisterEmbeddedResource registerCopyBufferRectStatelessHeaplessSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::copyBufferRectStatelessHeapless,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+        .c_str(),
+    std::string(
+#include "shared/source/built_ins/kernels/copy_buffer_rect_stateless.builtin_kernel"
+        ));
+
 static RegisterEmbeddedResource registerFillBufferSrc(
     createBuiltinResourceName(
         EBuiltInOps::fillBuffer,
@@ -60,6 +78,15 @@ static RegisterEmbeddedResource registerFillBufferSrc(
 static RegisterEmbeddedResource registerFillBufferStatelessSrc(
     createBuiltinResourceName(
         EBuiltInOps::fillBufferStateless,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
+        .c_str(),
+    std::string(
+#include "shared/source/built_ins/kernels/fill_buffer_stateless.builtin_kernel"
+        ));
+
+static RegisterEmbeddedResource registerFillBufferStatelessHeaplessSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::fillBufferStatelessHeapless,
         BuiltinCode::getExtension(BuiltinCode::ECodeType::source))
         .c_str(),
     std::string(

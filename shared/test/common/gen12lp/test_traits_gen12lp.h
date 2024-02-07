@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,4 +20,5 @@ struct TestTraits<IGFX_GEN12LP_CORE> {
     static constexpr bool forceGpuNonCoherent = true;
     static constexpr bool imagesSupported = true;
     static constexpr bool largeGrfModeInStateComputeModeSupported = true;
+    static constexpr bool heaplessAllowed = false;
 };

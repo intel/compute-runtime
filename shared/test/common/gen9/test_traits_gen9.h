@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,4 +20,5 @@ struct TestTraits<IGFX_GEN9_CORE> {
     static constexpr bool imagesSupported = true;
     static constexpr bool programComputeModeCommandProgramsThreadArbitrationPolicy = true;
     static constexpr bool programComputeModeCommandProgramsNonCoherent = false;
+    static constexpr bool heaplessAllowed = false;
 };

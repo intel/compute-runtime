@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -157,6 +157,24 @@ class BuiltInOp<EBuiltInOps::copyBufferToBufferStateless> : public BuiltInOp<EBu
 };
 
 template <>
+class BuiltInOp<EBuiltInOps::copyBufferToBufferStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyBufferToBuffer> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltInOp<EBuiltInOps::copyBufferToBuffer>(kernelsLib, device, false) {
+        populate(EBuiltInOps::copyBufferToBufferStatelessHeapless,
+                 CompilerOptions::greaterThan4gbBuffersRequired,
+                 "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
+                 "CopyBufferToBufferMiddle", kernMiddle,
+                 "CopyBufferToBufferMiddleMisaligned", kernMiddleMisaligned,
+                 "CopyBufferToBufferRightLeftover", kernRightLeftover);
+    }
+
+    bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
+        return buildDispatchInfosTyped<uint64_t>(multiDispatchInfo);
+    }
+};
+
+template <>
 class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
@@ -286,6 +304,22 @@ class BuiltInOp<EBuiltInOps::copyBufferRectStateless> : public BuiltInOp<EBuiltI
 };
 
 template <>
+class BuiltInOp<EBuiltInOps::copyBufferRectStatelessHeapless> : public BuiltInOp<EBuiltInOps::copyBufferRect> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltInOp<EBuiltInOps::copyBufferRect>(kernelsLib, device, false) {
+        populate(EBuiltInOps::copyBufferRectStatelessHeapless,
+                 CompilerOptions::greaterThan4gbBuffersRequired,
+                 "CopyBufferRectBytes2d", kernelBytes[0],
+                 "CopyBufferRectBytes2d", kernelBytes[1],
+                 "CopyBufferRectBytes3d", kernelBytes[2]);
+    }
+    bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
+        return buildDispatchInfosTyped<uint64_t>(multiDispatchInfo);
+    }
+};
+
+template <>
 class BuiltInOp<EBuiltInOps::fillBuffer> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
@@ -383,6 +417,21 @@ class BuiltInOp<EBuiltInOps::fillBufferStateless> : public BuiltInOp<EBuiltInOps
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltInOp<EBuiltInOps::fillBuffer>(kernelsLib, device, false) {
         populate(EBuiltInOps::fillBufferStateless,
+                 CompilerOptions::greaterThan4gbBuffersRequired,
+                 "FillBufferLeftLeftover", kernLeftLeftover,
+                 "FillBufferMiddle", kernMiddle,
+                 "FillBufferRightLeftover", kernRightLeftover);
+    }
+    bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfos) const override {
+        return buildDispatchInfosTyped<uint64_t>(multiDispatchInfos);
+    }
+};
+
+template <>
+class BuiltInOp<EBuiltInOps::fillBufferStatelessHeapless> : public BuiltInOp<EBuiltInOps::fillBuffer> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltInOp<EBuiltInOps::fillBuffer>(kernelsLib, device, false) {
+        populate(EBuiltInOps::fillBufferStatelessHeapless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
                  "FillBufferLeftLeftover", kernLeftLeftover,
                  "FillBufferMiddle", kernMiddle,
@@ -764,17 +813,26 @@ BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuil
     case EBuiltInOps::copyBufferToBufferStateless:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToBufferStateless>>(builtins, device); });
         break;
+    case EBuiltInOps::copyBufferToBufferStatelessHeapless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToBufferStatelessHeapless>>(builtins, device); });
+        break;
     case EBuiltInOps::copyBufferRect:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferRect>>(builtins, device); });
         break;
     case EBuiltInOps::copyBufferRectStateless:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferRectStateless>>(builtins, device); });
         break;
+    case EBuiltInOps::copyBufferRectStatelessHeapless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferRectStatelessHeapless>>(builtins, device); });
+        break;
     case EBuiltInOps::fillBuffer:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillBuffer>>(builtins, device); });
         break;
     case EBuiltInOps::fillBufferStateless:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillBufferStateless>>(builtins, device); });
+        break;
+    case EBuiltInOps::fillBufferStatelessHeapless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillBufferStatelessHeapless>>(builtins, device); });
         break;
     case EBuiltInOps::copyBufferToImage3d:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToImage3d>>(builtins, device); });

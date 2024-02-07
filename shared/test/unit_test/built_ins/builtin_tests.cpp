@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -133,4 +134,41 @@ HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCod
     auto builtinCode = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::binary, builtinCode.type);
     EXPECT_NE(0U, builtinCode.resource.size());
+}
+
+HWTEST2_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNamesIsCalledThenResourceNameIsCorrect, MatchAny) {
+
+    class MockCompilerProductHelper : public CompilerProductHelperHw<productFamily> {
+      public:
+        bool isHeaplessModeEnabled() const override {
+            return true;
+        }
+    };
+
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->compilerProductHelper.reset(new MockCompilerProductHelper());
+
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+
+    std::string deviceIpString = std::to_string(hwInfo.ipVersion.architecture) + "_" + std::to_string(hwInfo.ipVersion.release) + "_" + std::to_string(hwInfo.ipVersion.revision);
+
+    struct TestParam {
+        std::string builtInTypeAsString;
+        EBuiltInOps::Type builtinType;
+    };
+
+    TestParam params[] = {
+        {"copy_buffer_to_buffer_stateless", EBuiltInOps::copyBufferToBufferStatelessHeapless},
+        {"copy_buffer_rect_stateless", EBuiltInOps::copyBufferRectStatelessHeapless},
+        {"fill_buffer_stateless", EBuiltInOps::fillBufferStatelessHeapless}};
+
+    for (auto &[builtInTypeAsString, builtInType] : params) {
+
+        auto resourceNames = getBuiltinResourceNames(builtInType, BuiltinCode::ECodeType::binary, *pDevice);
+
+        std::string expectedResourceNameGeneric = "stateless_heapless_" + builtInTypeAsString + ".builtin_kernel.bin";
+        std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
+
+        EXPECT_EQ(1u, resourceNames.size());
+        EXPECT_EQ(resourceNames[0], expectedResourceNameForRelease);
+    }
 }

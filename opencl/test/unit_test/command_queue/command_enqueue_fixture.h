@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+
+#include "test_traits_common.h"
 
 namespace NEO {
 
@@ -145,6 +147,13 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
 
     bool validateKernelSystemMemory = false;
     bool expectedKernelSystemMemory = false;
+};
+
+struct HeaplessSupportedMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessAllowed;
+    }
 };
 
 } // namespace NEO
