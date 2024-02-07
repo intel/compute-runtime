@@ -1062,6 +1062,10 @@ bool ModuleImp::linkBinary() {
     Linker::SegmentInfo strings;
     GraphicsAllocation *globalsForPatching = translationUnit->globalVarBuffer;
     GraphicsAllocation *constantsForPatching = translationUnit->globalConstBuffer;
+
+    auto &compilerProductHelper = this->device->getNEODevice()->getCompilerProductHelper();
+    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled();
+
     if (globalsForPatching != nullptr) {
         globals.gpuAddress = static_cast<uintptr_t>(globalsForPatching->getGpuAddress());
         globals.segmentSize = globalsForPatching->getUnderlyingBufferSize();
@@ -1078,12 +1082,20 @@ bool ModuleImp::linkBinary() {
         auto exportedFunctionHeapId = linkerInput->getExportedFunctionsSegmentId();
         this->exportedFunctionsSurface = this->kernelImmDatas[exportedFunctionHeapId]->getIsaGraphicsAllocation();
         auto offsetInParentAllocation = this->kernelImmDatas[exportedFunctionHeapId]->getIsaOffsetInParentAllocation();
-        exportedFunctions.gpuAddress = static_cast<uintptr_t>(exportedFunctionsSurface->getGpuAddressToPatch() + offsetInParentAllocation);
+
+        uintptr_t isaAddressToPatch = 0;
+        if (useFullAddress) {
+            isaAddressToPatch = static_cast<uintptr_t>(exportedFunctionsSurface->getGpuAddress() + offsetInParentAllocation);
+        } else {
+            isaAddressToPatch = static_cast<uintptr_t>(exportedFunctionsSurface->getGpuAddressToPatch() + offsetInParentAllocation);
+        }
+
+        exportedFunctions.gpuAddress = isaAddressToPatch;
         exportedFunctions.segmentSize = this->kernelImmDatas[exportedFunctionHeapId]->getIsaSize();
     }
 
     Linker::KernelDescriptorsT kernelDescriptors;
-    auto &compilerProductHelper = this->device->getNEODevice()->getCompilerProductHelper();
+
     if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         patchedIsaTempStorage.reserve(this->kernelImmDatas.size());
         kernelDescriptors.reserve(this->kernelImmDatas.size());
@@ -1093,7 +1105,7 @@ bool ModuleImp::linkBinary() {
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
             patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize));
             uintptr_t isaAddressToPatch = 0;
-            if (compilerProductHelper.isHeaplessModeEnabled()) {
+            if (useFullAddress) {
                 isaAddressToPatch = static_cast<uintptr_t>(kernelImmDatas.at(i)->getIsaGraphicsAllocation()->getGpuAddress() +
                                                            kernelImmDatas.at(i)->getIsaOffsetInParentAllocation());
             } else {
