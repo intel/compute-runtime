@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,8 +37,8 @@ int main(int argc, char *argv[]) {
 
     std::ifstream file("copy_buffer_to_buffer.spv", std::ios::binary);
     if (!file.is_open()) {
-        std::cout << "Unable to open copy_buffer_to_buffer.spv file" << std::endl;
-        std::cout << "\nZello World USM Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+        std::cerr << "Unable to open copy_buffer_to_buffer.spv file" << std::endl;
+        std::cerr << "\nZello World USM Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
         return -1;
     }
 
@@ -69,11 +69,11 @@ int main(int argc, char *argv[]) {
 
         char *strLog = (char *)malloc(szLog);
         zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-        std::cout << "Build log:" << strLog << std::endl;
+        LevelZeroBlackBoxTests::printBuildLog(strLog);
 
         free(strLog);
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-        std::cout << "\nZello World Usm Results validation FAILED. Module creation error."
+        std::cerr << "\nZello World Usm Results validation FAILED. Module creation error."
                   << std::endl;
         SUCCESS_OR_TERMINATE_BOOL(false);
     }
@@ -144,11 +144,8 @@ int main(int argc, char *argv[]) {
     dispatchTraits.groupCountX = numThreads / groupSizeX;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
-    if (LevelZeroBlackBoxTests::verbose) {
-        std::cerr << "Number of groups : (" << dispatchTraits.groupCountX << ", "
-                  << dispatchTraits.groupCountY << ", " << dispatchTraits.groupCountZ << ")"
-                  << std::endl;
-    }
+    LevelZeroBlackBoxTests::printGroupCount(dispatchTraits);
+
     SUCCESS_OR_TERMINATE_BOOL(dispatchTraits.groupCountX * groupSizeX == allocSize);
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
                                                          nullptr, 0, nullptr));
@@ -167,29 +164,9 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate input / output
-    outputValidationSuccessful = true;
-    uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
-    uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
-    for (size_t i = 0; i < allocSize; i++) {
-        if (dstCharBuffer[i] != srcCharBuffer[i]) {
-            outputValidationSuccessful = false;
-            std::cout << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
-                      << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << "\n";
-        }
-        if (srcCharBuffer[i] != srcInitValue) {
-            outputValidationSuccessful = false;
-            std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                      << "value = " << static_cast<unsigned int>(srcInitValue) << "\n";
-        }
-        if (dstCharBuffer[i] != srcInitValue) {
-            outputValidationSuccessful = false;
-            std::cout << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << " not equal to "
-                      << "value = " << static_cast<unsigned int>(srcInitValue) << "\n";
-        }
-        if (!outputValidationSuccessful) {
-            break;
-        }
-    }
+    outputValidationSuccessful = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, allocSize);
+    outputValidationSuccessful &= LevelZeroBlackBoxTests::validateToValue<uint8_t>(srcInitValue, srcBuffer, allocSize);
+    outputValidationSuccessful &= LevelZeroBlackBoxTests::validateToValue<uint8_t>(srcInitValue, dstBuffer, allocSize);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));

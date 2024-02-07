@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,9 +62,7 @@ void executeKernelAndValidate(ze_context_handle_t &context,
 
     std::string buildLog;
     auto spirV = LevelZeroBlackBoxTests::compileToSpirV(moduleSrc, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
     ze_module_handle_t module = nullptr;
@@ -83,11 +81,11 @@ void executeKernelAndValidate(ze_context_handle_t &context,
 
         char *strLog = (char *)malloc(szLog);
         zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-        std::cout << "Build log:" << strLog << std::endl;
+        LevelZeroBlackBoxTests::printBuildLog(strLog);
 
         free(strLog);
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-        std::cout << "\nZello World Global Work Offset Results validation FAILED. Module creation error."
+        std::cerr << "\nZello World Global Work Offset Results validation FAILED. Module creation error."
                   << std::endl;
         SUCCESS_OR_TERMINATE_BOOL(false);
     }
@@ -181,7 +179,7 @@ int main(int argc, char *argv[]) {
     uint32_t extensionsCount = 0;
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, nullptr));
     if (extensionsCount == 0) {
-        std::cout << "No extensions supported on this driver\n";
+        std::cerr << "No extensions supported on this driver\n";
         std::terminate();
     }
 
@@ -200,7 +198,7 @@ int main(int argc, char *argv[]) {
         }
     }
     if (globalOffsetExtensionFound == false) {
-        std::cout << "No global offset extension found on this driver\n";
+        std::cerr << "No global offset extension found on this driver\n";
         std::terminate();
     }
 

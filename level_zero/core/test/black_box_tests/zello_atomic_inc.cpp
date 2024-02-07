@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,9 +45,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
 
     std::string buildLog;
     auto spirV = LevelZeroBlackBoxTests::compileToSpirV(moduleSrc, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
     ze_module_handle_t module = nullptr;
@@ -66,11 +64,11 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
 
         char *strLog = (char *)malloc(szLog);
         zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-        std::cout << "Build log:" << strLog << std::endl;
+        LevelZeroBlackBoxTests::printBuildLog(strLog);
 
         free(strLog);
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-        std::cout << "\nModule creation error." << std::endl;
+        std::cerr << "\nModule creation error." << std::endl;
         SUCCESS_OR_TERMINATE_BOOL(false);
     }
 

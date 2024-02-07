@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,8 +81,8 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
-    // Validate stack and xe buffers have the original data from heapBuffer
-    validRet = (0 == memcmp(heapBuffer, stackBuffer, allocSize));
+    // Validate stack and ze buffers have the original data from heapBuffer
+    validRet = LevelZeroBlackBoxTests::validate(heapBuffer, stackBuffer, allocSize);
 
     delete[] heapBuffer;
     delete[] stackBuffer;
@@ -156,8 +156,8 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
-    // Validate stack and xe deviceBuffers have the original data from hostBuffer
-    validRet = (0 == memcmp(hostBuffer, stackBuffer, allocSize));
+    // Validate stack and ze deviceBuffers have the original data from hostBuffer
+    validRet = LevelZeroBlackBoxTests::validate(hostBuffer, stackBuffer, allocSize);
 
     delete[] stackBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, hostBuffer));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,8 +76,8 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
         SUCCESS_OR_TERMINATE(zeFenceReset(fence));
         SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
     }
-    // Validate stack and xe buffers have the original data from heapBuffer
-    validRet = (0 == memcmp(heapBuffer, stackBuffer, allocSize));
+    // Validate stack and ze buffers have the original data from heapBuffer
+    validRet = LevelZeroBlackBoxTests::validate(heapBuffer, stackBuffer, allocSize);
 
     delete[] heapBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));

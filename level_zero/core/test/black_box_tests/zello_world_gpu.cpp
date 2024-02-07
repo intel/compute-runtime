@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,11 +66,11 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
 
             char *strLog = (char *)malloc(szLog);
             zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-            std::cout << "Build log:" << strLog << std::endl;
+            LevelZeroBlackBoxTests::printBuildLog(strLog);
 
             free(strLog);
             SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-            std::cout << "\nZello World Gpu Results validation FAILED. Module creation error."
+            std::cerr << "\nZello World Gpu Results validation FAILED. Module creation error."
                       << std::endl;
             SUCCESS_OR_TERMINATE_BOOL(false);
         }
@@ -113,19 +113,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate
-    outputValidationSuccessful = true;
-    if (memcmp(dstBuffer, srcBuffer, allocSize)) {
-        outputValidationSuccessful = false;
-        uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
-        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
-        for (size_t i = 0; i < allocSize; i++) {
-            if (srcCharBuffer[i] != dstCharBuffer[i]) {
-                std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
-                break;
-            }
-        }
-    }
+    outputValidationSuccessful = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, allocSize);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));

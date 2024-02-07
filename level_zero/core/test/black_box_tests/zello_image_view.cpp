@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,9 +41,7 @@ const char *readNV12Module = R"===(
 void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     std::string buildLog;
     auto spirV = LevelZeroBlackBoxTests::compileToSpirV(readNV12Module, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
     const size_t width = 32;
@@ -192,11 +190,11 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
 
             char *strLog = (char *)malloc(szLog);
             zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-            std::cout << "Build log:" << strLog << std::endl;
+            LevelZeroBlackBoxTests::printBuildLog(strLog);
 
             free(strLog);
             SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-            std::cout << "\nZello Image View Results validation FAILED. Module creation error."
+            std::cerr << "\nZello Image View Results validation FAILED. Module creation error."
                       << std::endl;
             SUCCESS_OR_TERMINATE_BOOL(false);
         }
@@ -249,34 +247,31 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
-    // validate Y plane data
-    auto result = memcmp(srcVecY.data(), dstVecY.data(), width * height);
-
     validRet = true;
-    if (result != 0) {
-        std::cout << "Failed to validate data read for plane Y from Y-plane view" << std::endl;
+
+    // validate Y plane data
+    auto result = LevelZeroBlackBoxTests::validate(srcVecY.data(), dstVecY.data(), width * height);
+    if (!result) {
+        std::cerr << "Failed to validate data read for plane Y from Y-plane view" << std::endl;
         validRet = false;
     }
 
-    result = memcmp(dstVecY.data(), dstMem, width * height);
-
-    if (result != 0 && validRet) {
-        std::cout << "Failed to validate data read for plane Y from nv12 surface" << std::endl;
+    result = LevelZeroBlackBoxTests::validate(dstVecY.data(), dstMem, width * height);
+    if (!result && validRet) {
+        std::cerr << "Failed to validate data read for plane Y from nv12 surface" << std::endl;
         validRet = false;
     }
 
     // validate UV plane data
-    result = memcmp(srcVecUV.data(), dstVecUV.data(), (width / 2) * (height));
-
-    if (result != 0 && validRet) {
-        std::cout << "Failed to validate data read for plane Y from Y-plane view" << std::endl;
+    result = LevelZeroBlackBoxTests::validate(srcVecUV.data(), dstVecUV.data(), (width / 2) * (height));
+    if (!result && validRet) {
+        std::cerr << "Failed to validate data read for plane Y from Y-plane view" << std::endl;
         validRet = false;
     }
 
-    result = memcmp(dstVecUV.data(), (dstMem + (width * height)), (width / 2) * (height));
-
-    if (result != 0 && validRet) {
-        std::cout << "Failed to validate data read for plane UV from nv12 surface" << std::endl;
+    result = LevelZeroBlackBoxTests::validate(dstVecUV.data(), (dstMem + (width * height)), (width / 2) * (height));
+    if (!result && validRet) {
+        std::cerr << "Failed to validate data read for plane UV from nv12 surface" << std::endl;
         validRet = false;
     }
 
@@ -500,26 +495,23 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // validate Y plane data
-    auto result = memcmp(srcVecY.data(), dstVecY.data(), width * height);
-
-    if (result != 0) {
-        std::cout << "Failed to validate data read for plane Y from Y-plane view" << std::endl;
+    auto result = LevelZeroBlackBoxTests::validate(srcVecY.data(), dstVecY.data(), width * height);
+    if (!result) {
+        std::cerr << "Failed to validate data read for plane Y from Y-plane view" << std::endl;
         validRet = false;
     }
 
     // validate U plane data
-    result = memcmp(srcVecU.data(), dstVecU.data(), width * height);
-
-    if (result != 0 && validRet) {
-        std::cout << "Failed to validate data read for plane U from U-plane view" << std::endl;
+    result = LevelZeroBlackBoxTests::validate(srcVecU.data(), dstVecU.data(), width * height);
+    if (!result && validRet) {
+        std::cerr << "Failed to validate data read for plane U from U-plane view" << std::endl;
         validRet = false;
     }
 
     // validate V plane data
-    result = memcmp(srcVecV.data(), dstVecV.data(), width * height);
-
-    if (result != 0 && validRet) {
-        std::cout << "Failed to validate data read for plane V from V-plane view" << std::endl;
+    result = LevelZeroBlackBoxTests::validate(srcVecV.data(), dstVecV.data(), width * height);
+    if (!result && validRet) {
+        std::cerr << "Failed to validate data read for plane V from V-plane view" << std::endl;
         validRet = false;
     }
 

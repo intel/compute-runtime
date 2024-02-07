@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,16 +100,20 @@ int main(int argc, char *argv[]) {
 
     uint32_t driverCount = 0;
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, nullptr));
-    if (driverCount == 0)
+    if (driverCount == 0) {
+        std::cerr << "No driver handle found!" << std::endl;
         std::terminate();
+    }
     ze_driver_handle_t driverHandle;
     driverCount = 1;
     SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
 
     uint32_t deviceCount = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, nullptr));
-    if (deviceCount == 0)
+    if (deviceCount == 0) {
+        std::cerr << "No device found!" << std::endl;
         std::terminate();
+    }
     ze_device_handle_t device;
     deviceCount = 1;
     SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, &device));
@@ -142,9 +146,7 @@ int main(int argc, char *argv[]) {
     }
     std::string buildLog;
     auto exportBinaryModule = LevelZeroBlackBoxTests::compileToSpirV(exportModuleSrcValue, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == exportBinaryModule.size()));
 
     ze_module_handle_t exportModule;
@@ -167,9 +169,7 @@ int main(int argc, char *argv[]) {
             std::cout << "reading export module2 for spirv\n";
         }
         auto exportBinaryModule2 = LevelZeroBlackBoxTests::compileToSpirV(exportModuleSrc2CircDep, "", buildLog);
-        if (buildLog.size() > 0) {
-            std::cout << "Build log " << buildLog;
-        }
+        LevelZeroBlackBoxTests::printBuildLog(buildLog);
         SUCCESS_OR_TERMINATE((0 == exportBinaryModule2.size()));
 
         ze_module_desc_t exportModuleDesc2 = {ZE_STRUCTURE_TYPE_MODULE_DESC};
@@ -191,9 +191,7 @@ int main(int argc, char *argv[]) {
         std::cout << "reading import module for spirv\n";
     }
     auto importBinaryModule = LevelZeroBlackBoxTests::compileToSpirV(importModuleSrcValue, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == importBinaryModule.size()));
 
     ze_module_handle_t importModule;

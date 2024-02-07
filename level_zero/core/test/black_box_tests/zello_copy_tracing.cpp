@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -356,7 +356,7 @@ void testAppendMemoryCopy0(ze_context_handle_t &context, ze_device_handle_t &dev
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(deviceDdiTable.pfnGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
     if (numQueueGroups == 0) {
-        std::cout << "No queue groups found!\n";
+        std::cerr << "No queue groups found!\n";
         std::terminate();
     }
     std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
@@ -409,8 +409,8 @@ void testAppendMemoryCopy0(ze_context_handle_t &context, ze_device_handle_t &dev
     SUCCESS_OR_TERMINATE(cmdQueueDdiTable.pfnExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(cmdQueueDdiTable.pfnSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
-    // Validate stack and xe buffers have the original data from heapBuffer
-    validRet = (0 == memcmp(heapBuffer, stackBuffer, allocSize));
+    // Validate stack and ze buffers have the original data from heapBuffer
+    validRet = LevelZeroBlackBoxTests::validate(heapBuffer, stackBuffer, allocSize);
 
     delete[] heapBuffer;
     SUCCESS_OR_TERMINATE(memDdiTable.pfnFree(context, zeBuffer));
@@ -432,7 +432,7 @@ void testAppendMemoryCopy1(ze_context_handle_t &context, ze_device_handle_t &dev
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(deviceDdiTable.pfnGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
     if (numQueueGroups == 0) {
-        std::cout << "No queue groups found!\n";
+        std::cerr << "No queue groups found!\n";
         std::terminate();
     }
     std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
@@ -490,8 +490,8 @@ void testAppendMemoryCopy1(ze_context_handle_t &context, ze_device_handle_t &dev
     SUCCESS_OR_TERMINATE(cmdQueueDdiTable.pfnExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(cmdQueueDdiTable.pfnSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
-    // Validate stack and xe buffers have the original data from hostBuffer
-    validRet = (0 == memcmp(hostBuffer, stackBuffer, allocSize));
+    // Validate stack and ze buffers have the original data from hostBuffer
+    validRet = LevelZeroBlackBoxTests::validate(hostBuffer, stackBuffer, allocSize);
 
     SUCCESS_OR_TERMINATE(memDdiTable.pfnFree(context, hostBuffer));
     SUCCESS_OR_TERMINATE(memDdiTable.pfnFree(context, zeBuffer));
@@ -510,7 +510,7 @@ void testAppendMemoryCopy2(ze_context_handle_t &context, ze_device_handle_t &dev
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(deviceDdiTable.pfnGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
     if (numQueueGroups == 0) {
-        std::cout << "No queue groups found!\n";
+        std::cerr << "No queue groups found!\n";
         std::terminate();
     }
     std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);
@@ -665,8 +665,10 @@ int main(int argc, char *argv[]) {
 
     uint32_t driverCount = 0;
     SUCCESS_OR_TERMINATE(driverDdiTable.pfnGet(&driverCount, nullptr));
-    if (driverCount == 0)
+    if (driverCount == 0) {
+        std::cerr << "No driver handle found!" << std::endl;
         std::terminate();
+    }
 
     ze_driver_handle_t driver;
     driverCount = 1;
@@ -674,8 +676,10 @@ int main(int argc, char *argv[]) {
 
     uint32_t deviceCount = 0;
     SUCCESS_OR_TERMINATE(deviceDdiTable.pfnGet(driver, &deviceCount, nullptr));
-    if (deviceCount == 0)
+    if (deviceCount == 0) {
+        std::cerr << "No device found!" << std::endl;
         std::terminate();
+    }
 
     ze_device_handle_t device;
     deviceCount = 1;

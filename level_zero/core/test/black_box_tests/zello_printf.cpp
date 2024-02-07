@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,9 +47,7 @@ enum class PrintfExecutionMode : uint32_t {
 void createModule(const ze_context_handle_t context, const ze_device_handle_t device, ze_module_handle_t &module) {
     std::string buildLog;
     auto spirV = LevelZeroBlackBoxTests::compileToSpirV(source, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
@@ -139,7 +137,7 @@ int main(int argc, char *argv[]) {
                 stdoutFd = dup(fileno(stdout));
                 auto newFile = freopen(fileName, "w", stdout);
                 if (newFile == nullptr) {
-                    std::cout << "Failed in freopen()" << std::endl;
+                    std::cerr << "Failed in freopen()" << std::endl;
                     abort();
                 }
             }
@@ -190,7 +188,7 @@ int main(int argc, char *argv[]) {
 
             if (validatePrintfOutput && !printfValidated) {
                 SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-                std::cout << "\nZello Printf FAILED " << std::endl;
+                std::cerr << "\nZello Printf FAILED " << std::endl;
                 return -1;
             }
         }

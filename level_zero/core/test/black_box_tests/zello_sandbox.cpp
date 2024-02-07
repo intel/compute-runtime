@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,7 @@ void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_dev
 
     std::string buildLog;
     auto spirV = LevelZeroBlackBoxTests::compileToSpirV(addConstModuleSrc, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
@@ -44,11 +42,11 @@ void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_dev
 
         char *strLog = (char *)malloc(szLog);
         zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-        std::cout << "Build log:" << strLog << std::endl;
+        LevelZeroBlackBoxTests::printBuildLog(strLog);
 
         free(strLog);
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-        std::cout << "\nZello Sandbox test Immediate and Regular concurrent execution validation FAILED. Module creation error."
+        std::cerr << "\nZello Sandbox test Immediate and Regular concurrent execution validation FAILED. Module creation error."
                   << std::endl;
         SUCCESS_OR_TERMINATE_BOOL(false);
     }
@@ -136,15 +134,13 @@ void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_dev
         SUCCESS_OR_TERMINATE(zeEventHostReset(events[2]));
 
         if (!aubMode) {
-            for (size_t i = 0; i < kernelDataSize; i++) {
-                if (static_cast<int *>(sharedBuffer)[i] != valCheck) {
-                    std::cout << "data mismatch at " << i << " expect " << valCheck << " is " << static_cast<int *>(sharedBuffer)[i] << " at iteration " << iter << " \n ";
-                    outputValidationSuccessful = false;
-                }
+            if (!LevelZeroBlackBoxTests::validateToValue<int>(valCheck, sharedBuffer, kernelDataSize)) {
+                std::cerr << "regular cmdlist execution mismatch at iteration " << iter << " shared memory to const value\n";
+                outputValidationSuccessful = false;
             }
 
-            if (0 != memcmp(sourceSystemMemory.data(), destSystemMemory.data(), regularCmdlistBufSize)) {
-                std::cout << "regular cmdlist execution mismatch at iteration " << iter << " \n ";
+            if (!LevelZeroBlackBoxTests::validate(sourceSystemMemory.data(), destSystemMemory.data(), regularCmdlistBufSize)) {
+                std::cerr << "regular cmdlist execution mismatch at iteration " << iter << " source memory and destination memory\n";
                 outputValidationSuccessful = false;
             }
 
@@ -276,15 +272,7 @@ void executeMemoryTransferAndValidate(ze_context_handle_t &context, ze_device_ha
     memcpy(output.get(), buffer5, allocSize);
 
     // Validate
-    outputValidationSuccessful = true;
-    for (size_t i = 0; i < allocSize; i++) {
-        if (output.get()[i] != value) {
-            std::cout << "output[" << i << "] = " << static_cast<unsigned int>(output.get()[i]) << " not equal to "
-                      << "reference = " << static_cast<unsigned int>(value) << "\n";
-            outputValidationSuccessful = false;
-            break;
-        }
-    }
+    outputValidationSuccessful = LevelZeroBlackBoxTests::validateToValue<uint8_t>(value, output.get(), allocSize);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer1));
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer2));

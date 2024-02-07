@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -218,6 +218,35 @@ inline bool validate(const void *expected, const void *tested, size_t len) {
     return resultsAreOk;
 }
 
+template <typename T>
+inline bool validateToValue(const T expected, const void *tested, size_t len) {
+    bool resultsAreOk = true;
+    size_t offset = 0;
+
+    const T *testedT = reinterpret_cast<const T *>(tested);
+    uint32_t errorsCount = 0;
+    uint32_t errorsMax = verbose ? 20 : 1;
+
+    while (offset < len) {
+        if (expected != testedT[offset]) {
+            resultsAreOk = false;
+
+            std::cerr << "Data mismatch expected != tested[" << offset
+                      << "]   ->    " << +expected << " != " << +testedT[offset]
+                      << std::endl;
+            ++errorsCount;
+            if (errorsCount >= errorsMax) {
+                std::cerr << "Found " << errorsCount
+                          << " data mismatches - skipping further comparison " << std::endl;
+                break;
+            }
+        }
+        ++offset;
+    }
+
+    return resultsAreOk;
+}
+
 struct CommandHandler {
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
@@ -239,5 +268,11 @@ struct CommandHandler {
 using TestBitMask = std::bitset<32>;
 
 TestBitMask getTestMask(int argc, char *argv[], uint32_t defaultValue);
+
+void printGroupCount(ze_group_count_t &groupCount);
+
+void printBuildLog(std::string &buildLog);
+
+void printBuildLog(const char *strLog);
 
 } // namespace LevelZeroBlackBoxTests

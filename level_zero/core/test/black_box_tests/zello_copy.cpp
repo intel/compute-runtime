@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t &context, z
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate stack and ze buffers have the original data from heapBuffer
-    validRet = (0 == memcmp(heapBuffer, stackBuffer, allocSize));
+    validRet = LevelZeroBlackBoxTests::validate(heapBuffer, stackBuffer, allocSize);
 
     delete[] heapBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
@@ -104,7 +104,7 @@ void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t &context, z
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate stack and ze buffers have the original data from hostBuffer
-    validRet = (0 == memcmp(hostBuffer, stackBuffer, allocSize));
+    validRet = LevelZeroBlackBoxTests::validate(hostBuffer, stackBuffer, allocSize);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, hostBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));

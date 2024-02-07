@@ -109,9 +109,7 @@ void createModule(const char *sourceCode, AddressingMode addressing, const ze_co
         internalOptions = bindlessImagesOptions;
     }
     auto bin = LevelZeroBlackBoxTests::compileToNative(sourceCode, deviceName, revisionId, "", internalOptions, buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == bin.size()));
 
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};

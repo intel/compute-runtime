@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
             SUCCESS_OR_TERMINATE(zeDeviceCanAccessPeer(devices[i], devices[j], &canAccessPeer));
             LevelZeroBlackBoxTests::printP2PProperties(deviceP2PProperties, canAccessPeer, i, j);
             if (canAccessPeer == false) {
-                std::cout << "Device " << i << " cannot access " << j << "\n";
+                std::cerr << "Device " << i << " cannot access " << j << "\n";
                 std::terminate();
             }
         }
@@ -90,9 +90,7 @@ int main(int argc, char *argv[]) {
 
     std::string buildLog;
     auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == moduleBinary.size()));
 
     // init everything
@@ -183,11 +181,8 @@ int main(int argc, char *argv[]) {
         dispatchTraits.groupCountX = numThreads / groupSizeX;
         dispatchTraits.groupCountY = 1u;
         dispatchTraits.groupCountZ = 1u;
-        if (LevelZeroBlackBoxTests::verbose) {
-            std::cerr << "Number of groups : (" << dispatchTraits.groupCountX << ", "
-                      << dispatchTraits.groupCountY << ", " << dispatchTraits.groupCountZ << ")"
-                      << std::endl;
-        }
+        LevelZeroBlackBoxTests::printGroupCount(dispatchTraits);
+
         SUCCESS_OR_TERMINATE_BOOL(dispatchTraits.groupCountX * groupSizeX == allocSize);
         SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(
             cmdList[i], kernel[i], &dispatchTraits, nullptr, 0, nullptr));
@@ -207,11 +202,7 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_WARNING(synchronizationResult);
 
         // Validate
-        outputValidationSuccessful = true;
-        for (size_t i = 0; i < allocSize; ++i) {
-            outputValidationSuccessful &=
-                ((unsigned char)(initDataSrc[i]) == (unsigned char)readBackData[i]);
-        }
+        outputValidationSuccessful = LevelZeroBlackBoxTests::validate(initDataSrc, readBackData, allocSize);
 
         // Release Mem
         SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
@@ -233,10 +224,6 @@ int main(int argc, char *argv[]) {
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    if (aubMode == false) {
-        std::cout << "\nZello Multidev Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED")
-                  << std::endl;
-    }
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,8 +95,8 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
         }
     }
 
-    // Validate stack and xe deviceBuffers have the original data from hostBuffer
-    validRet = (0 == memcmp(hostBuffer, stackBuffer, allocSize));
+    // Validate stack and ze deviceBuffers have the original data from hostBuffer
+    validRet = LevelZeroBlackBoxTests::validate(hostBuffer, stackBuffer, allocSize);
 
     delete[] stackBuffer;
 
@@ -176,11 +176,11 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
 
             char *strLog = (char *)malloc(szLog);
             zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-            std::cout << "Build log:" << strLog << std::endl;
+            LevelZeroBlackBoxTests::printBuildLog(strLog);
 
             free(strLog);
             SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-            std::cout << "\nZello Immediate Results validation FAILED. Module creation error."
+            std::cerr << "\nZello Immediate Results validation FAILED. Module creation error."
                       << std::endl;
             SUCCESS_OR_TERMINATE_BOOL(false);
         }
@@ -231,19 +231,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
     }
 
     // Validate
-    outputValidationSuccessful = true;
-    if (memcmp(dstBuffer, srcBuffer, allocSize)) {
-        outputValidationSuccessful = false;
-        uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
-        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
-        for (size_t i = 0; i < allocSize; i++) {
-            if (srcCharBuffer[i] != dstCharBuffer[i]) {
-                std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
-                break;
-            }
-        }
-    }
+    outputValidationSuccessful = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, allocSize);
 
     // Cleanup
     for (auto event : hostEvents) {

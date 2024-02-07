@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -622,16 +622,36 @@ ze_result_t CommandHandler::destroy() {
 
 TestBitMask getTestMask(int argc, char *argv[], uint32_t defaultValue) {
     uint32_t value = static_cast<uint32_t>(getParamValue(argc, argv, "-m", "-mask", static_cast<int>(defaultValue)));
-    std::cerr << "Test mask ";
+    std::cout << "Test mask ";
     if (value != defaultValue) {
-        std::cerr << "override ";
+        std::cout << "override ";
     } else {
-        std::cerr << "default ";
+        std::cout << "default ";
     }
     TestBitMask bitValue(value);
-    std::cerr << "value 0b" << bitValue << std::endl;
+    std::cout << "value 0b" << bitValue << std::endl;
 
     return bitValue;
+}
+
+void printGroupCount(ze_group_count_t &groupCount) {
+    if (verbose) {
+        std::cout << "Number of groups : (" << groupCount.groupCountX << ", "
+                  << groupCount.groupCountY << ", " << groupCount.groupCountZ << ")"
+                  << std::endl;
+    }
+}
+
+void printBuildLog(std::string &buildLog) {
+    if (buildLog.size() > 0) {
+        std::cerr << "Build log:" << std::endl
+                  << buildLog << std::endl;
+    }
+}
+
+void printBuildLog(const char *strLog) {
+    std::cerr << "Build log:" << std::endl
+              << strLog << std::endl;
 }
 
 } // namespace LevelZeroBlackBoxTests

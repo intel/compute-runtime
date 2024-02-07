@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ void createCmdQueueAndCmdList(ze_context_handle_t &context,
     uint32_t numQueueGroups = 0;
     SUCCESS_OR_TERMINATE(zeDeviceGetCommandQueueGroupProperties(device, &numQueueGroups, nullptr));
     if (numQueueGroups == 0) {
-        std::cout << "No queue groups found!\n";
+        std::cerr << "No queue groups found!\n";
         std::terminate();
     }
     std::vector<ze_command_queue_group_properties_t> queueProperties(numQueueGroups);

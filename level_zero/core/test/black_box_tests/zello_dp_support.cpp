@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,11 +36,11 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetModuleProperties(device, &deviceModProps));
 
     if (moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A) {
-        printf("DP4A supported\n");
+        std::cout << "DP4A supported" << std::endl;
     }
 
     if (moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS) {
-        printf("DPAS supported\n");
+        std::cout << "DPAS supported" << std::endl;
     }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));

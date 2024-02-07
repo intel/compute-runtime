@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
-    validRet = (0 == memcmp(srcBuffer, dstBuffer, size));
+    validRet = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, size);
 
     delete[] srcBuffer;
     delete[] dstBuffer;

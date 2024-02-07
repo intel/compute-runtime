@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,7 +141,7 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
 
     realResult = reinterpret_cast<int *>(dstBuffer);
     if (LevelZeroBlackBoxTests::verbose) {
-        std::cerr << "Inital Gobal Memory Value " << *realResult << std::endl;
+        std::cout << "Inital Gobal Memory Value " << *realResult << std::endl;
     }
 
     // Set kernel args and get ready to dispatch
@@ -154,11 +154,7 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
     dispatchTraits.groupCountX = 3u;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
-    if (LevelZeroBlackBoxTests::verbose) {
-        std::cerr << "Number of groups : (" << dispatchTraits.groupCountX << ", "
-                  << dispatchTraits.groupCountY << ", " << dispatchTraits.groupCountZ << ")"
-                  << std::endl;
-    }
+    LevelZeroBlackBoxTests::printGroupCount(dispatchTraits);
 
     SUCCESS_OR_TERMINATE(
         zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
@@ -169,7 +165,7 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
 
     realResult = reinterpret_cast<int *>(dstBuffer);
     if (LevelZeroBlackBoxTests::verbose) {
-        std::cerr << "Final Gobal Memory Value " << *realResult << std::endl;
+        std::cout << "Final Gobal Memory Value " << *realResult << std::endl;
     }
 
     if (*realResult != expectedResult) {

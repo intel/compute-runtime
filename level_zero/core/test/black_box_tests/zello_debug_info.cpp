@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,9 +47,7 @@ int main(int argc, char *argv[]) {
 
     std::string buildLog;
     auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesWithPrintfTestKernelSrc, "-g", buildLog);
-    if (!buildLog.empty()) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == moduleBinary.size()));
 
     ze_context_handle_t context = nullptr;

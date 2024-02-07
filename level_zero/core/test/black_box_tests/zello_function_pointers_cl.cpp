@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,9 +89,7 @@ int main(int argc, char *argv[]) {
 
     std::string buildLog;
     auto spirV = LevelZeroBlackBoxTests::compileToSpirV(functionPointersProgram, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
     ze_module_handle_t module;
@@ -107,11 +105,11 @@ int main(int argc, char *argv[]) {
 
         char *strLog = (char *)malloc(szLog);
         zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-        std::cout << "Build log:" << strLog << std::endl;
+        LevelZeroBlackBoxTests::printBuildLog(strLog);
 
         free(strLog);
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-        std::cout << "\nZello Function Pointers CL Results validation FAILED. Module creation error."
+        std::cerr << "\nZello Function Pointers CL Results validation FAILED. Module creation error."
                   << std::endl;
         return 1;
     }
@@ -165,7 +163,7 @@ int main(int argc, char *argv[]) {
     void *copyHelperFunction = nullptr;
     SUCCESS_OR_TERMINATE(zeModuleGetFunctionPointer(module, "copy_helper", &copyHelperFunction));
     if (nullptr == copyHelperFunction) {
-        std::cout << "Pointer to function helper not found\n";
+        std::cerr << "Pointer to function helper not found\n";
         std::terminate();
     }
 
@@ -211,10 +209,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // 6. Validate
-    outputValidationSuccessful = (0 == memcmp(initDataSrc, readBackData, sizeof(readBackData)));
-    if (LevelZeroBlackBoxTests::verbose && (false == outputValidationSuccessful)) {
-        LevelZeroBlackBoxTests::validate(initDataSrc, readBackData, sizeof(readBackData));
-    }
+    outputValidationSuccessful = LevelZeroBlackBoxTests::validate(initDataSrc, readBackData, sizeof(readBackData));
     SUCCESS_OR_WARNING_BOOL(outputValidationSuccessful);
 
     // 7. Cleanup

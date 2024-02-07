@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,8 +78,8 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
         SUCCESS_OR_TERMINATE(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         SUCCESS_OR_TERMINATE(zeEventHostSynchronize(event2, std::numeric_limits<uint64_t>::max()));
     }
-    // Validate stack and xe buffers have the original data from heapBuffer
-    validRet = (0 == memcmp(heapBuffer, stackBuffer, allocSize));
+    // Validate stack and ze buffers have the original data from heapBuffer
+    validRet = LevelZeroBlackBoxTests::validate(heapBuffer, stackBuffer, allocSize);
 
     delete[] heapBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
@@ -272,9 +272,7 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
 
     std::string buildLog;
     auto moduleBinary = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == moduleBinary.size()));
 
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
@@ -373,11 +371,8 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
     dispatchTraits.groupCountX = numThreads / groupSizeX;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
-    if (LevelZeroBlackBoxTests::verbose) {
-        std::cerr << "Number of groups : (" << dispatchTraits.groupCountX << ", "
-                  << dispatchTraits.groupCountY << ", " << dispatchTraits.groupCountZ << ")"
-                  << std::endl;
-    }
+    LevelZeroBlackBoxTests::printGroupCount(dispatchTraits);
+
     SUCCESS_OR_TERMINATE_BOOL(dispatchTraits.groupCountX * groupSizeX == allocSize);
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
                                                          useSyncCmdQ ? nullptr : event, 0, nullptr));
@@ -397,11 +392,7 @@ void testAppendGpuKernel(ze_context_handle_t &context, ze_device_handle_t &devic
         SUCCESS_OR_TERMINATE(zeEventHostSynchronize(event2, std::numeric_limits<uint64_t>::max()));
     }
 
-    validRet =
-        (0 == memcmp(initDataSrc, readBackData, sizeof(readBackData)));
-    if (LevelZeroBlackBoxTests::verbose && (false == validRet)) {
-        LevelZeroBlackBoxTests::validate(initDataSrc, readBackData, sizeof(readBackData));
-    }
+    validRet = LevelZeroBlackBoxTests::validate(initDataSrc, readBackData, sizeof(readBackData));
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
@@ -431,10 +422,10 @@ int main(int argc, char *argv[]) {
     bool commandListCoexist = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-o", "--coexists");
     bool eventPoolShared = !LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "-n", "--nopoolshared");
     if (eventPoolShared) {
-        std::cerr << "Event pool shared between tests" << std::endl;
+        std::cout << "Event pool shared between tests" << std::endl;
     }
     if (commandListCoexist) {
-        std::cerr << "Command List coexists between tests" << std::endl;
+        std::cout << "Command List coexists between tests" << std::endl;
         commandListShared = false;
     }
 

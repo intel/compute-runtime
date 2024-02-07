@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -139,21 +139,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
     }
 
     // Validate
-    outputValidationSuccessful = true;
-    if (memcmp(dstBuffer, expectedMemory, expectedMemorySize)) {
-        outputValidationSuccessful = false;
-        uint8_t *srcCharBuffer = static_cast<uint8_t *>(expectedMemory);
-        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
-        for (size_t i = 0; i < expectedMemorySize; i++) {
-            if (srcCharBuffer[i] != dstCharBuffer[i]) {
-                std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
-                if (!LevelZeroBlackBoxTests::verbose) {
-                    break;
-                }
-            }
-        }
-    }
+    outputValidationSuccessful = LevelZeroBlackBoxTests::validate(expectedMemory, dstBuffer, expectedMemorySize);
 
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
@@ -176,9 +162,7 @@ void createModuleKernel(ze_context_handle_t &context,
                         ze_kernel_handle_t &kernel) {
     std::string buildLog;
     auto spirV = LevelZeroBlackBoxTests::compileToSpirV(moduleSrc, "", buildLog);
-    if (buildLog.size() > 0) {
-        std::cout << "Build log " << buildLog;
-    }
+    LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
@@ -194,11 +178,11 @@ void createModuleKernel(ze_context_handle_t &context,
 
         char *strLog = (char *)malloc(szLog);
         zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-        std::cout << "Build log:" << strLog << std::endl;
+        LevelZeroBlackBoxTests::printBuildLog(strLog);
 
         free(strLog);
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-        std::cout << "\nZello Scratch Results validation FAILED. Module creation error."
+        std::cerr << "\nZello Scratch Results validation FAILED. Module creation error."
                   << std::endl;
         SUCCESS_OR_TERMINATE_BOOL(false);
     }

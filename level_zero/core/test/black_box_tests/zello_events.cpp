@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -287,19 +287,7 @@ bool testEventsHostSignalHostWait(ze_context_handle_t &context, ze_device_handle
     SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[0], std::numeric_limits<uint64_t>::max()));
 
     // Validate
-    bool outputValidationSuccessful = true;
-    if (memcmp(dstBuffer, srcBuffer, allocSize)) {
-        outputValidationSuccessful = false;
-        uint8_t *srcCharBuffer = static_cast<uint8_t *>(srcBuffer);
-        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
-        for (size_t i = 0; i < allocSize; i++) {
-            if (srcCharBuffer[i] != dstCharBuffer[i]) {
-                std::cout << "srcBuffer[" << i << "] = " << static_cast<unsigned int>(srcCharBuffer[i]) << " not equal to "
-                          << "dstBuffer[" << i << "] = " << static_cast<unsigned int>(dstCharBuffer[i]) << "\n";
-                break;
-            }
-        }
-    }
+    bool outputValidationSuccessful = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, allocSize);
 
     // Cleanup
     for (auto event : events) {
