@@ -177,6 +177,20 @@ ze_result_t EventPool::createEvent(const ze_event_desc_t *desc, ze_event_handle_
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t EventPool::getContextHandle(ze_context_handle_t *phContext) {
+    *phContext = context->toHandle();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t EventPool::getFlags(ze_event_pool_flags_t *pFlags) {
+    *pFlags = eventPoolFlags;
+
+    if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
+        *pFlags &= ~ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t *deviceHandles, DriverHandleImp &driver, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
 
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();

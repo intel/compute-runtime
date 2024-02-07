@@ -189,6 +189,44 @@ TEST_F(EventPoolCreate, givenInvalidPNextWhenCreatingPoolThenIgnore) {
     ASSERT_NE(nullptr, eventPool);
 }
 
+TEST_F(EventPoolCreate, givenValidEventPoolWithFlagsWhenCallingGetFlagsThenCorrectFlagsAreReturned) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    std::vector<ze_event_pool_flags_t> testingFlags = {
+        0,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        ZE_EVENT_POOL_FLAG_IPC,
+        ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
+        ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP};
+
+    for (auto &flags : testingFlags) {
+        ze_event_pool_flags_t eventPoolFlags = ZE_EVENT_POOL_FLAG_FORCE_UINT32;
+        eventPoolDesc.flags = flags;
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, eventPool);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->getFlags(&eventPoolFlags));
+        ASSERT_EQ(eventPoolDesc.flags, eventPoolFlags);
+    }
+}
+
+TEST_F(EventPoolCreate, givenValidEventPoolWhenCallingGetContextThenCorrectContextIsReturned) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_context_handle_t hContext;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->getContextHandle(&hContext));
+    ASSERT_EQ(hContext, context->toHandle());
+}
+
 HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelTimestamps) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -1406,6 +1444,96 @@ TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErro
 
     ASSERT_EQ(nullptr, event);
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, value);
+}
+
+TEST_F(EventCreate, givenEventWhenCallingGetEventPoolThenCorrectEventPoolIsReturned) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_event_handle_t hEvent = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &hEvent));
+    ASSERT_NE(nullptr, hEvent);
+
+    ze_event_pool_handle_t hEventPool;
+    auto event = Event::fromHandle(hEvent);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->getEventPool(&hEventPool));
+    EXPECT_EQ(eventPool->toHandle(), hEventPool);
+
+    event->destroy();
+}
+
+TEST_F(EventCreate, givenEventWhenCallingGetSignalScopelThenCorrectScopeIsReturned) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    std::vector<ze_event_scope_flags_t> testingFlags = {
+        0,
+        ZE_EVENT_SCOPE_FLAG_SUBDEVICE,
+        ZE_EVENT_SCOPE_FLAG_DEVICE,
+        ZE_EVENT_SCOPE_FLAG_HOST};
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    for (auto &flags : testingFlags) {
+        eventDesc.signal = flags;
+
+        ze_event_handle_t hEvent = nullptr;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &hEvent));
+        ASSERT_NE(nullptr, hEvent);
+
+        ze_event_scope_flags_t signalScopeFlags = ZE_EVENT_SCOPE_FLAG_FORCE_UINT32;
+        auto event = Event::fromHandle(hEvent);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, event->getSignalScope(&signalScopeFlags));
+        EXPECT_EQ(eventDesc.signal, signalScopeFlags);
+
+        event->destroy();
+    }
+}
+
+TEST_F(EventCreate, givenEventWhenCallingGetWaitScopelThenCorrectScopeIsReturned) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    std::vector<ze_event_scope_flags_t> testingFlags = {
+        0,
+        ZE_EVENT_SCOPE_FLAG_SUBDEVICE,
+        ZE_EVENT_SCOPE_FLAG_DEVICE,
+        ZE_EVENT_SCOPE_FLAG_HOST};
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    for (auto &flags : testingFlags) {
+        eventDesc.wait = flags;
+
+        ze_event_handle_t hEvent = nullptr;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &hEvent));
+        ASSERT_NE(nullptr, hEvent);
+
+        ze_event_scope_flags_t waitScopeFlags = ZE_EVENT_SCOPE_FLAG_FORCE_UINT32;
+        auto event = Event::fromHandle(hEvent);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, event->getWaitScope(&waitScopeFlags));
+        EXPECT_EQ(eventDesc.wait, waitScopeFlags);
+
+        event->destroy();
+    }
 }
 
 HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseContextEndThenDoNotUseContextEndOffset, IsXeHpOrXeHpcCore) {

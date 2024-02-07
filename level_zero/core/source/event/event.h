@@ -86,6 +86,9 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) = 0;
     virtual ze_result_t queryTimestampsExp(Device *device, uint32_t *count, ze_kernel_timestamp_result_t *timestamps) = 0;
     virtual ze_result_t queryKernelTimestampsExt(Device *device, uint32_t *pCount, ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) = 0;
+    virtual ze_result_t getEventPool(ze_event_pool_handle_t *phEventPool) = 0;
+    virtual ze_result_t getSignalScope(ze_event_scope_flags_t *pSignalScope) = 0;
+    virtual ze_result_t getWaitScope(ze_event_scope_flags_t *pWaitScope) = 0;
 
     enum State : uint32_t {
         STATE_SIGNALED = 0u,
@@ -115,6 +118,8 @@ struct Event : _ze_event_handle_t {
     inline ze_event_handle_t toHandle() { return this; }
 
     MOCKABLE_VIRTUAL NEO::GraphicsAllocation &getAllocation(Device *device) const;
+
+    void setEventPool(EventPool *eventPool) { this->eventPool = eventPool; }
 
     MOCKABLE_VIRTUAL uint64_t getGpuAddress(Device *device) const;
     virtual uint32_t getPacketsInUse() const = 0;
@@ -282,6 +287,8 @@ struct Event : _ze_event_handle_t {
 
     void unsetCmdQueue();
 
+    EventPool *eventPool = nullptr;
+
     uint64_t globalStartTS = 1;
     uint64_t globalEndTS = 1;
     uint64_t contextStartTS = 1;
@@ -352,6 +359,8 @@ struct EventPool : _ze_event_pool_handle_t {
     MOCKABLE_VIRTUAL ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle);
     MOCKABLE_VIRTUAL ze_result_t closeIpcHandle();
     MOCKABLE_VIRTUAL ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *eventHandle);
+    ze_result_t getContextHandle(ze_context_handle_t *phContext);
+    ze_result_t getFlags(ze_event_pool_flags_t *pFlags);
 
     static EventPool *fromHandle(ze_event_pool_handle_t handle) {
         return static_cast<EventPool *>(handle);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,36 @@ ze_result_t zeEventQueryKernelTimestampsExt(
     uint32_t *pCount,
     ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) {
     return L0::Event::fromHandle(hEvent)->queryKernelTimestampsExt(L0::Device::fromHandle(hDevice), pCount, pResults);
+}
+
+ze_result_t zeEventPoolGetContextHandle(
+    ze_event_pool_handle_t hEventPool,
+    ze_context_handle_t *phContext) {
+    return L0::EventPool::fromHandle(hEventPool)->getContextHandle(phContext);
+}
+
+ze_result_t zeEventPoolGetFlags(
+    ze_event_pool_handle_t hEventPool,
+    ze_event_pool_flags_t *pFlags) {
+    return L0::EventPool::fromHandle(hEventPool)->getFlags(pFlags);
+}
+
+ze_result_t zeEventGetEventPool(
+    ze_event_handle_t hEvent,
+    ze_event_pool_handle_t *phEventPool) {
+    return L0::Event::fromHandle(hEvent)->getEventPool(phEventPool);
+}
+
+ze_result_t zeEventGetSignalScope(
+    ze_event_handle_t hEvent,
+    ze_event_scope_flags_t *pSignalScope) {
+    return L0::Event::fromHandle(hEvent)->getSignalScope(pSignalScope);
+}
+
+ze_result_t zeEventGetWaitScope(
+    ze_event_handle_t hEvent,
+    ze_event_scope_flags_t *pWaitScope) {
+    return L0::Event::fromHandle(hEvent)->getWaitScope(pWaitScope);
 }
 } // namespace L0
 
@@ -261,5 +291,35 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(
         hSignalEvent,
         numWaitEvents,
         phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventPoolGetContextHandle(
+    ze_event_pool_handle_t hEventPool,
+    ze_context_handle_t *phContext) {
+    return L0::zeEventPoolGetContextHandle(hEventPool, phContext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventPoolGetFlags(
+    ze_event_pool_handle_t hEventPool,
+    ze_event_pool_flags_t *pFlags) {
+    return L0::zeEventPoolGetFlags(hEventPool, pFlags);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventGetEventPool(
+    ze_event_handle_t hEvent,
+    ze_event_pool_handle_t *phEventPool) {
+    return L0::zeEventGetEventPool(hEvent, phEventPool);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventGetSignalScope(
+    ze_event_handle_t hEvent,
+    ze_event_scope_flags_t *pSignalScope) {
+    return L0::zeEventGetSignalScope(hEvent, pSignalScope);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeEventGetWaitScope(
+    ze_event_handle_t hEvent,
+    ze_event_scope_flags_t *pWaitScope) {
+    return L0::zeEventGetWaitScope(hEvent, pWaitScope);
 }
 }
