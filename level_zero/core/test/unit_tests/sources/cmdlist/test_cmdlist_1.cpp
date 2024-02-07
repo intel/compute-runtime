@@ -975,6 +975,43 @@ TEST_F(CommandListCreate, whenCreatingImmediateCommandListWithASyncModeThenItHas
     EXPECT_NE(nullptr, static_cast<CommandList *>(commandList.get())->cmdQImmediate);
 }
 
+TEST_F(CommandListCreate, givenAsynchronousOverrideWhenCreatingImmediateCommandListWithSyncModeThenAynchronousCommandQueueIsCreated) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideImmediateCmdListSynchronousMode.set(2);
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    EXPECT_EQ(device, commandList->getDevice());
+    EXPECT_TRUE(commandList->isImmediateType());
+    EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
+    EXPECT_FALSE(whiteBoxCmdList->isSyncModeQueue);
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, static_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate)->getCommandQueueMode());
+}
+
+TEST_F(CommandListCreate, givenSynchronousOverrideWhenCreatingImmediateCommandListWithAsyncModeThenSynchronousCommandQueueIsCreated) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideImmediateCmdListSynchronousMode.set(1);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    EXPECT_EQ(device, commandList->getDevice());
+    EXPECT_TRUE(commandList->isImmediateType());
+    EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
+    EXPECT_TRUE(whiteBoxCmdList->isSyncModeQueue);
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate)->getCommandQueueMode());
+}
+
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendSignalEventThenUpdateTaskCountNeededFlagIsDisabled) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;

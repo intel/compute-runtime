@@ -173,6 +173,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceExecutionTile, -1, "-1: default, 0+: given 
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampPacketSize, -1, "-1: default, >0: size in bytes. 4 and 8 supported for experiments")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkGroupCount, -1, "-1: default, >0: Max WG size")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdQueueSynchronousMode, -1, "Overrides all command queues synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideImmediateCmdListSynchronousMode, -1, "Overrides all immediate command lists synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStatelessCompression, -1, "-1: default, 0: disable, 1: Enable E2EC in SBA for all stateless accesses")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMultiTileCompression, -1, "-1: default, 0: disable, 1: enable, Enables compression in multi tile scenarios.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmResourceUsageField, -1, "-1: default, >=0: gmm.resourceParams.Usage is set to this value")

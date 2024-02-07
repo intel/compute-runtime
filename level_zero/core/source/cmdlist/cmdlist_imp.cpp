@@ -157,6 +157,12 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                                           bool internalUsage, NEO::EngineGroupType engineGroupType,
                                           ze_result_t &returnValue) {
 
+    ze_command_queue_desc_t cmdQdesc = *desc;
+
+    int32_t overrideImmediateCmdListSyncMode = NEO::debugManager.flags.OverrideImmediateCmdListSynchronousMode.get();
+    if (overrideImmediateCmdListSyncMode != -1) {
+        cmdQdesc.mode = static_cast<ze_command_queue_mode_t>(overrideImmediateCmdListSyncMode);
+    }
     CommandListAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = commandListFactoryImmediate[productFamily];
@@ -179,7 +185,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 engineGroupType = deviceImp->getInternalEngineGroupType();
             }
         } else {
-            returnValue = device->getCsrForOrdinalAndIndexWithPriority(&csr, desc->ordinal, desc->index, desc->priority);
+            returnValue = device->getCsrForOrdinalAndIndexWithPriority(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority);
             if (returnValue != ZE_RESULT_SUCCESS) {
                 return commandList;
             }
@@ -191,7 +197,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->csr = csr;
         commandList->internalUsage = internalUsage;
         commandList->cmdListType = CommandListType::typeImmediate;
-        commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
+        commandList->isSyncModeQueue = (cmdQdesc.mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
 
         if (!internalUsage) {
             auto &productHelper = device->getProductHelper();
@@ -209,7 +215,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         csr->initDirectSubmission();
         returnValue = commandList->initialize(device, engineGroupType, 0);
 
-        if ((desc->flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER) || (NEO::debugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1)) {
+        if ((cmdQdesc.flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER) || (NEO::debugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1)) {
             commandList->enableInOrderExecution();
         }
 
@@ -219,7 +225,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             return commandList;
         }
 
-        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, commandList->isCopyOnly(), internalUsage, true, returnValue);
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, &cmdQdesc, commandList->isCopyOnly(), internalUsage, true, returnValue);
         if (!commandQueue) {
             commandList->destroy();
             commandList = nullptr;
@@ -230,7 +236,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->isTbxMode = csr->isTbxMode();
         commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
 
-        commandList->isBcsSplitNeeded = deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, desc, csr);
+        commandList->isBcsSplitNeeded = deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, &cmdQdesc, csr);
 
         commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, device->getProductHelper());
 
