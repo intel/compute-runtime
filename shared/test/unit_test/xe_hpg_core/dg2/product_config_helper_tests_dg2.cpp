@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -249,7 +249,7 @@ DG2TEST_F(ProductHelperTestDg2, whenAdjustingDefaultEngineTypeThenSelectEngineTy
             hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
-            gfxCoreHelper.adjustDefaultEngineType(&hwInfo, productHelper);
+            gfxCoreHelper.adjustDefaultEngineType(&hwInfo, productHelper, nullptr);
             if (DG2::isG10(hwInfo) && revision < REVISION_B) {
                 EXPECT_EQ(aub_stream::ENGINE_RCS, hwInfo.capabilityTable.defaultEngineType);
             } else {

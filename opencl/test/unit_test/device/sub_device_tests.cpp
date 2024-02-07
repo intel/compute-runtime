@@ -377,7 +377,7 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         hwInfo->capabilityTable.blitterOperationsSupported = true;
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        gfxCoreHelper.adjustDefaultEngineType(hwInfo, productHelper);
+        gfxCoreHelper.adjustDefaultEngineType(hwInfo, productHelper, rootDeviceEnvironment.ailConfiguration.get());
 
         if (!multiCcsDevice(rootDeviceEnvironment, numCcs)) {
             return false;

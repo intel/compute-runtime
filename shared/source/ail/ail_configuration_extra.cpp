@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,8 @@ std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blen
                                                                           {"Adobe Premiere Pro", {AILEnumeration::enableLegacyPlatformName}}};
 
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL = {{"svchost", {AILEnumeration::disableDirectSubmission}}};
+
+const std::set<std::string_view> applicationsForceRcsDg2 = {};
 
 const std::set<std::string_view> applicationsContextSyncFlag = {};
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -61,6 +62,33 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDon
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[5].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[6].first);
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);
+}
+
+DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledWhenAilForceToUseRcsThenRcsIsSetAndCssIsNot) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 1;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    auto ailConfiguration = std::make_unique<MockAILConfiguration>();
+    ailConfiguration->forceRcsValue = true;
+    auto &rootDeviceEnvironment = *device->getExecutionEnvironment()->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.ailConfiguration.reset(ailConfiguration.release());
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+    EXPECT_EQ(5u, engines.size());
+
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0].first);
+    EXPECT_EQ(getChosenEngineType(hwInfo), engines[1].first);
+    EXPECT_EQ(getChosenEngineType(hwInfo), engines[2].first);
+    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[3].first);
+    EXPECT_EQ(aub_stream::ENGINE_BCS, engines[4].first);
 }
 
 DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEnginesCalledThenSetRcs) {

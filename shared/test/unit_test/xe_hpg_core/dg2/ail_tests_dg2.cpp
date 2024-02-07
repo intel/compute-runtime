@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,4 +117,5 @@ HWTEST2_F(AILTestsDg2, givenApplicationNameRequiringCrossTargetCompabilityWhenCa
         EXPECT_TRUE(ail.useLegacyValidationLogic());
     }
 }
+
 } // namespace NEO

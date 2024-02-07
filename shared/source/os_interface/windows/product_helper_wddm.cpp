@@ -23,7 +23,7 @@ int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInf
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.flags.ftrSVM;
 
-    gfxCoreHelper.adjustDefaultEngineType(outHwInfo, *this);
+    gfxCoreHelper.adjustDefaultEngineType(outHwInfo, *this, rootDeviceEnvironment.ailConfiguration.get());
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     this->setCapabilityCoherencyFlag(*outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);

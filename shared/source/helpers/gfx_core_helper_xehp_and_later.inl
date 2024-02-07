@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
@@ -64,14 +65,15 @@ const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstanc
 
     EngineInstancesContainer engines;
 
-    if (hwInfo.featureTable.flags.ftrCCSNode) {
+    if (hwInfo.featureTable.flags.ftrCCSNode && !rootDeviceEnvironment.getAILConfigurationHelper()->forceRcs()) {
         for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
             engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::regular});
         }
     }
 
     if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) ||
-        hwInfo.featureTable.flags.ftrRcsNode) {
+        hwInfo.featureTable.flags.ftrRcsNode ||
+        rootDeviceEnvironment.getAILConfigurationHelper()->forceRcs()) {
         engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::regular});
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,11 @@ inline bool AILConfigurationHw<product>::isContextSyncFlagRequired() {
 template <PRODUCT_FAMILY product>
 inline bool AILConfigurationHw<product>::useLegacyValidationLogic() {
     return false;
+}
+
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::forceRcs() {
+    return shouldForceRcs;
 }
 
 } // namespace NEO

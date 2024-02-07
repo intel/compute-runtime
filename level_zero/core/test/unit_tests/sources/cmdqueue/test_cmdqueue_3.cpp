@@ -644,7 +644,7 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
 
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
         auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
-        gfxCoreHelper.adjustDefaultEngineType(hwInfo, productHelper);
+        gfxCoreHelper.adjustDefaultEngineType(hwInfo, productHelper, rootDeviceEnvironment.ailConfiguration.get());
 
         if (!multiCcsDevice(rootDeviceEnvironment, numCcs)) {
             return false;

@@ -44,6 +44,7 @@ struct PipeControlArgs;
 struct KernelDescriptor;
 class ProductHelper;
 class GfxCoreHelper;
+class AILConfiguration;
 
 using EngineInstancesContainer = StackVec<EngineTypeUsage, 32>;
 using GfxCoreHelperCreateFunctionType = std::unique_ptr<GfxCoreHelper> (*)();
@@ -61,7 +62,7 @@ class GfxCoreHelper {
     virtual size_t getKernelIsaPointerAlignment() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
-    virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) = 0;
+    virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
@@ -237,7 +238,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
-    void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) override;
+    void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) override;
 
     SipKernelType getSipKernelType(bool debuggingActive) const override;
 

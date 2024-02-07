@@ -149,7 +149,7 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
-    gfxCoreHelper.adjustDefaultEngineType(outHwInfo, *this);
+    gfxCoreHelper.adjustDefaultEngineType(outHwInfo, *this, rootDeviceEnvironment.ailConfiguration.get());
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     drm->checkQueueSliceSupport();

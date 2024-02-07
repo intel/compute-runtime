@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,8 @@ class AILConfiguration {
 
     virtual bool useLegacyValidationLogic() = 0;
 
+    virtual bool forceRcs() = 0;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
@@ -81,6 +83,7 @@ class AILConfiguration {
 };
 
 extern const std::set<std::string_view> applicationsContextSyncFlag;
+extern const std::set<std::string_view> applicationsForceRcsDg2;
 
 template <PRODUCT_FAMILY product>
 class AILConfigurationHw : public AILConfiguration {
@@ -96,6 +99,9 @@ class AILConfigurationHw : public AILConfiguration {
     bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override;
     bool isContextSyncFlagRequired() override;
     bool useLegacyValidationLogic() override;
+    bool forceRcs() override;
+
+    bool shouldForceRcs = false;
 };
 
 template <PRODUCT_FAMILY product>

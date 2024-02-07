@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,10 @@ class MockAILConfiguration : public AILConfiguration {
     bool fallbackToLegacyValidationLogic = false;
     bool useLegacyValidationLogic() override {
         return fallbackToLegacyValidationLogic;
+    }
+    bool forceRcsValue = false;
+    bool forceRcs() override {
+        return forceRcsValue;
     }
 
   protected:

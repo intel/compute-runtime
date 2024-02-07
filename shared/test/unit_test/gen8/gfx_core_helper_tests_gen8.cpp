@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ GEN8TEST_F(GfxCoreHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIs
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &productHelper = getHelper<ProductHelper>();
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper, nullptr);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 

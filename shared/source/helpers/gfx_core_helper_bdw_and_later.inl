@@ -13,7 +13,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) {
+void GfxCoreHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper, AILConfiguration *ailConfiguration) {
 }
 
 template <typename GfxFamily>
