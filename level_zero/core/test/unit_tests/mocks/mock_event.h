@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -159,6 +159,15 @@ class MockEvent : public ::L0::Event {
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t queryKernelTimestampsExt(L0::Device *device, uint32_t *count, ze_event_query_kernel_timestamps_results_ext_properties_t *pResults) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t getEventPool(ze_event_pool_handle_t *phEventPool) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t getSignalScope(ze_event_scope_flags_t *pSignalScope) override {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t getWaitScope(ze_event_scope_flags_t *pWaitScope) override {
         return ZE_RESULT_SUCCESS;
     }
     uint32_t getPacketsUsedInLastKernel() override { return 1; }

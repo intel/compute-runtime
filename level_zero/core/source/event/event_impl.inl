@@ -113,6 +113,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->enableInterruptMode();
     }
 
+    event->setEventPool(eventPool);
     return event;
 }
 
@@ -741,6 +742,24 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestampsExt(Device *device, uint32_
         getSynchronizedKernelTimestamps(pResults->pSynchronizedTimestampsBuffer, *pCount, pResults->pKernelTimestampsBuffer);
     }
     return status;
+}
+
+template <typename TagSizeT>
+ze_result_t EventImp<TagSizeT>::getEventPool(ze_event_pool_handle_t *phEventPool) {
+    *phEventPool = eventPool;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <typename TagSizeT>
+ze_result_t EventImp<TagSizeT>::getSignalScope(ze_event_scope_flags_t *pSignalScope) {
+    *pSignalScope = signalScope;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <typename TagSizeT>
+ze_result_t EventImp<TagSizeT>::getWaitScope(ze_event_scope_flags_t *pWaitScope) {
+    *pWaitScope = waitScope;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <typename TagSizeT>
