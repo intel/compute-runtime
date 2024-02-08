@@ -540,6 +540,10 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
+    if (!LevelZeroBlackBoxTests::checkImageSupport(device, false, true, false)) {
+        return 0;
+    }
+
     testAppendImageViewNV12Copy(context, device, outputValidationSuccessful);
     if (outputValidationSuccessful || aubMode) {
         testAppendImageViewRGBPCopy(context, device, outputValidationSuccessful);

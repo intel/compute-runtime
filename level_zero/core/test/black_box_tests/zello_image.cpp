@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -219,6 +219,10 @@ int main(int argc, char *argv[]) {
     ze_command_queue_handle_t cmdQueue;
     uint32_t cmdQueueOrdinal;
     LevelZeroBlackBoxTests::initialize(driver, context, device, cmdQueue, cmdQueueOrdinal);
+
+    if (!LevelZeroBlackBoxTests::checkImageSupport(device, do1D, do2D, do3D)) {
+        return 0;
+    }
 
     bool success1D = false;
     bool success2D = false;

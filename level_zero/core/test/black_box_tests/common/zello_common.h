@@ -119,6 +119,8 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
 
 void initialize(ze_driver_handle_t &driver, ze_context_handle_t &context, ze_device_handle_t &device, ze_command_queue_handle_t &cmdQueue, uint32_t &ordinal);
 
+bool checkImageSupport(ze_device_handle_t hDevice, bool test1D, bool test2D, bool test3D);
+
 void teardown(ze_context_handle_t context, ze_command_queue_handle_t cmdQueue);
 
 void printDeviceProperties(const ze_device_properties_t &props);

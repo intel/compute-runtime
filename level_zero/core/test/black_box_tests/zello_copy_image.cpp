@@ -120,6 +120,10 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
+    if (!LevelZeroBlackBoxTests::checkImageSupport(device, false, true, false)) {
+        return 0;
+    }
+
     testAppendImageCopy(context, device, outputValidationSuccessful);
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
