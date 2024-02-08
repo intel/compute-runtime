@@ -10,7 +10,6 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -774,7 +773,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenI
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
     NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
-    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs)) {
         itor++;
     }
     EXPECT_NE(cmdList.end(), itor);
@@ -816,7 +815,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
     NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
-    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs)) {
         itor++;
     }
     EXPECT_NE(cmdList.end(), itor);

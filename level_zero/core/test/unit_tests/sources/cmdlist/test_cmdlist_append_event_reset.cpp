@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -478,7 +477,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         expectedSize));
 
     uint32_t miFlushCountFactor = 1;
-    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > NEO::BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs)) {
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
         miFlushCountFactor = 2;
     }
     auto expectedMiFlushCount = packets * miFlushCountFactor;

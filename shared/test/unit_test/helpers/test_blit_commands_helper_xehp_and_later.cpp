@@ -15,10 +15,8 @@
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
-#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
@@ -513,7 +511,8 @@ class TestDummyBlitMockProductHelper : public ProductHelperHw<gfxProduct> {
     uint32_t dummyBlitRequired = true;
 };
 
-HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaRequiredThenDummyBlitIsProgrammedCorrectly, IsXeHPOrAbove) {
+HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaRequiredThenColorBltProgrammedCorrectly, IsXeHPOrAbove) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceDummyBlitWa.set(-1);
 
@@ -545,19 +544,30 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaRequiredThenDummyBlitI
     EXPECT_EQ(0u, stream.getUsed());
 
     EncodeDummyBlitWaArgs waArgsWhenBcs{true, &rootDeviceEnvironment};
+    expectedSize = sizeof(XY_COLOR_BLT);
     val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenBcs);
-    EXPECT_NE(0u, val);
+    EXPECT_EQ(expectedSize, val);
     BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenBcs);
     EXPECT_NE(nullptr, rootDeviceEnvironment.getDummyAllocation());
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(stream);
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
+    auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
 
-    auto cmdIterator = hwParser.cmdList.begin();
-    UnitTestHelper<FamilyType>::verifyDummyBlitWa(&rootDeviceEnvironment, cmdIterator);
+    EXPECT_EQ(rootDeviceEnvironment.getDummyAllocation()->getGpuAddress(), cmd->getDestinationBaseAddress());
+    EXPECT_EQ(XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR, cmd->getColorDepth());
+    EXPECT_EQ(1u, cmd->getDestinationX2CoordinateRight());
+    EXPECT_EQ(4u, cmd->getDestinationY2CoordinateBottom());
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::pageSize), cmd->getDestinationPitch());
+    EXPECT_EQ(XY_COLOR_BLT::DESTINATION_SURFACE_TYPE::DESTINATION_SURFACE_TYPE_2D, cmd->getDestinationSurfaceType());
 }
 
-HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaSetThenDummyBlitProgrammedCorrectly, IsXeHPOrAbove) {
+HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaSetThenColorBltProgrammedCorrectly, IsXeHPOrAbove) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceDummyBlitWa.set(1);
 
@@ -584,41 +594,30 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaSetThenDummyBlitP
     EXPECT_EQ(0u, stream.getUsed());
 
     EncodeDummyBlitWaArgs waArgsWhenBcs{true, &rootDeviceEnvironment};
+    expectedSize = sizeof(XY_COLOR_BLT);
     val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenBcs);
-    EXPECT_NE(0u, val);
+    EXPECT_EQ(expectedSize, val);
     BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenBcs);
     EXPECT_NE(nullptr, rootDeviceEnvironment.getDummyAllocation());
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(stream);
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
+    auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
 
-    auto cmdIterator = hwParser.cmdList.begin();
-    UnitTestHelper<FamilyType>::verifyDummyBlitWa(&rootDeviceEnvironment, cmdIterator);
-}
-
-struct DummyBlitWithColorBlt {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        return IsXeHPOrAbove::isMatched<productFamily>() && IsNotXeHpcCore::isMatched<productFamily>();
-    }
-};
-using DummyBlitWithMemSet = IsXeHpcCore;
-
-HWTEST2_F(BlitTests, whenGettingSizeForDummyBlitThenColorBltSizeIsReturned, DummyBlitWithColorBlt) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.ForceDummyBlitWa.set(1);
-    EncodeDummyBlitWaArgs waArgs{true, &pDevice->getRootDeviceEnvironmentRef()};
-    EXPECT_EQ(sizeof(typename FamilyType::XY_COLOR_BLT), BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs));
-}
-
-HWTEST2_F(BlitTests, whenGettingSizeForDummyBlitThenMemSetSizeIsReturned, DummyBlitWithMemSet) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.ForceDummyBlitWa.set(1);
-    EncodeDummyBlitWaArgs waArgs{true, &pDevice->getRootDeviceEnvironmentRef()};
-    EXPECT_EQ(sizeof(typename FamilyType::MEM_SET), BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs));
+    EXPECT_EQ(rootDeviceEnvironment.getDummyAllocation()->getGpuAddress(), cmd->getDestinationBaseAddress());
+    EXPECT_EQ(XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR, cmd->getColorDepth());
+    EXPECT_EQ(1u, cmd->getDestinationX2CoordinateRight());
+    EXPECT_EQ(4u, cmd->getDestinationY2CoordinateBottom());
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::pageSize), cmd->getDestinationPitch());
+    EXPECT_EQ(XY_COLOR_BLT::DESTINATION_SURFACE_TYPE::DESTINATION_SURFACE_TYPE_2D, cmd->getDestinationSurfaceType());
 }
 
 HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaNotRequiredThenAdditionalCommandsAreNotProgrammed, IsXeHPOrAbove) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceDummyBlitWa.set(-1);
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());

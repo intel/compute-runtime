@@ -119,23 +119,4 @@ size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize(uint32_t iddCount) {
     return 0;
 }
 
-template <typename GfxFamily>
-void UnitTestHelper<GfxFamily>::verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator) {
-    const auto &productHelper = rootDeviceEnvironment->getProductHelper();
-    if (productHelper.isDummyBlitWaRequired()) {
-        using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
-        auto dummyBltCmd = genCmdCast<XY_COLOR_BLT *>(*(cmdIterator++));
-        EXPECT_NE(nullptr, dummyBltCmd);
-
-        auto expectedDestinationBaseAddress = rootDeviceEnvironment->getDummyAllocation()->getGpuAddress();
-
-        EXPECT_EQ(expectedDestinationBaseAddress, dummyBltCmd->getDestinationBaseAddress());
-        EXPECT_EQ(XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR, dummyBltCmd->getColorDepth());
-        EXPECT_EQ(1u, dummyBltCmd->getDestinationX2CoordinateRight());
-        EXPECT_EQ(4u, dummyBltCmd->getDestinationY2CoordinateBottom());
-        EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::pageSize), dummyBltCmd->getDestinationPitch());
-        EXPECT_EQ(XY_COLOR_BLT::DESTINATION_SURFACE_TYPE::DESTINATION_SURFACE_TYPE_2D, dummyBltCmd->getDestinationSurfaceType());
-    }
-}
-
 } // namespace NEO

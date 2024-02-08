@@ -199,9 +199,4 @@ PVCTEST_F(GfxCoreHelperTestsPvc, GivenCooperativeEngineSupportedAndNotUsedWhenAd
         }
     }
 }
-PVCTEST_F(GfxCoreHelperTestsPvc, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue) {
-    auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.isDummyBlitWaRequired());
-}
-
 } // namespace NEO

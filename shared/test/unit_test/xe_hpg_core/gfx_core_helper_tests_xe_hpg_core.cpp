@@ -142,6 +142,11 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSize
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
 }
 
+XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue) {
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.isDummyBlitWaRequired());
+}
+
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCheckTimestampWaitSupportForQueuesThenReturnFalse) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isTimestampWaitSupportedForQueues());
