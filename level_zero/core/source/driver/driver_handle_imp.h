@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,11 @@
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/get_extension_function_lookup_map.h"
 #include "level_zero/include/ze_intel_gpu.h"
 
 #include <map>
 #include <mutex>
+#include <unordered_map>
 
 namespace L0 {
 class HostPointerManager;
@@ -126,8 +126,6 @@ struct DriverHandleImp : public DriverHandle {
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
-    // Experimental functions
-    std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
 
     std::mutex sharedMakeResidentAllocationsLock;
     std::map<void *, NEO::GraphicsAllocation *> sharedMakeResidentAllocations;

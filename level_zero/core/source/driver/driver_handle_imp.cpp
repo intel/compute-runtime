@@ -26,6 +26,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
+#include "level_zero/core/source/driver/extension_function_address.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/image/image.h"
@@ -128,9 +129,8 @@ ze_result_t DriverHandleImp::getIPCProperties(ze_driver_ipc_properties_t *pIPCPr
 }
 
 ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
-    auto funcAddr = extensionFunctionsLookupMap.find(std::string(pFuncName));
-    if (funcAddr != extensionFunctionsLookupMap.end()) {
-        *pfunc = funcAddr->second;
+    *pfunc = ExtensionFunctionAddressHelper::getExtensionFunctionAddress(pFuncName);
+    if (*pfunc) {
         return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -253,8 +253,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
 
     this->numDevices = static_cast<uint32_t>(this->devices.size());
-
-    extensionFunctionsLookupMap = getExtensionFunctionsLookupMap();
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
-#include "level_zero/core/source/get_extension_function_lookup_map.h"
+#include "level_zero/core/source/driver/extension_function_address.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/os_sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
@@ -49,9 +49,8 @@ ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executi
 }
 
 ze_result_t SysmanDriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
-    auto funcAddr = extensionFunctionsLookupMap.find(std::string(pFuncName));
-    if (funcAddr != extensionFunctionsLookupMap.end()) {
-        *pfunc = funcAddr->second;
+    *pfunc = ExtensionFunctionAddressHelper::getExtensionFunctionAddress(pFuncName);
+    if (*pfunc) {
         return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -69,7 +68,6 @@ SysmanDriverHandle *SysmanDriverHandle::create(NEO::ExecutionEnvironment &execut
         return nullptr;
     }
 
-    driverHandle->extensionFunctionsLookupMap = getExtensionFunctionsLookupMap();
     globalSysmanDriver = driverHandle;
     *returnValue = res;
     return driverHandle;

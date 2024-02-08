@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,6 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     std::vector<SysmanDevice *> sysmanDevices;
     uint32_t numDevices = 0;
     ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) override;
-    std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
     struct OsSysmanDriver *pOsSysmanDriver = nullptr;
 };
 
