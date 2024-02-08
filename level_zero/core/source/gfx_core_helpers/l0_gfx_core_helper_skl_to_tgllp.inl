@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,11 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsPrimaryBatchBufferCmdList() cons
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::platformSupportsImmediateComputeFlushTask() const {
     return false;
+}
+
+template <typename Family>
+uint32_t L0GfxCoreHelperHw<Family>::getCmdListUpdateCapabilities() const {
+    return 0;
 }
 
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,6 +88,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual uint32_t getCmdListWaitOnMemoryDataSize() const = 0;
     virtual bool hasUnifiedPostSyncAllocationLayout() const = 0;
     virtual uint32_t getImmediateWritePostSyncOffset() const = 0;
+    virtual uint32_t getCmdListUpdateCapabilities() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -129,6 +130,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint32_t getCmdListWaitOnMemoryDataSize() const override;
     bool hasUnifiedPostSyncAllocationLayout() const override;
     uint32_t getImmediateWritePostSyncOffset() const override;
+    uint32_t getCmdListUpdateCapabilities() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;
