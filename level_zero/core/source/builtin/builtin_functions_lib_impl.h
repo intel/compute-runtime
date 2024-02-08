@@ -27,6 +27,7 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     struct BuiltinData;
     BuiltinFunctionsLibImpl(Device *device, NEO::BuiltIns *builtInsLib);
     ~BuiltinFunctionsLibImpl() override {
+        this->ensureInitCompletionImpl();
         builtins->reset();
         imageBuiltins->reset();
     }
@@ -36,6 +37,7 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     void initBuiltinKernel(Builtin builtId) override;
     void initBuiltinImageKernel(ImageBuiltin func) override;
     void ensureInitCompletion() override;
+    void ensureInitCompletionImpl();
     MOCKABLE_VIRTUAL std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName);
 
     static bool initBuiltinsAsyncEnabled(Device *device);
