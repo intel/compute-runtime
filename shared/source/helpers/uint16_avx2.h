@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,8 +53,11 @@ struct uint16x16_t { // NOLINT(readability-identifier-naming)
     }
 
     inline void load(const void *alignedPtr) {
-        DEBUG_BREAK_IF(!isAligned<32>(alignedPtr));
-        value = _mm256_load_si256(reinterpret_cast<const __m256i *>(alignedPtr)); // AVX
+        if (isAligned<32>(alignedPtr)) {
+            value = _mm256_load_si256(reinterpret_cast<const __m256i *>(alignedPtr)); // AVX
+        } else {
+            loadUnaligned(alignedPtr);
+        }
     }
 
     inline void loadUnaligned(const void *ptr) {
@@ -62,8 +65,11 @@ struct uint16x16_t { // NOLINT(readability-identifier-naming)
     }
 
     inline void store(void *alignedPtr) {
-        DEBUG_BREAK_IF(!isAligned<32>(alignedPtr));
-        _mm256_store_si256(reinterpret_cast<__m256i *>(alignedPtr), value); // AVX
+        if (isAligned<32>(alignedPtr)) {
+            _mm256_store_si256(reinterpret_cast<__m256i *>(alignedPtr), value); // AVX
+        } else {
+            storeUnaligned(alignedPtr);
+        }
     }
 
     inline void storeUnaligned(void *ptr) {
