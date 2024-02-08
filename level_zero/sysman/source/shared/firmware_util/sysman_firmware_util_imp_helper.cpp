@@ -214,7 +214,7 @@ ze_result_t FirmwareUtilImp::fwFlashIafPsc(void *pImage, uint32_t size) {
     if (iafPscUpdate == nullptr) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
-    int ret = iafPscUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, &flashProgress);
+    int ret = iafPscUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, this);
     if (ret != IGSC_SUCCESS) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }

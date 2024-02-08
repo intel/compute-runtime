@@ -132,9 +132,9 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     static std::string fwUtilLibraryName;
     bool loadEntryPoints();
     bool loadEntryPointsExt();
+    void updateFirmwareFlashProgress(uint32_t percent);
 
     NEO::OsLibrary *libraryHandle = nullptr;
-    FlashProgressInfo flashProgress{};
 
   protected:
     ze_result_t getFirstDevice(igsc_device_info *);
@@ -161,6 +161,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     uint8_t device = 0;
     uint8_t function = 0;
     std::mutex fwLock;
+    FlashProgressInfo flashProgress{};
 };
 } // namespace Sysman
 } // namespace L0

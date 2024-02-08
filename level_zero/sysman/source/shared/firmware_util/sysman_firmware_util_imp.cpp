@@ -60,14 +60,18 @@ bool FirmwareUtilImp::loadEntryPoints() {
 void firmwareFlashProgressFunc(uint32_t done, uint32_t total, void *ctx) {
     if (ctx != nullptr) {
         uint32_t percent = (done * 100) / total;
-        FlashProgressInfo *pFlashProgress = static_cast<FlashProgressInfo *>(ctx);
-        const std::lock_guard<std::mutex> lock(pFlashProgress->fwProgressLock);
-        pFlashProgress->completionPercent = percent;
+        FirmwareUtilImp *pFirmwareUtilImp = static_cast<FirmwareUtilImp *>(ctx);
+        pFirmwareUtilImp->updateFirmwareFlashProgress(percent);
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
     }
 }
 
 FirmwareUtilImp::OsLibraryLoadPtr FirmwareUtilImp::osLibraryLoadFunction(NEO::OsLibrary::load);
+
+void FirmwareUtilImp::updateFirmwareFlashProgress(uint32_t percent) {
+    const std::lock_guard<std::mutex> lock(flashProgress.fwProgressLock);
+    flashProgress.completionPercent = percent;
+}
 
 ze_result_t FirmwareUtilImp::getFlashFirmwareProgress(uint32_t *pCompletionPercent) {
     const std::lock_guard<std::mutex> lock(flashProgress.fwProgressLock);
@@ -159,7 +163,7 @@ ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
 
 ze_result_t FirmwareUtilImp::fwFlashGSC(void *pImage, uint32_t size) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
-    int ret = deviceFwUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, &flashProgress);
+    int ret = deviceFwUpdate(&fwDeviceHandle, static_cast<const uint8_t *>(pImage), size, firmwareFlashProgressFunc, this);
     if (ret != IGSC_SUCCESS) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -180,10 +184,10 @@ ze_result_t FirmwareUtilImp::fwFlashOprom(void *pImage, uint32_t size) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
     if (opromImgType & IGSC_OPROM_DATA) {
-        retData = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_DATA, opromImg, firmwareFlashProgressFunc, &flashProgress);
+        retData = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_DATA, opromImg, firmwareFlashProgressFunc, this);
     }
     if (opromImgType & IGSC_OPROM_CODE) {
-        retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, firmwareFlashProgressFunc, &flashProgress);
+        retCode = deviceOpromUpdate(&fwDeviceHandle, IGSC_OPROM_CODE, opromImg, firmwareFlashProgressFunc, this);
     }
     if ((retData != IGSC_SUCCESS) && (retCode != IGSC_SUCCESS)) {
         return ZE_RESULT_ERROR_UNINITIALIZED;

@@ -440,7 +440,7 @@ TEST(FwGetMemHealthIndicatorTest, GivenFwGetHealthIndicatorProcAddrIsNullWhenMem
 TEST(FwUtilImpProgressTest, GivenFirmwareUtilImpWhenSettingFirmwareProgressPercentThenCorrectProgressIsReturned) {
     L0::Sysman::FirmwareUtilImp *pFwUtilImp = new L0::Sysman::FirmwareUtilImp(0, 0, 0, 0);
     uint32_t mockProgressPercent = 55;
-    pFwUtilImp->flashProgress.completionPercent = mockProgressPercent;
+    pFwUtilImp->updateFirmwareFlashProgress(mockProgressPercent);
     uint32_t percent = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFwUtilImp->getFlashFirmwareProgress(&percent));
     EXPECT_EQ(mockProgressPercent, percent);
@@ -452,7 +452,7 @@ TEST(FwUtilImpProgressTest, GivenFirmwareUtilImpWhenSettingProgressThroughCallba
     uint32_t mockDone = 55;
     uint32_t mockTotal = 100;
 
-    firmwareFlashProgressFunc(mockDone, mockTotal, &pFwUtilImp->flashProgress);
+    firmwareFlashProgressFunc(mockDone, mockTotal, pFwUtilImp);
 
     uint32_t percent = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pFwUtilImp->getFlashFirmwareProgress(&percent));
