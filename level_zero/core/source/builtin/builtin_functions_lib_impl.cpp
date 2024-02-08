@@ -275,6 +275,10 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
 }
 
 void BuiltinFunctionsLibImpl::ensureInitCompletion() {
+    this->ensureInitCompletionImpl();
+}
+
+void BuiltinFunctionsLibImpl::ensureInitCompletionImpl() {
     if (!this->initAsyncComplete) {
         while (!this->initAsync.load()) {
         }
