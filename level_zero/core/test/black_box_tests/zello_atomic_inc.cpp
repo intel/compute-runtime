@@ -32,14 +32,12 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
 
     constexpr size_t allocSize = 4096;
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-    deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
-    deviceDesc.ordinal = 0;
 
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
     void *dstBuffer = nullptr;
-    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 4096, &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc, allocSize, 4096, 0, &dstBuffer));
 
     memset(dstBuffer, 0, allocSize);
 
