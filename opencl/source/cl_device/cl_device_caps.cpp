@@ -14,6 +14,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/hw_info_helper.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/driver_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -161,10 +162,12 @@ void ClDevice::initializeCaps() {
         deviceInfo.singleFpAtomicCapabilities = defaultFpAtomicCapabilities;
         deviceInfo.halfFpAtomicCapabilities = 0;
         if (ocl21FeaturesEnabled && hwInfo.capabilityTable.supportsFloatAtomics) {
-            deviceInfo.singleFpAtomicCapabilities |= static_cast<cl_device_fp_atomic_capabilities_ext>(
-                CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
-            deviceInfo.halfFpAtomicCapabilities |= static_cast<cl_device_fp_atomic_capabilities_ext>(
-                CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
+            uint32_t fp16Caps = 0u;
+            uint32_t fp32Caps = 0u;
+            productHelper.getKernelFp16AtomicCapabilities(hwInfo, fp16Caps);
+            productHelper.getKernelFp32AtomicCapabilities(hwInfo, fp32Caps);
+            deviceInfo.halfFpAtomicCapabilities = fp16Caps;
+            deviceInfo.singleFpAtomicCapabilities = fp32Caps;
         }
 
         const cl_device_fp_atomic_capabilities_ext baseFP64AtomicCapabilities = hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics || hwInfo.capabilityTable.supportsFloatAtomics ? defaultFpAtomicCapabilities : 0;
@@ -174,6 +177,12 @@ void ClDevice::initializeCaps() {
                                                                                                                                                         : 0;
 
         deviceInfo.doubleFpAtomicCapabilities = deviceInfo.doubleFpConfig != 0u ? baseFP64AtomicCapabilities | optionalFP64AtomicCapabilities : 0;
+        static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT == FpAtomicExtFlags::globalLoadStore, "Mismatch between internal and API - specific capabilities.");
+        static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT == FpAtomicExtFlags::globalAdd, "Mismatch between internal and API - specific capabilities.");
+        static_assert(CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT == FpAtomicExtFlags::globalMinMax, "Mismatch between internal and API - specific capabilities.");
+        static_assert(CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT == FpAtomicExtFlags::localLoadStore, "Mismatch between internal and API - specific capabilities.");
+        static_assert(CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT == FpAtomicExtFlags::localAdd, "Mismatch between internal and API - specific capabilities.");
+        static_assert(CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT == FpAtomicExtFlags::localMinMax, "Mismatch between internal and API - specific capabilities.");
     }
 
     if (debugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {
