@@ -673,4 +673,46 @@ void printBuildLog(const char *strLog) {
               << strLog << std::endl;
 }
 
+bool checkExtensionIsPresent(ze_driver_handle_t &driverHandle, std::vector<ze_driver_extension_properties_t> &extensionsToCheck) {
+    uint32_t numMatchedExtensions = 0;
+    uint32_t extensionsCount = 0;
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, nullptr));
+    if (extensionsCount == 0) {
+        std::cerr << "No extensions supported on this driver" << std::endl;
+        return false;
+    }
+
+    std::vector<ze_driver_extension_properties_t> extensionsSupported(extensionsCount);
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, extensionsSupported.data()));
+
+    for (uint32_t i = 0; i < extensionsCount; i++) {
+        uint32_t supportedVersion = extensionsSupported[i].version;
+        if (verbose) {
+            std::cout << "Extension #" << i << " name: " << extensionsSupported[i].name << " version: " << ZE_MAJOR_VERSION(supportedVersion) << "." << ZE_MINOR_VERSION(supportedVersion) << std::endl;
+        }
+
+        for (const auto &checkedExtension : extensionsToCheck) {
+            std::string checkedExtensionName = checkedExtension.name;
+            if (strncmp(extensionsSupported[i].name, checkedExtensionName.c_str(), checkedExtensionName.size()) == 0) {
+                uint32_t version = checkedExtension.version;
+                if (verbose) {
+                    std::cout << "Checked extension: " << checkedExtensionName << " found in the driver." << std::endl;
+                }
+                if (version <= supportedVersion) {
+                    if (verbose) {
+                        std::cout << "Checked extension version: " << ZE_MAJOR_VERSION(version) << "." << ZE_MINOR_VERSION(version) << " is equal or lower than present." << std::endl;
+                    }
+                    numMatchedExtensions++;
+                } else {
+                    if (verbose) {
+                        std::cout << "Checked extension version: " << ZE_MAJOR_VERSION(version) << "." << ZE_MINOR_VERSION(version) << " is greater than present." << std::endl;
+                    }
+                }
+            }
+        }
+    }
+
+    return (numMatchedExtensions == extensionsToCheck.size());
+}
+
 } // namespace LevelZeroBlackBoxTests

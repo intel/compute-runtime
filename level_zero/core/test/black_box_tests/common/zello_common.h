@@ -277,4 +277,6 @@ void printBuildLog(std::string &buildLog);
 
 void printBuildLog(const char *strLog);
 
+bool checkExtensionIsPresent(ze_driver_handle_t &driverHandle, std::vector<ze_driver_extension_properties_t> &extensionsToCheck);
+
 } // namespace LevelZeroBlackBoxTests

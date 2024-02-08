@@ -183,20 +183,17 @@ int main(int argc, char *argv[]) {
         std::terminate();
     }
 
-    std::vector<ze_driver_extension_properties_t> extensionsSupported(extensionsCount);
-    SUCCESS_OR_TERMINATE(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, extensionsSupported.data()));
-    bool globalOffsetExtensionFound = false;
     std::string globalOffsetName = "ZE_experimental_global_offset";
-    for (uint32_t i = 0; i < extensionsSupported.size(); i++) {
-        if (LevelZeroBlackBoxTests::verbose) {
-            std::cout << "Extension #" << i << " name : " << extensionsSupported[i].name << " version : " << extensionsSupported[i].version << std::endl;
-        }
-        if (strncmp(extensionsSupported[i].name, globalOffsetName.c_str(), globalOffsetName.size()) == 0) {
-            if (extensionsSupported[i].version == ZE_GLOBAL_OFFSET_EXP_VERSION_1_0) {
-                globalOffsetExtensionFound = true;
-            }
-        }
-    }
+
+    ze_driver_extension_properties_t globalOffsetExtension{};
+
+    strncpy(globalOffsetExtension.name, globalOffsetName.c_str(), globalOffsetName.size());
+    globalOffsetExtension.version = ZE_GLOBAL_OFFSET_EXP_VERSION_1_0;
+
+    std::vector<ze_driver_extension_properties_t> extensionsToCheck;
+    extensionsToCheck.push_back(globalOffsetExtension);
+
+    bool globalOffsetExtensionFound = LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionsToCheck);
     if (globalOffsetExtensionFound == false) {
         std::cerr << "No global offset extension found on this driver\n";
         std::terminate();
