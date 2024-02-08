@@ -486,6 +486,8 @@ int main(int argc, char *argv[]) {
     auto bindlessImages = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "", "--bindless-images");
     AddressingMode mode = bindlessImages ? AddressingMode::bindlessImages : AddressingMode::bindless;
 
+    bool is2dImageSupported = LevelZeroBlackBoxTests::checkImageSupport(device, false, true, false);
+
     for (int i = 0; i < numTests; i++) {
         if (testCase != -1) {
             i = testCase;
@@ -501,7 +503,7 @@ int main(int argc, char *argv[]) {
         case 1:
             std::cout << "\ntest case: testBindlessImages\n"
                       << std::endl;
-            if (!isIntegratedGPU) {
+            if (!isIntegratedGPU && is2dImageSupported) {
                 int defaultImageCount = testCase == 1 ? 4 * 4096 + 8 : 4;
                 auto imageCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--image-count", defaultImageCount);
 
@@ -513,19 +515,19 @@ int main(int argc, char *argv[]) {
 
                 outputValidated &= testBindlessImages(context, device, ss.str(), revisionId, imageCount, mode);
             } else {
-                std::cout << "Skipped on integrated GPU\n";
+                std::cout << "Skipped. testBindlessImages case not supported\n";
             }
             break;
         case 2:
             std::cout << "\ntest case: testBindlessImageSampled\n"
                       << std::endl;
-            if (!isIntegratedGPU) {
+            if (!isIntegratedGPU && is2dImageSupported) {
                 if (bindlessImages) {
                     std::cout << "--bindless-images " << std::endl;
                 }
                 outputValidated &= testBindlessImageSampled(context, device, ss.str(), revisionId, mode);
             } else {
-                std::cout << "Skipped on integrated GPU\n";
+                std::cout << "Skipped. testBindlessImageSampled not supported\n";
             }
             break;
         }
