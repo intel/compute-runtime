@@ -9,6 +9,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -391,6 +392,221 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
         bitmaskSizeOut = bitmaskSizeRet;
     }
     return euControlRetVal;
+}
+
+ze_result_t DebugSessionLinux::readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer,
+                                            const char *&elfData, const uint64_t offset) {
+
+    int retVal = -1;
+    elfData += offset;
+    retVal = memcpy_s(buffer, size, elfData, size);
+    return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+}
+
+ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+
+    if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        status = readDefaultMemory(thread, desc, size, buffer);
+    } else {
+        auto threadId = convertToThreadId(thread);
+        status = slmMemoryAccess<void *, false>(threadId, desc, size, buffer);
+    }
+
+    return status;
+}
+
+ze_result_t DebugSessionLinux::readDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    ze_result_t status = ZE_RESULT_SUCCESS;
+
+    bool isa = tryReadIsa(connectedDevice->getNEODevice()->getDeviceBitfield(), desc, size, buffer, status);
+    if (isa) {
+        return status;
+    }
+
+    bool elf = tryReadElf(desc, size, buffer, status);
+    if (elf) {
+        return status;
+    }
+
+    if (DebugSession::isThreadAll(thread)) {
+        return accessDefaultMemForThreadAll(desc, size, const_cast<void *>(buffer), false);
+    }
+
+    auto threadId = convertToThreadId(thread);
+    auto vmHandle = allThreads[threadId]->getMemoryHandle();
+    if (vmHandle == invalidHandle) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    return readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+}
+
+ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
+    ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+
+    if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        status = writeDefaultMemory(thread, desc, size, buffer);
+    } else {
+        auto threadId = convertToThreadId(thread);
+        status = slmMemoryAccess<const void *, true>(threadId, desc, size, buffer);
+    }
+
+    return status;
+}
+
+ze_result_t DebugSessionLinux::writeDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
+    ze_result_t status = ZE_RESULT_SUCCESS;
+
+    auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
+
+    bool isa = tryWriteIsa(deviceBitfield, desc, size, buffer, status);
+    if (isa) {
+        return status;
+    }
+
+    if (DebugSession::isThreadAll(thread)) {
+        return accessDefaultMemForThreadAll(desc, size, const_cast<void *>(buffer), true);
+    }
+
+    auto threadId = convertToThreadId(thread);
+    auto threadVmHandle = allThreads[threadId]->getMemoryHandle();
+    if (threadVmHandle == invalidHandle) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    return writeGpuMemory(threadVmHandle, static_cast<const char *>(buffer), size, desc->address);
+}
+
+bool DebugSessionLinux::tryWriteIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer, ze_result_t &status) {
+    return tryAccessIsa(deviceBitfield, desc, size, const_cast<void *>(buffer), true, status);
+}
+
+bool DebugSessionLinux::tryReadIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status) {
+    return tryAccessIsa(deviceBitfield, desc, size, buffer, false, status);
+}
+
+bool DebugSessionLinux::tryReadElf(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status) {
+    const char *elfData = nullptr;
+    uint64_t offset = 0;
+
+    std::lock_guard<std::mutex> memLock(asyncThreadMutex);
+
+    status = getElfOffset(desc, size, elfData, offset);
+    if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
+        return true;
+    }
+
+    if (elfData) {
+        status = readElfSpace(desc, size, buffer, elfData, offset);
+        return true;
+    }
+    return false;
+}
+
+ze_result_t DebugSessionLinux::accessDefaultMemForThreadAll(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write) {
+    auto status = ZE_RESULT_ERROR_UNINITIALIZED;
+    std::vector<uint64_t> allVms;
+
+    allVms = getAllMemoryHandles();
+
+    if (allVms.size() > 0) {
+        for (auto vmHandle : allVms) {
+            if (write) {
+                status = writeGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+            } else {
+                status = readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+            }
+            if (status == ZE_RESULT_SUCCESS) {
+                return status;
+            }
+        }
+
+        status = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    return status;
+}
+
+bool DebugSessionLinux::tryAccessIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status) {
+    status = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    uint64_t vmHandle[NEO::EngineLimits::maxHandleCount] = {invalidHandle};
+    uint32_t deviceIndex = Math::getMinLsbSet(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+
+    bool isaAccess = false;
+
+    auto checkIfAnyFailed = [](const auto &result) { return result != ZE_RESULT_SUCCESS; };
+
+    {
+        std::lock_guard<std::mutex> memLock(asyncThreadMutex);
+
+        if (deviceBitfield.count() == 1) {
+            status = getISAVMHandle(deviceIndex, desc, size, vmHandle[deviceIndex]);
+            if (status == ZE_RESULT_SUCCESS) {
+                isaAccess = true;
+            }
+            if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
+                return true;
+            }
+        } else {
+            isaAccess = getIsaInfoForAllInstances(deviceBitfield, desc, size, vmHandle, status);
+        }
+    }
+
+    if (isaAccess && status == ZE_RESULT_SUCCESS) {
+
+        if (write) {
+            if (deviceBitfield.count() == 1) {
+                if (vmHandle[deviceIndex] != invalidHandle) {
+                    status = writeGpuMemory(vmHandle[deviceIndex], static_cast<char *>(buffer), size, desc->address);
+                } else {
+                    status = ZE_RESULT_ERROR_UNINITIALIZED;
+                }
+            } else {
+                std::vector<ze_result_t> results(NEO::EngineLimits::maxHandleCount);
+
+                for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                    results[i] = ZE_RESULT_SUCCESS;
+
+                    if (deviceBitfield.test(i) && vmHandle[i] != invalidHandle) {
+                        results[i] = writeGpuMemory(vmHandle[i], static_cast<char *>(buffer), size, desc->address);
+
+                        if (results[i] != ZE_RESULT_SUCCESS) {
+                            break;
+                        }
+                    }
+                }
+
+                const bool anyFailed = std::any_of(results.begin(), results.end(), checkIfAnyFailed);
+
+                if (anyFailed) {
+                    status = ZE_RESULT_ERROR_UNKNOWN;
+                }
+            }
+        } else {
+
+            if (deviceBitfield.count() > 1) {
+                for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                    if (vmHandle[i] != invalidHandle) {
+                        deviceIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (vmHandle[deviceIndex] != invalidHandle) {
+                status = readGpuMemory(vmHandle[deviceIndex], static_cast<char *>(buffer), size, desc->address);
+            } else {
+                status = ZE_RESULT_ERROR_UNINITIALIZED;
+            }
+        }
+    }
+    return isaAccess;
 }
 
 } // namespace L0

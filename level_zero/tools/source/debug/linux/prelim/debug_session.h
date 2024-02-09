@@ -42,8 +42,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     ze_result_t initialize() override;
 
     bool closeConnection() override;
-    ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override;
-    ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override;
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;
 
     struct IoctlHandleri915 : DebugSessionLinux::IoctlHandler {
@@ -183,7 +181,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     static void *asyncThreadFunction(void *arg);
     void startAsyncThread() override;
 
-    virtual std::vector<uint64_t> getAllMemoryHandles() {
+    std::vector<uint64_t> getAllMemoryHandles() override {
         std::vector<uint64_t> allVms;
         std::unique_lock<std::mutex> memLock(asyncThreadMutex);
 
@@ -203,6 +201,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     void handlePageFaultEvent(prelim_drm_i915_debug_event_page_fault *pf);
     virtual bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa);
     virtual bool ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle);
+    ze_result_t getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset) override;
 
     MOCKABLE_VIRTUAL void processPendingVmBindEvents();
 
@@ -222,22 +221,8 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     void readStateSaveAreaHeader() override;
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
 
-    ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle);
-    bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status);
-
-    ze_result_t getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset);
-    ze_result_t readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer,
-                             const char *&elfData, const uint64_t offset);
-    virtual bool tryReadElf(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status);
-
-    bool tryWriteIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer, ze_result_t &status);
-    bool tryReadIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status);
-    virtual bool tryAccessIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status);
-    ze_result_t accessDefaultMemForThreadAll(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write);
-    ze_result_t readDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc,
-                                  size_t size, void *buffer);
-    ze_result_t writeDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc,
-                                   size_t size, const void *buffer);
+    ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) override;
+    bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) override;
 
     int euControlIoctl(ThreadControlCmd threadCmd,
                        const NEO::EngineClassInstance *classInstance,
