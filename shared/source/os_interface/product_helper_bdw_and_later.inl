@@ -41,6 +41,11 @@ bool ProductHelperHw<gfxProduct>::isBlitterFullySupported(const HardwareInfo &hw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isNewResidencyModelSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) const {
     return false;
 }

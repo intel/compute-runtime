@@ -204,6 +204,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isAllocationSizeAdjustmentRequired(const Har
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
+    return false;
+}
+
+template <>
 std::pair<bool, bool> ProductHelperHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     return {false, false};
 }

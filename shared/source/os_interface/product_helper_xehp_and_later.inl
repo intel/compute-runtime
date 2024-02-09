@@ -50,6 +50,11 @@ bool ProductHelperHw<gfxProduct>::isBlitterFullySupported(const HardwareInfo &hw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isNewResidencyModelSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
     coherencyFlag = false;
 }

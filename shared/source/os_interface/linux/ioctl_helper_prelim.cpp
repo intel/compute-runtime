@@ -138,6 +138,10 @@ bool IoctlHelperPrelim20::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQ
 }
 
 bool IoctlHelperPrelim20::isVmBindAvailable() {
+    const auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+    if (!productHelper.isNewResidencyModelSupported()) {
+        return false;
+    }
     int vmBindSupported = 0;
     GetParam getParam{};
     getParam.param = PRELIM_I915_PARAM_HAS_VM_BIND;
