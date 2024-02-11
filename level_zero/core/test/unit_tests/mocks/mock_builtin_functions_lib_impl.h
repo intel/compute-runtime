@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,5 +57,24 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
         return std::unique_ptr<BuiltinData>(new BuiltinData{mockModule.get(), std::move(mockKernel)});
     }
 };
+
+struct MockCheckPassedArgumentsBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
+
+    using BuiltinFunctionsLibImpl::builtins;
+
+    MockCheckPassedArgumentsBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
+    }
+
+    std::unique_ptr<BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
+        kernelNamePassed = builtInName;
+        builtinPassed = builtin;
+
+        return nullptr;
+    }
+
+    std::string kernelNamePassed;
+    NEO::EBuiltInOps::Type builtinPassed;
+};
+
 } // namespace ult
 } // namespace L0

@@ -2983,5 +2983,47 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
     EXPECT_EQ(expectedDispatchCmdListBatchBufferAsPrimary, commandList->getCmdListBatchBufferFlag());
 }
 
+TEST(BuiltinTypeHelperTest, givenNonStatelessAndNonHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {
+    bool isStateless = false;
+    bool isHeapless = false;
+
+    EXPECT_EQ(Builtin::copyBufferBytes, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferBytes>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::copyBufferToBufferMiddle, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::copyBufferToBufferSide, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferImmediate, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferImmediateLeftOver, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferSSHOffset, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferSSHOffset>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferMiddle, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferRightLeftover, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless));
+}
+
+TEST(BuiltinTypeHelperTest, givenStatelessAndNonHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {
+    bool isStateless = true;
+    bool isHeapless = false;
+
+    EXPECT_EQ(Builtin::copyBufferBytesStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferBytes>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::copyBufferToBufferMiddleStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::copyBufferToBufferSideStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferImmediateStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferImmediateLeftOverStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferSSHOffsetStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferSSHOffset>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferMiddleStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferRightLeftoverStateless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless));
+}
+
+TEST(BuiltinTypeHelperTest, givenHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {
+    bool isStateless = false;
+    bool isHeapless = true;
+
+    EXPECT_EQ(Builtin::copyBufferBytesStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferBytes>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::copyBufferToBufferMiddleStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::copyBufferToBufferSideStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferImmediateStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediate>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferImmediateLeftOverStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferSSHOffsetStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferSSHOffset>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferMiddleStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless));
+    EXPECT_EQ(Builtin::fillBufferRightLeftoverStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless));
+}
+
 } // namespace ult
 } // namespace L0

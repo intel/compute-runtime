@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,22 +21,30 @@ struct Kernel;
 enum class Builtin : uint32_t {
     copyBufferBytes = 0u,
     copyBufferBytesStateless,
+    copyBufferBytesStatelessHeapless,
     copyBufferRectBytes2d,
     copyBufferRectBytes3d,
     copyBufferToBufferMiddle,
     copyBufferToBufferMiddleStateless,
+    copyBufferToBufferMiddleStatelessHeapless,
     copyBufferToBufferSide,
     copyBufferToBufferSideStateless,
+    copyBufferToBufferSideStatelessHeapless,
     fillBufferImmediate,
     fillBufferImmediateStateless,
+    fillBufferImmediateStatelessHeapless,
     fillBufferImmediateLeftOver,
     fillBufferImmediateLeftOverStateless,
+    fillBufferImmediateLeftOverStatelessHeapless,
     fillBufferSSHOffset,
     fillBufferSSHOffsetStateless,
+    fillBufferSSHOffsetStatelessHeapless,
     fillBufferMiddle,
     fillBufferMiddleStateless,
+    fillBufferMiddleStatelessHeapless,
     fillBufferRightLeftover,
     fillBufferRightLeftoverStateless,
+    fillBufferRightLeftoverStatelessHeapless,
     queryKernelTimestamps,
     queryKernelTimestampsWithOffsets,
     count
@@ -75,5 +83,93 @@ struct BuiltinFunctionsLib {
 
     MutexType ownershipMutex;
 };
+
+namespace BuiltinTypeHelper {
+
+template <Builtin type>
+constexpr Builtin adjustBuiltinType(const bool isStateless, const bool isHeapless) {
+    return type;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferBytes>(const bool isStateless, const bool isHeapless) {
+    if (isHeapless) {
+        return Builtin::copyBufferBytesStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::copyBufferBytesStateless;
+    }
+    return Builtin::copyBufferBytes;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferToBufferMiddle>(const bool isStateless, const bool isHeapless) {
+    if (isHeapless) {
+        return Builtin::copyBufferToBufferMiddleStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::copyBufferToBufferMiddleStateless;
+    }
+    return Builtin::copyBufferToBufferMiddle;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::copyBufferToBufferSide>(const bool isStateless, const bool isHeapless) {
+    if (isHeapless) {
+        return Builtin::copyBufferToBufferSideStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::copyBufferToBufferSideStateless;
+    }
+    return Builtin::copyBufferToBufferSide;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferImmediate>(const bool isStateless, const bool isHeapless) {
+    if (isHeapless) {
+        return Builtin::fillBufferImmediateStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::fillBufferImmediateStateless;
+    }
+    return Builtin::fillBufferImmediate;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(const bool isStateless, const bool isHeapless) {
+    if (isHeapless) {
+        return Builtin::fillBufferImmediateLeftOverStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::fillBufferImmediateLeftOverStateless;
+    }
+    return Builtin::fillBufferImmediateLeftOver;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferSSHOffset>(const bool isStateless, const bool isHeapless) {
+    if (isHeapless) {
+        return Builtin::fillBufferSSHOffsetStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::fillBufferSSHOffsetStateless;
+    }
+    return Builtin::fillBufferSSHOffset;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferMiddle>(const bool isStateless, const bool isHeapless) {
+    if (isHeapless) {
+        return Builtin::fillBufferMiddleStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::fillBufferMiddleStateless;
+    }
+    return Builtin::fillBufferMiddle;
+}
+
+template <>
+constexpr Builtin adjustBuiltinType<Builtin::fillBufferRightLeftover>(const bool isStateless, const bool isHeapless) {
+    if (isHeapless) {
+        return Builtin::fillBufferRightLeftoverStatelessHeapless;
+    } else if (isStateless) {
+        return Builtin::fillBufferRightLeftoverStateless;
+    }
+    return Builtin::fillBufferRightLeftover;
+}
+} // namespace BuiltinTypeHelper
 
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
@@ -148,6 +149,47 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, whenCreateBuiltinFunctionsLibThenImmediate
     /* std::async may create a detached thread - completion of the scheduled task can be ensured,
        but there is no way to ensure that actual OS thread exited and its resources are freed */
     MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
+}
+
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessBuiltinsWhenInitBuiltinKernelThenCorrectArgumentsArePassed) {
+
+    MockCheckPassedArgumentsBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
+
+    lib.initBuiltinKernel(L0::Builtin::copyBufferBytesStatelessHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless, lib.builtinPassed);
+    EXPECT_STREQ("copyBufferToBufferBytesSingle", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinKernel(L0::Builtin::copyBufferToBufferMiddleStatelessHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferToBufferMiddleRegion", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinKernel(L0::Builtin::copyBufferToBufferSideStatelessHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless, lib.builtinPassed);
+    EXPECT_STREQ("CopyBufferToBufferSideRegion", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinKernel(L0::Builtin::fillBufferImmediateStatelessHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    EXPECT_STREQ("FillBufferImmediate", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinKernel(L0::Builtin::fillBufferImmediateLeftOverStatelessHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    EXPECT_STREQ("FillBufferImmediateLeftOver", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinKernel(L0::Builtin::fillBufferSSHOffsetStatelessHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    EXPECT_STREQ("FillBufferSSHOffset", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinKernel(L0::Builtin::fillBufferSSHOffsetStatelessHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    EXPECT_STREQ("FillBufferSSHOffset", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinKernel(L0::Builtin::fillBufferMiddleStatelessHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    EXPECT_STREQ("FillBufferMiddle", lib.kernelNamePassed.c_str());
+
+    lib.initBuiltinKernel(L0::Builtin::fillBufferRightLeftoverStatelessHeapless);
+    EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
+    EXPECT_STREQ("FillBufferRightLeftover", lib.kernelNamePassed.c_str());
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {

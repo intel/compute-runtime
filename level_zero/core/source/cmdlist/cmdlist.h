@@ -338,6 +338,10 @@ struct CommandList : _ze_command_list_handle_t {
         return kernelWithAssertAppended;
     }
 
+    bool isHeaplessModeEnabled() const {
+        return heaplessModeEnabled;
+    }
+
     virtual bool skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const { return false; }
 
     bool getCmdListBatchBufferFlag() const {
