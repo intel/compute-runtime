@@ -129,6 +129,31 @@ TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensio
     delete[] extensionProperties;
 }
 
+TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertiesThenBindlessImageExtensionIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+
+    uint32_t count = 0;
+    ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
+    EXPECT_GT(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_driver_extension_properties_t *extensionProperties = new ze_driver_extension_properties_t[count];
+    res = driverHandle->getExtensionProperties(&count, extensionProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    bool extensionFound = false;
+    for (uint32_t i = 0; i < count; i++) {
+        auto extension = extensionProperties[i];
+        if (strcmp(extension.name, ZE_BINDLESS_IMAGE_EXP_NAME) == 0) {
+            extensionFound = true;
+        }
+    }
+    EXPECT_TRUE(extensionFound);
+
+    delete[] extensionProperties;
+}
+
 TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsReturned) {
     ze_driver_properties_t properties;
     ze_result_t res = driverHandle->getProperties(&properties);

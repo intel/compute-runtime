@@ -7,6 +7,7 @@
 target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/ze_bindless_image_exp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_api.h
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_cmdlist.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_cmdlist.h

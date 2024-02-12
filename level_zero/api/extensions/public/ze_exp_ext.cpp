@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -182,6 +182,22 @@ ze_result_t zeMemSetAtomicAccessAttributeExp(ze_context_handle_t hContext, ze_de
 
 ze_result_t zeMemGetAtomicAccessAttributeExp(ze_context_handle_t hContext, ze_device_handle_t hDevice, const void *ptr, size_t size, ze_memory_atomic_attr_exp_flags_t *pAttr) {
     return L0::Context::fromHandle(hContext)->getAtomicAccessAttribute(L0::Device::fromHandle(hDevice), ptr, size, pAttr);
+}
+
+ze_result_t ZE_APICALL zeMemGetPitchFor2dImage(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    size_t imageWidth,
+    size_t imageHeight,
+    unsigned int elementSizeInBytes,
+    size_t *rowPitch) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeImageGetDeviceOffsetExp(
+    ze_image_handle_t hImage,
+    uint64_t *pDeviceOffset) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 } // namespace L0

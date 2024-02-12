@@ -12,6 +12,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -138,15 +139,24 @@ ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, 
 
 ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
                                                     ze_driver_extension_properties_t *pExtensionProperties) {
+
+    std::vector<std::pair<std::string, uint32_t>> additionalExtensions;
+
+    if (NEO::ApiSpecificConfig::getGlobalBindlessHeapConfiguration()) {
+        additionalExtensions.push_back({ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT});
+    }
+
+    auto extensionCount = static_cast<uint32_t>(this->extensionsSupported.size() + additionalExtensions.size());
+
     if (nullptr == pExtensionProperties) {
-        *pCount = static_cast<uint32_t>(this->extensionsSupported.size());
+        *pCount = extensionCount;
         return ZE_RESULT_SUCCESS;
     }
 
-    *pCount = std::min(static_cast<uint32_t>(this->extensionsSupported.size()), *pCount);
+    *pCount = std::min(extensionCount, *pCount);
 
     for (uint32_t i = 0; i < *pCount; i++) {
-        auto extension = this->extensionsSupported[i];
+        auto extension = (i < this->extensionsSupported.size()) ? this->extensionsSupported[i] : additionalExtensions[i - this->extensionsSupported.size()];
         strncpy_s(pExtensionProperties[i].name, ZE_MAX_EXTENSION_NAME,
                   extension.first.c_str(), extension.first.length());
         pExtensionProperties[i].version = extension.second;

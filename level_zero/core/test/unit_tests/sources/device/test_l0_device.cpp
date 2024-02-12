@@ -5252,5 +5252,10 @@ TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZexCommandListAppendWaitOnM
     EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zexCommandListAppendWaitOnMemory64"));
 }
 
+TEST(ExtensionLookupTest, givenLookupMapWhenAskingForBindlessImageExtensionFunctionsThenValidPointersReturned) {
+    EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeMemGetPitchFor2dImage"));
+    EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeImageGetDeviceOffsetExp"));
+}
+
 } // namespace ult
 } // namespace L0

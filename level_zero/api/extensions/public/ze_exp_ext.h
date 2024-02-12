@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/api/driver_experimental/public/ze_bindless_image_exp.h"
 #include <level_zero/zet_api.h>
 
 namespace L0 {
@@ -156,5 +157,17 @@ ze_result_t zeMemGetAtomicAccessAttributeExp(
     const void *ptr,
     size_t size,
     ze_memory_atomic_attr_exp_flags_t *pAttr);
+
+ze_result_t zeMemGetPitchFor2dImage(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    size_t imageWidth,
+    size_t imageHeight,
+    unsigned int elementSizeInBytes,
+    size_t *rowPitch);
+
+ze_result_t zeImageGetDeviceOffsetExp(
+    ze_image_handle_t hImage,
+    uint64_t *pDeviceOffset);
 
 } // namespace L0

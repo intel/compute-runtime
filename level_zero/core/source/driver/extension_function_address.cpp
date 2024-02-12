@@ -8,6 +8,7 @@
 #include "level_zero/core/source/driver/extension_function_address.h"
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
+#include "level_zero/api/extensions/public/ze_exp_ext.h"
 
 #include <cstring>
 
@@ -36,6 +37,9 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(std::string fu
 
     RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate);
     RETURN_FUNC_PTR_IF_EXIST(zexEventGetDeviceAddress);
+
+    RETURN_FUNC_PTR_IF_EXIST(zeMemGetPitchFor2dImage);
+    RETURN_FUNC_PTR_IF_EXIST(zeImageGetDeviceOffsetExp);
 #undef RETURN_FUNC_PTR_IF_EXIST
 
     return ExtensionFunctionAddressHelper::getAdditionalExtensionFunctionAddress(functionName);
