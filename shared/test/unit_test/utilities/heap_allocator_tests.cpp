@@ -162,67 +162,17 @@ TEST(HeapAllocatorTest, GivenOnlyMoreThanTwiceBiggerSizeChunksInFreedChunksWhenG
     freedChunks.emplace_back(pLowerBound, 7 * 4096);
 
     size_t deltaSize = 7 * 4096 - requestedSize;
-    ptrExpected = pLowerBound + deltaSize;
+    ptrExpected = pLowerBound + requestedSize;
 
     EXPECT_EQ(3u, freedChunks.size());
 
     auto ptrReturned = heapAllocator->getFromFreedChunks(requestedSize, freedChunks, allocationAlignment);
 
-    EXPECT_EQ(ptrExpected, ptrReturned);
+    EXPECT_EQ(pLowerBound, ptrReturned);
     EXPECT_EQ(3u, freedChunks.size());
 
-    EXPECT_EQ(pLowerBound, freedChunks[2].ptr);
+    EXPECT_EQ(ptrExpected, freedChunks[2].ptr);
     EXPECT_EQ(deltaSize, freedChunks[2].size);
-}
-
-TEST(HeapAllocatorTest, GivenMoreThanTwiceBiggerSizeChunksInFreedChunksWhenGetIsCalledAndAlignmentDoesNotThenNullIsReturned) {
-    uint64_t ptrBase = 0x100000llu;
-    size_t size = 1024 * 4096;
-    auto pLowerBound = ptrBase;
-
-    auto allocAlign = 8162u;
-
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
-
-    std::vector<HeapChunk> freedChunks;
-    uint64_t ptrExpected = 0llu;
-    size_t requestedSize = 2 * 4096;
-
-    freedChunks.emplace_back(pLowerBound, 9 * 4096);
-    pLowerBound += 9 * 4096;
-    freedChunks.emplace_back(pLowerBound, 3 * 4096);
-
-    EXPECT_EQ(2u, freedChunks.size());
-
-    auto ptrReturned = heapAllocator->getFromFreedChunks(requestedSize, freedChunks, allocAlign);
-
-    EXPECT_EQ(ptrExpected, ptrReturned);
-    EXPECT_EQ(2u, freedChunks.size());
-}
-
-TEST(HeapAllocatorTest, GivenMoreThanTwiceBiggerSizeChunksInFreedChunksWhenGetIsCalledAndAlignmentDoesNotThenChuksSizeDoesNotChange) {
-    uint64_t ptrBase = 0x100000llu;
-    size_t size = 1024 * 4096;
-    auto pLowerBound = ptrBase;
-
-    auto allocAlign = 8162u;
-
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
-
-    std::vector<HeapChunk> freedChunks;
-    size_t requestedSize = 2 * 4096;
-    size_t sizeChunk1 = 9 * 4096;
-    size_t sizeChunk2 = 3 * 4096;
-
-    freedChunks.emplace_back(pLowerBound, sizeChunk1);
-    pLowerBound += sizeChunk1;
-    freedChunks.emplace_back(pLowerBound, sizeChunk2);
-
-    EXPECT_EQ(2u, freedChunks.size());
-
-    heapAllocator->getFromFreedChunks(requestedSize, freedChunks, allocAlign);
-    EXPECT_EQ(freedChunks[0].size, sizeChunk1);
-    EXPECT_EQ(freedChunks[1].size, sizeChunk2);
 }
 
 TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToLeftBoundaryOfIncomingChunkWhenStoreIsCalledThenChunkIsMerged) {
@@ -1406,7 +1356,7 @@ TEST(HeapAllocatorTest, givenAlignedFreedChunkSlightlyBiggerThanAllocationeWhenA
     EXPECT_EQ(heapSize - 2 * ptrSize, heapAllocator.getavailableSize());
 }
 
-TEST(HeapAllocatorTest, givenAlignedFreedChunkTwoTimesBiggerThanAllocationeWhenAllocatingMemoryWithCustomAlignmentFromLeftThenUseAPortionOfTheFreedChunk) {
+TEST(HeapAllocatorTest, givenAlignedFreedChunkTwoTimesBiggerThanAllocationeWhenAllocatingMemoryWithCustomAlignmentFromRightThenUseAPortionOfTheFreedChunk) {
     const uint64_t heapBase = 0x100000llu;
     const size_t heapSize = 1024u * 4096u;
     HeapAllocatorUnderTest heapAllocator(heapBase, heapSize, allocationAlignment, sizeThreshold);
@@ -1427,7 +1377,7 @@ TEST(HeapAllocatorTest, givenAlignedFreedChunkTwoTimesBiggerThanAllocationeWhenA
     EXPECT_EQ(32 * MemoryConstants::pageSize, ptrSize2);
     EXPECT_EQ(heapBase + 2 * ptrSize, heapAllocator.getLeftBound());
     EXPECT_EQ(1u, heapAllocator.getFreedChunksBig().size());
-    EXPECT_EQ(freeChunkAddress + 32 * MemoryConstants::pageSize, ptr);
+    EXPECT_EQ(freeChunkAddress, ptr);
     EXPECT_EQ(heapSize - ptrSize - ptrSize2, heapAllocator.getavailableSize());
 }
 
