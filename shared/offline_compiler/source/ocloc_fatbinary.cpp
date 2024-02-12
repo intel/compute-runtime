@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -229,6 +229,11 @@ std::vector<ConstStringRef> getProductForSpecificTarget(const CompilerOptions::T
             requestedConfigs.push_back(target);
             continue;
         }
+        auto legacyAcronymHwInfo = getHwInfoForDeprecatedAcronym(targetStr);
+        if (nullptr != legacyAcronymHwInfo) {
+            requestedConfigs.push_back(target);
+            continue;
+        }
         argHelper->printf("Failed to parse target : %s - invalid device:\n", target.str().c_str());
         return {};
     }
@@ -284,14 +289,19 @@ int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy
         return retVal;
     }
 
-    std::string productConfig("");
+    std::string entryName("");
     if (product.find(".") != std::string::npos) {
-        productConfig = product;
+        entryName = product;
     } else {
-        productConfig = ProductConfigHelper::parseMajorMinorRevisionValue(argHelper->productConfigHelper->getProductConfigFromDeviceName(product));
+        auto productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(product);
+        if (AOT::UNKNOWN_ISA != productConfig) {
+            entryName = ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
+        } else {
+            entryName = product;
+        }
     }
 
-    fatbinary.appendFileEntry(pointerSize + "." + productConfig, pCompiler->getPackedDeviceBinaryOutput());
+    fatbinary.appendFileEntry(pointerSize + "." + entryName, pCompiler->getPackedDeviceBinaryOutput());
     return retVal;
 }
 

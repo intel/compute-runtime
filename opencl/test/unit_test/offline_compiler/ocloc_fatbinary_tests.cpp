@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1918,6 +1918,61 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     const auto output{::testing::internal::GetCapturedStdout()};
 
     EXPECT_TRUE(output.empty()) << output;
+}
+
+TEST(OclocFatBinaryHelpersTest, givenListOfDeprecatedAcronymsThenUseThemAsIs) {
+    ProductConfigHelper productConfigHelper;
+    auto allDeperecatedAcronyms = productConfigHelper.getDeprecatedAcronyms();
+    if (allDeperecatedAcronyms.empty()) {
+        return;
+    }
+
+    ::testing::internal::CaptureStdout();
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        allDeperecatedAcronyms[0].str()};
+    int deviceArgIndex = 5;
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
+
+    mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
+
+    Ar::ArEncoder ar;
+    const std::string pointerSize{"64"};
+
+    const int previousReturnValue{OCLOC_SUCCESS};
+    for (const auto &product : allDeperecatedAcronyms) {
+        argv[deviceArgIndex] = product.str();
+
+        auto retVal = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, product.str());
+        EXPECT_EQ(0, retVal);
+    }
+    const auto output{::testing::internal::GetCapturedStdout()};
+    EXPECT_TRUE(output.empty()) << output;
+
+    auto encodedFatbin = ar.encode();
+    std::string arError, arWarning;
+    auto decodedAr = Ar::decodeAr(encodedFatbin, arError, arWarning);
+    EXPECT_TRUE(arError.empty()) << arError;
+    EXPECT_TRUE(arWarning.empty()) << arWarning;
+    std::unordered_set<std::string> entryNames;
+    for (const auto &entry : decodedAr.files) {
+        entryNames.insert(entry.fileName.str());
+    }
+
+    for (const auto &deprecatedAcronym : allDeperecatedAcronyms) {
+        auto expectedFName = (pointerSize + ".") + deprecatedAcronym.data();
+        EXPECT_EQ(1U, entryNames.count(expectedFName)) << deprecatedAcronym.data() << "not found in [" << ConstStringRef(",").join(entryNames) << "]";
+    }
 }
 
 TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {

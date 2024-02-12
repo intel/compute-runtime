@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "offline_compiler_tests.h"
 
 #include "shared/offline_compiler/source/ocloc_api.h"
+#include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
@@ -686,6 +687,22 @@ TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithRevisionWhenInitHwIn
         }
 
         EXPECT_EQ(mockOfflineCompiler.revisionId, static_cast<decltype(mockOfflineCompiler.revisionId)>(mockOfflineCompiler.hwInfo.platform.usRevId));
+    }
+}
+
+TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymThenSameAcronymIsReturnedAsProduct) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto deprecatedAcronyms = mockOfflineCompiler.argHelper->productConfigHelper->getDeprecatedAcronyms();
+    if (deprecatedAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &acronym : deprecatedAcronyms) {
+        NEO::CompilerOptions::TokenizedString srcAcronym;
+        srcAcronym.push_back(acronym);
+        auto products = NEO::getProductForSpecificTarget(srcAcronym, mockOfflineCompiler.argHelper);
+        ASSERT_EQ(1U, products.size());
+        EXPECT_STREQ(acronym.data(), products[0].data());
     }
 }
 

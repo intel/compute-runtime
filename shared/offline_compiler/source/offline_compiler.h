@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,8 @@ struct NameVersionPair : ocloc_name_version {
     NameVersionPair(ConstStringRef name, unsigned int version);
 };
 static_assert(sizeof(NameVersionPair) == sizeof(ocloc_name_version));
+
+const HardwareInfo *getHwInfoForDeprecatedAcronym(const std::string &deviceName);
 
 class OfflineCompiler {
   public:
@@ -129,7 +131,7 @@ All supported acronyms: %s.
 
     int initHardwareInfo(std::string deviceName);
     int initHardwareInfoForProductConfig(std::string deviceName);
-    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper);
+    int initHardwareInfoForDeprecatedAcronyms(const std::string &deviceName, std::unique_ptr<NEO::CompilerProductHelper> &compilerProductHelper, std::unique_ptr<NEO::ReleaseHelper> &releaseHelper);
     bool isArgumentDeviceId(const std::string &argument) const;
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);

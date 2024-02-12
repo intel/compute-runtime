@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/compiler_interface/tokenized_string.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
@@ -45,5 +46,6 @@ int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy
                             OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &deviceConfig);
 int appendGenericIr(Ar::ArEncoder &fatbinary, const std::string &inputFile, OclocArgHelper *argHelper, std::string options);
 std::vector<uint8_t> createEncodedElfWithSpirv(const ArrayRef<const uint8_t> &spirv, const ArrayRef<const uint8_t> &options);
+std::vector<ConstStringRef> getProductForSpecificTarget(const NEO::CompilerOptions::TokenizedString &targets, OclocArgHelper *argHelper);
 
 } // namespace NEO

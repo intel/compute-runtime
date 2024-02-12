@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -231,10 +231,10 @@ class ConstStringRef {
         }
         ret.reserve(len);
 
-        ret.append(*container.begin());
-        for (auto it = container.begin() + 1, e = container.end(); it != e; ++it) {
+        ret.append(container.begin()->data(), container.begin()->size());
+        for (auto it = std::next(container.begin()), e = container.end(); it != e; ++it) {
             ret.append(this->ptr, this->len);
-            ret.append(*it);
+            ret.append(it->data(), it->size());
         }
         return ret;
     }
