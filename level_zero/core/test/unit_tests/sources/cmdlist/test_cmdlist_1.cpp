@@ -2970,7 +2970,7 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
     EXPECT_EQ(expectedFrontEndTracking, commandList->frontEndStateTracking);
 
     bool expectedStateBaseAddressTracking = l0GfxCoreHelper.platformSupportsStateBaseAddressTracking();
-    EXPECT_EQ(expectedStateBaseAddressTracking, commandList->stateBaseAddressTracking);
+    EXPECT_EQ(expectedStateBaseAddressTracking, commandList->getCmdListStateBaseAddressTracking());
 
     bool expectedDoubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(device->getHwInfo());
     EXPECT_EQ(expectedDoubleSbaWa, commandList->doubleSbaWa);

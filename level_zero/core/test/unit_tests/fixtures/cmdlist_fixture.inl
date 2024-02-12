@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,8 +122,8 @@ void CmdListPipelineSelectStateFixture::testBody() {
 
     void *currentBuffer = nullptr;
 
-    auto &cmdlistRequiredState = commandList->getRequiredStreamState();
-    auto &cmdListFinalState = commandList->getFinalStreamState();
+    const auto &cmdlistRequiredState = commandList->getRequiredStreamState();
+    const auto &cmdListFinalState = commandList->getFinalStreamState();
     auto &csrState = commandQueue->csr->getStreamProperties();
 
     auto commandListHandle = commandList->toHandle();
@@ -465,8 +465,8 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
 
     void *currentBuffer = nullptr;
 
-    auto &regularCmdlistRequiredState = commandList->getRequiredStreamState();
-    auto &regularCmdListFinalState = commandList->getFinalStreamState();
+    const auto &regularCmdlistRequiredState = commandList->getRequiredStreamState();
+    const auto &regularCmdListFinalState = commandList->getFinalStreamState();
     auto &csrState = commandQueue->csr->getStreamProperties();
 
     auto commandListHandle = commandList->toHandle();
@@ -652,8 +652,8 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     cmdList.clear();
     pipelineSelectList.clear();
 
-    auto &regularCmdlistRequiredState = commandList->getRequiredStreamState();
-    auto &regularCmdListFinalState = commandList->getFinalStreamState();
+    const auto &regularCmdlistRequiredState = commandList->getRequiredStreamState();
+    const auto &regularCmdListFinalState = commandList->getFinalStreamState();
 
     auto commandListHandle = commandList->toHandle();
 
@@ -796,8 +796,8 @@ void CmdListThreadArbitrationFixture::testBody() {
 
     void *currentBuffer = nullptr;
 
-    auto &cmdlistRequiredState = commandList->getRequiredStreamState();
-    auto &cmdListFinalState = commandList->getFinalStreamState();
+    const auto &cmdlistRequiredState = commandList->getRequiredStreamState();
+    const auto &cmdListFinalState = commandList->getFinalStreamState();
     auto &csrState = commandQueue->csr->getStreamProperties();
 
     auto commandListHandle = commandList->toHandle();

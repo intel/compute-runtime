@@ -712,8 +712,8 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
 
     for (uint32_t i = 0; i < numCommandLists; i++) {
         auto cmdList = CommandList::fromHandle(phCommandLists[i]);
-        auto &requiredStreamState = cmdList->getRequiredStreamState();
-        auto &finalStreamState = cmdList->getFinalStreamState();
+        const NEO::StreamProperties &requiredStreamState = cmdList->getRequiredStreamState();
+        const NEO::StreamProperties &finalStreamState = cmdList->getFinalStreamState();
 
         linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, ctx.engineInstanced, cmdList,
                                                                                    streamProperties, requiredStreamState, finalStreamState,

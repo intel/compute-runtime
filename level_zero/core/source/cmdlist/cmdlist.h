@@ -262,10 +262,16 @@ struct CommandList : _ze_command_list_handle_t {
         return hostPtrMap;
     };
 
-    const NEO::StreamProperties &getRequiredStreamState() {
+    const NEO::StreamProperties &getRequiredStreamState() const {
         return requiredStreamState;
     }
-    const NEO::StreamProperties &getFinalStreamState() {
+    const NEO::StreamProperties &getFinalStreamState() const {
+        return finalStreamState;
+    }
+    NEO::StreamProperties &getRequiredStreamState() {
+        return requiredStreamState;
+    }
+    NEO::StreamProperties &getFinalStreamState() {
         return finalStreamState;
     }
     const CommandsToPatch &getCommandsToPatch() {
@@ -346,6 +352,10 @@ struct CommandList : _ze_command_list_handle_t {
 
     bool getCmdListBatchBufferFlag() const {
         return dispatchCmdListBatchBufferAsPrimary;
+    }
+
+    bool getCmdListStateBaseAddressTracking() const {
+        return stateBaseAddressTracking;
     }
 
   protected:
