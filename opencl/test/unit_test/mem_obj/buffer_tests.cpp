@@ -72,19 +72,6 @@ TEST(Buffer, givenBufferWhenAskedForPtrLengthThenReturnCorrectValue) {
     EXPECT_EQ(size[0], retOffset);
 }
 
-TEST(Buffer, whenBufferAllocatedInLocalMemoryThenCpuCopyIsDisallowed) {
-    MockGraphicsAllocation allocation{};
-    MockBuffer buffer(allocation);
-    UltDeviceFactory factory{1, 0};
-    auto &device = *factory.rootDevices[0];
-
-    allocation.memoryPool = MemoryPool::localMemory;
-    EXPECT_FALSE(buffer.isReadWriteOnCpuAllowed(device));
-
-    allocation.memoryPool = MemoryPool::system4KBPages;
-    EXPECT_TRUE(buffer.isReadWriteOnCpuAllowed(device));
-}
-
 TEST(Buffer, givenNoCpuAccessWhenIsReadWriteOnCpuAllowedIsCalledThenReturnFalse) {
     MockGraphicsAllocation allocation{};
     MockBuffer buffer(allocation);

@@ -774,10 +774,6 @@ bool Buffer::isReadWriteOnCpuAllowed(const Device &device) {
         return false;
     }
 
-    if (graphicsAllocation->isAllocatedInLocalMemoryPool()) {
-        return false;
-    }
-
     return true;
 }
 
