@@ -151,6 +151,10 @@ NAMEDDEVICE(0xA7A8, AdlpHwConfig, "Intel(R) UHD Graphics")
 NAMEDDEVICE(0xA7A1, AdlpHwConfig, "Intel(R) Iris(R) Xe Graphics")
 NAMEDDEVICE(0xA721, AdlpHwConfig, "Intel(R) UHD Graphics")
 NAMEDDEVICE(0xA7A9, AdlpHwConfig, "Intel(R) UHD Graphics")
+NAMEDDEVICE(0xA7AA, AdlpHwConfig, "Intel(R) Graphics")
+NAMEDDEVICE(0xA7AB, AdlpHwConfig, "Intel(R) Graphics")
+NAMEDDEVICE(0xA7AC, AdlpHwConfig, "Intel(R) Graphics")
+NAMEDDEVICE(0xA7AD, AdlpHwConfig, "Intel(R) Graphics")
 #endif
 #endif
 

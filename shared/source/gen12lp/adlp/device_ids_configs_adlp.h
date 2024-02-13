@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,5 +34,9 @@ inline const std::vector<unsigned short> adlpDeviceIds{
     0xA7A8,
     0xA7A1,
     0xA721,
-    0xA7A9};
+    0xA7A9,
+    0xA7AA,
+    0xA7AB,
+    0xA7AC,
+    0xA7AD};
 } // namespace NEO
