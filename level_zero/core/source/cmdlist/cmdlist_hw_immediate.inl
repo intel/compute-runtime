@@ -433,7 +433,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     ze_kernel_handle_t kernelHandle, const ze_group_count_t &threadGroupDimensions,
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-    const CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) {
+    CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) {
 
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
     bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);

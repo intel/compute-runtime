@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,5 +27,6 @@ struct CmdListKernelLaunchParams {
     bool isHostSignalScopeEvent = false;
     bool skipInOrderNonWalkerSignaling = false;
     bool pipeControlSignalling = false;
+    bool omitAddingKernelResidency = false;
 };
 } // namespace L0

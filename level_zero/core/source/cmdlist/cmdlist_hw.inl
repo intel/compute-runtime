@@ -348,7 +348,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
                                                                      ze_event_handle_t hEvent,
                                                                      uint32_t numWaitEvents,
                                                                      ze_event_handle_t *phWaitEvents,
-                                                                     const CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) {
+                                                                     CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) {
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
@@ -1804,7 +1804,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const voi
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, const AlignedAllocationData &dstAllocation, const void *pattern, Event *signalEvent, const CmdListKernelLaunchParams &launchParams) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, const AlignedAllocationData &dstAllocation, const void *pattern, Event *signalEvent, CmdListKernelLaunchParams &launchParams) {
 
     const bool isHeapless = this->isHeaplessModeEnabled();
     auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferImmediateLeftOver>(isStateless, isHeapless);

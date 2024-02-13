@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -1453,6 +1454,33 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenC
         commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
         EXPECT_EQ(threadArbitrationPolicy, commandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
     }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelMockModule,
+          givenFlagOmitKernelResourcePassToCmdlistResidencyWhenAppendingKernelThenExpectNoKernelArgumentsInCmdlistResidency,
+          IsAtLeastXeHpCore) {
+    NEO::MockGraphicsAllocation mockAllocation;
+    NEO::GraphicsAllocation *allocation = &mockAllocation;
+    kernel->residencyContainer.push_back(allocation);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.omitAddingKernelResidency = true;
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto &cmdlistResidency = commandList->getCmdContainer().getResidencyContainer();
+
+    auto kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), allocation);
+    EXPECT_EQ(kernelAllocationIt, cmdlistResidency.end());
+
+    launchParams.omitAddingKernelResidency = false;
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), allocation);
+    EXPECT_NE(kernelAllocationIt, cmdlistResidency.end());
 }
 
 } // namespace ult

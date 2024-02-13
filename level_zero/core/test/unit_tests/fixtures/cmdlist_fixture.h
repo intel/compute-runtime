@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -216,7 +216,7 @@ class AppendFillFixture : public DeviceFixture {
         ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
                                                  const ze_group_count_t &pThreadGroupDimensions,
                                                  L0::Event *event,
-                                                 const CmdListKernelLaunchParams &launchParams) override {
+                                                 CmdListKernelLaunchParams &launchParams) override {
             if (numberOfCallsToAppendLaunchKernelWithParams == thresholdOfCallsToAppendLaunchKernelWithParamsToFail) {
                 return ZE_RESULT_ERROR_UNKNOWN;
             }

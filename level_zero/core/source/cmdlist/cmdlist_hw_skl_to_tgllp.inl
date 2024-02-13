@@ -49,7 +49,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel,
                                                                                const ze_group_count_t &threadGroupDimensions,
                                                                                Event *event,
-                                                                               const CmdListKernelLaunchParams &launchParams) {
+                                                                               CmdListKernelLaunchParams &launchParams) {
     UNRECOVERABLE_IF(kernel == nullptr);
     UNRECOVERABLE_IF(launchParams.skipInOrderNonWalkerSignaling);
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
@@ -324,7 +324,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel *kernel,
                                                                           const ze_group_count_t &threadGroupDimensions,
                                                                           Event *event,
-                                                                          const CmdListKernelLaunchParams &launchParams) {
+                                                                          CmdListKernelLaunchParams &launchParams) {
     return appendLaunchKernelWithParams(kernel, threadGroupDimensions, nullptr, launchParams);
 }
 

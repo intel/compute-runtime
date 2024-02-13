@@ -92,6 +92,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImp::printfBuffer;
         using KernelImp::privateMemoryGraphicsAllocation;
         using KernelImp::requiredWorkgroupOrder;
+        using KernelImp::residencyContainer;
         using KernelImp::surfaceStateHeapData;
         using KernelImp::surfaceStateHeapDataSize;
         using KernelImp::unifiedMemoryControls;

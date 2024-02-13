@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1273,7 +1273,7 @@ class MockCommandListHwKernelSplit : public WhiteBox<::L0::CommandListCoreFamily
     ze_result_t appendLaunchKernelSplit(::L0::Kernel *kernel,
                                         const ze_group_count_t &threadGroupDimensions,
                                         ::L0::Event *event,
-                                        const CmdListKernelLaunchParams &launchParams) override {
+                                        CmdListKernelLaunchParams &launchParams) override {
         passedKernel = kernel;
         return status;
     }

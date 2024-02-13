@@ -83,7 +83,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(c
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions, Event *event,
-                                                                               const CmdListKernelLaunchParams &launchParams) {
+                                                                               CmdListKernelLaunchParams &launchParams) {
 
     if (NEO::debugManager.flags.ForcePipeControlPriorToWalker.get()) {
         NEO::PipeControlArgs args;
@@ -388,9 +388,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     // Attach kernel residency to our CommandList residency
     {
         commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
-        auto &residencyContainer = kernel->getResidencyContainer();
-        for (auto resource : residencyContainer) {
-            commandContainer.addToResidencyContainer(resource);
+        if (!launchParams.omitAddingKernelResidency) {
+            auto &residencyContainer = kernel->getResidencyContainer();
+            for (auto resource : residencyContainer) {
+                commandContainer.addToResidencyContainer(resource);
+            }
         }
     }
 
@@ -485,7 +487,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel *kernel,
                                                                           const ze_group_count_t &threadGroupDimensions,
                                                                           Event *event,
-                                                                          const CmdListKernelLaunchParams &launchParams) {
+                                                                          CmdListKernelLaunchParams &launchParams) {
     if (event) {
         if (eventSignalPipeControl(launchParams.isKernelSplitOperation, getDcFlushRequired(event->isSignalScope()))) {
             event = nullptr;

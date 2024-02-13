@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,7 +105,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                    const ze_group_count_t &threadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                    ze_event_handle_t *phWaitEvents,
-                                   const CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) override;
+                                   CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) override;
     ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
                                               const ze_group_count_t &launchKernelArgs,
                                               ze_event_handle_t hSignalEvent,
@@ -253,18 +253,18 @@ struct CommandListCoreFamily : public CommandListImp {
     virtual ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
                                                      const ze_group_count_t &threadGroupDimensions,
                                                      Event *event,
-                                                     const CmdListKernelLaunchParams &launchParams);
+                                                     CmdListKernelLaunchParams &launchParams);
     MOCKABLE_VIRTUAL ze_result_t appendLaunchKernelSplit(Kernel *kernel,
                                                          const ze_group_count_t &threadGroupDimensions,
                                                          Event *event,
-                                                         const CmdListKernelLaunchParams &launchParams);
+                                                         CmdListKernelLaunchParams &launchParams);
 
     ze_result_t appendUnalignedFillKernel(bool isStateless,
                                           uint32_t unalignedSize,
                                           const AlignedAllocationData &dstAllocation,
                                           const void *pattern,
                                           Event *signalEvent,
-                                          const CmdListKernelLaunchParams &launchParams);
+                                          CmdListKernelLaunchParams &launchParams);
 
     void appendWaitOnSingleEvent(Event *event, bool relaxedOrderingAllowed);
 
