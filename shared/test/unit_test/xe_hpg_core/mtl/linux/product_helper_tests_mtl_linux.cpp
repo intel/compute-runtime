@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -56,4 +57,15 @@ MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationsSuppo
 
 MTLTEST_F(MtlProductHelperLinux, whenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
     EXPECT_FALSE(productHelper->isTimestampWaitSupportedForEvents());
+}
+
+MTLTEST_F(MtlProductHelperLinux, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned) {
+    uint64_t patIndex = 1u;
+    bool isUncached = true;
+    EXPECT_EQ(0u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
+    EXPECT_EQ(3u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::commandBuffer));
+
+    isUncached = false;
+    EXPECT_EQ(0u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
+    EXPECT_EQ(3u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::commandBuffer));
 }

@@ -84,7 +84,7 @@ DECLARE_DEBUG_VARIABLE(bool, ForceMemoryPrefetchForKmdMigratedSharedAllocations,
 DECLARE_DEBUG_VARIABLE(bool, ClKhrExternalMemoryExtension, true, "Enable cl_khr_external_memory extension")
 DECLARE_DEBUG_VARIABLE(bool, WaitForMemoryRelease, false, "Wait for memory release when out of memory")
 DECLARE_DEBUG_VARIABLE(bool, RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup, 0, "0 - default disabled, 1- remove restrictions on NumberOfThreadsInGpgpuThreadGroup in INTERFACE_DESCRIPTOR_DATA")
-DECLARE_DEBUG_VARIABLE(bool, DisableGemCreateExtSetPat, true, "Do not use I915_GEM_CREATE_EXT_SET_PAT extension when gem create ext is called")
+DECLARE_DEBUG_VARIABLE(bool, DisableGemCreateExtSetPat, false, "Do not use I915_GEM_CREATE_EXT_SET_PAT extension when gem create ext is called")
 DECLARE_DEBUG_VARIABLE(bool, SkipInOrderNonWalkerSignalingAllowed, false, "Allows for skipping non walker signalling in InOrder command lists, default: false")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened; ignored when unk")

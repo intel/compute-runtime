@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,8 +77,10 @@ class DrmMockTime : public DrmMockSuccess {
   public:
     using DrmMockSuccess::DrmMockSuccess;
     int ioctl(DrmIoctl request, void *arg) override {
-        auto *reg = reinterpret_cast<NEO::RegisterRead *>(arg);
-        reg->value = getVal() << 32 | 0x1;
+        if (DrmIoctl::regRead == request) {
+            auto *reg = reinterpret_cast<NEO::RegisterRead *>(arg);
+            reg->value = getVal() << 32 | 0x1;
+        }
         return 0;
     };
 
