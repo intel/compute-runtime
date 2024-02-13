@@ -63,7 +63,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 
     constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
-    if constexpr (heaplessModeEnabled == false) {
+    if constexpr (heaplessModeEnabled) {
+        indirectHeap.align(MemoryConstants::cacheLineSize);
+    } else {
         indirectHeap.align(WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     }
 
