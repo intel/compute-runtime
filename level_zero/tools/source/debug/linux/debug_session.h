@@ -85,8 +85,34 @@ struct DebugSessionLinux : DebugSessionImp {
 
     ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override;
     ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override;
+    struct BindInfo {
+        uint64_t gpuVa = 0;
+        uint64_t size = 0;
+    };
+    struct ClientConnection {
+        virtual ~ClientConnection() = default;
+        virtual size_t getElfSize(uint64_t elfHandle) = 0;
+        virtual char *getElfData(uint64_t elfHandle) = 0;
+
+        std::unordered_set<uint64_t> vmIds;
+
+        std::unordered_map<uint64_t, BindInfo> vmToModuleDebugAreaBindInfo;
+        std::unordered_map<uint64_t, BindInfo> vmToContextStateSaveAreaBindInfo;
+        std::unordered_map<uint64_t, BindInfo> vmToStateBaseAreaBindInfo;
+        std::unordered_map<uint64_t, uint32_t> vmToTile;
+
+        std::unordered_map<uint64_t, uint64_t> elfMap;
+
+        uint64_t moduleDebugAreaGpuVa = 0;
+        uint64_t contextStateSaveAreaGpuVa = 0;
+        uint64_t stateBaseAreaGpuVa = 0;
+
+        size_t contextStateSaveAreaSize = 0;
+    };
 
   protected:
+    virtual std::shared_ptr<ClientConnection> getClientConnection(uint64_t clientHandle) = 0;
+
     enum class ThreadControlCmd {
         interrupt,
         resume,
@@ -104,7 +130,7 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
     ze_result_t interruptImp(uint32_t deviceIndex) override;
 
-    virtual ze_result_t getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset) = 0;
+    ze_result_t getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset);
     ze_result_t readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer,
                              const char *&elfData, const uint64_t offset);
     virtual bool tryReadElf(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status);
@@ -120,7 +146,7 @@ struct DebugSessionLinux : DebugSessionImp {
     virtual ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) = 0;
     virtual bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) = 0;
 
-    virtual std::vector<uint64_t> getAllMemoryHandles() = 0;
+    virtual std::vector<uint64_t> getAllMemoryHandles();
 
     std::unique_ptr<IoctlHandler> ioctlHandler;
     uint64_t euControlInterruptSeqno[NEO::EngineLimits::maxHandleCount];

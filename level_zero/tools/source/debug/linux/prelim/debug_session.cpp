@@ -307,7 +307,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
 
         if (event->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE) {
             DEBUG_BREAK_IF(clientHandleToConnection.find(clientEvent->handle) != clientHandleToConnection.end());
-            clientHandleToConnection[clientEvent->handle].reset(new ClientConnection);
+            clientHandleToConnection[clientEvent->handle].reset(new ClientConnectioni915);
             clientHandleToConnection[clientEvent->handle]->client = *clientEvent;
         }
 
@@ -1443,35 +1443,6 @@ void DebugSessionLinuxi915::printContextVms() {
                                (uint64_t)clientHandleToConnection[clientHandle]->contextsCreated[i].vm);
         }
     }
-}
-
-ze_result_t DebugSessionLinuxi915::getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset) {
-    auto &elfMap = clientHandleToConnection[clientHandle]->elfMap;
-    auto accessVA = desc->address;
-    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
-    elfData = nullptr;
-
-    if (elfMap.size() > 0) {
-        uint64_t baseVa;
-        uint64_t ceilVa;
-        for (auto &elf : elfMap) {
-            baseVa = elf.first;
-            ceilVa = elf.first + clientHandleToConnection[clientHandle]->uuidMap[elf.second].dataSize;
-            if (accessVA >= baseVa && accessVA < ceilVa) {
-                if (accessVA + size > ceilVa) {
-                    status = ZE_RESULT_ERROR_INVALID_ARGUMENT;
-                } else {
-                    DEBUG_BREAK_IF(clientHandleToConnection[clientHandle]->uuidMap[elf.second].data.get() == nullptr);
-                    elfData = clientHandleToConnection[clientHandle]->uuidMap[elf.second].data.get();
-                    offset = accessVA - baseVa;
-                    status = ZE_RESULT_SUCCESS;
-                }
-                break;
-            }
-        }
-    }
-
-    return status;
 }
 
 bool DebugSessionLinuxi915::ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa) {

@@ -83,12 +83,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
         uint64_t ptr = 0;
     };
-
-    struct BindInfo {
-        uint64_t gpuVa = 0;
-        uint64_t size = 0;
-    };
-
     struct IsaAllocation {
         BindInfo bindInfo;
         uint64_t elfUuidHandle;
@@ -122,36 +116,31 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
         return memcmp(&event1, &event2, sizeof(zet_debug_event_t)) == 0;
     };
 
-    struct ClientConnection {
+    struct ClientConnectioni915 : public ClientConnection {
         prelim_drm_i915_debug_event_client client = {};
+
+        size_t getElfSize(uint64_t elfHandle) override { return uuidMap[elfHandle].dataSize; };
+        char *getElfData(uint64_t elfHandle) override { return uuidMap[elfHandle].data.get(); };
 
         std::unordered_map<ContextHandle, ContextParams> contextsCreated;
         std::unordered_map<uint64_t, std::pair<std::string, uint32_t>> classHandleToIndex;
         std::unordered_map<uint64_t, UuidData> uuidMap;
-        std::unordered_set<uint64_t> vmIds;
-
-        std::unordered_map<uint64_t, BindInfo> vmToModuleDebugAreaBindInfo;
-        std::unordered_map<uint64_t, BindInfo> vmToContextStateSaveAreaBindInfo;
-        std::unordered_map<uint64_t, BindInfo> vmToStateBaseAreaBindInfo;
-        std::unordered_map<uint64_t, uint32_t> vmToTile;
 
         std::unordered_map<uint64_t, std::unique_ptr<IsaAllocation>> isaMap[NEO::EngineLimits::maxHandleCount];
-        std::unordered_map<uint64_t, uint64_t> elfMap;
         std::unordered_map<uint64_t, ContextHandle> lrcToContextHandle;
 
-        uint64_t moduleDebugAreaGpuVa = 0;
-        uint64_t contextStateSaveAreaGpuVa = 0;
-        uint64_t stateBaseAreaGpuVa = 0;
-
-        size_t contextStateSaveAreaSize = 0;
-
         std::unordered_map<uint64_t, Module> uuidToModule;
+    };
+
+    std::shared_ptr<ClientConnection> getClientConnection(uint64_t clientHandle) override {
+        return clientHandleToConnection[clientHandle];
     };
 
   protected:
     MOCKABLE_VIRTUAL void handleEvent(prelim_drm_i915_debug_event *event);
     bool checkAllEventsCollected();
-    std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;
+    std::unordered_map<uint64_t, std::shared_ptr<ClientConnectioni915>> clientHandleToConnection;
+
     ze_result_t readEventImp(prelim_drm_i915_debug_event *drmDebugEvent);
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
@@ -181,16 +170,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     static void *asyncThreadFunction(void *arg);
     void startAsyncThread() override;
 
-    std::vector<uint64_t> getAllMemoryHandles() override {
-        std::vector<uint64_t> allVms;
-        std::unique_lock<std::mutex> memLock(asyncThreadMutex);
-
-        auto &vmIds = clientHandleToConnection[clientHandle]->vmIds;
-        allVms.resize(vmIds.size());
-        std::copy(vmIds.begin(), vmIds.end(), allVms.begin());
-        return allVms;
-    }
-
     void handleEventsAsync();
 
     uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle);
@@ -201,7 +180,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     void handlePageFaultEvent(prelim_drm_i915_debug_event_page_fault *pf);
     virtual bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa);
     virtual bool ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle);
-    ze_result_t getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset) override;
 
     MOCKABLE_VIRTUAL void processPendingVmBindEvents();
 

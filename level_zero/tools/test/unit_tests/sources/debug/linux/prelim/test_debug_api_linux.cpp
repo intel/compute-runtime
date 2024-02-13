@@ -907,7 +907,7 @@ TEST_F(DebugApiLinuxTest, GivenCommandQueueDestroyedWhenHandlingEventThenExitEve
 
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
-    session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinuxi915::ClientConnection);
+    session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinuxi915::ClientConnectioni915);
 
     session->handleEvent(&uuid.base);
     EXPECT_EQ(0u, session->apiEvents.size());
@@ -944,7 +944,7 @@ TEST_F(DebugApiLinuxTest, GivenDestroyClientForClientNotSavedWhenHandlingEventTh
 
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
-    session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinuxi915::ClientConnection);
+    session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinuxi915::ClientConnectioni915);
 
     session->handleEvent(&clientDestroy.base);
     EXPECT_EQ(0u, session->apiEvents.size());

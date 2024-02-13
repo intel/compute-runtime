@@ -1036,5 +1036,18 @@ TEST_F(DebugApiLinuxTestXe, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheck
     EXPECT_EQ(0u, sessionMock->apiEvents.size());
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenNoElfDataImplementationThenGetElfDataReturnsNullptr) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    uint64_t elfHandle = 0;
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    auto clientConnection = sessionMock->getClientConnection(MockDebugSessionLinuxXe::mockClientHandle);
+    ASSERT_NE(nullptr, clientConnection);
+    ASSERT_EQ(nullptr, clientConnection->getElfData(elfHandle));
+    ASSERT_EQ(0u, clientConnection->getElfSize(elfHandle));
+}
+
 } // namespace ult
 } // namespace L0

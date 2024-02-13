@@ -200,7 +200,7 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
 
         if (event->flags & DRM_XE_EUDEBUG_EVENT_CREATE) {
             DEBUG_BREAK_IF(clientHandleToConnection.find(clientEvent->client_handle) != clientHandleToConnection.end());
-            clientHandleToConnection[clientEvent->client_handle].reset(new ClientConnection);
+            clientHandleToConnection[clientEvent->client_handle].reset(new ClientConnectionXe);
             clientHandleToConnection[clientEvent->client_handle]->client = *clientEvent;
         }
 

@@ -127,6 +127,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionImp::allThreads;
     using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::stateSaveAreaHeader;
+    using L0::DebugSessionLinux::getClientConnection;
     using L0::DebugSessionLinuxXe::asyncThread;
     using L0::DebugSessionLinuxXe::asyncThreadFunction;
     using L0::DebugSessionLinuxXe::checkStoppedThreadsAndGenerateEvents;
@@ -145,7 +146,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::ThreadControlCmd;
 
     MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxXe(config, device, debugFd, params) {
-        clientHandleToConnection[mockClientHandle].reset(new ClientConnection);
+        clientHandleToConnection[mockClientHandle].reset(new ClientConnectionXe);
         clientHandle = mockClientHandle;
         createEuThreads();
     }

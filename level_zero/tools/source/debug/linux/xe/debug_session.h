@@ -78,12 +78,11 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         uint16_t engineClass = UINT16_MAX;
     };
 
-    struct BindInfo {
-        uint64_t gpuVa = 0;
-        uint64_t size = 0;
-    };
-
     uint32_t xeDebuggerVersion = 0;
+
+    std::shared_ptr<ClientConnection> getClientConnection(uint64_t clientHandle) override {
+        return clientHandleToConnection[clientHandle];
+    };
 
   protected:
     int euControlIoctl(ThreadControlCmd threadCmd,
@@ -143,26 +142,25 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         UNRECOVERABLE_IF(true);
     }
 
-    struct ClientConnection {
+    struct ClientConnectionXe : public ClientConnection {
         drm_xe_eudebug_event_client client = {};
+        size_t getElfSize(uint64_t elfHandle) override { return 0; };
+        char *getElfData(uint64_t elfHandle) override { return nullptr; };
+
         std::unordered_map<ExecQueueHandle, ExecQueueParams> execQueues;
         std::unordered_map<uint64_t, uint64_t> lrcHandleToVmHandle;
-        std::unordered_map<uint64_t, BindInfo> vmToModuleDebugAreaBindInfo;
-        std::unordered_set<uint64_t> vmIds;
     };
+    std::unordered_map<uint64_t, std::shared_ptr<ClientConnectionXe>> clientHandleToConnection;
 
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
     bool checkAllEventsCollected();
     MOCKABLE_VIRTUAL void handleEvent(drm_xe_eudebug_event *event);
     void readInternalEventsAsync() override;
     void pushApiEvent(zet_debug_event_t &debugEvent);
-    ze_result_t getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset) override { return ZE_RESULT_ERROR_UNKNOWN; };
     ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) override { return ZE_RESULT_ERROR_UNKNOWN; };
     bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) override { return false; };
 
-    std::unordered_map<uint64_t, std::unique_ptr<ClientConnection>> clientHandleToConnection;
     std::atomic<bool> detached{false};
-    std::vector<uint64_t> getAllMemoryHandles() override { return {}; };
 
     ze_result_t readEventImp(drm_xe_eudebug_event *drmDebugEvent);
     int ioctl(unsigned long request, void *arg);

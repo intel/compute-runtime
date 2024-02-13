@@ -609,4 +609,44 @@ bool DebugSessionLinux::tryAccessIsa(NEO::DeviceBitfield deviceBitfield, const z
     return isaAccess;
 }
 
+std::vector<uint64_t> DebugSessionLinux::getAllMemoryHandles() {
+    std::vector<uint64_t> allVms;
+    std::unique_lock<std::mutex> memLock(asyncThreadMutex);
+
+    auto &vmIds = getClientConnection(clientHandle)->vmIds;
+    allVms.resize(vmIds.size());
+    std::copy(vmIds.begin(), vmIds.end(), allVms.begin());
+    return allVms;
+}
+
+ze_result_t DebugSessionLinux::getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset) {
+    auto clientConnection = getClientConnection(clientHandle);
+    auto &elfMap = clientConnection->elfMap;
+    auto accessVA = desc->address;
+    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
+    elfData = nullptr;
+
+    if (elfMap.size() > 0) {
+        uint64_t baseVa;
+        uint64_t ceilVa;
+        for (auto &elf : elfMap) {
+            baseVa = elf.first;
+            ceilVa = elf.first + clientConnection->getElfSize(elf.second);
+            if (accessVA >= baseVa && accessVA < ceilVa) {
+                if (accessVA + size > ceilVa) {
+                    status = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                } else {
+                    DEBUG_BREAK_IF(clientConnection->getElfData(elf.second) == nullptr);
+                    elfData = clientConnection->getElfData(elf.second);
+                    offset = accessVA - baseVa;
+                    status = ZE_RESULT_SUCCESS;
+                }
+                break;
+            }
+        }
+    }
+
+    return status;
+}
+
 } // namespace L0

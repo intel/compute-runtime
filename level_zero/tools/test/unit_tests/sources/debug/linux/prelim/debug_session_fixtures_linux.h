@@ -199,7 +199,7 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     using L0::DebugSessionLinuxi915::writeGpuMemory;
 
     MockDebugSessionLinuxi915(const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) : DebugSessionLinuxi915(config, device, debugFd, params) {
-        clientHandleToConnection[mockClientHandle].reset(new ClientConnection);
+        clientHandleToConnection[mockClientHandle].reset(new ClientConnectioni915);
         clientHandle = mockClientHandle;
         createEuThreads();
     }
