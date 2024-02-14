@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1750,7 +1750,7 @@ HWTEST2_F(ProgramTests, givenDebugFlagSetForceAllResourcesUncachedWhenGetInterna
     debugManager.flags.ForceAllResourcesUncached.set(true);
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=1 -cl-load-cache-default=1"));
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=2 -cl-load-cache-default=2"));
 }
 
 HWTEST2_F(ProgramTests, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {

@@ -3346,7 +3346,7 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedW
     result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
-    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=1 -cl-load-cache-default=1"), std::string::npos);
+    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=2 -cl-load-cache-default=2"), std::string::npos);
 }
 
 HWTEST2_F(ModuleTranslationUnitTest, givenAtLeastXeHpgCoreWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {

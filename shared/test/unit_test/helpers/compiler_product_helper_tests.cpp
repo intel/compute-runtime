@@ -227,7 +227,7 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreAndDebugFlagSetForc
     debugManager.flags.ForceAllResourcesUncached.set(true);
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    const char *expectedStr = "-cl-store-cache-default=1 -cl-load-cache-default=1";
+    const char *expectedStr = "-cl-store-cache-default=2 -cl-load-cache-default=2";
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }

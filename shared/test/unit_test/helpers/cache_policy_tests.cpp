@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ HWTEST2_F(ProductHelperTest, givenAtLeastXeHpgCoreAndForceAllResourcesUncachedWh
     debugManager.flags.ForceAllResourcesUncached.set(true);
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
 
-    const char *expectedStr = "-cl-store-cache-default=1 -cl-load-cache-default=1";
+    const char *expectedStr = "-cl-store-cache-default=2 -cl-load-cache-default=2";
     EXPECT_EQ(0, memcmp(L1CachePolicyHelper<productFamily>::getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
     EXPECT_EQ(0, memcmp(L1CachePolicyHelper<productFamily>::getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }
