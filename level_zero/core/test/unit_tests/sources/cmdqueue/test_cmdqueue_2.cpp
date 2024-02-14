@@ -136,7 +136,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrSyncQueueAndKmdWaitWhenCallingExecuteC
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    queue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    queue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 1u);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
@@ -162,7 +162,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrAndSyncQueueWhenCallingExecuteCommandL
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    queue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    queue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
@@ -188,7 +188,7 @@ HWTEST_TEMPLATED_F(AubCsrTest, givenAubCsrAndAsyncQueueWhenCallingExecuteCommand
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    queue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    queue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(aubCsr->pollForCompletionCalled, 0u);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
@@ -385,7 +385,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
     commandList->close();
 
-    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     uint64_t timeout = std::numeric_limits<uint64_t>::max();
@@ -427,7 +427,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
     commandList->close();
 
-    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(2u, commandQueue->partitionCount);
@@ -512,12 +512,12 @@ HWTEST_F(CommandQueueSynchronizeTest, givenSynchronousCommandQueueWhenTagUpdateF
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
     commandList->close();
 
-    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
-    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
@@ -803,7 +803,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     auto sizeBefore = commandQueue->commandStream.getUsed();
     auto pageFaultSizeBefore = pageFaultCmdQueue->commandStream.getUsed();
     auto handle = commandList->toHandle();
-    commandQueue->executeCommandLists(1, &handle, nullptr, true);
+    commandQueue->executeCommandLists(1, &handle, nullptr, true, nullptr, 0, nullptr);
     auto sizeAfter = commandQueue->commandStream.getUsed();
     auto pageFaultSizeAfter = pageFaultCmdQueue->commandStream.getUsed();
     EXPECT_LT(sizeBefore, sizeAfter);

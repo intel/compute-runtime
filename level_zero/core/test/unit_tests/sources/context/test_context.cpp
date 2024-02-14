@@ -758,7 +758,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
                                                                      returnValue, false));
     auto commandListHandle = commandList->toHandle();
     commandList->close();
-    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
+    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 1u);
@@ -810,7 +810,7 @@ HWTEST2_F(ContextMakeMemoryResidentAndMigrationTests,
     commandList->close();
 
     auto commandListHandle = commandList->toHandle();
-    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
+    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomainCalled, 1u);
 
@@ -860,7 +860,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalledTimes, 0u);

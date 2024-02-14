@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaPro
         ze_command_list_handle_t commandListHandle = commandList->toHandle();
         const uint32_t numCommandLists = 1u;
 
-        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, true);
+        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         auto usedSpaceAfter = cmdStream.getUsed();

@@ -58,7 +58,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     uint32_t numCommandLists,
     ze_command_list_handle_t *phCommandLists,
     ze_fence_handle_t hFence,
-    bool performMigration) {
+    bool performMigration,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
 
     auto ret = ZE_RESULT_SUCCESS;
 
@@ -86,9 +89,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     this->device->activateMetricGroups();
 
     if (this->isCopyOnlyCommandQueue) {
-        ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence);
+        ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, nullptr, 0, nullptr);
     } else {
-        ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence);
+        ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence, nullptr, 0, nullptr);
     }
 
     if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) {
@@ -103,7 +106,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     CommandListExecutionContext &ctx,
     uint32_t numCommandLists,
     ze_command_list_handle_t *commandListHandles,
-    ze_fence_handle_t hFence) {
+    ze_fence_handle_t hFence,
+    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
 
     this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence);
     ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
@@ -258,7 +263,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     CommandListExecutionContext &ctx,
     uint32_t numCommandLists,
     ze_command_list_handle_t *phCommandLists,
-    ze_fence_handle_t hFence) {
+    ze_fence_handle_t hFence,
+    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
 
     this->setupCmdListsAndContextParams(ctx, phCommandLists, numCommandLists, hFence);
     ctx.isDirectSubmissionEnabled = this->csr->isBlitterDirectSubmissionEnabled();

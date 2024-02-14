@@ -43,7 +43,9 @@ struct CommandQueue : _ze_command_queue_handle_t {
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
-                                            ze_fence_handle_t hFence, bool performMigration) = 0;
+                                            ze_fence_handle_t hFence, bool performMigration,
+                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                            ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t executeCommands(uint32_t numCommands,
                                         void *phCommands,
                                         ze_fence_handle_t hFence) = 0;

@@ -30,7 +30,7 @@ ze_result_t zeCommandQueueExecuteCommandLists(
     uint32_t numCommandLists,
     ze_command_list_handle_t *phCommandLists,
     ze_fence_handle_t hFence) {
-    return L0::CommandQueue::fromHandle(hCommandQueue)->executeCommandLists(numCommandLists, phCommandLists, hFence, true);
+    return L0::CommandQueue::fromHandle(hCommandQueue)->executeCommandLists(numCommandLists, phCommandLists, hFence, true, nullptr, 0, nullptr);
 }
 
 ze_result_t zeCommandQueueSynchronize(

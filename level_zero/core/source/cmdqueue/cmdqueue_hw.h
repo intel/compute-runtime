@@ -27,7 +27,9 @@ struct CommandQueueHw : public CommandQueueImp {
     ze_result_t createFence(const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) override;
     ze_result_t executeCommandLists(uint32_t numCommandLists,
                                     ze_command_list_handle_t *phCommandLists,
-                                    ze_fence_handle_t hFence, bool performMigration) override;
+                                    ze_fence_handle_t hFence, bool performMigration,
+                                    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                    ze_event_handle_t *phWaitEvents) override;
     ze_result_t executeCommands(uint32_t numCommands,
                                 void *phCommands,
                                 ze_fence_handle_t hFence) override;
@@ -112,11 +114,15 @@ struct CommandQueueHw : public CommandQueueImp {
     ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
                                            uint32_t numCommandLists,
                                            ze_command_list_handle_t *commandListHandles,
-                                           ze_fence_handle_t hFence);
+                                           ze_fence_handle_t hFence,
+                                           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                           ze_event_handle_t *phWaitEvents);
     inline ze_result_t executeCommandListsCopyOnly(CommandListExecutionContext &ctx,
                                                    uint32_t numCommandLists,
                                                    ze_command_list_handle_t *phCommandLists,
-                                                   ze_fence_handle_t hFence);
+                                                   ze_fence_handle_t hFence,
+                                                   ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                                   ze_event_handle_t *phWaitEvents);
     inline size_t computeDebuggerCmdsSize(const CommandListExecutionContext &ctx);
     inline size_t computePreemptionSizeForCommandList(CommandListExecutionContext &ctx,
                                                       CommandList *commandList,

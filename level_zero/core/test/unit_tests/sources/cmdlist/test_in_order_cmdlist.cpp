@@ -2488,19 +2488,19 @@ HWTEST2_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFro
 
     // 1 Execute call
     offset = cmdStream->getUsed();
-    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, 0, nullptr);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
     verifySemaphore(expectedCounterValue);
 
     // 2 Execute calls
     offset = cmdStream->getUsed();
-    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, 0, nullptr);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
     verifySemaphore(expectedCounterValue + expectedCounterAppendValue);
 
     // 3 Execute calls
     offset = cmdStream->getUsed();
-    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &regularCmdListHandle, nullptr, false, nullptr, 0, nullptr);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
     verifySemaphore(expectedCounterValue + (expectedCounterAppendValue * 2));
 }
@@ -3637,8 +3637,8 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAn
     mockCmdQHw->initialize(false, false, false);
 
     auto cmdListHandle = cmdList->toHandle();
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
     EXPECT_EQ(4u, counterValue);
@@ -4327,13 +4327,13 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
 
     auto handle = regularCmdList->toHandle();
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(0);
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(1);
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(2);
 }
 
@@ -4813,18 +4813,18 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
 
     auto handle = regularCmdList->toHandle();
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(0);
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(1);
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(2);
 
     if (regularCmdList->isQwordInOrderCounter()) {
         regularCmdList->inOrderExecInfo->addRegularCmdListSubmissionCounter(static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 3);
-        mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+        mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
 
         verifyPatching(regularCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter() - 1);
     }
@@ -4884,14 +4884,14 @@ HWTEST2_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenEx
     auto cmdListHandle1 = regularCmdList1->toHandle();
     auto cmdListHandle2 = regularCmdList2->toHandle();
 
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false, nullptr, 0, nullptr);
 
     verifyPatching(5, baseEventWaitValue);
 
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false, nullptr, 0, nullptr);
 
     verifyPatching(7, baseEventWaitValue);
 }
@@ -4925,9 +4925,9 @@ HWTEST2_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenEx
     auto cmdListHandle1 = regularCmdList1->toHandle();
     auto cmdListHandle2 = regularCmdList2->toHandle();
 
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false, nullptr, 0, nullptr);
 
     auto cmdStream2 = regularCmdList2->getCmdContainer().getCommandStream();
 
@@ -4959,17 +4959,17 @@ HWTEST2_F(InOrderRegularCmdListTests, givenCrossRegularCmdListDependenciesWhenEx
 
     verifyPatching(1, baseEventWaitValue);
 
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false, nullptr, 0, nullptr);
 
     verifyPatching(1, baseEventWaitValue + (2 * regularCmdList1->inOrderExecInfo->getCounterValue()));
 
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false, nullptr, 0, nullptr);
 
     verifyPatching(5, baseEventWaitValue + (2 * regularCmdList1->inOrderExecInfo->getCounterValue()));
 
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle1, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &cmdListHandle2, nullptr, false, nullptr, 0, nullptr);
 
     verifyPatching(7, baseEventWaitValue + (3 * regularCmdList1->inOrderExecInfo->getCounterValue()));
 }
@@ -5048,13 +5048,13 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
 
     auto handle = regularCmdList->toHandle();
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(0);
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(1);
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(2);
 }
 
@@ -5357,19 +5357,19 @@ HWTEST2_F(InOrderRegularCmdListTests, givenNonInOrderRegularCmdListWhenPassingCo
     auto inOrderRegularCmdListHandle = inOrderRegularCmdList->toHandle();
     auto regularHandle = regularCmdList->toHandle();
 
-    mockCmdQHw->executeCommandLists(1, &inOrderRegularCmdListHandle, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &inOrderRegularCmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(0);
 
-    mockCmdQHw->executeCommandLists(1, &inOrderRegularCmdListHandle, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &inOrderRegularCmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(1);
 
-    mockCmdQHw->executeCommandLists(1, &inOrderRegularCmdListHandle, nullptr, false);
-    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &inOrderRegularCmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(2);
 
-    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false);
+    mockCmdQHw->executeCommandLists(1, &regularHandle, nullptr, false, nullptr, 0, nullptr);
     verifyPatching(2);
 }
 
