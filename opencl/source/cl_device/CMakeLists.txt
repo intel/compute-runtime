@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2021 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ set(RUNTIME_SRCS_CL_DEVICE
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_device_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_device_info_map.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_device_vector.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cl_device_info_extra.cpp
 )
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_CL_DEVICE})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_CL_DEVICE ${RUNTIME_SRCS_CL_DEVICE})

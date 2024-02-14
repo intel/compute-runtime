@@ -101,6 +101,11 @@ class ClDevice : public BaseObject<_cl_device_id> {
                                const void *&src,
                                size_t &srcSize,
                                size_t &retSize);
+    bool getDeviceInfoExtra(cl_device_info paramName,
+                            ClDeviceInfoParam &param,
+                            const void *&src,
+                            size_t &srcSize,
+                            size_t &retSize);
 
     // This helper template is meant to simplify getDeviceInfo
     template <cl_device_info param>

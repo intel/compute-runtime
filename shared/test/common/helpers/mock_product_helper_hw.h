@@ -26,6 +26,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
     std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
+    void getKernelCapabilitiesExtra(uint32_t &extraCaps) const override;
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;
@@ -37,6 +38,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     uint32_t returnedStepping = 0;
     uint32_t returnedL1CachePolicy = 0;
     uint32_t returnedL1CachePolicyIfDebugger = 0;
+    uint32_t returnedExtraKernelCapabilities = 0;
     std::vector<int32_t> threadArbPolicies = {};
     aub_stream::EngineType mockDefaultCopyEngine = aub_stream::EngineType::ENGINE_BCS;
 };

@@ -357,10 +357,14 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = (getSharedDeviceInfo().threadsPerEUConfigs.size() * sizeof(uint32_t));
         break;
     default:
-        if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !getSharedDeviceInfo().imageSupport) {
-            src = &value;
+        if (getDeviceInfoForImage(paramName, src, srcSize, retSize)) {
+            if (false == getSharedDeviceInfo().imageSupport) {
+                src = &value;
+            }
+        } else if (getDeviceInfoExtra(paramName, param, src, srcSize, retSize)) {
             break;
         }
+        break;
     }
 
     auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, src, srcSize);

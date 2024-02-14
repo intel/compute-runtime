@@ -88,4 +88,9 @@ aub_stream::EngineType MockProductHelperHw<gfxProduct>::getDefaultCopyEngine() c
     return this->mockDefaultCopyEngine;
 }
 
+template <>
+void MockProductHelperHw<gfxProduct>::getKernelCapabilitiesExtra(uint32_t &extraCaps) const {
+    extraCaps = this->returnedExtraKernelCapabilities;
+}
+
 } // namespace NEO

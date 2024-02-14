@@ -53,6 +53,10 @@ void ProductHelperHw<gfxProduct>::getKernelFp64AtomicCapabilities(const Hardware
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::getKernelCapabilitiesExtra(uint32_t &extraCaps) const {
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(const HardwareInfo &hwInfo, uint32_t &fp16, uint32_t &fp32, uint32_t &fp64) const {
     getKernelFp16AtomicCapabilities(hwInfo, fp16);
     getKernelFp32AtomicCapabilities(hwInfo, fp32);

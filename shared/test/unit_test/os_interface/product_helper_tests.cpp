@@ -880,3 +880,9 @@ HWTEST_F(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreference
 HWTEST_F(ProductHelperTest, whenAskingForLocalDispatchSizeThenReturnEmpty) {
     EXPECT_EQ(0u, productHelper->getSupportedLocalDispatchSizes().size());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForExtraKerneCapabilitiesThenReturnNone) {
+    uint32_t extraKernelCapabilities = 0u;
+    productHelper->getKernelCapabilitiesExtra(extraKernelCapabilities);
+    EXPECT_EQ(0u, extraKernelCapabilities);
+}
