@@ -1308,4 +1308,14 @@ bool ContextImp::isAllocationSuitableForCompression(const StructuresLookupTable 
     return structuresLookupTable.compressedHint;
 }
 
+ze_result_t ContextImp::getPitchFor2dImage(
+    ze_device_handle_t hDevice,
+    size_t imageWidth,
+    size_t imageHeight,
+    unsigned int elementSizeInBytes,
+    size_t *rowPitch) {
+
+    return Image::getPitchFor2dImage(hDevice, imageWidth, imageHeight, elementSizeInBytes, rowPitch);
+}
+
 } // namespace L0

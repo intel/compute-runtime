@@ -98,6 +98,7 @@ void testAppendImageFunction(ze_context_handle_t &context,
                                   gpuDepth,
                                   0,
                                   0};
+
     ze_image_handle_t dstImg;
     ze_image_region_t dstRegion = {outOffsetX, outOffsetY, outOffsetZ, hostWidth, hostHeight, hostDepth};
 

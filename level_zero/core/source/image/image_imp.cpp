@@ -10,6 +10,8 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -18,6 +20,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/image/image_formats.h"
 
 #include "igfxfmid.h"
 
@@ -143,4 +146,55 @@ ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image
 
     return result;
 }
+
+ze_result_t Image::getPitchFor2dImage(
+    ze_device_handle_t hDevice,
+    size_t imageWidth,
+    size_t imageHeight,
+    unsigned int elementSizeInByte,
+    size_t *rowPitch) {
+
+    NEO::StorageInfo storageInfo = {};
+
+    NEO::GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+
+    NEO::ImageInfo imgInfo = {};
+    imgInfo.imgDesc.imageType = NEO::ImageType::image2D;
+    imgInfo.imgDesc.imageWidth = imageWidth;
+    imgInfo.imgDesc.imageHeight = imageHeight;
+    imgInfo.linearStorage = true;
+
+    const uint32_t exponent = Math::log2(elementSizeInByte);
+
+    if (exponent >= 5u) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    imgInfo.surfaceFormat = &ImageFormats::surfaceFormatsForRedescribe[exponent % 5];
+
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(Device::fromHandle(hDevice));
+    NEO::Gmm gmm(deviceImp->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[deviceImp->getRootDeviceIndex()]->getGmmHelper(),
+                 imgInfo,
+                 storageInfo,
+                 false);
+
+    *rowPitch = imgInfo.rowPitch;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ImageImp::getDeviceOffset(uint64_t *deviceOffset) {
+    if (!this->bindlessImage) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    auto result = allocateBindlessSlot();
+
+    if (result == ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(this->getBindlessSlot() == nullptr);
+        *deviceOffset = this->getBindlessSlot()->surfaceStateOffset;
+    }
+    return result;
+}
+
 } // namespace L0

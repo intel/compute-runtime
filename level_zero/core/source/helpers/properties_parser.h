@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/surface_format_info.h"
 
+#include "level_zero/api/driver_experimental/public/ze_bindless_image_exp.h"
 #include <level_zero/ze_api.h>
 
 #include <cstdint>
@@ -71,6 +72,7 @@ struct StructuresLookupTable {
     bool compressedHint;
     bool uncompressedHint;
     bool rayTracingMemory;
+    bool bindlessImage;
 };
 
 inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupTable, const void *desc) {
@@ -112,6 +114,11 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             lookupTable.areImageProperties = true;
             lookupTable.imageProperties.isPlanarExtension = true;
             lookupTable.imageProperties.planeIndex = imageViewDesc->planeIndex;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC) {
+            const ze_image_bindless_exp_desc_t *imageBindlessDesc =
+                reinterpret_cast<const ze_image_bindless_exp_desc_t *>(extendedDesc);
+            lookupTable.bindlessImage = imageBindlessDesc->flags & ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
             const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
                 reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);

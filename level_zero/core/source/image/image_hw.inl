@@ -36,8 +36,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
     const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
-    const bool isBindlessMode = rootDeviceEnvironment.getReleaseHelper() ? NEO::ApiSpecificConfig::getBindlessMode(rootDeviceEnvironment.getReleaseHelper()) : false;
-
     StructuresLookupTable lookupTable = {};
 
     lookupTable.areImageProperties = true;
@@ -84,6 +82,11 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     imgInfo.plane = lookupTable.imageProperties.isPlanarExtension ? static_cast<GMM_YUV_PLANE>(lookupTable.imageProperties.planeIndex + 1u) : GMM_NO_PLANE;
     imgInfo.useLocalMemory = false;
 
+    if (lookupTable.bindlessImage && this->device->getNEODevice()->getBindlessHeapsHelper() == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    this->bindlessImage = lookupTable.bindlessImage;
+
     if (!isImageView()) {
         if (lookupTable.isSharedHandle) {
             if (!lookupTable.sharedHandleType.isSupportedHandle) {
@@ -113,7 +116,11 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
 
-    if (isBindlessMode) {
+    if (this->bindlessImage) {
+        auto result = allocateBindlessSlot();
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
         NEO::AllocationProperties imgImplicitArgsAllocProperties(device->getRootDeviceIndex(), NEO::ImageImplicitArgs::getSize(), NEO::AllocationType::buffer, device->getNEODevice()->getDeviceBitfield());
         implicitArgsAllocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(imgImplicitArgsAllocProperties);
     }
@@ -172,7 +179,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
 
-    if (isBindlessMode && implicitArgsAllocation) {
+    if (this->bindlessImage && implicitArgsAllocation) {
         implicitArgsSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
         auto clChannelType = getClChannelDataType(imageFormatDesc.format);

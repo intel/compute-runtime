@@ -47,7 +47,14 @@ struct Image : _ze_image_handle_t {
     virtual ze_result_t getMemoryProperties(ze_image_memory_properties_exp_t *pMemoryProperties) = 0;
     virtual ze_result_t allocateBindlessSlot() = 0;
     virtual NEO::SurfaceStateInHeapInfo *getBindlessSlot() = 0;
+    virtual ze_result_t getDeviceOffset(uint64_t *deviceOffset) = 0;
 
+    static ze_result_t getPitchFor2dImage(
+        ze_device_handle_t hDevice,
+        size_t imageWidth,
+        size_t imageHeight,
+        unsigned int elementSizeInByte,
+        size_t *rowPitch);
     static Image *fromHandle(ze_image_handle_t handle) { return static_cast<Image *>(handle); }
 
     inline ze_image_handle_t toHandle() { return this; }

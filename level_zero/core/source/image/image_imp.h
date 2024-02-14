@@ -48,6 +48,7 @@ struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
 
     ze_result_t allocateBindlessSlot() override;
     NEO::SurfaceStateInHeapInfo *getBindlessSlot() override;
+    ze_result_t getDeviceOffset(uint64_t *deviceOffset) override;
 
   protected:
     Device *device = nullptr;
@@ -57,5 +58,6 @@ struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
     ze_image_desc_t imageFormatDesc = {};
     std::optional<ze_image_desc_t> sourceImageFormatDesc = {};
     std::unique_ptr<NEO::SurfaceStateInHeapInfo> bindlessInfo;
+    bool bindlessImage = false;
 };
 } // namespace L0

@@ -1593,6 +1593,22 @@ TEST_F(MemoryTest, givenProductWithNon48bForRTWhenAllocatingDeviceMemoryAsRayTra
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 }
 
+TEST_F(MemoryTest, givenContextWhenGettingPitchFor2dImageThenCorrectRowPitchIsReturned) {
+    size_t rowPitch = 0;
+    ze_result_t result = context->getPitchFor2dImage(device->toHandle(),
+                                                     4, 4,
+                                                     4, &rowPitch);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(0u, rowPitch);
+
+    rowPitch = 0;
+    result = context->getPitchFor2dImage(device->toHandle(),
+                                         4, 4,
+                                         1024, &rowPitch);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(0u, rowPitch);
+}
+
 struct SVMAllocsManagerSharedAllocZexPointerMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerSharedAllocZexPointerMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
     void *createHostUnifiedMemoryAllocation(size_t size,

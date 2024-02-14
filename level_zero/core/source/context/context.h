@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,6 +165,13 @@ struct Context : _ze_context_handle_t {
 
     virtual bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) = 0;
     virtual void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, ze_ipc_memory_flags_t flags) = 0;
+
+    virtual ze_result_t getPitchFor2dImage(
+        ze_device_handle_t hDevice,
+        size_t imageWidth,
+        size_t imageHeight,
+        unsigned int elementSizeInBytes,
+        size_t *rowPitch) = 0;
 
     static Context *fromHandle(ze_context_handle_t handle) { return static_cast<Context *>(handle); }
     inline ze_context_handle_t toHandle() { return this; }

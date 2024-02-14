@@ -10,6 +10,7 @@
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
@@ -1953,7 +1954,7 @@ HWTEST2_F(ContextTest, givenBindlessModeDisabledWhenMakeImageResidentAndEvictThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-HWTEST2_F(ContextTest, givenBindlessModeEnabledWhenMakeImageResidentAndEvictThenImageImplicitArgsAllocationIsMadeResidentAndEvicted, IsAtLeastSkl) {
+HWTEST2_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageImplicitArgsAllocationIsMadeResidentAndEvicted, IsAtLeastSkl) {
     if (!device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper() ||
         !device->getNEODevice()->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
@@ -1970,12 +1971,23 @@ HWTEST2_F(ContextTest, givenBindlessModeEnabledWhenMakeImageResidentAndEvictThen
     auto mockMemoryOperationsInterface = new NEO::MockMemoryOperations();
     mockMemoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(mockMemoryOperationsInterface);
+    auto bindlessHelper = new MockBindlesHeapsHelper(device->getNEODevice()->getMemoryManager(),
+                                                     device->getNEODevice()->getNumGenericSubDevices() > 1,
+                                                     device->getNEODevice()->getRootDeviceIndex(),
+                                                     device->getNEODevice()->getDeviceBitfield());
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
 
     ze_image_handle_t image = {};
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = nullptr;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
     ze_image_desc_t imageDesc = {};
     imageDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    imageDesc.pNext = &bindlessExtDesc;
 
     res = contextImp->createImage(device, &imageDesc, &image);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
