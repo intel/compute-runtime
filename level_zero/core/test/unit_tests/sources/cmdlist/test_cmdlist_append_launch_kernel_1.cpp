@@ -1483,5 +1483,30 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     EXPECT_NE(kernelAllocationIt, cmdlistResidency.end());
 }
 
+HWTEST2_F(CommandListAppendLaunchKernelMockModule,
+          givenOutWalkerPtrDispatchParamWhenAppendingKernelThenSetPtrToWalkerCmd,
+          IsAtLeastXeHpCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    CmdListKernelLaunchParams launchParams = {};
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+
+    ASSERT_NE(nullptr, launchParams.outWalker);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        commandList->getCmdContainer().getCommandStream()->getCpuBase(),
+        usedSpaceAfter));
+    auto itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    EXPECT_EQ(*itorWalker, launchParams.outWalker);
+}
+
 } // namespace ult
 } // namespace L0

@@ -13,6 +13,7 @@
 
 namespace L0 {
 struct CmdListKernelLaunchParams {
+    void *outWalker = nullptr;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;

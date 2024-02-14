@@ -335,6 +335,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
+    launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;
 
     if (!this->isFlushTaskSubmissionEnabled) {
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
