@@ -4081,6 +4081,36 @@ TEST(zeDevice, givenValidImagePropertiesStructWhenGettingImagePropertiesThenSucc
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST(zeDevice, givenPitchedAllocPropertiesStructWhenGettingImagePropertiesThenCorrectPropertiesAreReturned) {
+    ze_result_t errorValue;
+    DriverHandleImp driverHandle{};
+    NEO::MockDevice *neoDevice = (NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(&driverHandle, neoDevice, false, &errorValue));
+    DeviceInfo &deviceInfo = neoDevice->deviceInfo;
+
+    neoDevice->deviceInfo.imageSupport = true;
+    deviceInfo.image2DMaxWidth = 32;
+    deviceInfo.image2DMaxHeight = 16;
+    deviceInfo.image3DMaxDepth = 1;
+    deviceInfo.imageMaxBufferSize = 1024;
+    deviceInfo.imageMaxArraySize = 1;
+    deviceInfo.maxSamplers = 6;
+    deviceInfo.maxReadImageArgs = 7;
+    deviceInfo.maxWriteImageArgs = 8;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    ze_device_pitched_alloc_exp_properties_t extendedProperties = {};
+    extendedProperties.stype = ZE_STRUCTURE_TYPE_PITCHED_ALLOC_DEVICE_EXP_PROPERTIES;
+
+    ze_device_image_properties_t imageProperties;
+    imageProperties.pNext = &extendedProperties;
+
+    result = zeDeviceGetImageProperties(device->toHandle(), &imageProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(32u, extendedProperties.maxImageLinearWidth);
+    EXPECT_EQ(16u, extendedProperties.maxImageLinearHeight);
+}
+
 TEST(zeDevice, givenImagesSupportedWhenGettingImagePropertiesThenValidValuesAreReturned) {
     ze_result_t errorValue;
 
