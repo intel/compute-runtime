@@ -273,6 +273,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, InOrderDuplicatedCounterStorageEnabled, -1, "-1:
 DECLARE_DEBUG_VARIABLE(int32_t, SetProcessPowerThrottlingState, -1, "-1: default, 0: Disabled, 1: ECO, 2: HIGH. If set, will override process power throttling state on os context init. Windows only.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetThreadPriority, -1, "-1: default, 0: Disabled, 1: Enabled. If set, will set thread priority to above normal on os context init. Windows only.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCpuCaching, -1, "-1: default, 1: DRM_XE_GEM_CPU_CACHING_WB, 2: DRM_XE_GEM_CPU_CACHING_WC")
+DECLARE_DEBUG_VARIABLE(int32_t, FlushTlbBeforeCopy, -1, "-1: default, 0: Dont flush, 1: flush TLB as part of MI_FLUSH_DW/PIPE_CONTROL command before copy operation")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

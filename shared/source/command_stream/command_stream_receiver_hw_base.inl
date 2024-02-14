@@ -188,10 +188,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
 
     uint64_t taskStartAddress = commandStreamTask.getGpuBase() + commandStreamTaskStart;
 
+    NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&(this->peekRootDeviceEnvironment()))};
+
     if (dispatchBcsFlags.flushTaskCount) {
         uint64_t postSyncAddress = getTagAllocation()->getGpuAddress();
         TaskCountType postSyncData = peekTaskCount() + 1;
-        NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&(this->peekRootDeviceEnvironment()))};
         NEO::MiFlushArgs args{waArgs};
         args.commandWithPostSync = true;
         args.notifyEnable = isUsedNotifyEnableForPostSync();
@@ -203,6 +204,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
     size_t commandStreamStartCSR = commandStreamCSR.getUsed();
 
     programHardwareContext(commandStreamCSR);
+
+    if (debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
+        MiFlushArgs tlbFlushArgs{waArgs};
+        tlbFlushArgs.commandWithPostSync = true;
+        tlbFlushArgs.tlbFlush = true;
+
+        EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, this->globalFenceAllocation->getGpuAddress(), 0, tlbFlushArgs);
+    }
 
     if (globalFenceAllocation) {
         makeResident(*globalFenceAllocation);
@@ -1190,6 +1199,14 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
         if (blitProperties.outputTimestampPacket && profilingEnabled) {
             BlitCommandsHelper<GfxFamily>::encodeProfilingStartMmios(commandStream, *blitProperties.outputTimestampPacket);
+        }
+
+        if (debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
+            MiFlushArgs tlbFlushArgs{waArgs};
+            tlbFlushArgs.commandWithPostSync = true;
+            tlbFlushArgs.tlbFlush = true;
+
+            EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, this->globalFenceAllocation->getGpuAddress(), 0, tlbFlushArgs);
         }
 
         BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(blitProperties, commandStream, waArgs);

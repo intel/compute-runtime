@@ -1467,6 +1467,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                    srcAllocationStruct.alignedAllocationPtr,
                                    srcAllocationStruct.alloc, srcAllocationStruct.offset, size);
     } else {
+        if (NEO::debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
+            NEO::PipeControlArgs args;
+            args.tlbInvalidation = true;
+
+            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+        }
+
         if (ret == ZE_RESULT_SUCCESS && leftSize) {
 
             Builtin copyKernel = BuiltinTypeHelper::adjustBuiltinType<Builtin::copyBufferToBufferSide>(isStateless, isHeapless);
