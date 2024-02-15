@@ -635,14 +635,25 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
                                      allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper), systemMemoryStorageInfo, gmmRequirements);
     size_t bufferSize = allocationData.size;
-    uint64_t gpuRange = acquireGpuRangeWithCustomAlignment(bufferSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard64KB, allocationData.alignment);
+    auto alignment = allocationData.alignment;
+    if (bufferSize >= 2 * MemoryConstants::megaByte) {
+        alignment = MemoryConstants::pageSize2M;
+    }
+    uint64_t gpuRange = acquireGpuRangeWithCustomAlignment(bufferSize, allocationData.rootDeviceIndex, HeapIndex::heapStandard64KB, alignment);
 
     auto &drm = getDrm(allocationData.rootDeviceIndex);
-    auto ioctlHelper = drm.getIoctlHelper();
-
-    uint32_t handle = ioctlHelper->createGem(bufferSize, static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong()));
-
+    int ret = -1;
+    uint32_t handle;
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
+    const bool tryToUseGemCreateExt = !debugManager.flags.DisableGemCreateExtSetPat.get();
+    if (tryToUseGemCreateExt && drm.getMemoryInfo()) {
+        ret = drm.getMemoryInfo()->createGemExtWithSingleRegion(allocationData.storageInfo.getMemoryBanks(), bufferSize, handle, patIndex, -1, allocationData.flags.isUSMHostAllocation);
+    }
+
+    if (0 != ret) {
+        auto ioctlHelper = drm.getIoctlHelper();
+        handle = ioctlHelper->createGem(bufferSize, static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong()));
+    }
 
     std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, bufferSize, maxOsContextCount));
     bo->setAddress(gpuRange);

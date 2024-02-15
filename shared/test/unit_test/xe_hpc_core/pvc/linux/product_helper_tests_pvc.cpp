@@ -68,7 +68,6 @@ PVCTEST_F(PvcProductHelperLinux, GivenPvcWhenConfigureHardwareCustomThenKmdNotif
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammingSupportedThenReturnTrue) {
-
     EXPECT_TRUE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
 

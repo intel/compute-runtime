@@ -10,6 +10,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -32,7 +33,7 @@ struct ClCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiver
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex, false);
         executionEnvironment->memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
         mdevice = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
-
+        ASSERT_NE(nullptr, mdevice.get());
         clDevice = mdevice.get();
         retVal = CL_SUCCESS;
         context = std::unique_ptr<Context>(Context::create<MockContext>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
