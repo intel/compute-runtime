@@ -1126,7 +1126,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
         }
 
         if (debugFlag == 0 || !closSupported || debugFlag == -1) {
-            auto expectedIndex = productHelper.overridePatIndex(false, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached), allocation.getAllocationType());
+            auto expectedIndex = productHelper.overridePatIndex(false, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::cached));
 
             EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 
@@ -1187,7 +1187,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
 
-    auto expectedIndex = productHelper.overridePatIndex(true, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached), allocation->getAllocationType());
+    auto expectedIndex = productHelper.overridePatIndex(true, static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached));
 
     EXPECT_EQ(expectedIndex, mock->context.receivedVmBindPatIndex.value());
 

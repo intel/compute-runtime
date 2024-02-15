@@ -1756,11 +1756,8 @@ TEST_F(DrmMemoryManagerTest, givenRequiresStandard2MBHeapThenStandard2MBHeapIsAc
 }
 
 TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGraphicsAllocationThenValidAllocationIsReturnedAndStandard64KBHeapIsUsed) {
-    mock->ioctlHelper.reset(new MockIoctlHelper(*mock));
-    mock->queryMemoryInfo();
-    EXPECT_NE(nullptr, mock->getMemoryInfo());
     mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemCreateExt = 1;
+    mock->ioctlExpected.gemCreate = 1;
     mock->ioctlExpected.gemClose = 1;
 
     allocationData.size = MemoryConstants::pageSize;
@@ -1777,9 +1774,6 @@ TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGraphicsAlloc
 }
 
 TEST_F(DrmMemoryManagerTest, GivenSizeAndAlignmentWhenAskedToCreateGraphicsAllocationThenValidAllocationIsReturnedAndMemoryIsAligned) {
-    mock->ioctlHelper.reset(new MockIoctlHelper(*mock));
-    mock->queryMemoryInfo();
-    EXPECT_NE(nullptr, mock->getMemoryInfo());
     allocationData.size = 1;
     int ioctlCnt = 0;
     size_t alignment = 8 * MemoryConstants::megaByte;
@@ -1798,7 +1792,7 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAndAlignmentWhenAskedToCreateGraphicsAlloc
         ioctlCnt += 1;
     } while (alignment != 0);
 
-    mock->ioctlExpected.gemCreateExt = ioctlCnt;
+    mock->ioctlExpected.gemCreate = ioctlCnt;
     mock->ioctlExpected.gemWait = ioctlCnt;
     mock->ioctlExpected.gemClose = ioctlCnt;
 }

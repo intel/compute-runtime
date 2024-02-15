@@ -11,7 +11,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/kernel/kernel_descriptor.h"
-#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
@@ -446,6 +445,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfTile64With3DSurfaceOnBC
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPatIndexProgrammingSupportedThenReturnFalse) {
+
     EXPECT_FALSE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
 
@@ -841,10 +841,10 @@ HWTEST_F(ProductHelperTest, whenDisableL3ForDebugCalledThenFalseIsReturned) {
 HWTEST_F(ProductHelperTest, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned) {
     uint64_t patIndex = 1u;
     bool isUncached = true;
-    EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
+    EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex));
 
     isUncached = false;
-    EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
+    EXPECT_EQ(patIndex, productHelper->overridePatIndex(isUncached, patIndex));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSupportedNumGrfsThenCorrectValueIsReturned) {
