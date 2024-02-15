@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,6 +66,7 @@ class SysmanProductHelper {
     virtual int32_t getPowerLimitValue(uint64_t value) = 0;
     virtual uint64_t setPowerLimitValue(int32_t value) = 0;
     virtual zes_limit_unit_t getPowerLimitUnit() = 0;
+    virtual bool isPowerSetLimitSupported() = 0;
 
     virtual ~SysmanProductHelper() = default;
 

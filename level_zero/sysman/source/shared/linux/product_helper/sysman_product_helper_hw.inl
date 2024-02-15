@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,6 +146,11 @@ uint64_t SysmanProductHelperHw<gfxProduct>::setPowerLimitValue(int32_t value) {
 template <PRODUCT_FAMILY gfxProduct>
 zes_limit_unit_t SysmanProductHelperHw<gfxProduct>::getPowerLimitUnit() {
     return ZES_LIMIT_UNIT_POWER;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isPowerSetLimitSupported() {
+    return true;
 }
 
 } // namespace Sysman
