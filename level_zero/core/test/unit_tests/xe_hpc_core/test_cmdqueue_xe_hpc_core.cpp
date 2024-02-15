@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -1547,6 +1548,71 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.subcopy.size(), 8u);
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.barrier.size(), 2u);
     EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.createdFromLatestPool, 12u);
+
+    NEO::debugManager.flags.OverrideEventSynchronizeTimeout.set(0);
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.device.getDriverHandle()->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    ret = static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.obtainForSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+
+    EXPECT_EQ(ret, 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.pools.size(), 1u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.marker.size(), 2u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.subcopy.size(), 8u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.barrier.size(), 2u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.createdFromLatestPool, 12u);
+}
+
+HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenOOMAndObtainEventsForSplitThenNulloptIsReturned, IsXeHpcCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SplitBcsCopy.set(1);
+    debugManager.flags.EnableFlushTaskSubmission.set(0);
+
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
+
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               testL0Device.get(),
+                                                                               &desc,
+                                                                               false,
+                                                                               NEO::EngineGroupType::copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 4u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 0u);
+
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.pools.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.marker.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.subcopy.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.barrier.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.createdFromLatestPool, 0u);
+
+    NEO::debugManager.flags.OverrideEventSynchronizeTimeout.set(0);
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.device.getDriverHandle()->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    auto ret = static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.obtainForSplit(Context::fromHandle(commandList0->getCmdListContext()), 12);
+
+    EXPECT_FALSE(ret.has_value());
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.pools.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.marker.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.subcopy.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.barrier.size(), 0u);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.events.createdFromLatestPool, 0u);
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingPageFaultCopyThenSuccessIsReturned, IsXeHpcCore) {

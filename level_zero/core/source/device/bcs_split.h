@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,8 +44,9 @@ struct BcsSplit {
         std::vector<Event *> marker;
         size_t createdFromLatestPool = 0u;
 
-        size_t obtainForSplit(Context *context, size_t maxEventCountInPool);
-        size_t allocateNew(Context *context, size_t maxEventCountInPool);
+        std::optional<size_t> obtainForSplit(Context *context, size_t maxEventCountInPool);
+        std::optional<size_t> allocateNew(Context *context, size_t maxEventCountInPool);
+        void resetEventPackage(size_t index);
 
         void releaseResources();
 
@@ -74,7 +75,12 @@ struct BcsSplit {
                                 std::function<ze_result_t(T, K, size_t, ze_event_handle_t)> appendCall) {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
-        auto markerEventIndex = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
+        auto markerEventIndexRet = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
+        if (!markerEventIndexRet.has_value()) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+
+        auto markerEventIndex = *markerEventIndexRet;
 
         auto barrierRequired = !cmdList->isInOrderExecutionEnabled() && cmdList->isBarrierRequired();
         if (barrierRequired) {

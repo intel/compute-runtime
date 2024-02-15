@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,24 +114,27 @@ std::vector<CommandQueue *> &BcsSplit::getCmdQsForSplit(NEO::TransferDirection d
     return this->cmdQs;
 }
 
-size_t BcsSplit::Events::obtainForSplit(Context *context, size_t maxEventCountInPool) {
+std::optional<size_t> BcsSplit::Events::obtainForSplit(Context *context, size_t maxEventCountInPool) {
     std::lock_guard<std::mutex> lock(this->mtx);
     for (size_t i = 0; i < this->marker.size(); i++) {
         auto ret = this->marker[i]->queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {
-            this->marker[i]->reset();
-            this->barrier[i]->reset();
-            for (size_t j = 0; j < this->bcsSplit.cmdQs.size(); j++) {
-                this->subcopy[i * this->bcsSplit.cmdQs.size() + j]->reset();
-            }
+            this->resetEventPackage(i);
             return i;
         }
     }
 
-    return this->allocateNew(context, maxEventCountInPool);
+    auto newEventIndex = this->allocateNew(context, maxEventCountInPool);
+    if (newEventIndex.has_value() || this->marker.empty()) {
+        return newEventIndex;
+    }
+
+    this->marker[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    this->resetEventPackage(0);
+    return 0;
 }
 
-size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPool) {
+std::optional<size_t> BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPool) {
     /* Internal events needed for split:
      *  - event per subcopy to signal completion of given subcopy (vector of subcopy events),
      *  - 1 event to signal completion of entire split (vector of marker events),
@@ -147,6 +150,9 @@ size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPoo
         desc.count = static_cast<uint32_t>(maxEventCountInPool);
         auto hDevice = this->bcsSplit.device.toHandle();
         auto pool = EventPool::create(this->bcsSplit.device.getDriverHandle(), context, 1, &hDevice, &desc, result);
+        if (!pool) {
+            return std::nullopt;
+        }
         this->pools.push_back(pool);
         this->createdFromLatestPool = 0u;
     }
@@ -181,6 +187,15 @@ size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPoo
 
     return this->marker.size() - 1;
 }
+
+void BcsSplit::Events::resetEventPackage(size_t index) {
+    this->marker[index]->reset();
+    this->barrier[index]->reset();
+    for (size_t j = 0; j < this->bcsSplit.cmdQs.size(); j++) {
+        this->subcopy[index * this->bcsSplit.cmdQs.size() + j]->reset();
+    }
+}
+
 void BcsSplit::Events::releaseResources() {
     for (auto &markerEvent : this->marker) {
         markerEvent->destroy();
