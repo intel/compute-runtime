@@ -26,7 +26,7 @@ struct ClDeviceInfoParam {
 
 // clang-format off
 struct ClDeviceInfo {
-    std::vector<cl_name_version>                                                  ilsWithVersion;
+    cl_name_version                                                               ilsWithVersion[1];
     StackVec<cl_name_version, 3>                                                  builtInKernelsWithVersion;
     StackVec<cl_name_version, 5>                                                  openclCAllVersions;
     OpenClCFeaturesContainer                                                      openclCFeatures;

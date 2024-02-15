@@ -538,24 +538,18 @@ TEST(GetDeviceInfo, GivenPreferredInteropsWhenGettingDeviceInfoThenCorrectValueI
     EXPECT_EQ(sizeof(cl_bool), size);
     EXPECT_TRUE(value == 1u);
 }
-
 TEST(GetDeviceInfo, WhenQueryingIlsWithVersionThenProperValueIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    constexpr auto ilCount = 4;
-    cl_name_version ilsWithVersion[ilCount];
+    cl_name_version ilsWithVersion[1];
     size_t paramRetSize;
 
     const auto retVal = device->getDeviceInfo(CL_DEVICE_ILS_WITH_VERSION, sizeof(ilsWithVersion), &ilsWithVersion,
                                               &paramRetSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(sizeof(cl_name_version) * ilCount, paramRetSize);
-    for (int i = 0; i < ilCount; i++) {
-        EXPECT_EQ(1u, CL_VERSION_MAJOR(ilsWithVersion[i].version));
-        EXPECT_GT(4u, CL_VERSION_MINOR(ilsWithVersion[i].version));
-        EXPECT_EQ(0u, CL_VERSION_PATCH(ilsWithVersion[i].version));
-        EXPECT_STREQ("SPIR-V", ilsWithVersion[i].name);
-    }
+    EXPECT_EQ(sizeof(cl_name_version), paramRetSize);
+    EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), ilsWithVersion->version);
+    EXPECT_STREQ("SPIR-V", ilsWithVersion->name);
 }
 
 TEST(GetDeviceInfo, WhenQueryingAtomicMemoryCapabilitiesThenProperValueIsReturned) {

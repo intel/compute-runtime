@@ -460,7 +460,7 @@ TEST(DeviceGetCapsSimpleTest, givenVariousOclVersionsWhenCapsAreCreatedThenDevic
         debugManager.flags.ForceOCLVersion.set(oclVersion);
         auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
-        EXPECT_STREQ("SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ", caps.ilVersion);
+        EXPECT_STREQ("SPIR-V_1.2 ", caps.ilVersion);
     }
 }
 
