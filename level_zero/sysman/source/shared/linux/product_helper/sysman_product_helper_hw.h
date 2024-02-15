@@ -53,6 +53,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     int32_t getPowerLimitValue(uint64_t value) override;
     uint64_t setPowerLimitValue(int32_t value) override;
     zes_limit_unit_t getPowerLimitUnit() override;
+    bool isPowerSetLimitSupported() override;
 
     ~SysmanProductHelperHw() override = default;
 

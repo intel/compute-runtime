@@ -213,5 +213,10 @@ zes_limit_unit_t SysmanProductHelperHw<gfxProduct>::getPowerLimitUnit() {
     return ZES_LIMIT_UNIT_POWER;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isPowerSetLimitSupported() {
+    return true;
+}
+
 } // namespace Sysman
 } // namespace L0

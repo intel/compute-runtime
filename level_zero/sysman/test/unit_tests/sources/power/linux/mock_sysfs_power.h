@@ -55,6 +55,7 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t mockReadResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadPeakResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockWriteResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadIntResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWritePeakLimitResult = ZE_RESULT_SUCCESS;
     ze_result_t mockscanDirEntriesResult = ZE_RESULT_SUCCESS;
@@ -187,6 +188,14 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
         return getValUnsignedInt(file, val);
     }
 
+    ze_result_t write(const std::string file, const int val) override {
+        if (mockWriteResult != ZE_RESULT_SUCCESS) {
+            return mockWriteResult;
+        }
+
+        return setVal(file, val);
+    }
+
     ze_result_t write(const std::string file, const uint64_t val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
         if (!mockWriteUnsignedResult.empty()) {
@@ -291,7 +300,7 @@ struct MockPowerFsAccess : public L0::Sysman::FsAccessInterface {
 
 class PublicLinuxPowerImp : public L0::Sysman::LinuxPowerImp {
   public:
-    PublicLinuxPowerImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId) {}
+    PublicLinuxPowerImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId) {}
     using L0::Sysman::LinuxPowerImp::pPmt;
     using L0::Sysman::LinuxPowerImp::pSysfsAccess;
 };

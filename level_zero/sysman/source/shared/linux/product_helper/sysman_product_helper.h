@@ -74,6 +74,7 @@ class SysmanProductHelper {
     virtual int32_t getPowerLimitValue(uint64_t value) = 0;
     virtual uint64_t setPowerLimitValue(int32_t value) = 0;
     virtual zes_limit_unit_t getPowerLimitUnit() = 0;
+    virtual bool isPowerSetLimitSupported() = 0;
 
     virtual ~SysmanProductHelper() = default;
 
