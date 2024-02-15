@@ -87,6 +87,9 @@ class SysmanProductHelper {
     // Firmware
     virtual void getDeviceSupportedFwTypes(FirmwareUtil *pFwInterface, std::vector<std::string> &fwTypes) = 0;
 
+    // Ecc
+    virtual bool isEccConfigurationSupported() = 0;
+
     virtual ~SysmanProductHelper() = default;
 
   protected:

@@ -235,5 +235,10 @@ void SysmanProductHelperHw<gfxProduct>::getDeviceSupportedFwTypes(FirmwareUtil *
     pFwInterface->getDeviceSupportedFwTypes(fwTypes);
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
+    return false;
+}
+
 } // namespace Sysman
 } // namespace L0

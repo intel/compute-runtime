@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     pBandwidth->maxBandwidth = maxBw * mbpsToBytesPerSecond;
     pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
     return result;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
+    return true;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;
