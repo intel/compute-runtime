@@ -220,6 +220,11 @@ zes_limit_unit_t SysmanProductHelperHw<gfxProduct>::getPowerLimitUnit() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isPowerSetLimitSupported() {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isDiagnosticsSupported() {
     return false;
 }

@@ -221,7 +221,7 @@ ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, ze
 
 ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustained, const zes_power_burst_limit_t *pBurst, const zes_power_peak_limit_t *pPeak) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    if (!isSubdevice) {
+    if ((!isSubdevice) && (pSysmanProductHelper->isPowerSetLimitSupported())) {
         uint64_t val = 0;
 
         if (pSustained != nullptr) {
@@ -312,7 +312,7 @@ ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_de
 
 ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    if (!isSubdevice) {
+    if ((!isSubdevice) && (pSysmanProductHelper->isPowerSetLimitSupported())) {
         uint64_t val = 0;
         for (uint32_t i = 0; i < *pCount; i++) {
             if (pSustained[i].level == ZES_POWER_LEVEL_SUSTAINED) {

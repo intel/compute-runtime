@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,11 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCalling
     zes_limit_unit_t expectedPowerUnit = ZES_LIMIT_UNIT_POWER;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(expectedPowerUnit, pSysmanProductHelper->getPowerLimitUnit());
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCallingIsPowerSetLimitSupportedThenVerifySetRequestIsSupported, IsXeHpOrXeHpcOrXeHpgCore) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isPowerSetLimitSupported());
 }
 
 } // namespace ult
