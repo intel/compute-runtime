@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,8 +91,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
-
-    EXPECT_EQ(1u, wddm->makeResidentResult.called);
     EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
@@ -128,8 +126,6 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
-
-    EXPECT_EQ(1u, wddm->makeResidentResult.called);
     EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
@@ -173,7 +169,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
     }
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
-    EXPECT_EQ(1u, wddm->makeResidentResult.called);
     EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 }
 
@@ -196,8 +191,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreation
     EXPECT_FALSE(ret);
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
-    EXPECT_EQ(0u, wddm->makeResidentResult.called);
-    EXPECT_EQ(0u, wddm->makeResidentResult.handleCount);
 
     memoryManager->freeGraphicsMemory(ringBuffer);
 }
@@ -217,8 +210,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
     }
 
     EXPECT_EQ(0u, wddmMockInterface->createMonitoredFenceCalled);
-    // expect 2 makeResident calls, due to fail on 1st and then retry (which also fails)
-    EXPECT_EQ(2u, wddm->makeResidentResult.called);
     EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 }
 
@@ -240,10 +231,11 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenGettingTagDataThenExpectContextM
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenHandleResidencyThenExpectWddmWaitOnPaginfFenceFromCpuCalled) {
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    auto expectedMakeResidentCalled = wddm->makeResidentResult.called + 1;
 
     wddmDirectSubmission.handleResidency();
 
-    EXPECT_EQ(1u, wddm->waitOnPagingFenceFromCpuResult.called);
+    EXPECT_EQ(expectedMakeResidentCalled, wddm->waitOnPagingFenceFromCpuResult.called);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenHandlingRingBufferCompletionThenExpectWaitFromCpuWithCorrectFenceValue) {
@@ -632,7 +624,6 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenAllocatingResour
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
-    EXPECT_EQ(10u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 }
 

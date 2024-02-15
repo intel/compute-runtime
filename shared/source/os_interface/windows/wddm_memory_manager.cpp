@@ -668,7 +668,7 @@ void WddmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *g
 
 void *WddmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
-    return getWddm(graphicsAllocation.getRootDeviceIndex()).lockResource(wddmAllocation.getDefaultHandle(), wddmAllocation.needsMakeResidentBeforeLock, wddmAllocation.getAlignedSize());
+    return getWddm(graphicsAllocation.getRootDeviceIndex()).lockResource(wddmAllocation.getDefaultHandle(), this->peekExecutionEnvironment().rootDeviceEnvironments[wddmAllocation.getRootDeviceIndex()]->getHelper<GfxCoreHelper>().makeResidentBeforeLockNeeded(wddmAllocation.needsMakeResidentBeforeLock), wddmAllocation.getAlignedSize());
 }
 void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation) {
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);

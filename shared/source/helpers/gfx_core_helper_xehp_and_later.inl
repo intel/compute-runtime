@@ -59,6 +59,11 @@ bool GfxCoreHelperHw<GfxFamily>::isTimestampWaitSupportedForQueues() const {
 }
 
 template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::makeResidentBeforeLockNeeded(bool precondition) const {
+    return true;
+}
+
+template <typename GfxFamily>
 const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto defaultEngine = getChosenEngineType(hwInfo);
