@@ -36,6 +36,7 @@
 #include "shared/source/program/work_size_info.h"
 #include "shared/source/utilities/arrayref.h"
 
+#include "level_zero/api/driver_experimental/public/zex_module.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -915,8 +916,10 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
             if (gfxCoreHelper.isFusedEuDispatchEnabled(this->module->getDevice()->getHwInfo(), kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion)) {
                 preferredGroupSizeProperties->preferredMultiple *= 2;
             }
+        } else if (extendedProperties->stype == ZEX_STRUCTURE_KERNEL_REGISTER_FILE_SIZE_EXP) {
+            zex_kernel_register_file_size_exp_t *properties = reinterpret_cast<zex_kernel_register_file_size_exp_t *>(extendedProperties);
+            properties->registerFileSize = kernelDescriptor.kernelAttributes.numGrfRequired;
         }
-        getExtendedKernelProperties(extendedProperties);
 
         pNext = const_cast<void *>(extendedProperties->pNext);
     }

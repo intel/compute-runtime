@@ -19,8 +19,6 @@ uint32_t DeviceImp::getAdditionalEngines(uint32_t numAdditionalEnginesRequested,
     return 0;
 }
 
-void DeviceImp::getExtendedDeviceModuleProperties(ze_base_desc_t *pExtendedProperties) {}
-
 void DeviceImp::getAdditionalExtProperties(ze_base_properties_t *extendedProperties) {}
 
 } // namespace L0

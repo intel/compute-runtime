@@ -32,6 +32,7 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/driver_experimental/public/zex_module.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/module_imp.h"
@@ -45,6 +46,66 @@ namespace L0 {
 namespace ult {
 
 using ModuleTest = Test<ModuleFixture>;
+
+TEST_F(ModuleTest, GivenGeneralRegisterFileDescriptorWhenGetKernelPropertiesIsCalledThenDescriptorIsCorrectlySet) {
+    zex_device_module_register_file_exp_t descriptor{};
+    ze_device_module_properties_t properties{};
+    properties.pNext = &descriptor;
+
+    const auto &productHelper = getHelper<ProductHelper>();
+    const auto correctRegisterFileSizes = productHelper.getSupportedNumGrfs(device->getNEODevice()->getReleaseHelper());
+    const auto correctRegisterFileSizesCount = static_cast<uint32_t>(correctRegisterFileSizes.size());
+    std::array<std::pair<uint32_t, uint32_t>, 3> testParams = {{{0u, correctRegisterFileSizesCount},
+                                                                {correctRegisterFileSizesCount - 1u, correctRegisterFileSizesCount - 1u},
+                                                                {correctRegisterFileSizesCount + 1u, correctRegisterFileSizesCount}}};
+
+    for (const auto &[registerFileSizesCount, expectedRegisterFileSizesCount] : testParams) {
+        if (expectedRegisterFileSizesCount == 0u) {
+            continue;
+        }
+
+        std::unique_ptr<uint32_t[]> registerSizes;
+
+        descriptor.registerFileSizesCount = registerFileSizesCount;
+        descriptor.registerFileSizes = nullptr;
+        if (registerFileSizesCount != 0u) {
+            registerSizes = std::make_unique<uint32_t[]>(registerFileSizesCount);
+            descriptor.registerFileSizes = registerSizes.get();
+        }
+
+        ze_result_t result = device->getKernelProperties(&properties);
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+        if (descriptor.registerFileSizes == nullptr) {
+            registerSizes = std::make_unique<uint32_t[]>(descriptor.registerFileSizesCount);
+            descriptor.registerFileSizes = registerSizes.get();
+
+            result = device->getKernelProperties(&properties);
+            EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        }
+
+        const std::vector<uint32_t> expectedRegisterFileSizes(correctRegisterFileSizes.begin(), correctRegisterFileSizes.begin() + expectedRegisterFileSizesCount);
+        const std::vector<uint32_t> queriedRegisterFileSizes(descriptor.registerFileSizes, descriptor.registerFileSizes + descriptor.registerFileSizesCount);
+        EXPECT_EQ(expectedRegisterFileSizesCount, descriptor.registerFileSizesCount);
+        EXPECT_EQ(expectedRegisterFileSizes, queriedRegisterFileSizes);
+
+        descriptor = {};
+    }
+}
+
+TEST_F(ModuleTest, GivenKernelRegisterFileDescriptorWhenGetPropertiesIsCalledThenDescriptorIsCorrectlySet) {
+    createKernel();
+
+    zex_kernel_register_file_size_exp_t descriptor{};
+    ze_kernel_properties_t properties{};
+    properties.pNext = &descriptor;
+
+    ze_result_t result = kernel->getProperties(&properties);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    const auto &kernelDescriptor = kernel->getKernelDescriptor();
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.numGrfRequired, descriptor.registerFileSize);
+}
 
 HWTEST_F(ModuleTest, givenBinaryWithDebugDataWhenModuleCreatedFromNativeBinaryThenDebugDataIsStored) {
     size_t size = 0;

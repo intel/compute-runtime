@@ -40,6 +40,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 
+#include "level_zero/api/driver_experimental/public/zex_module.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -849,8 +850,21 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
             if (compilerProductHelper.isDotProductAccumulateSystolicSupported(releaseHelper)) {
                 dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
             }
+        } else if (extendedProperties->stype == ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP) {
+            zex_device_module_register_file_exp_t *properties = reinterpret_cast<zex_device_module_register_file_exp_t *>(extendedProperties);
+
+            const auto supportedNumGrfs = this->getProductHelper().getSupportedNumGrfs(this->getNEODevice()->getReleaseHelper());
+
+            const auto registerFileSizesCount = static_cast<uint32_t>(supportedNumGrfs.size());
+
+            if (properties->registerFileSizes == nullptr) {
+                properties->registerFileSizesCount = registerFileSizesCount;
+            } else {
+                properties->registerFileSizesCount = std::min(properties->registerFileSizesCount, registerFileSizesCount);
+                const auto sizeToCopy = sizeof(*properties->registerFileSizes) * properties->registerFileSizesCount;
+                memcpy_s(properties->registerFileSizes, sizeToCopy, supportedNumGrfs.data(), sizeToCopy);
+            }
         }
-        getExtendedDeviceModuleProperties(extendedProperties);
 
         pNext = const_cast<void *>(extendedProperties->pNext);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,6 @@
 namespace L0 {
 
 KernelExt *KernelImp::getExtension(uint32_t extensionType) { return nullptr; }
-
-void KernelImp::getExtendedKernelProperties(ze_base_desc_t *pExtendedProperties) {}
 
 void KernelImp::patchRegionParams(const CmdListKernelLaunchParams &launchParams) {}
 

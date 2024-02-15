@@ -186,8 +186,6 @@ struct KernelImp : Kernel {
 
     KernelExt *getExtension(uint32_t extensionType);
 
-    void getExtendedKernelProperties(ze_base_desc_t *pExtendedProperties);
-
   protected:
     KernelImp() = default;
 
