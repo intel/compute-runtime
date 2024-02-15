@@ -29,13 +29,14 @@ namespace L0 {
 ImageAllocatorFn imageFactory[IGFX_MAX_PRODUCT] = {};
 
 ImageImp::~ImageImp() {
-    if (isImageView() && this->device != nullptr && this->allocation) {
-        if (bindlessInfo.get() && this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[this->allocation->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr) {
-            this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[this->allocation->getRootDeviceIndex()]->getBindlessHeapsHelper()->releaseSSToReusePool(*bindlessInfo);
+    if ((isImageView() || imageFromBuffer) && this->device != nullptr) {
+        auto rootIndex = this->device->getNEODevice()->getRootDeviceIndex();
+        if (bindlessInfo.get() && this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootIndex]->getBindlessHeapsHelper() != nullptr) {
+            this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootIndex]->getBindlessHeapsHelper()->releaseSSToReusePool(*bindlessInfo);
         }
     }
     if (this->device != nullptr) {
-        if (!isImageView()) {
+        if (!isImageView() && !imageFromBuffer) {
             this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
         }
         if (implicitArgsAllocation) {
@@ -95,7 +96,7 @@ ze_result_t ImageImp::createView(Device *device, const ze_image_desc_t *desc, ze
 }
 
 ze_result_t ImageImp::allocateBindlessSlot() {
-    if (!isImageView()) {
+    if (!isImageView() && !imageFromBuffer) {
         if (!this->device->getNEODevice()->getMemoryManager()->allocateBindlessSlot(allocation)) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
@@ -154,11 +155,6 @@ ze_result_t Image::getPitchFor2dImage(
     unsigned int elementSizeInByte,
     size_t *rowPitch) {
 
-    NEO::StorageInfo storageInfo = {};
-
-    NEO::GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-
     NEO::ImageInfo imgInfo = {};
     imgInfo.imgDesc.imageType = NEO::ImageType::image2D;
     imgInfo.imgDesc.imageWidth = imageWidth;
@@ -173,13 +169,8 @@ ze_result_t Image::getPitchFor2dImage(
 
     imgInfo.surfaceFormat = &ImageFormats::surfaceFormatsForRedescribe[exponent % 5];
 
-    DeviceImp *deviceImp = static_cast<DeviceImp *>(Device::fromHandle(hDevice));
-    NEO::Gmm gmm(deviceImp->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[deviceImp->getRootDeviceIndex()]->getGmmHelper(),
-                 imgInfo,
-                 storageInfo,
-                 false);
-
-    *rowPitch = imgInfo.rowPitch;
+    Device *device = Device::fromHandle(hDevice);
+    *rowPitch = ImageImp::getRowPitchFor2dImage(device, imgInfo);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -195,6 +186,22 @@ ze_result_t ImageImp::getDeviceOffset(uint64_t *deviceOffset) {
         *deviceOffset = this->getBindlessSlot()->surfaceStateOffset;
     }
     return result;
+}
+
+size_t ImageImp::getRowPitchFor2dImage(Device *device, NEO::ImageInfo imgInfo) {
+    NEO::StorageInfo storageInfo = {};
+
+    NEO::GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+
+    NEO::Gmm gmm(deviceImp->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[deviceImp->getRootDeviceIndex()]->getGmmHelper(),
+                 imgInfo,
+                 storageInfo,
+                 false);
+
+    return imgInfo.rowPitch;
 }
 
 } // namespace L0

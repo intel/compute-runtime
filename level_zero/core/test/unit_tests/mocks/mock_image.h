@@ -28,6 +28,10 @@ struct WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>
     using BaseClass::implicitArgsSurfaceState;
     using BaseClass::redescribedSurfaceState;
     using BaseClass::surfaceState;
+    using BaseClass::ImageImp::imageFromBuffer;
+    ;
+    using BaseClass::ImageImp::imgInfo;
+    ;
 };
 
 } // namespace ult

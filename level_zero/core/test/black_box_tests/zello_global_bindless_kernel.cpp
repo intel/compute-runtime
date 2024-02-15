@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,10 +55,11 @@ int main(int argc, char *argv[], char **envp) {
         allEnv.push_back(*env);
     }
     allEnv.push_back("UseExternalAllocatorForSshAndDsh=1");
+    allEnv.push_back("UseBindlessMode=1");
     allEnv.push_back("PrintDebugSettings=1");
     allEnv.push_back(nullptr);
 
-    std::cout << "\nRunning " << argv2[0] << " with UseExternalAllocatorForSshAndDsh=1 ..." << std::endl;
+    std::cout << "\nRunning " << argv2[0] << " with UseExternalAllocatorForSshAndDsh=1 UseBindlessMode=1..." << std::endl;
 
     execve(argv2[0], argv2, const_cast<char **>(allEnv.data()));
 

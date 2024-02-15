@@ -1682,5 +1682,162 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenBindlessSlotAllocationFailsThenImag
     ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
 }
 
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithInvalidPitchedPtrThenErrorIsReturned, IsAtLeastSkl) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
+                                                     neoDevice->getNumGenericSubDevices() > 1,
+                                                     neoDevice->getRootDeviceIndex(),
+                                                     neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = reinterpret_cast<void *>(0x1234000); // invalid USM device pointer
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &pitchedDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithDeviceUMSPitchedPtrThenImageIsCreated, IsAtLeastSkl) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
+                                                     neoDevice->getNumGenericSubDevices() > 1,
+                                                     neoDevice->getRootDeviceIndex(),
+                                                     neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto ret = context->allocDeviceMem(device,
+                                       &deviceDesc,
+                                       size,
+                                       0,
+                                       &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr; // USM device pointer
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &pitchedDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->bindlessImage);
+    EXPECT_TRUE(imageHW->imageFromBuffer);
+
+    size_t rowPitch = 0;
+    imageHW->getPitchFor2dImage(device->toHandle(), width, height, 1, &rowPitch);
+    EXPECT_EQ(rowPitch, imageHW->imgInfo.rowPitch);
+
+    uint64_t deviceOffset = 0;
+    ret = imageHW->getDeviceOffset(&deviceOffset);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    auto ssHeapInfo = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, ssHeapInfo);
+    EXPECT_EQ(ssHeapInfo->surfaceStateOffset, deviceOffset);
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+
+    // Allocation in image is equal to allocation from USM memory
+    EXPECT_EQ(allocData->gpuAllocations.getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()), imageHW->getAllocation());
+    // Allocation should not have bindless offset allocated
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), imageHW->getAllocation()->getBindlessOffset());
+
+    imageHW.reset(nullptr);
+
+    ret = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+}
+
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithDeviceUMSPitchedPtrThenErrorIsReturned, IsAtLeastSkl) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
+                                                     neoDevice->getNumGenericSubDevices() > 1,
+                                                     neoDevice->getRootDeviceIndex(),
+                                                     neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto ret = context->allocDeviceMem(device,
+                                       &deviceDesc,
+                                       size,
+                                       0,
+                                       &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = nullptr;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC, &bindlessExtDesc, ZE_IMAGE_FLAG_KERNEL_WRITE, ZE_IMAGE_TYPE_2D, {ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT, ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G, ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A}, width, height, depth, 0, 0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->bindlessImage);
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr; // USM device pointer
+
+    ze_image_desc_t imgViewDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC, &pitchedDesc, ZE_IMAGE_FLAG_KERNEL_WRITE, ZE_IMAGE_TYPE_2D, {ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT, ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G, ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A}, width, height, depth, 0, 0};
+
+    ze_image_handle_t imageView = {};
+    ret = imageHW->createView(device, &imgViewDesc, &imageView);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+
+    ret = context->freeMem(ptr);
+}
+
 } // namespace ult
 } // namespace L0

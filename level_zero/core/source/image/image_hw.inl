@@ -18,9 +18,11 @@
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/release_helper/release_helper.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
@@ -87,6 +89,13 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     }
     this->bindlessImage = lookupTable.bindlessImage;
 
+    if (lookupTable.imageProperties.pitchedPtr) {
+        if (!this->bindlessImage || isImageView()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        this->imageFromBuffer = true;
+    }
+
     if (!isImageView()) {
         if (lookupTable.isSharedHandle) {
             if (!lookupTable.sharedHandleType.isSupportedHandle) {
@@ -105,11 +114,35 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 allocation->getDefaultGmm()->queryImageParams(imgInfo);
             }
         } else {
-            NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::image, device->getNEODevice()->getDeviceBitfield());
 
-            properties.flags.preferCompressed = isSuitableForCompression(lookupTable, imgInfo);
+            if (!this->imageFromBuffer) {
+                NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::image, device->getNEODevice()->getDeviceBitfield());
 
-            allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+                properties.flags.preferCompressed = isSuitableForCompression(lookupTable, imgInfo);
+
+                allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+            } else {
+
+                auto usmAllocation = this->device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(lookupTable.imageProperties.pitchedPtr);
+                if (usmAllocation == nullptr) {
+                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                }
+                allocation = usmAllocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+                imgInfo.linearStorage = true;
+                imgInfo.imgDesc.imageRowPitch = getRowPitchFor2dImage(device, imgInfo);
+
+                if (imgInfo.imgDesc.imageRowPitch > 0) {
+                    imgInfo.rowPitch = imgInfo.imgDesc.imageRowPitch;
+                } else {
+                    imgInfo.rowPitch = imgInfo.imgDesc.imageWidth * imgInfo.surfaceFormat->imageElementSizeInBytes;
+                }
+                imgInfo.slicePitch = imgInfo.rowPitch * imgInfo.imgDesc.imageHeight;
+                imgInfo.size = allocation->getUnderlyingBufferSize();
+                imgInfo.qPitch = 0;
+
+                UNRECOVERABLE_IF(imgInfo.offset != 0);
+            }
         }
         if (allocation == nullptr) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -128,7 +161,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     auto gmm = this->allocation->getDefaultGmm();
     auto gmmHelper = static_cast<const NEO::RootDeviceEnvironment &>(rootDeviceEnvironment).getGmmHelper();
 
-    if (gmm != nullptr) {
+    if (!this->imageFromBuffer && gmm != nullptr) {
         NEO::ImagePlane yuvPlaneType = NEO::ImagePlane::noPlane;
         if (isImageView() && (sourceImageFormatDesc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12)) {
             yuvPlaneType = NEO::ImagePlane::planeY;

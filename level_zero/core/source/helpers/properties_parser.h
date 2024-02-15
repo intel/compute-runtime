@@ -55,6 +55,7 @@ struct StructuresLookupTable {
         NEO::ImageDescriptor imageDescriptor;
         uint32_t planeIndex;
         bool isPlanarExtension;
+        void *pitchedPtr;
     } imageProperties;
 
     struct SharedHandleType {
@@ -119,6 +120,10 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
                 reinterpret_cast<const ze_image_bindless_exp_desc_t *>(extendedDesc);
             lookupTable.bindlessImage = imageBindlessDesc->flags & ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
 
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC) {
+            const ze_image_pitched_exp_desc_t *pitchedDesc = reinterpret_cast<const ze_image_pitched_exp_desc_t *>(extendedDesc);
+            lookupTable.areImageProperties = true;
+            lookupTable.imageProperties.pitchedPtr = pitchedDesc->ptr;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
             const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
                 reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
