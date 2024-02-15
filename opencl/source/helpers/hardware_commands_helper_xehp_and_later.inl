@@ -61,11 +61,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     uint32_t &sizeCrossThreadData,
     [[maybe_unused]] uint64_t scratchAddress) {
 
-    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
-
-    if constexpr (heaplessModeEnabled == false) {
-        indirectHeap.align(WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
-    }
+    indirectHeap.align(GfxFamily::indirectDataAlignment);
 
     auto offsetCrossThreadData = indirectHeap.getUsed();
     char *dest = nullptr;
@@ -119,6 +115,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         dest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
         memcpy_s(dest, sizeCrossThreadData, src, sizeCrossThreadData);
     }
+
+    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
     if constexpr (heaplessModeEnabled) {
         auto device = kernel.getContext().getDevice(0);

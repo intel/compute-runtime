@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,6 +145,7 @@ struct XeHpgCoreFamily : public XeHpgCore {
     static const STATE_SIP cmdInitStateSip;
     static constexpr bool isQwordInOrderCounter = false;
     static constexpr bool walkerPostSyncSupport = true;
+    static constexpr size_t indirectDataAlignment = COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_XE_HP_CORE;
