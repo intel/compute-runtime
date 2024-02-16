@@ -198,13 +198,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             compactEvent = event;
             event = nullptr;
         } else {
-            NEO::GraphicsAllocation *eventAlloc = &event->getAllocation(this->device);
-            commandContainer.addToResidencyContainer(eventAlloc);
+            NEO::GraphicsAllocation *eventPoolAlloc = event->getPoolAllocation(this->device);
+
+            if (eventPoolAlloc) {
+                commandContainer.addToResidencyContainer(eventPoolAlloc);
+                eventAddress = event->getPacketAddress(this->device);
+                isTimestampEvent = event->isUsingContextEndOffset();
+            }
+
             bool flushRequired = event->isSignalScope() &&
                                  !launchParams.isKernelSplitOperation;
             l3FlushEnable = getDcFlushRequired(flushRequired);
-            isTimestampEvent = event->isUsingContextEndOffset();
-            eventAddress = event->getPacketAddress(this->device);
             interruptEvent = event->isInterruptModeEnabled();
         }
     }

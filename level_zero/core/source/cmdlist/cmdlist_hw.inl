@@ -548,7 +548,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
 
     event->resetPackets(false);
     event->disableHostCaching(!isImmediateType());
-    commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+    commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
 
     // default state of event is single packet, handle case when reset is used 1st, launchkernel 2nd - just reset all packets then, use max
     bool useMaxPackets = event->isEventTimestampFlagSet() || (event->getPacketsInUse() < this->partitionCount);
@@ -2156,14 +2156,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *event, bool skipBarrierForEndProfiling) {
-    if (event == nullptr) {
+    if (event == nullptr || !event->getPoolAllocation(this->device)) {
         return;
     }
     if (event->isEventTimestampFlagSet()) {
         appendEventForProfiling(event, false, skipBarrierForEndProfiling);
     } else {
         event->resetKernelCountAndPacketUsedCount();
-        commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+        commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
 
         event->setPacketsInUse(this->partitionCount);
         dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, !isCopyOnly(), false);
@@ -2175,7 +2175,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
     if (!event->isEventTimestampFlagSet()) {
         return;
     }
-    commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+    commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
 
     if (beforeWalker) {
         event->resetKernelCountAndPacketUsedCount();
@@ -2362,7 +2362,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+    commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
     if (NEO::debugManager.flags.EnableSWTags.get()) {
@@ -2506,7 +2506,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             continue;
         }
 
-        commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+        commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
 
         appendWaitOnSingleEvent(event, relaxedOrderingAllowed);
     }
@@ -2633,7 +2633,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             return;
         }
 
-        commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+        commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
         bool workloadPartition = isTimestampEventForMultiTile(event);
 
         appendDispatchOffsetRegister(workloadPartition, true);
@@ -2749,7 +2749,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
 
     for (uint32_t i = 0u; i < numEvents; ++i) {
         auto event = Event::fromHandle(phEvents[i]);
-        commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
+        commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
         timestampsData[i].address = event->getGpuAddress(this->device);
         timestampsData[i].packetsInUse = event->getPacketsInUse();
         timestampsData[i].timestampSizeInDw = event->getTimestampSizeInDw();

@@ -3257,7 +3257,7 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
-    auto eventAllocation = &event->getAllocation(device);
+    auto eventAllocation = event->getPoolAllocation(device);
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     auto result = event->hostSynchronize(timeout);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -3314,7 +3314,7 @@ HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenA
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
-    auto eventAllocation = &event->getAllocation(device);
+    auto eventAllocation = event->getPoolAllocation(device);
     constexpr uint64_t timeout = 0;
     auto result = event->hostSynchronize(timeout);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -3546,7 +3546,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(0u, ultCsr.writeMemoryParams.callCount);
 
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
-    auto eventAllocation = &event->getAllocation(device);
+    auto eventAllocation = event->getPoolAllocation(device);
 
     EXPECT_TRUE(eventAllocation->getAubInfo().writeMemoryOnly);
 

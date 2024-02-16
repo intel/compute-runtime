@@ -3609,6 +3609,87 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingSynchronizeThenRet
     zeEventDestroy(handle);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
+    uint64_t counterValue = 2;
+    uint64_t *hostAddress = &counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+
+    ze_event_desc_t eventDesc = {};
+    ze_event_handle_t eHandle1 = nullptr;
+    ze_event_handle_t eHandle2 = nullptr;
+    ze_event_handle_t eHandle3 = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle3));
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocHostMem(size);
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    immCmdList->appendMemoryFill(data, data, 1, size, eHandle1, 0, nullptr, false);
+    immCmdList->appendMemoryFill(data, data, 1, size, nullptr, 1, &eHandle2, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eHandle3, 0, nullptr, launchParams, false);
+
+    context->freeMem(data);
+    zeEventDestroy(eHandle1);
+    zeEventDestroy(eHandle2);
+    zeEventDestroy(eHandle3);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
+    uint64_t counterValue = 2;
+    uint64_t *hostAddress = &counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+
+    ze_event_desc_t eventDesc = {};
+    ze_event_handle_t eHandle1 = nullptr;
+    ze_event_handle_t eHandle2 = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle2));
+
+    const size_t ptrBaseSize = 128;
+    const size_t offset = 1;
+    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto unalignedPtr = ptrOffset(alignedPtr, offset);
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, eHandle1, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 1, &eHandle2, false, false);
+
+    alignedFree(alignedPtr);
+    zeEventDestroy(eHandle1);
+    zeEventDestroy(eHandle2);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
+    uint64_t counterValue = 2;
+    uint64_t *hostAddress = &counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+
+    ze_event_desc_t eventDesc = {};
+    ze_event_handle_t eHandle1 = nullptr;
+    ze_event_handle_t eHandle2 = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle2));
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocHostMem(size);
+
+    auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+
+    immCmdList->appendMemoryFill(data, data, 1, size, eHandle1, 0, nullptr, false);
+    immCmdList->appendMemoryFill(data, data, 1, size, nullptr, 1, &eHandle2, false);
+
+    context->freeMem(data);
+    zeEventDestroy(eHandle1);
+    zeEventDestroy(eHandle2);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAndValueThenReturnCorrectValues, IsAtLeastSkl) {
     auto eventPool = createEvents<FamilyType>(1, false);
     uint64_t counterValue = -1;
@@ -3812,6 +3893,87 @@ struct MultiTileInOrderCmdListTests : public InOrderCmdListTests {
 
     const uint32_t partitionCount = 2;
 };
+
+HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
+    uint64_t counterValue = 2;
+    uint64_t *hostAddress = &counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+
+    ze_event_desc_t eventDesc = {};
+    ze_event_handle_t eHandle1 = nullptr;
+    ze_event_handle_t eHandle2 = nullptr;
+    ze_event_handle_t eHandle3 = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle3));
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocHostMem(size);
+
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    immCmdList->appendMemoryFill(data, data, 1, size, eHandle1, 0, nullptr, false);
+    immCmdList->appendMemoryFill(data, data, 1, size, nullptr, 1, &eHandle2, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eHandle3, 0, nullptr, launchParams, false);
+
+    context->freeMem(data);
+    zeEventDestroy(eHandle1);
+    zeEventDestroy(eHandle2);
+    zeEventDestroy(eHandle3);
+}
+
+HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
+    uint64_t counterValue = 2;
+    uint64_t *hostAddress = &counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+
+    ze_event_desc_t eventDesc = {};
+    ze_event_handle_t eHandle1 = nullptr;
+    ze_event_handle_t eHandle2 = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle2));
+
+    const size_t ptrBaseSize = 128;
+    const size_t offset = 1;
+    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto unalignedPtr = ptrOffset(alignedPtr, offset);
+
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, eHandle1, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 1, &eHandle2, false, false);
+
+    alignedFree(alignedPtr);
+    zeEventDestroy(eHandle1);
+    zeEventDestroy(eHandle2);
+}
+
+HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
+    uint64_t counterValue = 2;
+    uint64_t *hostAddress = &counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+
+    ze_event_desc_t eventDesc = {};
+    ze_event_handle_t eHandle1 = nullptr;
+    ze_event_handle_t eHandle2 = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue + 1, &eventDesc, &eHandle2));
+
+    constexpr size_t size = 128 * sizeof(uint32_t);
+    auto data = allocHostMem(size);
+
+    auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+
+    immCmdList->appendMemoryFill(data, data, 1, size, eHandle1, 0, nullptr, false);
+    immCmdList->appendMemoryFill(data, data, 1, size, nullptr, 1, &eHandle2, false);
+
+    context->freeMem(data);
+    zeEventDestroy(eHandle1);
+    zeEventDestroy(eHandle2);
+}
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagSetWhenAskingForAtomicSignallingThenReturnTrue, IsAtLeastXeHpCore) {
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();

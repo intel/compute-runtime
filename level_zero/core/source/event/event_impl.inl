@@ -319,7 +319,7 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
             for (auto const &engine : allEngines) {
                 const auto &csr = engine.commandStreamReceiver;
                 if (!downloadedAllocation) {
-                    if (auto &alloc = this->getAllocation(this->device); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
+                    if (auto &alloc = *this->getPoolAllocation(this->device); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
                         csr->downloadAllocation(alloc);
                         downloadedAllocation = true;
                     }
@@ -367,7 +367,7 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 
     auto baseHostAddr = this->hostAddress;
-    auto baseGpuAddr = getAllocation(device).getGpuAddress();
+    auto baseGpuAddr = getPoolAllocation(device)->getGpuAddress();
 
     uint64_t timestampStart = static_cast<uint64_t>(eventVal);
     uint64_t timestampEnd = static_cast<uint64_t>(eventVal);
@@ -415,15 +415,20 @@ void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpu
     memcpy_s(dstHostAddr, copySize, &copyData, copySize);
 
     if (this->tbxMode) {
-        auto &alloc = getAllocation(device);
+        auto alloc = getPoolAllocation(device);
+        if (!alloc) {
+            DEBUG_BREAK_IF(true);
+            return;
+        }
+
         constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-        alloc.setTbxWritable(true, allBanks);
+        alloc->setTbxWritable(true, allBanks);
 
-        auto offset = ptrDiff(dstGpuVa, alloc.getGpuAddress());
+        auto offset = ptrDiff(dstGpuVa, alloc->getGpuAddress());
 
-        csrs[0]->writeMemory(alloc, true, offset, copySize);
+        csrs[0]->writeMemory(*alloc, true, offset, copySize);
 
-        alloc.setTbxWritable(true, allBanks);
+        alloc->setTbxWritable(true, allBanks);
     }
 }
 
