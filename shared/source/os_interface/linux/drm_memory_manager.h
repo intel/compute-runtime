@@ -156,6 +156,7 @@ class DrmMemoryManager : public MemoryManager {
     BufferObject *createRootDeviceBufferObject(uint32_t rootDeviceIndex);
     void releaseBufferObject(uint32_t rootDeviceIndex);
     bool retrieveMmapOffsetForBufferObject(uint32_t rootDeviceIndex, BufferObject &bo, uint64_t flags, uint64_t &offset);
+    BufferObject::BOType getBOTypeFromPatIndex(uint64_t patIndex, bool isPatIndexSupported) const;
 
     std::vector<BufferObject *> pinBBs;
     std::vector<void *> memoryForPinBBs;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,6 +91,12 @@ class BufferObject {
             bo->close();
             delete bo;
         }
+    };
+
+    enum class BOType {
+        legacy,
+        coherent,
+        nonCoherent
     };
 
     bool setTiling(uint32_t mode, uint32_t stride);
@@ -205,6 +211,8 @@ class BufferObject {
     }
     uint64_t peekPatIndex() const { return patIndex; }
     void setPatIndex(uint64_t newPatIndex) { this->patIndex = newPatIndex; }
+    BOType peekBOType() const { return boType; }
+    void setBOType(BOType newBoType) { this->boType = newBoType; }
 
     static constexpr int gpuHangDetected{-7171};
 
@@ -215,38 +223,34 @@ class BufferObject {
 
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
-
-    Drm *drm = nullptr;
-    bool perContextVmsUsed = false;
-    std::atomic<uint32_t> refCount;
-
-    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
-    BufferObjectHandleWrapper handle; // i915 gem object handle
-    uint64_t size;
-    bool isReused = false;
-    bool boHandleShared = false;
-
-    uint32_t tilingMode;
-    bool allowCapture = false;
-    bool requiresImmediateBinding = false;
-    bool requiresExplicitResidency = false;
-
     MOCKABLE_VIRTUAL void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
     void printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal);
 
-    void *lockedAddress; // CPU side virtual address
-
+    Drm *drm = nullptr;
+    uint64_t size;
     uint64_t unmapSize = 0;
     uint64_t patIndex = CommonConstants::unsupportedPatIndex;
+    void *lockedAddress; // CPU side virtual address
+    size_t colourChunk = 0;
+    BufferObjectHandleWrapper handle; // i915 gem object handle
+    StackVec<uint32_t, 2> bindExtHandles;
+    std::vector<uint64_t> bindAddresses;
+    std::atomic<uint32_t> refCount;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
+    uint32_t tilingMode;
+
+    BOType boType = BOType::legacy;
 
     CacheRegion cacheRegion = CacheRegion::defaultRegion;
     CachePolicy cachePolicy = CachePolicy::writeBack;
 
-    StackVec<uint32_t, 2> bindExtHandles;
-
+    bool perContextVmsUsed = false;
+    bool isReused = false;
+    bool boHandleShared = false;
+    bool allowCapture = false;
+    bool requiresImmediateBinding = false;
+    bool requiresExplicitResidency = false;
     bool colourWithBind = false;
-    size_t colourChunk = 0;
-    std::vector<uint64_t> bindAddresses;
 
   private:
     uint64_t gpuAddress = 0llu;

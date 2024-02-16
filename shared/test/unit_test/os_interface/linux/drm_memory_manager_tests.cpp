@@ -1759,8 +1759,14 @@ TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGraphicsAlloc
     mock->ioctlHelper.reset(new MockIoctlHelper(*mock));
     mock->queryMemoryInfo();
     EXPECT_NE(nullptr, mock->getMemoryInfo());
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (debugManager.flags.UseGemCreateExtInAllocateMemoryByKMD.get() == 0 ||
+        !productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+        mock->ioctlExpected.gemCreate = 1;
+    } else {
+        mock->ioctlExpected.gemCreateExt = 1;
+    }
     mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemCreate = 1;
     mock->ioctlExpected.gemClose = 1;
 
     allocationData.size = MemoryConstants::pageSize;
@@ -1797,8 +1803,13 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAndAlignmentWhenAskedToCreateGraphicsAlloc
         memoryManager->freeGraphicsMemory(allocation);
         ioctlCnt += 1;
     } while (alignment != 0);
-
-    mock->ioctlExpected.gemCreate = ioctlCnt;
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (debugManager.flags.UseGemCreateExtInAllocateMemoryByKMD.get() == 0 ||
+        !productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+        mock->ioctlExpected.gemCreate = ioctlCnt;
+    } else {
+        mock->ioctlExpected.gemCreateExt = ioctlCnt;
+    }
     mock->ioctlExpected.gemWait = ioctlCnt;
     mock->ioctlExpected.gemClose = ioctlCnt;
 }
@@ -2400,7 +2411,13 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     // check DRM_IOCTL_I915_GEM_MMAP_OFFSET input params
     EXPECT_EQ((uint32_t)drmAllocation->getBO()->peekHandle(), mock->mmapOffsetHandle);
     EXPECT_EQ(0u, mock->mmapOffsetPad);
-    EXPECT_EQ(static_cast<uint32_t>(I915_MMAP_OFFSET_WC), mock->mmapOffsetFlags);
+    auto expectedMmapOffset = static_cast<uint32_t>(I915_MMAP_OFFSET_WC);
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (BufferObject::BOType::nonCoherent != drmAllocation->getBO()->peekBOType() &&
+        productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+        expectedMmapOffset = static_cast<uint32_t>(I915_MMAP_OFFSET_WB);
+    }
+    EXPECT_EQ(expectedMmapOffset, mock->mmapOffsetFlags);
 
     memoryManager->unlockResource(allocation);
     EXPECT_EQ(nullptr, drmAllocation->getBO()->peekLockedAddress());
@@ -7136,17 +7153,46 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBuf
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledForSystemMemoryThenApplyCorrectFlags) {
-    mock->ioctlExpected.gemMmapOffset = 4;
+    mock->ioctlExpected.gemMmapOffset = 8;
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
 
     uint64_t offset = 0;
     bool ret = false;
-
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    bo.setBOType(BufferObject::BOType::legacy);
     for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
         ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
 
         EXPECT_TRUE(ret);
-        EXPECT_EQ(flags, mock->mmapOffsetFlags);
+        if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+            EXPECT_EQ(static_cast<uint32_t>(I915_MMAP_OFFSET_WB), mock->mmapOffsetFlags);
+        } else {
+            EXPECT_EQ(flags, mock->mmapOffsetFlags);
+        }
+    }
+
+    bo.setBOType(BufferObject::BOType::coherent);
+    for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
+        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+
+        EXPECT_TRUE(ret);
+        if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+            EXPECT_EQ(static_cast<uint32_t>(I915_MMAP_OFFSET_WB), mock->mmapOffsetFlags);
+        } else {
+            EXPECT_EQ(flags, mock->mmapOffsetFlags);
+        }
+    }
+
+    bo.setBOType(BufferObject::BOType::nonCoherent);
+    for (uint64_t flags : {I915_MMAP_OFFSET_WC, I915_MMAP_OFFSET_WB}) {
+        ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
+
+        EXPECT_TRUE(ret);
+        if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+            EXPECT_EQ(static_cast<uint32_t>(I915_MMAP_OFFSET_WC), mock->mmapOffsetFlags);
+        } else {
+            EXPECT_EQ(flags, mock->mmapOffsetFlags);
+        }
     }
 
     mock->failOnMmapOffset = true;
@@ -7155,7 +7201,28 @@ TEST_F(DrmMemoryManagerTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCall
         ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, flags, offset);
 
         EXPECT_FALSE(ret);
-        EXPECT_EQ(flags, mock->mmapOffsetFlags);
+        if (productHelper.useGemCreateExtInAllocateMemoryByKMD()) {
+            EXPECT_EQ(static_cast<uint32_t>(I915_MMAP_OFFSET_WC), mock->mmapOffsetFlags);
+        } else {
+            EXPECT_EQ(flags, mock->mmapOffsetFlags);
+        }
+    }
+}
+
+HWTEST_F(DrmMemoryManagerTest, givenDrmWhenGetBOTypeFromPatIndexIsCalledThenReturnCorrectBOType) {
+    const bool isPatIndexSupported = memoryManager->getGmmHelper(mockRootDeviceIndex)->getRootDeviceEnvironment().getProductHelper().isVmBindPatIndexProgrammingSupported();
+    if (!isPatIndexSupported) {
+        EXPECT_EQ(BufferObject::BOType::legacy, memoryManager->getBOTypeFromPatIndex(0, isPatIndexSupported));
+        EXPECT_EQ(BufferObject::BOType::legacy, memoryManager->getBOTypeFromPatIndex(1, isPatIndexSupported));
+        EXPECT_EQ(BufferObject::BOType::legacy, memoryManager->getBOTypeFromPatIndex(2, isPatIndexSupported));
+        EXPECT_EQ(BufferObject::BOType::legacy, memoryManager->getBOTypeFromPatIndex(3, isPatIndexSupported));
+        EXPECT_EQ(BufferObject::BOType::legacy, memoryManager->getBOTypeFromPatIndex(4, isPatIndexSupported));
+    } else {
+        EXPECT_EQ(BufferObject::BOType::nonCoherent, memoryManager->getBOTypeFromPatIndex(0, isPatIndexSupported));
+        EXPECT_EQ(BufferObject::BOType::nonCoherent, memoryManager->getBOTypeFromPatIndex(1, isPatIndexSupported));
+        EXPECT_EQ(BufferObject::BOType::nonCoherent, memoryManager->getBOTypeFromPatIndex(2, isPatIndexSupported));
+        EXPECT_EQ(BufferObject::BOType::coherent, memoryManager->getBOTypeFromPatIndex(3, isPatIndexSupported));
+        EXPECT_EQ(BufferObject::BOType::coherent, memoryManager->getBOTypeFromPatIndex(4, isPatIndexSupported));
     }
 }
 

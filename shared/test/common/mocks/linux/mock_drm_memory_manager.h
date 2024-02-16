@@ -52,6 +52,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::createSharedUnifiedMemoryAllocation;
     using DrmMemoryManager::eraseSharedBoHandleWrapper;
     using DrmMemoryManager::eraseSharedBufferObject;
+    using DrmMemoryManager::getBOTypeFromPatIndex;
     using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::getDrm;
     using DrmMemoryManager::getRootDeviceIndex;

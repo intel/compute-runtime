@@ -22,6 +22,11 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint
     }
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::useGemCreateExtInAllocateMemoryByKMD() const {
+    return true;
+}
+
 template class NEO::ProductHelperHw<gfxProduct>;
 
 } // namespace NEO

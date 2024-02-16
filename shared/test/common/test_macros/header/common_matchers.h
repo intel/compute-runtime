@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ using IsBeforeXeHpCore = IsBeforeGfxCore<IGFX_XE_HP_CORE>;
 
 using IsAtLeastXeHpgCore = IsAtLeastGfxCore<IGFX_XE_HPG_CORE>;
 using IsAtMostXeHpgCore = IsAtMostGfxCore<IGFX_XE_HPG_CORE>;
+using IsBeforeXeHpgCore = IsBeforeGfxCore<IGFX_XE_HPG_CORE>;
 
 using IsAtLeastXeHpcCore = IsAtLeastGfxCore<IGFX_XE_HPC_CORE>;
 using IsAtMostXeHpcCore = IsAtMostGfxCore<IGFX_XE_HPC_CORE>;
