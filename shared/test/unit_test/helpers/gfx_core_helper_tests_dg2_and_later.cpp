@@ -225,13 +225,6 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckIsUpdateTaskC
     EXPECT_TRUE(gfxCoreHelper.isUpdateTaskCountFromWaitSupported());
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckMakeResidentBeforeLockNeededThenReturnsTrue, IsAtLeastXeHpgCore) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-
-    EXPECT_TRUE(gfxCoreHelper.makeResidentBeforeLockNeeded(false));
-}
-
 using ProductHelperTestDg2AndLater = ::testing::Test;
 
 HWTEST2_F(ProductHelperTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapInLocalMemThenTrueIsReturned, IsAtLeastXeHpgCore) {

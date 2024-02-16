@@ -79,7 +79,6 @@ class GfxCoreHelper {
     virtual bool timestampPacketWriteSupported() const = 0;
     virtual bool isTimestampWaitSupportedForQueues() const = 0;
     virtual bool isUpdateTaskCountFromWaitSupported() const = 0;
-    virtual bool makeResidentBeforeLockNeeded(bool precondition) const = 0;
     virtual size_t getRenderSurfaceStateSize() const = 0;
     virtual void setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                          void *surfaceStateBuffer,
@@ -259,8 +258,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override;
 
     bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const override;
-
-    bool makeResidentBeforeLockNeeded(bool precondition) const override;
 
     void setRenderSurfaceStateForScratchResource(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                  void *surfaceStateBuffer,

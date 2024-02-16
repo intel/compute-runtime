@@ -654,11 +654,10 @@ TEST_F(WddmCommandStreamTest, WhenMakingResidentThenAllocationIsCorrectlySet) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
-    auto expected = wddm->makeResidentResult.called;
 
     csr->makeResident(*commandBuffer);
 
-    EXPECT_EQ(expected, wddm->makeResidentResult.called);
+    EXPECT_EQ(0u, wddm->makeResidentResult.called);
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(commandBuffer, csr->getResidencyAllocations()[0]);
 
@@ -717,10 +716,9 @@ TEST_F(WddmCommandStreamTest, WhenMakingResidentAndNonResidentThenAllocationIsMo
     GraphicsAllocation *gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     ASSERT_NE(gfxAllocation, nullptr);
-    auto expected = wddm->makeResidentResult.called;
 
     csr->makeResident(*gfxAllocation);
-    EXPECT_EQ(expected, wddm->makeResidentResult.called);
+    EXPECT_EQ(0u, wddm->makeResidentResult.called);
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(gfxAllocation, csr->getResidencyAllocations()[0]);
 
@@ -895,10 +893,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidency
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
-    if (device->getGfxCoreHelper().makeResidentBeforeLockNeeded(false)) {
-        GTEST_SKIP();
-    }
-
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
     // preemption allocation + sip allocation
     size_t csrSurfaceCount = 0;

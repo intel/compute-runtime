@@ -1241,7 +1241,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenAlllocationNeedsBlockingMakeResidentBe
     allocation.needsMakeResidentBeforeLock = false;
     memoryManager.lockResource(&allocation);
     EXPECT_EQ(1u, wddm->lockResult.called);
-    EXPECT_EQ(rootDeviceEnvironment->getHelper<GfxCoreHelper>().makeResidentBeforeLockNeeded(false), wddm->lockResult.uint64ParamPassed);
+    EXPECT_EQ(0u, wddm->lockResult.uint64ParamPassed);
     memoryManager.unlockResource(&allocation);
 
     allocation.needsMakeResidentBeforeLock = true;

@@ -54,11 +54,6 @@ bool GfxCoreHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::makeResidentBeforeLockNeeded(bool precondition) const {
-    return precondition;
-}
-
-template <typename GfxFamily>
 const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return {
         {aub_stream::ENGINE_RCS, EngineUsage::regular},
