@@ -80,7 +80,7 @@ void InOrderExecInfo::reset() {
     if (deviceCounterAllocation) {
         memset(deviceCounterAllocation->getUnderlyingBuffer(), 0, deviceCounterAllocation->getUnderlyingBufferSize());
     } else {
-        DEBUG_BREAK_IF(true);
+        DEBUG_BREAK_IF(!deviceAddress);
     }
 
     if (hostCounterAllocation) {
