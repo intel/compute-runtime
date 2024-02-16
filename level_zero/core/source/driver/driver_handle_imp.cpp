@@ -231,6 +231,13 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
         const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
+        auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+        if (osInterface && !osInterface->isDebugAttachAvailable() && enableProgramDebugging != NEO::DebuggingMode::disabled) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Debug mode is not enabled in the system.\n");
+            enableProgramDebugging = NEO::DebuggingMode::disabled;
+        }
+
         enableRootDeviceDebugger(neoDevice);
 
         this->rootDeviceIndices.pushUnique(rootDeviceIndex);
@@ -241,13 +248,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
         auto device = Device::create(this, pNeoDevice, false, &returnValue);
         this->devices.push_back(device);
-
-        auto osInterface = device->getNEODevice()->getRootDeviceEnvironment().osInterface.get();
-        if (osInterface && !osInterface->isDebugAttachAvailable() && enableProgramDebugging != NEO::DebuggingMode::disabled) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "Debug mode is not enabled in the system.\n");
-            return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-        }
 
         multiOsContextDriver |= device->isImplicitScalingCapable();
         if (returnValue != ZE_RESULT_SUCCESS) {

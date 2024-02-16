@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,7 @@ struct L0DebuggerLinuxFixture {
         executionEnvironment->initializeMemoryManager();
         auto osInterface = new OSInterface();
         drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+        drmMock->allowDebugAttach = true;
         executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
 
@@ -414,7 +415,10 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachAvailableWhenIn
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsReturned) {
+HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsPrintedButNotReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
+
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
@@ -434,8 +438,15 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachNotAvailableWhe
 
     drmMock->allowDebugAttach = false;
 
+    ::testing::internal::CaptureStderr();
     ze_result_t result = driverHandle->initialize(std::move(devices));
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string("Debug mode is not enabled in the system.\n"), output);
+
+    EXPECT_EQ(NEO::DebuggingMode::disabled, driverHandle->enableProgramDebugging);
+    EXPECT_EQ(nullptr, neoDevice->getL0Debugger());
 }
 
 HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenImmCommandListsCreatedAndDestroyedThenDebuggerL0IsNotified) {
@@ -549,6 +560,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenSubDeviceFilteredByAffinityMaskWhenC
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    drmMock->allowDebugAttach = true;
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
 

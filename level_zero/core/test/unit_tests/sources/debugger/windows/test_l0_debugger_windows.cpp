@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -225,7 +225,10 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachAvailabl
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsReturned) {
+TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsPrintedButNotReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
+
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
@@ -251,8 +254,16 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachNotAvail
     driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
     wddm->debugAttachAvailable = false;
 
+    ::testing::internal::CaptureStderr();
+
     ze_result_t result = driverHandle->initialize(std::move(devices));
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string("Debug mode is not enabled in the system.\n"), output);
+
+    EXPECT_EQ(NEO::DebuggingMode::disabled, driverHandle->enableProgramDebugging);
+    EXPECT_EQ(nullptr, neoDevice->getL0Debugger());
 }
 
 } // namespace ult
