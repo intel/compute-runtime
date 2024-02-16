@@ -864,6 +864,8 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
                 const auto sizeToCopy = sizeof(*properties->registerFileSizes) * properties->registerFileSizesCount;
                 memcpy_s(properties->registerFileSizes, sizeToCopy, supportedNumGrfs.data(), sizeToCopy);
             }
+        } else {
+            getExtendedDeviceModuleProperties(extendedProperties);
         }
 
         pNext = const_cast<void *>(extendedProperties->pNext);

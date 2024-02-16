@@ -101,6 +101,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     const NEO::DeviceInfo &getDeviceInfo() const override;
 
     void activateMetricGroups() override;
+    void getExtendedDeviceModuleProperties(ze_base_desc_t *pExtendedProperties);
     uint32_t getAdditionalEngines(uint32_t numAdditionalEnginesRequested,
                                   ze_command_queue_group_properties_t *pCommandQueueGroupProperties);
     NEO::GraphicsAllocation *getDebugSurface() const override { return debugSurface; }
