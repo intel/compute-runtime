@@ -19,19 +19,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address) {
     auto eventObj = Event::fromHandle(event);
 
-    if (!eventObj || !eventObj->isCounterBased() || !completionValue || !address) {
+    if (!eventObj || !eventObj->isCounterBased() || !eventObj->getInOrderExecInfo() || !completionValue || !address) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     *completionValue = eventObj->getInOrderExecSignalValueWithSubmissionCounter();
-
-    auto deviceAlloc = eventObj->getInOrderExecDataAllocation();
-
-    if (deviceAlloc) {
-        *address = deviceAlloc->getGpuAddress() + eventObj->getInOrderAllocationOffset();
-    } else {
-        *address = 0;
-    }
+    *address = eventObj->getInOrderExecInfo()->getBaseDeviceAddress() + eventObj->getInOrderAllocationOffset();
 
     return ZE_RESULT_SUCCESS;
 }

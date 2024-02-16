@@ -3585,6 +3585,13 @@ HWTEST2_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRet
     EXPECT_EQ(hostAddress, eventObj->getInOrderExecInfo()->getBaseHostAddress());
     EXPECT_EQ(castToUint64(gpuAddress), eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
 
+    uint64_t addresss = 0;
+    uint64_t value = 0;
+    zexEventGetDeviceAddress(handle, &value, &addresss);
+
+    EXPECT_EQ(addresss, eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
+    EXPECT_EQ(value, counterValue);
+
     zeEventDestroy(handle);
 }
 
@@ -3700,9 +3707,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAn
 
     auto eventHandle = events[0]->toHandle();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
-    EXPECT_EQ(0u, counterValue);
-    EXPECT_EQ(0u, address);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
