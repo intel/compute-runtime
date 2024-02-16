@@ -107,7 +107,7 @@ struct CommandQueueImp : public CommandQueue {
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
                                                              bool isCooperative);
 
-    ze_result_t synchronizeByPollingForTaskCount(uint64_t timeout);
+    ze_result_t synchronizeByPollingForTaskCount(uint64_t timeoutNanoseconds);
 
     void postSyncOperations(bool hangDetected);
 

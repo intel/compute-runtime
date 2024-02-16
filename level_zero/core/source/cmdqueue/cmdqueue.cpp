@@ -165,13 +165,13 @@ ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
     }
 }
 
-ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) {
+ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeoutNanoseconds) {
     UNRECOVERABLE_IF(csr == nullptr);
 
     auto taskCountToWait = getTaskCount();
     bool enableTimeout = true;
-    int64_t timeoutMicroseconds = static_cast<int64_t>(timeout);
-    if (timeout == std::numeric_limits<uint64_t>::max()) {
+    int64_t timeoutMicroseconds = static_cast<int64_t>(timeoutNanoseconds / 1000);
+    if (timeoutNanoseconds == std::numeric_limits<uint64_t>::max()) {
         enableTimeout = false;
         timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
     }
