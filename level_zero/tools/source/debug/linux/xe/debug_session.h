@@ -162,6 +162,19 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     std::atomic<bool> detached{false};
 
+    uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) override;
+    void checkTriggerEventsForAttentionForTileSession(uint32_t tileIndex) override {}
+    std::unique_lock<std::mutex> getThreadStateMutexForTileSession(uint32_t tileIndex) override {
+        std::mutex m;
+        std::unique_lock<std::mutex> lock(m);
+        lock.release();
+        return lock;
+    }
+    void addThreadToNewlyStoppedFromRaisedAttentionForTileSession(EuThread::ThreadId threadId,
+                                                                  uint64_t memoryHandle,
+                                                                  const void *stateSaveArea,
+                                                                  uint32_t tileIndex) override {}
+
     ze_result_t readEventImp(drm_xe_eudebug_event *drmDebugEvent);
     int ioctl(unsigned long request, void *arg);
     std::atomic<bool> processEntryEventGenerated = false;

@@ -126,19 +126,26 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
 struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionImp::allThreads;
     using L0::DebugSessionImp::apiEvents;
+    using L0::DebugSessionImp::expectedAttentionEvents;
     using L0::DebugSessionImp::stateSaveAreaHeader;
+    using L0::DebugSessionImp::triggerEvents;
     using L0::DebugSessionLinux::getClientConnection;
+    using L0::DebugSessionLinuxXe::addThreadToNewlyStoppedFromRaisedAttentionForTileSession;
     using L0::DebugSessionLinuxXe::asyncThread;
     using L0::DebugSessionLinuxXe::asyncThreadFunction;
     using L0::DebugSessionLinuxXe::checkStoppedThreadsAndGenerateEvents;
+    using L0::DebugSessionLinuxXe::checkTriggerEventsForAttentionForTileSession;
     using L0::DebugSessionLinuxXe::clientHandleClosed;
     using L0::DebugSessionLinuxXe::clientHandleToConnection;
     using L0::DebugSessionLinuxXe::euControlInterruptSeqno;
+    using L0::DebugSessionLinuxXe::getThreadStateMutexForTileSession;
+    using L0::DebugSessionLinuxXe::getVmHandleFromClientAndlrcHandle;
     using L0::DebugSessionLinuxXe::handleEvent;
     using L0::DebugSessionLinuxXe::internalEventQueue;
     using L0::DebugSessionLinuxXe::internalEventThread;
     using L0::DebugSessionLinuxXe::invalidClientHandle;
     using L0::DebugSessionLinuxXe::ioctlHandler;
+    using L0::DebugSessionLinuxXe::newlyStoppedThreads;
     using L0::DebugSessionLinuxXe::readEventImp;
     using L0::DebugSessionLinuxXe::readInternalEventsAsync;
     using L0::DebugSessionLinuxXe::startAsyncThread;
@@ -151,6 +158,14 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         createEuThreads();
     }
     MockDebugSessionLinuxXe(const zet_debug_config_t &config, L0::Device *device, int debugFd) : MockDebugSessionLinuxXe(config, device, debugFd, nullptr) {}
+
+    void addThreadToNewlyStoppedFromRaisedAttentionForTileSession(EuThread::ThreadId threadId,
+                                                                  uint64_t memoryHandle,
+                                                                  const void *stateSaveArea,
+                                                                  uint32_t tileIndex) override {
+        DebugSessionLinuxXe::addThreadToNewlyStoppedFromRaisedAttentionForTileSession(threadId, 0x12345678, nullptr, 0);
+        countToAddThreadToNewlyStoppedFromRaisedAttentionForTileSession++;
+    }
 
     ze_result_t initialize() override {
         if (initializeRetVal != ZE_RESULT_FORCE_UINT32) {
@@ -180,6 +195,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;
     static constexpr uint64_t mockClientHandle = 1;
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
+    uint32_t countToAddThreadToNewlyStoppedFromRaisedAttentionForTileSession = 0;
 };
 
 struct MockAsyncThreadDebugSessionLinuxXe : public MockDebugSessionLinuxXe {

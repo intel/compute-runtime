@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2183,13 +2183,13 @@ TEST_F(MultiTileDebugSessionTest, givenTwoInterruptsSentWhenCheckingTriggerEvent
     sessionMock->sendInterrupts();
     EXPECT_EQ(2u, sessionMock->expectedAttentionEvents);
 
-    sessionMock->newAttentionRaised(0);
+    sessionMock->newAttentionRaised();
     EXPECT_EQ(1u, sessionMock->expectedAttentionEvents);
     sessionMock->checkTriggerEventsForAttention();
 
     EXPECT_FALSE(sessionMock->triggerEvents);
 
-    sessionMock->newAttentionRaised(1);
+    sessionMock->newAttentionRaised();
     EXPECT_EQ(0u, sessionMock->expectedAttentionEvents);
     sessionMock->checkTriggerEventsForAttention();
 
@@ -3294,7 +3294,7 @@ TEST(DebugSessionTest, givenNewAttentionRaisedWithNoExpectedAttentionThenExpecte
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, nullptr);
     EXPECT_EQ(0UL, sessionMock->expectedAttentionEvents);
-    sessionMock->newAttentionRaised(0);
+    sessionMock->newAttentionRaised();
     EXPECT_EQ(0UL, sessionMock->expectedAttentionEvents);
 }
 

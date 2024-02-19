@@ -1092,83 +1092,32 @@ void DebugSessionLinuxi915::handleAttentionEvent(prelim_drm_i915_debug_event_eu_
         return;
     }
 
-    newAttentionRaised(
-        tileIndex);
-
-    auto vmHandle = getVmHandleFromClientAndlrcHandle(attention->client_handle, attention->lrc_handle);
-    if (vmHandle == invalidHandle) {
-        return;
-    }
-
+    newAttentionRaised();
     if (!connectedDevice->getNEODevice()->getDeviceBitfield().test(tileIndex)) {
         return;
     }
 
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+    AttentionEventFields attentionEventFields;
+    attentionEventFields.bitmask = attention->bitmask;
+    attentionEventFields.bitmaskSize = attention->bitmask_size;
+    attentionEventFields.clientHandle = attention->client_handle;
+    attentionEventFields.contextHandle = attention->ctx_handle;
+    attentionEventFields.lrcHandle = attention->lrc_handle;
 
-    std::vector<EuThread::ThreadId> threadsWithAttention;
-    if (interruptSent) {
-        std::unique_ptr<uint8_t[]> bitmask;
-        size_t bitmaskSize;
-        auto attReadResult = threadControl({}, tileIndex, ThreadControlCmd::stopped, bitmask, bitmaskSize);
-        if (attReadResult == 0) {
-            threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmask.get(), bitmaskSize);
-        }
-    }
+    return updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, tileIndex);
+}
 
-    if (threadsWithAttention.size() == 0) {
-        threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention->bitmask, attention->bitmask_size);
-        printBitmask(attention->bitmask, attention->bitmask_size);
-    }
-
-    PRINT_DEBUGGER_THREAD_LOG("ATTENTION for tile = %d thread count = %d\n", tileIndex, (int)threadsWithAttention.size());
-
-    if (threadsWithAttention.size() > 0) {
-        auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);
-        auto stateSaveAreaSize = getContextStateSaveAreaSize(vmHandle);
-        auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
-
-        std::unique_lock<std::mutex> lock;
-
-        if (tileSessionsEnabled) {
-            lock = std::unique_lock<std::mutex>(static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->threadStateMutex);
-        } else {
-            lock = std::unique_lock<std::mutex>(threadStateMutex);
-        }
-
-        if (gpuVa != 0 && stateSaveAreaSize != 0) {
-
-            std::vector<EuThread::ThreadId> newThreads;
-            getNotStoppedThreads(threadsWithAttention, newThreads);
-
-            if (newThreads.size() > 0) {
-                allocateStateSaveAreaMemory(stateSaveAreaSize);
-                stateSaveReadResult = readGpuMemory(vmHandle, stateSaveAreaMemory.data(), stateSaveAreaSize, gpuVa);
-            }
-        } else {
-            PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
-            DEBUG_BREAK_IF(true);
-        }
-
-        if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
-            for (auto &threadId : threadsWithAttention) {
-                PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
-
-                if (tileSessionsEnabled) {
-                    static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
-                } else {
-                    addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
-                }
-            }
-        }
-    }
-
-    if (tileSessionsEnabled) {
-        static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->checkTriggerEventsForAttention();
-    } else {
-        checkTriggerEventsForAttention();
-    }
+std::unique_lock<std::mutex> DebugSessionLinuxi915::getThreadStateMutexForTileSession(uint32_t tileIndex) {
+    return std::unique_lock<std::mutex>(static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->threadStateMutex);
+}
+void DebugSessionLinuxi915::checkTriggerEventsForAttentionForTileSession(uint32_t tileIndex) {
+    static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->checkTriggerEventsForAttention();
+}
+void DebugSessionLinuxi915::addThreadToNewlyStoppedFromRaisedAttentionForTileSession(EuThread::ThreadId threadId,
+                                                                                     uint64_t memoryHandle,
+                                                                                     const void *stateSaveArea,
+                                                                                     uint32_t tileIndex) {
+    static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, stateSaveAreaMemory.data());
 }
 
 void DebugSessionLinuxi915::handlePageFaultEvent(prelim_drm_i915_debug_event_page_fault *pf) {

@@ -695,7 +695,7 @@ TEST_F(TileAttachTest, givenTwoInterruptsSentWhenCheckingTriggerEventsThenTrigge
     EXPECT_EQ(0u, tileSessions[0]->expectedAttentionEvents);
     EXPECT_EQ(0u, rootSession->interruptedDevice);
 
-    rootSession->newAttentionRaised(0);
+    rootSession->newAttentionRaised();
 
     tileSessions[0]->checkTriggerEventsForAttention();
     EXPECT_TRUE(tileSessions[0]->triggerEvents);
@@ -710,7 +710,7 @@ TEST_F(TileAttachTest, givenTwoInterruptsSentWhenCheckingTriggerEventsThenTrigge
     EXPECT_FALSE(tileSessions[1]->triggerEvents);
     EXPECT_EQ(1u, rootSession->interruptedDevice);
 
-    rootSession->newAttentionRaised(1);
+    rootSession->newAttentionRaised();
     EXPECT_EQ(0u, tileSessions[1]->expectedAttentionEvents);
     tileSessions[1]->checkTriggerEventsForAttention();
 

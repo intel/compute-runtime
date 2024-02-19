@@ -172,7 +172,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
     void handleEventsAsync();
 
-    uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle);
+    uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) override;
     bool handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind);
     void handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam);
     void handleAttentionEvent(prelim_drm_i915_debug_event_eu_attention *attention);
@@ -182,6 +182,13 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     virtual bool ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle);
 
     MOCKABLE_VIRTUAL void processPendingVmBindEvents();
+
+    std::unique_lock<std::mutex> getThreadStateMutexForTileSession(uint32_t tileIndex) override;
+    void checkTriggerEventsForAttentionForTileSession(uint32_t tileIndex) override;
+    void addThreadToNewlyStoppedFromRaisedAttentionForTileSession(EuThread::ThreadId threadId,
+                                                                  uint64_t memoryHandle,
+                                                                  const void *stateSaveArea,
+                                                                  uint32_t tileIndex) override;
 
     void attachTile() override {
         UNRECOVERABLE_IF(true);

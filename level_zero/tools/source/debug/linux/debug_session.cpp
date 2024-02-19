@@ -649,4 +649,77 @@ ze_result_t DebugSessionLinux::getElfOffset(const zet_debug_memory_space_desc_t 
     return status;
 }
 
+void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(AttentionEventFields &attention, uint32_t tileIndex) {
+    auto vmHandle = getVmHandleFromClientAndlrcHandle(attention.clientHandle, attention.lrcHandle);
+    if (vmHandle == invalidHandle) {
+        return;
+    }
+
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    if (interruptSent) {
+        std::unique_ptr<uint8_t[]> bitmask;
+        size_t bitmaskSize;
+        auto attReadResult = threadControl({}, tileIndex, ThreadControlCmd::stopped, bitmask, bitmaskSize);
+        if (attReadResult == 0) {
+            threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmask.get(), bitmaskSize);
+        }
+    }
+
+    if (threadsWithAttention.size() == 0) {
+        threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention.bitmask, attention.bitmaskSize);
+        printBitmask(attention.bitmask, attention.bitmaskSize);
+    }
+
+    PRINT_DEBUGGER_THREAD_LOG("ATTENTION for tile = %d thread count = %d\n", tileIndex, (int)threadsWithAttention.size());
+
+    if (threadsWithAttention.size() > 0) {
+        auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);
+        auto stateSaveAreaSize = getContextStateSaveAreaSize(vmHandle);
+        auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
+
+        std::unique_lock<std::mutex> lock;
+
+        if (tileSessionsEnabled) {
+            lock = getThreadStateMutexForTileSession(tileIndex);
+        } else {
+            lock = std::unique_lock<std::mutex>(threadStateMutex);
+        }
+
+        if (gpuVa != 0 && stateSaveAreaSize != 0) {
+
+            std::vector<EuThread::ThreadId> newThreads;
+            getNotStoppedThreads(threadsWithAttention, newThreads);
+
+            if (newThreads.size() > 0) {
+                allocateStateSaveAreaMemory(stateSaveAreaSize);
+                stateSaveReadResult = readGpuMemory(vmHandle, stateSaveAreaMemory.data(), stateSaveAreaSize, gpuVa);
+            }
+        } else {
+            PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
+            DEBUG_BREAK_IF(true);
+        }
+
+        if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
+            for (auto &threadId : threadsWithAttention) {
+                PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
+
+                if (tileSessionsEnabled) {
+                    addThreadToNewlyStoppedFromRaisedAttentionForTileSession(threadId, vmHandle, stateSaveAreaMemory.data(), tileIndex);
+                } else {
+                    addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
+                }
+            }
+        }
+    }
+
+    if (tileSessionsEnabled) {
+        checkTriggerEventsForAttentionForTileSession(tileIndex);
+    } else {
+        checkTriggerEventsForAttention();
+    }
+}
+
 } // namespace L0

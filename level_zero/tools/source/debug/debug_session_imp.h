@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,7 +127,7 @@ struct DebugSessionImp : DebugSession {
     size_t calculateThreadSlotOffset(EuThread::ThreadId threadId);
     size_t calculateRegisterOffsetInThreadSlot(const SIP::regset_desc *const regdesc, uint32_t start);
 
-    void newAttentionRaised(uint32_t deviceIndex) {
+    void newAttentionRaised() {
         if (expectedAttentionEvents > 0) {
             expectedAttentionEvents--;
         }

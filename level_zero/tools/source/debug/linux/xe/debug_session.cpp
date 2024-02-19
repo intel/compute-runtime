@@ -303,6 +303,20 @@ int DebugSessionLinuxXe::flushVmCache(int vmfd) {
     return retVal;
 }
 
+uint64_t DebugSessionLinuxXe::getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) {
+
+    if (clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end()) {
+        return invalidHandle;
+    }
+
+    auto &clientConnection = clientHandleToConnection[clientHandle];
+    if (clientConnection->lrcHandleToVmHandle.find(lrcHandle) == clientConnection->lrcHandleToVmHandle.end()) {
+        return invalidHandle;
+    }
+
+    return clientConnection->lrcHandleToVmHandle[lrcHandle];
+}
+
 int DebugSessionLinuxXe::euControlIoctl(ThreadControlCmd threadCmd,
                                         const NEO::EngineClassInstance *classInstance,
                                         std::unique_ptr<uint8_t[]> &bitmask,

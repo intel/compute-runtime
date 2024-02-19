@@ -747,6 +747,73 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugExecQueueEventWithEventDestroyFlagWhenHa
     EXPECT_TRUE(session->clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle.empty());
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenExecQueueWhenGetVmHandleFromClientAndlrcHandleThenProperVmHandleReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    drm_xe_eudebug_event_client client1;
+    client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
+    client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    client1.client_handle = 0x123456789;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
+
+    uint64_t execQueueData[sizeof(drm_xe_eudebug_event_exec_queue) / sizeof(uint64_t) + 3 * sizeof(typeOfLrcHandle)];
+    auto *lrcHandle = reinterpret_cast<typeOfLrcHandle *>(ptrOffset(execQueueData, sizeof(drm_xe_eudebug_event_exec_queue)));
+    typeOfLrcHandle lrcHandleTemp[3];
+    const uint64_t lrcHandle0 = 2;
+    const uint64_t lrcHandle1 = 3;
+    const uint64_t lrcHandle2 = 5;
+    lrcHandleTemp[0] = static_cast<typeOfLrcHandle>(lrcHandle0);
+    lrcHandleTemp[1] = static_cast<typeOfLrcHandle>(lrcHandle1);
+    lrcHandleTemp[2] = static_cast<typeOfLrcHandle>(lrcHandle2);
+
+    drm_xe_eudebug_event_exec_queue *execQueue = reinterpret_cast<drm_xe_eudebug_event_exec_queue *>(&execQueueData);
+    execQueue->base.type = DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE;
+    execQueue->base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    execQueue->client_handle = client1.client_handle;
+    execQueue->vm_handle = 0x1234;
+    execQueue->exec_queue_handle = 0x100;
+    execQueue->engine_class = DRM_XE_ENGINE_CLASS_COMPUTE;
+    execQueue->width = 3;
+    memcpy(lrcHandle, lrcHandleTemp, sizeof(lrcHandleTemp));
+    session->handleEvent(&execQueue->base);
+
+    EXPECT_EQ(execQueue->vm_handle, session->getVmHandleFromClientAndlrcHandle(execQueue->client_handle, lrcHandleTemp[0]));
+    EXPECT_EQ(DebugSessionLinux::invalidHandle, session->getVmHandleFromClientAndlrcHandle(0x1234567, lrcHandleTemp[0]));
+    EXPECT_EQ(DebugSessionLinux::invalidHandle, session->getVmHandleFromClientAndlrcHandle(execQueue->client_handle, 7));
+}
+
+TEST_F(DebugApiLinuxTestXe, whenGetThreadStateMutexForTileSessionThenNullLockIsReceived) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    std::unique_lock<std::mutex> lock;
+    EXPECT_FALSE(session->getThreadStateMutexForTileSession(0).owns_lock());
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenNewlyStoppedThreadsAndNoExpectedAttentionEventsWhenCheckTriggerEventsForTileSessionThenTriggerEventsDontChange) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    EuThread::ThreadId threadId{0, 0, 0, 0, 0};
+    session->addThreadToNewlyStoppedFromRaisedAttentionForTileSession(threadId, 0x12345678, nullptr, 0);
+    EXPECT_EQ(session->countToAddThreadToNewlyStoppedFromRaisedAttentionForTileSession, 1u);
+    session->newlyStoppedThreads.push_back(threadId);
+    session->expectedAttentionEvents = 0;
+    session->triggerEvents = false;
+    session->checkTriggerEventsForAttentionForTileSession(0);
+    EXPECT_FALSE(session->triggerEvents);
+}
+
 TEST_F(DebugApiLinuxTestXe, whenHandleExecQueueEventThenProcessEnterAndProcessExitEventTriggeredUponFirstExecQueueCreateAndLastExecQueueDestroyRespectively) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

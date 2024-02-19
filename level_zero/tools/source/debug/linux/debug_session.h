@@ -120,6 +120,23 @@ struct DebugSessionLinux : DebugSessionImp {
         interruptAll
     };
 
+    struct AttentionEventFields {
+        uint64_t clientHandle;
+        uint64_t contextHandle;
+        uint64_t lrcHandle;
+        uint32_t bitmaskSize;
+        uint8_t *bitmask;
+    };
+
+    void updateStoppedThreadsAndCheckTriggerEvents(AttentionEventFields &attention, uint32_t tileIndex);
+    virtual uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) = 0;
+    virtual std::unique_lock<std::mutex> getThreadStateMutexForTileSession(uint32_t tileIndex) = 0;
+    virtual void checkTriggerEventsForAttentionForTileSession(uint32_t tileIndex) = 0;
+    virtual void addThreadToNewlyStoppedFromRaisedAttentionForTileSession(EuThread::ThreadId threadId,
+                                                                          uint64_t memoryHandle,
+                                                                          const void *stateSaveArea,
+                                                                          uint32_t tileIndex) = 0;
+
     virtual int euControlIoctl(ThreadControlCmd threadCmd,
                                const NEO::EngineClassInstance *classInstance,
                                std::unique_ptr<uint8_t[]> &bitmask,
