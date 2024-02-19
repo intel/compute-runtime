@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -331,13 +331,10 @@ ze_result_t OaMetricStreamerImp::appendStreamerMarker(CommandList &commandList, 
     OaMetricSourceImp &metricSource = pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>();
     auto &metricsLibrary = metricSource.getMetricsLibrary();
 
-    const uint32_t streamerMarkerHighBitsShift = 25;
-
     // Obtain gpu commands.
     CommandBufferData_1_0 commandBuffer = {};
     commandBuffer.CommandsType = ObjectType::MarkerStreamUser;
     commandBuffer.MarkerStreamUser.Value = value;
-    commandBuffer.MarkerStreamUser.Reserved = (value >> streamerMarkerHighBitsShift);
     commandBuffer.Type = metricSource.isComputeUsed()
                              ? GpuCommandBufferType::Compute
                              : GpuCommandBufferType::Render;
