@@ -25,6 +25,7 @@ struct HardwareInfo;
 struct EngineGroupT;
 struct RootDeviceEnvironment;
 class Debugger;
+class ProductHelper;
 } // namespace NEO
 
 namespace L0 {
@@ -89,6 +90,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool hasUnifiedPostSyncAllocationLayout() const = 0;
     virtual uint32_t getImmediateWritePostSyncOffset() const = 0;
     virtual uint32_t getCmdListUpdateCapabilities() const = 0;
+    virtual void appendPlatformSpecificExtensions(std::vector<std::pair<std::string, uint32_t>> &extensions, const NEO::ProductHelper &productHelper) const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -131,6 +133,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool hasUnifiedPostSyncAllocationLayout() const override;
     uint32_t getImmediateWritePostSyncOffset() const override;
     uint32_t getCmdListUpdateCapabilities() const override;
+    void appendPlatformSpecificExtensions(std::vector<std::pair<std::string, uint32_t>> &extensions, const NEO::ProductHelper &productHelper) const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

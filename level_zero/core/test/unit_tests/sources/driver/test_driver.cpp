@@ -29,6 +29,7 @@
 #include "level_zero/api/driver_experimental/public/zex_driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
@@ -108,22 +109,35 @@ TEST_F(DriverVersionTest, givenSupportedExtensionsWhenCheckIfDeviceIpVersionIsSu
 }
 
 TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
+    std::vector<std::pair<std::string, uint32_t>> additionalExtensions;
+    device->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, device->getProductHelper());
+
     uint32_t count = 0;
     ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
-    EXPECT_EQ(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size()));
+    EXPECT_EQ(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size() + additionalExtensions.size()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ze_driver_extension_properties_t *extensionProperties = new ze_driver_extension_properties_t[count];
     count++;
     res = driverHandle->getExtensionProperties(&count, extensionProperties);
-    EXPECT_EQ(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size()));
+    EXPECT_EQ(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size() + additionalExtensions.size()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle.get());
-    for (uint32_t i = 0; i < count; i++) {
+
+    size_t i = 0;
+    for (; i < driverHandleImp->extensionsSupported.size(); i++) {
         auto extension = extensionProperties[i];
         EXPECT_EQ(0, strcmp(extension.name, driverHandleImp->extensionsSupported[i].first.c_str()));
         EXPECT_EQ(extension.version, driverHandleImp->extensionsSupported[i].second);
+    }
+
+    for (size_t j = 0; j < additionalExtensions.size(); j++) {
+        auto extension = extensionProperties[i];
+        EXPECT_EQ(0, strcmp(extension.name, additionalExtensions[j].first.c_str()));
+        EXPECT_EQ(extension.version, additionalExtensions[j].second);
+
+        i++;
     }
 
     delete[] extensionProperties;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,10 @@ bool L0GfxCoreHelperHw<Family>::hasUnifiedPostSyncAllocationLayout() const {
 template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getImmediateWritePostSyncOffset() const {
     return NEO::ImplicitScalingDispatch<Family>::getImmediateWritePostSyncOffset();
+}
+
+template <typename Family>
+void L0GfxCoreHelperHw<Family>::appendPlatformSpecificExtensions(std::vector<std::pair<std::string, uint32_t>> &extensions, const NEO::ProductHelper &productHelper) const {
 }
 
 } // namespace L0

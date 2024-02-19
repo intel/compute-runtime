@@ -30,6 +30,7 @@
 #include "level_zero/core/source/driver/extension_function_address.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/source/fabric/fabric.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image.h"
 
 #include "driver_version_l0.h"
@@ -145,6 +146,8 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
     if (NEO::ApiSpecificConfig::getGlobalBindlessHeapConfiguration()) {
         additionalExtensions.push_back({ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT});
     }
+
+    devices[0]->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, devices[0]->getProductHelper());
 
     auto extensionCount = static_cast<uint32_t>(this->extensionsSupported.size() + additionalExtensions.size());
 
