@@ -81,7 +81,7 @@ BufferObject::BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex
     : BufferObject(rootDeviceIndex, drm, patIndex, BufferObjectHandleWrapper{handle}, size, maxOsContextCount) {}
 
 BufferObject::BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex, BufferObjectHandleWrapper &&handle, size_t size, size_t maxOsContextCount)
-    : drm(drm), size(size), handle(std::move(handle)), refCount(1), rootDeviceIndex(rootDeviceIndex) {
+    : drm(drm), refCount(1), rootDeviceIndex(rootDeviceIndex), handle(std::move(handle)), size(size) {
 
     auto ioctlHelper = drm->getIoctlHelper();
     this->tilingMode = ioctlHelper->getDrmParamValue(DrmParam::tilingNone);
