@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,6 +167,10 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
 
     if (relaxedOrderingEnabled) {
         size += 2 * EncodeSetMMIO<GfxFamily>::sizeREG;
+    }
+
+    if (debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
+        size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
     }
 
     return alignUp(size, MemoryConstants::cacheLineSize);

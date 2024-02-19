@@ -307,6 +307,106 @@ HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaph
     EXPECT_TRUE(dependenciesFound);
 }
 
+HWTEST_F(BcsTests, givenDebugFlagSetWhenDispatchingThenFlushTlb) {
+    debugManager.flags.FlushTlbBeforeCopy.set(1);
+
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+
+    auto hostAllocationPtr = allocateAlignedMemory(1, MemoryConstants::cacheLineSize);
+    void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
+
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
+                                                                          csr, graphicsAllocation, nullptr, hostPtr,
+                                                                          graphicsAllocation->getGpuAddress(), 0,
+                                                                          0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    if (!csr.globalFenceAllocation) {
+        csr.globalFenceAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, AllocationType::globalFence, 1});
+    }
+
+    {
+        auto offset = csr.commandStream.getUsed();
+        flushBcsTask(&csr, blitProperties, true, *pDevice);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
+
+        bool copyFlushFound = false;
+        bool tlbFlushFound = false;
+
+        for (auto cmdIterator = hwParser.cmdList.begin(); cmdIterator != hwParser.cmdList.end(); cmdIterator++) {
+            if (genCmdCast<XY_COPY_BLT *>(*cmdIterator)) {
+                copyFlushFound = true;
+                EXPECT_TRUE(tlbFlushFound);
+                continue;
+            }
+
+            auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
+            if (miFlushCmd && miFlushCmd->getTlbInvalidate()) {
+                tlbFlushFound = true;
+                EXPECT_FALSE(copyFlushFound);
+                continue;
+            }
+        }
+        EXPECT_TRUE(copyFlushFound);
+        EXPECT_TRUE(tlbFlushFound);
+    }
+
+    {
+        uint8_t cmds[3 * sizeof(XY_COPY_BLT)] = {};
+        XY_COPY_BLT bltCmd = FamilyType::cmdInitXyCopyBlt;
+
+        memcpy_s(cmds, sizeof(XY_COPY_BLT), &bltCmd, sizeof(XY_COPY_BLT));
+
+        MockGraphicsAllocation mockAlloc;
+
+        LinearStream stream(&mockAlloc, cmds, sizeof(cmds));
+        auto offset = csr.commandStream.getUsed();
+
+        DispatchBcsFlags flags(false, false, false);
+        csr.flushBcsTask(stream, 0, flags, pDevice->getHardwareInfo());
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
+
+        bool tlbFlushFound = false;
+
+        for (auto cmdIterator = hwParser.cmdList.begin(); cmdIterator != hwParser.cmdList.end(); cmdIterator++) {
+            auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
+            if (miFlushCmd && miFlushCmd->getTlbInvalidate()) {
+                tlbFlushFound = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(tlbFlushFound);
+    }
+}
+
+HWTEST_F(BcsTests, givenDebugFlagSetWhenAskingForStreamSizeThenAddMiFlushDw) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DispatchBcsFlags flags(false, false, false);
+
+    auto baseSize = csr.getRequiredCmdStreamSize(flags);
+
+    debugManager.flags.FlushTlbBeforeCopy.set(1);
+
+    auto rootExecutionEnvironment = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    EncodeDummyBlitWaArgs waArgs{false, rootExecutionEnvironment};
+
+    EXPECT_EQ(baseSize + EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs), csr.getRequiredCmdStreamSize(flags));
+}
+
 HWTEST_F(BcsTests, givenMultipleBlitPropertiesWhenDispatchingThenProgramCommandsInCorrectOrder) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

@@ -104,6 +104,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::executionEnvironment;
     using BaseClass::CommandStreamReceiver::experimentalCmdBuffer;
     using BaseClass::CommandStreamReceiver::feSupportFlags;
+    using BaseClass::CommandStreamReceiver::flushBcsTask;
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;

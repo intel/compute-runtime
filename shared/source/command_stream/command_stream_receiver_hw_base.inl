@@ -897,7 +897,16 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchBcsFlags &dispatchBcsFlags) {
-    return getCmdsSizeForHardwareContext() + sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
+    size_t size = getCmdsSizeForHardwareContext() + sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
+
+    if (debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
+        auto rootExecutionEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
+        EncodeDummyBlitWaArgs waArgs{false, rootExecutionEnvironment};
+
+        size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+    }
+
+    return size;
 }
 
 template <typename GfxFamily>
