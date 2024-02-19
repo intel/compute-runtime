@@ -68,12 +68,16 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
                 debugEventRetVal = -1;
             }
             return debugEventRetVal;
+        } else if ((request == DRM_XE_EUDEBUG_IOCTL_VM_OPEN) && (arg != nullptr)) {
+            drm_xe_eudebug_vm_open *vmOpenIn = reinterpret_cast<drm_xe_eudebug_vm_open *>(arg);
+            vmOpen = *vmOpenIn;
+            return vmOpenRetVal;
         } else if ((request == DRM_XE_EUDEBUG_IOCTL_EU_CONTROL) && (arg != nullptr)) {
             drm_xe_eudebug_eu_control *euControlArg = reinterpret_cast<drm_xe_eudebug_eu_control *>(arg);
             EuControlArg arg;
             arg.euControl = *euControlArg;
 
-            euControlArg->seqno = euControlOutputSeqno;
+            euControlArg->seqno = ++euControlOutputSeqno;
 
             if (euControlArg->bitmask_size != 0) {
                 arg.euControlBitmaskSize = euControlArg->bitmask_size;
@@ -110,6 +114,7 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
     };
 
     drm_xe_eudebug_event debugEventInput = {};
+    drm_xe_eudebug_vm_open vmOpen = {};
 
     int ioctlRetVal = 0;
     int debugEventRetVal = 0;
@@ -117,16 +122,18 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
     int fsyncCalled = 0;
     int fsyncRetVal = 0;
     int numFsyncToSucceed = 100;
-    uint64_t euControlOutputSeqno = 10;
+    uint64_t euControlOutputSeqno = 0;
     std::vector<EuControlArg> euControlArgs;
     std::unique_ptr<uint8_t[]> outputBitmask;
     size_t outputBitmaskSize = 0;
+    int vmOpenRetVal = 600;
 };
 
 struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionImp::allThreads;
     using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::expectedAttentionEvents;
+    using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::stateSaveAreaHeader;
     using L0::DebugSessionImp::triggerEvents;
     using L0::DebugSessionLinux::getClientConnection;
@@ -135,6 +142,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::asyncThreadFunction;
     using L0::DebugSessionLinuxXe::checkStoppedThreadsAndGenerateEvents;
     using L0::DebugSessionLinuxXe::checkTriggerEventsForAttentionForTileSession;
+    using L0::DebugSessionLinuxXe::ClientConnectionXe;
     using L0::DebugSessionLinuxXe::clientHandleClosed;
     using L0::DebugSessionLinuxXe::clientHandleToConnection;
     using L0::DebugSessionLinuxXe::euControlInterruptSeqno;
@@ -146,6 +154,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::invalidClientHandle;
     using L0::DebugSessionLinuxXe::ioctlHandler;
     using L0::DebugSessionLinuxXe::newlyStoppedThreads;
+    using L0::DebugSessionLinuxXe::pendingInterrupts;
     using L0::DebugSessionLinuxXe::readEventImp;
     using L0::DebugSessionLinuxXe::readInternalEventsAsync;
     using L0::DebugSessionLinuxXe::startAsyncThread;
@@ -189,6 +198,48 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         return DebugSessionLinuxXe::getInternalEvent();
     }
 
+    bool readSystemRoutineIdentFromMemory(EuThread *thread, const void *stateSaveArea, SIP::sr_ident &srIdent) override {
+        readSystemRoutineIdentFromMemoryCallCount++;
+        srIdent.count = 0;
+        if (stoppedThreads.size()) {
+            auto entry = stoppedThreads.find(thread->getThreadId());
+            if (entry != stoppedThreads.end()) {
+                srIdent.count = entry->second;
+            }
+            return true;
+        }
+        return L0::DebugSessionImp::readSystemRoutineIdentFromMemory(thread, stateSaveArea, srIdent);
+    }
+
+    void addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle, const void *stateSaveArea) override {
+        addThreadToNewlyStoppedFromRaisedAttentionCallCount++;
+        return DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, stateSaveArea);
+    }
+
+    bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) override {
+        readSystemRoutineIdentCallCount++;
+        srIdent.count = 0;
+        if (stoppedThreads.size()) {
+            auto entry = stoppedThreads.find(thread->getThreadId());
+            if (entry != stoppedThreads.end()) {
+                srIdent.count = entry->second;
+            }
+            return true;
+        }
+        return L0::DebugSessionImp::readSystemRoutineIdent(thread, vmHandle, srIdent);
+    }
+
+    uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
+        return 0x1000;
+    }
+
+    size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override {
+        return 0x1000;
+    }
+
+    uint32_t readSystemRoutineIdentCallCount = 0;
+    uint32_t addThreadToNewlyStoppedFromRaisedAttentionCallCount = 0;
+    uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
     size_t numThreadsPassedToThreadControl = 0;
     bool synchronousInternalEventRead = false;
     std::atomic<int> getInternalEventCounter = 0;

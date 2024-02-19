@@ -351,49 +351,6 @@ ze_result_t DebugSessionLinux::writeGpuMemory(uint64_t vmHandle, const char *inp
     return (retVal == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
-
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto classInstance = DrmHelper::getEngineInstance(connectedDevice, tile, hwInfo.capabilityTable.defaultEngineType);
-    UNRECOVERABLE_IF(!classInstance);
-
-    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
-
-    bitmaskSizeOut = 0;
-    std::unique_ptr<uint8_t[]> bitmask;
-    size_t bitmaskSize = 0;
-
-    if (threadCmd == ThreadControlCmd::interrupt ||
-        threadCmd == ThreadControlCmd::resume ||
-        threadCmd == ThreadControlCmd::stopped) {
-        l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
-    }
-
-    uint64_t seqnoRet = 0;
-    uint64_t bitmaskSizeRet = 0;
-    auto euControlRetVal = euControlIoctl(threadCmd, classInstance, bitmask, bitmaskSize, seqnoRet, bitmaskSizeRet);
-    if (euControlRetVal != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("euControl IOCTL failed: retCode: %d errno = %d threadCmd = %d\n", euControlRetVal, errno, threadCmd);
-    } else {
-        PRINT_DEBUGGER_INFO_LOG("euControl IOCTL: seqno = %llu threadCmd = %u\n", seqnoRet, threadCmd);
-    }
-
-    if (threadCmd == ThreadControlCmd::interrupt ||
-        threadCmd == ThreadControlCmd::interruptAll) {
-        if (euControlRetVal == 0) {
-            euControlInterruptSeqno[tile] = seqnoRet;
-        } else {
-            euControlInterruptSeqno[tile] = invalidHandle;
-        }
-    }
-
-    if (threadCmd == ThreadControlCmd::stopped) {
-        bitmaskOut = std::move(bitmask);
-        bitmaskSizeOut = bitmaskSizeRet;
-    }
-    return euControlRetVal;
-}
-
 ze_result_t DebugSessionLinux::readElfSpace(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer,
                                             const char *&elfData, const uint64_t offset) {
 
@@ -649,7 +606,7 @@ ze_result_t DebugSessionLinux::getElfOffset(const zet_debug_memory_space_desc_t 
     return status;
 }
 
-void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(AttentionEventFields &attention, uint32_t tileIndex) {
+void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) {
     auto vmHandle = getVmHandleFromClientAndlrcHandle(attention.clientHandle, attention.lrcHandle);
     if (vmHandle == invalidHandle) {
         return;
@@ -657,16 +614,6 @@ void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(AttentionEvent
 
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
-
-    std::vector<EuThread::ThreadId> threadsWithAttention;
-    if (interruptSent) {
-        std::unique_ptr<uint8_t[]> bitmask;
-        size_t bitmaskSize;
-        auto attReadResult = threadControl({}, tileIndex, ThreadControlCmd::stopped, bitmask, bitmaskSize);
-        if (attReadResult == 0) {
-            threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmask.get(), bitmaskSize);
-        }
-    }
 
     if (threadsWithAttention.size() == 0) {
         threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention.bitmask, attention.bitmaskSize);
@@ -705,6 +652,8 @@ void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(AttentionEvent
         if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
             for (auto &threadId : threadsWithAttention) {
                 PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
+                allThreads[threadId]->setContextHandle(attention.contextHandle);
+                allThreads[threadId]->setLrcHandle(attention.lrcHandle);
 
                 if (tileSessionsEnabled) {
                     addThreadToNewlyStoppedFromRaisedAttentionForTileSession(threadId, vmHandle, stateSaveAreaMemory.data(), tileIndex);

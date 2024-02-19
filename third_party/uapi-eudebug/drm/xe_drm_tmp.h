@@ -149,7 +149,8 @@ struct drm_xe_eudebug_eu_control {
 	__u32 flags;
 	__u64 seqno;
 
-	struct drm_xe_engine_class_instance ci;
+	__u64 exec_queue_handle;
+	__u64 lrc_handle;
 	__u32 bitmask_size;
 	__u64 bitmask_ptr;
 } __attribute__((packed));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -168,7 +168,20 @@ class EuThread {
     }
     bool getPageFault() {
         return hasPageFault;
-        ;
+    }
+    void setContextHandle(uint64_t contextHandleParam) {
+        contextHandle = contextHandleParam;
+    }
+    void getContextHandle(uint64_t &contextHandleParam) const {
+        DEBUG_BREAK_IF(state != State::stopped);
+        contextHandleParam = contextHandle;
+    }
+    void setLrcHandle(uint64_t lrcHandleParam) {
+        lrcHandle = lrcHandleParam;
+    }
+    void getLrcHandle(uint64_t &lrcHandleParam) const {
+        DEBUG_BREAK_IF(state != State::stopped);
+        lrcHandleParam = lrcHandle;
     }
 
   public:
@@ -181,6 +194,8 @@ class EuThread {
     std::atomic<uint64_t> memoryHandle = invalidHandle;
     std::atomic<bool> reportedAsStopped = false;
     bool hasPageFault = false;
+    uint64_t contextHandle = 0;
+    uint64_t lrcHandle = 0;
 };
 
 static_assert(sizeof(EuThread::ThreadId) == sizeof(uint64_t));
