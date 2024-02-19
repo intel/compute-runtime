@@ -152,7 +152,8 @@ struct DebugSessionLinux : DebugSessionImp {
         uint8_t *bitmask;
     };
 
-    void updateStoppedThreadsAndCheckTriggerEvents(AttentionEventFields &attention, uint32_t tileIndex);
+    void updateStoppedThreadsAndCheckTriggerEvents(AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention);
+    virtual void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) = 0;
     virtual uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) = 0;
     virtual std::unique_lock<std::mutex> getThreadStateMutexForTileSession(uint32_t tileIndex) = 0;
     virtual void checkTriggerEventsForAttentionForTileSession(uint32_t tileIndex) = 0;
@@ -161,11 +162,7 @@ struct DebugSessionLinux : DebugSessionImp {
                                                                           const void *stateSaveArea,
                                                                           uint32_t tileIndex) = 0;
 
-    virtual int euControlIoctl(ThreadControlCmd threadCmd,
-                               const NEO::EngineClassInstance *classInstance,
-                               std::unique_ptr<uint8_t[]> &bitmask,
-                               size_t bitmaskSize, uint64_t &seqnoOut, uint64_t &bitmaskSizeOut) = 0;
-    MOCKABLE_VIRTUAL int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize);
+    virtual int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) = 0;
     void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override;
     MOCKABLE_VIRTUAL bool checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc);
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
@@ -190,6 +187,5 @@ struct DebugSessionLinux : DebugSessionImp {
     virtual std::vector<uint64_t> getAllMemoryHandles();
 
     std::unique_ptr<IoctlHandler> ioctlHandler;
-    uint64_t euControlInterruptSeqno[NEO::EngineLimits::maxHandleCount];
 };
 } // namespace L0

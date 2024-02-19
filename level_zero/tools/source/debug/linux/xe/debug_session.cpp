@@ -237,6 +237,7 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
             UNRECOVERABLE_IF(clientHandleToConnection.find(execQueue->client_handle) == clientHandleToConnection.end());
 
             if (!processEntryEventGenerated) {
+                clientHandle = execQueue->client_handle;
                 zet_debug_event_t debugEvent = {};
                 debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
                 pushApiEvent(debugEvent);
@@ -246,7 +247,9 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
             clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].vmHandle = execQueue->vm_handle;
             clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].engineClass = execQueue->engine_class;
             for (uint16_t idx = 0; idx < execQueue->width; idx++) {
-                clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle[execQueue->lrc_handle[idx]] = execQueue->vm_handle;
+                uint64_t lrcHandle = execQueue->lrc_handle[idx];
+                clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].lrcHandles.push_back(lrcHandle);
+                clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle[lrcHandle] = execQueue->vm_handle;
             }
         }
 
@@ -276,6 +279,17 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
         vm_handle = %llu exec_queue_handle = %llu engine_class = %u\n",
                                 (uint16_t)event->flags, (uint32_t)event->len, (uint64_t)execQueue->client_handle, (uint64_t)execQueue->vm_handle,
                                 (uint64_t)execQueue->exec_queue_handle, (uint16_t)execQueue->engine_class);
+    } break;
+
+    case DRM_XE_EUDEBUG_EVENT_EU_ATTENTION: {
+        drm_xe_eudebug_event_eu_attention *attention = reinterpret_cast<drm_xe_eudebug_event_eu_attention *>(event);
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_EU_ATTENTION flags = %d, seqno = %llu, len = %lu"
+                                " client_handle = %llu flags = %llu bitmask_size = %lu exec_queue_handle = %llu lrc_handle = %llu\n",
+                                (int)attention->base.flags, (uint64_t)attention->base.seqno, (uint32_t)attention->base.len,
+                                (uint64_t)attention->client_handle, (uint64_t)attention->flags,
+                                (uint32_t)attention->bitmask_size, uint64_t(attention->exec_queue_handle), uint64_t(attention->lrc_handle));
+        handleAttentionEvent(attention);
     } break;
 
     default:
@@ -317,43 +331,116 @@ uint64_t DebugSessionLinuxXe::getVmHandleFromClientAndlrcHandle(uint64_t clientH
     return clientConnection->lrcHandleToVmHandle[lrcHandle];
 }
 
-int DebugSessionLinuxXe::euControlIoctl(ThreadControlCmd threadCmd,
-                                        const NEO::EngineClassInstance *classInstance,
-                                        std::unique_ptr<uint8_t[]> &bitmask,
-                                        size_t bitmaskSize, uint64_t &seqnoOut, uint64_t &bitmaskSizeOut) {
+void DebugSessionLinuxXe::handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention) {
+    if (interruptSent) {
+        if (attention->base.seqno <= euControlInterruptSeqno) {
+            PRINT_DEBUGGER_INFO_LOG("Discarding EU ATTENTION event for interrupt request. Event seqno == %llu <= %llu == interrupt seqno\n",
+                                    static_cast<uint64_t>(attention->base.seqno), euControlInterruptSeqno);
+            return;
+        }
+    }
+
+    newAttentionRaised();
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    AttentionEventFields attentionEventFields;
+    attentionEventFields.bitmask = attention->bitmask;
+    attentionEventFields.bitmaskSize = attention->bitmask_size;
+    attentionEventFields.clientHandle = attention->client_handle;
+    attentionEventFields.contextHandle = attention->exec_queue_handle;
+    attentionEventFields.lrcHandle = attention->lrc_handle;
+
+    return updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, 0, threadsWithAttention);
+}
+
+int DebugSessionLinuxXe::threadControlInterruptAll(drm_xe_eudebug_eu_control &euControl) {
+    int euControlRetVal = -1;
+
+    DEBUG_BREAK_IF(clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end());
+    for (const auto &execQueue : clientHandleToConnection[clientHandle]->execQueues) {
+        euControl.exec_queue_handle = execQueue.first;
+        for (const auto &lrcHandle : execQueue.second.lrcHandles) {
+            euControl.lrc_handle = lrcHandle;
+            euControlRetVal = ioctl(DRM_XE_EUDEBUG_IOCTL_EU_CONTROL, &euControl);
+            if (euControlRetVal != 0) {
+                PRINT_DEBUGGER_ERROR_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d, execQueueHandle = %llu lrcHandle = %llu\n",
+                                         euControlRetVal, errno, static_cast<uint32_t>(euControl.cmd), static_cast<uint64_t>(euControl.exec_queue_handle),
+                                         static_cast<uint64_t>(euControl.lrc_handle));
+            } else {
+                DEBUG_BREAK_IF(euControlInterruptSeqno >= euControl.seqno);
+                euControlInterruptSeqno = euControl.seqno;
+                PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", static_cast<uint64_t>(euControl.seqno),
+                                        static_cast<uint32_t>(euControl.cmd));
+            }
+        }
+    }
+
+    return euControlRetVal;
+}
+
+int DebugSessionLinuxXe::threadControlResumeAndStopped(const std::vector<EuThread::ThreadId> &threads, drm_xe_eudebug_eu_control &euControl,
+                                                       std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
+    int euControlRetVal = -1;
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    euControl.bitmask_size = static_cast<uint32_t>(bitmaskSize);
+    euControl.bitmask_ptr = reinterpret_cast<uint64_t>(bitmask.get());
+    printBitmask(bitmask.get(), bitmaskSize);
+    uint64_t execQueueHandle{0};
+    uint64_t lrcHandle{0};
+    allThreads[threads[0]]->getContextHandle(execQueueHandle);
+    allThreads[threads[0]]->getLrcHandle(lrcHandle);
+    euControl.exec_queue_handle = execQueueHandle;
+    euControl.lrc_handle = lrcHandle;
+
+    euControlRetVal = ioctl(DRM_XE_EUDEBUG_IOCTL_EU_CONTROL, &euControl);
+    if (euControlRetVal != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d, execQueueHandle = %llu lrcHandle = %llu\n",
+                                 euControlRetVal, errno, static_cast<uint32_t>(euControl.cmd), static_cast<uint64_t>(euControl.exec_queue_handle),
+                                 static_cast<uint64_t>(euControl.lrc_handle));
+    } else {
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", static_cast<uint64_t>(euControl.seqno), static_cast<uint32_t>(euControl.cmd));
+    }
+
+    if (euControl.cmd == DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED) {
+        bitmaskOut = std::move(bitmask);
+        bitmaskSizeOut = euControl.bitmask_size;
+    }
+
+    return euControlRetVal;
+}
+
+int DebugSessionLinuxXe::threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile,
+                                       ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
+
+    bitmaskSizeOut = 0;
     struct drm_xe_eudebug_eu_control euControl = {};
     euControl.client_handle = clientHandle;
-    euControl.ci.engine_class = classInstance->engineClass;
-    euControl.ci.engine_instance = classInstance->engineInstance;
     euControl.bitmask_size = 0;
     euControl.bitmask_ptr = 0;
 
-    decltype(drm_xe_eudebug_eu_control::cmd) command = 0;
     switch (threadCmd) {
     case ThreadControlCmd::interruptAll:
-        command = DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL;
-        break;
+        euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL;
+        return threadControlInterruptAll(euControl);
     case ThreadControlCmd::resume:
-        command = DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME;
-        break;
+        euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME;
+        return threadControlResumeAndStopped(threads, euControl, bitmaskOut, bitmaskSizeOut);
     case ThreadControlCmd::stopped:
-        command = DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED;
-        break;
+        euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED;
+        return threadControlResumeAndStopped(threads, euControl, bitmaskOut, bitmaskSizeOut);
     default:
-        command = 0xFFFFFFFF;
         break;
     }
-    euControl.cmd = command;
+    return -1;
+}
 
-    euControl.bitmask_size = static_cast<uint32_t>(bitmaskSize);
-    euControl.bitmask_ptr = reinterpret_cast<uint64_t>(bitmask.get());
-
-    printBitmask(bitmask.get(), bitmaskSize);
-
-    auto euControlRetVal = ioctl(DRM_XE_EUDEBUG_IOCTL_EU_CONTROL, &euControl);
-    seqnoOut = euControl.seqno;
-    bitmaskSizeOut = euControl.bitmask_size;
-    return euControlRetVal;
+void DebugSessionLinuxXe::updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) {
+    allThreads[threadId]->setContextHandle(attention.contextHandle);
+    allThreads[threadId]->setLrcHandle(attention.lrcHandle);
 }
 
 } // namespace L0

@@ -155,6 +155,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
     void handleEventsAsync();
 
+    void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) override {}
     uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) override;
     bool handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind);
     void handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam);
@@ -189,10 +190,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     void readStateSaveAreaHeader() override;
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
 
-    int euControlIoctl(ThreadControlCmd threadCmd,
-                       const NEO::EngineClassInstance *classInstance,
-                       std::unique_ptr<uint8_t[]> &bitmask,
-                       size_t bitmaskSize, uint64_t &seqnoOut, uint64_t &bitmaskSizeOut) override;
+    int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override;
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override;
     size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override;
     virtual uint64_t getSbaBufferGpuVa(uint64_t memoryHandle);
@@ -262,6 +260,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     std::atomic<bool> detached{false};
 
     std::unordered_map<uint64_t, uint32_t> uuidL0CommandQueueHandleToDevice;
+    uint64_t euControlInterruptSeqno[NEO::EngineLimits::maxHandleCount];
     void readInternalEventsAsync() override;
 
     bool blockOnFenceMode = false; // false - blocking VM_BIND on CPU - autoack events until last blocking event
