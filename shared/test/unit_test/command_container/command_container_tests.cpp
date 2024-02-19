@@ -38,6 +38,7 @@ class MyMockCommandContainer : public CommandContainer {
     using CommandContainer::getAlignedCmdBufferSize;
     using CommandContainer::immediateReusableAllocationList;
     using CommandContainer::secondaryCommandStreamForImmediateCmdList;
+    using CommandContainer::storedHeapsContainer;
 
     GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory) override {
         allocateCommandBufferCalled[!!forceHostMemory]++;
@@ -271,7 +272,7 @@ TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenAllocateS
 TEST_F(CommandContainerTest, givenCmdContainerWithAllocsListWhenAllocateAndResetThenCmdBufferAllocIsReused) {
     AllocationsList allocList;
     auto cmdContainer = std::make_unique<CommandContainer>();
-    cmdContainer->initialize(pDevice, &allocList, true, HeapSize::defaultHeapSize, false);
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::defaultHeapSize, true, false);
     auto &cmdBufferAllocs = cmdContainer->getCmdBufferAllocations();
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     EXPECT_EQ(memoryManager->handleFenceCompletionCalled, 0u);
@@ -373,10 +374,10 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenSettingIndirectHeapAllocat
 
 TEST_F(CommandContainerTest, givenHeapAllocationsWhenDestroyCommandContainerThenHeapAllocationsAreReused) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr, true, HeapSize::defaultHeapSize, false);
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     auto heapAllocationsAddress = cmdContainer->getIndirectHeapAllocation(HeapType::surfaceState)->getUnderlyingBuffer();
     cmdContainer.reset(new CommandContainer);
-    cmdContainer->initialize(pDevice, nullptr, true, HeapSize::defaultHeapSize, false);
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     bool status = true;
     for (uint32_t i = 0; i < HeapType::numTypes && !status; i++) {
         auto heapType = static_cast<HeapType>(i);
@@ -1898,4 +1899,44 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenImmediateCmdListCsrIsSetThenCo
     cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, false, false);
     EXPECT_EQ(cmdContainer.getCommandStream()->getCmdContainer(), nullptr);
+}
+
+TEST_F(CommandContainerTest, givenCmdContainerWhenOldHeapIsStoredAndResetContainerThenUseStorageForReuseForStoredHeap) {
+    MyMockCommandContainer cmdContainer;
+
+    auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, status);
+    EXPECT_EQ(0u, cmdContainer.storedHeapsContainer.size());
+    auto ioh = cmdContainer.getIndirectHeap(NEO::HeapType::indirectObject);
+    auto iohOldAllocation = ioh->getGraphicsAllocation();
+
+    ioh->getSpace(ioh->getAvailableSpace());
+    cmdContainer.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::indirectObject, 64, 1);
+    EXPECT_EQ(1u, cmdContainer.storedHeapsContainer.size());
+    auto iohAllocIt = std::find(cmdContainer.storedHeapsContainer.begin(),
+                                cmdContainer.storedHeapsContainer.end(),
+                                iohOldAllocation);
+    EXPECT_NE(cmdContainer.storedHeapsContainer.end(), iohAllocIt);
+
+    cmdContainer.reset();
+    EXPECT_EQ(0u, cmdContainer.storedHeapsContainer.size());
+
+    auto internalStorage = pDevice->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage();
+
+    auto iohReusedAllocation = internalStorage->obtainReusableAllocation(iohOldAllocation->getUnderlyingBufferSize(),
+                                                                         iohOldAllocation->getAllocationType())
+                                   .release();
+    EXPECT_EQ(iohOldAllocation, iohReusedAllocation);
+    pDevice->getMemoryManager()->freeGraphicsMemory(iohReusedAllocation);
+}
+
+TEST_F(CommandContainerTest, givenHeaplessCmdContainerWhenResetContainerThenNoHeapInStorageForReuse) {
+    MyMockCommandContainer cmdContainer;
+
+    auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, false, false);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, status);
+    EXPECT_EQ(0u, cmdContainer.storedHeapsContainer.size());
+
+    cmdContainer.reset();
+    EXPECT_EQ(0u, cmdContainer.storedHeapsContainer.size());
 }

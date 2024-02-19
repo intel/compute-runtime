@@ -130,11 +130,8 @@ void CommandList::removeDeallocationContainerData() {
         if (allocData) {
             device->getDriverHandle()->getSvmAllocsManager()->removeSVMAlloc(*allocData);
         }
-        if (!((deallocation->getAllocationType() == NEO::AllocationType::internalHeap) ||
-              (deallocation->getAllocationType() == NEO::AllocationType::linearStream))) {
-            memoryManager->freeGraphicsMemory(deallocation);
-            eraseDeallocationContainerEntry(deallocation);
-        }
+        memoryManager->freeGraphicsMemory(deallocation);
+        eraseDeallocationContainerEntry(deallocation);
     }
 }
 

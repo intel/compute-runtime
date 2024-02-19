@@ -1923,23 +1923,6 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->csr->peekLatestFlushedTaskCount());
 }
 
-HWTEST_F(CommandListCreate, givenCommandListWhenRemoveDeallocationContainerDataThenHeapNotErased) {
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,
-                                                                     device,
-                                                                     NEO::EngineGroupType::compute,
-                                                                     0u,
-                                                                     returnValue, false));
-    auto &cmdContainer = commandList->getCmdContainer();
-    auto heapAlloc = cmdContainer.getIndirectHeapAllocation(HeapType::indirectObject);
-    cmdContainer.getDeallocationContainer().push_back(heapAlloc);
-    EXPECT_EQ(cmdContainer.getDeallocationContainer().size(), 1u);
-    commandList->removeDeallocationContainerData();
-    EXPECT_EQ(cmdContainer.getDeallocationContainer().size(), 1u);
-
-    cmdContainer.getDeallocationContainer().clear();
-}
-
 TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListThenEachCmdListHasDifferentCsr) {
 
     HardwareInfo hwInfo = *defaultHwInfo;

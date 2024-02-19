@@ -35,14 +35,12 @@ CommandContainer::~CommandContainer() {
 
     this->handleCmdBufferAllocations(0u);
 
-    for (auto allocationIndirectHeap : allocationIndirectHeaps) {
-        if (heapHelper) {
+    if (heapHelper) {
+        for (auto allocationIndirectHeap : allocationIndirectHeaps) {
             heapHelper->storeHeapAllocation(allocationIndirectHeap);
         }
-    }
-    for (auto deallocation : deallocationContainer) {
-        if (((deallocation->getAllocationType() == AllocationType::internalHeap) || (deallocation->getAllocationType() == AllocationType::linearStream))) {
-            getHeapHelper()->storeHeapAllocation(deallocation);
+        for (auto heapAllocation : storedHeapsContainer) {
+            heapHelper->storeHeapAllocation(heapAllocation);
         }
     }
 }
@@ -185,6 +183,12 @@ void CommandContainer::reset() {
     setDirtyStateForAllHeaps(true);
     slmSize = std::numeric_limits<uint32_t>::max();
     getResidencyContainer().clear();
+    if (getHeapHelper()) {
+        for (auto heapAllocation : storedHeapsContainer) {
+            getHeapHelper()->storeHeapAllocation(heapAllocation);
+        }
+    }
+    storedHeapsContainer.clear();
     getDeallocationContainer().clear();
     sshAllocations.clear();
 
@@ -282,7 +286,7 @@ void CommandContainer::createAndAssignNewHeap(HeapType heapType, size_t size) {
     if (this->immediateCmdListCsr) {
         this->storeAllocationAndFlushTagUpdate(oldAlloc);
     } else {
-        getDeallocationContainer().push_back(oldAlloc);
+        storedHeapsContainer.push_back(oldAlloc);
     }
     setIndirectHeapAllocation(heapType, newAlloc);
     if (oldBase != newBase) {
