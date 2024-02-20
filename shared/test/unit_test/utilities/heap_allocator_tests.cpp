@@ -32,7 +32,6 @@ class HeapAllocatorUnderTest : public HeapAllocator {
     using HeapAllocator::defragment;
 
     uint64_t getFromFreedChunks(size_t size, std::vector<HeapChunk> &vec, size_t requiredAlignment) {
-        size_t sizeOfFreedChunk;
         return HeapAllocator::getFromFreedChunks(size, vec, sizeOfFreedChunk, requiredAlignment);
     }
     void storeInFreedChunks(uint64_t ptr, size_t size, std::vector<HeapChunk> &vec) { return HeapAllocator::storeInFreedChunks(ptr, size, vec); }
@@ -41,6 +40,7 @@ class HeapAllocatorUnderTest : public HeapAllocator {
     std::vector<HeapChunk> &getFreedChunksBig() { return this->freedChunksBig; };
 
     using HeapAllocator::allocationAlignment;
+    size_t sizeOfFreedChunk = 0;
 };
 
 TEST(HeapAllocatorTest, WhenHeapAllocatorIsCreatedWithAlignmentThenAlignmentIsSet) {
@@ -162,17 +162,65 @@ TEST(HeapAllocatorTest, GivenOnlyMoreThanTwiceBiggerSizeChunksInFreedChunksWhenG
     freedChunks.emplace_back(pLowerBound, 7 * 4096);
 
     size_t deltaSize = 7 * 4096 - requestedSize;
-    ptrExpected = pLowerBound + requestedSize;
+    ptrExpected = pLowerBound + deltaSize;
 
     EXPECT_EQ(3u, freedChunks.size());
 
     auto ptrReturned = heapAllocator->getFromFreedChunks(requestedSize, freedChunks, allocationAlignment);
 
-    EXPECT_EQ(pLowerBound, ptrReturned);
+    EXPECT_EQ(ptrExpected, ptrReturned);
     EXPECT_EQ(3u, freedChunks.size());
 
-    EXPECT_EQ(ptrExpected, freedChunks[2].ptr);
+    EXPECT_EQ(pLowerBound, freedChunks[2].ptr);
     EXPECT_EQ(deltaSize, freedChunks[2].size);
+}
+
+TEST(HeapAllocatorTest, GivenMoreThanTwiceBiggerSizeChunksInFreedChunksWhenAligningDownNewPtrThenReturnAlignedPtr) {
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+    auto pLowerBound = ptrBase;
+
+    auto allocAlign = 8162u;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+
+    std::vector<HeapChunk> freedChunks;
+    size_t requestedSize = 2 * 4096;
+    size_t chunkSize = 9 * 4096;
+    uint64_t ptrExpected = alignDown((pLowerBound + chunkSize) - requestedSize, allocAlign);
+    size_t expectedUnalignedPart = (static_cast<size_t>(pLowerBound) + chunkSize) - requestedSize - static_cast<size_t>(ptrExpected);
+
+    freedChunks.emplace_back(pLowerBound, chunkSize);
+
+    auto ptrReturned = heapAllocator->getFromFreedChunks(requestedSize, freedChunks, allocAlign);
+
+    EXPECT_EQ(ptrExpected, ptrReturned);
+    EXPECT_EQ(expectedUnalignedPart + requestedSize, heapAllocator->sizeOfFreedChunk);
+    EXPECT_EQ(1u, freedChunks.size());
+    EXPECT_EQ(chunkSize - requestedSize - expectedUnalignedPart, freedChunks[0].size);
+}
+
+TEST(HeapAllocatorTest, GivenMoreThanTwiceBiggerSizeChunksButSmallerThanTwiceAlignmentWhenGettingPtrSizeBiggerThanUnalignedPartThenUseAllChunkRange) {
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+    auto pLowerBound = ptrBase;
+
+    auto allocAlign = 8192u;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+
+    std::vector<HeapChunk> freedChunks;
+    size_t requestedSize = 5120;
+    size_t chunkSize = 3 * 4096;
+    uint64_t ptrExpected = alignDown((pLowerBound + chunkSize) - requestedSize, allocAlign);
+
+    freedChunks.emplace_back(pLowerBound, chunkSize);
+
+    auto ptrReturned = heapAllocator->getFromFreedChunks(requestedSize, freedChunks, allocAlign);
+
+    EXPECT_EQ(ptrExpected, ptrReturned);
+    EXPECT_EQ(chunkSize, heapAllocator->sizeOfFreedChunk);
+    EXPECT_EQ(0u, freedChunks.size());
 }
 
 TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToLeftBoundaryOfIncomingChunkWhenStoreIsCalledThenChunkIsMerged) {
@@ -1377,7 +1425,7 @@ TEST(HeapAllocatorTest, givenAlignedFreedChunkTwoTimesBiggerThanAllocationeWhenA
     EXPECT_EQ(32 * MemoryConstants::pageSize, ptrSize2);
     EXPECT_EQ(heapBase + 2 * ptrSize, heapAllocator.getLeftBound());
     EXPECT_EQ(1u, heapAllocator.getFreedChunksBig().size());
-    EXPECT_EQ(freeChunkAddress, ptr);
+    EXPECT_EQ(freeChunkAddress + 32 * MemoryConstants::pageSize, ptr);
     EXPECT_EQ(heapSize - ptrSize - ptrSize2, heapAllocator.getavailableSize());
 }
 

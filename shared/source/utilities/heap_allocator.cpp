@@ -146,8 +146,18 @@ uint64_t HeapAllocator::getFromFreedChunks(size_t size, std::vector<HeapChunk> &
 
             DEBUG_BREAK_IF(!(size <= sizeThreshold || (size > sizeThreshold && sizeDelta > sizeThreshold)));
 
-            auto ptr = freedChunks[bestFitIndex].ptr;
-            freedChunks[bestFitIndex].ptr += size;
+            auto ptr = freedChunks[bestFitIndex].ptr + sizeDelta;
+            if (!isAligned(ptr, requiredAlignment)) {
+                auto alignedPtr = alignDown(ptr, requiredAlignment);
+                auto alignedDelta = ptr - alignedPtr;
+
+                sizeOfFreedChunk = size + static_cast<size_t>(alignedDelta);
+                freedChunks[bestFitIndex].size = sizeDelta - static_cast<size_t>(alignedDelta);
+                if (freedChunks[bestFitIndex].size == 0) {
+                    freedChunks.erase(freedChunks.begin() + bestFitIndex);
+                }
+                return alignedPtr;
+            }
 
             freedChunks[bestFitIndex].size = sizeDelta;
             return ptr;
