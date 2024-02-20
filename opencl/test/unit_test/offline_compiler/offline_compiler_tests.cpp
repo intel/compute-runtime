@@ -448,6 +448,7 @@ TEST(MultiCommandWhiteboxTest, GivenCommandLineWithMissingApostropheWhenRunningB
     mockMultiCommand.callBaseSingleBuild = false;
     mockMultiCommand.lines.push_back("-out_dir \"Some Directory");
 
+    mockMultiCommand.argHelper->getPrinterRef().setSuppressMessages(true);
     mockMultiCommand.runBuilds("ocloc");
     EXPECT_EQ(0, mockMultiCommand.singleBuildCalledCount);
 
@@ -1619,11 +1620,14 @@ TEST_F(OfflineCompilerTests, givenValidArgumentsAndFclInitFailureWhenInitIsPerfo
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.mockFclFacade->shouldFailLoadingOfFclLib = true;
 
+    testing::internal::CaptureStdout();
     const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
     EXPECT_EQ(OCLOC_SUCCESS, initResult);
+    auto output = testing::internal::GetCapturedStdout();
+
     testing::internal::CaptureStdout();
     const auto buildResult = mockOfflineCompiler.build();
-    const auto output = testing::internal::GetCapturedStdout();
+    output = testing::internal::GetCapturedStdout();
 
     std::stringstream expectedErrorMessage;
     expectedErrorMessage << "Error! Loading of FCL library has failed! Filename: " << Os::frontEndDllName << "\n"
@@ -1643,12 +1647,14 @@ TEST_F(OfflineCompilerTests, givenValidArgumentsAndIgcInitFailureWhenInitIsPerfo
 
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.mockIgcFacade->shouldFailLoadingOfIgcLib = true;
-
+    testing::internal::CaptureStdout();
     const auto initResult = mockOfflineCompiler.initialize(argv.size(), argv);
     EXPECT_EQ(OCLOC_SUCCESS, initResult);
+    auto output = testing::internal::GetCapturedStdout();
+
     testing::internal::CaptureStdout();
     const auto buildResult = mockOfflineCompiler.build();
-    const auto output = testing::internal::GetCapturedStdout();
+    output = testing::internal::GetCapturedStdout();
 
     std::stringstream expectedErrorMessage;
     expectedErrorMessage << "Error! Loading of IGC library has failed! Filename: " << Os::igcDllName << "\n"
@@ -2196,12 +2202,19 @@ TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
         "-spirv_input"};
 
     MockOfflineCompiler offlineCompiler;
+
+    testing::internal::CaptureStdout();
     auto ret = offlineCompiler.initialize(argv.size(), argv, true);
     EXPECT_EQ(OCLOC_SUCCESS, ret);
     ret = offlineCompiler.build();
     EXPECT_EQ(OCLOC_SUCCESS, ret);
     EXPECT_FALSE(offlineCompiler.fclFacade->isInitialized());
     EXPECT_TRUE(offlineCompiler.igcFacade->isInitialized());
+
+    std::string output = testing::internal::GetCapturedStdout();
+    auto expectedString = "Compilation from IR - skipping loading of FCL";
+
+    EXPECT_TRUE(hasSubstr(output, expectedString));
 }
 
 TEST_F(OfflineCompilerTests, WhenParsingBinToCharArrayThenCorrectFileIsGenerated) {
@@ -2388,6 +2401,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailu
         "ocloc",
         "-file",
         clFiles + "shouldfail.cl",
+        "-qq",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -2715,10 +2729,16 @@ TEST(OfflineCompilerTest, GivenValidParamWhenGettingHardwareInfoThenSuccessIsRet
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
+    testing::internal::CaptureStdout();
+
     EXPECT_EQ(CL_INVALID_DEVICE, mockOfflineCompiler->initHardwareInfo("invalid"));
+    std::string output = testing::internal::GetCapturedStdout();
+
     EXPECT_EQ(PRODUCT_FAMILY::IGFX_UNKNOWN, mockOfflineCompiler->getHardwareInfo().platform.eProductFamily);
     EXPECT_EQ(CL_SUCCESS, mockOfflineCompiler->initHardwareInfo(gEnvironment->devicePrefix.c_str()));
     EXPECT_NE(PRODUCT_FAMILY::IGFX_UNKNOWN, mockOfflineCompiler->getHardwareInfo().platform.eProductFamily);
+
+    EXPECT_STREQ("Could not determine device target: invalid.\n", output.c_str());
 }
 
 TEST(OfflineCompilerTest, WhenStoringBinaryThenStoredCorrectly) {
@@ -3175,14 +3195,14 @@ TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTransl
 }
 
 TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
-    std::vector<std::string> argvLlvm = {"ocloc", "-llvm_input", "-file", clFiles + "binary_with_zeroes",
+    std::vector<std::string> argvLlvm = {"ocloc", "-llvm_input", "-file", clFiles + "binary_with_zeroes", "-qq",
                                          "-device", gEnvironment->devicePrefix.c_str()};
     auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     mockOfflineCompiler->initialize(argvLlvm.size(), argvLlvm);
     mockOfflineCompiler->build();
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
 
-    std::vector<std::string> argvSpirV = {"ocloc", "-spirv_input", "-file", clFiles + "binary_with_zeroes",
+    std::vector<std::string> argvSpirV = {"ocloc", "-spirv_input", "-file", clFiles + "binary_with_zeroes", "-qq",
                                           "-device", gEnvironment->devicePrefix.c_str()};
     mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
     mockOfflineCompiler->initialize(argvSpirV.size(), argvSpirV);
@@ -3207,7 +3227,7 @@ TEST(OfflineCompilerTest, givenSpirvInputFileWhenCmdLineHasOptionsThenCorrectOpt
         "-device",
         gEnvironment->devicePrefix.c_str(),
         "-options",
-        "test_options_passed"};
+        "test_options_passed", "-qq"};
 
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
@@ -4268,7 +4288,7 @@ TEST(OclocCompile, givenSpirvInputThenDontGenerateSpirvFile) {
         "offline_compiler_test",
         "-device",
         gEnvironment->devicePrefix.c_str(),
-        "-spirv_input"};
+        "-spirv_input", "-qq"};
 
     int retVal = ocloc.initialize(argv.size(), argv);
     ASSERT_EQ(0, retVal);
