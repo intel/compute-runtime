@@ -89,6 +89,29 @@ struct DebugSessionLinux : DebugSessionImp {
         uint64_t gpuVa = 0;
         uint64_t size = 0;
     };
+
+    struct EventToAck {
+        EventToAck(uint64_t seqno, uint32_t type) : seqno(seqno), type(type){};
+        uint64_t seqno;
+        uint32_t type;
+    };
+    struct IsaAllocation {
+        BindInfo bindInfo;
+        uint64_t elfUuidHandle;
+        uint64_t vmHandle;
+        bool tileInstanced = false;
+        bool perKernelModule = true;
+        NEO::DeviceBitfield deviceBitfield;
+
+        uint64_t moduleBegin;
+        uint64_t moduleEnd;
+
+        std::unordered_set<uint64_t> cookies;
+        int vmBindCounter = 0;
+        bool moduleLoadEventAck = false;
+        std::vector<EventToAck> ackEvents;
+    };
+
     struct ClientConnection {
         virtual ~ClientConnection() = default;
         virtual size_t getElfSize(uint64_t elfHandle) = 0;
@@ -102,6 +125,7 @@ struct DebugSessionLinux : DebugSessionImp {
         std::unordered_map<uint64_t, uint32_t> vmToTile;
 
         std::unordered_map<uint64_t, uint64_t> elfMap;
+        std::unordered_map<uint64_t, std::unique_ptr<IsaAllocation>> isaMap[NEO::EngineLimits::maxHandleCount];
 
         uint64_t moduleDebugAreaGpuVa = 0;
         uint64_t contextStateSaveAreaGpuVa = 0;
@@ -160,8 +184,8 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t writeDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc,
                                    size_t size, const void *buffer);
     virtual bool tryAccessIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status);
-    virtual ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) = 0;
-    virtual bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) = 0;
+    ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle);
+    bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status);
 
     virtual std::vector<uint64_t> getAllMemoryHandles();
 

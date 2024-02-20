@@ -83,22 +83,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
         uint64_t ptr = 0;
     };
-    struct IsaAllocation {
-        BindInfo bindInfo;
-        uint64_t elfUuidHandle;
-        uint64_t vmHandle;
-        bool tileInstanced = false;
-        bool perKernelModule = true;
-        NEO::DeviceBitfield deviceBitfield;
-
-        uint64_t moduleBegin;
-        uint64_t moduleEnd;
-
-        std::unordered_set<uint64_t> cookies;
-        int vmBindCounter = 0;
-        bool moduleLoadEventAck = false;
-        std::vector<prelim_drm_i915_debug_event> ackEvents;
-    };
 
     struct Module {
         std::unordered_set<uint64_t> loadAddresses[NEO::EngineLimits::maxHandleCount];
@@ -108,7 +92,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
         NEO::DeviceBitfield deviceBitfield;
         int segmentVmBindCounter[NEO::EngineLimits::maxHandleCount];
 
-        std::vector<prelim_drm_i915_debug_event> ackEvents[NEO::EngineLimits::maxHandleCount];
+        std::vector<EventToAck> ackEvents[NEO::EngineLimits::maxHandleCount];
         bool moduleLoadEventAcked[NEO::EngineLimits::maxHandleCount];
     };
 
@@ -126,7 +110,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
         std::unordered_map<uint64_t, std::pair<std::string, uint32_t>> classHandleToIndex;
         std::unordered_map<uint64_t, UuidData> uuidMap;
 
-        std::unordered_map<uint64_t, std::unique_ptr<IsaAllocation>> isaMap[NEO::EngineLimits::maxHandleCount];
         std::unordered_map<uint64_t, ContextHandle> lrcToContextHandle;
 
         std::unordered_map<uint64_t, Module> uuidToModule;
@@ -205,9 +188,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     ze_result_t readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) override;
     void readStateSaveAreaHeader() override;
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
-
-    ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) override;
-    bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) override;
 
     int euControlIoctl(ThreadControlCmd threadCmd,
                        const NEO::EngineClassInstance *classInstance,

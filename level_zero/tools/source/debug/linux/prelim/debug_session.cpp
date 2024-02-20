@@ -810,7 +810,8 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
 
                     if (doNotAutoAckEvent) {
                         PRINT_DEBUGGER_INFO_LOG("Add event to ack, seqno = %llu", (uint64_t)vmBind->base.seqno);
-                        connection->isaMap[tileIndex][vmBind->va_start]->ackEvents.push_back(vmBind->base);
+                        EventToAck ackEvent(vmBind->base.seqno, vmBind->base.type);
+                        connection->isaMap[tileIndex][vmBind->va_start]->ackEvents.push_back(ackEvent);
                         shouldAckEvent = false;
                     }
                 }
@@ -892,7 +893,8 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                                         if (allInstancesEventsReceived) {
                                             if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
                                                 debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
-                                                module.ackEvents[tileIndex].push_back(vmBind->base);
+                                                EventToAck ackEvent(vmBind->base.seqno, vmBind->base.type);
+                                                module.ackEvents[tileIndex].push_back(ackEvent);
                                             }
                                             pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
                                             shouldAckEvent = false;
@@ -903,7 +905,8 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                                         if (tileAttached) {
                                             if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
                                                 debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
-                                                module.ackEvents[tileIndex].push_back(vmBind->base);
+                                                EventToAck ackEvent(vmBind->base.seqno, vmBind->base.type);
+                                                module.ackEvents[tileIndex].push_back(ackEvent);
                                             }
                                             static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
                                             shouldAckEvent = false;
@@ -955,7 +958,8 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                                         shouldAckEvent = true;
                                     }
                                     if (!shouldAckEvent && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
-                                        module.ackEvents[tileIndex].push_back(vmBind->base);
+                                        EventToAck ackEvent(vmBind->base.seqno, vmBind->base.type);
+                                        module.ackEvents[tileIndex].push_back(ackEvent);
                                     }
                                 }
                             }
@@ -1305,83 +1309,6 @@ int DebugSessionLinuxi915::euControlIoctl(ThreadControlCmd threadCmd,
     seqnoOut = euControl.seqno;
     bitmaskSizeOut = euControl.bitmask_size;
     return euControlRetVal;
-}
-
-ze_result_t DebugSessionLinuxi915::getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
-    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-    auto accessVA = gmmHelper->decanonize(desc->address);
-    auto &isaMap = clientHandleToConnection[clientHandle]->isaMap[deviceIndex];
-    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
-    vmHandle = invalidHandle;
-
-    if (isaMap.size() > 0) {
-        uint64_t baseVa;
-        uint64_t ceilVa;
-        for (const auto &isa : isaMap) {
-            baseVa = isa.second->bindInfo.gpuVa;
-            ceilVa = isa.second->bindInfo.gpuVa + isa.second->bindInfo.size;
-            if (accessVA >= baseVa && accessVA < ceilVa) {
-                if (accessVA + size > ceilVa) {
-                    status = ZE_RESULT_ERROR_INVALID_ARGUMENT;
-                } else {
-                    vmHandle = isa.second->vmHandle;
-                    status = ZE_RESULT_SUCCESS;
-                }
-                break;
-            }
-        }
-    }
-
-    return status;
-}
-
-bool DebugSessionLinuxi915::getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) {
-    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-    auto accessVA = gmmHelper->decanonize(desc->address);
-
-    status = ZE_RESULT_ERROR_UNINITIALIZED;
-
-    bool tileInstancedIsa = false;
-    bool invalidIsaRange = false;
-    uint32_t isaFound = 0;
-
-    for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
-        vmHandles[i] = invalidHandle;
-
-        if (deviceBitfield.test(i)) {
-
-            auto &isaMap = clientHandleToConnection[clientHandle]->isaMap[i];
-            if (isaMap.size() > 0) {
-                uint64_t baseVa;
-                uint64_t ceilVa;
-                for (const auto &isa : isaMap) {
-                    baseVa = isa.second->bindInfo.gpuVa;
-                    ceilVa = isa.second->bindInfo.gpuVa + isa.second->bindInfo.size;
-                    if (accessVA >= baseVa && accessVA < ceilVa) {
-                        isaFound++;
-                        if (accessVA + size > ceilVa) {
-                            invalidIsaRange = true;
-                        } else {
-                            vmHandles[i] = isa.second->vmHandle;
-                        }
-                        tileInstancedIsa = isa.second->tileInstanced;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    if (invalidIsaRange) {
-        status = ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    } else if (isaFound > 0) {
-        if ((tileInstancedIsa && deviceBitfield.count() == isaFound) ||
-            !tileInstancedIsa) {
-            status = ZE_RESULT_SUCCESS;
-        }
-    }
-
-    return isaFound > 0;
 }
 
 void DebugSessionLinuxi915::printContextVms() {

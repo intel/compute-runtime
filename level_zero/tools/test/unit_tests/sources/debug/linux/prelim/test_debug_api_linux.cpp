@@ -35,6 +35,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
+#include "level_zero/tools/source/debug/linux/debug_session.h"
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/prelim/debug_session_fixtures_linux.h"
@@ -591,11 +592,7 @@ TEST_F(DebugApiLinuxTest, GivenEventRequiringAckWhenAcknowledgeEventCalledThenSu
     debugEvent.info.module.load = isaGpuVa;
     debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
 
-    prelim_drm_i915_debug_event eventToAck = {};
-    eventToAck.type = 500;
-    eventToAck.seqno = 10;
-    eventToAck.flags = PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
-    eventToAck.size = sizeof(prelim_drm_i915_debug_event);
+    DebugSessionLinux::EventToAck ackEvent(10, 500);
 
     auto isa = std::make_unique<DebugSessionLinuxi915::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
@@ -607,7 +604,7 @@ TEST_F(DebugApiLinuxTest, GivenEventRequiringAckWhenAcknowledgeEventCalledThenSu
     auto &isaMap = sessionMock->clientHandleToConnection[sessionMock->clientHandle]->isaMap[0];
     isaMap[isaGpuVa] = std::move(isa);
     isaMap[isaGpuVa]->vmBindCounter = 5;
-    isaMap[isaGpuVa]->ackEvents.push_back(eventToAck);
+    isaMap[isaGpuVa]->ackEvents.push_back(ackEvent);
 
     sessionMock->pushApiEvent(debugEvent);
 
@@ -615,7 +612,6 @@ TEST_F(DebugApiLinuxTest, GivenEventRequiringAckWhenAcknowledgeEventCalledThenSu
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(500u, handler->debugEventAcked.type);
-    EXPECT_EQ(0u, handler->debugEventAcked.flags);
     EXPECT_EQ(10u, handler->debugEventAcked.seqno);
 }
 
@@ -3751,7 +3747,6 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithAckFlagWhenHandlingEventForISAThen
     EXPECT_EQ(1u, isaIter->second->ackEvents.size());
     auto ackedEvent = isaIter->second->ackEvents[0];
 
-    EXPECT_EQ(vmBindIsa->base.flags, ackedEvent.flags);
     EXPECT_EQ(vmBindIsa->base.seqno, ackedEvent.seqno);
     EXPECT_EQ(vmBindIsa->base.type, ackedEvent.type);
 }

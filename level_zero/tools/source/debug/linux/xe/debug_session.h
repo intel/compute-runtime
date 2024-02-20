@@ -157,9 +157,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     MOCKABLE_VIRTUAL void handleEvent(drm_xe_eudebug_event *event);
     void readInternalEventsAsync() override;
     void pushApiEvent(zet_debug_event_t &debugEvent);
-    ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) override { return ZE_RESULT_ERROR_UNKNOWN; };
-    bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) override { return false; };
-
     std::atomic<bool> detached{false};
 
     uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) override;

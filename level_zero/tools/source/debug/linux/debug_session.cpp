@@ -714,12 +714,86 @@ void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(AttentionEvent
             }
         }
     }
-
     if (tileSessionsEnabled) {
         checkTriggerEventsForAttentionForTileSession(tileIndex);
     } else {
         checkTriggerEventsForAttention();
     }
+}
+
+ze_result_t DebugSessionLinux::getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto accessVA = gmmHelper->decanonize(desc->address);
+    auto &isaMap = getClientConnection(clientHandle)->isaMap[deviceIndex];
+    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
+    vmHandle = invalidHandle;
+
+    if (isaMap.size() > 0) {
+        uint64_t baseVa;
+        uint64_t ceilVa;
+        for (const auto &isa : isaMap) {
+            baseVa = isa.second->bindInfo.gpuVa;
+            ceilVa = isa.second->bindInfo.gpuVa + isa.second->bindInfo.size;
+            if (accessVA >= baseVa && accessVA < ceilVa) {
+                if (accessVA + size > ceilVa) {
+                    status = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                } else {
+                    vmHandle = isa.second->vmHandle;
+                    status = ZE_RESULT_SUCCESS;
+                }
+                break;
+            }
+        }
+    }
+
+    return status;
+}
+
+bool DebugSessionLinux::getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) {
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto accessVA = gmmHelper->decanonize(desc->address);
+
+    status = ZE_RESULT_ERROR_UNINITIALIZED;
+
+    bool tileInstancedIsa = false;
+    bool invalidIsaRange = false;
+    uint32_t isaFound = 0;
+
+    for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+        vmHandles[i] = invalidHandle;
+
+        if (deviceBitfield.test(i)) {
+            auto &isaMap = getClientConnection(clientHandle)->isaMap[i];
+            if (isaMap.size() > 0) {
+                uint64_t baseVa;
+                uint64_t ceilVa;
+                for (const auto &isa : isaMap) {
+                    baseVa = isa.second->bindInfo.gpuVa;
+                    ceilVa = isa.second->bindInfo.gpuVa + isa.second->bindInfo.size;
+                    if (accessVA >= baseVa && accessVA < ceilVa) {
+                        isaFound++;
+                        if (accessVA + size > ceilVa) {
+                            invalidIsaRange = true;
+                        } else {
+                            vmHandles[i] = isa.second->vmHandle;
+                        }
+                        tileInstancedIsa = isa.second->tileInstanced;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    if (invalidIsaRange) {
+        status = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    } else if (isaFound > 0) {
+        if ((tileInstancedIsa && deviceBitfield.count() == isaFound) ||
+            !tileInstancedIsa) {
+            status = ZE_RESULT_SUCCESS;
+        }
+    }
+
+    return isaFound > 0;
 }
 
 } // namespace L0
