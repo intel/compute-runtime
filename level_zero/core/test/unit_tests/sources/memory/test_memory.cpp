@@ -3370,6 +3370,33 @@ TEST_F(MemoryExportImportTest,
     delete alloc;
 }
 
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndLargeSubAllocationCountInputThenGetSingleSubAllocation) {
+
+    char buffer[256];
+    auto alloc = new SingleSubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
+    uint32_t numberOfSubAllocations = 7;
+    subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
+    subAllocationDesc.pCount = &numberOfSubAllocations;
+    memoryProperties.pNext = &subAllocationDesc;
+    ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
+
+    ze_result_t result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, numberOfSubAllocations);
+    std::vector<ze_sub_allocation_t> subAllocationMemAllocProperties(1);
+    subAllocationDesc.pSubAllocations = subAllocationMemAllocProperties.data();
+    result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, numberOfSubAllocations);
+    EXPECT_EQ(1000lu, subAllocationMemAllocProperties[0].size);
+    EXPECT_EQ(0lu, reinterpret_cast<uint64_t>(subAllocationMemAllocProperties[0].base));
+    delete alloc;
+}
+
 struct SubAllocMockGraphicsAllocation : public NEO::MockGraphicsAllocation {
     using NEO::MockGraphicsAllocation::MockGraphicsAllocation;
 
@@ -3409,6 +3436,37 @@ TEST_F(MemoryExportImportTest,
     result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(4u, numberOfSubAllocations);
+
+    for (uint32_t i = 0; i < numberOfSubAllocations; i++) {
+        EXPECT_EQ(MemoryConstants::pageSize64k, subAllocationMemAllocProperties[i].size);
+        EXPECT_EQ(i * MemoryConstants::pageSize64k, reinterpret_cast<uint64_t>(subAllocationMemAllocProperties[i].base));
+    }
+    delete alloc;
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndSmallSubAllocationCountInputThenGetFewerSubAllocations) {
+
+    char buffer[256];
+    auto alloc = new SubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
+    uint32_t numberOfSubAllocations = 2;
+    subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
+    subAllocationDesc.pCount = &numberOfSubAllocations;
+    memoryProperties.pNext = &subAllocationDesc;
+
+    ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
+
+    ze_result_t result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, numberOfSubAllocations);
+    std::vector<ze_sub_allocation_t> subAllocationMemAllocProperties(2);
+    subAllocationDesc.pSubAllocations = subAllocationMemAllocProperties.data();
+    result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, numberOfSubAllocations);
 
     for (uint32_t i = 0; i < numberOfSubAllocations; i++) {
         EXPECT_EQ(MemoryConstants::pageSize64k, subAllocationMemAllocProperties[i].size);

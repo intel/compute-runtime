@@ -783,14 +783,15 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
             }
             exportStructure->handle = reinterpret_cast<void *>(handle);
         } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES) {
-            if (alloc->getNumHandles()) {
+            const auto numHandles = alloc->getNumHandles();
+            if (numHandles > 0) {
                 ze_memory_sub_allocations_exp_properties_t *extendedSubAllocProperties =
                     reinterpret_cast<ze_memory_sub_allocations_exp_properties_t *>(extendedProperties);
-                if (extendedSubAllocProperties->pCount) {
-                    *extendedSubAllocProperties->pCount = alloc->getNumHandles();
-                } else {
-                    // pCount cannot be nullptr
+                if (extendedSubAllocProperties->pCount == nullptr) {
                     return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+                }
+                if ((*extendedSubAllocProperties->pCount == 0) || (*extendedSubAllocProperties->pCount > numHandles)) {
+                    *extendedSubAllocProperties->pCount = numHandles;
                 }
                 if (extendedSubAllocProperties->pSubAllocations) {
                     for (uint32_t i = 0; i < *extendedSubAllocProperties->pCount; i++) {
