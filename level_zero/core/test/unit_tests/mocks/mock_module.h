@@ -102,7 +102,7 @@ struct Mock<Module> : public Module {
     ADDMETHOD(initializeTranslationUnit, ze_result_t, true, ZE_RESULT_SUCCESS, (const ze_module_desc_t *desc, NEO::Device *neoDevice), (desc, neoDevice));
     ADDMETHOD_NOBASE_VOIDRETURN(updateBuildLog, (NEO::Device * neoDevice));
     ADDMETHOD(allocateKernelsIsaMemory, NEO::GraphicsAllocation *, true, nullptr, (size_t isaSize), (isaSize));
-    ADDMETHOD(computeKernelIsaAllocationAlignedSizeWithPadding, size_t, true, 0ul, (size_t isaSize), (isaSize));
+    ADDMETHOD(computeKernelIsaAllocationAlignedSizeWithPadding, size_t, true, 0ul, (size_t isaSize, bool lastKernel), (isaSize, lastKernel));
 };
 
 struct MockModule : public L0::ModuleImp {

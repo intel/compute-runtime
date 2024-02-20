@@ -3921,11 +3921,11 @@ TEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhichFitInS
 
     auto requestedSize1 = 0x40;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize1);
-    auto isaAllocationSize1 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize1);
+    auto isaAllocationSize1 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize1, false);
 
     auto requestedSize2 = isaAllocationPageSize - isaAllocationSize1 - this->isaPadding;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize2);
-    auto isaAllocationSize2 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize2);
+    auto isaAllocationSize2 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize2, true);
 
     this->mockModule->initializeKernelImmutableDatas();
     auto &kernelImmDatas = this->mockModule->getKernelImmutableDataVector();
@@ -3961,11 +3961,11 @@ TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPage
 
     const auto requestedSize1 = 0x8;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize1);
-    auto isaAllocationAlignedSize1 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize1);
+    auto isaAllocationAlignedSize1 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize1, false);
 
     const auto requestedSize2 = 0x4;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize2);
-    auto isaAllocationAlignedSize2 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize2);
+    auto isaAllocationAlignedSize2 = this->mockModule->computeKernelIsaAllocationAlignedSizeWithPadding(requestedSize2, true);
 
     // for 4kB pages, 2x isaPaddings alone could exceed isaAllocationPageSize, which precludes page sharing
     const bool isasShouldShareSamePage = (isaAllocationAlignedSize1 + isaAllocationAlignedSize2 <= isaAllocationPageSize);
@@ -3979,7 +3979,7 @@ TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPage
         EXPECT_EQ(kernelImmDatas[1]->getIsaGraphicsAllocation(), kernelImmDatas[1]->getIsaParentAllocation());
         EXPECT_EQ(kernelImmDatas[1]->getIsaOffsetInParentAllocation(), isaAllocationAlignedSize1);
         EXPECT_EQ(kernelImmDatas[1]->getIsaSubAllocationSize(), isaAllocationAlignedSize2);
-        EXPECT_EQ(kernelImmDatas[0]->getIsaSize(), isaAllocationAlignedSize2);
+        EXPECT_EQ(kernelImmDatas[1]->getIsaSize(), isaAllocationAlignedSize2);
     } else {
         EXPECT_EQ(nullptr, kernelImmDatas[0]->getIsaParentAllocation());
         EXPECT_NE(nullptr, kernelImmDatas[0]->getIsaGraphicsAllocation());
@@ -4605,7 +4605,7 @@ TEST_F(ModuleIsaCopyTest, whenModuleIsInitializedThenIsaIsCopied) {
     auto additionalSections = {ZebinTestData::AppendElfAdditionalSection::global};
     createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get(), additionalSections);
 
-    uint32_t numOfKernels = static_cast<uint32_t>(module->getKernelImmutableDataVector().size());
+    uint32_t numOfKernels = module->getKernelsIsaParentAllocation() ? 1u : static_cast<uint32_t>(module->getKernelImmutableDataVector().size());
     const uint32_t numOfGlobalBuffers = 1;
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes + numOfGlobalBuffers + numOfKernels, mockMemoryManager->copyMemoryToAllocationCalledTimes);
