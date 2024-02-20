@@ -273,6 +273,12 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         createHostPointerManager();
     }
 
+    for (auto &device : this->devices) {
+        if (device->getBuiltinFunctionsLib()) {
+            device->getBuiltinFunctionsLib()->ensureInitCompletion();
+        }
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

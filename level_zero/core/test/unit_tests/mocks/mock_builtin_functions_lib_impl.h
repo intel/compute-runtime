@@ -18,6 +18,8 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
     using BuiltinFunctionsLibImpl::builtins;
     using BuiltinFunctionsLibImpl::getFunction;
     using BuiltinFunctionsLibImpl::imageBuiltins;
+    using BuiltinFunctionsLibImpl::initAsyncComplete;
+
     MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
 
         dummyKernel = std::unique_ptr<WhiteBox<::L0::KernelImp>>(new Mock<::L0::KernelImp>());
