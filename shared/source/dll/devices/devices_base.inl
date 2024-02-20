@@ -91,6 +91,7 @@ NAMEDDEVICE(0x4905, Dg1HwConfig, "Intel(R) Iris(R) Xe MAX Graphics")
 DEVICE(0x4906, Dg1HwConfig)
 NAMEDDEVICE(0x4907, Dg1HwConfig, "Intel(R) Server GPU SG-18M")
 NAMEDDEVICE(0x4908, Dg1HwConfig, "Intel(R) Iris(R) Xe Graphics")
+NAMEDDEVICE(0x4909, Dg1HwConfig, "Intel(R) Iris(R) Xe MAX 100 Graphics")
 #endif
 
 #ifdef SUPPORT_RKL
@@ -107,6 +108,7 @@ NAMEDDEVICE(0x4680, AdlsHwConfig, "Intel(R) UHD Graphics 770")
 NAMEDDEVICE(0x4682, AdlsHwConfig, "Intel(R) UHD Graphics 730")
 NAMEDDEVICE(0x4688, AdlsHwConfig, "Intel(R) UHD Graphics")
 NAMEDDEVICE(0x468A, AdlsHwConfig, "Intel(R) UHD Graphics")
+NAMEDDEVICE(0x468B, AdlsHwConfig, "Intel(R) UHD Graphics")
 NAMEDDEVICE(0x4690, AdlsHwConfig, "Intel(R) UHD Graphics 770")
 NAMEDDEVICE(0x4692, AdlsHwConfig, "Intel(R) UHD Graphics 730")
 NAMEDDEVICE(0x4693, AdlsHwConfig, "Intel(R) UHD Graphics 710")

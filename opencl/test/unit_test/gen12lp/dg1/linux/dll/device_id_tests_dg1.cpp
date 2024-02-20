@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,12 @@
 using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenDg1SupportedDeviceIdThenHardwareInfoIsCorrect) {
-    std::array<DeviceDescriptor, 4> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 5> expectedDescriptors = {{
         {0x4905, &Dg1HwConfig::hwInfo, &Dg1HwConfig::setupHardwareInfo},
         {0x4906, &Dg1HwConfig::hwInfo, &Dg1HwConfig::setupHardwareInfo},
         {0x4907, &Dg1HwConfig::hwInfo, &Dg1HwConfig::setupHardwareInfo},
         {0x4908, &Dg1HwConfig::hwInfo, &Dg1HwConfig::setupHardwareInfo},
+        {0x4909, &Dg1HwConfig::hwInfo, &Dg1HwConfig::setupHardwareInfo},
     }};
 
     testImpl(expectedDescriptors);

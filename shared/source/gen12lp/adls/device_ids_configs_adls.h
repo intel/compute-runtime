@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ inline const std::vector<unsigned short> adlsDeviceIds{
     0x4682,
     0x4688,
     0x468A,
+    0x468B,
     0x4690,
     0x4692,
     0x4693,
