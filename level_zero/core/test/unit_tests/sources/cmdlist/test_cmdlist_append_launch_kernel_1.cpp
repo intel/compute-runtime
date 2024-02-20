@@ -1508,5 +1508,43 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     EXPECT_EQ(*itorWalker, launchParams.outWalker);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernelMockModule,
+          givenFlagOmitEventResourcePassToCmdlistResidencyWhenAppendingKernelThenExpectNoEventInCmdlistResidency,
+          IsAtLeastXeHpCore) {
+    ze_result_t returnValue;
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 1;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    ze_event_handle_t event = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+
+    auto eventAllocation = eventObject->getPoolAllocation(device);
+    ASSERT_NE(nullptr, eventAllocation);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.omitAddingEventResidency = true;
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto &cmdlistResidency = commandList->getCmdContainer().getResidencyContainer();
+
+    auto eventAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), eventAllocation);
+    EXPECT_EQ(eventAllocationIt, cmdlistResidency.end());
+
+    launchParams.omitAddingEventResidency = false;
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    eventAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), eventAllocation);
+    EXPECT_NE(eventAllocationIt, cmdlistResidency.end());
+}
+
 } // namespace ult
 } // namespace L0

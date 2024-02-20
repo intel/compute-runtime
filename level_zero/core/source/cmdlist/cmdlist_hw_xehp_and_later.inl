@@ -201,7 +201,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             NEO::GraphicsAllocation *eventPoolAlloc = event->getPoolAllocation(this->device);
 
             if (eventPoolAlloc) {
-                commandContainer.addToResidencyContainer(eventPoolAlloc);
+                if (!launchParams.omitAddingEventResidency) {
+                    commandContainer.addToResidencyContainer(eventPoolAlloc);
+                }
                 eventAddress = event->getPacketAddress(this->device);
                 isTimestampEvent = event->isUsingContextEndOffset();
             }

@@ -29,5 +29,6 @@ struct CmdListKernelLaunchParams {
     bool skipInOrderNonWalkerSignaling = false;
     bool pipeControlSignalling = false;
     bool omitAddingKernelResidency = false;
+    bool omitAddingEventResidency = false;
 };
 } // namespace L0
