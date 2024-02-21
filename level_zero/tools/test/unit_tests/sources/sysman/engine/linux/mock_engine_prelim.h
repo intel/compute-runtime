@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,11 +105,11 @@ struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
 
     bool mockPmuRead = false;
     bool mockPerfEventOpenRead = false;
-    uint32_t mockPerfEventOpenFailAtCount = 1;
+    int32_t mockPerfEventOpenFailAtCount = 1;
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
 
-        mockPerfEventOpenFailAtCount = std::max(mockPerfEventOpenFailAtCount - 1, 1u);
+        mockPerfEventOpenFailAtCount = std::max<int32_t>(mockPerfEventOpenFailAtCount - 1, 1);
         const bool shouldCheckForError = (mockPerfEventOpenFailAtCount == 1);
         if (shouldCheckForError && mockPerfEventOpenRead == true) {
             return mockedPerfEventOpenAndFailureReturn(attr, pid, cpu, groupFd, flags);

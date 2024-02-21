@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,6 +104,22 @@ TEST_F(ZesEngineFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGr
     std::vector<zes_engine_handle_t> handles(count, nullptr);
     EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, handleComponentCount);
+}
+
+TEST_F(ZesEngineFixture, GivenPmuOpenFailsWhenCallingzesDeviceEnumEngineGroupsThenNoHandlesAreEnumerated) {
+    auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
+    pMemoryManagerTest->localMemorySupported[0] = true;
+    device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
+    pSysfsAccess->mockReadVal = 1;
+    pSysfsAccess->mockReadSymLinkSuccess = true;
+    pPmuInterface->mockPerfEventOpenRead = true;
+    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
+
+    uint32_t handleCount = 0;
+    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &handleCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(handleCount, 0u);
 }
 
 TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
@@ -231,6 +247,33 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEn
     }
 }
 
+TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityExtMultipleTimesThenVerifyCallReturnsSuccess) {
+    auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
+    pMemoryManagerTest->localMemorySupported[0] = true;
+    device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
+    pSysfsAccess->mockReadVal = 2;
+    pSysfsAccess->mockReadSymLinkSuccess = true;
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+        EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+        std::vector<zes_engine_stats_t> engineStats(count);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+        for (auto &stat : engineStats) {
+            EXPECT_EQ(mockActiveTime, stat.activeTime);
+            EXPECT_EQ(mockTimestamp, stat.timestamp);
+        }
+    }
+}
+
 TEST_F(ZesEngineFixture, GivenReadingNumberOfVfsFailWhenInitializingEnginesThenGetActivityExtReturnsError) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
@@ -289,14 +332,12 @@ TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithValidVfsWhenPmuReadingFailsWhenC
     }
 }
 
-TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithOneInvalidVfWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithTotalTicksInvalidVfWhenCallingZesEngineGetActivityExtThenReturnFailure) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
     pSysfsAccess->mockReadVal = 1;
     pSysfsAccess->mockReadSymLinkSuccess = true;
-    pPmuInterface->mockPerfEventOpenRead = true;
-    pPmuInterface->mockPerfEventOpenFailAtCount = 4;
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
     pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
     auto handles = getEngineHandles(handleComponentCount);
@@ -304,6 +345,29 @@ TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithOneInvalidVfWhenCallingZesEngine
     auto handle = handles[0];
     ASSERT_NE(nullptr, handle);
     uint32_t count = 0;
+    pPmuInterface->mockPerfEventOpenRead = true;
+    pPmuInterface->mockPerfEventOpenFailAtCount = 2;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+    EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+    std::vector<zes_engine_stats_t> engineStats(count);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+}
+
+TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithBusyTicksInvalidVfWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+    auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
+    pMemoryManagerTest->localMemorySupported[0] = true;
+    device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
+    pSysfsAccess->mockReadVal = 1;
+    pSysfsAccess->mockReadSymLinkSuccess = true;
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+    auto handle = handles[0];
+    ASSERT_NE(nullptr, handle);
+    uint32_t count = 0;
+    pPmuInterface->mockPerfEventOpenRead = true;
+    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
     EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
     std::vector<zes_engine_stats_t> engineStats(count);

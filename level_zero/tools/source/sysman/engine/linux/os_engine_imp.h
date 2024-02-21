@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   private:
     void init();
     std::vector<std::pair<int64_t, int64_t>> fdList{};
+    std::vector<std::pair<uint64_t, uint64_t>> vfConfigs{};
 };
 
 } // namespace L0

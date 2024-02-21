@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,6 +87,30 @@ static ze_result_t readBusynessFromGroupFd(PmuInterface *pPmuInterface, std::pai
     return ZE_RESULT_SUCCESS;
 }
 
+static void openPmuHandlesForVfs(uint32_t numberOfVfs,
+                                 PmuInterface *pPmuInterface,
+                                 std::vector<std::pair<uint64_t, uint64_t>> &vfConfigs,
+                                 std::vector<std::pair<int64_t, int64_t>> &fdList) {
+    // +1 to include PF
+    for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
+        int64_t fd[2] = {-1, -1};
+        fd[0] = pPmuInterface->pmuInterfaceOpen(vfConfigs[i].first, -1,
+                                                PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+
+        if (fd[0] >= 0) {
+            fd[1] = pPmuInterface->pmuInterfaceOpen(vfConfigs[i].second, static_cast<int>(fd[0]),
+                                                    PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+            if (fd[1] == -1) {
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks PMU Handle \n", __FUNCTION__);
+                close(static_cast<int>(fd[0]));
+                fd[0] = -1;
+            }
+        }
+
+        fdList.push_back(std::make_pair(fd[0], fd[1]));
+    }
+}
+
 ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
     // read from global busyness fd
     return readBusynessFromGroupFd(pPmuInterface, fdList[0], pStats);
@@ -115,6 +139,17 @@ ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t 
         // +1 for PF
         *pCount = numberOfVfs + 1;
         return ZE_RESULT_SUCCESS;
+    }
+
+    if (fdList.size() == 0) {
+        DEBUG_BREAK_IF(true);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): unexpected fdlist\n", __FUNCTION__);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    // Open only if not opened previously
+    if (fdList.size() == 1) {
+        openPmuHandlesForVfs(numberOfVfs, pPmuInterface, vfConfigs, fdList);
     }
 
     *pCount = std::min(*pCount, numberOfVfs + 1);
@@ -166,26 +201,42 @@ void LinuxEngineImp::init() {
 
     // Fds for global busyness
     fd[0] = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    if (fd[0] == -1) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
+        return;
+    }
     fd[1] = pPmuInterface->pmuInterfaceOpen(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+
+    if (fd[1] == -1) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
+        close(static_cast<int>(fd[0]));
+        return;
+    }
+
     fdList.push_back(std::make_pair(fd[0], fd[1]));
 
     auto status = pSysfsAccess->read(pathForNumberOfVfs.data(), numberOfVfs);
     if (status != ZE_RESULT_SUCCESS) {
         numberOfVfs = 0;
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Reading Number Of Vfs Failed \n", __FUNCTION__);
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():Reading Number Of Vfs Failed or number of Vfs == 0 \n", __FUNCTION__);
         return;
     }
-    // +1 to include PF
+
+    // Delay fd opening till actually needed
     for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
         const uint64_t busyConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
-        fd[0] = pPmuInterface->pmuInterfaceOpen(busyConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
         const uint64_t totalConfig = ___PRELIM_I915_PMU_FN_EVENT(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), i);
-        fd[1] = pPmuInterface->pmuInterfaceOpen(totalConfig, static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
-        fdList.push_back(std::make_pair(fd[0], fd[1]));
+        vfConfigs.push_back(std::make_pair(busyConfig, totalConfig));
     }
 }
 
 bool LinuxEngineImp::isEngineModuleSupported() {
+
+    if (fdList.size() == 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptors could not be opened \n", __FUNCTION__);
+        return false;
+    }
+
     if (fdList[0].second < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d Engine Module is not supported \n", __FUNCTION__, fdList[0].second);
         return false;
