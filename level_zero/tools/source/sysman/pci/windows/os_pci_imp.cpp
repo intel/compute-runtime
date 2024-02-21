@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,6 +122,10 @@ ze_result_t WddmPciImp::getState(zes_pci_state_t *state) {
     state->qualityIssues = ZES_PCI_LINK_QUAL_ISSUE_FLAG_FORCE_UINT32;
     state->stabilityIssues = ZES_PCI_LINK_STAB_ISSUE_FLAG_FORCE_UINT32;
     state->status = ZES_PCI_LINK_STATUS_FORCE_UINT32;
+
+    state->speed.gen = -1;
+    state->speed.width = -1;
+    state->speed.maxBandwidth = -1;
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PciComponent;
