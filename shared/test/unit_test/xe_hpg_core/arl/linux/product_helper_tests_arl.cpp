@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,4 +84,15 @@ ARLTEST_F(ArlHwInfoLinux, whenSetupHardwareInfoThenGtSetupIsCorrect) {
     EXPECT_GT(gtSystemInfo.MaxSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MaxSubSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MaxEuPerSubSlice, 0u);
+}
+
+ARLTEST_F(ArlProductHelperLinux, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned) {
+    uint64_t patIndex = 1u;
+    bool isUncached = true;
+    EXPECT_EQ(0u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
+    EXPECT_EQ(3u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::commandBuffer));
+
+    isUncached = false;
+    EXPECT_EQ(0u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
+    EXPECT_EQ(3u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::commandBuffer));
 }
