@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compilers.h"
@@ -828,6 +829,10 @@ TEST(DriverTest, givenBuiltinsAsyncInitEnabledWhenCreatingDriverThenMakeSureBuil
 
     delete driverHandle;
     L0::globalDriver = nullptr;
+
+    /* std::async may create a detached thread - completion of the scheduled task can be ensured,
+       but there is no way to ensure that actual OS thread exited and its resources are freed */
+    MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
 }
 
 TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIsReturned) {
