@@ -175,7 +175,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetRunaloneExtPropertyThenC
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
-    EXPECT_EQ(xeIoctlHelper->getRunaloneExtProperty(), DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE);
+    EXPECT_EQ(xeIoctlHelper->getRunaloneExtProperty(), DRM_XE_EXEC_QUEUE_SET_PROPERTY_EU_DEBUG);
 }
 
 using IoctlHelperXeTestFixture = ::testing::Test;
@@ -201,7 +201,7 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnFalseWhenCreat
     xeIoctlHelper->createDrmContext(drm, osContext, 0, 0);
 
     auto ext = drm.receivedContextCreateSetParam;
-    EXPECT_NE(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE));
+    EXPECT_NE(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_EU_DEBUG));
 }
 
 HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnTrueWhenCreateDrmContextThenRunAloneContextIsRequested) {
@@ -228,7 +228,7 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnTrueWhenCreate
     auto ext = drm.receivedContextCreateSetParam;
     EXPECT_EQ(ext.base.name, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY));
     EXPECT_EQ(ext.base.next_extension, 0ULL);
-    EXPECT_EQ(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE));
+    EXPECT_EQ(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_EU_DEBUG));
     EXPECT_EQ(ext.value, 1ULL);
 }
 
@@ -262,7 +262,7 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenContextCreatedForCopyEngineWhenCreateDrm
     xeIoctlHelper->createDrmContext(drm, osContext, 0, 0);
 
     auto ext = drm.receivedContextCreateSetParam;
-    EXPECT_NE(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE));
+    EXPECT_NE(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_EU_DEBUG));
 }
 
 TEST(IoctlHelperXeTest, GivenXeDriverThenDebugAttachReturnsTrue) {

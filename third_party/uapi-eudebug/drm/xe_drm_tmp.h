@@ -38,8 +38,11 @@ struct drm_xe_eudebug_event {
 #define DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE 4
 #define DRM_XE_EUDEBUG_EVENT_EU_ATTENTION 5
 #define DRM_XE_EUDEBUG_EVENT_VM_BIND 6
-#define DRM_XE_EUDEBUG_EVENT_METADATA 7
-#define DRM_XE_EUDEBUG_EVENT_VM_SET_METADATA 8
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP 7
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE 8
+#define DRM_XE_EUDEBUG_EVENT_METADATA 9
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA 10
+#define DRM_XE_EUDEBUG_EVENT_VM_SET_METADATA 11
 #define DRM_XE_EUDEBUG_EVENT_MAX_EVENT DRM_XE_EUDEBUG_EVENT_VM_SET_METADATA
 
 	__u16 flags;
@@ -88,14 +91,24 @@ struct drm_xe_eudebug_event_eu_attention {
 
 struct drm_xe_eudebug_event_vm_bind {
 	struct drm_xe_eudebug_event base;
+
 	__u64 client_handle;
-
 	__u64 vm_handle;
-	__u64 va_start;
-	__u64 va_length;
+	__u64 num_binds;
+} __attribute__((packed));
 
-	__u64 metadata_handle;
-	__u64 metadata_cookie;
+struct drm_xe_eudebug_event_vm_bind_op {
+	struct drm_xe_eudebug_event base;
+	__u64 vm_bind_ref_seqno; /* *_event_vm_bind.base.seqno */
+	__u64 num_extensions;
+
+	__u64 addr; /* XXX: Zero for unmap all? */
+	__u64 range; /* XXX: Zero for unmap all? */
+} __attribute__((packed));
+
+struct drm_xe_eudebug_event_vm_bind_ufence {
+	struct drm_xe_eudebug_event base;
+	__u64 vm_bind_ref_seqno; /* *_event_vm_bind.base.seqno */
 } __attribute__((packed));
 
 struct drm_xe_eudebug_event_metadata {
@@ -107,6 +120,14 @@ struct drm_xe_eudebug_event_metadata {
 	__u64 type;
 	__u64 len;
 } __attribute__((packed));
+
+struct drm_xe_eudebug_vm_bind_op_metadata {
+	struct drm_xe_eudebug_event base;
+	__u64 vm_bind_op_ref_seqno; /* *_event_vm_bind_op.base.seqno */
+
+	__u64 metadata_handle;
+	__u64 metadata_cookie;
+};
 
 struct drm_xe_eudebug_event_vm_set_metadata {
 	struct drm_xe_eudebug_event base;

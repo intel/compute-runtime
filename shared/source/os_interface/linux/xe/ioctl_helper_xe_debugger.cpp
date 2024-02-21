@@ -46,7 +46,7 @@ int IoctlHelperXe::debuggerMetadataCreateIoctl(DrmIoctl request, void *arg) {
     drm_xe_debug_metadata_create *metadata = static_cast<drm_xe_debug_metadata_create *>(arg);
     auto ret = IoctlHelper::ioctl(request, arg);
     xeLog(" -> IoctlHelperXe::ioctl metadataCreate type=%llu user_addr=%uul len=%uul\n id=%uul ret=%d, errno=%d\n",
-          metadata->type, metadata->user_addr, metadata->len, metadata->id, ret, errno);
+          metadata->type, metadata->user_addr, metadata->len, metadata->metadata_id, ret, errno);
     return ret;
 }
 
@@ -54,7 +54,7 @@ int IoctlHelperXe::debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg) {
     drm_xe_debug_metadata_destroy *metadata = static_cast<drm_xe_debug_metadata_destroy *>(arg);
     auto ret = IoctlHelper::ioctl(request, arg);
     xeLog(" -> IoctlHelperXe::ioctl metadataDestroy id=%llu r=%d\n",
-          metadata->id, ret);
+          metadata->metadata_id, ret);
     return ret;
 }
 
@@ -137,7 +137,7 @@ void IoctlHelperXe::addDebugMetadata(DrmResourceClass type, uint64_t *offset, ui
 }
 
 int IoctlHelperXe::getRunaloneExtProperty() {
-    return DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE;
+    return DRM_XE_EXEC_QUEUE_SET_PROPERTY_EU_DEBUG;
 }
 
 int IoctlHelperXe::getEuDebugSysFsEnable() {
@@ -169,17 +169,17 @@ uint32_t IoctlHelperXe::registerResource(DrmResourceClass classType, const void 
     }
     [[maybe_unused]] auto retVal = IoctlHelperXe::ioctl(DrmIoctl::metadataCreate, &metadata);
     PRINT_DEBUGGER_INFO_LOG("DRM_XE_DEBUG_METADATA_CREATE: type=%llu user_addr=%llu len=%llu id=%llu\n",
-                            metadata.type, metadata.user_addr, metadata.len, metadata.id);
+                            metadata.type, metadata.user_addr, metadata.len, metadata.metadata_id);
     DEBUG_BREAK_IF(retVal != 0);
-    return static_cast<uint32_t>(metadata.id);
+    return static_cast<uint32_t>(metadata.metadata_id);
 }
 
 void IoctlHelperXe::unregisterResource(uint32_t handle) {
     drm_xe_debug_metadata_destroy metadata = {};
-    metadata.id = handle;
+    metadata.metadata_id = handle;
     [[maybe_unused]] auto retVal = IoctlHelperXe::ioctl(DrmIoctl::metadataDestroy, &metadata);
     DEBUG_BREAK_IF(retVal != 0);
-    PRINT_DEBUGGER_INFO_LOG("DRM_XE_DEBUG_METADATA_DESTROY: id=%llu\n", metadata.id);
+    PRINT_DEBUGGER_INFO_LOG("DRM_XE_DEBUG_METADATA_DESTROY: id=%llu\n", metadata.metadata_id);
 }
 
 } // namespace NEO

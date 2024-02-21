@@ -114,12 +114,12 @@ class DrmMockXeDebug : public DrmMockCustom {
             metadataAddr = reinterpret_cast<void *>(metadata->user_addr);
             metadataSize = metadata->len;
             metadataType = metadata->type;
-            metadata->id = metadataID;
+            metadata->metadata_id = metadataID;
             return 0;
         } break;
         case DrmIoctl::metadataDestroy: {
             auto metadata = reinterpret_cast<drm_xe_debug_metadata_destroy *>(arg);
-            metadataID = metadata->id;
+            metadataID = metadata->metadata_id;
             return 0;
         } break;
 
@@ -177,7 +177,7 @@ class DrmMockXeDebug : public DrmMockCustom {
     int setIoctlAnswer = 0;
     int gemVmBindReturn = 0;
 
-    uint64_t metadataID = 20;
+    uint32_t metadataID = 20;
     void *metadataAddr = nullptr;
     size_t metadataSize = 0;
     uint64_t metadataType = 9999;

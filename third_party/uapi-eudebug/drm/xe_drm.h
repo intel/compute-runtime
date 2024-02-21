@@ -830,8 +830,8 @@ struct drm_xe_vm_bind_op_ext_attach_debug {
 	/** @base: base user extension */
 	struct drm_xe_user_extension base;
 
-	/** @id: Debug object id from create metadata */
-	__u64 id;
+	/** @metadata_id: Debug object id from create metadata */
+	__u32 metadata_id;
 
 	/** @flags: Flags */
 	__u64 flags;
@@ -1086,7 +1086,7 @@ struct drm_xe_exec_queue_create {
 /* Monitor 64MB contiguous region with 2M sub-granularity */
 #define     DRM_XE_ACC_GRANULARITY_64M				3
 
-#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_RUNALONE		8
+#define   DRM_XE_EXEC_QUEUE_SET_PROPERTY_EU_DEBUG		8
 
 	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
@@ -1384,6 +1384,9 @@ struct drm_xe_debug_metadata_create {
 
 #define DRM_XE_DEBUG_METADATA_ELF_BINARY     0
 #define DRM_XE_DEBUG_METADATA_PROGRAM_MODULE 1
+#define WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA 2
+#define WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SBA_AREA 3
+#define WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA 4
 	/** @type: Type of metadata */
 	__u64 type;
 
@@ -1393,8 +1396,8 @@ struct drm_xe_debug_metadata_create {
 	/** @len: length, in bytes of the medata */
 	__u64 len;
 
-	/** @id: created metadata handle (out) */
-	__u64 id;
+	/** @metadata_id: created metadata handle (out) */
+	__u32 metadata_id;
 };
 
 /**
@@ -1406,8 +1409,8 @@ struct drm_xe_debug_metadata_destroy {
 	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
 
-	/** @id: metadata handle to destroy */
-	__u64 id;
+	/** @metadata_id: metadata handle to destroy */
+	__u32 metadata_id;
 };
 
 /**
