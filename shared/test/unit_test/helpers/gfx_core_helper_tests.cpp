@@ -260,8 +260,11 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
         stream, PostSyncMode::timestamp, address, immediateData, rootDeviceEnvironment, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
-    auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
+    void *cpuPipeControlBuffer = ptrOffset(stream.getCpuBase(), pipeControlLocationSize);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(cpuPipeControlBuffer);
     ASSERT_NE(nullptr, pipeControl);
+
+    EXPECT_EQ(cpuPipeControlBuffer, args.postSyncCmd);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
     EXPECT_EQ(pipeControl->getCommandStreamerStallEnable(), expectedPipeControl.getCommandStreamerStallEnable());
@@ -317,8 +320,11 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
         stream, PostSyncMode::immediateData, address, immediateData, rootDeviceEnvironment, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
-    auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
+    void *cpuPipeControlBuffer = ptrOffset(stream.getCpuBase(), pipeControlLocationSize);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(cpuPipeControlBuffer);
     ASSERT_NE(nullptr, pipeControl);
+
+    EXPECT_EQ(cpuPipeControlBuffer, args.postSyncCmd);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
     EXPECT_EQ(pipeControl->getCommandStreamerStallEnable(), expectedPipeControl.getCommandStreamerStallEnable());

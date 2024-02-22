@@ -293,6 +293,7 @@ void MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(void *commandsBu
     }
 
     if (postSyncMode != PostSyncMode::noWrite) {
+        args.postSyncCmd = commandsBuffer;
         pipeControl.setAddress(static_cast<uint32_t>(gpuAddress & 0x0000FFFFFFFFULL));
         pipeControl.setAddressHigh(static_cast<uint32_t>(gpuAddress >> 32));
     }
