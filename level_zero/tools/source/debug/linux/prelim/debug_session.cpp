@@ -1349,6 +1349,7 @@ int DebugSessionLinuxi915::threadControl(const std::vector<EuThread::ThreadId> &
 
     if (threadCmd == ThreadControlCmd::stopped) {
         bitmaskOut = std::move(bitmask);
+        UNRECOVERABLE_IF(bitmaskOut.get() == nullptr);
         bitmaskSizeOut = euControl.bitmask_size;
     }
     return euControlRetVal;

@@ -407,6 +407,7 @@ int DebugSessionLinuxXe::threadControlResumeAndStopped(const std::vector<EuThrea
 
     if (euControl.cmd == DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED) {
         bitmaskOut = std::move(bitmask);
+        UNRECOVERABLE_IF(bitmaskOut.get() == nullptr);
         bitmaskSizeOut = euControl.bitmask_size;
     }
 
