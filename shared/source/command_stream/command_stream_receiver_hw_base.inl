@@ -699,28 +699,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     if (this->dispatchMode == DispatchMode::batchedDispatch) {
-        // check if we are not over the budget, if we are do implicit flush
-        if (getMemoryManager()->isMemoryBudgetExhausted()) {
-            if (this->totalMemoryUsed >= device.getDeviceInfo().globalMemSize / 4) {
-                implicitFlush = true;
-            }
-        }
-
-        if (debugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() != -1) {
-            if ((taskCount + 1) % debugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() == 0) {
-                implicitFlush = true;
-            }
-        }
-
-        if (this->newResources) {
-            implicitFlush = true;
-            this->newResources = false;
-        }
-        implicitFlush |= checkImplicitFlushForGpuIdle();
-
-        if (implicitFlush) {
-            this->flushBatchedSubmissions();
-        }
+        handleBatchedDispatchImplicitFlush(device.getDeviceInfo().globalMemSize, implicitFlush);
     }
 
     ++taskCount;
@@ -2241,6 +2220,32 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatc
             flushStamp->peekStamp()};
 
         return completionStamp;
+    }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::handleBatchedDispatchImplicitFlush(uint64_t globalMemorySize, bool implicitFlush) {
+    // check if we are not over the budget, if we are do implicit flush
+    if (getMemoryManager()->isMemoryBudgetExhausted()) {
+        if (this->totalMemoryUsed >= globalMemorySize / 4) {
+            implicitFlush = true;
+        }
+    }
+
+    if (debugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() != -1) {
+        if ((taskCount + 1) % debugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() == 0) {
+            implicitFlush = true;
+        }
+    }
+
+    if (this->newResources) {
+        implicitFlush = true;
+        this->newResources = false;
+    }
+    implicitFlush |= checkImplicitFlushForGpuIdle();
+
+    if (implicitFlush) {
+        this->flushBatchedSubmissions();
     }
 }
 

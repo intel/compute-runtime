@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -274,6 +274,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                                                ImmediateDispatchFlags &dispatchFlags,
                                                                ImmediateFlushData &flushData,
                                                                LinearStream &csrStream);
+
+    inline void handleBatchedDispatchImplicitFlush(uint64_t globalMemorySize, bool implicitFlush);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;
