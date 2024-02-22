@@ -241,6 +241,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                               bool areMultipleSubDevicesInContext,
                                               bool setGeneralStateBaseAddress);
 
+    inline CompletionStamp updateTaskCountAndGetCompletionStamp(bool levelClosed);
     inline void programSamplerCacheFlushBetweenRedescribedSurfaceReads(LinearStream &commandStreamCSR);
     bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;
     inline void handleImmediateFlushPipelineSelectState(ImmediateDispatchFlags &dispatchFlags, ImmediateFlushData &flushData);

@@ -702,20 +702,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         handleBatchedDispatchImplicitFlush(device.getDeviceInfo().globalMemSize, implicitFlush);
     }
 
-    ++taskCount;
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", tagAddress ? *tagAddress : 0);
-
-    CompletionStamp completionStamp = {
-        taskCount,
-        this->taskLevel,
-        flushStamp->peekStamp()};
-
-    if (levelClosed) {
-        this->taskLevel++;
-    }
-
-    return completionStamp;
+    return updateTaskCountAndGetCompletionStamp(levelClosed);
 }
 
 template <typename GfxFamily>
@@ -1893,6 +1880,26 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
         collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, generalStateBaseAddress,
                                         device.getDeviceInfo().imageSupport);
     }
+}
+
+template <typename GfxFamily>
+inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::updateTaskCountAndGetCompletionStamp(bool levelClosed) {
+
+    ++taskCount;
+
+    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
+    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", tagAddress ? *tagAddress : 0);
+
+    CompletionStamp completionStamp = {
+        taskCount,
+        this->taskLevel,
+        flushStamp->peekStamp()};
+
+    if (levelClosed) {
+        this->taskLevel++;
+    }
+
+    return completionStamp;
 }
 
 template <typename GfxFamily>
