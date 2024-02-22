@@ -2956,7 +2956,7 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
     eventDesc.signal = 0;
     eventDesc.wait = 0;
 
-    constexpr uint32_t packetsUsed = 4u;
+    uint32_t packetsUsed = std::min(4u, eventPool->getEventMaxPackets());
 
     eventPool->setEventSize(static_cast<uint32_t>(alignUp(packetsUsed * device->getGfxCoreHelper().getSingleTimestampPacketSize(), 64)));
 
@@ -2983,7 +2983,7 @@ TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThe
     eventDesc.signal = 0;
     eventDesc.wait = 0;
 
-    constexpr uint32_t packetsUsed = 4u;
+    uint32_t packetsUsed = std::min(4u, eventPool->getEventMaxPackets());
 
     eventPool->setEventSize(static_cast<uint32_t>(alignUp(packetsUsed * device->getGfxCoreHelper().getSingleTimestampPacketSize(), 64)));
 

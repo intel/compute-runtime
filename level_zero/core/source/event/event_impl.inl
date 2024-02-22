@@ -372,8 +372,12 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
     uint64_t timestampStart = static_cast<uint64_t>(eventVal);
     uint64_t timestampEnd = static_cast<uint64_t>(eventVal);
     if (eventVal == Event::STATE_SIGNALED) {
-        timestampStart = static_cast<uint64_t>(this->gpuStartTimestamp);
-        timestampEnd = static_cast<uint64_t>(this->gpuEndTimestamp);
+        if (this->gpuStartTimestamp != 0u) {
+            timestampStart = static_cast<uint64_t>(this->gpuStartTimestamp);
+        }
+        if (this->gpuEndTimestamp != 0u) {
+            timestampEnd = static_cast<uint64_t>(this->gpuEndTimestamp);
+        }
     }
 
     uint32_t packets = 0;

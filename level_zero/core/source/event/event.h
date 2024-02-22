@@ -91,7 +91,7 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t getWaitScope(ze_event_scope_flags_t *pWaitScope) = 0;
 
     enum State : uint32_t {
-        STATE_SIGNALED = 0u,
+        STATE_SIGNALED = 2u,
         HOST_CACHING_DISABLED_PERMANENT = std::numeric_limits<uint32_t>::max() - 2,
         HOST_CACHING_DISABLED = std::numeric_limits<uint32_t>::max() - 1,
         STATE_CLEARED = std::numeric_limits<uint32_t>::max(),

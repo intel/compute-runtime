@@ -674,7 +674,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
                 auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorStoreDataImm[i]);
                 EXPECT_EQ(gpuAddress, cmd->getAddress());
                 EXPECT_FALSE(cmd->getStoreQword());
-                EXPECT_EQ(0u, cmd->getDataDword0());
+                EXPECT_EQ(2u, cmd->getDataDword0());
                 if constexpr (multiTile == 1) {
                     EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
                 } else {
