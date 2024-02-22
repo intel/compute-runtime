@@ -345,6 +345,8 @@ struct CommandListCoreFamily : public CommandListImp {
     bool inOrderAtomicSignallingEnabled() const override;
     uint64_t getInOrderIncrementValue() const;
 
+    bool isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const;
+
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
     uint64_t latestHostWaitedInOrderSyncValue = 0;

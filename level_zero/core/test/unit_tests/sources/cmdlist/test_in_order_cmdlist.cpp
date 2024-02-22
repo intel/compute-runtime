@@ -3143,6 +3143,29 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
     EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWithoutWaitlistThenInheritSignalSyncAllocation, IsAtLeastSkl) {
+    auto cmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto cmdStream = cmdList->getCmdContainer().getCommandStream();
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(1u, cmdList->inOrderExecInfo->getCounterValue());
+
+    auto offset = cmdStream->getUsed();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto eventHandle = events[0]->toHandle();
+
+    cmdList->appendBarrier(nullptr, 0, nullptr, false);
+    cmdList->appendBarrier(eventHandle, 0, nullptr, false);
+
+    EXPECT_EQ(offset, cmdStream->getUsed());
+
+    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithDifferentEventsThenDontInherit, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
