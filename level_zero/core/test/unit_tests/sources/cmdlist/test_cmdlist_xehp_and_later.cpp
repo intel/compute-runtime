@@ -2398,9 +2398,13 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppend
 }
 
 HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThenEventAllocationNotAddedToResidency, IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto &commandContainer = commandList->getCmdContainer();
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -2415,20 +2419,62 @@ HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThe
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event.get());
 
-    auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
+    auto &residencyContainer = commandContainer.getResidencyContainer();
     auto eventAllocation = event->getPoolAllocation(device);
 
+    void *pipeControlBuffer = nullptr;
+
+    auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
     bool skipAdd = true;
-    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, false, true, skipAdd);
+    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, false, true, skipAdd);
 
     auto eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
     EXPECT_EQ(residencyContainer.end(), eventAllocIt);
 
-    skipAdd = false;
+    ASSERT_NE(nullptr, pipeControlBuffer);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
 
-    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, false, true, skipAdd);
+    auto pcList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pcList.size());
+
+    PIPE_CONTROL *postSyncPipeControl = nullptr;
+    for (const auto it : pcList) {
+        postSyncPipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (postSyncPipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            break;
+        }
+    }
+    ASSERT_NE(nullptr, postSyncPipeControl);
+    ASSERT_EQ(postSyncPipeControl, pipeControlBuffer);
+
+    commandStreamOffset = commandContainer.getCommandStream()->getUsed();
+    skipAdd = false;
+    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, false, true, skipAdd);
     eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
     EXPECT_NE(residencyContainer.end(), eventAllocIt);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
+
+    pcList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pcList.size());
+
+    postSyncPipeControl = nullptr;
+    for (const auto it : pcList) {
+        postSyncPipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (postSyncPipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            break;
+        }
+    }
+    ASSERT_NE(nullptr, postSyncPipeControl);
+    ASSERT_EQ(postSyncPipeControl, pipeControlBuffer);
 }
 
 } // namespace ult

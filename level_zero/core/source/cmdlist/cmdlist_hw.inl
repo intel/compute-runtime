@@ -3593,6 +3593,10 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
             value,
             device->getNEODevice()->getRootDeviceEnvironment(),
             pipeControlArgs);
+
+        if (syncCmdBuffer != nullptr) {
+            *syncCmdBuffer = pipeControlArgs.postSyncCmd;
+        }
     }
 
     if (eventOperations.isTimestmapEvent && !skipPartitionOffsetProgramming) {
