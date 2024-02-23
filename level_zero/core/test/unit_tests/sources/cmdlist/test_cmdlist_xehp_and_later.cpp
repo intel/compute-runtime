@@ -2477,5 +2477,66 @@ HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThe
     ASSERT_EQ(postSyncPipeControl, pipeControlBuffer);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel,
+          givenL3EventCompationPlatformWhenAppendKernelWithSignalScopeEventAndCmdPatchListProvidedThenDispatchSignalPostSyncCmdAndStoreInPatchList,
+          IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    commandList->dcFlushSupport = true;
+    commandList->compactL3FlushEventPacket = true;
+
+    auto &commandContainer = commandList->getCmdContainer();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = 0;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event.get());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    CommandToPatch signalCmd;
+    launchParams.outSyncCommand = &signalCmd;
+    auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
+
+    auto pcList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, pcList.size());
+
+    PIPE_CONTROL *postSyncPipeControl = nullptr;
+    for (const auto it : pcList) {
+        postSyncPipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (postSyncPipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            break;
+        }
+    }
+    ASSERT_NE(nullptr, postSyncPipeControl);
+
+    EXPECT_EQ(CommandToPatch::SignalEventPostSyncPipeControl, signalCmd.type);
+    EXPECT_EQ(postSyncPipeControl, signalCmd.pDestination);
+}
+
 } // namespace ult
 } // namespace L0

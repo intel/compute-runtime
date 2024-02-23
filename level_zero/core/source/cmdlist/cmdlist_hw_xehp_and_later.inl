@@ -348,7 +348,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (compactEvent) {
-        appendEventForProfilingAllWalkers(compactEvent, nullptr, false, true, launchParams.omitAddingEventResidency);
+        void **syncCmdBuffer = nullptr;
+        if (launchParams.outSyncCommand != nullptr) {
+            launchParams.outSyncCommand->type = CommandToPatch::SignalEventPostSyncPipeControl;
+            syncCmdBuffer = &launchParams.outSyncCommand->pDestination;
+        }
+        appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, false, true, launchParams.omitAddingEventResidency);
     } else if (event) {
         event->setPacketsInUse(partitionCount);
         if (l3FlushEnable) {
