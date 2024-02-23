@@ -366,8 +366,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
-
     DEBUG_BREAK_IF(&commandStreamTask == &commandStream);
     DEBUG_BREAK_IF(!(dispatchFlags.preemptionMode == PreemptionMode::Disabled ? device.getPreemptionMode() == PreemptionMode::Disabled : true));
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
@@ -393,55 +391,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool hasStallingCmdsOnTaskStream = false;
 
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag) {
-        if (this->dispatchMode == DispatchMode::immediateDispatch) {
-            // for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
-            // for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
-            levelClosed = true;
-            // if we guard with ppc, flush dc as well to speed up completion latency
-            if (dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag || dispatchFlags.blocking) {
-                dispatchFlags.dcFlush = this->dcFlushSupport;
-            }
-        }
 
-        this->heapStorageRequiresRecyclingTag = false;
-        epiloguePipeControlLocation = ptrOffset(commandStreamTask.getCpuBase(), commandStreamTask.getUsed());
-
-        if ((dispatchFlags.outOfOrderExecutionAllowed || timestampPacketWriteEnabled) &&
-            !dispatchFlags.dcFlush) {
-            currentPipeControlForNooping = epiloguePipeControlLocation;
-        }
-
-        hasStallingCmdsOnTaskStream = true;
-
-        auto address = getTagAllocation()->getGpuAddress();
-
-        args.dcFlushEnable = getDcFlushRequired(dispatchFlags.dcFlush);
-        args.notifyEnable = isUsedNotifyEnableForPostSync();
-        args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
-        args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
-        args.workloadPartitionOffset = isMultiTileOperationEnabled();
-        args.stateCacheInvalidationEnable = dispatchFlags.stateCacheInvalidation;
-        MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-            commandStreamTask,
-            PostSyncMode::immediateData,
-            address,
-            taskCount + 1,
-            rootDeviceEnvironment,
-            args);
-
-        DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
-        if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
-                                                                  PatchInfoAllocationType::tagAddress,
-                                                                  commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
-                                                                  commandStreamTask.getUsed() - 2 * sizeof(uint64_t),
-                                                                  PatchInfoAllocationType::defaultType));
-            flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
-                                                                  PatchInfoAllocationType::tagValue,
-                                                                  commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
-                                                                  commandStreamTask.getUsed() - sizeof(uint64_t),
-                                                                  PatchInfoAllocationType::defaultType));
-        }
+        processBarrierWithPostSync(commandStreamTask, dispatchFlags, levelClosed, currentPipeControlForNooping,
+                                   epiloguePipeControlLocation, hasStallingCmdsOnTaskStream, args);
     }
     this->latestSentTaskCount = taskCount + 1;
 
@@ -1826,6 +1778,62 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
     if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, generalStateBaseAddress,
                                         device.getDeviceInfo().imageSupport);
+    }
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::processBarrierWithPostSync(LinearStream &commandStreamTask, DispatchFlags &dispatchFlags, bool &levelClosed, void *&currentPipeControlForNooping, void *&epiloguePipeControlLocation, bool &hasStallingCmdsOnTaskStream, PipeControlArgs &args) {
+
+    if (this->dispatchMode == DispatchMode::immediateDispatch) {
+        // for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
+        // for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
+        levelClosed = true;
+        // if we guard with ppc, flush dc as well to speed up completion latency
+        if (dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag || dispatchFlags.blocking) {
+            dispatchFlags.dcFlush = this->dcFlushSupport;
+        }
+    }
+
+    this->heapStorageRequiresRecyclingTag = false;
+    epiloguePipeControlLocation = ptrOffset(commandStreamTask.getCpuBase(), commandStreamTask.getUsed());
+
+    if ((dispatchFlags.outOfOrderExecutionAllowed || timestampPacketWriteEnabled) &&
+        !dispatchFlags.dcFlush) {
+        currentPipeControlForNooping = epiloguePipeControlLocation;
+    }
+
+    hasStallingCmdsOnTaskStream = true;
+
+    auto address = getTagAllocation()->getGpuAddress();
+    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
+
+    args.dcFlushEnable = getDcFlushRequired(dispatchFlags.dcFlush);
+    args.notifyEnable = isUsedNotifyEnableForPostSync();
+    args.tlbInvalidation |= dispatchFlags.memoryMigrationRequired;
+    args.textureCacheInvalidationEnable |= dispatchFlags.textureCacheFlush;
+    args.workloadPartitionOffset = isMultiTileOperationEnabled();
+    args.stateCacheInvalidationEnable = dispatchFlags.stateCacheInvalidation;
+
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+        commandStreamTask,
+        PostSyncMode::immediateData,
+        address,
+        taskCount + 1,
+        rootDeviceEnvironment,
+        args);
+
+    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
+    if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
+                                                              PatchInfoAllocationType::tagAddress,
+                                                              commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
+                                                              commandStreamTask.getUsed() - 2 * sizeof(uint64_t),
+                                                              PatchInfoAllocationType::defaultType));
+        flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
+                                                              PatchInfoAllocationType::tagValue,
+                                                              commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
+                                                              commandStreamTask.getUsed() - sizeof(uint64_t),
+                                                              PatchInfoAllocationType::defaultType));
     }
 }
 
