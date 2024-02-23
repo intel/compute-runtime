@@ -247,7 +247,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
 
-    appendSignalEventPostWalker(event, false);
+    appendSignalEventPostWalker(event, nullptr, false, false);
 
     commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
     auto &residencyContainer = kernel->getResidencyContainer();
@@ -329,11 +329,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, bool beforeWalker, bool singlePacketEvent) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency) {
     if (beforeWalker) {
         appendEventForProfiling(event, true, false);
     } else {
-        appendSignalEventPostWalker(event, false);
+        appendSignalEventPostWalker(event, syncCmdBuffer, false, skipAddingEventToResidency);
     }
 }
 

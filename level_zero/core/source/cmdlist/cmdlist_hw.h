@@ -182,7 +182,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
     void appendMultiPartitionEpilogue() override;
-    void appendEventForProfilingAllWalkers(Event *event, bool beforeWalker, bool singlePacketEvent);
+    void appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency);
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency);
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
@@ -289,7 +289,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition);
     void appendEventForProfiling(Event *event, bool beforeWalker, bool skipBarrierForEndProfiling);
     void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
-    void appendSignalEventPostWalker(Event *event, bool skipBarrierForEndProfiling);
+    void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency);
     virtual void programStateBaseAddress(NEO::CommandContainer &container, bool useSbaProperties);
     void appendComputeBarrierCommand();
     NEO::PipeControlArgs createBarrierFlags();
@@ -320,9 +320,9 @@ struct CommandListCoreFamily : public CommandListImp {
     CmdListEventOperation estimateEventPostSync(Event *event, uint32_t operations);
     void dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
     void dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
-    void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming);
+    void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, void **syncCmdBuffer, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming);
     void dispatchEventRemainingPacketsPostSyncOperation(Event *event);
-    void dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming);
+    void dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming);
     bool isKernelUncachedMocsRequired(bool kernelState) {
         this->containsStatelessUncachedResource |= kernelState;
         if (this->stateBaseAddressTracking) {

@@ -950,7 +950,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         commandList->setupTimestampEventForMultiTile(event.get());
         size_t sizeBefore = cmdStream->getUsed();
-        commandList->appendSignalEventPostWalker(event.get(), false);
+        commandList->appendSignalEventPostWalker(event.get(), nullptr, false, false);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -2395,6 +2395,40 @@ HWTEST2_F(CommandListCreate, givenPlatformSupportsHdcUntypedCacheFlushWhenAppend
         }
     }
     EXPECT_TRUE(timestampPostSyncFound);
+}
+
+HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThenEventAllocationNotAddedToResidency, IsAtLeastXeHpCore) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = 0;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event.get());
+
+    auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
+    auto eventAllocation = event->getPoolAllocation(device);
+
+    bool skipAdd = true;
+    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, false, true, skipAdd);
+
+    auto eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
+    EXPECT_EQ(residencyContainer.end(), eventAllocIt);
+
+    skipAdd = false;
+
+    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, false, true, skipAdd);
+    eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
+    EXPECT_NE(residencyContainer.end(), eventAllocIt);
 }
 
 } // namespace ult

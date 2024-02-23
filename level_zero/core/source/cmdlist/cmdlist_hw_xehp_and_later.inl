@@ -286,7 +286,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     std::list<void *> additionalCommands;
 
     if (compactEvent) {
-        appendEventForProfilingAllWalkers(compactEvent, true, true);
+        appendEventForProfilingAllWalkers(compactEvent, nullptr, true, true, false);
     }
 
     bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
@@ -297,7 +297,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
-            dispatchEventPostSyncOperation(eventForInOrderExec, Event::STATE_CLEARED, false, false, false, false);
+            dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, Event::STATE_CLEARED, false, false, false, false);
         } else {
             inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
             inOrderExecInfo = this->inOrderExecInfo.get();
@@ -348,7 +348,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (compactEvent) {
-        appendEventForProfilingAllWalkers(compactEvent, false, true);
+        appendEventForProfilingAllWalkers(compactEvent, nullptr, false, true, launchParams.omitAddingEventResidency);
     } else if (event) {
         event->setPacketsInUse(partitionCount);
         if (l3FlushEnable) {
@@ -506,12 +506,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, bool beforeWalker, bool singlePacketEvent) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency) {
     if (isCopyOnly() || singlePacketEvent) {
         if (beforeWalker) {
             appendEventForProfiling(event, true, false);
         } else {
-            appendSignalEventPostWalker(event, false);
+            appendSignalEventPostWalker(event, syncCmdBuffer, false, skipAddingEventToResidency);
         }
     } else {
         if (event) {

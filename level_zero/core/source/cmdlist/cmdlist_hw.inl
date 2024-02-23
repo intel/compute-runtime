@@ -465,7 +465,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), pDispatchArgumentsBuffer,
                                        nullptr, launchParams);
     addToMappedEventList(event);
-    appendSignalEventPostWalker(event, false);
+    appendSignalEventPostWalker(event, nullptr, false, false);
 
     handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event));
 
@@ -516,7 +516,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         }
     }
     addToMappedEventList(event);
-    appendSignalEventPostWalker(event, false);
+    appendSignalEventPostWalker(event, nullptr, false, false);
 
     return ret;
 }
@@ -554,7 +554,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     bool useMaxPackets = event->isEventTimestampFlagSet() || (event->getPacketsInUse() < this->partitionCount);
 
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync, false);
+    dispatchEventPostSyncOperation(event, nullptr, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync, false);
 
     if (!isCopyOnly()) {
         if (this->partitionCount > 1) {
@@ -602,7 +602,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
 
     appendEventForProfiling(signalEvent, true, false);
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
-    appendSignalEventPostWalker(signalEvent, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, false, false);
     addToMappedEventList(signalEvent);
 
     if (this->isInOrderExecutionEnabled()) {
@@ -1272,7 +1272,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
     makeResidentDummyAllocation();
 
-    appendSignalEventPostWalker(signalEvent, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, false, false);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1301,7 +1301,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), dummyBlitWa);
     makeResidentDummyAllocation();
 
-    appendSignalEventPostWalker(signalEvent, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, false, false);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1459,7 +1459,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     launchParams.pipeControlSignalling = (signalEvent && singlePipeControlPacket) || dstAllocationStruct.needsFlush;
 
-    appendEventForProfilingAllWalkers(signalEvent, true, singlePipeControlPacket);
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, true, singlePipeControlPacket, false);
 
     if (isCopyOnly()) {
         ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
@@ -1524,7 +1524,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
     }
 
-    appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, false, singlePipeControlPacket, false);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
     addToMappedEventList(signalEvent);
 
@@ -1922,7 +1922,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     launchParams.isKernelSplitOperation = (fillArguments.leftRemainingBytes > 0 || fillArguments.rightRemainingBytes > 0);
     bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
 
-    appendEventForProfilingAllWalkers(signalEvent, true, singlePipeControlPacket);
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, true, singlePipeControlPacket, false);
 
     if (fillArguments.leftRemainingBytes > 0) {
         launchParams.numKernelsInSplitLaunch++;
@@ -2067,7 +2067,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     addToMappedEventList(signalEvent);
-    appendEventForProfilingAllWalkers(signalEvent, false, singlePipeControlPacket);
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, false, singlePipeControlPacket, false);
     addFlushRequiredCommand(hostPointerNeedsFlush, signalEvent);
 
     bool nonWalkerInOrderCmdChaining = false;
@@ -2144,7 +2144,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
                                                                         this->dummyBlitWa);
         makeResidentDummyAllocation();
 
-        appendSignalEventPostWalker(signalEvent, false);
+        appendSignalEventPostWalker(signalEvent, nullptr, false, false);
 
         if (isInOrderExecutionEnabled()) {
             appendSignalInOrderDependencyCounter(signalEvent);
@@ -2155,7 +2155,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *event, bool skipBarrierForEndProfiling) {
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency) {
     if (event == nullptr || !event->getPoolAllocation(this->device)) {
         return;
     }
@@ -2163,10 +2163,12 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
         appendEventForProfiling(event, false, skipBarrierForEndProfiling);
     } else {
         event->resetKernelCountAndPacketUsedCount();
-        commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+        if (!skipAddingEventToResidency) {
+            commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+        }
 
         event->setPacketsInUse(this->partitionCount);
-        dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, !isCopyOnly(), false);
+        dispatchEventPostSyncOperation(event, syncCmdBuffer, Event::STATE_SIGNALED, false, false, !isCopyOnly(), false);
     }
 }
 
@@ -2183,7 +2185,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
         NEO::MiFlushArgs args{this->dummyBlitWa};
         NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), 0, 0, args);
         makeResidentDummyAllocation();
-        dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false, false);
+        dispatchEventPostSyncOperation(event, nullptr, Event::STATE_SIGNALED, true, false, false, false);
     }
     appendWriteKernelTimestamp(event, beforeWalker, false, false);
 }
@@ -2376,7 +2378,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 
     event->setPacketsInUse(this->partitionCount);
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false);
+    dispatchEventPostSyncOperation(event, nullptr, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false);
 
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(event);
@@ -2643,7 +2645,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             bool workloadPartition = setupTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, beforeWalker, true, workloadPartition);
         } else {
-            dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false, true);
+            dispatchEventPostSyncOperation(event, nullptr, Event::STATE_SIGNALED, true, false, false, true);
 
             const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
 
@@ -2713,7 +2715,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
             args);
     }
 
-    appendSignalEventPostWalker(signalEvent, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, false, false);
 
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent);
@@ -3260,7 +3262,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     }
 
     addToMappedEventList(signalEvent);
-    appendSignalEventPostWalker(signalEvent, this->isInOrderExecutionEnabled());
+    appendSignalEventPostWalker(signalEvent, nullptr, this->isInOrderExecutionEnabled(), false);
 
     if (isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent);
@@ -3425,7 +3427,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, rootDeviceEnvironment);
     }
 
-    appendSignalEventPostWalker(signalEvent, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, false, false);
 
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent);
@@ -3553,7 +3555,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute(uint64_t gpuA
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, void **syncCmdBuffer, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming) {
     decltype(&CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute) dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute;
     if (isCopyOnly()) {
         dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy;
@@ -3603,7 +3605,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming) {
     uint32_t packets = event->getPacketsInUse();
     if (this->signalAllEventPackets || useMax) {
         packets = event->getMaxPacketsCount();
@@ -3616,7 +3618,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event 
         eventPostSync.operationCount--;
     }
 
-    dispatchPostSyncCommands(eventPostSync, gpuAddress, value, useLastPipeControl, event->isSignalScope(), skipPartitionOffsetProgramming);
+    dispatchPostSyncCommands(eventPostSync, gpuAddress, syncCmdBuffer, value, useLastPipeControl, event->isSignalScope(), skipPartitionOffsetProgramming);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3629,7 +3631,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
         eventAddress += event->getSinglePacketSize() * event->getPacketsInUse();
 
         constexpr bool appendLastPipeControl = false;
-        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope(), false);
+        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, nullptr, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope(), false);
     }
 }
 
