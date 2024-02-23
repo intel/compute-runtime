@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ enum class SipKernelType : std::uint32_t;
 class OsLibrary;
 class CompilerCache;
 class Device;
+struct TargetDevice;
 
 using specConstValuesMap = std::unordered_map<uint32_t, uint64_t>;
 
@@ -192,4 +193,14 @@ class CompilerInterface {
     std::once_flag igcIcbeCheckVersionCallOnce;
     std::once_flag fclIcbeCheckVersionCallOnce;
 };
+
+class CompilerCacheHelper {
+  public:
+    static void packAndCacheBinary(CompilerCache &compilerCache, const std::string &kernelFileHash, const NEO::TargetDevice &targetDevice, const NEO::TranslationOutput &translationOutput);
+    static bool loadCacheAndSetOutput(CompilerCache &compilerCache, const std::string &kernelFileHash, NEO::TranslationOutput &output, const NEO::Device &device);
+
+  protected:
+    static bool processPackedCacheBinary(ArrayRef<const uint8_t> archive, TranslationOutput &output, const NEO::Device &device);
+};
+
 } // namespace NEO

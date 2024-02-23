@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -85,8 +86,9 @@ TranslationOutput::ErrorCode CompilerInterface::build(
                                                   input.src,
                                                   input.apiOptions,
                                                   input.internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
-        output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
-        if (output.deviceBinary.mem) {
+
+        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output, device);
+        if (success) {
             return TranslationOutput::ErrorCode::success;
         }
     }
@@ -141,8 +143,9 @@ TranslationOutput::ErrorCode CompilerInterface::build(
         kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), irRef,
                                                   input.apiOptions,
                                                   input.internalOptions, specIdsRef, specValuesRef, igcRevision, igcLibSize, igcLibMTime);
-        output.deviceBinary.mem = cache->loadCachedBinary(kernelFileHash, output.deviceBinary.size);
-        if (output.deviceBinary.mem) {
+
+        bool success = CompilerCacheHelper::loadCacheAndSetOutput(*cache, kernelFileHash, output, device);
+        if (success) {
             return TranslationOutput::ErrorCode::success;
         }
     }
@@ -162,12 +165,12 @@ TranslationOutput::ErrorCode CompilerInterface::build(
         return TranslationOutput::ErrorCode::buildFailure;
     }
 
-    if (cache != nullptr && cache->getConfig().enabled) {
-        cache->cacheBinary(kernelFileHash, igcOutput->GetOutput()->GetMemory<char>(), static_cast<uint32_t>(igcOutput->GetOutput()->GetSize<char>()));
-    }
-
     TranslationOutput::makeCopy(output.deviceBinary, igcOutput->GetOutput());
     TranslationOutput::makeCopy(output.debugData, igcOutput->GetDebugData());
+
+    if (cache != nullptr && cache->getConfig().enabled) {
+        CompilerCacheHelper::packAndCacheBinary(*cache, kernelFileHash, NEO::getTargetDevice(device.getRootDeviceEnvironment()), output);
+    }
 
     return TranslationOutput::ErrorCode::success;
 }
@@ -572,4 +575,79 @@ bool CompilerInterface::disableZebin(std::string &options, std::string &internal
 
 template bool CompilerInterface::checkIcbeVersionOnce<IGC::FclOclDeviceCtx>(CIF::CIFMain *main, const char *libName);
 template bool CompilerInterface::checkIcbeVersionOnce<IGC::IgcOclDeviceCtx>(CIF::CIFMain *main, const char *libName);
+
+void CompilerCacheHelper::packAndCacheBinary(CompilerCache &compilerCache, const std::string &kernelFileHash, const NEO::TargetDevice &targetDevice, const NEO::TranslationOutput &translationOutput) {
+    NEO::SingleDeviceBinary singleDeviceBinary = {};
+    singleDeviceBinary.targetDevice = targetDevice;
+    singleDeviceBinary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationOutput.deviceBinary.mem.get()), translationOutput.deviceBinary.size);
+    singleDeviceBinary.debugData = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationOutput.debugData.mem.get()), translationOutput.debugData.size);
+    singleDeviceBinary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(translationOutput.intermediateRepresentation.mem.get()), translationOutput.intermediateRepresentation.size);
+
+    if (NEO::isAnyPackedDeviceBinaryFormat(singleDeviceBinary.deviceBinary)) {
+        compilerCache.cacheBinary(kernelFileHash, translationOutput.deviceBinary.mem.get(), translationOutput.deviceBinary.size);
+        return;
+    }
+
+    std::string packWarnings;
+    std::string packErrors;
+    auto packedBinary = packDeviceBinary<DeviceBinaryFormat::oclElf>(singleDeviceBinary, packErrors, packWarnings);
+
+    if (false == packedBinary.empty()) {
+        compilerCache.cacheBinary(kernelFileHash, reinterpret_cast<const char *>(packedBinary.data()), packedBinary.size());
+    }
+}
+
+bool CompilerCacheHelper::loadCacheAndSetOutput(CompilerCache &compilerCache, const std::string &kernelFileHash, NEO::TranslationOutput &output, const NEO::Device &device) {
+    size_t cacheBinarySize = 0u;
+    auto cacheBinary = compilerCache.loadCachedBinary(kernelFileHash, cacheBinarySize);
+
+    if (cacheBinary) {
+        ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(cacheBinary.get()), cacheBinarySize);
+
+        if (isDeviceBinaryFormat<DeviceBinaryFormat::oclElf>(archive)) {
+            bool success = processPackedCacheBinary(archive, output, device);
+            if (success) {
+                return true;
+            }
+        } else {
+            output.deviceBinary.mem = std::move(cacheBinary);
+            output.deviceBinary.size = cacheBinarySize;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool CompilerCacheHelper::processPackedCacheBinary(ArrayRef<const uint8_t> archive, TranslationOutput &output, const NEO::Device &device) {
+    auto productAbbreviation = NEO::hardwarePrefix[device.getHardwareInfo().platform.eProductFamily];
+    NEO::TargetDevice targetDevice = NEO::getTargetDevice(device.getRootDeviceEnvironment());
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto singleDeviceBinary = unpackSingleDeviceBinary(archive, NEO::ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
+                                                       decodeErrors, decodeWarnings);
+
+    if (false == singleDeviceBinary.deviceBinary.empty()) {
+        if (nullptr == output.deviceBinary.mem) {
+            output.deviceBinary.mem = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
+            output.deviceBinary.size = singleDeviceBinary.deviceBinary.size();
+        }
+
+        if (false == singleDeviceBinary.intermediateRepresentation.empty() &&
+            nullptr == output.intermediateRepresentation.mem) {
+            output.intermediateRepresentation.mem = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
+            output.intermediateRepresentation.size = singleDeviceBinary.intermediateRepresentation.size();
+        }
+
+        if (false == singleDeviceBinary.debugData.empty() &&
+            nullptr == output.debugData.mem) {
+            output.debugData.mem = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
+            output.debugData.size = singleDeviceBinary.debugData.size();
+        }
+
+        return true;
+    }
+
+    return false;
+}
 } // namespace NEO
