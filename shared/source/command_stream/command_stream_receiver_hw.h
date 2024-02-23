@@ -278,6 +278,23 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     inline void handleBatchedDispatchImplicitFlush(uint64_t globalMemorySize, bool implicitFlush);
 
+    inline BatchBuffer prepareBatchBufferForSubmission(LinearStream &commandStreamTask,
+                                                       size_t commandStreamStartTask,
+                                                       LinearStream &commandStreamCSR,
+                                                       size_t commandStreamStartCSR,
+                                                       DispatchFlags &dispatchFlags,
+                                                       Device &device,
+                                                       bool submitTask,
+                                                       bool submitCSR,
+                                                       bool hasStallingCmdsOnTaskStream);
+
+    inline void chainCsrWorkToTask(LinearStream &commandStreamCSR,
+                                   LinearStream &commandStreamTask,
+                                   size_t commandStreamStartTask,
+                                   void *bbEndLocation,
+                                   size_t &chainedBatchBufferStartOffset,
+                                   GraphicsAllocation *&chainedBatchBuffer);
+
     HeapDirtyState dshState;
     HeapDirtyState iohState;
     HeapDirtyState sshState;

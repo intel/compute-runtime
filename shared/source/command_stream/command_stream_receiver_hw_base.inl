@@ -612,70 +612,17 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*rtBuffer);
     }
 
-    // If the CSR has work in its CS, flush it before the task
     bool submitTask = commandStreamStartTask != commandStreamTask.getUsed();
-    bool submitCSR = (commandStreamStartCSR != commandStreamCSR.getUsed());
-    bool submitCommandStreamFromCsr = false;
-    void *bbEndLocation = nullptr;
-    auto bbEndPaddingSize = this->dispatchMode == DispatchMode::immediateDispatch ? 0 : sizeof(MI_BATCH_BUFFER_START) - sizeof(MI_BATCH_BUFFER_END);
-    size_t chainedBatchBufferStartOffset = 0;
-    GraphicsAllocation *chainedBatchBuffer = nullptr;
-    bool directSubmissionEnabled = isDirectSubmissionEnabled();
-    if (submitTask) {
-        programEndingCmd(commandStreamTask, &bbEndLocation, directSubmissionEnabled, dispatchFlags.hasRelaxedOrderingDependencies);
-        EncodeNoop<GfxFamily>::emitNoop(commandStreamTask, bbEndPaddingSize);
-        EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
+    bool submitCSR = commandStreamStartCSR != commandStreamCSR.getUsed();
 
-        if (submitCSR) {
-            chainedBatchBufferStartOffset = commandStreamCSR.getUsed();
-            chainedBatchBuffer = commandStreamTask.getGraphicsAllocation();
-            // Add MI_BATCH_BUFFER_START to chain from CSR -> Task
-            auto pBBS = reinterpret_cast<MI_BATCH_BUFFER_START *>(commandStreamCSR.getSpace(sizeof(MI_BATCH_BUFFER_START)));
-            addBatchBufferStart(pBBS, ptrOffset(commandStreamTask.getGraphicsAllocation()->getGpuAddress(), commandStreamStartTask), false);
-            if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
-                flatBatchBufferHelper->registerCommandChunk(commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
-                                                            reinterpret_cast<uint64_t>(commandStreamTask.getCpuBase()),
-                                                            commandStreamStartTask,
-                                                            static_cast<uint64_t>(ptrDiff(bbEndLocation,
-                                                                                          commandStreamTask.getGraphicsAllocation()->getGpuAddress())) +
-                                                                sizeof(MI_BATCH_BUFFER_START));
-            }
-
-            auto commandStreamAllocation = commandStreamTask.getGraphicsAllocation();
-            DEBUG_BREAK_IF(commandStreamAllocation == nullptr);
-
-            this->makeResident(*commandStreamAllocation);
-            EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
-            submitCommandStreamFromCsr = true;
-        } else if (dispatchFlags.epilogueRequired) {
-            this->makeResident(*commandStreamCSR.getGraphicsAllocation());
-        }
-        this->programEpilogue(commandStreamCSR, device, &bbEndLocation, dispatchFlags);
-
-    } else if (submitCSR) {
-        programEndingCmd(commandStreamCSR, &bbEndLocation, directSubmissionEnabled, dispatchFlags.hasRelaxedOrderingDependencies);
-        EncodeNoop<GfxFamily>::emitNoop(commandStreamCSR, bbEndPaddingSize);
-        EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
-        DEBUG_BREAK_IF(commandStreamCSR.getUsed() > commandStreamCSR.getMaxAvailableSpace());
-        submitCommandStreamFromCsr = true;
-    }
-
-    uint64_t taskStartAddress = commandStreamTask.getGpuBase() + commandStreamStartTask;
-
-    size_t startOffset = submitCommandStreamFromCsr ? commandStreamStartCSR : commandStreamStartTask;
-    auto &streamToSubmit = submitCommandStreamFromCsr ? commandStreamCSR : commandStreamTask;
-    BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, taskStartAddress, chainedBatchBuffer,
-                            dispatchFlags.lowPriority, dispatchFlags.throttle, dispatchFlags.sliceCount,
-                            streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, this->getNumClients(), (submitCSR || dispatchFlags.hasStallingCmds || hasStallingCmdsOnTaskStream),
-                            dispatchFlags.hasRelaxedOrderingDependencies, hasStallingCmdsOnTaskStream};
-
-    updateStreamTaskCount(streamToSubmit, taskCount + 1);
+    auto batchBuffer = prepareBatchBufferForSubmission(commandStreamTask, commandStreamStartTask, commandStreamCSR, commandStreamStartCSR,
+                                                       dispatchFlags, device, submitTask, submitCSR, hasStallingCmdsOnTaskStream);
 
     if (submitCSR || submitTask) {
         if (this->dispatchMode == DispatchMode::immediateDispatch) {
             auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
             if (submissionStatus != SubmissionStatus::success) {
-                updateStreamTaskCount(streamToSubmit, taskCount);
+                updateStreamTaskCount(*batchBuffer.stream, taskCount);
                 CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
                 return completionStamp;
             }
@@ -686,7 +633,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             auto commandBuffer = new CommandBuffer(device);
             commandBuffer->batchBuffer = batchBuffer;
             commandBuffer->surfaces.swap(this->getResidencyAllocations());
-            commandBuffer->batchBufferEndLocation = bbEndLocation;
+            commandBuffer->batchBufferEndLocation = batchBuffer.endCmdPtr;
             commandBuffer->taskCount = this->taskCount + 1;
             commandBuffer->flushStamp->replaceStampObject(dispatchFlags.flushStampReference);
             commandBuffer->pipeControlThatMayBeErasedLocation = currentPipeControlForNooping;
@@ -2254,6 +2201,90 @@ inline void CommandStreamReceiverHw<GfxFamily>::handleBatchedDispatchImplicitFlu
     if (implicitFlush) {
         this->flushBatchedSubmissions();
     }
+}
+
+template <typename GfxFamily>
+inline BatchBuffer CommandStreamReceiverHw<GfxFamily>::prepareBatchBufferForSubmission(LinearStream &commandStreamTask,
+                                                                                       size_t commandStreamStartTask,
+                                                                                       LinearStream &commandStreamCSR,
+                                                                                       size_t commandStreamStartCSR,
+                                                                                       DispatchFlags &dispatchFlags,
+                                                                                       Device &device,
+                                                                                       bool submitTask,
+                                                                                       bool submitCSR,
+                                                                                       bool hasStallingCmdsOnTaskStream) {
+
+    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
+
+    bool submitCommandStreamFromCsr = false;
+    bool directSubmissionEnabled = isDirectSubmissionEnabled();
+    void *bbEndLocation = nullptr;
+    size_t chainedBatchBufferStartOffset = 0;
+    GraphicsAllocation *chainedBatchBuffer = nullptr;
+
+    auto bbEndPaddingSize = this->dispatchMode == DispatchMode::immediateDispatch ? 0 : sizeof(MI_BATCH_BUFFER_START) - sizeof(MI_BATCH_BUFFER_END);
+
+    // If the CSR has work in its CS, flush it before the task
+
+    if (submitTask) {
+        programEndingCmd(commandStreamTask, &bbEndLocation, directSubmissionEnabled, dispatchFlags.hasRelaxedOrderingDependencies);
+        EncodeNoop<GfxFamily>::emitNoop(commandStreamTask, bbEndPaddingSize);
+        EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
+
+        if (submitCSR) {
+            chainCsrWorkToTask(commandStreamCSR, commandStreamTask, commandStreamStartTask, bbEndLocation, chainedBatchBufferStartOffset, chainedBatchBuffer);
+            submitCommandStreamFromCsr = true;
+        } else if (dispatchFlags.epilogueRequired) {
+            this->makeResident(*commandStreamCSR.getGraphicsAllocation());
+        }
+        this->programEpilogue(commandStreamCSR, device, &bbEndLocation, dispatchFlags);
+
+    } else if (submitCSR) {
+        programEndingCmd(commandStreamCSR, &bbEndLocation, directSubmissionEnabled, dispatchFlags.hasRelaxedOrderingDependencies);
+        EncodeNoop<GfxFamily>::emitNoop(commandStreamCSR, bbEndPaddingSize);
+        EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
+        DEBUG_BREAK_IF(commandStreamCSR.getUsed() > commandStreamCSR.getMaxAvailableSpace());
+        submitCommandStreamFromCsr = true;
+    }
+
+    uint64_t taskStartAddress = commandStreamTask.getGpuBase() + commandStreamStartTask;
+    size_t startOffset = submitCommandStreamFromCsr ? commandStreamStartCSR : commandStreamStartTask;
+    auto &streamToSubmit = submitCommandStreamFromCsr ? commandStreamCSR : commandStreamTask;
+
+    BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, taskStartAddress, chainedBatchBuffer,
+                            dispatchFlags.lowPriority, dispatchFlags.throttle, dispatchFlags.sliceCount,
+                            streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, this->getNumClients(), (submitCSR || dispatchFlags.hasStallingCmds || hasStallingCmdsOnTaskStream),
+                            dispatchFlags.hasRelaxedOrderingDependencies, hasStallingCmdsOnTaskStream};
+
+    updateStreamTaskCount(streamToSubmit, taskCount + 1);
+
+    return batchBuffer;
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::chainCsrWorkToTask(LinearStream &commandStreamCSR, LinearStream &commandStreamTask, size_t commandStreamStartTask, void *bbEndLocation, size_t &chainedBatchBufferStartOffset, GraphicsAllocation *&chainedBatchBuffer) {
+    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
+
+    chainedBatchBufferStartOffset = commandStreamCSR.getUsed();
+    chainedBatchBuffer = commandStreamTask.getGraphicsAllocation();
+    // Add MI_BATCH_BUFFER_START to chain from CSR -> Task
+    auto pBBS = reinterpret_cast<MI_BATCH_BUFFER_START *>(commandStreamCSR.getSpace(sizeof(MI_BATCH_BUFFER_START)));
+    addBatchBufferStart(pBBS, ptrOffset(commandStreamTask.getGraphicsAllocation()->getGpuAddress(), commandStreamStartTask), false);
+
+    if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+        uint64_t baseCpu = reinterpret_cast<uint64_t>(commandStreamTask.getCpuBase());
+        uint64_t baseGpu = commandStreamTask.getGraphicsAllocation()->getGpuAddress();
+        uint64_t startOffset = commandStreamStartTask;
+        uint64_t endOffset = sizeof(MI_BATCH_BUFFER_START) +
+                             static_cast<uint64_t>(ptrDiff(bbEndLocation, commandStreamTask.getGraphicsAllocation()->getGpuAddress()));
+
+        flatBatchBufferHelper->registerCommandChunk(baseCpu, baseGpu, startOffset, endOffset);
+    }
+
+    DEBUG_BREAK_IF(chainedBatchBuffer == nullptr);
+    this->makeResident(*chainedBatchBuffer);
+    EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
 }
 
 } // namespace NEO
