@@ -64,13 +64,18 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         }
     };
 
+    using ContextHandle = uint64_t;
     using ExecQueueHandle = uint64_t;
-    using LrcHandle = uint64_t;
+
+    struct ContextParams {
+        ContextHandle handle = 0;
+        uint64_t vm = UINT64_MAX;
+        std::vector<drm_xe_engine_class_instance> engines;
+    };
 
     struct ExecQueueParams {
         uint64_t vmHandle = 0;
         uint16_t engineClass = UINT16_MAX;
-        std::vector<LrcHandle> lrcHandles;
     };
 
     uint32_t xeDebuggerVersion = 0;
@@ -80,10 +85,10 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     };
 
   protected:
-    int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override;
-    int threadControlInterruptAll(drm_xe_eudebug_eu_control &euControl);
-    int threadControlResumeAndStopped(const std::vector<EuThread::ThreadId> &threads, drm_xe_eudebug_eu_control &euControl, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut);
-    void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention);
+    int euControlIoctl(ThreadControlCmd threadCmd,
+                       const NEO::EngineClassInstance *classInstance,
+                       std::unique_ptr<uint8_t[]> &bitmask,
+                       size_t bitmaskSize, uint64_t &seqnoOut, uint64_t &bitmaskSizeOut) override;
 
     void startAsyncThread() override;
     static void *asyncThreadFunction(void *arg);
@@ -166,8 +171,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
                                                                   uint64_t memoryHandle,
                                                                   const void *stateSaveArea,
                                                                   uint32_t tileIndex) override {}
-
-    uint64_t euControlInterruptSeqno = 0;
 
     ze_result_t readEventImp(drm_xe_eudebug_event *drmDebugEvent);
     int ioctl(unsigned long request, void *arg);
