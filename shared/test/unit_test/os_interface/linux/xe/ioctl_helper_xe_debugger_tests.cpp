@@ -204,6 +204,29 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnFalseWhenCreat
     EXPECT_NE(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_EU_DEBUG));
 }
 
+HWTEST_F(IoctlHelperXeTestFixture, givenDeviceIndexWhenCreatingContextThenSetCorrectGtId) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+
+    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    auto engineInfo = xeIoctlHelper->createEngineInfo(false);
+    ASSERT_NE(nullptr, engineInfo);
+
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+
+    uint16_t deviceIndex = 2;
+
+    xeIoctlHelper->createDrmContext(drm, osContext, 0, deviceIndex);
+
+    EXPECT_EQ(1u, drm.execQueueCreateParams.num_placements);
+    ASSERT_EQ(1u, drm.execQueueEngineInstances.size());
+
+    EXPECT_EQ(deviceIndex, drm.execQueueEngineInstances[0].gt_id);
+}
+
 HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnTrueWhenCreateDrmContextThenRunAloneContextIsRequested) {
     DebugManagerStateRestore restorer;
     struct MockGfxCoreHelperHw : NEO::GfxCoreHelperHw<FamilyType> {

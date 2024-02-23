@@ -84,8 +84,13 @@ class DrmMockXeDebug : public DrmMockCustom {
         } break;
         case DrmIoctl::gemContextCreateExt: {
             auto create = static_cast<struct drm_xe_exec_queue_create *>(arg);
+            execQueueCreateParams = *create;
             if (create->extensions) {
                 receivedContextCreateSetParam = *reinterpret_cast<struct drm_xe_ext_set_property *>(create->extensions);
+            }
+            execQueueEngineInstances.clear();
+            for (uint16_t i = 0; i < create->num_placements; i++) {
+                execQueueEngineInstances.push_back(reinterpret_cast<drm_xe_engine_class_instance *>(create->instances)[i]);
             }
             ret = 0;
         } break;
@@ -184,6 +189,8 @@ class DrmMockXeDebug : public DrmMockCustom {
 
     alignas(64) std::vector<uint8_t> queryTopology;
     std::vector<drm_xe_ext_vm_set_debug_metadata> vmCreateMetadata;
+    std::vector<drm_xe_engine_class_instance> execQueueEngineInstances;
+    drm_xe_exec_queue_create execQueueCreateParams = {};
 
     // Debugger ioctls
     int debuggerOpenRetval = 10; // debugFd

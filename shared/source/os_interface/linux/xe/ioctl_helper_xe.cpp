@@ -1209,6 +1209,7 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
             UNRECOVERABLE_IF(true);
             return 0;
         }
+        currentEngine->gt_id = static_cast<uint16_t>(deviceIndex);
         engine.push_back(*currentEngine);
     } else {
         for (size_t i = 0; i < n; i++) {
@@ -1221,6 +1222,7 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
                 UNRECOVERABLE_IF(true);
                 return 0;
             }
+            currentEngine->gt_id = static_cast<uint16_t>(deviceIndex);
             engine.push_back(*currentEngine);
         }
     }
