@@ -249,6 +249,18 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                            bool &hasStallingCmdsOnTaskStream,
                                            PipeControlArgs &args);
 
+    inline CompletionStamp handleFlushTaskSubmission(BatchBuffer &&batchBuffer,
+                                                     const DispatchFlags &dispatchFlags,
+                                                     Device &device,
+                                                     void *currentPipeControlForNooping,
+                                                     void *epiloguePipeControlLocation,
+                                                     PipeControlArgs &args,
+                                                     bool submitTask,
+                                                     bool submitCSR,
+                                                     bool hasStallingCmdsOnTaskStream,
+                                                     bool levelClosed,
+                                                     bool implicitFlush);
+
     inline CompletionStamp updateTaskCountAndGetCompletionStamp(bool levelClosed);
     inline void programSamplerCacheFlushBetweenRedescribedSurfaceReads(LinearStream &commandStreamCSR);
     bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;

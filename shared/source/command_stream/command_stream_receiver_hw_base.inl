@@ -570,38 +570,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto batchBuffer = prepareBatchBufferForSubmission(commandStreamTask, commandStreamStartTask, commandStreamCSR, commandStreamStartCSR,
                                                        dispatchFlags, device, submitTask, submitCSR, hasStallingCmdsOnTaskStream);
 
-    if (submitCSR || submitTask) {
-        if (this->dispatchMode == DispatchMode::immediateDispatch) {
-            auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
-            if (submissionStatus != SubmissionStatus::success) {
-                updateStreamTaskCount(*batchBuffer.stream, taskCount);
-                CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
-                return completionStamp;
-            }
-            if (hasStallingCmdsOnTaskStream) {
-                this->latestFlushedTaskCount = this->taskCount + 1;
-            }
-        } else {
-            auto commandBuffer = new CommandBuffer(device);
-            commandBuffer->batchBuffer = batchBuffer;
-            commandBuffer->surfaces.swap(this->getResidencyAllocations());
-            commandBuffer->batchBufferEndLocation = batchBuffer.endCmdPtr;
-            commandBuffer->taskCount = this->taskCount + 1;
-            commandBuffer->flushStamp->replaceStampObject(dispatchFlags.flushStampReference);
-            commandBuffer->pipeControlThatMayBeErasedLocation = currentPipeControlForNooping;
-            commandBuffer->epiloguePipeControlLocation = epiloguePipeControlLocation;
-            commandBuffer->epiloguePipeControlArgs = args;
-            this->submissionAggregator->recordCommandBuffer(commandBuffer);
-        }
-    } else {
-        this->makeSurfacePackNonResident(this->getResidencyAllocations(), true);
-    }
+    auto completionStamp = handleFlushTaskSubmission(std::move(batchBuffer), dispatchFlags, device, currentPipeControlForNooping, epiloguePipeControlLocation,
+                                                     args, submitTask, submitCSR, hasStallingCmdsOnTaskStream, levelClosed, implicitFlush);
 
-    if (this->dispatchMode == DispatchMode::batchedDispatch) {
-        handleBatchedDispatchImplicitFlush(device.getDeviceInfo().globalMemSize, implicitFlush);
-    }
-
-    return updateTaskCountAndGetCompletionStamp(levelClosed);
+    return completionStamp;
 }
 
 template <typename GfxFamily>
@@ -1835,6 +1807,54 @@ inline void CommandStreamReceiverHw<GfxFamily>::processBarrierWithPostSync(Linea
                                                               commandStreamTask.getUsed() - sizeof(uint64_t),
                                                               PatchInfoAllocationType::defaultType));
     }
+}
+
+template <typename GfxFamily>
+inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleFlushTaskSubmission(BatchBuffer &&batchBuffer,
+                                                                                     const DispatchFlags &dispatchFlags,
+                                                                                     Device &device,
+                                                                                     void *currentPipeControlForNooping,
+                                                                                     void *epiloguePipeControlLocation,
+                                                                                     PipeControlArgs &args,
+                                                                                     bool submitTask,
+                                                                                     bool submitCSR,
+                                                                                     bool hasStallingCmdsOnTaskStream,
+                                                                                     bool levelClosed,
+                                                                                     bool implicitFlush) {
+
+    if (submitCSR || submitTask) {
+        if (this->dispatchMode == DispatchMode::immediateDispatch) {
+            auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
+            if (submissionStatus != SubmissionStatus::success) {
+                updateStreamTaskCount(*batchBuffer.stream, taskCount);
+                CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
+                return completionStamp;
+            }
+            if (hasStallingCmdsOnTaskStream) {
+                this->latestFlushedTaskCount = this->taskCount + 1;
+            }
+        } else {
+            auto commandBuffer = new CommandBuffer(device);
+            commandBuffer->batchBufferEndLocation = batchBuffer.endCmdPtr;
+            commandBuffer->batchBuffer = std::move(batchBuffer);
+            commandBuffer->surfaces.swap(this->getResidencyAllocations());
+            commandBuffer->taskCount = this->taskCount + 1;
+            commandBuffer->flushStamp->replaceStampObject(dispatchFlags.flushStampReference);
+            commandBuffer->pipeControlThatMayBeErasedLocation = currentPipeControlForNooping;
+            commandBuffer->epiloguePipeControlLocation = epiloguePipeControlLocation;
+            commandBuffer->epiloguePipeControlArgs = args;
+            this->submissionAggregator->recordCommandBuffer(commandBuffer);
+        }
+    } else {
+        this->makeSurfacePackNonResident(this->getResidencyAllocations(), true);
+    }
+
+    if (this->dispatchMode == DispatchMode::batchedDispatch) {
+        handleBatchedDispatchImplicitFlush(device.getDeviceInfo().globalMemSize, implicitFlush);
+    }
+
+    CompletionStamp completionStamp = updateTaskCountAndGetCompletionStamp(levelClosed);
+    return completionStamp;
 }
 
 template <typename GfxFamily>
