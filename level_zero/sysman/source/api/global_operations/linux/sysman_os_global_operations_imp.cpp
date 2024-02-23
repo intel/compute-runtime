@@ -311,11 +311,12 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
     std::string flrPath = resetName + functionLevelReset;
     resetName = pFsAccess->getBaseName(resetName);
 
-    // Unbind the device from the kernel driver.
-    result = pSysfsAccess->unbindDevice(resetName);
-    if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to unbind device:%s and returning error:0x%x \n", __FUNCTION__, resetName.c_str(), result);
-        return result;
+    if (resetType == ZES_RESET_TYPE_FLR || resetType == ZES_RESET_TYPE_COLD) {
+        result = pSysfsAccess->unbindDevice(resetName);
+        if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to unbind device:%s and returning error:0x%x \n", __FUNCTION__, resetName.c_str(), result);
+            return result;
+        }
     }
 
     std::vector<::pid_t> processes;
@@ -372,11 +373,12 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
         return result;
     }
 
-    // Rebind the device to the kernel driver.
-    result = pSysfsAccess->bindDevice(resetName);
-    if (ZE_RESULT_SUCCESS != result) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to rebind the device to the kernel driver and returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    if (resetType == ZES_RESET_TYPE_FLR || resetType == ZES_RESET_TYPE_COLD) {
+        result = pSysfsAccess->bindDevice(resetName);
+        if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to bind the device to the kernel driver and returning error:0x%x \n", __FUNCTION__, result);
+            return result;
+        }
     }
 
     return pLinuxSysmanImp->reInitSysmanDeviceResources();
