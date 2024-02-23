@@ -3138,9 +3138,13 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWitho
     immCmdList->appendBarrier(nullptr, 0, nullptr, false);
     immCmdList->appendBarrier(eventHandle, 0, nullptr, false);
 
-    EXPECT_EQ(offset, cmdStream->getUsed());
-
-    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    if (immCmdList->getDcFlushRequired(true)) {
+        EXPECT_NE(offset, cmdStream->getUsed());
+        EXPECT_EQ(3u, events[0]->inOrderExecSignalValue);
+    } else {
+        EXPECT_EQ(offset, cmdStream->getUsed());
+        EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    }
 }
 
 HWTEST2_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWithoutWaitlistThenInheritSignalSyncAllocation, IsAtLeastSkl) {
@@ -3161,9 +3165,13 @@ HWTEST2_F(InOrderCmdListTests, givenRegularCmdListWhenProgrammingAppendBarrierWi
     cmdList->appendBarrier(nullptr, 0, nullptr, false);
     cmdList->appendBarrier(eventHandle, 0, nullptr, false);
 
-    EXPECT_EQ(offset, cmdStream->getUsed());
-
-    EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    if (cmdList->getDcFlushRequired(true)) {
+        EXPECT_NE(offset, cmdStream->getUsed());
+        EXPECT_EQ(3u, events[0]->inOrderExecSignalValue);
+    } else {
+        EXPECT_EQ(offset, cmdStream->getUsed());
+        EXPECT_EQ(1u, events[0]->inOrderExecSignalValue);
+    }
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithDifferentEventsThenDontInherit, IsAtLeastXeHpCore) {

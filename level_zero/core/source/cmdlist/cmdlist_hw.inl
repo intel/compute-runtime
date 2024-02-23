@@ -3193,6 +3193,10 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const {
+    if (dcFlushSupport) {
+        return false;
+    }
+
     uint32_t eventsToWait = numWaitEvents;
 
     for (uint32_t i = 0; i < numWaitEvents; i++) {
