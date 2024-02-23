@@ -47,7 +47,7 @@ bool UnitTestHelper<GfxFamily>::isAdditionalSynchronizationRequired() {
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::requiresTimestampPacketsInSystemMemory(HardwareInfo &hwInfo) {
-    return true;
+    return !hwInfo.featureTable.flags.ftrLocalMemory;
 }
 
 template <typename GfxFamily>

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/submission_status.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/vec.h"
@@ -286,6 +287,11 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
         miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         nonAuxToAuxOutputAddress[1] = miflushDwCmd->getDestinationAddress();
     }
+    auto gmmHelper = device->getGmmHelper();
+    nonAuxToAuxOutputAddress[0] = gmmHelper->canonize(nonAuxToAuxOutputAddress[0]);
+    nonAuxToAuxOutputAddress[1] = gmmHelper->canonize(nonAuxToAuxOutputAddress[1]);
+    auxToNonAuxOutputAddress[0] = gmmHelper->canonize(auxToNonAuxOutputAddress[0]);
+    auxToNonAuxOutputAddress[1] = gmmHelper->canonize(auxToNonAuxOutputAddress[1]);
 
     {
         auto cmdListQueue = getCmdList<FamilyType>(commandQueue->getCS(0), 0);
@@ -655,6 +661,11 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
         miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
         nonAuxToAuxOutputAddress[1] = miflushDwCmd->getDestinationAddress();
     }
+    auto gmmHelper = device->getGmmHelper();
+    nonAuxToAuxOutputAddress[0] = gmmHelper->canonize(nonAuxToAuxOutputAddress[0]);
+    nonAuxToAuxOutputAddress[1] = gmmHelper->canonize(nonAuxToAuxOutputAddress[1]);
+    auxToNonAuxOutputAddress[0] = gmmHelper->canonize(auxToNonAuxOutputAddress[0]);
+    auxToNonAuxOutputAddress[1] = gmmHelper->canonize(auxToNonAuxOutputAddress[1]);
 
     {
         auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);

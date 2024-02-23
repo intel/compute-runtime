@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -598,12 +598,14 @@ HWTEST_F(GetAllocationDataTestHw, givenLinearStreamTypeWhenGetAllocationDataIsCa
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
-HWTEST_F(GetAllocationDataTestHw, givenTimestampPacketTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequestedAndRequireCpuAccess) {
+HWTEST_F(GetAllocationDataTestHw, givenTimestampPacketTagBufferTypeWhenGetAllocationDataIsCalledThenLocalMemoryIsRequestedAndRequireCpuAccess) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForceLocalMemoryAccessMode.set(0u);
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::timestampPacketTagBuffer, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_EQ(UnitTestHelper<FamilyType>::requiresTimestampPacketsInSystemMemory(*defaultHwInfo), allocData.flags.useSystemMemory);
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 

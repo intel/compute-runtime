@@ -464,7 +464,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::tagBuffer:
     case AllocationType::globalFence:
     case AllocationType::internalHostMemory:
-    case AllocationType::timestampPacketTagBuffer:
     case AllocationType::debugContextSaveArea:
     case AllocationType::debugSbaTrackingBuffer:
     case AllocationType::swTagBuffer:
