@@ -3082,14 +3082,14 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
 
     for (auto &commandToPatch : commandsToPatch) {
         switch (commandToPatch.type) {
-        case CommandList::CommandToPatch::FrontEndState:
+        case CommandToPatch::FrontEndState:
             UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
             delete reinterpret_cast<FrontEndStateCommand *>(commandToPatch.pCommand);
             break;
-        case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreStart:
-        case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreEnd:
-        case CommandList::CommandToPatch::PauseOnEnqueuePipeControlStart:
-        case CommandList::CommandToPatch::PauseOnEnqueuePipeControlEnd:
+        case CommandToPatch::PauseOnEnqueueSemaphoreStart:
+        case CommandToPatch::PauseOnEnqueueSemaphoreEnd:
+        case CommandToPatch::PauseOnEnqueuePipeControlStart:
+        case CommandToPatch::PauseOnEnqueuePipeControlEnd:
             UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
             break;
         default:

@@ -975,10 +975,10 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
         }
         EXPECT_NE(destinationCfeStates[i].getMaximumNumberOfThreads(), sourceCfeState->getMaximumNumberOfThreads());
 
-        CommandList::CommandToPatch commandToPatch;
+        CommandToPatch commandToPatch;
         commandToPatch.pDestination = &destinationCfeStates[i];
         commandToPatch.pCommand = sourceCfeState;
-        commandToPatch.type = CommandList::CommandToPatch::CommandType::FrontEndState;
+        commandToPatch.type = CommandToPatch::CommandType::FrontEndState;
         commandList->commandsToPatch.push_back(commandToPatch);
     }
 
@@ -1009,14 +1009,14 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWh
     EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0));
     commandList->commandsToPatch.clear();
 
-    CommandList::CommandToPatch commandToPatch;
+    CommandToPatch commandToPatch;
 
-    commandToPatch.type = CommandList::CommandToPatch::FrontEndState;
+    commandToPatch.type = CommandToPatch::FrontEndState;
     commandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0));
     commandList->commandsToPatch.clear();
 
-    commandToPatch.type = CommandList::CommandToPatch::Invalid;
+    commandToPatch.type = CommandToPatch::Invalid;
     commandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0));
     commandList->commandsToPatch.clear();

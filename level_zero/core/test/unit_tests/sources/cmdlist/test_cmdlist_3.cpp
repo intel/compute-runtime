@@ -1383,12 +1383,12 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 
-    CommandList::CommandToPatch commandToPatch{};
+    CommandToPatch commandToPatch{};
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
     pCommandList->commandsToPatch.clear();
 
-    commandToPatch.type = CommandList::CommandToPatch::CommandType::FrontEndState;
+    commandToPatch.type = CommandToPatch::CommandType::FrontEndState;
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
     pCommandList->commandsToPatch.clear();
@@ -1399,7 +1399,7 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 
     commandToPatch = {};
-    commandToPatch.type = CommandList::CommandToPatch::PauseOnEnqueueSemaphoreStart;
+    commandToPatch.type = CommandToPatch::PauseOnEnqueueSemaphoreStart;
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
     pCommandList->commandsToPatch.clear();
@@ -1410,7 +1410,7 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 
     commandToPatch = {};
-    commandToPatch.type = CommandList::CommandToPatch::PauseOnEnqueueSemaphoreEnd;
+    commandToPatch.type = CommandToPatch::PauseOnEnqueueSemaphoreEnd;
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
     pCommandList->commandsToPatch.clear();
@@ -1421,7 +1421,7 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 
     commandToPatch = {};
-    commandToPatch.type = CommandList::CommandToPatch::PauseOnEnqueuePipeControlStart;
+    commandToPatch.type = CommandToPatch::PauseOnEnqueuePipeControlStart;
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
     pCommandList->commandsToPatch.clear();
@@ -1432,7 +1432,7 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
 
     commandToPatch = {};
-    commandToPatch.type = CommandList::CommandToPatch::PauseOnEnqueuePipeControlEnd;
+    commandToPatch.type = CommandToPatch::PauseOnEnqueuePipeControlEnd;
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_ANY_THROW(pCommandList->clearCommandsToPatch());
     pCommandList->commandsToPatch.clear();
@@ -1568,8 +1568,8 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     if (fePropertiesSupport.disableEuFusion) {
         ASSERT_EQ(1u, commandsToPatch.size());
-        CommandList::CommandToPatch &cfePatch = commandsToPatch[0];
-        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+        CommandToPatch &cfePatch = commandsToPatch[0];
+        EXPECT_EQ(CommandToPatch::FrontEndState, cfePatch.type);
 
         void *expectedDestination = ptrOffset(cmdStream.getCpuBase(), usedBefore);
         EXPECT_EQ(expectedDestination, cfePatch.pDestination);
@@ -1599,8 +1599,8 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     if (fePropertiesSupport.disableEuFusion) {
         ASSERT_EQ(2u, commandsToPatch.size());
-        CommandList::CommandToPatch &cfePatch = commandsToPatch[1];
-        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+        CommandToPatch &cfePatch = commandsToPatch[1];
+        EXPECT_EQ(CommandToPatch::FrontEndState, cfePatch.type);
 
         void *expectedDestination = ptrOffset(cmdStream.getCpuBase(), usedBefore);
         EXPECT_EQ(expectedDestination, cfePatch.pDestination);
@@ -1619,8 +1619,8 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     if (fePropertiesSupport.disableEuFusion) {
         ASSERT_EQ(3u, commandsToPatch.size());
-        CommandList::CommandToPatch &cfePatch = commandsToPatch[2];
-        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+        CommandToPatch &cfePatch = commandsToPatch[2];
+        EXPECT_EQ(CommandToPatch::FrontEndState, cfePatch.type);
 
         void *expectedDestination = ptrOffset(cmdStream.getCpuBase(), usedBefore);
         EXPECT_EQ(expectedDestination, cfePatch.pDestination);
@@ -1647,7 +1647,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
         uint32_t disableFusionStatesIdx = 0;
 
         for (const auto &cfeToPatch : commandsToPatch) {
-            EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfeToPatch.type);
+            EXPECT_EQ(CommandToPatch::FrontEndState, cfeToPatch.type);
             auto cfeCmd = genCmdCast<CFE_STATE *>(cfeToPatch.pDestination);
             ASSERT_NE(nullptr, cfeCmd);
 
@@ -1692,8 +1692,8 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     if (fePropertiesSupport.computeDispatchAllWalker) {
         ASSERT_EQ(1u, commandsToPatch.size());
-        CommandList::CommandToPatch &cfePatch = commandsToPatch[0];
-        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+        CommandToPatch &cfePatch = commandsToPatch[0];
+        EXPECT_EQ(CommandToPatch::FrontEndState, cfePatch.type);
 
         auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
         ASSERT_NE(nullptr, cfeCmd);
@@ -1717,8 +1717,8 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     if (fePropertiesSupport.computeDispatchAllWalker) {
         ASSERT_EQ(2u, commandsToPatch.size());
-        CommandList::CommandToPatch &cfePatch = commandsToPatch[1];
-        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+        CommandToPatch &cfePatch = commandsToPatch[1];
+        EXPECT_EQ(CommandToPatch::FrontEndState, cfePatch.type);
 
         auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
         ASSERT_NE(nullptr, cfeCmd);
@@ -1733,8 +1733,8 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     if (fePropertiesSupport.computeDispatchAllWalker) {
         ASSERT_EQ(3u, commandsToPatch.size());
-        CommandList::CommandToPatch &cfePatch = commandsToPatch[2];
-        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+        CommandToPatch &cfePatch = commandsToPatch[2];
+        EXPECT_EQ(CommandToPatch::FrontEndState, cfePatch.type);
 
         auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
         ASSERT_NE(nullptr, cfeCmd);
@@ -1758,7 +1758,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
         uint32_t computeDispatchAllWalkerStatesIdx = 0;
 
         for (const auto &cfeToPatch : commandsToPatch) {
-            EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfeToPatch.type);
+            EXPECT_EQ(CommandToPatch::FrontEndState, cfeToPatch.type);
             auto cfeCmd = genCmdCast<CFE_STATE *>(cfeToPatch.pDestination);
             ASSERT_NE(nullptr, cfeCmd);
 

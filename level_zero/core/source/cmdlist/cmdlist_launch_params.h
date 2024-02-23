@@ -10,10 +10,31 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 
 #include <cstdint>
+#include <vector>
 
 namespace L0 {
+
+struct CommandToPatch {
+    enum CommandType {
+        FrontEndState,
+        PauseOnEnqueueSemaphoreStart,
+        PauseOnEnqueueSemaphoreEnd,
+        PauseOnEnqueuePipeControlStart,
+        PauseOnEnqueuePipeControlEnd,
+        ComputeWalker,
+        SignalEventPostSyncPipeControl,
+        WaitEventSemaphoreWait,
+        Invalid
+    };
+    void *pDestination = nullptr;
+    void *pCommand = nullptr;
+    CommandType type = Invalid;
+};
+
 struct CmdListKernelLaunchParams {
     void *outWalker = nullptr;
+    CommandToPatch *outSyncCommand = nullptr;
+    std::vector<CommandToPatch> *outListCommands = nullptr;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;

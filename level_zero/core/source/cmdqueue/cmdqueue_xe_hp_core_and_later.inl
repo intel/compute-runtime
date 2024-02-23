@@ -172,7 +172,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     auto &commandsToPatch = commandList.getCommandsToPatch();
     for (auto &commandToPatch : commandsToPatch) {
         switch (commandToPatch.type) {
-        case CommandList::CommandToPatch::FrontEndState: {
+        case CommandToPatch::FrontEndState: {
             uint32_t lowScratchAddress = uint32_t(0xFFFFFFFF & scratchAddress);
             CFE_STATE *cfeStateCmd = nullptr;
             cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
@@ -183,7 +183,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
             break;
         }
-        case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreStart: {
+        case CommandToPatch::PauseOnEnqueueSemaphoreStart: {
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
                                                                     csr->getDebugPauseStateGPUAddress(),
                                                                     static_cast<uint32_t>(NEO::DebugPauseState::hasUserStartConfirmation),
@@ -191,7 +191,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                                                                     false, true, false, false);
             break;
         }
-        case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreEnd: {
+        case CommandToPatch::PauseOnEnqueueSemaphoreEnd: {
             NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
                                                                     csr->getDebugPauseStateGPUAddress(),
                                                                     static_cast<uint32_t>(NEO::DebugPauseState::hasUserEndConfirmation),
@@ -199,7 +199,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                                                                     false, true, false, false);
             break;
         }
-        case CommandList::CommandToPatch::PauseOnEnqueuePipeControlStart: {
+        case CommandToPatch::PauseOnEnqueuePipeControlStart: {
 
             NEO::PipeControlArgs args;
             args.dcFlushEnable = csr->getDcFlushSupport();
@@ -214,7 +214,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 args);
             break;
         }
-        case CommandList::CommandToPatch::PauseOnEnqueuePipeControlEnd: {
+        case CommandToPatch::PauseOnEnqueuePipeControlEnd: {
 
             NEO::PipeControlArgs args;
             args.dcFlushEnable = csr->getDcFlushSupport();

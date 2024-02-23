@@ -54,19 +54,6 @@ struct CommandList : _ze_command_list_handle_t {
         static CommandList *allocate(uint32_t numIddsPerBlock) { return new Type(numIddsPerBlock); }
     };
 
-    struct CommandToPatch {
-        enum CommandType {
-            FrontEndState,
-            PauseOnEnqueueSemaphoreStart,
-            PauseOnEnqueueSemaphoreEnd,
-            PauseOnEnqueuePipeControlStart,
-            PauseOnEnqueuePipeControlEnd,
-            Invalid
-        };
-        void *pDestination = nullptr;
-        void *pCommand = nullptr;
-        CommandType type = Invalid;
-    };
     using CommandsToPatch = StackVec<CommandToPatch, 16>;
     using CmdListReturnPoints = StackVec<CmdListReturnPoint, 32>;
 
