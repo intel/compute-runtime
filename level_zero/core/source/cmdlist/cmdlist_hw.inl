@@ -3691,13 +3691,16 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         return true;
     }
 
-    if ((NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() != 0)) {
-        if (!signalEvent->isCounterBasedExplicitlyEnabled()) {
-            if (isInOrderExecutionEnabled() && isImmediateType()) {
-                signalEvent->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
-            } else {
-                signalEvent->disableImplicitCounterBasedMode();
-            }
+    bool implicitCounterBasedEventConversionEnable = !this->dcFlushSupport;
+    if (NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() != -1) {
+        implicitCounterBasedEventConversionEnable = !!NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get();
+    }
+
+    if (implicitCounterBasedEventConversionEnable && !signalEvent->isCounterBasedExplicitlyEnabled()) {
+        if (isInOrderExecutionEnabled() && isImmediateType()) {
+            signalEvent->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+        } else {
+            signalEvent->disableImplicitCounterBasedMode();
         }
     }
 
