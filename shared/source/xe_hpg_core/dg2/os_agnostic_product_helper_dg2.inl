@@ -244,10 +244,6 @@ template <>
 bool ProductHelperHw<gfxProduct>::isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const {
     return DG2::isG10(hwInfo) || DG2::isG11(hwInfo) || DG2::isG12(hwInfo);
 }
-template <>
-bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
-    return false;
-}
 
 template <>
 bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &hwInfo) const {
