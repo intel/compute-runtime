@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -327,6 +327,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         auto indirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
                                           WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
         walkerCmd->setIndirectDataLength(indirectDataLength);
+
+        ioh.align(kernel.getGfxCoreHelper().getIOHAlignment());
     }
 
     return offsetCrossThreadData;

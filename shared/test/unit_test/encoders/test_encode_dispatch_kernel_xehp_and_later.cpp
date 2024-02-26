@@ -592,9 +592,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhe
     EXPECT_EQ(1u, cmd->getEmitInlineParameter());
 
     const uint32_t inlineDataSize = sizeof(InlineData);
-    size_t expectedSizeIOH = dispatchInterface->getCrossThreadDataSize() +
-                             dispatchInterface->getPerThreadDataSizeForWholeThreadGroup() -
-                             inlineDataSize;
+    size_t expectedSizeIOH = alignUp(dispatchInterface->getCrossThreadDataSize() +
+                                         dispatchInterface->getPerThreadDataSizeForWholeThreadGroup() -
+                                         inlineDataSize,
+                                     this->getHelper<GfxCoreHelper>().getIOHAlignment());
     auto heap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
     EXPECT_EQ(expectedSizeIOH, heap->getUsed());
 }
@@ -619,8 +620,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredIsF
     auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(0u, cmd->getEmitInlineParameter());
 
-    size_t expectedSizeIOH = dispatchInterface->getCrossThreadDataSize() +
-                             dispatchInterface->getPerThreadDataSizeForWholeThreadGroup();
+    size_t expectedSizeIOH = alignUp(dispatchInterface->getCrossThreadDataSize() +
+                                         dispatchInterface->getPerThreadDataSizeForWholeThreadGroup(),
+                                     this->getHelper<GfxCoreHelper>().getIOHAlignment());
     auto heap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
     EXPECT_EQ(expectedSizeIOH, heap->getUsed());
 }

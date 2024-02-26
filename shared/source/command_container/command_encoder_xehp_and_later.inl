@@ -343,6 +343,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     } else {
         walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
         walkerCmd.setIndirectDataLength(sizeThreadData);
+
+        container.getIndirectHeap(HeapType::indirectObject)->align(rootDeviceEnvironment.getHelper<GfxCoreHelper>().getIOHAlignment());
     }
 
     EncodeDispatchKernel<Family>::encodeThreadData(walkerCmd,

@@ -159,6 +159,7 @@ class GfxCoreHelper {
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
     virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
+    virtual size_t getIOHAlignment() const = 0;
     virtual bool isStatelessToStatefulWithOffsetSupported() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const = 0;
     virtual bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -383,6 +384,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
+    size_t getIOHAlignment() const override;
     bool isStatelessToStatefulWithOffsetSupported() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override;
     bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;

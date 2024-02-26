@@ -669,6 +669,11 @@ uint64_t GfxCoreHelperHw<GfxFamily>::getPatIndex(CacheRegion cacheRegion, CacheP
 }
 
 template <typename GfxFamily>
+size_t GfxCoreHelperHw<GfxFamily>::getIOHAlignment() const {
+    return 1;
+}
+
+template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     if (debugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return debugManager.flags.ExperimentalCopyThroughLock.get() == 1;

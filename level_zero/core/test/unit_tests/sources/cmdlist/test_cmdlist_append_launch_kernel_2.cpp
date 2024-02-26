@@ -1000,7 +1000,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&expectedImplicitArgs, *kernelDescriptor, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
         auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
         auto sizePerThreadDataForWholeGroup = kernel->getPerThreadDataSizeForWholeThreadGroup();
-        EXPECT_EQ(indirectHeap->getUsed(), sizeCrossThreadData + sizePerThreadDataForWholeGroup + implicitArgsProgrammingSize);
+        EXPECT_EQ(indirectHeap->getUsed(), alignUp(sizeCrossThreadData + sizePerThreadDataForWholeGroup + implicitArgsProgrammingSize, gfxCoreHelper.getIOHAlignment()));
 
         if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
             expectedImplicitArgs.localIdTablePtr = indirectHeapAllocation->getGpuAddress();
