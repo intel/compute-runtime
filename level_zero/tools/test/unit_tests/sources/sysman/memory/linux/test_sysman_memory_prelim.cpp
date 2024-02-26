@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -392,7 +392,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceeds) {
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZesMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceedsAndHealthIsOK, IsPVC) {
     setLocalSupportedAndReinit(true);
 
     auto handles = getMemoryHandles(memoryHandleComponentCount);
@@ -405,6 +405,24 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
+        EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
+        EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
+    }
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceedsAndHealthIsUnknown, IsNotPVC) {
+    setLocalSupportedAndReinit(true);
+
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_state_t state;
+
+        ze_result_t result = zesMemoryGetState(handle, &state);
+
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(state.health, ZES_MEM_HEALTH_UNKNOWN);
         EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
         EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
     }
@@ -448,7 +466,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemo
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitializedWhenCallingZesSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceeds) {
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitializedWhenCallingZesSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceedsAndHealthIsOK, IsPVC) {
     pMemoryManager->localMemorySupported[0] = true;
 
     pLinuxSysmanImp->releaseSysmanDeviceResources();
@@ -478,6 +496,45 @@ TEST_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitialize
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
+        EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
+        EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
+    }
+
+    pLinuxSysmanImp->releasePmtObject();
+    delete pLinuxSysmanImp->pFwUtilInterface;
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+}
+
+HWTEST2_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitializedWhenCallingZesSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceedsAndHealthIsUnknown, IsNotPVC) {
+    pMemoryManager->localMemorySupported[0] = true;
+
+    pLinuxSysmanImp->releaseSysmanDeviceResources();
+    pLinuxSysmanImp->pDrm = pDrm;
+    pLinuxSysmanImp->reInitSysmanDeviceResources();
+
+    VariableBackup<std::map<uint32_t, PlatformMonitoringTech *>> pmtBackup(&pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject);
+    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
+    for (auto &deviceHandle : deviceHandles) {
+        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+        auto pPmt = new MockMemoryPmt(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                      deviceProperties.subdeviceId);
+        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
+    }
+
+    VariableBackup<FirmwareUtil *> backup(&pLinuxSysmanImp->pFwUtilInterface);
+    pLinuxSysmanImp->pFwUtilInterface = new MockFwUtilInterface();
+
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_mem_state_t state;
+
+        ze_result_t result = zesMemoryGetState(handle, &state);
+
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(state.health, ZES_MEM_HEALTH_UNKNOWN);
         EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
         EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
     }
@@ -1134,7 +1191,7 @@ TEST_F(SysmanMultiDeviceMemoryFixture, GivenValidDevicePointerWhenGettingMemoryP
     }
 }
 
-TEST_F(SysmanMultiDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceeds) {
+HWTEST2_F(SysmanMultiDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceedsAndHealthIsOK, IsPVC) {
     setLocalSupportedAndReinit(true);
 
     auto handles = getMemoryHandles(subDeviceCount);
@@ -1153,6 +1210,29 @@ TEST_F(SysmanMultiDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysma
     result = zesMemoryGetState(handles[1], &state2);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state2.health, ZES_MEM_HEALTH_OK);
+    EXPECT_EQ(state2.size, NEO::probedSizeRegionFour);
+    EXPECT_EQ(state2.free, NEO::unallocatedSizeRegionFour);
+}
+
+HWTEST2_F(SysmanMultiDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingZetSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceedsAndHealthIsUnknown, IsNotPVC) {
+    setLocalSupportedAndReinit(true);
+
+    auto handles = getMemoryHandles(subDeviceCount);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+    }
+    zes_mem_state_t state1;
+    ze_result_t result = zesMemoryGetState(handles[0], &state1);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(state1.health, ZES_MEM_HEALTH_UNKNOWN);
+    EXPECT_EQ(state1.size, NEO::probedSizeRegionOne);
+    EXPECT_EQ(state1.free, NEO::unallocatedSizeRegionOne);
+
+    zes_mem_state_t state2;
+    result = zesMemoryGetState(handles[1], &state2);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(state2.health, ZES_MEM_HEALTH_UNKNOWN);
     EXPECT_EQ(state2.size, NEO::probedSizeRegionFour);
     EXPECT_EQ(state2.free, NEO::unallocatedSizeRegionFour);
 }

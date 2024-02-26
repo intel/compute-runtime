@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -351,7 +351,8 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     pState->health = ZES_MEM_HEALTH_UNKNOWN;
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
-    if (pFwInterface != nullptr) {
+    auto productFamily = SysmanDeviceImp::getProductFamily(pDevice);
+    if ((pFwInterface != nullptr) && (IGFX_PVC == productFamily)) {
         pFwInterface->fwGetMemoryHealthIndicator(&pState->health);
     }
     auto memoryInfo = pDrm->getIoctlHelper()->createMemoryInfo();

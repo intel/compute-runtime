@@ -93,6 +93,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+void SysmanProductHelperHw<gfxProduct>::getMemoryHealthIndicator(FirmwareUtil *pFwInterface, zes_mem_health_t *health) {
+    *health = ZES_MEM_HEALTH_UNKNOWN;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void SysmanProductHelperHw<gfxProduct>::getMediaPerformanceFactorMultiplier(const double performanceFactor, double *pMultiplier) {
     if (performanceFactor > halfOfMaxPerformanceFactor) {
         *pMultiplier = 1;

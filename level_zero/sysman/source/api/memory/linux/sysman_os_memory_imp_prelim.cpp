@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,9 +47,9 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     pState->health = ZES_MEM_HEALTH_UNKNOWN;
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
-    if (pFwInterface != nullptr) {
-        pFwInterface->fwGetMemoryHealthIndicator(&pState->health);
-    }
+    // get memory health indicator if supported
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    pSysmanProductHelper->getMemoryHealthIndicator(pFwInterface, &pState->health);
 
     std::unique_ptr<NEO::MemoryInfo> memoryInfo;
     {
