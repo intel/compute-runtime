@@ -264,7 +264,8 @@ struct EncodeMathMMIO {
                                     uint32_t regOffset,
                                     uint32_t immVal,
                                     uint64_t dstAddress,
-                                    bool workloadPartition);
+                                    bool workloadPartition,
+                                    void **outCmdBuffer);
 
     static void encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, AluRegisters srcA, AluRegisters srcB, AluRegisters op, AluRegisters dest, AluRegisters result);
 
@@ -385,7 +386,7 @@ struct EncodeStoreMMIO {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     static const size_t size = sizeof(MI_STORE_REGISTER_MEM);
-    static void encode(LinearStream &csr, uint32_t offset, uint64_t address, bool workloadPartition);
+    static void encode(LinearStream &csr, uint32_t offset, uint64_t address, bool workloadPartition, void **outCmdBuffer);
     static void encode(MI_STORE_REGISTER_MEM *cmdBuffer, uint32_t offset, uint64_t address, bool workloadPartition);
     static void appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bool workloadPartition);
 };

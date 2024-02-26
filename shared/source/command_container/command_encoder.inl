@@ -120,7 +120,7 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
         EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR0, RegisterOffsets::csGprR2);
         i++;
     }
-    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::csGprR1, dstAddress, false);
+    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::csGprR1, dstAddress, false, nullptr);
 }
 
 /*
@@ -149,14 +149,14 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
  */
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeBitwiseAndVal(CommandContainer &container, uint32_t regOffset, uint32_t immVal, uint64_t dstAddress,
-                                                 bool workloadPartition) {
+                                                 bool workloadPartition, void **outCmdBuffer) {
     EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR13, regOffset);
     EncodeSetMMIO<Family>::encodeIMM(container, RegisterOffsets::csGprR14, immVal, true);
     EncodeMath<Family>::bitwiseAnd(container, AluRegisters::gpr13,
                                    AluRegisters::gpr14,
                                    AluRegisters::gpr15);
     EncodeStoreMMIO<Family>::encode(*container.getCommandStream(),
-                                    RegisterOffsets::csGprR15, dstAddress, workloadPartition);
+                                    RegisterOffsets::csGprR15, dstAddress, workloadPartition, outCmdBuffer);
 }
 
 /*
@@ -387,8 +387,11 @@ void EncodeSetMMIO<Family>::encodeREG(LinearStream &cmdStream, uint32_t dstOffse
 }
 
 template <typename Family>
-void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_t address, bool workloadPartition) {
+void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_t address, bool workloadPartition, void **outCmdBuffer) {
     auto buffer = csr.getSpaceForCmd<MI_STORE_REGISTER_MEM>();
+    if (outCmdBuffer != nullptr) {
+        *outCmdBuffer = buffer;
+    }
     EncodeStoreMMIO<Family>::encode(buffer, offset, address, workloadPartition);
 }
 
@@ -605,7 +608,7 @@ void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &conta
         if (NEO::isUndefinedOffset(offsets[i])) {
             continue;
         }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::gpgpuDispatchDim[i], ptrOffset(crossThreadAddress, offsets[i]), false);
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::gpgpuDispatchDim[i], ptrOffset(crossThreadAddress, offsets[i]), false, nullptr);
     }
 }
 
@@ -696,7 +699,7 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
                 EncodeMath<Family>::addition(container, resultAluRegister, backupAluRegister, resultAluRegister);
             }
         }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), resultRegister, dstPtr, false);
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), resultRegister, dstPtr, false, nullptr);
     }
 }
 
