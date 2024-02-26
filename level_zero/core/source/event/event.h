@@ -195,6 +195,9 @@ struct Event : _ze_event_handle_t {
     void zeroKernelCount() {
         kernelCount = 0;
     }
+    void setKernelCount(uint32_t newKernelCount) {
+        kernelCount = newKernelCount;
+    }
     bool getL3FlushForCurrenKernel() {
         return l3FlushAppliedOnKernel.test(kernelCount - 1);
     }

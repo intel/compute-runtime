@@ -3870,6 +3870,15 @@ TEST_F(EventTests, GivenResetAllPacketsFalseWhenResetPacketsThenKernelCountAndPa
     EXPECT_EQ(event->gpuEndTimestamp, 0u);
 }
 
+TEST_F(EventTests, WhenSetNewKernelCountThenKernelCountGetReturnsCorrectValue) {
+    auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
+    event->zeroKernelCount();
+    EXPECT_EQ(0u, event->getKernelCount());
+
+    event->setKernelCount(1);
+    EXPECT_EQ(1u, event->getKernelCount());
+}
+
 TEST_F(EventTests, givenCallToEventQueryStatusWithKernelPointerReturnsCounter) {
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
     Mock<Module> mockModule(this->device, nullptr);
