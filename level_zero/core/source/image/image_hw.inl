@@ -212,6 +212,11 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
     }
 
+    if (this->bindlessImage) {
+        auto ssInHeap = getBindlessSlot();
+        copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, false);
+    }
+
     if (this->bindlessImage && implicitArgsAllocation) {
         implicitArgsSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
 

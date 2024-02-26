@@ -1839,5 +1839,51 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithDeviceUMSPitche
     ret = context->freeMem(ptr);
 }
 
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenInitializedThenSurfaceStateCopiedToSSH, IsAtLeastSkl) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
+                                                     neoDevice->getNumGenericSubDevices() > 1,
+                                                     neoDevice->getRootDeviceIndex(),
+                                                     neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = nullptr;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto ssHeapInfo = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, ssHeapInfo);
+
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    auto *surfaceState = static_cast<RENDER_SURFACE_STATE *>(ssHeapInfo->ssPtr);
+    ASSERT_EQ(surfaceState->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
+    ASSERT_EQ(surfaceState->getSurfaceFormat(),
+              RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UINT);
+    ASSERT_EQ(surfaceState->getWidth(), width);
+    ASSERT_EQ(surfaceState->getHeight(), height);
+    ASSERT_EQ(surfaceState->getDepth(), depth);
+}
+
 } // namespace ult
 } // namespace L0
