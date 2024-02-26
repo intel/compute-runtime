@@ -188,7 +188,7 @@ PVCTEST_F(GfxCoreHelperTestsPvc, GivenCooperativeEngineSupportedAndNotUsedWhenAd
                     } else {
                         for (uint32_t ccsCount : {1, 2, 4}) {
                             hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = ccsCount;
-                            tilePartsForConcurrentKernels = ccsCount == 1   ? 2
+                            tilePartsForConcurrentKernels = ccsCount == 1   ? 1
                                                             : ccsCount == 2 ? 4
                                                                             : 8;
                             EXPECT_EQ(passedMaxWorkGroupCount / tilePartsForConcurrentKernels, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));

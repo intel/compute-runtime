@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,19 +22,19 @@ using KernelImpSuggestMaxCooperativeGroupCountTestsPvc = Test<L0::ult::KernelImp
 
 PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenNoBarriersOrSlmUsedWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithSimd) {
     auto workGroupSize = lws[0] * lws[1] * lws[2];
-    auto expected = (availableThreadCount / Math::divideAndRoundUp(workGroupSize, simd)) / 2;
+    auto expected = availableThreadCount / Math::divideAndRoundUp(workGroupSize, simd);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
 PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenBarriersWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToBarriersCount) {
     usesBarriers = 1;
-    auto expected = (dssCount * (maxBarrierCount / usesBarriers)) / 2;
+    auto expected = dssCount * (maxBarrierCount / usesBarriers);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
 PVCTEST_F(KernelImpSuggestMaxCooperativeGroupCountTestsPvc, GivenUsedSlmSizeWhenCalculatingMaxCooperativeGroupCountThenResultIsCalculatedWithRegardToUsedSlmSize) {
     usedSlm = 64 * MemoryConstants::kiloByte;
-    auto expected = (availableSlm / usedSlm) / 2;
+    auto expected = availableSlm / usedSlm;
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 
