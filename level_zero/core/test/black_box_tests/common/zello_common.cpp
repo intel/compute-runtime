@@ -353,11 +353,11 @@ ze_result_t createCommandList(ze_context_handle_t &context, ze_device_handle_t &
 void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_device_handle_t &device,
                               ze_event_pool_handle_t &eventPool,
-                              ze_event_pool_flag_t poolFlag,
+                              ze_event_pool_flags_t poolFlag,
                               uint32_t poolSize,
                               ze_event_handle_t *events,
-                              ze_event_scope_flag_t signalScope,
-                              ze_event_scope_flag_t waitScope) {
+                              ze_event_scope_flags_t signalScope,
+                              ze_event_scope_flags_t waitScope) {
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     eventPoolDesc.count = poolSize;

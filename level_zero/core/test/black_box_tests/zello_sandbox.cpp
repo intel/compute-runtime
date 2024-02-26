@@ -206,7 +206,7 @@ void executeMemoryTransferAndValidate(ze_context_handle_t &context, ze_device_ha
     ze_event_pool_handle_t eventPool;
     uint32_t numEvents = 10;
     std::vector<ze_event_handle_t> events(numEvents);
-    ze_event_pool_flag_t eventPoolFlags = static_cast<ze_event_pool_flag_t>(flags);
+    ze_event_pool_flags_t eventPoolFlags = flags;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
                                                      eventPoolFlags,
                                                      numEvents, events.data(),

@@ -97,10 +97,10 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> events(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP),
+                                                     ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_DEVICE,
-                                                     (ze_event_scope_flag_t)0);
+                                                     0);
 
     auto buffer = reinterpret_cast<uint32_t *>(dstBuffer);
     auto offsetedBuffer = &(buffer[1]);

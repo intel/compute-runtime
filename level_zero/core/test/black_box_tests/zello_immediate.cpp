@@ -65,15 +65,15 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> deviceEvents(numEvents), hostEvents(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolDevice,
-                                                     (ze_event_pool_flag_t)(0),
+                                                     0,
                                                      numEvents, deviceEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_SUBDEVICE,
-                                                     (ze_event_scope_flag_t)0);
+                                                     0);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolHost,
-                                                     (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
                                                      numEvents, hostEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
-                                                     (ze_event_scope_flag_t)0);
+                                                     0);
 
     // Copy from host-allocated to device-allocated memory
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, deviceBuffer, hostBuffer, allocSize,
@@ -150,10 +150,10 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> hostEvents(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolHost,
-                                                     (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE),
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
                                                      numEvents, hostEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
-                                                     (ze_event_scope_flag_t)0);
+                                                     0);
 
     if (file.is_open()) {
         file.seekg(0, file.end);

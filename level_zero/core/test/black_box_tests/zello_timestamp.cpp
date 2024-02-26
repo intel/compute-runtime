@@ -620,7 +620,8 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
 
     ze_event_handle_t kernelTsEvent[maxEventUsageCount];
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     (ze_event_pool_flag_t)(ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP), maxEventUsageCount, kernelTsEvent,
+                                                     (ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP),
+                                                     maxEventUsageCount, kernelTsEvent,
                                                      ZE_EVENT_SCOPE_FLAG_DEVICE, ZE_EVENT_SCOPE_FLAG_HOST);
 
     // Create commandQueue and cmdList
