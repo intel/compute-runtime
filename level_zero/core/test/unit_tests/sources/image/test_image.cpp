@@ -1839,6 +1839,68 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithDeviceUMSPitche
     ret = context->freeMem(ptr);
 }
 
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithTheSameFormatThenImageViewHasCorrectImgInfo, IsAtLeastSkl) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
+                                                     neoDevice->getNumGenericSubDevices() > 1,
+                                                     neoDevice->getRootDeviceIndex(),
+                                                     neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    const size_t size = 4096;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto ret = context->allocDeviceMem(device,
+                                       &deviceDesc,
+                                       size,
+                                       0,
+                                       &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr; // USM device pointer
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &pitchedDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC, &bindlessExtDesc, ZE_IMAGE_FLAG_KERNEL_WRITE, ZE_IMAGE_TYPE_2D, {ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT, ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G, ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A}, width, height, depth, 0, 0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->bindlessImage);
+
+    ze_image_handle_t imageView = {};
+    bindlessExtDesc.pNext = nullptr;
+    ret = imageHW->createView(device, &srcImgDesc, &imageView);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto imageViewObject = static_cast<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> *>(Image::fromHandle(imageView));
+
+    EXPECT_TRUE(imageViewObject->bindlessImage);
+    EXPECT_TRUE(imageViewObject->imageFromBuffer);
+
+    EXPECT_EQ(imageHW->imgInfo.slicePitch, imageViewObject->getImageInfo().slicePitch);
+    EXPECT_NE(0u, imageViewObject->getImageInfo().slicePitch);
+    EXPECT_EQ(imageHW->imgInfo.rowPitch, imageViewObject->getImageInfo().rowPitch);
+    EXPECT_NE(0u, imageViewObject->getImageInfo().rowPitch);
+    EXPECT_EQ(imageHW->imgInfo.offset, imageViewObject->getImageInfo().offset);
+    EXPECT_EQ(imageHW->imgInfo.size, imageViewObject->getImageInfo().size);
+    EXPECT_NE(0u, imageViewObject->getImageInfo().size);
+    EXPECT_EQ(imageHW->imgInfo.linearStorage, imageViewObject->getImageInfo().linearStorage);
+    EXPECT_TRUE(imageViewObject->getImageInfo().linearStorage);
+
+    Image::fromHandle(imageView)->destroy();
+    ret = context->freeMem(ptr);
+}
+
 HWTEST2_F(ImageCreate, GivenBindlessImageWhenInitializedThenSurfaceStateCopiedToSSH, IsAtLeastSkl) {
     const size_t width = 32;
     const size_t height = 32;

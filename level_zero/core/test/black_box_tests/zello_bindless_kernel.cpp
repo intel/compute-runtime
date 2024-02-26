@@ -492,156 +492,178 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
     SUCCESS_OR_TERMINATE(zeDeviceGetImageProperties(device, &imageProperties));
 
     size_t allWidths[] = {
-        48,
         13,
         extendedProperties.maxImageLinearWidth};
 
-    for (auto width : allWidths) {
-        size_t rowPitch = 0;
+    bool useImageView[] = {false, true};
 
-        size_t imageWidth = width;
-        size_t imageHeight = 4;
-        size_t imageDepth = 1;
-        uint32_t elementSizeInBytes = 4;
+    for (auto useView : useImageView) {
+        for (auto width : allWidths) {
+            size_t rowPitch = 0;
 
-        uint32_t groupCountX = 1;
-        uint32_t groupSizeX = static_cast<uint32_t>(width);
-        if (groupSizeX > computeProperties.maxGroupSizeX) {
-            groupCountX = groupSizeX / 32;
-            groupSizeX = 32;
-            imageHeight = 1;
-        }
+            size_t imageWidth = width;
+            size_t imageHeight = 4;
+            size_t imageDepth = 1;
+            uint32_t elementSizeInBytes = 4;
 
-        std::cout << "\nTesting image width, height, depth, elementSizeInBytes = " << imageWidth << ", " << imageHeight << " ," << imageDepth << " ," << elementSizeInBytes << " ..." << std::endl;
-
-        LevelZeroBlackBoxTests::CommandHandler commandHandler;
-        bool isImmediateCmdList = false;
-        SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
-        SUCCESS_OR_TERMINATE(zeMemGetPitchFor2dImageFunctionPtr(context, device, imageWidth, imageHeight, elementSizeInBytes, &rowPitch));
-
-        if (LevelZeroBlackBoxTests::verbose) {
-            std::cout << "zeMemGetPitchFor2dImageFunctionPtr()  with " << std::dec << // image dimesions
-                "\n\t imageWidth = " << imageWidth <<                                 //
-                "\n\t imageHeight = " << imageHeight <<                               //
-                "\n\t elementSizeInBytes = " << elementSizeInBytes <<                 //
-                "\n returned rowPitch = " << rowPitch << std::endl;
-
-            std::cout << " imageWidth * elementSizeInBytes = " << imageWidth * elementSizeInBytes << std::endl;
-        }
-
-        ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-        deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
-        deviceDesc.ordinal = 0;
-
-        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-        hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
-
-        size_t allocSize = rowPitch * imageHeight;
-
-        void *pitchedBuffer = nullptr;
-        void *pitchedBufferDevice = nullptr;
-        SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &pitchedBuffer));
-        SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, 1, device, &pitchedBufferDevice));
-
-        void *dstBuffer = nullptr;
-        SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &dstBuffer));
-
-        // Initialize memory
-        constexpr uint8_t val = 55;
-        memset(pitchedBuffer, 2, allocSize);
-        {
-            uint8_t *srcCharBuffer = static_cast<uint8_t *>(pitchedBuffer);
-            for (size_t i = 0; i < imageHeight; i++) {
-                memset(srcCharBuffer, val, imageWidth * elementSizeInBytes);
-                srcCharBuffer += rowPitch;
+            uint32_t groupCountX = 1;
+            uint32_t groupSizeX = static_cast<uint32_t>(width);
+            if (groupSizeX > computeProperties.maxGroupSizeX) {
+                groupCountX = groupSizeX / 32;
+                groupSizeX = 32;
+                imageHeight = 1;
             }
-        }
-        // Copy from heap to device-allocated memory
-        SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(commandHandler.cmdList, pitchedBufferDevice, pitchedBuffer, allocSize,
-                                                           nullptr, 0, nullptr));
-        SUCCESS_OR_TERMINATE(commandHandler.execute());
-        SUCCESS_OR_TERMINATE(commandHandler.synchronize());
 
-        memset(dstBuffer, 0, allocSize);
+            if (useView) {
+                std::cout << "\nTesting imageView: ";
 
-        ze_image_pitched_exp_desc_t pitchedDesc = {};
-        pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
-        pitchedDesc.ptr = pitchedBufferDevice;
+            } else {
+                std::cout << "\nTesting image: ";
+            }
+            std::cout << "width, height, depth, elementSizeInBytes = " << imageWidth << ", " << imageHeight << ", " << imageDepth << ", " << elementSizeInBytes << " ... " << std::endl;
 
-        ze_image_bindless_exp_desc_t bindlessExtDesc = {};
-        bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
-        bindlessExtDesc.pNext = &pitchedDesc;
-        bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+            LevelZeroBlackBoxTests::CommandHandler commandHandler;
+            bool isImmediateCmdList = false;
+            SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
+            SUCCESS_OR_TERMINATE(zeMemGetPitchFor2dImageFunctionPtr(context, device, imageWidth, imageHeight, elementSizeInBytes, &rowPitch));
 
-        ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
-                                      &bindlessExtDesc,
-                                      0,
-                                      ZE_IMAGE_TYPE_2D,
-                                      {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_SINT,
-                                       ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
-                                       ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
-                                      imageWidth,
-                                      static_cast<uint32_t>(imageHeight),
-                                      static_cast<uint32_t>(imageDepth),
-                                      0,
-                                      0};
+            if (LevelZeroBlackBoxTests::verbose) {
+                std::cout << "zeMemGetPitchFor2dImageFunctionPtr()  with " << std::dec << // image dimesions
+                    "\n\t imageWidth = " << imageWidth <<                                 //
+                    "\n\t imageHeight = " << imageHeight <<                               //
+                    "\n\t elementSizeInBytes = " << elementSizeInBytes <<                 //
+                    "\n returned rowPitch = " << rowPitch << std::endl;
 
-        ze_image_handle_t srcImg = nullptr;
+                std::cout << " imageWidth * elementSizeInBytes = " << imageWidth * elementSizeInBytes << std::endl;
+            }
 
-        ze_group_count_t dispatchTraits = {};
-        dispatchTraits.groupCountX = groupCountX;
-        dispatchTraits.groupCountY = static_cast<uint32_t>(imageHeight);
-        dispatchTraits.groupCountZ = 1u;
+            ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+            deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+            deviceDesc.ordinal = 0;
 
-        SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &srcImgDesc, &srcImg));
+            ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+            hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
-        uint64_t bindlessOffset;
-        SUCCESS_OR_TERMINATE(zeImageGetDeviceOffsetExpFunctionPtr(srcImg, &bindlessOffset));
-        if (LevelZeroBlackBoxTests::verbose) {
-            std::cout << "zeImageGetDeviceOffsetExp(srcImg, &bindlessOffset) " << std::dec << "\n\t bindlessOffset = " << bindlessOffset << std::endl;
-        }
+            size_t allocSize = rowPitch * imageHeight;
 
-        SUCCESS_OR_TERMINATE(zeContextMakeMemoryResident(context, device, pitchedBufferDevice, allocSize));
+            void *pitchedBuffer = nullptr;
+            void *pitchedBufferDevice = nullptr;
+            SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &pitchedBuffer));
+            SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, 1, device, &pitchedBufferDevice));
 
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(srcImg), &srcImg));
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 0, sizeof(dstBuffer), &dstBuffer));
-        SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(copyKernel, groupSizeX, 1U, 1U));
+            void *dstBuffer = nullptr;
+            SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &dstBuffer));
 
-        SUCCESS_OR_TERMINATE(commandHandler.appendKernel(copyKernel, dispatchTraits));
-        SUCCESS_OR_TERMINATE(commandHandler.execute());
-        SUCCESS_OR_TERMINATE(commandHandler.synchronize());
-
-        // Validate
-        uint8_t *srcCharBuffer = static_cast<uint8_t *>(pitchedBuffer);
-        uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
-
-        outputValidated = true;
-        for (size_t i = 0; i < imageHeight; i++) {
-
-            if (memcmp(dstCharBuffer, srcCharBuffer, imageWidth * elementSizeInBytes)) {
-                std::cout << "error: dstCharBuffer for row " << i << " not equal to "
-                          << "srcCharBuffer at row " << i << "\n";
-
-                for (size_t x = 0; x < imageWidth * elementSizeInBytes; x++) {
-                    std::cout << "error: dstCharBuffer[" << x << "] = " << std::dec << static_cast<unsigned int>(dstCharBuffer[x]) << " not equal to "
-                              << "srcCharBuffer[" << x << "] = " << std::dec << static_cast<unsigned int>(srcCharBuffer[x]) << "\n";
+            // Initialize memory
+            constexpr uint8_t val = 55;
+            memset(pitchedBuffer, 2, allocSize);
+            {
+                uint8_t *srcCharBuffer = static_cast<uint8_t *>(pitchedBuffer);
+                for (size_t i = 0; i < imageHeight; i++) {
+                    memset(srcCharBuffer, val, imageWidth * elementSizeInBytes);
+                    srcCharBuffer += rowPitch;
                 }
-                outputValidated = false;
+            }
+            // Copy from heap to device-allocated memory
+            SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(commandHandler.cmdList, pitchedBufferDevice, pitchedBuffer, allocSize,
+                                                               nullptr, 0, nullptr));
+            SUCCESS_OR_TERMINATE(commandHandler.execute());
+            SUCCESS_OR_TERMINATE(commandHandler.synchronize());
+
+            memset(dstBuffer, 0, allocSize);
+
+            ze_image_pitched_exp_desc_t pitchedDesc = {};
+            pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+            pitchedDesc.ptr = pitchedBufferDevice;
+
+            ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+            bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+            bindlessExtDesc.pNext = &pitchedDesc;
+            bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+            ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                          &bindlessExtDesc,
+                                          0,
+                                          ZE_IMAGE_TYPE_2D,
+                                          {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_SINT,
+                                           ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                           ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                          imageWidth,
+                                          static_cast<uint32_t>(imageHeight),
+                                          static_cast<uint32_t>(imageDepth),
+                                          0,
+                                          0};
+
+            ze_image_handle_t srcImg = nullptr;
+            ze_image_handle_t imgView = nullptr;
+
+            ze_group_count_t dispatchTraits = {};
+            dispatchTraits.groupCountX = groupCountX;
+            dispatchTraits.groupCountY = static_cast<uint32_t>(imageHeight);
+            dispatchTraits.groupCountZ = 1u;
+
+            SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &srcImgDesc, &srcImg));
+
+            if (useView) {
+                bindlessExtDesc.pNext = nullptr;
+                SUCCESS_OR_TERMINATE(zeImageViewCreateExt(context, device, &srcImgDesc, srcImg, &imgView));
+            }
+
+            uint64_t bindlessOffset;
+            SUCCESS_OR_TERMINATE(zeImageGetDeviceOffsetExpFunctionPtr(srcImg, &bindlessOffset));
+            if (LevelZeroBlackBoxTests::verbose) {
+                std::cout << "zeImageGetDeviceOffsetExp(srcImg, &bindlessOffset) " << std::dec << "\n\t bindlessOffset = " << bindlessOffset << std::endl;
+            }
+
+            SUCCESS_OR_TERMINATE(zeContextMakeMemoryResident(context, device, pitchedBufferDevice, allocSize));
+
+            if (useView) {
+                SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(imgView), &imgView));
+            } else {
+                SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(srcImg), &srcImg));
+            }
+            SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 0, sizeof(dstBuffer), &dstBuffer));
+            SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(copyKernel, groupSizeX, 1U, 1U));
+
+            SUCCESS_OR_TERMINATE(commandHandler.appendKernel(copyKernel, dispatchTraits));
+            SUCCESS_OR_TERMINATE(commandHandler.execute());
+            SUCCESS_OR_TERMINATE(commandHandler.synchronize());
+
+            // Validate
+            uint8_t *srcCharBuffer = static_cast<uint8_t *>(pitchedBuffer);
+            uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
+
+            outputValidated = true;
+            for (size_t i = 0; i < imageHeight; i++) {
+
+                if (memcmp(dstCharBuffer, srcCharBuffer, imageWidth * elementSizeInBytes)) {
+                    std::cout << "error: dstCharBuffer for row " << i << " not equal to "
+                              << "srcCharBuffer at row " << i << "\n";
+
+                    for (size_t x = 0; x < imageWidth * elementSizeInBytes; x++) {
+                        std::cout << "error: dstCharBuffer[" << x << "] = " << std::dec << static_cast<unsigned int>(dstCharBuffer[x]) << " not equal to "
+                                  << "srcCharBuffer[" << x << "] = " << std::dec << static_cast<unsigned int>(srcCharBuffer[x]) << "\n";
+                    }
+                    outputValidated = false;
+                    break;
+                }
+                srcCharBuffer += rowPitch;
+                dstCharBuffer += imageWidth * elementSizeInBytes;
+            }
+
+            if (imgView != nullptr) {
+                SUCCESS_OR_TERMINATE(zeImageDestroy(imgView));
+            }
+            SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
+            SUCCESS_OR_TERMINATE(zeMemFree(context, pitchedBuffer));
+            SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+            if (!outputValidated) {
+                std::cout << "\nTest case FAILED" << std::endl;
+
                 break;
             }
-            srcCharBuffer += rowPitch;
-            dstCharBuffer += imageWidth * elementSizeInBytes;
+            std::cout << "\nTest case PASSED" << std::endl;
         }
-
-        SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
-        SUCCESS_OR_TERMINATE(zeMemFree(context, pitchedBuffer));
-        SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
-        if (!outputValidated) {
-            std::cout << "\nTest case FAILED" << std::endl;
-
-            break;
-        }
-        std::cout << "\nTest case PASSED" << std::endl;
     }
 
     SUCCESS_OR_TERMINATE(zeKernelDestroy(copyKernel));

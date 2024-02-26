@@ -128,25 +128,27 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
                 allocation = usmAllocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-
-                imgInfo.linearStorage = true;
-                imgInfo.imgDesc.imageRowPitch = getRowPitchFor2dImage(device, imgInfo);
-
-                if (imgInfo.imgDesc.imageRowPitch > 0) {
-                    imgInfo.rowPitch = imgInfo.imgDesc.imageRowPitch;
-                } else {
-                    imgInfo.rowPitch = imgInfo.imgDesc.imageWidth * imgInfo.surfaceFormat->imageElementSizeInBytes;
-                }
-                imgInfo.slicePitch = imgInfo.rowPitch * imgInfo.imgDesc.imageHeight;
-                imgInfo.size = allocation->getUnderlyingBufferSize();
-                imgInfo.qPitch = 0;
-
-                UNRECOVERABLE_IF(imgInfo.offset != 0);
             }
         }
         if (allocation == nullptr) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
+    }
+
+    if (this->imageFromBuffer) {
+        imgInfo.linearStorage = true;
+        imgInfo.imgDesc.imageRowPitch = getRowPitchFor2dImage(device, imgInfo);
+
+        if (imgInfo.imgDesc.imageRowPitch > 0) {
+            imgInfo.rowPitch = imgInfo.imgDesc.imageRowPitch;
+        } else {
+            imgInfo.rowPitch = imgInfo.imgDesc.imageWidth * imgInfo.surfaceFormat->imageElementSizeInBytes;
+        }
+        imgInfo.slicePitch = imgInfo.rowPitch * imgInfo.imgDesc.imageHeight;
+        imgInfo.size = allocation->getUnderlyingBufferSize();
+        imgInfo.qPitch = 0;
+
+        UNRECOVERABLE_IF(imgInfo.offset != 0);
     }
 
     if (this->bindlessImage) {

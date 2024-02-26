@@ -83,6 +83,9 @@ ze_result_t ImageImp::createView(Device *device, const ze_image_desc_t *desc, ze
     image = static_cast<ImageImp *>((*allocator)());
     image->allocation = allocation;
     image->sourceImageFormatDesc = this->imageFormatDesc;
+    image->imgInfo = this->imgInfo;
+    image->imageFromBuffer = this->imageFromBuffer;
+
     auto result = image->initialize(device, desc);
 
     if (result != ZE_RESULT_SUCCESS) {
