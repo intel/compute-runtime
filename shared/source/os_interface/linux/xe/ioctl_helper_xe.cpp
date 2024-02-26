@@ -748,11 +748,6 @@ bool IoctlHelperXe::completionFenceExtensionSupported(const bool isVmBindAvailab
     return isVmBindAvailable;
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
-    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return {};
-}
-
 uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) {
     uint64_t ret = 0;
     xeLog(" -> IoctlHelperXe::%s %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident);
@@ -830,6 +825,12 @@ void IoctlHelperXe::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFen
     xeBindExtUserFence->tag = UserFenceExtension::tagValue;
     xeBindExtUserFence->addr = fenceAddress;
     xeBindExtUserFence->value = fenceValue;
+}
+
+void IoctlHelperXe::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) {
+    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    vmBind.userFence = castToUint64(vmBindUserFence);
+    return;
 }
 
 std::optional<uint64_t> IoctlHelperXe::getCopyClassSaturatePCIECapability() {
@@ -1287,7 +1288,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         drm_xe_sync sync[1] = {};
         sync[0].type = DRM_XE_SYNC_TYPE_USER_FENCE;
         sync[0].flags = DRM_XE_SYNC_FLAG_SIGNAL;
-        auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindParams.extensions);
+        auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindParams.userFence);
         UNRECOVERABLE_IF(!xeBindExtUserFence);
         UNRECOVERABLE_IF(xeBindExtUserFence->tag != UserFenceExtension::tagValue);
         sync[0].addr = xeBindExtUserFence->addr;
@@ -1302,6 +1303,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
         bind.bind.obj_offset = vmBindParams.offset;
         bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
+        bind.bind.extensions = vmBindParams.extensions;
 
         if (isBind) {
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP;

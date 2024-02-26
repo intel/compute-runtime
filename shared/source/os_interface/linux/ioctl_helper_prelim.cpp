@@ -679,6 +679,10 @@ void IoctlHelperPrelim20::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtU
     prelimVmBindExtUserFence->addr = fenceAddress;
     prelimVmBindExtUserFence->val = fenceValue;
 }
+void IoctlHelperPrelim20::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) {
+    vmBind.extensions = castToUint64(vmBindUserFence);
+    return;
+}
 
 std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturatePCIECapability() {
     return PRELIM_I915_COPY_CLASS_CAP_SATURATE_PCIE;

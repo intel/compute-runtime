@@ -1333,7 +1333,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 
                     incrementFenceValue = true;
                     ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
-                    vmBind.extensions = castToUint64(vmBindExtUserFence);
+                    ioctlHelper->setVmBindUserFence(vmBind, vmBindExtUserFence);
                 }
             }
         }

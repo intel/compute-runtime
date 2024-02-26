@@ -63,6 +63,7 @@ struct VmBindParams {
     uint64_t length;
     uint64_t flags;
     uint64_t extensions;
+    uint64_t userFence;
     uint64_t patIndex;
 };
 
@@ -116,6 +117,7 @@ class IoctlHelper {
     virtual uint32_t createCooperativeContext(GemContextCreateExt &gcc) = 0;
     virtual void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) = 0;
     virtual void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
+    virtual void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) = 0;
     virtual std::optional<uint64_t> getCopyClassSaturatePCIECapability() = 0;
     virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() = 0;
     virtual uint32_t getVmAdviseAtomicAttribute() = 0;
@@ -247,6 +249,7 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     uint32_t createCooperativeContext(GemContextCreateExt &gcc) override;
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
+    void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
     uint32_t getVmAdviseAtomicAttribute() override;
@@ -321,6 +324,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     uint32_t createCooperativeContext(GemContextCreateExt &gcc) override;
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
+    void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
     uint32_t getVmAdviseAtomicAttribute() override;

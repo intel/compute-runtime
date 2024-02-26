@@ -359,3 +359,23 @@ TEST(IoctlHelperXeTest, givenXeunregisterResourceThenCorrectIoctlCalled) {
     xeIoctlHelper->unregisterResource(0x1234);
     EXPECT_EQ(drm.metadataID, 0x1234u);
 }
+
+TEST(IoctlHelperXeTest, whenGettingVmBindExtFromHandlesThenProperStructsAreReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    StackVec<uint32_t, 2> bindExtHandles;
+    bindExtHandles.push_back(1u);
+    bindExtHandles.push_back(2u);
+    bindExtHandles.push_back(3u);
+    auto retVal = xeIoctlHelper->prepareVmBindExt(bindExtHandles);
+    auto vmBindExt = reinterpret_cast<drm_xe_vm_bind_op_ext_attach_debug *>(retVal.get());
+
+    for (size_t i = 0; i < bindExtHandles.size(); i++) {
+        EXPECT_EQ(bindExtHandles[i], vmBindExt[i].metadata_id);
+        EXPECT_EQ(static_cast<uint32_t>(XE_VM_BIND_OP_EXTENSIONS_ATTACH_DEBUG), vmBindExt[i].base.name);
+    }
+
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[1]), vmBindExt[0].base.next_extension);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[2]), vmBindExt[1].base.next_extension);
+}

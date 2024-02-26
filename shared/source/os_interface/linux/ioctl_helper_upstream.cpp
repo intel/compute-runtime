@@ -225,6 +225,8 @@ void IoctlHelperUpstream::fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat,
 
 void IoctlHelperUpstream::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) {}
 
+void IoctlHelperUpstream::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence){};
+
 std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturatePCIECapability() {
     return std::nullopt;
 }

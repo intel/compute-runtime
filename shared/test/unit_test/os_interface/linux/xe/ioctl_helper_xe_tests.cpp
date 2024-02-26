@@ -253,9 +253,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(0u, xeIoctlHelper->getDirectSubmissionFlag());
 
-    StackVec<uint32_t, 2> bindExtHandles;
-    EXPECT_EQ(nullptr, xeIoctlHelper->prepareVmBindExt(bindExtHandles));
-
     EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false));
 
     std::vector<QueryItem> queryItems;
@@ -1405,7 +1402,7 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
 
     VmBindParams vmBindParams{};
     vmBindParams.handle = mockBindInfo.handle;
-    vmBindParams.extensions = castToUint64(&vmBindExtUserFence);
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     drm.vmBindInputs.clear();
     drm.syncInputs.clear();
@@ -1474,7 +1471,7 @@ TEST(IoctlHelperXeTest, whenGemVmBindFailsThenErrorIsPropagated) {
 
     VmBindParams vmBindParams{};
     vmBindParams.handle = mockBindInfo.handle;
-    vmBindParams.extensions = castToUint64(&vmBindExtUserFence);
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     drm.waitUserFenceInputs.clear();
 
@@ -1506,7 +1503,7 @@ TEST(IoctlHelperXeTest, whenUserFenceFailsThenErrorIsPropagated) {
 
     VmBindParams vmBindParams{};
     vmBindParams.handle = mockBindInfo.handle;
-    vmBindParams.extensions = castToUint64(&vmBindExtUserFence);
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     drm.waitUserFenceInputs.clear();
 
@@ -1707,7 +1704,7 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenPatIndexIsSet) {
 
     VmBindParams vmBindParams{};
     vmBindParams.handle = mockBindInfo.handle;
-    vmBindParams.extensions = castToUint64(&vmBindExtUserFence);
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
     vmBindParams.patIndex = expectedPatIndex;
 
     drm.vmBindInputs.clear();

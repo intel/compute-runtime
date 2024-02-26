@@ -87,6 +87,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t createCooperativeContext(GemContextCreateExt &gcc) override;
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
+    void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) override;
     std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
     std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
     uint32_t getVmAdviseAtomicAttribute() override;
