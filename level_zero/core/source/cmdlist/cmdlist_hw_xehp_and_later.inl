@@ -286,7 +286,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     std::list<void *> additionalCommands;
 
     if (compactEvent) {
-        appendEventForProfilingAllWalkers(compactEvent, nullptr, true, true, false);
+        appendEventForProfilingAllWalkers(compactEvent, nullptr, launchParams.outListCommands, true, true, launchParams.omitAddingEventResidency);
     }
 
     bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
@@ -353,7 +353,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             launchParams.outSyncCommand->type = CommandToPatch::SignalEventPostSyncPipeControl;
             syncCmdBuffer = &launchParams.outSyncCommand->pDestination;
         }
-        appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, false, true, launchParams.omitAddingEventResidency);
+        appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, launchParams.outListCommands, false, true, launchParams.omitAddingEventResidency);
     } else if (event) {
         event->setPacketsInUse(partitionCount);
         if (l3FlushEnable) {
@@ -426,16 +426,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueuePipeControlStart});
+        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueuePipeControlStart});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueueSemaphoreStart});
+        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueueSemaphoreStart});
         additionalCommands.pop_front();
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueuePipeControlEnd});
+        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueuePipeControlEnd});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueueSemaphoreEnd});
+        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueueSemaphoreEnd});
         additionalCommands.pop_front();
     }
 
@@ -511,12 +511,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency) {
     if (isCopyOnly() || singlePacketEvent) {
         if (beforeWalker) {
-            appendEventForProfiling(event, true, false);
+            appendEventForProfiling(event, outTimeStampSyncCmds, true, false, skipAddingEventToResidency);
         } else {
-            appendSignalEventPostWalker(event, syncCmdBuffer, false, skipAddingEventToResidency);
+            appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, false, skipAddingEventToResidency);
         }
     } else {
         if (event) {

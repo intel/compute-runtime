@@ -865,7 +865,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         commandList->setupTimestampEventForMultiTile(event.get());
         size_t sizeBefore = cmdStream->getUsed();
-        commandList->appendEventForProfiling(event.get(), false, false);
+        commandList->appendEventForProfiling(event.get(), nullptr, false, false, false);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -950,7 +950,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         commandList->setupTimestampEventForMultiTile(event.get());
         size_t sizeBefore = cmdStream->getUsed();
-        commandList->appendSignalEventPostWalker(event.get(), nullptr, false, false);
+        commandList->appendSignalEventPostWalker(event.get(), nullptr, nullptr, false, false);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -2426,7 +2426,7 @@ HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThe
 
     auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
     bool skipAdd = true;
-    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, false, true, skipAdd);
+    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, nullptr, false, true, skipAdd);
 
     auto eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
     EXPECT_EQ(residencyContainer.end(), eventAllocIt);
@@ -2453,7 +2453,7 @@ HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThe
 
     commandStreamOffset = commandContainer.getCommandStream()->getUsed();
     skipAdd = false;
-    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, false, true, skipAdd);
+    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, nullptr, false, true, skipAdd);
     eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
     EXPECT_NE(residencyContainer.end(), eventAllocIt);
 
@@ -2477,8 +2477,75 @@ HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThe
     ASSERT_EQ(postSyncPipeControl, pipeControlBuffer);
 }
 
+HWTEST2_F(CommandListCreate,
+          givenAppendTimestampSignalEventWhenSkipAddToResidencyTrueAndOutRegMemListProvidedThenAllocationNotAddedToResidencyAndStoreRegMemCmdsStored,
+          IsAtLeastXeHpCore) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    auto &commandContainer = commandList->getCmdContainer();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = 0;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event.get());
+
+    auto &residencyContainer = commandContainer.getResidencyContainer();
+    auto eventAllocation = event->getPoolAllocation(device);
+    auto eventBaseAddress = event->getGpuAddress(device);
+
+    CommandToPatchContainer outStoreRegMemCmdList;
+
+    auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
+    bool skipAdd = true;
+
+    bool before = true;
+    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, &outStoreRegMemCmdList, before, true, skipAdd);
+    before = false;
+    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, &outStoreRegMemCmdList, before, true, skipAdd);
+
+    auto eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
+    EXPECT_EQ(residencyContainer.end(), eventAllocIt);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
+
+    auto storeRegMemList = findAll<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, storeRegMemList.size());
+    ASSERT_NE(0u, outStoreRegMemCmdList.size());
+
+    ASSERT_EQ(storeRegMemList.size(), outStoreRegMemCmdList.size());
+
+    for (size_t i = 0; i < storeRegMemList.size(); i++) {
+        MI_STORE_REGISTER_MEM *storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*storeRegMemList[i]);
+
+        auto &cmdToPatch = outStoreRegMemCmdList[i];
+        EXPECT_EQ(CommandToPatch::TimestampEventPostSyncStoreRegMem, cmdToPatch.type);
+        MI_STORE_REGISTER_MEM *outStoreRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(cmdToPatch.pDestination);
+        ASSERT_NE(nullptr, outStoreRegMem);
+
+        EXPECT_EQ(storeRegMem, outStoreRegMem);
+
+        auto cmdAddress = eventBaseAddress + cmdToPatch.offset;
+        EXPECT_EQ(cmdAddress, outStoreRegMem->getMemoryAddress());
+    }
+}
+
 HWTEST2_F(CommandListAppendLaunchKernel,
-          givenL3EventCompationPlatformWhenAppendKernelWithSignalScopeEventAndCmdPatchListProvidedThenDispatchSignalPostSyncCmdAndStoreInPatchList,
+          givenL3EventCompactionPlatformWhenAppendKernelWithSignalScopeEventAndCmdPatchListProvidedThenDispatchSignalPostSyncCmdAndStoreInPatchList,
           IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -2536,6 +2603,73 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
     EXPECT_EQ(CommandToPatch::SignalEventPostSyncPipeControl, signalCmd.type);
     EXPECT_EQ(postSyncPipeControl, signalCmd.pDestination);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel,
+          givenL3EventCompactionPlatformWhenAppendKernelWithTimestampSignalScopeEventAndCmdPatchListProvidedThenDispatchSignalPostSyncCmdAndStoreInPatchList,
+          IsAtLeastXeHpCore) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    commandList->dcFlushSupport = true;
+    commandList->compactL3FlushEventPacket = true;
+
+    auto &commandContainer = commandList->getCmdContainer();
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event.get());
+
+    auto eventBaseAddress = event->getGpuAddress(device);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    CommandToPatchContainer outStoreRegMemCmdList;
+    launchParams.outListCommands = &outStoreRegMemCmdList;
+    auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
+
+    auto storeRegMemList = findAll<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, storeRegMemList.size());
+    ASSERT_NE(0u, outStoreRegMemCmdList.size());
+
+    ASSERT_EQ(storeRegMemList.size(), outStoreRegMemCmdList.size());
+
+    for (size_t i = 0; i < storeRegMemList.size(); i++) {
+        MI_STORE_REGISTER_MEM *storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*storeRegMemList[i]);
+
+        auto &cmdToPatch = outStoreRegMemCmdList[i];
+        EXPECT_EQ(CommandToPatch::TimestampEventPostSyncStoreRegMem, cmdToPatch.type);
+        MI_STORE_REGISTER_MEM *outStoreRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(cmdToPatch.pDestination);
+        ASSERT_NE(nullptr, outStoreRegMem);
+
+        EXPECT_EQ(storeRegMem, outStoreRegMem);
+
+        auto cmdAddress = eventBaseAddress + cmdToPatch.offset;
+        EXPECT_EQ(cmdAddress, outStoreRegMem->getMemoryAddress());
+    }
 }
 
 } // namespace ult

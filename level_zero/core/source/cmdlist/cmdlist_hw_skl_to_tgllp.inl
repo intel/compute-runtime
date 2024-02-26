@@ -38,7 +38,7 @@ size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition) {}
+void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds, bool maskLsb, uint32_t mask, bool workloadPartition) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(const Event *event) const {
@@ -108,7 +108,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         dsh = dshReserveArgs.indirectHeapReservation;
     }
 
-    appendEventForProfiling(event, true, false);
+    appendEventForProfiling(event, nullptr, true, false, false);
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(0u),
                                                         kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
     this->setCommandListPerThreadScratchSize(0u, perThreadScratchSize);
@@ -247,7 +247,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
 
-    appendSignalEventPostWalker(event, nullptr, false, false);
+    appendSignalEventPostWalker(event, nullptr, nullptr, false, false);
 
     commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
     auto &residencyContainer = kernel->getResidencyContainer();
@@ -264,16 +264,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueuePipeControlStart});
+        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueuePipeControlStart});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueueSemaphoreStart});
+        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueueSemaphoreStart});
         additionalCommands.pop_front();
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueuePipeControlEnd});
+        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueuePipeControlEnd});
         additionalCommands.pop_front();
-        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueueSemaphoreEnd});
+        commandsToPatch.push_back({0x0, additionalCommands.front(), 0, CommandToPatch::PauseOnEnqueueSemaphoreEnd});
         additionalCommands.pop_front();
     }
 
@@ -329,11 +329,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency) {
     if (beforeWalker) {
-        appendEventForProfiling(event, true, false);
+        appendEventForProfiling(event, outTimeStampSyncCmds, true, false, skipAddingEventToResidency);
     } else {
-        appendSignalEventPostWalker(event, syncCmdBuffer, false, skipAddingEventToResidency);
+        appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, false, skipAddingEventToResidency);
     }
 }
 

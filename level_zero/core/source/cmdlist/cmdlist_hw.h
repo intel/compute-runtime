@@ -182,7 +182,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
     void appendMultiPartitionEpilogue() override;
-    void appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency);
+    void appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency);
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency);
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
@@ -285,11 +285,11 @@ struct CommandListCoreFamily : public CommandListImp {
 
     ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, uint32_t lws[3]);
     ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t &threadGroupDimensions);
-    void appendWriteKernelTimestamp(Event *event, bool beforeWalker, bool maskLsb, bool workloadPartition);
-    void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition);
-    void appendEventForProfiling(Event *event, bool beforeWalker, bool skipBarrierForEndProfiling);
+    void appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition);
+    void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds, bool maskLsb, uint32_t mask, bool workloadPartition);
+    void appendEventForProfiling(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency);
     void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
-    void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency);
+    void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency);
     virtual void programStateBaseAddress(NEO::CommandContainer &container, bool useSbaProperties);
     void appendComputeBarrierCommand();
     NEO::PipeControlArgs createBarrierFlags();

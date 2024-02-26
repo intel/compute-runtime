@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -24,17 +25,21 @@ struct CommandToPatch {
         ComputeWalker,
         SignalEventPostSyncPipeControl,
         WaitEventSemaphoreWait,
+        TimestampEventPostSyncStoreRegMem,
         Invalid
     };
     void *pDestination = nullptr;
     void *pCommand = nullptr;
+    size_t offset = 0;
     CommandType type = Invalid;
 };
+
+using CommandToPatchContainer = std::vector<CommandToPatch>;
 
 struct CmdListKernelLaunchParams {
     void *outWalker = nullptr;
     CommandToPatch *outSyncCommand = nullptr;
-    std::vector<CommandToPatch> *outListCommands = nullptr;
+    CommandToPatchContainer *outListCommands = nullptr;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;

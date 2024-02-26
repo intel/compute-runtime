@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ PVCTEST_F(CommandListEventFenceTestsPvc, givenCommandListWithProfilingEventAfter
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-    commandList->appendEventForProfiling(event.get(), false, false);
+    commandList->appendEventForProfiling(event.get(), nullptr, false, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
