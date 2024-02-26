@@ -816,3 +816,26 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGetFdFromVmExportIsCalledThenFal
     int32_t fd = 0;
     EXPECT_FALSE(ioctlHelper.getFdFromVmExport(vmId, flags, &fd));
 }
+
+TEST(IoctlHelperTestsUpstream, whenCallingGetResetStatsThenSuccessIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+
+    ResetStats resetStats{};
+    resetStats.contextId = 0;
+    drm->resetStatsToReturn.push_back(resetStats);
+
+    EXPECT_EQ(0, ioctlHelper.getResetStats(resetStats, nullptr, nullptr));
+}
+
+TEST(IoctlHelperTestsUpstream, whenCallingGetStatusAndFlagsForResetStatsThenZeroIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+
+    EXPECT_EQ(0u, ioctlHelper.getStatusForResetStats(true));
+    EXPECT_EQ(0u, ioctlHelper.getStatusForResetStats(false));
+
+    EXPECT_FALSE(ioctlHelper.validPageFault(0u));
+}

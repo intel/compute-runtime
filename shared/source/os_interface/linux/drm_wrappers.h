@@ -238,6 +238,7 @@ enum class DrmIoctl {
     gemContextDestroy,
     regRead,
     getResetStats,
+    getResetStatsPrelim,
     gemContextGetparam,
     gemContextSetparam,
     query,

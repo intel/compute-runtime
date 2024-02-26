@@ -1740,3 +1740,29 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenPatIndexIsSet) {
 
     EXPECT_EQ(drm.vmBindInputs[0].bind.pat_index, expectedPatIndex);
 }
+
+TEST(IoctlHelperXeTest, whenCallingGetResetStatsThenSuccessIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    ResetStats resetStats{};
+    resetStats.contextId = 0;
+
+    EXPECT_EQ(0, xeIoctlHelper->getResetStats(resetStats, nullptr, nullptr));
+}
+
+TEST(IoctlHelperXeTest, whenCallingGetStatusAndFlagsForResetStatsThenZeroIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    auto ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(true));
+    EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(false));
+
+    EXPECT_FALSE(ioctlHelper->validPageFault(0u));
+}

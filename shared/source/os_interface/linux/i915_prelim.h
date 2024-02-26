@@ -79,6 +79,7 @@ using NEO::PrelimI915::prelim_drm_i915_gem_vm_region_ext;
 using NEO::PrelimI915::prelim_drm_i915_gem_wait_user_fence;
 using NEO::PrelimI915::prelim_drm_i915_query_distance_info;
 using NEO::PrelimI915::prelim_drm_i915_query_hw_ip_version;
+using NEO::PrelimI915::prelim_drm_i915_reset_stats;
 using NEO::PrelimI915::prelim_drm_i915_uuid_control;
 using NEO::PrelimI915::prelim_drm_i915_vm_bind_ext_set_pat;
 using NEO::PrelimI915::prelim_drm_i915_vm_bind_ext_user_fence;

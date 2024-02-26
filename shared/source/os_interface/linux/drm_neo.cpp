@@ -244,17 +244,22 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
     for (const auto drmContextId : drmContextIds) {
         ResetStats resetStats{};
         resetStats.contextId = drmContextId;
-
-        const auto retVal{ioctlHelper->ioctl(DrmIoctl::getResetStats, &resetStats)};
+        ResetStatsFault fault{};
+        uint32_t status = 0;
+        const auto retVal{ioctlHelper->getResetStats(resetStats, &status, &fault)};
         UNRECOVERABLE_IF(retVal != 0);
-
+        if (ioctlHelper->validPageFault(fault.flags)) {
+            UNRECOVERABLE_IF((status & ioctlHelper->getStatusForResetStats(true)) == 0);
+            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ERROR: Unexpected page fault from GPU at 0x%llx, type: %d, level: %d, access: %d, aborting.\n",
+                               fault.addr, fault.type, fault.level, fault.access);
+            UNRECOVERABLE_IF(true);
+        }
         if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
             PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
             osContextLinux->setHangDetected();
             return true;
         }
     }
-
     return false;
 }
 

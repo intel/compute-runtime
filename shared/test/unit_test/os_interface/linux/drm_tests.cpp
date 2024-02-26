@@ -1393,6 +1393,41 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
     EXPECT_TRUE(isGpuHangDetected);
 }
 
+class MockIoctlHelperResetStats : public MockIoctlHelper {
+  public:
+    using MockIoctlHelper::MockIoctlHelper;
+    bool validPageFault(uint16_t flags) override {
+        return validPageFaultReturnValue;
+    }
+    uint32_t getStatusForResetStats(bool banned) override {
+        return getStatusForResetStatsReturnValue;
+    }
+    bool validPageFaultReturnValue = 0;
+    uint32_t getStatusForResetStatsReturnValue = 0;
+};
+
+TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcessTerminated) {
+    MockExecutionEnvironment executionEnvironment{};
+
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+    uint32_t contextId{0};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
+    auto ioctlHelper = std::make_unique<MockIoctlHelperResetStats>(drm);
+
+    MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
+    mockOsContextLinux.drmContextIds.push_back(0);
+
+    ResetStats resetStats{};
+    resetStats.contextId = 0;
+    drm.resetStatsToReturn.push_back(resetStats);
+
+    ioctlHelper->getStatusForResetStatsReturnValue = 1;
+    ioctlHelper->validPageFaultReturnValue = true;
+    drm.ioctlHelper = std::move(ioctlHelper);
+
+    EXPECT_THROW(drm.isGpuHangDetected(mockOsContextLinux), std::runtime_error);
+}
+
 TEST(DrmTest, givenSetupIoctlHelperWhenCalledTwiceThenIoctlHelperIsSetOnlyOnce) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};

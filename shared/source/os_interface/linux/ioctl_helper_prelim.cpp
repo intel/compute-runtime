@@ -725,6 +725,29 @@ int IoctlHelperPrelim20::vmUnbind(const VmBindParams &vmBindParams) {
     return IoctlHelper::ioctl(DrmIoctl::gemVmUnbind, &prelimVmBind);
 }
 
+int IoctlHelperPrelim20::getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) {
+    prelim_drm_i915_reset_stats prelimResetStats{};
+    prelimResetStats.ctx_id = resetStats.contextId;
+    prelimResetStats.flags = resetStats.flags;
+
+    const auto retVal = ioctl(DrmIoctl::getResetStatsPrelim, &prelimResetStats);
+    if (retVal != 0) {
+        return ioctl(DrmIoctl::getResetStats, &resetStats);
+    }
+    resetStats.resetCount = prelimResetStats.reset_count;
+    resetStats.batchActive = prelimResetStats.batch_active;
+    resetStats.batchPending = prelimResetStats.batch_pending;
+    if (status) {
+        *status = prelimResetStats.status;
+    }
+    if (resetStatsFault) {
+        auto fault = reinterpret_cast<ResetStatsFault *>(&(prelimResetStats.fault));
+        *resetStatsFault = *fault;
+    }
+
+    return retVal;
+}
+
 UuidRegisterResult IoctlHelperPrelim20::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
     prelim_drm_i915_uuid_control uuidControl = {};
     memcpy_s(uuidControl.uuid, sizeof(uuidControl.uuid), uuid.c_str(), uuid.size());
@@ -802,8 +825,8 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) co
         return PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE;
     case DrmIoctl::gemCacheReserve:
         return PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE;
-    case DrmIoctl::getResetStats:
-        return DRM_IOCTL_I915_GET_RESET_STATS;
+    case DrmIoctl::getResetStatsPrelim:
+        return PRELIM_DRM_IOCTL_I915_GET_RESET_STATS;
     default:
         return IoctlHelperI915::getIoctlRequestValue(ioctlRequest);
     }
@@ -862,6 +885,8 @@ std::string IoctlHelperPrelim20::getIoctlString(DrmIoctl ioctlRequest) const {
         return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
     case DrmIoctl::gemCacheReserve:
         return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
+    case DrmIoctl::getResetStatsPrelim:
+        return "PRELIM_DRM_IOCTL_I915_GET_RESET_STATS";
     default:
         return IoctlHelperI915::getIoctlString(ioctlRequest);
     }
@@ -1102,8 +1127,23 @@ int IoctlHelperPrelim20::getEuDebugSysFsEnable() {
     return enabledEuDebug - '0';
 }
 
+bool IoctlHelperPrelim20::validPageFault(uint16_t flags) {
+    if ((flags & I915_RESET_STATS_FAULT_VALID) != 0) {
+        return true;
+    }
+    return false;
+}
+
+uint32_t IoctlHelperPrelim20::getStatusForResetStats(bool banned) {
+    uint32_t retVal = 0u;
+    if (banned) {
+        retVal |= I915_RESET_STATS_BANNED;
+    }
+    return retVal;
+}
+
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));
 static_assert(offsetof(MemoryClassInstance, memoryClass) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_class));
 static_assert(offsetof(MemoryClassInstance, memoryInstance) == offsetof(prelim_drm_i915_gem_memory_class_instance, memory_instance));
-
+static_assert(sizeof(ResetStatsFault) == sizeof(prelim_drm_i915_reset_stats::fault));
 } // namespace NEO
