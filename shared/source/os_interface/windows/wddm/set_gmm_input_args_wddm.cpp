@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,9 @@ namespace NEO {
 
 void Wddm::setGmmInputArgs(void *args) {
     auto gmmInArgs = reinterpret_cast<GMM_INIT_IN_ARGS *>(args);
+
+    gmmInArgs->Platform.eRenderCoreFamily = gfxPlatform->eRenderCoreFamily;
+    gmmInArgs->Platform.eDisplayCoreFamily = gfxPlatform->eDisplayCoreFamily;
 
     gmmInArgs->stAdapterBDF = this->adapterBDF;
     gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,4 +46,43 @@ TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForNewResourceImplicitFlushSuppor
 
 TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForGpuIdleImplicitFlushSupportThenReturnFalse) {
     EXPECT_FALSE(OSInterface::gpuIdleImplicitFlush);
+}
+
+TEST_F(OsInterfaceTest, GivenDefaultOsInterfaceThenLocalMemoryEnabled) {
+    EXPECT_TRUE(OSInterface::osEnableLocalMemory);
+}
+
+TEST_F(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    auto wddm = new WddmMock(rootDeviceEnvironment);
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.osInterface.get());
+    wddm->init();
+    EXPECT_NE(nullptr, rootDeviceEnvironment.osInterface.get());
+
+    constexpr auto expectedCoreFamily = IGFX_GEN12_CORE;
+
+    wddm->gfxPlatform->eRenderCoreFamily = expectedCoreFamily;
+    wddm->gfxPlatform->eDisplayCoreFamily = expectedCoreFamily;
+    wddm->deviceRegistryPath = "registryPath";
+    auto expectedRegistryPath = wddm->deviceRegistryPath.c_str();
+    auto &adapterBDF = wddm->adapterBDF;
+    uint32_t bus = 0x12;
+    adapterBDF.Bus = bus;
+    uint32_t device = 0x34;
+    adapterBDF.Device = device;
+    uint32_t function = 0x56;
+    adapterBDF.Function = function;
+
+    GMM_INIT_IN_ARGS gmmInputArgs = {};
+    EXPECT_NE(0, memcmp(&wddm->adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
+    EXPECT_STRNE(expectedRegistryPath, gmmInputArgs.DeviceRegistryPath);
+
+    rootDeviceEnvironment.osInterface->getDriverModel()->setGmmInputArgs(&gmmInputArgs);
+
+    EXPECT_EQ(0, memcmp(&wddm->adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
+    EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, gmmInputArgs.ClientType);
+    EXPECT_STREQ(expectedRegistryPath, gmmInputArgs.DeviceRegistryPath);
+    EXPECT_EQ(expectedCoreFamily, gmmInputArgs.Platform.eRenderCoreFamily);
+    EXPECT_EQ(expectedCoreFamily, gmmInputArgs.Platform.eDisplayCoreFamily);
 }
