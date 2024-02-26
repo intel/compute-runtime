@@ -130,6 +130,7 @@ class Drm : public DriverModel {
 
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
     bool isGpuHangDetected(OsContext &osContext) override;
+    MOCKABLE_VIRTUAL bool checkResetStatus(OsContext &osContext);
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
     void checkNonPersistentContextsSupport();
@@ -342,6 +343,10 @@ class Drm : public DriverModel {
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;
     bool vmBindPatIndexProgrammingSupported = false;
+    bool disableScratch = false;
+
+    uint32_t gpuFaultCheckThreshold = 0u;
+    uint32_t gpuFaultCheckCounter = 0u;
 
   private:
     int getParamIoctl(DrmParam param, int *dstValue);

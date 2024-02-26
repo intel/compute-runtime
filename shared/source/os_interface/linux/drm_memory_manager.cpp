@@ -1990,6 +1990,16 @@ bool DrmMemoryManager::checkAllocationForChunking(size_t allocSize, size_t minSi
             (((allocSize / MemoryConstants::chunkThreshold) % 2) == 0) && subDeviceEnabled && debugDisabled && modeEnabled && bufferEnabled);
 }
 
+void DrmMemoryManager::checkUnexpectedGpuPageFault() {
+    for (auto &engineContainer : allRegisteredEngines) {
+        for (auto &engine : engineContainer) {
+            CommandStreamReceiver *csr = engine.commandStreamReceiver;
+            Drm &drm = getDrm(csr->getRootDeviceIndex());
+            drm.checkResetStatus(*engine.osContext);
+        }
+    }
+}
+
 bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *allocation, uint64_t boAddress, size_t boSize, size_t maxOsContextCount) {
     auto &storageInfo = allocation->storageInfo;
     auto memoryInfo = drm->getMemoryInfo();

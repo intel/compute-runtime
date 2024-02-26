@@ -98,6 +98,8 @@ class DrmMemoryManager : public MemoryManager {
     size_t getSizeOfChunk(size_t allocSize);
     bool checkAllocationForChunking(size_t allocSize, size_t minSize, bool subDeviceEnabled, bool debugDisabled, bool modeEnabled, bool bufferEnabled);
 
+    MOCKABLE_VIRTUAL void checkUnexpectedGpuPageFault();
+
   protected:
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
     BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle);

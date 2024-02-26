@@ -45,6 +45,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocatePhysicalLocalDeviceMemory;
     using DrmMemoryManager::allocationTypeForCompletionFence;
     using DrmMemoryManager::allocUserptr;
+    using DrmMemoryManager::checkUnexpectedGpuPageFault;
     using DrmMemoryManager::createAllocWithAlignment;
     using DrmMemoryManager::createAllocWithAlignmentFromUserptr;
     using DrmMemoryManager::createGraphicsAllocation;
@@ -72,6 +73,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::registerSharedBoHandleAllocation;
     using DrmMemoryManager::releaseGpuRange;
     using DrmMemoryManager::retrieveMmapOffsetForBufferObject;
+    using DrmMemoryManager::secondaryEngines;
     using DrmMemoryManager::selectAlignmentAndHeap;
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharedBoHandles;

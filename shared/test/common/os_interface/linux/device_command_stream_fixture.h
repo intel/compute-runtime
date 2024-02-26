@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 
@@ -18,6 +19,7 @@
 using NEO::Drm;
 using NEO::DrmIoctl;
 using NEO::HwDeviceIdDrm;
+using NEO::OsContext;
 using NEO::RootDeviceEnvironment;
 
 extern const int mockFd;
@@ -190,6 +192,11 @@ class DrmMockCustom : public Drm {
         return 0u;
     }
 
+    bool checkResetStatus(OsContext &osContext) override {
+        checkResetStatusCalled++;
+        return Drm::checkResetStatus(osContext);
+    }
+
     Ioctls ioctlCnt{};
     Ioctls ioctlExpected{};
 
@@ -202,6 +209,8 @@ class DrmMockCustom : public Drm {
     IsChunkingAvailableCall getChunkingAvailableCall{};
     ChunkingModeCall getChunkingModeCall{};
     IsChunkingAvailableCall isChunkingAvailableCall{};
+
+    size_t checkResetStatusCalled = 0u;
 
     std::atomic<int> ioctlRes;
     std::atomic<IoctlResExt *> ioctlResExt;

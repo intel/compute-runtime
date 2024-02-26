@@ -23,6 +23,7 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -1426,6 +1427,88 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
     drm.ioctlHelper = std::move(ioctlHelper);
 
     EXPECT_THROW(drm.isGpuHangDetected(mockOsContextLinux), std::runtime_error);
+}
+
+struct DrmMockCheckPageFault : public DrmMock {
+  public:
+    using DrmMock::DrmMock;
+    using DrmMock::gpuFaultCheckThreshold;
+};
+
+TEST(DrmTest, givenDisableScratchPagesWhenSettingGpuFaultCheckThresholdThenThesholdValueIsSet) {
+    constexpr unsigned int iteration = 3u;
+    constexpr unsigned int threshold = 3u;
+    ASSERT_NE(0u, iteration);
+    ASSERT_NE(0u, threshold);
+    DebugManagerStateRestore restore;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    debugManager.flags.DisableScratchPages.set(false);
+    debugManager.flags.GpuFaultCheckThreshold.set(threshold);
+    DrmMockCheckPageFault drm1{*executionEnvironment->rootDeviceEnvironments[0]};
+    EXPECT_EQ(0u, drm1.gpuFaultCheckThreshold);
+
+    debugManager.flags.DisableScratchPages.set(true);
+    debugManager.flags.GpuFaultCheckThreshold.set(-1);
+    DrmMockCheckPageFault drm2{*executionEnvironment->rootDeviceEnvironments[0]};
+    EXPECT_EQ(0u, drm2.gpuFaultCheckThreshold);
+
+    debugManager.flags.DisableScratchPages.set(true);
+    debugManager.flags.GpuFaultCheckThreshold.set(threshold);
+    DrmMockCheckPageFault drm3{*executionEnvironment->rootDeviceEnvironments[0]};
+    EXPECT_EQ(threshold, drm3.gpuFaultCheckThreshold);
+}
+
+struct MockDrmMemoryManagerCheckPageFault : public MockDrmMemoryManager {
+    using MockDrmMemoryManager::MockDrmMemoryManager;
+    void checkUnexpectedGpuPageFault() override {
+        checkUnexpectedGpuPageFaultCalled++;
+    }
+    size_t checkUnexpectedGpuPageFaultCalled = 0;
+};
+
+TEST(DrmTest, givenDisableScratchPagesSetWhenSettingGpuFaultCheckThresholdThenFaultCheckingIsHappeningAfterThreshold) {
+    constexpr unsigned int iteration = 3u;
+    constexpr unsigned int threshold = 3u;
+    ASSERT_NE(0u, iteration);
+    ASSERT_NE(0u, threshold);
+    DebugManagerStateRestore restore;
+    debugManager.flags.DisableScratchPages.set(true);
+    debugManager.flags.GpuFaultCheckThreshold.set(threshold);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMock(*rootDeviceEnvironment)));
+
+    auto memoryManager = new MockDrmMemoryManagerCheckPageFault(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto &drm = *executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmMock>();
+
+    uint32_t contextId{0};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
+
+    MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
+    mockOsContextLinux.drmContextIds.push_back(0);
+
+    ResetStats resetStats{};
+    resetStats.contextId = 0;
+    drm.resetStatsToReturn.push_back(resetStats);
+
+    bool isGpuHangDetected{};
+    for (auto i = 0u; i < iteration; i++) {
+        memoryManager->checkUnexpectedGpuPageFaultCalled = 0u;
+        for (auto j = 0u; j < threshold; j++) {
+            EXPECT_NO_THROW(isGpuHangDetected = drm.isGpuHangDetected(mockOsContextLinux));
+            EXPECT_FALSE(isGpuHangDetected);
+            EXPECT_EQ(0u, memoryManager->checkUnexpectedGpuPageFaultCalled);
+        }
+        EXPECT_NO_THROW(isGpuHangDetected = drm.isGpuHangDetected(mockOsContextLinux));
+        EXPECT_FALSE(isGpuHangDetected);
+        EXPECT_EQ(1u, memoryManager->checkUnexpectedGpuPageFaultCalled);
+    }
 }
 
 TEST(DrmTest, givenSetupIoctlHelperWhenCalledTwiceThenIoctlHelperIsSetOnlyOnce) {

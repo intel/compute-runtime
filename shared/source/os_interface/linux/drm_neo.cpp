@@ -59,6 +59,17 @@ Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &r
       hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     pagingFence.fill(0u);
     fenceVal.fill(0u);
+
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+        disableScratch = false;
+    }
+    if (debugManager.flags.DisableScratchPages.get() != -1) {
+        disableScratch = debugManager.flags.DisableScratchPages.get();
+    }
+    auto threshold = debugManager.flags.GpuFaultCheckThreshold.get();
+    if (disableScratch && threshold != -1) {
+        gpuFaultCheckThreshold = threshold;
+    }
 }
 
 SubmissionStatus Drm::getSubmissionStatusFromReturnCode(int32_t retCode) {
@@ -238,6 +249,20 @@ int Drm::queryGttSize(uint64_t &gttSizeOutput) {
 }
 
 bool Drm::isGpuHangDetected(OsContext &osContext) {
+    bool ret = checkResetStatus(osContext);
+    if (gpuFaultCheckThreshold != 0) {
+        if (gpuFaultCheckCounter == gpuFaultCheckThreshold) {
+            auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
+            memoryManager->checkUnexpectedGpuPageFault();
+            gpuFaultCheckCounter = 0;
+            return false;
+        }
+        gpuFaultCheckCounter++;
+    }
+    return ret;
+}
+
+bool Drm::checkResetStatus(OsContext &osContext) {
     const auto osContextLinux = static_cast<OsContextLinux *>(&osContext);
     const auto &drmContextIds = osContextLinux->getDrmContextIds();
 
@@ -1417,14 +1442,6 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 
     if (vmControlExtRegion) {
         ctl.extensions = castToUint64(vmControlExtRegion.get());
-    }
-
-    bool disableScratch = false;
-    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
-        disableScratch = false;
-    }
-    if (debugManager.flags.DisableScratchPages.get() != -1) {
-        disableScratch = debugManager.flags.DisableScratchPages.get();
     }
 
     bool useVmBind = isVmBindAvailable();

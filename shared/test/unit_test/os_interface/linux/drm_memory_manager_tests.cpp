@@ -327,6 +327,16 @@ TEST_F(DrmMemoryManagerTest, GivenAllocatePhysicalDeviceMemoryThenSuccessReturne
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, whenCallingChekcUnexpectedGpuPagedfaultThenAllEnginesWereChecked) {
+    memoryManager->checkUnexpectedGpuPageFault();
+    size_t allEnginesSize = 0u;
+    for (auto &engineContainer : memoryManager->allRegisteredEngines) {
+        allEnginesSize += engineContainer.size();
+    }
+    ASSERT_NE(0u, allEnginesSize);
+    EXPECT_EQ(allEnginesSize, mock->checkResetStatusCalled);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGpuAddressReservationIsAttemptedAtIndex1ThenAddressFromGfxPartitionIsUsed) {
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
     RootDeviceIndicesContainer rootDeviceIndices;
