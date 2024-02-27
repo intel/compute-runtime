@@ -62,7 +62,8 @@ static const std::map<zes_ras_error_category_exp_t, zes_ras_error_cat_t> rasErro
     {ZES_RAS_ERROR_CATEGORY_EXP_PROGRAMMING_ERRORS, ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS},
     {ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS, ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS},
     {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, ZES_RAS_ERROR_CAT_COMPUTE_ERRORS},
-    {ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS, ZES_RAS_ERROR_CAT_DRIVER_ERRORS}};
+    {ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS, ZES_RAS_ERROR_CAT_DRIVER_ERRORS},
+    {ZES_RAS_ERROR_CATEGORY_EXP_DISPLAY_ERRORS, ZES_RAS_ERROR_CAT_DISPLAY_ERRORS}};
 
 static ze_result_t readI915EventsDirectory(LinuxSysmanImp *pLinuxSysmanImp, std::vector<std::string> &listOfEvents, std::string *eventDirectory) {
     // To know how many errors are supported on a platform scan
@@ -180,6 +181,7 @@ ze_result_t LinuxRasSourceGt::osRasGetState(zes_ras_state_t &state, ze_bool_t cl
     for (auto errorCat = errorCategoryToEventCount.begin(); errorCat != errorCategoryToEventCount.end(); errorCat++) {
         auto errorCategory = rasErrorCatExpToErrorCat.find(errorCat->first);
         if (errorCategory == rasErrorCatExpToErrorCat.end()) {
+            initialIndex += errorCat->second;
             continue;
         }
         uint64_t errorCount = 0;

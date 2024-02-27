@@ -143,6 +143,8 @@ struct MockRasPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         data[8] = fatalEuErrorCount;
         data[9] = socFatalPsfCsc0Count;
         data[10] = fatalTlb;
+        data[11] = 0;
+        data[12] = socFatalMdfiEastCount;
         return 0;
     }
 
@@ -171,6 +173,8 @@ struct MockRasPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         data[11] = nonFatalGscAonParity;
         data[12] = nonFataGscSelfmBist;
         data[13] = fatalTlb;
+        data[14] = 0;
+        data[15] = socFatalMdfiEastCount;
         return 0;
     }
 
@@ -194,6 +198,7 @@ struct MockRasPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         data[7] = socFatalPunitTile1;
         data[8] = fatalIdiParityErrorCountTile1;
         data[9] = fatalL3BankTile1;
+        data[10] = socFatalMdfiWestCountTile1;
         return 0;
     }
 

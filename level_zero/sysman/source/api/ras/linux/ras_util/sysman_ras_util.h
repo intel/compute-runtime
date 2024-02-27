@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ class PmuRasUtil : public RasUtil {
   private:
     std::vector<int64_t> memberFds = {};
     int64_t groupFd = -1;
-    uint64_t absoluteErrorCount[maxRasErrorCategoryCount] = {0};
+    uint64_t absoluteErrorCount[maxRasErrorCategoryExpCount] = {0};
     uint32_t clearStatus = 0;
     std::map<zes_ras_error_category_exp_t, uint64_t> errorCategoryToEventCount;
     bool isSubdevice = false;
