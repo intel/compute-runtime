@@ -475,10 +475,7 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
     bool outputValidated = false;
 
     ze_module_handle_t module = nullptr;
-    ze_kernel_handle_t copyKernel = nullptr;
-
     createModule(source3, mode, context, device, deviceId, revisionId, module);
-    createKernel(module, copyKernel, kernelName3.c_str());
 
     ze_device_compute_properties_t computeProperties = {};
     zeDeviceGetComputeProperties(device, &computeProperties);
@@ -499,6 +496,10 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
 
     for (auto useView : useImageView) {
         for (auto width : allWidths) {
+
+            ze_kernel_handle_t copyKernel = nullptr;
+            createKernel(module, copyKernel, kernelName3.c_str());
+
             size_t rowPitch = 0;
 
             size_t imageWidth = width;
@@ -629,6 +630,8 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
             SUCCESS_OR_TERMINATE(commandHandler.execute());
             SUCCESS_OR_TERMINATE(commandHandler.synchronize());
 
+            SUCCESS_OR_TERMINATE(zeContextEvictMemory(context, device, pitchedBufferDevice, allocSize));
+
             // Validate
             uint8_t *srcCharBuffer = static_cast<uint8_t *>(pitchedBuffer);
             uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
@@ -655,6 +658,7 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
                 SUCCESS_OR_TERMINATE(zeImageDestroy(imgView));
             }
             SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
+            SUCCESS_OR_TERMINATE(zeMemFree(context, pitchedBufferDevice));
             SUCCESS_OR_TERMINATE(zeMemFree(context, pitchedBuffer));
             SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
             if (!outputValidated) {
@@ -663,10 +667,10 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
                 break;
             }
             std::cout << "\nTest case PASSED" << std::endl;
+            SUCCESS_OR_TERMINATE(zeKernelDestroy(copyKernel));
         }
     }
 
-    SUCCESS_OR_TERMINATE(zeKernelDestroy(copyKernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 
     return outputValidated;
