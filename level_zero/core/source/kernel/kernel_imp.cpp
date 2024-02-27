@@ -919,6 +919,9 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
             if (gfxCoreHelper.isFusedEuDispatchEnabled(this->module->getDevice()->getHwInfo(), kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion)) {
                 preferredGroupSizeProperties->preferredMultiple *= 2;
             }
+        } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_KERNEL_MAX_GROUP_SIZE_EXT_PROPERTIES) {
+            ze_kernel_max_group_size_properties_ext_t *properties = reinterpret_cast<ze_kernel_max_group_size_properties_ext_t *>(extendedProperties);
+            properties->maxGroupSize = maxKernelWorkGroupSize;
         }
         getExtendedKernelProperties(extendedProperties);
 
