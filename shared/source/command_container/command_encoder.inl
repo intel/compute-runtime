@@ -1042,17 +1042,6 @@ template <typename Family>
 size_t EncodeMiArbCheck<Family>::getCommandSize() { return sizeof(MI_ARB_CHECK); }
 
 template <typename Family>
-void EncodeMiArbCheck<Family>::programWithWa(LinearStream &commandStream, std::optional<bool> preParserDisable, EncodeDummyBlitWaArgs &waArgs) {
-    BlitCommandsHelper<Family>::dispatchDummyBlit(commandStream, waArgs);
-    EncodeMiArbCheck<Family>::program(commandStream, preParserDisable);
-}
-
-template <typename Family>
-size_t EncodeMiArbCheck<Family>::getCommandSizeWithWa(const EncodeDummyBlitWaArgs &waArgs) {
-    return EncodeMiArbCheck<Family>::getCommandSize() + BlitCommandsHelper<Family>::getDummyBlitSize(waArgs);
-}
-
-template <typename Family>
 inline void EncodeNoop<Family>::alignToCacheLine(LinearStream &commandStream) {
     auto used = commandStream.getUsed();
     auto alignment = MemoryConstants::cacheLineSize;

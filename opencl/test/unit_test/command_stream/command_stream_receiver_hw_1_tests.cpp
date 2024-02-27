@@ -694,7 +694,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
     waArgs.isWaRequired = false;
     auto baseSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
 
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize() + dummyBlitWaSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
@@ -737,7 +737,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
     size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
     waArgs.isWaRequired = false;
     auto baseSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + sizeof(typename FamilyType::MI_BATCH_BUFFER_START);
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize() + dummyBlitWaSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
@@ -778,7 +778,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWrit
     EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
     size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
     waArgs.isWaRequired = false;
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize() + dummyBlitWaSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
@@ -820,7 +820,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstima
     EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
     size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
     waArgs.isWaRequired = false;
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize() + dummyBlitWaSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
@@ -858,7 +858,7 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
     size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
     waArgs.isWaRequired = false;
-    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize() + dummyBlitWaSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         expectedBaseSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
@@ -884,7 +884,7 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
     size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
     waArgs.isWaRequired = false;
-    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize() + dummyBlitWaSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         expectedBaseSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
@@ -920,7 +920,7 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
     EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
     size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
     waArgs.isWaRequired = false;
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize() + dummyBlitWaSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
@@ -952,7 +952,7 @@ HWTEST_F(BcsTests, givenBltSizeWithCsrDependenciesAndRelaxedOrderingWhenEstimati
     EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
     size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
     waArgs.isWaRequired = false;
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSize() + dummyBlitWaSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
@@ -977,7 +977,7 @@ HWTEST_F(BcsTests, givenImageAndBufferWhenEstimateBlitCommandSizeThenReturnCorre
         EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
         size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
         waArgs.isWaRequired = false;
-        auto expectedSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+        auto expectedSize = EncodeMiArbCheck<FamilyType>::getCommandSize() + dummyBlitWaSize;
         expectedSize += isImage ? sizeof(typename FamilyType::XY_BLOCK_COPY_BLT) : sizeof(typename FamilyType::XY_COPY_BLT);
 
         if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {

@@ -1568,7 +1568,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispa
 
     const uint64_t expectedQueueSizeValueVa = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress() +
                                               RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::drainRequestSectionStart +
-                                              EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) +
+                                              EncodeMiArbCheck<FamilyType>::getCommandSize() +
                                               RelaxedOrderingHelper::getQueueSizeLimitValueOffset<FamilyType>();
 
     auto findStaticSchedulerUpdate = [&](LinearStream &cs, size_t offset, uint32_t expectedQueueSize) {

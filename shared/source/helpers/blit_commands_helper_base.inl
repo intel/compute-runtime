@@ -66,7 +66,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
     if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::defaultMode) {
         switch (debugManager.flags.PostBlitCommand.get()) {
         case BlitterConstants::PostBlitMode::miArbCheck:
-            EncodeMiArbCheck<GfxFamily>::programWithWa(linearStream, std::nullopt, waArgs);
+            EncodeMiArbCheck<GfxFamily>::program(linearStream, std::nullopt);
             return;
         case BlitterConstants::PostBlitMode::miFlush:
             EncodeMiFlushDW<GfxFamily>::programWithWa(linearStream, 0, 0, args);
@@ -81,7 +81,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
         args.waArgs.isWaRequired = false;
     }
 
-    EncodeMiArbCheck<GfxFamily>::programWithWa(linearStream, std::nullopt, waArgs);
+    EncodeMiArbCheck<GfxFamily>::program(linearStream, std::nullopt);
 }
 
 template <typename GfxFamily>
@@ -91,7 +91,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(const RootDevi
     if (debugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::defaultMode) {
         switch (debugManager.flags.PostBlitCommand.get()) {
         case BlitterConstants::PostBlitMode::miArbCheck:
-            return EncodeMiArbCheck<GfxFamily>::getCommandSizeWithWa(waArgs);
+            return EncodeMiArbCheck<GfxFamily>::getCommandSize();
         case BlitterConstants::PostBlitMode::miFlush:
             return EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
         default:
@@ -101,9 +101,8 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(const RootDevi
     size_t size = 0u;
     if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
         size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
-        waArgs.isWaRequired = false;
     }
-    size += EncodeMiArbCheck<GfxFamily>::getCommandSizeWithWa(waArgs);
+    size += EncodeMiArbCheck<GfxFamily>::getCommandSize();
     return size;
 }
 

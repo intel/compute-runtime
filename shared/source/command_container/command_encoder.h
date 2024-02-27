@@ -541,12 +541,10 @@ template <typename GfxFamily>
 struct EncodeMiArbCheck {
     using MI_ARB_CHECK = typename GfxFamily::MI_ARB_CHECK;
 
-    static void programWithWa(LinearStream &commandStream, std::optional<bool> preParserDisable, EncodeDummyBlitWaArgs &waArgs);
-    static size_t getCommandSizeWithWa(const EncodeDummyBlitWaArgs &waArgs);
-
-  protected:
     static void program(LinearStream &commandStream, std::optional<bool> preParserDisable);
     static size_t getCommandSize();
+
+  protected:
     static void adjust(MI_ARB_CHECK &miArbCheck, std::optional<bool> preParserDisable);
 };
 

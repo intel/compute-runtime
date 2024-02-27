@@ -384,8 +384,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
         rootDeviceEnvironment.initGmm();
 
-        EncodeDummyBlitWaArgs waArgs{};
-        EncodeMiArbCheck<FamilyType>::programWithWa(linearStream, false, waArgs);
+        EncodeMiArbCheck<FamilyType>::program(linearStream, false);
 
         if (value == 0) {
             EXPECT_TRUE(buffer[0].getPreParserDisable());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,7 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchDisablePrefetcher(bool disable) {
 
     if (isDisablePrefetcherRequired) {
-        EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&this->rootDeviceEnvironment)};
-        EncodeMiArbCheck<GfxFamily>::programWithWa(ringCommandStream, disable, waArgs);
+        EncodeMiArbCheck<GfxFamily>::program(ringCommandStream, disable);
     }
 }
 

@@ -155,11 +155,9 @@ HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSizeThenHonorUseProvide
 
 HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenReturnCorrectResult) {
     EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
-    size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
-    waArgs.isWaRequired = false;
     DebugManagerStateRestore restore{};
 
-    size_t arbCheckSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
+    size_t arbCheckSize = EncodeMiArbCheck<FamilyType>::getCommandSize();
     size_t expectedDefaultSize = arbCheckSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
@@ -187,7 +185,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
     GenCmdList commands{};
     EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
-    size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
+    size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSize() + BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);

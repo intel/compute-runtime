@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ XE_HPC_CORETEST_F(DirectSubmissionTestXeHpcCore, givenXeHpcCoreWhenDispatchDisab
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    EXPECT_EQ(EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}), directSubmission.getSizeDisablePrefetcher());
+    EXPECT_EQ(EncodeMiArbCheck<FamilyType>::getCommandSize(), directSubmission.getSizeDisablePrefetcher());
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);

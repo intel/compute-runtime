@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,19 +148,19 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenNonZeroSbaAddressesWhenProgra
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
 
-    size_t sizeExpected = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) + sizeof(MI_BATCH_BUFFER_START);
+    size_t sizeExpected = EncodeMiArbCheck<FamilyType>::getCommandSize() + sizeof(MI_BATCH_BUFFER_START);
 
     for (int i = 0; i < 6; i++) {
         sizeExpected += NEO::EncodeSetMMIO<FamilyType>::sizeIMM;
         sizeExpected += NEO::EncodeMath<FamilyType>::streamCommandSize;
         sizeExpected += 2 * sizeof(MI_STORE_REGISTER_MEM);
         sizeExpected += 2 * sizeof(MI_STORE_DATA_IMM);
-        sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{});
+        sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSize();
         sizeExpected += sizeof(MI_BATCH_BUFFER_START);
         sizeExpected += sizeof(MI_STORE_DATA_IMM);
     }
 
-    sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) + sizeof(MI_BATCH_BUFFER_START);
+    sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSize() + sizeof(MI_BATCH_BUFFER_START);
 
     EXPECT_EQ(sizeExpected, cmdStream.getUsed());
 
@@ -260,17 +260,17 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenPro
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
 
-    size_t sizeExpected = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) + sizeof(MI_BATCH_BUFFER_START);
+    size_t sizeExpected = EncodeMiArbCheck<FamilyType>::getCommandSize() + sizeof(MI_BATCH_BUFFER_START);
 
     sizeExpected += NEO::EncodeSetMMIO<FamilyType>::sizeIMM;
     sizeExpected += NEO::EncodeMath<FamilyType>::streamCommandSize;
     sizeExpected += 2 * sizeof(MI_STORE_REGISTER_MEM);
     sizeExpected += 2 * sizeof(MI_STORE_DATA_IMM);
-    sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{});
+    sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSize();
     sizeExpected += sizeof(MI_BATCH_BUFFER_START);
     sizeExpected += sizeof(MI_STORE_DATA_IMM);
 
-    sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) + sizeof(MI_BATCH_BUFFER_START);
+    sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSize() + sizeof(MI_BATCH_BUFFER_START);
 
     EXPECT_EQ(sizeExpected, cmdStream.getUsed());
     EXPECT_EQ(sizeExpected, debugger->getSbaTrackingCommandsSize(1));
