@@ -76,9 +76,16 @@ int setAlarm(bool enableAlarm) {
         std::atomic<bool> threadStarted{false};
         alarmThread = std::make_unique<std::thread>([&]() {
             auto currentUltIterationMaxTimeInS = NEO::ultIterationMaxTimeInS;
-            auto ultIterationMaxTimeInSEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
+
+            std::string envVar = std::string("NEO_") + NEO::executionName + "_ITERATION_MAX_TIME";
+            auto ultIterationMaxTimeInSEnv = getenv(envVar.c_str());
             if (ultIterationMaxTimeInSEnv != nullptr) {
                 currentUltIterationMaxTimeInS = atoi(ultIterationMaxTimeInSEnv);
+            } else {
+                ultIterationMaxTimeInSEnv = getenv("NEO_ULT_ITERATION_MAX_TIME");
+                if (ultIterationMaxTimeInSEnv != nullptr) {
+                    currentUltIterationMaxTimeInS = atoi(ultIterationMaxTimeInSEnv);
+                }
             }
             unsigned int alarmTimeInS = currentUltIterationMaxTimeInS * ::testing::GTEST_FLAG(repeat);
             std::cout << "set timeout to: " << alarmTimeInS << " seconds" << std::endl;
