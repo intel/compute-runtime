@@ -3287,7 +3287,7 @@ struct KernelLargeGrfTests : Test<ClDeviceFixture> {
     SPatchExecutionEnvironment executionEnvironment = {};
 };
 
-HWTEST_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSizeThenCorrectValueReturned) {
+HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSizeThenCorrectValueReturned, IsAtLeastXeHpCore) {
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 16;
     pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4;
     pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize = 0;
