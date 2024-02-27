@@ -940,50 +940,62 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelThenProgram
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
     findSemaphores(1); // chaining
+    EXPECT_EQ(1u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     findSemaphores(0); // no implicit dependency semaphore
+    EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
     findSemaphores(2); // implicit dependency + chaining
+    EXPECT_EQ(3u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
     findSemaphores(0); // no implicit dependency
+    EXPECT_EQ(4u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
     findSemaphores(2); // implicit dependency + chaining
+    EXPECT_EQ(5u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
     findSemaphores(0); // no implicit dependency
+    EXPECT_EQ(6u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
     findSemaphores(2); // implicit dependency + chaining
+    EXPECT_EQ(7u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryFill(alloc, &copyData, 1, 16, nullptr, 0, nullptr, false);
     findSemaphores(0); // no implicit dependency
+    EXPECT_EQ(8u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
     findSemaphores(2); // implicit dependency + chaining
+    EXPECT_EQ(9u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernelIndirect(kernel->toHandle(), *static_cast<ze_group_count_t *>(alloc), nullptr, 0, nullptr, false);
     findSemaphores(0); // no implicit dependency
+    EXPECT_EQ(10u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
     findSemaphores(2); // implicit dependency + chaining
+    EXPECT_EQ(11u, immCmdList->inOrderExecInfo->getCounterValue());
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, false);
     findSemaphores(0); // no implicit dependency
+    EXPECT_EQ(12u, immCmdList->inOrderExecInfo->getCounterValue());
 
     context->freeMem(alloc);
 }

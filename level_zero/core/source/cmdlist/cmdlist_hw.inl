@@ -1637,11 +1637,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     if (this->isInOrderExecutionEnabled()) {
         if (inOrderCopyOnlySignalingAllowed) {
             appendSignalInOrderDependencyCounter(signalEvent);
-        }
-
-        if (!isCopyOnly() || inOrderCopyOnlySignalingAllowed) {
-            bool nonWalkerInOrderCmdChaining = !isCopyOnly() && isInOrderNonWalkerSignalingRequired(signalEvent);
-            handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdChaining);
+            handleInOrderDependencyCounter(signalEvent, false);
         }
     } else {
         handleInOrderDependencyCounter(signalEvent, false);
