@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -302,6 +302,10 @@ zeGetCommandQueueProcAddrTable(
     pDdiTable->pfnDestroy = L0::zeCommandQueueDestroy;
     pDdiTable->pfnExecuteCommandLists = L0::zeCommandQueueExecuteCommandLists;
     pDdiTable->pfnSynchronize = L0::zeCommandQueueSynchronize;
+    if (version >= ZE_API_VERSION_1_9) {
+        pDdiTable->pfnGetOrdinal = L0::zeCommandQueueGetOrdinal;
+        pDdiTable->pfnGetIndex = L0::zeCommandQueueGetIndex;
+    }
     driverDdiTable.coreDdiTable.CommandQueue = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         pDdiTable->pfnCreate = zeCommandQueueCreateTracing;
@@ -351,6 +355,13 @@ zeGetCommandListProcAddrTable(
     pDdiTable->pfnAppendMemoryCopyFromContext = L0::zeCommandListAppendMemoryCopyFromContext;
     pDdiTable->pfnAppendQueryKernelTimestamps = L0::zeCommandListAppendQueryKernelTimestamps;
     pDdiTable->pfnHostSynchronize = L0::zeCommandListHostSynchronize;
+    if (version >= ZE_API_VERSION_1_9) {
+        pDdiTable->pfnGetDeviceHandle = L0::zeCommandListGetDeviceHandle;
+        pDdiTable->pfnGetContextHandle = L0::zeCommandListGetContextHandle;
+        pDdiTable->pfnGetOrdinal = L0::zeCommandListGetOrdinal;
+        pDdiTable->pfnImmediateGetIndex = L0::zeCommandListImmediateGetIndex;
+        pDdiTable->pfnIsImmediate = L0::zeCommandListIsImmediate;
+    }
     driverDdiTable.coreDdiTable.CommandList = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         pDdiTable->pfnAppendBarrier = zeCommandListAppendBarrierTracing;
@@ -428,6 +439,8 @@ zeGetEventPoolProcAddrTable(
     pDdiTable->pfnGetIpcHandle = L0::zeEventPoolGetIpcHandle;
     pDdiTable->pfnOpenIpcHandle = L0::zeEventPoolOpenIpcHandle;
     pDdiTable->pfnCloseIpcHandle = L0::zeEventPoolCloseIpcHandle;
+    pDdiTable->pfnGetContextHandle = L0::zeEventPoolGetContextHandle;
+    pDdiTable->pfnGetFlags = L0::zeEventPoolGetFlags;
     driverDdiTable.coreDdiTable.EventPool = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         pDdiTable->pfnCreate = zeEventPoolCreateTracing;
@@ -459,6 +472,11 @@ zeGetEventProcAddrTable(
     pDdiTable->pfnHostReset = L0::zeEventHostReset;
     pDdiTable->pfnQueryKernelTimestamp = L0::zeEventQueryKernelTimestamp;
     pDdiTable->pfnQueryKernelTimestampsExt = L0::zeEventQueryKernelTimestampsExt;
+    if (version >= ZE_API_VERSION_1_9) {
+        pDdiTable->pfnGetEventPool = L0::zeEventGetEventPool;
+        pDdiTable->pfnGetSignalScope = L0::zeEventGetSignalScope;
+        pDdiTable->pfnGetWaitScope = L0::zeEventGetWaitScope;
+    }
     driverDdiTable.coreDdiTable.Event = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         pDdiTable->pfnCreate = zeEventCreateTracing;
