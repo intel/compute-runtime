@@ -410,7 +410,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenSetInOrde
     uint32_t counterOffset = 64;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->inOrderExecInfo->addAllocationOffset(counterOffset);
+    immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
 
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->makeCounterBasedImplicitlyDisabled();
@@ -486,7 +486,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
     uint32_t counterOffset = 64;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->inOrderExecInfo->addAllocationOffset(counterOffset);
+    immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -736,8 +736,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSem
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
 
-    immCmdList->inOrderExecInfo->addAllocationOffset(counterOffset);
-    immCmdList2->inOrderExecInfo->addAllocationOffset(counterOffset2);
+    immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
+    immCmdList2->inOrderExecInfo->setAllocationOffset(counterOffset2);
 
     auto eventPool = createEvents<FamilyType>(2, false);
 
@@ -1629,7 +1629,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
     uint32_t counterOffset = 64;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->inOrderExecInfo->addAllocationOffset(counterOffset);
+    immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -2140,7 +2140,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramP
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->inOrderExecInfo->addAllocationOffset(64);
+    immCmdList->inOrderExecInfo->setAllocationOffset(64);
     immCmdList->inOrderExecInfo->addCounterValue(123);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -2179,7 +2179,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenPro
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->inOrderExecInfo->addAllocationOffset(64);
+    immCmdList->inOrderExecInfo->setAllocationOffset(64);
     immCmdList->inOrderExecInfo->addCounterValue(123);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -3018,6 +3018,39 @@ HWTEST2_F(InOrderCmdListTests, givenRegularInOrderCmdListWhenProgrammingAppendWa
     EXPECT_EQ(0u, sdiCmd->getDataDword1());
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflowThenHandleOffsetCorrectly, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->inOrderExecInfo->addCounterValue(std::numeric_limits<uint32_t>::max() - 1);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    bool useZeroOffset = false;
+    uint64_t expectedCounter = 1;
+    uint32_t expectedOffset = 0;
+
+    for (uint32_t i = 0; i < 10; i++) {
+        immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+        if (immCmdList->isQwordInOrderCounter()) {
+            expectedCounter += static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) - 1;
+        } else {
+            expectedCounter = 1;
+            expectedOffset = useZeroOffset ? 0 : static_cast<uint32_t>(sizeof(uint64_t));
+        }
+
+        EXPECT_EQ(expectedCounter, immCmdList->inOrderExecInfo->getCounterValue());
+        EXPECT_EQ(expectedOffset, immCmdList->inOrderExecInfo->getAllocationOffset());
+
+        EXPECT_EQ(expectedCounter, events[0]->inOrderExecSignalValue);
+        EXPECT_EQ(expectedOffset, events[0]->inOrderAllocationOffset);
+
+        immCmdList->inOrderExecInfo->addCounterValue(std::numeric_limits<uint32_t>::max() - 2);
+
+        useZeroOffset = !useZeroOffset;
+    }
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflowThenHandleItCorrectly, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -3391,7 +3424,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     uint32_t counterOffset = 64;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->inOrderExecInfo->addAllocationOffset(counterOffset);
+    immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -3482,7 +3515,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleComplet
     uint32_t counterOffset = 64;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->inOrderExecInfo->addAllocationOffset(counterOffset);
+    immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -5411,7 +5444,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         EXPECT_EQ(cmdList.end(), sdiItor);
     }
 
-    regularCmdList->inOrderExecInfo->addAllocationOffset(123);
+    regularCmdList->inOrderExecInfo->setAllocationOffset(123);
     auto hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
     *hostAddr = 0x1234;
     regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining = true;

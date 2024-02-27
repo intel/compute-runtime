@@ -124,7 +124,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
 
         inOrderExecInfo.addCounterValue(2);
         inOrderExecInfo.addRegularCmdListSubmissionCounter(3);
-        inOrderExecInfo.addAllocationOffset(4);
+        inOrderExecInfo.setAllocationOffset(4);
         *inOrderExecInfo.getBaseHostAddress() = 5;
         *deviceAllocHostAddress = 6;
 

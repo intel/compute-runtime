@@ -72,18 +72,24 @@ InOrderExecInfo::InOrderExecInfo(NEO::GraphicsAllocation *deviceCounterAllocatio
     reset();
 }
 
+void InOrderExecInfo::initializeAllocationsFromHost() {
+    if (deviceCounterAllocation) {
+        const size_t deviceAllocationWriteSize = sizeof(uint64_t) * numDevicePartitionsToWait;
+        memset(ptrOffset(deviceCounterAllocation->getUnderlyingBuffer(), allocationOffset), 0, deviceAllocationWriteSize);
+    }
+
+    if (hostCounterAllocation) {
+        const size_t hostAllocationWriteSize = sizeof(uint64_t) * numHostPartitionsToWait;
+        memset(ptrOffset(hostCounterAllocation->getUnderlyingBuffer(), allocationOffset), 0, hostAllocationWriteSize);
+    }
+}
+
 void InOrderExecInfo::reset() {
     resetCounterValue();
     regularCmdListSubmissionCounter = 0;
     allocationOffset = 0;
 
-    if (deviceCounterAllocation) {
-        memset(deviceCounterAllocation->getUnderlyingBuffer(), 0, deviceCounterAllocation->getUnderlyingBufferSize());
-    }
-
-    if (hostCounterAllocation) {
-        memset(hostCounterAllocation->getUnderlyingBuffer(), 0, hostCounterAllocation->getUnderlyingBufferSize());
-    }
+    initializeAllocationsFromHost();
 }
 
 } // namespace NEO

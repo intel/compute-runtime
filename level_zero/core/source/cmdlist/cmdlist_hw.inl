@@ -166,12 +166,14 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
 
         inOrderExecInfo->resetCounterValue();
 
-        // multitile immediate writes are uint64_t aligned
-        uint32_t offset = this->partitionCount * static_cast<uint32_t>(sizeof(uint64_t));
+        uint32_t newOffset = 0;
+        if (inOrderExecInfo->getAllocationOffset() == 0) {
+            // multitile immediate writes are uint64_t aligned
+            newOffset = this->partitionCount * static_cast<uint32_t>(sizeof(uint64_t));
+        }
 
-        inOrderExecInfo->addAllocationOffset(offset);
-
-        UNRECOVERABLE_IF(inOrderExecInfo->getAllocationOffset() + offset >= inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBufferSize());
+        inOrderExecInfo->setAllocationOffset(newOffset);
+        inOrderExecInfo->initializeAllocationsFromHost();
 
         CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr); // signal counter on new offset
     }

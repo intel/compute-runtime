@@ -49,7 +49,8 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint32_t getNumDevicePartitionsToWait() const { return numDevicePartitionsToWait; }
     uint32_t getNumHostPartitionsToWait() const { return numHostPartitionsToWait; }
 
-    void addAllocationOffset(uint32_t addValue) { allocationOffset += addValue; }
+    void setAllocationOffset(uint32_t newOffset) { allocationOffset = newOffset; }
+    void initializeAllocationsFromHost();
     uint32_t getAllocationOffset() const { return allocationOffset; }
 
     void reset();
