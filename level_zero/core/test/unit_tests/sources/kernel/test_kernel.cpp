@@ -1651,6 +1651,53 @@ HWTEST2_F(KernelMaxNumSubgroupsTests, givenLargeGrfAndSimdSmallerThan32WhenCalcu
     EXPECT_EQ(static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize) / maxSubgroupSize, maxNumSubgroups * 2);
 }
 
+HWTEST2_F(KernelMaxNumSubgroupsTests, givenLargeGrfAndSimdSmallerThan32WhenPassingKernelMaxGroupSizePropertiesStructToGetPropertiesThenHalfDeviceMaxGroupSizeIsReturned, IsWithinXeGfxFamily) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.simdSize = 16;
+    kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
+
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
+
+    auto mockKernel = std::make_unique<MockKernel>(this->module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    mockKernel->initialize(&kernelDesc);
+
+    ze_kernel_properties_t kernelProperties = {};
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
+    ze_kernel_max_group_size_properties_ext_t maxGroupSizeProperties = {};
+    maxGroupSizeProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_MAX_GROUP_SIZE_EXT_PROPERTIES;
+
+    kernelProperties.pNext = &maxGroupSizeProperties;
+
+    ze_result_t res = mockKernel->getProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize), maxGroupSizeProperties.maxGroupSize * 2);
+}
+
+TEST_F(KernelPropertiesTests, whenPassingKernelMaxGroupSizePropertiesStructToGetPropertiesThenMaxGroupSizeIsReturned) {
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(kernel->getKernelDescriptor());
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
+    kernelDescriptor.kernelAttributes.simdSize = 16;
+
+    ze_kernel_properties_t kernelProperties = {};
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
+
+    ze_kernel_max_group_size_properties_ext_t maxGroupSizeProperties = {};
+    maxGroupSizeProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_MAX_GROUP_SIZE_EXT_PROPERTIES;
+
+    kernelProperties.pNext = &maxGroupSizeProperties;
+
+    ze_result_t res = kernel->getProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto &gfxCoreHelper = module->getDevice()->getGfxCoreHelper();
+    uint32_t maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, false, static_cast<uint32_t>(this->module->getMaxGroupSize(kernelDescriptor)));
+    EXPECT_EQ(maxKernelWorkGroupSize, maxGroupSizeProperties.maxGroupSize);
+}
+
 TEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructToGetPropertiesThenPreferredMultipleIsReturned) {
     ze_kernel_properties_t kernelProperties = {};
     kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
