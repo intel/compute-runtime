@@ -1403,7 +1403,7 @@ HWTEST_F(CommandListCreate, givenSignalEventWhenCallingSynchronizeThenUnregister
         zeEventHostReset(event3);
 
         zeEventHostSynchronize(event3, 1);
-        EXPECT_EQ(ultCsr->getNumClients(), 1u);
+        EXPECT_EQ(ultCsr->getNumClients(), 0u);
     }
 
     zeEventDestroy(event1);
