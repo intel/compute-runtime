@@ -282,6 +282,10 @@ struct Event : _ze_event_handle_t {
     void unsetInOrderExecInfo();
     uint32_t getCounterBasedFlags() const { return counterBasedFlags; }
 
+    uint32_t getPacketsToWait() const {
+        return this->signalAllEventPackets ? getMaxPacketsCount() : getPacketsInUse();
+    }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 

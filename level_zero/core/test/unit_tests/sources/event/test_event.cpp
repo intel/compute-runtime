@@ -3903,6 +3903,16 @@ TEST_F(EventTests, givenCallToEventQueryStatusWithNullKernelPointerReturnsCounte
     EXPECT_EQ(nullptr, event->getKernelWithPrintfDeviceMutex());
 }
 
+HWTEST_F(EventTests, givenSignalAllPacketsValueWhenGettingEventPacketToWaitThenReturnCorrectValue) {
+    event->maxPacketCount = 4;
+
+    event->signalAllEventPackets = true;
+    EXPECT_EQ(4u, event->getPacketsToWait());
+
+    event->signalAllEventPackets = false;
+    EXPECT_EQ(event->getPacketsInUse(), event->getPacketsToWait());
+}
+
 TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
     const auto mockCsr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());

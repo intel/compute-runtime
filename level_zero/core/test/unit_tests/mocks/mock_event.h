@@ -27,6 +27,7 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::isFromIpcPool;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;
+    using BaseClass::maxPacketCount;
     using BaseClass::signalAllEventPackets;
     using BaseClass::signalScope;
     using BaseClass::waitScope;
@@ -44,6 +45,7 @@ struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass::isFromIpcPool;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;
+    using BaseClass::maxPacketCount;
     using BaseClass::signalAllEventPackets;
     using BaseClass::signalScope;
     using BaseClass::waitScope;
@@ -106,6 +108,7 @@ class MockEvent : public ::L0::Event {
     using ::L0::Event::isFromIpcPool;
     using ::L0::Event::l3FlushAppliedOnKernel;
     using ::L0::Event::maxKernelCount;
+    using ::L0::Event::maxPacketCount;
     using ::L0::Event::signalAllEventPackets;
     using ::L0::Event::signalScope;
     using ::L0::Event::waitScope;
