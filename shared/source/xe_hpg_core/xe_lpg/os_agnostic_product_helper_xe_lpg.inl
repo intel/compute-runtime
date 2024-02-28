@@ -89,14 +89,6 @@ uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQue
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
-    if (debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
-        return debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
-    }
-    return 1u;
-}
-
-template <>
 std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
     switch (allocationType) {
     case AllocationType::tagBuffer:

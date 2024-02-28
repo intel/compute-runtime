@@ -454,6 +454,14 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTimestampWaitSupport
     EXPECT_FALSE(productHelper->isTimestampWaitSupportedForEvents());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue, IsBeforeXeHpCore) {
+    EXPECT_EQ(productHelper->getInternalHeapsPreallocated(), 0u);
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(3);
+    EXPECT_EQ(productHelper->getInternalHeapsPreallocated(), 3u);
+}
+
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenTrueIsReturned, IsNotXeHpgOrXeHpcCore) {
     EXPECT_TRUE(productHelper->isTlbFlushRequired());
 }

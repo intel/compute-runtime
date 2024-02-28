@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -198,6 +199,15 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGettingEvictIfNecessary
 
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckBlitEnqueueAllowedThenReturnFalse, IsXeLpg) {
     EXPECT_FALSE(productHelper->blitEnqueueAllowed());
+}
+
+HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue, IsXeLpg) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 1u);
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(3);
+    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 3u);
 }
 
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues, IsXeLpg) {

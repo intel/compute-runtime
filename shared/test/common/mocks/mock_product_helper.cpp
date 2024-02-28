@@ -346,6 +346,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isTimestampWaitSupportedForEvents() const {
 }
 
 template <>
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getInternalHeapsPreallocated() const {
+    return 0u;
+}
+
+template <>
 uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilitiesValue() const {
     return 0;
 }

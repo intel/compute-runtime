@@ -717,6 +717,14 @@ DG2TEST_F(ProductHelperTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForE
     EXPECT_TRUE(productHelper->isTimestampWaitSupportedForEvents());
 }
 
+DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue) {
+    EXPECT_EQ(productHelper->getInternalHeapsPreallocated(), 1u);
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(3);
+    EXPECT_EQ(productHelper->getInternalHeapsPreallocated(), 3u);
+}
+
 DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdsWhenConfigIsCheckedThenCorrectValueIsReturned) {
     for (const auto &deviceId : dg2G10DeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;

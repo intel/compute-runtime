@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -72,6 +73,15 @@ using ProductHelperTestXeHpcCore = Test<DeviceFixture>;
 XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimestampWaitSupportForEventsThenReturnTrue) {
     auto &helper = getHelper<ProductHelper>();
     EXPECT_TRUE(helper.isTimestampWaitSupportedForEvents());
+}
+
+XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 1u);
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SetAmountOfInternalHeapsToPreallocate.set(3);
+    EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 3u);
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
