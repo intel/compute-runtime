@@ -712,7 +712,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsPlatformQueryNotSupportedTh
     EXPECT_FALSE(productHelper->isPlatformQuerySupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsNotXeHpgCore) {
+HWTEST2_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsBeforeXeHpgCore) {
     DebugManagerStateRestore restorer;
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
