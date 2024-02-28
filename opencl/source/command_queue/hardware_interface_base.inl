@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -288,7 +288,7 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
             EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandStream,
                                                                   address,
                                                                   static_cast<uint32_t>(waitCondition),
-                                                                  COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false);
+                                                                  COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, nullptr);
         }
     }
 }

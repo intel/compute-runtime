@@ -424,7 +424,8 @@ struct EncodeSemaphore {
                                           COMPARE_OPERATION compareMode,
                                           bool registerPollMode,
                                           bool useQwordData,
-                                          bool indirect);
+                                          bool indirect,
+                                          void **outSemWaitCmd);
 
     static void applyMiSemaphoreWaitCommand(LinearStream &commandStream,
                                             std::list<void *> &commandsList);

@@ -813,8 +813,12 @@ void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
                                                         COMPARE_OPERATION compareMode,
                                                         bool registerPollMode,
                                                         bool useQwordData,
-                                                        bool indirect) {
+                                                        bool indirect,
+                                                        void **outSemWaitCmd) {
     auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    if (outSemWaitCmd != nullptr) {
+        *outSemWaitCmd = semaphoreCommand;
+    }
     programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect);
 }
 template <typename Family>
