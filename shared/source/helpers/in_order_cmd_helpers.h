@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/allocation_type.h"
 
 #include <cstdint>
 #include <memory>
@@ -18,6 +20,27 @@ namespace NEO {
 class GraphicsAllocation;
 class MemoryManager;
 class Device;
+class TagNodeBase;
+
+template <bool deviceAlloc>
+class DeviceAllocNodeType {
+  public:
+    static constexpr size_t defaultAllocatorTagCount = 128;
+
+    static constexpr AllocationType getAllocationType() { return deviceAlloc ? AllocationType::timestampPacketTagBuffer : NEO::AllocationType::bufferHostMemory; }
+
+    static constexpr TagNodeType getTagNodeType() { return TagNodeType::counter64b; }
+
+    static constexpr size_t getSinglePacketSize() { return sizeof(uint64_t); }
+
+    void initialize() { data = 0; }
+
+  protected:
+    uint64_t data = {};
+};
+
+static_assert(sizeof(uint64_t) == sizeof(DeviceAllocNodeType<true>), "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
+static_assert(sizeof(uint64_t) == sizeof(DeviceAllocNodeType<false>), "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 class InOrderExecInfo : public NEO::NonCopyableClass {
   public:
@@ -25,12 +48,13 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     InOrderExecInfo() = delete;
 
-    static std::shared_ptr<InOrderExecInfo> create(NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling, bool duplicatedHostStorage);
+    static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling, bool duplicatedHostStorage);
     static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, uint64_t deviceAddress, uint64_t *hostAddress, uint64_t counterValue);
 
-    InOrderExecInfo(NEO::GraphicsAllocation *deviceCounterAllocation, NEO::GraphicsAllocation *hostCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
+    InOrderExecInfo(TagNodeBase *deviceCounterNode, NEO::GraphicsAllocation *hostCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, uint32_t rootDeviceIndex,
+                    bool regularCmdList, bool atomicDeviceSignalling);
 
-    NEO::GraphicsAllocation *getDeviceCounterAllocation() const { return deviceCounterAllocation; }
+    NEO::GraphicsAllocation *getDeviceCounterAllocation() const;
     NEO::GraphicsAllocation *getHostCounterAllocation() const { return hostCounterAllocation; }
     uint64_t *getBaseHostAddress() const { return hostAddress; }
     uint64_t getBaseDeviceAddress() const { return deviceAddress; }
@@ -57,7 +81,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
   protected:
     NEO::MemoryManager &memoryManager;
-    NEO::GraphicsAllocation *deviceCounterAllocation = nullptr;
+    NEO::TagNodeBase *deviceCounterNode = nullptr;
     NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
     uint64_t counterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
@@ -66,6 +90,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint32_t numDevicePartitionsToWait = 0;
     uint32_t numHostPartitionsToWait = 0;
     uint32_t allocationOffset = 0;
+    uint32_t rootDeviceIndex = 0;
     bool regularCmdList = false;
     bool duplicatedHostStorage = false;
     bool atomicDeviceSignalling = false;

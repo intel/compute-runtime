@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,8 @@ class TagTypeBase {
 enum class TagNodeType {
     timestampPacket,
     hwTimeStamps,
-    hwPerfCounter
+    hwPerfCounter,
+    counter64b
 };
 
 enum class CacheRegion : uint16_t {

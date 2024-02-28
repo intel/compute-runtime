@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/perf_counter.h"
@@ -443,14 +444,20 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSet
     MockTagAllocator<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestampPacketAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>), false, mockDeviceBitfield);
     MockTagAllocator<HwTimeStamps> hwTimeStampsAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(HwTimeStamps), false, mockDeviceBitfield);
     MockTagAllocator<HwPerfCounter> hwPerfCounterAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(HwPerfCounter), false, mockDeviceBitfield);
+    MockTagAllocator<DeviceAllocNodeType<true>> inOrderDeviceAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(HwPerfCounter), false, mockDeviceBitfield);
+    MockTagAllocator<DeviceAllocNodeType<false>> inOrderHostAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(HwPerfCounter), false, mockDeviceBitfield);
 
     auto timestampPacketTag = timestampPacketAllocator.getTag();
     auto hwTimeStampsTag = hwTimeStampsAllocator.getTag();
     auto hwPerfCounterTag = hwPerfCounterAllocator.getTag();
+    auto inOrderDeviceTag = inOrderDeviceAllocator.getTag();
+    auto inOrderHostTag = inOrderHostAllocator.getTag();
 
     EXPECT_EQ(AllocationType::timestampPacketTagBuffer, timestampPacketTag->getBaseGraphicsAllocation()->getAllocationType());
     EXPECT_EQ(AllocationType::profilingTagBuffer, hwTimeStampsTag->getBaseGraphicsAllocation()->getAllocationType());
     EXPECT_EQ(AllocationType::profilingTagBuffer, hwPerfCounterTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::timestampPacketTagBuffer, inOrderDeviceTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::bufferHostMemory, inOrderHostTag->getBaseGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMultiGraphicsAllocation) {
@@ -545,6 +552,42 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
     }
 
     {
+        TagNode<DeviceAllocNodeType<true>> inOrder = {};
+
+        EXPECT_ANY_THROW(inOrder.getGlobalStartOffset());
+        EXPECT_ANY_THROW(inOrder.getContextStartOffset());
+        EXPECT_ANY_THROW(inOrder.getContextEndOffset());
+        EXPECT_ANY_THROW(inOrder.getGlobalEndOffset());
+        EXPECT_ANY_THROW(inOrder.getContextStartValue(0));
+        EXPECT_ANY_THROW(inOrder.getGlobalStartValue(0));
+        EXPECT_ANY_THROW(inOrder.getContextEndValue(0));
+        EXPECT_ANY_THROW(inOrder.getGlobalEndValue(0));
+        EXPECT_ANY_THROW(inOrder.getContextEndAddress(0));
+        EXPECT_ANY_THROW(inOrder.getContextCompleteRef());
+        EXPECT_ANY_THROW(inOrder.getGlobalEndRef());
+        EXPECT_ANY_THROW(inOrder.getSinglePacketSize());
+        EXPECT_ANY_THROW(inOrder.assignDataToAllTimestamps(0, nullptr));
+    }
+
+    {
+        TagNode<DeviceAllocNodeType<false>> inOrder = {};
+
+        EXPECT_ANY_THROW(inOrder.getGlobalStartOffset());
+        EXPECT_ANY_THROW(inOrder.getContextStartOffset());
+        EXPECT_ANY_THROW(inOrder.getContextEndOffset());
+        EXPECT_ANY_THROW(inOrder.getGlobalEndOffset());
+        EXPECT_ANY_THROW(inOrder.getContextStartValue(0));
+        EXPECT_ANY_THROW(inOrder.getGlobalStartValue(0));
+        EXPECT_ANY_THROW(inOrder.getContextEndValue(0));
+        EXPECT_ANY_THROW(inOrder.getGlobalEndValue(0));
+        EXPECT_ANY_THROW(inOrder.getContextEndAddress(0));
+        EXPECT_ANY_THROW(inOrder.getContextCompleteRef());
+        EXPECT_ANY_THROW(inOrder.getGlobalEndRef());
+        EXPECT_ANY_THROW(inOrder.getSinglePacketSize());
+        EXPECT_ANY_THROW(inOrder.assignDataToAllTimestamps(0, nullptr));
+    }
+
+    {
         TagNode<HwTimeStamps> hwTimestampNode = {};
 
         EXPECT_ANY_THROW(hwTimestampNode.getGlobalStartOffset());
@@ -557,10 +600,17 @@ TEST_F(TagAllocatorTest, givenNotSupportedTagTypeWhenCallingMethodThenAbortOrRet
     }
 
     {
-        TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestampPacketsNode = {};
+        using TsType = TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>;
+        TagNode<TsType> timestampPacketsNode = {};
+        TsType data = {};
+        timestampPacketsNode.tagForCpuAccess = &data;
 
         EXPECT_ANY_THROW(timestampPacketsNode.getContextCompleteRef());
         EXPECT_ANY_THROW(timestampPacketsNode.getGlobalEndRef());
         EXPECT_ANY_THROW(timestampPacketsNode.getQueryHandleRef());
+        EXPECT_NO_THROW(timestampPacketsNode.getContextEndValue(0));
+        EXPECT_NO_THROW(timestampPacketsNode.getContextStartValue(0));
+        EXPECT_NO_THROW(timestampPacketsNode.getGlobalEndValue(0));
+        EXPECT_NO_THROW(timestampPacketsNode.getGlobalStartValue(0));
     }
 }

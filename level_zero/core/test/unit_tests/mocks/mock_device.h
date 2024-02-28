@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,6 +103,7 @@ struct MockDeviceImp : public L0::DeviceImp {
     using Base = L0::DeviceImp;
     using Base::adjustCommandQueueDesc;
     using Base::debugSession;
+    using Base::deviceInOrderCounterAllocator;
     using Base::getNEODevice;
     using Base::implicitScalingCapable;
     using Base::neoDevice;

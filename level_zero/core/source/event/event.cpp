@@ -493,8 +493,6 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
     }
 }
 
-NEO::GraphicsAllocation *Event::getInOrderExecDataAllocation() const { return inOrderExecInfo.get() ? inOrderExecInfo->getDeviceCounterAllocation() : nullptr; }
-
 void Event::unsetInOrderExecInfo() {
     inOrderExecInfo.reset();
     inOrderAllocationOffset = 0;

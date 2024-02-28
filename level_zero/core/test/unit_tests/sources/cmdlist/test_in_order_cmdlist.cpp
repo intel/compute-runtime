@@ -271,8 +271,8 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
         ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
         uint32_t hostCopyData = 0;
-        auto hostAddress0 = static_cast<uint64_t *>(immCmdList0->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
-        auto hostAddress1 = static_cast<uint64_t *>(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+        auto hostAddress0 = static_cast<uint64_t *>(immCmdList0->inOrderExecInfo->getBaseHostAddress());
+        auto hostAddress1 = static_cast<uint64_t *>(immCmdList1->inOrderExecInfo->getBaseHostAddress());
 
         *hostAddress0 = 1;
         *hostAddress1 = 1;
@@ -348,7 +348,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenHostResetOrSignalEventCalledT
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
-    EXPECT_EQ(MemoryConstants::pageSize64k, immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBufferSize());
+    EXPECT_TRUE(MemoryConstants::pageSize64k >= immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBufferSize());
 
     EXPECT_TRUE(events[0]->isCounterBased());
     EXPECT_EQ(events[0]->inOrderExecSignalValue, immCmdList->inOrderExecInfo->getCounterValue());
@@ -363,6 +363,37 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenHostResetOrSignalEventCalledT
     EXPECT_EQ(events[0]->inOrderAllocationOffset, 123u);
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, events[0]->hostSignal());
+}
+
+HWTEST2_F(InOrderCmdListTests, whenCreatingInOrderExecInfoThenReuseDeviceAlloc, IsAtLeastSkl) {
+    auto tag = device->getDeviceInOrderCounterAllocator()->getTag();
+
+    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
+    auto gpuVa1 = immCmdList1->inOrderExecInfo->getBaseDeviceAddress();
+
+    auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
+    auto gpuVa2 = immCmdList2->inOrderExecInfo->getBaseDeviceAddress();
+
+    EXPECT_NE(gpuVa1, gpuVa2);
+
+    // allocation from the same allocator
+    EXPECT_EQ(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation(), tag->getBaseGraphicsAllocation()->getGraphicsAllocation(0));
+
+    immCmdList1.reset();
+
+    auto immCmdList3 = createImmCmdList<gfxCoreFamily>();
+    auto gpuVa3 = immCmdList3->inOrderExecInfo->getBaseDeviceAddress();
+
+    EXPECT_EQ(gpuVa1, gpuVa3);
+
+    immCmdList2.reset();
+
+    auto immCmdList4 = createImmCmdList<gfxCoreFamily>();
+    auto gpuVa4 = immCmdList4->inOrderExecInfo->getBaseDeviceAddress();
+
+    EXPECT_EQ(gpuVa2, gpuVa4);
+
+    tag->returnTag();
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventWhenAppendEventResetCalledThenReturnError, IsAtLeastSkl) {

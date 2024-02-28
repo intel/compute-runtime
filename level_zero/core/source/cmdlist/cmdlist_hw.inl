@@ -2439,10 +2439,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(const Event &event) const {
+bool CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(Event &event) const {
     if (isInOrderExecutionEnabled()) {
-        return ((isImmediateType() && event.getLatestUsedCmdQueue() == this->cmdQImmediate) ||                                      // 1. Immediate CmdList can skip "regular Events" from the same CmdList
-                (event.isCounterBased() && event.getInOrderExecDataAllocation() == inOrderExecInfo->getDeviceCounterAllocation())); // 2. Both Immediate and Regular CmdLists can skip "CounterBased Events" from the same CmdList
+        return ((isImmediateType() && event.getLatestUsedCmdQueue() == this->cmdQImmediate) ||          // 1. Immediate CmdList can skip "regular Events" from the same CmdList
+                (event.isCounterBased() && event.getInOrderExecInfo().get() == inOrderExecInfo.get())); // 2. Both Immediate and Regular CmdLists can skip "CounterBased Events" from the same CmdList
     }
 
     return false;

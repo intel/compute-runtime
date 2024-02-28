@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -182,7 +182,7 @@ size_t TagNode<TagType>::getGlobalEndOffset() const {
 
 template <typename TagType>
 uint64_t TagNode<TagType>::getContextStartValue([[maybe_unused]] uint32_t packetIndex) const {
-    if constexpr (TagType::getTagNodeType() != TagNodeType::hwPerfCounter) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket || TagType::getTagNodeType() == TagNodeType::hwTimeStamps) {
         return tagForCpuAccess->getContextStartValue(packetIndex);
     } else {
         UNRECOVERABLE_IF(true);
@@ -191,7 +191,7 @@ uint64_t TagNode<TagType>::getContextStartValue([[maybe_unused]] uint32_t packet
 
 template <typename TagType>
 uint64_t TagNode<TagType>::getGlobalStartValue([[maybe_unused]] uint32_t packetIndex) const {
-    if constexpr (TagType::getTagNodeType() != TagNodeType::hwPerfCounter) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket || TagType::getTagNodeType() == TagNodeType::hwTimeStamps) {
         return tagForCpuAccess->getGlobalStartValue(packetIndex);
     } else {
         UNRECOVERABLE_IF(true);
@@ -200,7 +200,7 @@ uint64_t TagNode<TagType>::getGlobalStartValue([[maybe_unused]] uint32_t packetI
 
 template <typename TagType>
 uint64_t TagNode<TagType>::getContextEndValue([[maybe_unused]] uint32_t packetIndex) const {
-    if constexpr (TagType::getTagNodeType() != TagNodeType::hwPerfCounter) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket || TagType::getTagNodeType() == TagNodeType::hwTimeStamps) {
         return tagForCpuAccess->getContextEndValue(packetIndex);
     } else {
         UNRECOVERABLE_IF(true);
@@ -209,7 +209,7 @@ uint64_t TagNode<TagType>::getContextEndValue([[maybe_unused]] uint32_t packetIn
 
 template <typename TagType>
 uint64_t TagNode<TagType>::getGlobalEndValue([[maybe_unused]] uint32_t packetIndex) const {
-    if constexpr (TagType::getTagNodeType() != TagNodeType::hwPerfCounter) {
+    if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket || TagType::getTagNodeType() == TagNodeType::hwTimeStamps) {
         return tagForCpuAccess->getGlobalEndValue(packetIndex);
     } else {
         UNRECOVERABLE_IF(true);

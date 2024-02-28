@@ -266,7 +266,6 @@ struct Event : _ze_event_handle_t {
     bool isCounterBasedExplicitlyEnabled() const { return (counterBasedMode == CounterBasedMode::explicitlyEnabled); }
     void enableCounterBasedMode(bool apiRequest, uint32_t flags);
     void disableImplicitCounterBasedMode();
-    NEO::GraphicsAllocation *getInOrderExecDataAllocation() const;
     uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
     uint64_t getInOrderExecBaseSignalValue() const { return inOrderExecSignalValue; }
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }

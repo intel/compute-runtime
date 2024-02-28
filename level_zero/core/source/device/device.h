@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,13 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
 #include <memory>
+#include <mutex>
 
 static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
 
@@ -26,6 +28,7 @@ class GfxCoreHelper;
 class MemoryManager;
 struct DeviceInfo;
 class CompilerProductHelper;
+class TagAllocatorBase;
 enum class AllocationType;
 } // namespace NEO
 
@@ -146,9 +149,12 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) = 0;
     virtual uint32_t getEventMaxPacketCount() const = 0;
     virtual uint32_t getEventMaxKernelCount() const = 0;
+    NEO::TagAllocatorBase *getDeviceInOrderCounterAllocator();
 
   protected:
     NEO::Device *neoDevice = nullptr;
+    std::unique_ptr<NEO::TagAllocatorBase> deviceInOrderCounterAllocator;
+    std::mutex inOrderAllocatorMutex;
     bool implicitScalingCapable = false;
 };
 

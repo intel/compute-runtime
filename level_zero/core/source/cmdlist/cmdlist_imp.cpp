@@ -263,7 +263,9 @@ bool CommandListImp::duplicatedInOrderCounterStorageEnabled() const {
 void CommandListImp::enableInOrderExecution() {
     UNRECOVERABLE_IF(inOrderExecInfo.get());
 
-    inOrderExecInfo = NEO::InOrderExecInfo::create(*this->device->getNEODevice(), this->partitionCount, !isImmediateType(), inOrderAtomicSignallingEnabled(), duplicatedInOrderCounterStorageEnabled());
+    auto deviceCounterNode = this->device->getDeviceInOrderCounterAllocator()->getTag();
+
+    inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, *this->device->getNEODevice(), this->partitionCount, !isImmediateType(), inOrderAtomicSignallingEnabled(), duplicatedInOrderCounterStorageEnabled());
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {

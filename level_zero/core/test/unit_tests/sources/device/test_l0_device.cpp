@@ -831,6 +831,34 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelAndHostPointerC
     delete[] buffer;
 }
 
+TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemand) {
+    const uint32_t rootDeviceIndex = 0u;
+    auto hwInfo = *NEO::defaultHwInfo;
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
+    neoMockDevice->incRefInternal();
+    neoMockDevice->deviceBitfield = 0b111;
+
+    {
+        MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+        EXPECT_EQ(nullptr, deviceImp.deviceInOrderCounterAllocator.get());
+
+        auto allocator = deviceImp.getDeviceInOrderCounterAllocator();
+        EXPECT_NE(nullptr, deviceImp.deviceInOrderCounterAllocator.get());
+
+        auto expectedOffset = alignUp(sizeof(uint64_t) * neoMockDevice->deviceBitfield.count() * 2, MemoryConstants::cacheLineSize);
+
+        auto node1 = allocator->getTag();
+        auto node2 = allocator->getTag();
+
+        EXPECT_EQ(node1->getGpuAddress() + expectedOffset, node2->getGpuAddress());
+        EXPECT_EQ(ptrOffset(node1->getCpuBase(), expectedOffset), node2->getCpuBase());
+
+        node1->returnTag();
+        node2->returnTag();
+    }
+    neoMockDevice->decRefInternal();
+}
+
 TEST_F(DeviceTest, givenMoreThanOneExtendedPropertiesStructuresWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {
     ze_scheduling_hint_exp_properties_t schedulingHintProperties = {};
     schedulingHintProperties.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES;

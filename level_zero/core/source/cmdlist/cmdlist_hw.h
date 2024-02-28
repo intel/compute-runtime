@@ -334,7 +334,7 @@ struct CommandListCoreFamily : public CommandListImp {
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const { return false; }
     virtual void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {}
-    bool canSkipInOrderEventWait(const Event &event) const;
+    bool canSkipInOrderEventWait(Event &event) const;
     bool handleInOrderImplicitDependencies(bool relaxedOrderingAllowed);
     bool isQwordInOrderCounter() const { return GfxFamily::isQwordInOrderCounter; }
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
