@@ -802,6 +802,8 @@ unsigned int IoctlHelperPrelim20::getIoctlRequestValue(DrmIoctl ioctlRequest) co
         return PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE;
     case DrmIoctl::gemCacheReserve:
         return PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE;
+    case DrmIoctl::getResetStats:
+        return DRM_IOCTL_I915_GET_RESET_STATS;
     default:
         return IoctlHelperI915::getIoctlRequestValue(ioctlRequest);
     }
