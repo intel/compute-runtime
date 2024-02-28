@@ -81,6 +81,12 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
     // Validate stack and ze buffers have the original data from heapBuffer
     validRet = LevelZeroBlackBoxTests::validate(heapBuffer, stackBuffer, allocSize);
 
+    if (!validRet) {
+        std::cerr << "Data mismatches found!\n";
+        std::cerr << "heapBuffer == " << static_cast<void *>(heapBuffer) << "\n";
+        std::cerr << "stackBuffer == " << static_cast<void *>(stackBuffer) << std::endl;
+    }
+
     delete[] heapBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     if (sharedCmdList == nullptr) {
