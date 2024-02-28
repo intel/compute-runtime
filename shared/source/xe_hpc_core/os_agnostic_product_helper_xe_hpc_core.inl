@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,11 +19,6 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
 template <>
 bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
     return false;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
-    return true;
 }
 
 template <>

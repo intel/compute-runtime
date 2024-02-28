@@ -449,7 +449,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPatIndexProgrammingSupp
     EXPECT_FALSE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTimestampWaitSupportedForEventsThenFalseIsReturned, IsNotXeHpgOrXeHpcCore) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTimestampWaitSupportedForEventsThenFalseIsReturned, IsBeforeXeHpCore) {
 
     EXPECT_FALSE(productHelper->isTimestampWaitSupportedForEvents());
 }

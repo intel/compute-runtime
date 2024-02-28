@@ -61,6 +61,11 @@ bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
     return true;
 }

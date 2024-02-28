@@ -174,11 +174,6 @@ uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const Hardwa
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const {
     if (memoryManager) {
         if constexpr (is32bit) {

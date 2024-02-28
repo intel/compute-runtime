@@ -56,7 +56,7 @@ MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationsSuppo
 }
 
 MTLTEST_F(MtlProductHelperLinux, whenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
-    EXPECT_FALSE(productHelper->isTimestampWaitSupportedForEvents());
+    EXPECT_TRUE(productHelper->isTimestampWaitSupportedForEvents());
 }
 
 MTLTEST_F(MtlProductHelperLinux, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned) {

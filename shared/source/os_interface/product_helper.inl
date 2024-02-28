@@ -483,11 +483,6 @@ bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInf
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
     if (debugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != -1) {
         return debugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get();
