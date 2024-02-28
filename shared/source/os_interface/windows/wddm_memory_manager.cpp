@@ -969,9 +969,10 @@ AddressRange WddmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredS
     *reservedOnRootDeviceIndex = 0;
     size_t reservedSize = 0;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[*reservedOnRootDeviceIndex]->getGmmHelper();
     for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
-        status = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(requiredStartAddress, gfxPartition->getHeapMinimalAddress(heap), gfxPartition->getHeapLimit(heap), size, &gpuVa);
+        status = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(gmmHelper->decanonize(requiredStartAddress), gfxPartition->getHeapMinimalAddress(heap), gfxPartition->getHeapLimit(heap), size, &gpuVa);
         if (requiredStartAddress != 0ull && status != STATUS_SUCCESS) {
             status = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(0ull, gfxPartition->getHeapMinimalAddress(heap), gfxPartition->getHeapLimit(heap), size, &gpuVa);
         }
@@ -984,7 +985,6 @@ AddressRange WddmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredS
     if (status != STATUS_SUCCESS) {
         return AddressRange{0u, 0};
     }
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[*reservedOnRootDeviceIndex]->getGmmHelper();
     gpuVa = gmmHelper->canonize(gpuVa);
     return AddressRange{gpuVa, reservedSize};
 }
