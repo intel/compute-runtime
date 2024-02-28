@@ -42,6 +42,10 @@ class LinuxPowerImp::PowerLimitRestorer : NEO::NonCopyableOrMovableClass {
     uint64_t powerLimitValue = 0;
 };
 
+std::unique_lock<std::mutex> LinuxPowerImp::obtainMutex() {
+    return std::unique_lock<std::mutex>(this->powerLimitMutex);
+}
+
 ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     pProperties->onSubdevice = isSubdevice;
     pProperties->subdeviceId = subdeviceId;
@@ -60,6 +64,7 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
         return result;
     }
 
+    auto lock = this->obtainMutex();
     auto powerLimitRestorer = L0::Sysman::LinuxPowerImp::PowerLimitRestorer(pSysfsAccess, sustainedPowerLimit);
     if (powerLimitRestorer != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s and returning error:0x%x \n", __FUNCTION__, sustainedPowerLimit.c_str(), getErrorCode(powerLimitRestorer));

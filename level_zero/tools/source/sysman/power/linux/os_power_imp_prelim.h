@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,10 +42,12 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   protected:
     PlatformMonitoringTech *pPmt = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
+    virtual std::unique_lock<std::mutex> obtainMutex();
 
   private:
     std::string i915HwmonDir;
     std::string criticalPowerLimit;
+    std::mutex powerLimitMutex{};
     static const std::string hwmonDir;
     static const std::string i915;
     static const std::string sustainedPowerLimit;
