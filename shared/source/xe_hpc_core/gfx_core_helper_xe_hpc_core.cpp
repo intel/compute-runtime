@@ -366,11 +366,6 @@ size_t GfxCoreHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
-    return true;
-}
-
-template <>
 uint64_t GfxCoreHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
     /*
     PAT Index  CLOS   MemType

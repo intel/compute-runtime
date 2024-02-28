@@ -55,7 +55,7 @@ bool GfxCoreHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isTimestampWaitSupportedForQueues() const {
-    return false;
+    return true;
 }
 
 template <typename GfxFamily>
