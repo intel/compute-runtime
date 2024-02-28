@@ -105,6 +105,31 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerProper
     }
 }
 
+TEST_F(SysmanDevicePowerFixtureI915, GivenValidMockMutexPowerImpWhenGettingPowerPropertiesThenMutexLockCounterMatchesNumberOfGetCalls) {
+    class MockMutexPowerImp : public L0::Sysman::LinuxPowerImp {
+      public:
+        using L0::Sysman::LinuxPowerImp::pSysfsAccess;
+        MockMutexPowerImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId) {}
+        uint32_t mutexLockCounter = 0;
+        std::unique_lock<std::mutex> obtainMutex() override {
+            mutexLockCounter++;
+            std::unique_lock<std::mutex> mutexLock = L0::Sysman::LinuxPowerImp::obtainMutex();
+            EXPECT_TRUE(mutexLock.owns_lock());
+            return mutexLock;
+        }
+    };
+
+    std::unique_ptr<MockMutexPowerImp> pLinuxPowerImp(new MockMutexPowerImp(pOsSysman, false, 0));
+    pLinuxPowerImp->pSysfsAccess = pSysfsAccess;
+
+    zes_power_properties_t properties{};
+    uint32_t testReadCount = 0;
+    for (uint32_t i = 0; i < testReadCount; i++) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getProperties(&properties));
+    }
+    EXPECT_EQ(pLinuxPowerImp->mutexLockCounter, testReadCount);
+}
+
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
     auto handles = getPowerHandles(powerHandleComponentCount);
 

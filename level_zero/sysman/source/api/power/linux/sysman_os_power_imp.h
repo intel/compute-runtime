@@ -11,6 +11,7 @@
 #include "level_zero/sysman/source/api/power/sysman_os_power.h"
 
 #include <memory>
+#include <mutex>
 #include <string>
 
 namespace L0 {
@@ -44,12 +45,14 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     SysFsAccessInterface *pSysfsAccess = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
+    virtual std::unique_lock<std::mutex> obtainMutex();
 
   private:
     std::string intelGraphicsHwmonDir = {};
     std::string criticalPowerLimit = {};
     std::string sustainedPowerLimit = {};
     std::string sustainedPowerLimitInterval = {};
+    std::mutex powerLimitMutex{};
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;

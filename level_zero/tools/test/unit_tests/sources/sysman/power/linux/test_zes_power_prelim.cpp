@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,6 +119,31 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
         EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
         EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
     }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidMockMutexPowerImpWhenGettingPowerPropertiesThenMutexLockCounterMatchesNumberOfGetCalls) {
+    class MockMutexPowerImp : public L0::LinuxPowerImp {
+      public:
+        using L0::LinuxPowerImp::pSysfsAccess;
+        MockMutexPowerImp(L0::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId) {}
+        uint32_t mutexLockCounter = 0;
+        std::unique_lock<std::mutex> obtainMutex() override {
+            mutexLockCounter++;
+            std::unique_lock<std::mutex> mutexLock = L0::LinuxPowerImp::obtainMutex();
+            EXPECT_TRUE(mutexLock.owns_lock());
+            return mutexLock;
+        }
+    };
+
+    std::unique_ptr<MockMutexPowerImp> pLinuxPowerImp(new MockMutexPowerImp(pOsSysman, false, 0));
+    pLinuxPowerImp->pSysfsAccess = pSysfsAccess.get();
+
+    uint32_t testReadCount = 0;
+    zes_power_properties_t properties{};
+    for (uint32_t i = 0; i < testReadCount; i++) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getProperties(&properties));
+    }
+    EXPECT_EQ(pLinuxPowerImp->mutexLockCounter, testReadCount);
 }
 
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
