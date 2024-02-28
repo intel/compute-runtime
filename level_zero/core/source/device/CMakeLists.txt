@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,7 +12,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/bcs_split.h
                ${CMAKE_CURRENT_SOURCE_DIR}/device.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/device.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/device_imp_${DRIVER_MODEL}/device_imp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/device_imp_${DRIVER_MODEL}/device_imp_${DRIVER_MODEL}.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/device_imp.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/device_imp.h
 )

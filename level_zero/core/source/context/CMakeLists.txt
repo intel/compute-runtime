@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,7 +7,7 @@
 target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${CMAKE_CURRENT_SOURCE_DIR}/context_imp_${DRIVER_MODEL}/context_imp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/context_imp_${DRIVER_MODEL}/context_imp_${DRIVER_MODEL}.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/context_imp_${DRIVER_MODEL}${BRANCH_DIR_SUFFIX}context_imp_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/context_imp.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/context_imp.h

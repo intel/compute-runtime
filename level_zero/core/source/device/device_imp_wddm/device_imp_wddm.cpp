@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/core/source/device/device_imp.h"
-
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+
+#include "level_zero/core/source/device/device_imp.h"
 
 namespace L0 {
 
