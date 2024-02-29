@@ -1001,7 +1001,9 @@ void EncodeMiFlushDW<GfxFamily>::appendWa(LinearStream &commandStream, MiFlushAr
 template <typename Family>
 void EncodeMiFlushDW<Family>::programWithWa(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData,
                                             MiFlushArgs &args) {
+    UNRECOVERABLE_IF(args.waArgs.isWaRequired && !args.commandWithPostSync);
     appendWa(commandStream, args);
+    args.waArgs.isWaRequired = false;
 
     auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
     MI_FLUSH_DW miFlush = Family::cmdInitMiFlushDw;
