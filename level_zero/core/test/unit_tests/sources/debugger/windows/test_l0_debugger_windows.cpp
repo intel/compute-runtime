@@ -227,7 +227,6 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachAvailabl
 
 TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsPrintedButNotReturned) {
     DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.PrintDebugMessages.set(1);
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -256,9 +255,11 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachNotAvail
 
     ::testing::internal::CaptureStderr();
 
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
     ze_result_t result = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    NEO::debugManager.flags.PrintDebugMessages.set(0);
     auto output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(std::string("Debug mode is not enabled in the system.\n"), output);
 
