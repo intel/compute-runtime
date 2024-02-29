@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,8 +52,7 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
                                               canonizedGpuAddress);
         uint32_t patternToCommand[4];
         memset(patternToCommand, 4, patternSize);
-        EncodeDummyBlitWaArgs waArgs{false, &(device->getRootDeviceEnvironmentRef())};
-        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, patternToCommand, patternSize, stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
+        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, patternToCommand, patternSize, stream, mockAllocation.getUnderlyingBufferSize(), device->getRootDeviceEnvironmentRef());
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
