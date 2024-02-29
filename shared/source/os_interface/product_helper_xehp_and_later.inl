@@ -45,6 +45,11 @@ bool ProductHelperHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::useGemCreateExtInAllocateMemoryByKMD() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isBlitterFullySupported(const HardwareInfo &hwInfo) const {
     return hwInfo.capabilityTable.blitterOperationsSupported;
 }

@@ -60,6 +60,11 @@ uint64_t ProductHelperHw<IGFX_UNKNOWN>::getCrossDeviceSharedMemCapabilities() co
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::useGemCreateExtInAllocateMemoryByKMD() const {
+    return false;
+}
+
+template <>
 uint64_t ProductHelperHw<IGFX_UNKNOWN>::getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const {
     return 0;
 }

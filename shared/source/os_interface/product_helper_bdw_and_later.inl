@@ -51,6 +51,11 @@ bool ProductHelperHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) con
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::useGemCreateExtInAllocateMemoryByKMD() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
     coherencyFlag = true;
 }

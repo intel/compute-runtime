@@ -421,6 +421,10 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfStorageInfoAdjustmentIs
     EXPECT_FALSE(productHelper->isStorageInfoAdjustmentRequired());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallUseGemCreateExtInAllocateMemoryByKMDThenFalseIsReturned, IsBeforeXeHpgCore) {
+    EXPECT_FALSE(productHelper->useGemCreateExtInAllocateMemoryByKMD());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfBlitterForImagesIsSupportedThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->isBlitterForImagesSupported());
