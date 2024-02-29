@@ -70,7 +70,7 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsImmediateComputeFlushTask() cons
 }
 
 template <typename Family>
-uint32_t L0GfxCoreHelperHw<Family>::getCmdListUpdateCapabilities() const {
+ze_mutable_command_exp_flags_t L0GfxCoreHelperHw<Family>::getCmdListUpdateCapabilities() const {
     return 0;
 }
 

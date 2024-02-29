@@ -83,8 +83,8 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsImmediateComputeFlushTask() cons
 }
 
 template <typename Family>
-uint32_t L0GfxCoreHelperHw<Family>::getCmdListUpdateCapabilities() const {
-    return 1;
+ze_mutable_command_exp_flags_t L0GfxCoreHelperHw<Family>::getCmdListUpdateCapabilities() const {
+    return ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
 }
 
 } // namespace L0
