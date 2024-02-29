@@ -772,7 +772,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenI
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
-    NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    NEO::EncodeDummyBlitWaArgs waArgs{false, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
     if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs)) {
         itor++;
     }
@@ -814,7 +814,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
-    NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    NEO::EncodeDummyBlitWaArgs waArgs{false, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
     if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs)) {
         itor++;
     }

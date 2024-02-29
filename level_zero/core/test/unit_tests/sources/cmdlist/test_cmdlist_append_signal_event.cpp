@@ -613,7 +613,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         usedAfterSize));
 
     uint32_t expectedMiFlushCount = 1;
-    NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    NEO::EncodeDummyBlitWaArgs waArgs{false, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
     if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
         expectedMiFlushCount = 2;
     }
@@ -655,7 +655,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         usedAfterSize));
 
     uint32_t expectedMiFlushCount = 1;
-    NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    NEO::EncodeDummyBlitWaArgs waArgs{false, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
     if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
         expectedMiFlushCount = 2;
     }
@@ -699,7 +699,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         usedAfterSize));
 
     uint32_t expectedMiFlushCount = 1;
-    NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    NEO::EncodeDummyBlitWaArgs waArgs{false, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
     if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
         expectedMiFlushCount = 2;
     }

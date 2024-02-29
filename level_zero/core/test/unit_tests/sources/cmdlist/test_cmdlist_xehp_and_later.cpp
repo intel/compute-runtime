@@ -726,7 +726,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         if constexpr (copyOnly == 1) {
             uint32_t flushCmdWaFactor = 1;
-            NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+            NEO::EncodeDummyBlitWaArgs waArgs{false, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
             if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
                 flushCmdWaFactor++;
             }
@@ -966,7 +966,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             auto itorFlushDw = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
             uint32_t flushCmdWaFactor = 1;
-            NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+            NEO::EncodeDummyBlitWaArgs waArgs{false, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
             if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
                 flushCmdWaFactor++;
             }
@@ -1175,7 +1175,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         if constexpr (copyOnly == 1) {
             uint32_t flushCmdWaFactor = 1;
-            NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+            NEO::EncodeDummyBlitWaArgs waArgs{false, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
             if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
                 flushCmdWaFactor++;
             }

@@ -477,6 +477,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         expectedSize));
 
     uint32_t miFlushCountFactor = 1;
+    waArgs.isWaRequired = false;
     if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
         miFlushCountFactor = 2;
     }
