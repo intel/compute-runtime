@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,6 +167,7 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGrou
         zet_metric_properties_t ipSamplingMetricProperties = {};
         for (auto &metricHandle : metricHandles) {
             EXPECT_EQ(zetMetricGetProperties(metricHandle, &ipSamplingMetricProperties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(zetMetricDestroyExp(metricHandle), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
             EXPECT_EQ(strcmp(ipSamplingMetricProperties.name, propertiesIter->name), 0);
             EXPECT_EQ(strcmp(ipSamplingMetricProperties.description, propertiesIter->description), 0);
             EXPECT_EQ(strcmp(ipSamplingMetricProperties.component, propertiesIter->component), 0);
@@ -190,6 +191,34 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenDummyAct
         metricGroups.resize(metricGroupCount);
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroups[0]), ZE_RESULT_SUCCESS);
+        static_cast<DeviceImp *>(device)->activateMetricGroups();
+        EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
+    }
+}
+
+TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulThenUnsupportedApisForMetricGroupReturnsFailure) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+
+        zet_metric_handle_t hMetric{};
+        EXPECT_EQ(zetMetricGroupAddMetricExp(metricGroups[0], hMetric, nullptr, nullptr), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zetMetricGroupRemoveMetricExp(metricGroups[0], hMetric), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zetMetricGroupCloseExp(metricGroups[0]), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        EXPECT_EQ(zetMetricGroupDestroyExp(metricGroups[0]), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
@@ -1084,6 +1113,42 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulAndActivatio
         ASSERT_NE(metricGroups[0], nullptr);
 
         EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroups[0]), ZE_RESULT_ERROR_UNKNOWN);
+    }
+}
+
+TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenUnsupportedFunctionsAreCalledErrorIsReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+        auto &metricSource = (static_cast<DeviceImp *>(device))->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+
+        char name[ZET_MAX_METRIC_GROUP_NAME] = {};
+        char description[ZET_MAX_METRIC_GROUP_DESCRIPTION] = {};
+        zet_metric_group_sampling_type_flag_t samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+        zet_metric_group_handle_t *pMetricGroupHandle = nullptr;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, metricSource.metricGroupCreate(
+                                                           name, description, samplingType, pMetricGroupHandle));
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, metricSource.metricProgrammableGet(
+                                                           &count, nullptr));
+    }
+}
+
+TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenUnsupportedFunctionsForDeviceContextAreCalledErrorIsReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+        auto &deviceContext = (static_cast<DeviceImp *>(device))->getMetricDeviceContext();
+
+        char name[ZET_MAX_METRIC_GROUP_NAME] = {};
+        char description[ZET_MAX_METRIC_GROUP_DESCRIPTION] = {};
+        zet_metric_group_sampling_type_flag_t samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+        zet_metric_group_handle_t *pMetricGroupHandle = nullptr;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContext.metricGroupCreate(
+                                                           name, description, samplingType, pMetricGroupHandle));
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContext.metricProgrammableGet(
+                                                           &count, nullptr));
     }
 }
 

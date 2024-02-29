@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -236,6 +236,52 @@ zetGetMetricGroupExpProcAddrTable(
     pDdiTable->pfnGetGlobalTimestampsExp = L0::zetMetricGroupGetGlobalTimestampsExp;
     pDdiTable->pfnGetExportDataExp = L0::zetMetricGroupGetExportDataExp;
     pDdiTable->pfnCalculateMetricExportDataExp = L0::zetDriverCalculateMetricExportDataExp;
+
+    if (version >= ZE_API_VERSION_1_9) {
+        pDdiTable->pfnCreateExp = L0::zetMetricGroupCreateExp;
+        pDdiTable->pfnAddMetricExp = L0::zetMetricGroupAddMetricExp;
+        pDdiTable->pfnRemoveMetricExp = L0::zetMetricGroupRemoveMetricExp;
+        pDdiTable->pfnCloseExp = L0::zetMetricGroupCloseExp;
+        pDdiTable->pfnDestroyExp = L0::zetMetricGroupDestroyExp;
+    }
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zetGetMetricProgrammableExpProcAddrTable(
+    ze_api_version_t version,
+    zet_metric_programmable_exp_dditable_t *pDdiTable) {
+
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (version < ZE_API_VERSION_1_9) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    pDdiTable->pfnGetExp = L0::zetMetricProgrammableGetExp;
+    pDdiTable->pfnGetPropertiesExp = L0::zetMetricProgrammableGetPropertiesExp;
+    pDdiTable->pfnGetParamInfoExp = L0::zetMetricProgrammableGetParamInfoExp;
+    pDdiTable->pfnGetParamValueInfoExp = L0::zetMetricProgrammableGetParamValueInfoExp;
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zetGetMetricExpProcAddrTable(
+    ze_api_version_t version,
+    zet_metric_exp_dditable_t *pDdiTable) {
+
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (version < ZE_API_VERSION_1_9) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    pDdiTable->pfnCreateFromProgrammableExp = L0::zetMetricCreateFromProgrammableExp;
+    pDdiTable->pfnDestroyExp = L0::zetMetricDestroyExp;
 
     return result;
 }

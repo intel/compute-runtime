@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ struct _zet_metric_handle_t {};
 struct _zet_metric_streamer_handle_t {};
 struct _zet_metric_query_pool_handle_t {};
 struct _zet_metric_query_handle_t {};
+struct _zet_metric_programmable_exp_handle_t {};
 
 namespace L0 {
 struct CommandList;
@@ -41,6 +42,11 @@ class MetricSource {
     virtual ze_result_t getTimestampValidBits(uint64_t &validBits) = 0;
     virtual ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups) = 0;
     virtual ze_result_t activateMetricGroupsAlreadyDeferred() = 0;
+    virtual ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) = 0;
+    virtual ze_result_t metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
+                                          const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                          zet_metric_group_sampling_type_flag_t samplingType,
+                                          zet_metric_group_handle_t *pMetricGroupHandle) = 0;
     virtual ~MetricSource() = default;
     uint32_t getType() const {
         return type;
@@ -71,10 +77,16 @@ class MetricDeviceContext {
 
   public:
     MetricDeviceContext(Device &device);
+    virtual ~MetricDeviceContext() {}
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
     ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
     ze_result_t activateMetricGroups();
     ze_result_t appendMetricMemoryBarrier(CommandList &commandList);
+    ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables);
+    ze_result_t metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
+                                  const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                  zet_metric_group_sampling_type_flag_t samplingType,
+                                  zet_metric_group_handle_t *pMetricGroupHandle);
     bool isImplicitScalingCapable() const;
     Device &getDevice() const;
     uint32_t getSubDeviceIndex() const;
@@ -84,6 +96,8 @@ class MetricDeviceContext {
 
     static std::unique_ptr<MetricDeviceContext> create(Device &device);
     static ze_result_t enableMetricApi();
+
+    bool isProgrammableMetricsEnabled = false;
 
   protected:
     std::map<uint32_t, std::unique_ptr<MetricSource>> metricSources;
@@ -99,7 +113,7 @@ struct Metric : _zet_metric_handle_t {
     virtual ~Metric() = default;
 
     virtual ze_result_t getProperties(zet_metric_properties_t *pProperties) = 0;
-
+    virtual ze_result_t destroy() = 0;
     static Metric *fromHandle(zet_metric_handle_t handle) { return static_cast<Metric *>(handle); }
     inline zet_metric_handle_t toHandle() { return this; }
 };
@@ -120,7 +134,10 @@ struct MetricGroup : _zet_metric_group_handle_t {
     virtual ze_result_t getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
                                                uint64_t *globalTimestamp,
                                                uint64_t *metricTimestamp) = 0;
-
+    virtual ze_result_t addMetric(zet_metric_handle_t hMetric, size_t *errorStringSize, char *pErrorString) = 0;
+    virtual ze_result_t removeMetric(zet_metric_handle_t hMetric) = 0;
+    virtual ze_result_t close() = 0;
+    virtual ze_result_t destroy() = 0;
     static MetricGroup *fromHandle(zet_metric_group_handle_t handle) {
         return static_cast<MetricGroup *>(handle);
     }
@@ -225,5 +242,23 @@ ze_result_t metricStreamerOpen(zet_context_handle_t hContext, zet_device_handle_
 // MetricQueryPool.
 ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                                   const zet_metric_query_pool_desc_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool);
+
+// MetricProgrammable
+ze_result_t metricProgrammableGet(zet_device_handle_t hDevice, uint32_t *pCount,
+                                  zet_metric_programmable_exp_handle_t *phMetricProgrammables);
+
+ze_result_t metricProgrammableGetProperties(zet_metric_programmable_exp_handle_t hMetricProgrammable,
+                                            zet_metric_programmable_exp_properties_t *pProperties);
+
+ze_result_t metricProgrammableGetParamInfo(zet_metric_programmable_exp_handle_t hMetricProgrammable,
+                                           uint32_t *pParameterCount, zet_metric_programmable_param_info_exp_t *pParameterInfo);
+
+ze_result_t metricProgrammableGetParamValueInfo(zet_metric_programmable_exp_handle_t hMetricProgrammable,
+                                                uint32_t parameterOrdinal, uint32_t *pValueInfoCount, zet_metric_programmable_param_value_info_exp_t *pValueInfo);
+
+ze_result_t metricCreateFromProgrammable(zet_metric_programmable_exp_handle_t hMetricProgrammable,
+                                         zet_metric_programmable_param_value_exp_t *pParameterValues, uint32_t parameterCount,
+                                         const char name[ZET_MAX_METRIC_NAME], const char description[ZET_MAX_METRIC_DESCRIPTION],
+                                         uint32_t *pMetricHandleCount, zet_metric_handle_t *phMetricHandles);
 
 } // namespace L0

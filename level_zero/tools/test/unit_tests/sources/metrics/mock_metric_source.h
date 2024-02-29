@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,15 @@ class MockMetricSource : public L0::MetricSource {
     ze_result_t getTimestampValidBits(uint64_t &validBits) override { return ZE_RESULT_ERROR_UNKNOWN; }
     ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups) override { return ZE_RESULT_ERROR_UNKNOWN; }
     ze_result_t activateMetricGroupsAlreadyDeferred() override { return ZE_RESULT_ERROR_UNKNOWN; }
+    ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
+                                  const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                  zet_metric_group_sampling_type_flag_t samplingType,
+                                  zet_metric_group_handle_t *pMetricGroupHandle) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     ~MockMetricSource() override = default;
 };
 
@@ -79,6 +88,18 @@ class MockMetricGroup : public L0::MetricGroupImp {
 
     ze_result_t getExportData(const uint8_t *pRawData, size_t rawDataSize, size_t *pExportDataSize,
                               uint8_t *pExportData) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t addMetric(zet_metric_handle_t hMetric, size_t *errorStringSize, char *pErrorString) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t removeMetric(zet_metric_handle_t hMetric) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t close() override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t destroy() override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 };

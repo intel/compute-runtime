@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,7 +121,7 @@ struct MetricEnumeration {
     static const char *oaConcurrentGroupName;
 };
 
-struct OaMetricGroupImp : MetricGroupImp {
+struct OaMetricGroupImp : public MetricGroupImp {
     ~OaMetricGroupImp() override;
     OaMetricGroupImp(MetricSource &metricSource) : MetricGroupImp(metricSource) {}
 
@@ -137,6 +137,18 @@ struct OaMetricGroupImp : MetricGroupImp {
     ze_result_t getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
                                        uint64_t *globalTimestamp,
                                        uint64_t *metricTimestamp) override;
+    ze_result_t addMetric(zet_metric_handle_t hMetric, size_t *errorStringSize, char *pErrorString) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t removeMetric(zet_metric_handle_t hMetric) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t close() override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t destroy() override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     ze_result_t initialize(const zet_metric_group_properties_t &sourceProperties,
                            MetricsDiscovery::IMetricSet_1_5 &metricSet,
                            MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
@@ -214,10 +226,14 @@ struct OaMetricGroupImp : MetricGroupImp {
                               zet_metric_streamer_handle_t *phMetricStreamer);
 };
 
-struct OaMetricImp : Metric {
+struct OaMetricImp : public Metric {
     ~OaMetricImp() override{};
 
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
+
+    ze_result_t destroy() override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 
     ze_result_t initialize(const zet_metric_properties_t &sourceProperties);
 

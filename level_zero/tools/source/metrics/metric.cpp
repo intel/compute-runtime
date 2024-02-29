@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -356,6 +356,11 @@ void MetricCollectorEventNotify::detachEvent() {
     if (pNotificationEvent != nullptr) {
         pNotificationEvent->setMetricNotification(nullptr);
     }
+}
+
+ze_result_t metricProgrammableGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) {
+    auto device = Device::fromHandle(hDevice);
+    return static_cast<MetricDeviceContext &>(device->getMetricDeviceContext()).metricProgrammableGet(pCount, phMetricProgrammables);
 }
 
 } // namespace L0
