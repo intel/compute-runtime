@@ -756,4 +756,9 @@ bool GfxCoreHelperHw<GfxFamily>::singleTileExecImplicitScalingRequired(bool coop
     return cooperativeKernel;
 }
 
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::duplicatedInOrderCounterStorageEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    return (debugManager.flags.InOrderDuplicatedCounterStorageEnabled.get() == 1);
+}
+
 } // namespace NEO

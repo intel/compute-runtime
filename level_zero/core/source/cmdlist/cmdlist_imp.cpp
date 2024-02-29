@@ -256,16 +256,12 @@ void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &s
     streamProperties.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, true);
 }
 
-bool CommandListImp::duplicatedInOrderCounterStorageEnabled() const {
-    return (NEO::debugManager.flags.InOrderDuplicatedCounterStorageEnabled.get() == 1);
-}
-
 void CommandListImp::enableInOrderExecution() {
     UNRECOVERABLE_IF(inOrderExecInfo.get());
 
     auto deviceCounterNode = this->device->getDeviceInOrderCounterAllocator()->getTag();
 
-    inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, *this->device->getNEODevice(), this->partitionCount, !isImmediateType(), inOrderAtomicSignallingEnabled(), duplicatedInOrderCounterStorageEnabled());
+    inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, *this->device->getNEODevice(), this->partitionCount, !isImmediateType(), inOrderAtomicSignallingEnabled());
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {

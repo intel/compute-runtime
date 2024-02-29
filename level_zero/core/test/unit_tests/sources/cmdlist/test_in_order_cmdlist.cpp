@@ -2158,11 +2158,12 @@ HWTEST2_F(InOrderCmdListTests, givenMultipleAllocationsForWriteWhenAskingForNonW
     EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(nullptr));
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+    auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
 
-    EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
-    EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(events[1].get()));
-    EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(events[2].get()));
-    EXPECT_FALSE(immCmdList->isInOrderNonWalkerSignalingRequired(nullptr));
+    EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(events[0].get()));
+    EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(events[1].get()));
+    EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(events[2].get()));
+    EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(nullptr));
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramPipeControlWithSignalAllocation, NonPostSyncWalkerMatcher) {

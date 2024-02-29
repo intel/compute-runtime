@@ -88,7 +88,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation()->getGpuAddress(), deviceNode->getGpuAddress());
         EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation()->getUnderlyingBuffer(), deviceNode->getCpuBase());
 
-        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, mockDevice, 2, false, false, false);
+        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, mockDevice, 2, false, false);
 
         EXPECT_EQ(deviceNode->getCpuBase(), inOrderExecInfo->getBaseHostAddress());
         EXPECT_EQ(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo->getDeviceCounterAllocation());
@@ -115,7 +115,10 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
     {
         auto deviceNode = tagAllocator.getTag();
 
-        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, mockDevice, 2, false, false, true);
+        DebugManagerStateRestore restore;
+        debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, mockDevice, 2, false, false);
 
         EXPECT_NE(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
         EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo->getHostCounterAllocation());

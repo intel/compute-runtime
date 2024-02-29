@@ -78,7 +78,7 @@ void programEventL3Flush(Event *event,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(const Event *event) const {
-    return (!duplicatedInOrderCounterStorageEnabled() && event && (event->isUsingContextEndOffset() || !event->isCounterBased() || compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))));
+    return (!this->duplicatedInOrderCounterStorageEnabled && event && (event->isUsingContextEndOffset() || !event->isCounterBased() || compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

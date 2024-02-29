@@ -236,6 +236,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
+    this->duplicatedInOrderCounterStorageEnabled = gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(rootDeviceEnvironment);
 
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
@@ -3662,7 +3663,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
     if ((NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && !isImmediateType()) {
-        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, inOrderAtomicSignallingEnabled(), duplicatedInOrderCounterStorageEnabled());
+        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, inOrderAtomicSignallingEnabled(), this->duplicatedInOrderCounterStorageEnabled);
     }
 }
 

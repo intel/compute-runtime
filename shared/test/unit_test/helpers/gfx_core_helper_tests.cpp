@@ -1673,6 +1673,21 @@ HWTEST_F(GfxCoreHelperTest, whenAskingIf48bResourceNeededForCmdBufferThenReturnT
     EXPECT_TRUE(getHelper<GfxCoreHelper>().is48ResourceNeededForCmdBuffer());
 }
 
+HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForDumplicatedInOrderHostStorageThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    auto &helper = getHelper<GfxCoreHelper>();
+    auto &rootExecEnv = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
+
+    EXPECT_FALSE(helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
+
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+    EXPECT_TRUE(helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
+
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
+    EXPECT_FALSE(helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
+}
+
 TEST_F(GfxCoreHelperTest, whenOnlyPerThreadPrivateMemorySizeIsDefinedThenItIsReturnedAsKernelPrivateMemorySize) {
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = 0x100u;

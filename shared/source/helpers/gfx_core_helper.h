@@ -186,6 +186,7 @@ class GfxCoreHelper {
     virtual uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const = 0;
 
     virtual bool singleTileExecImplicitScalingRequired(bool cooperativeKernel) const = 0;
+    virtual bool duplicatedInOrderCounterStorageEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -411,6 +412,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const override;
 
     bool singleTileExecImplicitScalingRequired(bool cooperativeKernel) const override;
+    bool duplicatedInOrderCounterStorageEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     ~GfxCoreHelperHw() override = default;
 

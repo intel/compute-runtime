@@ -351,6 +351,7 @@ struct CommandListCoreFamily : public CommandListImp {
 
     uint64_t latestHostWaitedInOrderSyncValue = 0;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
+    bool duplicatedInOrderCounterStorageEnabled = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

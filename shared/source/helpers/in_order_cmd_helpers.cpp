@@ -8,6 +8,7 @@
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -18,10 +19,12 @@
 
 namespace NEO {
 
-std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling, bool duplicatedHostStorage) {
+std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling) {
     NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
 
-    if (duplicatedHostStorage) {
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+
+    if (gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(device.getRootDeviceEnvironment())) {
         NEO::AllocationProperties hostAllocationProperties{device.getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::bufferHostMemory, device.getDeviceBitfield()};
         hostCounterAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(hostAllocationProperties);
 
