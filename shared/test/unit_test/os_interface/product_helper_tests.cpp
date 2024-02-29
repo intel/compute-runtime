@@ -454,6 +454,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTimestampWaitSupport
     EXPECT_FALSE(productHelper->isTimestampWaitSupportedForEvents());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallGetCommandBuffersPreallocatedPerCommandQueueThenReturnCorrectValue, IsBeforeXeHpCore) {
+    EXPECT_EQ(0u, productHelper->getCommandBuffersPreallocatedPerCommandQueue());
+}
+
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue, IsBeforeXeHpCore) {
     EXPECT_EQ(productHelper->getInternalHeapsPreallocated(), 0u);
 

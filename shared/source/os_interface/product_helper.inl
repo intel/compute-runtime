@@ -808,11 +808,6 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxNumSamplers() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQueue() const {
-    return 0u;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::disableL3CacheForDebug(const HardwareInfo &) const {
     return false;
 }

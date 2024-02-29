@@ -717,6 +717,10 @@ DG2TEST_F(ProductHelperTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForE
     EXPECT_TRUE(productHelper->isTimestampWaitSupportedForEvents());
 }
 
+DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCallGetCommandBuffersPreallocatedPerCommandQueueThenReturnCorrectValue) {
+    EXPECT_EQ(2u, productHelper->getCommandBuffersPreallocatedPerCommandQueue());
+}
+
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue) {
     EXPECT_EQ(productHelper->getInternalHeapsPreallocated(), 1u);
 

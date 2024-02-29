@@ -75,6 +75,11 @@ XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimesta
     EXPECT_TRUE(helper.isTimestampWaitSupportedForEvents());
 }
 
+XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCallGetCommandBuffersPreallocatedPerCommandQueueThenReturnCorrectValue) {
+    auto &helper = getHelper<ProductHelper>();
+    EXPECT_EQ(2u, helper.getCommandBuffersPreallocatedPerCommandQueue());
+}
+
 XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 1u);

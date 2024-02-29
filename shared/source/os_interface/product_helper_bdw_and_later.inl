@@ -66,6 +66,11 @@ bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQueue() const {
+    return 0u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
     if (debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get() != -1) {
         return debugManager.flags.SetAmountOfInternalHeapsToPreallocate.get();
