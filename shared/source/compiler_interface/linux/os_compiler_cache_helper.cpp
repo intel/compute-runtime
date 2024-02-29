@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,10 +18,6 @@
 #include <link.h>
 
 namespace NEO {
-int64_t defaultCacheEnabled() {
-    return 1l;
-}
-
 bool createCompilerCachePath(std::string &cacheDir) {
     if (NEO::SysCalls::pathExists(cacheDir)) {
         if (NEO::SysCalls::pathExists(joinPath(cacheDir, "neo_compiler_cache"))) {

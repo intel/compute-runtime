@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,4 +78,21 @@ TEST(ApiSpecificConfigL0Tests, GivenDebugFlagCombinationsGetCorrectSharedAllocPr
 TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportEnabled) {
     EXPECT_TRUE(ImplicitScaling::apiSupport);
 }
+
+TEST(ApiSpecificConfigL0Tests, WhenGettingCompilerCacheDirThenReturnProperDirString) {
+    EXPECT_EQ(0, strcmp("l0_cache_dir", ApiSpecificConfig::compilerCacheDir().c_str()));
+}
+
+TEST(ApiSpecificConfigL0Tests, WhenGettingCompilerCacheLocationThenReturnProperLocationString) {
+    EXPECT_EQ(0, strcmp("l0_cache", ApiSpecificConfig::compilerCacheLocation().c_str()));
+}
+
+TEST(ApiSpecificConfigL0Tests, WhenGettingCompilerCacheFileExtensionThenReturnProperFileExtensionString) {
+    EXPECT_EQ(0, strcmp(".l0_cache", ApiSpecificConfig::compilerCacheFileExtension().c_str()));
+}
+
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIfCompilerCacheIsEnabledByDefaultThenReturnTrue) {
+    EXPECT_EQ(0l, ApiSpecificConfig::compilerCacheDefaultEnabled());
+}
+
 } // namespace NEO

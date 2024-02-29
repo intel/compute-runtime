@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,6 @@ void PageFaultManager::transferToGpu(void *ptr, void *cmdQ) {
 }
 void PageFaultManager::allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaultData) {
 }
-CompilerCacheConfig getDefaultCompilerCacheConfig() { return {}; }
 const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) { return nullptr; }
 
 void RootDeviceEnvironment::initApiGfxCoreHelper() {

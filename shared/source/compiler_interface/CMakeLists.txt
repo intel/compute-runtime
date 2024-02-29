@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -17,6 +17,7 @@ set(NEO_CORE_COMPILER_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}compiler_options_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_warnings/compiler_warnings.h
     ${CMAKE_CURRENT_SOURCE_DIR}/create_main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/default_cache_config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/default_cache_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/external_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/external_functions.h

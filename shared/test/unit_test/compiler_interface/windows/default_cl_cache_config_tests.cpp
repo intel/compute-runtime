@@ -6,10 +6,12 @@
  */
 
 #include "shared/source/compiler_interface/default_cache_config.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -31,8 +33,8 @@ extern const size_t shGetKnownFolderSetPathSize;
 extern wchar_t shGetKnownFolderSetPath[];
 } // namespace SysCalls
 
-struct CompilerCacheTest : public ::testing::Test {
-    CompilerCacheTest()
+struct ClCacheDefaultConfigWindowsTest : public ::testing::Test {
+    ClCacheDefaultConfigWindowsTest()
         : mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs),
           getLastErrorResultBackup(&SysCalls::getLastErrorResult),
           shGetKnownFolderPathResultBackup(&SysCalls::shGetKnownFolderPathResult),
@@ -60,31 +62,31 @@ struct CompilerCacheTest : public ::testing::Test {
     VariableBackup<BOOL> createDirectoryAResultBackup;
 };
 
-TEST_F(CompilerCacheTest, GivenDefaultClCacheConfigWithPathExistsThenValuesAreProperlyPopulated) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenDefaultClCacheConfigWithPathExistsThenValuesAreProperlyPopulated) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
 
     bool pathExistsMock = true;
     VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    EXPECT_STREQ("cl_cache", cacheConfig.cacheDir.c_str());
-    EXPECT_STREQ(".cl_cache", cacheConfig.cacheFileExtension.c_str());
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheLocation().c_str(), cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheFileExtension().c_str(), cacheConfig.cacheFileExtension.c_str());
     EXPECT_TRUE(cacheConfig.enabled);
 }
 
-TEST_F(CompilerCacheTest, GivenDefaultClCacheConfigWithNonExistingPathThenValuesAreProperlyPopulated) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenDefaultClCacheConfigWithNonExistingPathThenValuesAreProperlyPopulated) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
 
     bool pathExistsMock = false;
     VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
 
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    EXPECT_STREQ("cl_cache", cacheConfig.cacheDir.c_str());
-    EXPECT_STREQ(".cl_cache", cacheConfig.cacheFileExtension.c_str());
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheLocation().c_str(), cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheFileExtension().c_str(), cacheConfig.cacheFileExtension.c_str());
     EXPECT_FALSE(cacheConfig.enabled);
 }
 
-TEST_F(CompilerCacheTest, GivenAllEnvVarWhenProperlySetThenCorrectConfigIsReturned) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenAllEnvVarWhenProperlySetThenCorrectConfigIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
     mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
@@ -95,12 +97,12 @@ TEST_F(CompilerCacheTest, GivenAllEnvVarWhenProperlySetThenCorrectConfigIsReturn
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ApiSpecificConfig::compilerCacheFileExtension().c_str());
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "ult\\directory\\");
 }
 
-TEST_F(CompilerCacheTest, GivenNonExistingPathWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenNonExistingPathWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
     mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
@@ -114,7 +116,7 @@ TEST_F(CompilerCacheTest, GivenNonExistingPathWhenGetCompilerCacheConfigThenConf
     EXPECT_TRUE(cacheConfig.cacheDir.empty());
 }
 
-TEST_F(CompilerCacheTest, GivenLocalAppDataCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenLocalAppDataCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
@@ -131,12 +133,12 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataCachePathSetWhenGetCompilerCacheConfi
     const std::string expectedCacheDirPath = "C:\\Users\\user1\\AppData\\Local\\NEO\\neo_compiler_cache";
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ApiSpecificConfig::compilerCacheFileExtension().c_str());
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, expectedCacheDirPath);
 }
 
-TEST_F(CompilerCacheTest, GivenNeoCacheDirNotSetAndLocalAppDataCachePathNotSetWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenNeoCacheDirNotSetAndLocalAppDataCachePathNotSetWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
@@ -148,7 +150,7 @@ TEST_F(CompilerCacheTest, GivenNeoCacheDirNotSetAndLocalAppDataCachePathNotSetWh
     EXPECT_TRUE(cacheConfig.cacheDir.empty());
 }
 
-TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetCompilerCacheConfigThenNeoDirectoryIsCreatedAndConfigWithEnabledCacheIsReturned) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetCompilerCacheConfigThenNeoDirectoryIsCreatedAndConfigWithEnabledCacheIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
@@ -163,13 +165,13 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetC
     const std::string expectedCacheDirPath = "C:\\Users\\user1\\AppData\\Local\\NEO\\neo_compiler_cache";
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ApiSpecificConfig::compilerCacheFileExtension().c_str());
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, expectedCacheDirPath);
     EXPECT_EQ(1u, SysCalls::createDirectoryACalled);
 }
 
-TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetCompilerCacheConfigAndNeoDirCreationFailsThenConfigWithDisabledCacheIsReturned) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetCompilerCacheConfigAndNeoDirCreationFailsThenConfigWithDisabledCacheIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
@@ -187,7 +189,7 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoDirectoryWhenGetC
     EXPECT_EQ(1u, SysCalls::createDirectoryACalled);
 }
 
-TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDirectoryWhenGetCompilerCacheConfigThenNeoCompilerCacheDirectoryIsCreatedAndConfigWithEnabledCacheIsReturned) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDirectoryWhenGetCompilerCacheConfigThenNeoCompilerCacheDirectoryIsCreatedAndConfigWithEnabledCacheIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
@@ -203,13 +205,13 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDire
     const std::string expectedCacheDirPath = "C:\\Users\\user1\\AppData\\Local\\NEO\\neo_compiler_cache";
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ApiSpecificConfig::compilerCacheFileExtension().c_str());
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, expectedCacheDirPath);
     EXPECT_EQ(1u, SysCalls::createDirectoryACalled);
 }
 
-TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDirectoryWhenGetCompilerCacheConfigAndDirectoryCreationFailsThenConfigWithDisabledCacheIsReturned) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDirectoryWhenGetCompilerCacheConfigAndDirectoryCreationFailsThenConfigWithDisabledCacheIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
@@ -229,7 +231,7 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetAndNonExistingNeoCompilerCacheDire
     EXPECT_EQ(1u, SysCalls::createDirectoryACalled);
 }
 
-TEST_F(CompilerCacheTest, GivenLocalAppDataSetWhenGetCompilerCacheConfigAndNeoCompilerCacheDirectoryAlreadyExistsThenConfigWithEnabledCacheIsReturned) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenLocalAppDataSetWhenGetCompilerCacheConfigAndNeoCompilerCacheDirectoryAlreadyExistsThenConfigWithEnabledCacheIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
 
@@ -247,13 +249,13 @@ TEST_F(CompilerCacheTest, GivenLocalAppDataSetWhenGetCompilerCacheConfigAndNeoCo
     const std::string expectedCacheDirPath = "C:\\Users\\user1\\AppData\\Local\\NEO\\neo_compiler_cache";
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ApiSpecificConfig::compilerCacheFileExtension().c_str());
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, expectedCacheDirPath);
     EXPECT_EQ(1u, SysCalls::createDirectoryACalled);
 }
 
-TEST_F(CompilerCacheTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigThenCacheSizeIsSetToMaxSize) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigThenCacheSizeIsSetToMaxSize) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "0";
     mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
@@ -263,12 +265,12 @@ TEST_F(CompilerCacheTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigThenCacheSi
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ApiSpecificConfig::compilerCacheFileExtension().c_str());
     EXPECT_EQ(cacheConfig.cacheSize, std::numeric_limits<size_t>::max());
     EXPECT_EQ(cacheConfig.cacheDir, "ult\\directory\\");
 }
 
-TEST_F(CompilerCacheTest, GivenCachePathExistsAndNoEnvVarsSetWhenGetDefaultCompilerCacheConfigThenCacheIsEnabled) {
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenCachePathExistsAndNoEnvVarsSetWhenGetDefaultCompilerCacheConfigThenCacheIsEnabled) {
     bool pathExistsMock = true;
     VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
 
@@ -282,7 +284,7 @@ TEST_F(CompilerCacheTest, GivenCachePathExistsAndNoEnvVarsSetWhenGetDefaultCompi
     const std::string expectedCacheDirPath = "C:\\Users\\user1\\AppData\\Local\\NEO\\neo_compiler_cache";
 
     EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_EQ(cacheConfig.cacheFileExtension, ".cl_cache");
+    EXPECT_EQ(cacheConfig.cacheFileExtension, ApiSpecificConfig::compilerCacheFileExtension().c_str());
     EXPECT_EQ(cacheConfig.cacheSize, static_cast<size_t>(MemoryConstants::gigaByte));
     EXPECT_EQ(cacheConfig.cacheDir, expectedCacheDirPath);
 }

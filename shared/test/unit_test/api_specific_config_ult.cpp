@@ -78,4 +78,20 @@ const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
     }
 }
 
+std::string ApiSpecificConfig::compilerCacheDir() {
+    return "cl_cache_dir";
+}
+
+std::string ApiSpecificConfig::compilerCacheLocation() {
+    return "cl_cache";
+}
+
+std::string ApiSpecificConfig::compilerCacheFileExtension() {
+    return ".cl_cache";
+}
+
+int64_t ApiSpecificConfig::compilerCacheDefaultEnabled() {
+    return 1l;
+}
+
 } // namespace NEO

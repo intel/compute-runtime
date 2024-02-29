@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,10 +15,6 @@
 #include <algorithm>
 
 namespace NEO {
-int64_t defaultCacheEnabled() {
-    return 1l;
-}
-
 std::string getKnownFolderPath(REFKNOWNFOLDERID rfid) {
     PWSTR path = nullptr;
     auto result = SysCalls::shGetKnownFolderPath(rfid, 0, nullptr, &path);

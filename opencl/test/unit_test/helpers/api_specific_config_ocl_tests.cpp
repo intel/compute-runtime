@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,4 +70,21 @@ TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingPrin
 
     EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
+
+TEST(ApiSpecificConfigOclTests, WhenGettingCompilerCacheDirThenReturnProperDirString) {
+    EXPECT_EQ(0, strcmp("cl_cache_dir", ApiSpecificConfig::compilerCacheDir().c_str()));
+}
+
+TEST(ApiSpecificConfigOclTests, WhenGettingCompilerCacheLocationThenReturnProperLocationString) {
+    EXPECT_EQ(0, strcmp("cl_cache", ApiSpecificConfig::compilerCacheLocation().c_str()));
+}
+
+TEST(ApiSpecificConfigOclTests, WhenGettingCompilerCacheFileExtensionThenReturnProperFileExtensionString) {
+    EXPECT_EQ(0, strcmp(".cl_cache", ApiSpecificConfig::compilerCacheFileExtension().c_str()));
+}
+
+TEST(ApiSpecificConfigOclTests, WhenCheckingIfCompilerCacheIsEnabledByDefaultThenReturnTrue) {
+    EXPECT_EQ(1u, ApiSpecificConfig::compilerCacheDefaultEnabled());
+}
+
 } // namespace NEO

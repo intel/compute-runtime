@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -984,10 +984,6 @@ TEST_F(CompilerCacheWindowsTest, givenCacheBinaryWhenRenameTempFileBinaryToPrope
     EXPECT_EQ(1u, cache.renameTempFileBinaryToProperNameCalled);
     EXPECT_EQ(1u, SysCalls::deleteFileACalled);
     EXPECT_EQ(0u, SysCalls::writeFileCalled);
-}
-
-TEST(CompilerCacheHelperWindowsTest, whenDefaultCacheEnabledIsCalledThenReturnCorrectValue) {
-    EXPECT_EQ(1l, NEO::defaultCacheEnabled());
 }
 
 TEST(CompilerCacheHelperWindowsTest, givenFindFirstFileASuccessWhenGetFileModificationTimeThenFindCloseIsCalled) {

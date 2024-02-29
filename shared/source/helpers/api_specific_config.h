@@ -35,5 +35,9 @@ struct ApiSpecificConfig {
         return (getName() + "_");
     }
     static bool isSharedAllocPrefetchEnabled();
+    static std::string compilerCacheDir();
+    static std::string compilerCacheLocation();
+    static std::string compilerCacheFileExtension();
+    static int64_t compilerCacheDefaultEnabled();
 };
 } // namespace NEO
