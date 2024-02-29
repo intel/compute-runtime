@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1523,9 +1523,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
@@ -1559,9 +1557,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
     EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
@@ -1585,9 +1581,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     size_t gws[] = {129, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
     kernel->mockProgram->allowNonUniform = true;
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
@@ -1936,10 +1930,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, give
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {2, 1, 1};
     size_t lws[] = {1, 1, 1};
-    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     KernelWithSingleSubdevicePreferences subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
     subdeviceKernel.singleSubdevicePreferred = true;
     cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
@@ -1960,10 +1951,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, give
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {2, 1, 1};
     size_t lws[] = {1, 1, 1};
-    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
-    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     KernelWithSingleSubdevicePreferences subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
     subdeviceKernel.singleSubdevicePreferred = false;
     cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);

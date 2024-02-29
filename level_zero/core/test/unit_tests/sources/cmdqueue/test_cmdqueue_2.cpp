@@ -356,9 +356,6 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenMultiplePartitionCountWhenC
     ze_result_t returnValue;
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
-    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread) {
-        csr->createPreemptionAllocation();
-    }
     EXPECT_NE(0u, csr->getImmWritePostSyncWriteOffset());
     volatile TagAddressType *tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {
@@ -399,9 +396,7 @@ HWTEST2_F(MultiTileCommandQueueSynchronizeTest, givenCsrHasMultipleActivePartiti
     ze_result_t returnValue;
 
     auto csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
-    if (device->getNEODevice()->getPreemptionMode() == PreemptionMode::MidThread) {
-        csr->createPreemptionAllocation();
-    }
+
     EXPECT_NE(0u, csr->getImmWritePostSyncWriteOffset());
     volatile TagAddressType *tagAddress = csr->getTagAddress();
     for (uint32_t i = 0; i < 2; i++) {

@@ -596,6 +596,18 @@ TEST_F(DeviceTests, givenDispatchGlobalsAllocationFailsOnSecondSubDeviceThenRtDi
     EXPECT_EQ(nullptr, rtDispatchGlobalsInfo);
 }
 
+TEST_F(DeviceTests, givenMtPreemptionEnabledWhenCreatingRootCsrThenCreatePreemptionAllocation) {
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.ForcePreemptionMode.set(4);
+
+    UltDeviceFactory deviceFactory{1, 2};
+
+    EXPECT_TRUE(deviceFactory.rootDevices[0]->getDefaultEngine().osContext->isRootDevice());
+    EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getPreemptionAllocation());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableDefinedWhenDeviceIsCreatedThenCreateDevicesWithProperCcsCount) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;

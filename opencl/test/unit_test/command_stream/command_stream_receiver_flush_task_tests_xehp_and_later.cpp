@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -774,9 +774,7 @@ struct CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests : public Command
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleStaticActivePartitionsWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;
@@ -797,9 +795,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     debugManager.flags.UpdateTaskCountFromWait.set(3);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;
@@ -815,9 +811,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenSingleStaticActivePartitionWhenFlushingTaskThenExpectTagUpdatePipeControlWithoutPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     commandStreamReceiver.activePartitions = 1;
     commandStreamReceiver.taskCount = 3;
     flushTask(commandStreamReceiver, true);
@@ -838,9 +832,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     debugManager.flags.UpdateTaskCountFromWait.set(3);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     EXPECT_EQ(1u, commandStreamReceiver.activePartitionsConfig);
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;
@@ -869,9 +861,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleDynamicActivePartitionsWhenFlushingTaskTwiceThenExpectTagUpdatePipeControlWithoutPartitionFlagAndPartitionRegisters) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
 
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;
@@ -892,9 +881,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
     debugManager.flags.UpdateTaskCountFromWait.set(1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
+
     commandStreamReceiver.activePartitions = 2;
     commandStreamReceiver.taskCount = 3;
     commandStreamReceiver.staticWorkPartitioningEnabled = false;
@@ -907,9 +894,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterMultiTileTests,
             givenMultipleStaticActivePartitionsAndDirectSubmissionActiveWhenFlushingTaskThenExpectTagUpdatePipeControlWithPartitionFlagOnAndNoActivePartitionConfig) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (pDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver.createPreemptionAllocation();
-    }
 
     commandStreamReceiver.directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(commandStreamReceiver);
     commandStreamReceiver.directSubmissionAvailable = true;

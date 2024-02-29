@@ -1122,11 +1122,6 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     EXPECT_EQ(2u, commandQueue->partitionCount);
     ASSERT_NE(nullptr, commandQueue);
 
-    auto &commandStreamReceiver = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-    if (neoDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-        commandStreamReceiver->createPreemptionAllocation();
-    }
-
     ze_fence_desc_t fenceDesc{};
     auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
     ASSERT_NE(nullptr, fence);
