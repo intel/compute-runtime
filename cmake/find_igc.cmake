@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -118,12 +118,3 @@ else()
 endif()
 
 message(STATUS "IGA Includes dir: ${IGA_INCLUDE_DIR}")
-
-if(WIN32)
-  set(IGC_LIBRARY_NAME "igc${NEO_BITS}")
-  set(FCL_LIBRARY_NAME "igdfcl${NEO_BITS}")
-endif()
-
-if(WIN32 AND NOT NEO__IGC_FOUND)
-  configure_file(igc.opencl.h.in ${NEO_BUILD_DIR}/igc.opencl.h)
-endif()
