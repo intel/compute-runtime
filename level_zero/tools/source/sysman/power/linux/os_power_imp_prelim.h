@@ -42,12 +42,10 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   protected:
     PlatformMonitoringTech *pPmt = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
-    virtual std::unique_lock<std::mutex> obtainMutex();
 
   private:
     std::string i915HwmonDir;
     std::string criticalPowerLimit;
-    std::mutex powerLimitMutex{};
     static const std::string hwmonDir;
     static const std::string i915;
     static const std::string sustainedPowerLimit;
@@ -59,7 +57,6 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     uint32_t subdeviceId = 0;
     uint32_t powerLimitCount = 0;
     PRODUCT_FAMILY productFamily{};
-    class PowerLimitRestorer;
 
     ze_result_t getErrorCode(ze_result_t result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
