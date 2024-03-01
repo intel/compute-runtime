@@ -400,14 +400,6 @@ bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hw
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
-    if (debugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
-        return debugManager.flags.SetAmountOfReusableAllocations.get();
-    }
-    return 1u;
-}
-
-template <>
 bool GfxCoreHelperHw<Family>::isRelaxedOrderingSupported() const {
     return true;
 }

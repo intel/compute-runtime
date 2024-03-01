@@ -1347,11 +1347,6 @@ HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabl
     EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallGetAmountOfAllocationsToFillThenReturnFalse, IsNotXeHpcCore) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 0u);
-}
-
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallCopyThroughLockedPtrEnabledThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
@@ -1363,9 +1358,11 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallCopyThroughLocke
     EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 }
 
-HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue) {
+HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue, IsBeforeXeHpCore) {
     DebugManagerStateRestore restorer;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 0u);
+
     debugManager.flags.SetAmountOfReusableAllocations.set(0);
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 0u);
 
