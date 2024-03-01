@@ -42,11 +42,11 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 2295-1365
+    revision: 2301-1370
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
-    revision: 552a3276a44e3255cf2a184acfc98123a43518b6
+    revision: c6d3572fb36789df452ca417454272a2a92b78fc
     type: git
   level_zero:
     asset_name: level_zero
@@ -91,5 +91,5 @@ components:
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-2295
+converter: M-2301
 version: '1'
