@@ -50,8 +50,6 @@ struct CommandListImp : public CommandList {
 
     ~CommandListImp() override = default;
 
-    virtual bool inOrderAtomicSignallingEnabled() const = 0;
-
     static constexpr int32_t cmdListDefaultEngineInstancedDevice = NEO::StreamProperty::initValue;
     static constexpr bool cmdListDefaultCoherency = false;
     static constexpr bool cmdListDefaultDisableOverdispatch = true;

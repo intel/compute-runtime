@@ -80,7 +80,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
-    using BaseClass::inOrderAtomicSignallingEnabled;
+    using BaseClass::inOrderAtomicSignalingEnabled;
     using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;
     using BaseClass::isFlushTaskSubmissionEnabled;
@@ -187,7 +187,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::getInOrderIncrementValue;
     using BaseClass::hostSynchronize;
     using BaseClass::immediateCmdListHeapSharing;
-    using BaseClass::inOrderAtomicSignallingEnabled;
+    using BaseClass::inOrderAtomicSignalingEnabled;
     using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;
     using BaseClass::isBcsSplitNeeded;
@@ -295,7 +295,6 @@ struct MockCommandList : public CommandList {
     ADDMETHOD_NOBASE(close, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE_VOIDRETURN(patchInOrderCmds, (void));
-    ADDMETHOD_CONST_NOBASE(inOrderAtomicSignallingEnabled, bool, false, (void));
 
     ADDMETHOD_NOBASE(appendLaunchKernel, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_kernel_handle_t kernelHandle,

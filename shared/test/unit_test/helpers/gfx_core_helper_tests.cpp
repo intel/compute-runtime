@@ -1673,7 +1673,7 @@ HWTEST_F(GfxCoreHelperTest, whenAskingIf48bResourceNeededForCmdBufferThenReturnT
     EXPECT_TRUE(getHelper<GfxCoreHelper>().is48ResourceNeededForCmdBuffer());
 }
 
-HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForDumplicatedInOrderHostStorageThenReturnCorrectValue) {
+HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForDuplicatedInOrderHostStorageThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 
     auto &helper = getHelper<GfxCoreHelper>();
@@ -1686,6 +1686,21 @@ HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForDumplicatedInOrder
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
     EXPECT_FALSE(helper.duplicatedInOrderCounterStorageEnabled(rootExecEnv));
+}
+
+HWTEST_F(GfxCoreHelperTest, givenDebugVariableSetWhenAskingForInOrderAtomicSignalingThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    auto &helper = getHelper<GfxCoreHelper>();
+    auto &rootExecEnv = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
+
+    EXPECT_FALSE(helper.inOrderAtomicSignallingEnabled(rootExecEnv));
+
+    debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
+    EXPECT_TRUE(helper.inOrderAtomicSignallingEnabled(rootExecEnv));
+
+    debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
+    EXPECT_FALSE(helper.inOrderAtomicSignallingEnabled(rootExecEnv));
 }
 
 TEST_F(GfxCoreHelperTest, whenOnlyPerThreadPrivateMemorySizeIsDefinedThenItIsReturnedAsKernelPrivateMemorySize) {

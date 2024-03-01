@@ -19,10 +19,11 @@
 
 namespace NEO {
 
-std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling) {
+std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList) {
     NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
 
     auto &gfxCoreHelper = device.getGfxCoreHelper();
+    bool atomicDeviceSignalling = gfxCoreHelper.inOrderAtomicSignallingEnabled(device.getRootDeviceEnvironment());
 
     if (gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(device.getRootDeviceEnvironment())) {
         NEO::AllocationProperties hostAllocationProperties{device.getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::bufferHostMemory, device.getDeviceBitfield()};

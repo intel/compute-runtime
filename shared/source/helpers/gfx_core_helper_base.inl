@@ -761,4 +761,9 @@ bool GfxCoreHelperHw<GfxFamily>::duplicatedInOrderCounterStorageEnabled(const Ro
     return (debugManager.flags.InOrderDuplicatedCounterStorageEnabled.get() == 1);
 }
 
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::inOrderAtomicSignallingEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    return (debugManager.flags.InOrderAtomicSignallingEnabled.get() == 1);
+}
+
 } // namespace NEO

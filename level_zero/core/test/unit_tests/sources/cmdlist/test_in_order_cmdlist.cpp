@@ -502,13 +502,15 @@ HWTEST2_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnR
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetAndSingleTileCmdListWhenAskingForAtomicSignallingThenReturnTrue, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
-    EXPECT_FALSE(immCmdList->inOrderAtomicSignallingEnabled());
+    EXPECT_FALSE(immCmdList->inOrderAtomicSignalingEnabled);
     EXPECT_EQ(1u, immCmdList->getInOrderIncrementValue());
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
 
-    EXPECT_TRUE(immCmdList->inOrderAtomicSignallingEnabled());
-    EXPECT_EQ(1u, immCmdList->getInOrderIncrementValue());
+    auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
+
+    EXPECT_TRUE(immCmdList2->inOrderAtomicSignalingEnabled);
+    EXPECT_EQ(1u, immCmdList2->getInOrderIncrementValue());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphoreForPreviousDispatch, IsAtLeastXeHpCore) {
@@ -4166,13 +4168,15 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWh
 HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagSetWhenAskingForAtomicSignallingThenReturnTrue, IsAtLeastXeHpCore) {
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
 
-    EXPECT_FALSE(immCmdList->inOrderAtomicSignallingEnabled());
+    EXPECT_FALSE(immCmdList->inOrderAtomicSignalingEnabled);
     EXPECT_EQ(1u, immCmdList->getInOrderIncrementValue());
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
 
-    EXPECT_TRUE(immCmdList->inOrderAtomicSignallingEnabled());
-    EXPECT_EQ(partitionCount, immCmdList->getInOrderIncrementValue());
+    auto immCmdList2 = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    EXPECT_TRUE(immCmdList2->inOrderAtomicSignalingEnabled);
+    EXPECT_EQ(partitionCount, immCmdList2->getInOrderIncrementValue());
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignallingCounterThenUseMiAtomicCmd, IsAtLeastXeHpCore) {

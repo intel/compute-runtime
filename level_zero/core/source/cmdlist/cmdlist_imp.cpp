@@ -261,7 +261,7 @@ void CommandListImp::enableInOrderExecution() {
 
     auto deviceCounterNode = this->device->getDeviceInOrderCounterAllocator()->getTag();
 
-    inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, *this->device->getNEODevice(), this->partitionCount, !isImmediateType(), inOrderAtomicSignallingEnabled());
+    inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, *this->device->getNEODevice(), this->partitionCount, !isImmediateType());
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {

@@ -237,6 +237,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
     this->duplicatedInOrderCounterStorageEnabled = gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(rootDeviceEnvironment);
+    this->inOrderAtomicSignalingEnabled = gfxCoreHelper.inOrderAtomicSignallingEnabled(rootDeviceEnvironment);
 
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
@@ -2560,7 +2561,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
 
     auto cmdStream = commandContainer.getCommandStream();
 
-    if (inOrderAtomicSignallingEnabled()) {
+    if (this->inOrderAtomicSignalingEnabled) {
         using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
         using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
@@ -3690,7 +3691,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType) {
     if ((NEO::debugManager.flags.EnableInOrderRegularCmdListPatching.get() != 0) && !isImmediateType()) {
-        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, inOrderAtomicSignallingEnabled(), this->duplicatedInOrderCounterStorageEnabled);
+        this->inOrderPatchCmds.emplace_back(externalInOrderExecInfo, cmd1, cmd2, counterValue, patchCmdType, this->inOrderAtomicSignalingEnabled, this->duplicatedInOrderCounterStorageEnabled);
     }
 }
 
@@ -3758,13 +3759,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::inOrderAtomicSignallingEnabled() const {
-    return (NEO::debugManager.flags.InOrderAtomicSignallingEnabled.get() == 1);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 uint64_t CommandListCoreFamily<gfxCoreFamily>::getInOrderIncrementValue() const {
-    return (inOrderAtomicSignallingEnabled() ? this->getPartitionCount() : 1);
+    return (this->inOrderAtomicSignalingEnabled ? this->getPartitionCount() : 1);
 }
 
 } // namespace L0

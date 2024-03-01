@@ -341,10 +341,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool hasInOrderDependencies() const;
 
     void addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
-
-    bool inOrderAtomicSignallingEnabled() const override;
     uint64_t getInOrderIncrementValue() const;
-
     bool isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const;
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
@@ -352,6 +349,7 @@ struct CommandListCoreFamily : public CommandListImp {
     uint64_t latestHostWaitedInOrderSyncValue = 0;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
+    bool inOrderAtomicSignalingEnabled = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>
