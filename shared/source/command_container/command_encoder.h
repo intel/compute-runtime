@@ -158,6 +158,9 @@ struct EncodeDispatchKernel {
     template <typename WalkerType, typename InterfaceDescriptorType>
     static void adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd);
 
+    template <typename WalkerType, typename InterfaceDescriptorType>
+    static void adjustInterfaceDescriptorDataForOverdispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd);
+
     static void adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount);
 
     template <typename WalkerType>
