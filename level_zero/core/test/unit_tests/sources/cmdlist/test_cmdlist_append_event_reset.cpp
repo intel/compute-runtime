@@ -464,7 +464,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     EXPECT_EQ(2u, event->getPacketsInUse());
     size_t usedAfterSize = cmdStream->getUsed();
 
-    NEO::EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&device->getNEODevice()->getRootDeviceEnvironment())};
+    NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&device->getNEODevice()->getRootDeviceEnvironment())};
     size_t expectedSize = NEO::EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) * packets;
     EXPECT_EQ(expectedSize, (usedAfterSize - usedBeforeSize));
 

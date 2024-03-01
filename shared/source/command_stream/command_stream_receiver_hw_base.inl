@@ -1055,7 +1055,11 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
             EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, this->globalFenceAllocation->getGpuAddress(), 0, tlbFlushArgs);
         }
 
-        BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(blitProperties, commandStream, *waArgs.rootDeviceEnvironment);
+        BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(blitProperties, commandStream, waArgs);
+        auto dummyAllocation = rootDeviceEnvironment->getDummyAllocation();
+        if (dummyAllocation) {
+            makeResident(*dummyAllocation);
+        }
 
         if (blitProperties.outputTimestampPacket) {
             if (profilingEnabled) {
@@ -1090,13 +1094,8 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     if (updateTag) {
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
         args.commandWithPostSync = true;
-        args.waArgs.isWaRequired = true;
         args.notifyEnable = isUsedNotifyEnableForPostSync();
         EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, tagAllocation->getGpuAddress(), newTaskCount, args);
-        auto dummyAllocation = rootDeviceEnvironment->getDummyAllocation();
-        if (dummyAllocation) {
-            makeResident(*dummyAllocation);
-        }
 
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
     }
