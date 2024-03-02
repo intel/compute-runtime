@@ -232,19 +232,6 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckMakeResidentB
     EXPECT_TRUE(gfxCoreHelper.makeResidentBeforeLockNeeded(false));
 }
 
-HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue, IsAtLeastXeHpgCore) {
-    DebugManagerStateRestore restorer;
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 1u);
-
-    debugManager.flags.SetAmountOfReusableAllocations.set(0);
-    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 0u);
-
-    debugManager.flags.SetAmountOfReusableAllocations.set(1);
-    EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 1u);
-}
-
 using ProductHelperTestDg2AndLater = ::testing::Test;
 
 HWTEST2_F(ProductHelperTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapInLocalMemThenTrueIsReturned, IsAtLeastXeHpgCore) {

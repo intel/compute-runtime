@@ -682,6 +682,14 @@ bool GfxCoreHelperHw<GfxFamily>::copyThroughLockedPtrEnabled(const HardwareInfo 
 }
 
 template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getAmountOfAllocationsToFill() const {
+    if (debugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
+        return debugManager.flags.SetAmountOfReusableAllocations.get();
+    }
+    return 0u;
+}
+
+template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isChipsetUniqueUUIDSupported() const {
     return false;
 }

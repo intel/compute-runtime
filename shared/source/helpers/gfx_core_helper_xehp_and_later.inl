@@ -59,14 +59,6 @@ bool GfxCoreHelperHw<GfxFamily>::isTimestampWaitSupportedForQueues() const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getAmountOfAllocationsToFill() const {
-    if (debugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
-        return debugManager.flags.SetAmountOfReusableAllocations.get();
-    }
-    return 1u;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::makeResidentBeforeLockNeeded(bool precondition) const {
     return true;
 }
