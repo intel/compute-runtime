@@ -235,23 +235,20 @@ TEST_F(DeviceTest, givenNot48bResourceForRtWhenAllocateRTDispatchGlobalsIsCalled
 }
 
 HWTEST2_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledAndRTStackAllocationFailsRTDispatchGlobalsIsNotAllocated, IsPVC) {
-    DebugManagerStateRestore dbgRestorer;
-
+    DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(2);
-    pDevice->deviceBitfield = 3;
-
-    pDevice->subdevices.push_back(new SubDevice(pDevice->executionEnvironment, 0, *pDevice));
-    pDevice->subdevices.push_back(new SubDevice(pDevice->executionEnvironment, 1, *pDevice));
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
     std::unique_ptr<NEO::MemoryManager> otherMemoryManager;
-    otherMemoryManager = std::make_unique<NEO::MockMemoryManagerWithCapacity>(*pDevice->executionEnvironment);
+    otherMemoryManager = std::make_unique<NEO::MockMemoryManagerWithCapacity>(*device->executionEnvironment);
     static_cast<NEO::MockMemoryManagerWithCapacity &>(*otherMemoryManager).capacity = 50000000;
-    pDevice->executionEnvironment->memoryManager.swap(otherMemoryManager);
+    device->executionEnvironment->memoryManager.swap(otherMemoryManager);
 
-    pDevice->initializeRayTracing(5);
-    EXPECT_EQ(nullptr, pDevice->getRTDispatchGlobals(3));
+    device->initializeRayTracing(5);
+    EXPECT_EQ(nullptr, device->getRTDispatchGlobals(3));
 
-    pDevice->executionEnvironment->memoryManager.swap(otherMemoryManager);
+    device->executionEnvironment->memoryManager.swap(otherMemoryManager);
 }
 
 TEST_F(DeviceTest, givenDispatchGlobalsAllocationFailsThenRTDispatchGlobalsInfoIsNull) {
@@ -855,6 +852,36 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetWithoutTilesThen
     for (uint32_t i = 0u; i < devices.size(); i++) {
         std::tuple<uint32_t, uint32_t, uint32_t> subDeviceMap;
         EXPECT_FALSE(executionEnvironment.getSubDeviceHierarchy(i, &subDeviceMap));
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetWhenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsAllocated) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+
+    uint32_t numRootDevices = 4;
+    uint32_t numSubDevices = 4;
+
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+
+    uint32_t expectedRootDevices = 4;
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.2,1.2,2.3,3.3");
+
+    auto hwInfo = *defaultHwInfo;
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo, false, numRootDevices);
+    executionEnvironment.incRefInternal();
+
+    auto devices = DeviceFactory::createDevices(executionEnvironment);
+    EXPECT_EQ(devices.size(), expectedRootDevices);
+    for (uint32_t i = 0u; i < devices.size(); i++) {
+        devices[0]->initializeRayTracing(5);
+        EXPECT_NE(nullptr, devices[0]->getRTDispatchGlobals(3));
     }
 }
 

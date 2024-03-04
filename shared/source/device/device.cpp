@@ -1019,9 +1019,14 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
 
     bool allocFailed = false;
 
-    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getHardwareInfo());
-    auto dispatchGlobalsSize = deviceCount * dispatchGlobalsStride;
-    auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(*this, deviceCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
+    uint32_t tileCount = 1;
+    if (this->getNumSubDevices() > 1) {
+        // If device encompasses multiple tiles, allocate RTDispatchGlobals for each tile
+        tileCount = this->getNumSubDevices();
+    }
+
+    auto dispatchGlobalsSize = tileCount * dispatchGlobalsStride;
+    auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(*this, tileCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
 
     std::unique_ptr<RTDispatchGlobalsInfo> dispatchGlobalsInfo = std::make_unique<RTDispatchGlobalsInfo>();
 
@@ -1039,9 +1044,9 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         return;
     }
 
-    for (unsigned int tile = 0; tile < deviceCount; tile++) {
+    for (unsigned int tile = 0; tile < tileCount; tile++) {
         DeviceBitfield deviceBitfield =
-            (deviceCount == 1)
+            (tileCount == 1)
                 ? this->getDeviceBitfield()
                 : subdevices[tile]->getDeviceBitfield();
 
