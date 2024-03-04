@@ -4638,6 +4638,159 @@ TEST_F(P2pBandwidthPropertiesTest, GivenNoXeLinkFabricConnectionBetweenDevicesWh
     driverHandle->fabricEdges.pop_back();
 }
 
+TEST_F(P2pBandwidthPropertiesTest, GivenXeLinkAndMdfiFabricConnectionBetweenSubDevicesWhenQueryingBandwidthPropertiesThenCorrectPropertiesAreSet) {
+    constexpr uint32_t xeLinkBandwidth = 3;
+
+    driverHandle->initializeVertexes();
+
+    uint32_t subDeviceCount = 2;
+    ze_device_handle_t device0SubDevices[2];
+    ze_device_handle_t device1SubDevices[2];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->devices[0]->getSubDevices(&subDeviceCount, device0SubDevices));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->devices[1]->getSubDevices(&subDeviceCount, device1SubDevices));
+    EXPECT_NE(nullptr, device0SubDevices[0]);
+    EXPECT_NE(nullptr, device0SubDevices[1]);
+    EXPECT_NE(nullptr, device1SubDevices[0]);
+    EXPECT_NE(nullptr, device1SubDevices[1]);
+
+    ze_fabric_vertex_handle_t vertex00 = nullptr;
+    ze_fabric_vertex_handle_t vertex01 = nullptr;
+    ze_fabric_vertex_handle_t vertex10 = nullptr;
+    ze_fabric_vertex_handle_t vertex11 = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[0])->getFabricVertex(&vertex00));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[1])->getFabricVertex(&vertex01));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device1SubDevices[0])->getFabricVertex(&vertex10));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device1SubDevices[1])->getFabricVertex(&vertex11));
+    EXPECT_NE(nullptr, vertex00);
+    EXPECT_NE(nullptr, vertex01);
+    EXPECT_NE(nullptr, vertex10);
+    EXPECT_NE(nullptr, vertex11);
+
+    const char *mdfiModel = "MDFI";
+    const char *xeLinkModel = "XeLink";
+    const char *xeLinkMdfiModel = "XeLink-MDFI";
+    const char *mdfiXeLinkModel = "MDFI-XeLink";
+    const char *mdfiXeLinkMdfiModel = "MDFI-XeLink-MDFI";
+
+    // MDFI between 00 & 01
+    auto testEdgeMdfi0 = new FabricEdge;
+    testEdgeMdfi0->vertexA = FabricVertex::fromHandle(vertex00);
+    testEdgeMdfi0->vertexB = FabricVertex::fromHandle(vertex01);
+    memcpy_s(testEdgeMdfi0->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, mdfiModel, strlen(mdfiModel));
+    testEdgeMdfi0->properties.bandwidth = 0u;
+    testEdgeMdfi0->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_UNKNOWN;
+    testEdgeMdfi0->properties.latency = 0u;
+    testEdgeMdfi0->properties.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+    driverHandle->fabricEdges.push_back(testEdgeMdfi0);
+
+    // MDFI between 10 & 11
+    auto testEdgeMdfi1 = new FabricEdge;
+    testEdgeMdfi1->vertexA = FabricVertex::fromHandle(vertex10);
+    testEdgeMdfi1->vertexB = FabricVertex::fromHandle(vertex11);
+    memcpy_s(testEdgeMdfi1->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, mdfiModel, strlen(mdfiModel));
+    testEdgeMdfi1->properties.bandwidth = 0u;
+    testEdgeMdfi1->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_UNKNOWN;
+    testEdgeMdfi1->properties.latency = 0u;
+    testEdgeMdfi1->properties.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+    driverHandle->fabricEdges.push_back(testEdgeMdfi1);
+
+    // XeLink between 01 & 10
+    auto testEdgeXeLink = new FabricEdge;
+    testEdgeXeLink->vertexA = FabricVertex::fromHandle(vertex01);
+    testEdgeXeLink->vertexB = FabricVertex::fromHandle(vertex10);
+    memcpy_s(testEdgeXeLink->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, xeLinkModel, strlen(xeLinkModel));
+    testEdgeXeLink->properties.bandwidth = xeLinkBandwidth;
+    testEdgeXeLink->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+    testEdgeXeLink->properties.latency = 1u;
+    testEdgeXeLink->properties.latencyUnit = ZE_LATENCY_UNIT_HOP;
+    driverHandle->fabricEdges.push_back(testEdgeXeLink);
+
+    // MDFI-XeLink between 00 & 10
+    auto testEdgeMdfiXeLink = new FabricEdge;
+    testEdgeMdfiXeLink->vertexA = FabricVertex::fromHandle(vertex00);
+    testEdgeMdfiXeLink->vertexB = FabricVertex::fromHandle(vertex10);
+    memcpy_s(testEdgeMdfiXeLink->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, mdfiXeLinkModel, strlen(mdfiXeLinkModel));
+    testEdgeMdfiXeLink->properties.bandwidth = xeLinkBandwidth;
+    testEdgeMdfiXeLink->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+    testEdgeMdfiXeLink->properties.latency = std::numeric_limits<uint32_t>::max();
+    testEdgeMdfiXeLink->properties.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+    driverHandle->fabricIndirectEdges.push_back(testEdgeMdfiXeLink);
+
+    // MDFI-XeLink-MDFI between 00 & 11
+    auto testEdgeMdfiXeLinkMdfi = new FabricEdge;
+    testEdgeMdfiXeLinkMdfi->vertexA = FabricVertex::fromHandle(vertex00);
+    testEdgeMdfiXeLinkMdfi->vertexB = FabricVertex::fromHandle(vertex11);
+    memcpy_s(testEdgeMdfiXeLinkMdfi->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, mdfiXeLinkMdfiModel, strlen(mdfiXeLinkMdfiModel));
+    testEdgeMdfiXeLinkMdfi->properties.bandwidth = xeLinkBandwidth;
+    testEdgeMdfiXeLinkMdfi->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+    testEdgeMdfiXeLinkMdfi->properties.latency = std::numeric_limits<uint32_t>::max();
+    testEdgeMdfiXeLinkMdfi->properties.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+    driverHandle->fabricIndirectEdges.push_back(testEdgeMdfiXeLinkMdfi);
+
+    // XeLink-MDFI between 01 & 11
+    auto testEdgeXeLinkMdfi = new FabricEdge;
+    testEdgeXeLinkMdfi->vertexA = FabricVertex::fromHandle(vertex01);
+    testEdgeXeLinkMdfi->vertexB = FabricVertex::fromHandle(vertex11);
+    memcpy_s(testEdgeXeLinkMdfi->properties.model, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE, xeLinkMdfiModel, strlen(xeLinkMdfiModel));
+    testEdgeXeLinkMdfi->properties.bandwidth = xeLinkBandwidth;
+    testEdgeXeLinkMdfi->properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
+    testEdgeXeLinkMdfi->properties.latency = std::numeric_limits<uint32_t>::max();
+    testEdgeXeLinkMdfi->properties.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+    driverHandle->fabricIndirectEdges.push_back(testEdgeXeLinkMdfi);
+
+    ze_device_p2p_properties_t p2pProperties = {};
+    ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProps = {};
+
+    p2pProperties.pNext = &p2pBandwidthProps;
+    p2pBandwidthProps.stype = ZE_STRUCTURE_TYPE_DEVICE_P2P_BANDWIDTH_EXP_PROPERTIES;
+    p2pBandwidthProps.pNext = nullptr;
+
+    // Check MDFI
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[0])->getP2PProperties(device0SubDevices[1], &p2pProperties));
+    EXPECT_EQ(0u, p2pBandwidthProps.logicalBandwidth);
+    EXPECT_EQ(0u, p2pBandwidthProps.physicalBandwidth);
+    EXPECT_EQ(ZE_BANDWIDTH_UNIT_UNKNOWN, p2pBandwidthProps.bandwidthUnit);
+    EXPECT_EQ(0u, p2pBandwidthProps.logicalLatency);
+    EXPECT_EQ(0u, p2pBandwidthProps.physicalLatency);
+    EXPECT_EQ(ZE_LATENCY_UNIT_UNKNOWN, p2pBandwidthProps.latencyUnit);
+
+    // Check XeLink
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[1])->getP2PProperties(device1SubDevices[0], &p2pProperties));
+    EXPECT_EQ(xeLinkBandwidth, p2pBandwidthProps.logicalBandwidth);
+    EXPECT_EQ(xeLinkBandwidth, p2pBandwidthProps.physicalBandwidth);
+    EXPECT_EQ(ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC, p2pBandwidthProps.bandwidthUnit);
+    EXPECT_EQ(1u, p2pBandwidthProps.logicalLatency);
+    EXPECT_EQ(1u, p2pBandwidthProps.physicalLatency);
+    EXPECT_EQ(ZE_LATENCY_UNIT_HOP, p2pBandwidthProps.latencyUnit);
+
+    // Check MDFI-XeLink
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[0])->getP2PProperties(device1SubDevices[0], &p2pProperties));
+    EXPECT_EQ(xeLinkBandwidth, p2pBandwidthProps.logicalBandwidth);
+    EXPECT_EQ(xeLinkBandwidth, p2pBandwidthProps.physicalBandwidth);
+    EXPECT_EQ(ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC, p2pBandwidthProps.bandwidthUnit);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), p2pBandwidthProps.logicalLatency);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), p2pBandwidthProps.physicalLatency);
+    EXPECT_EQ(ZE_LATENCY_UNIT_UNKNOWN, p2pBandwidthProps.latencyUnit);
+
+    // Check MDFI-XeLink-MDFI
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[0])->getP2PProperties(device1SubDevices[1], &p2pProperties));
+    EXPECT_EQ(xeLinkBandwidth, p2pBandwidthProps.logicalBandwidth);
+    EXPECT_EQ(xeLinkBandwidth, p2pBandwidthProps.physicalBandwidth);
+    EXPECT_EQ(ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC, p2pBandwidthProps.bandwidthUnit);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), p2pBandwidthProps.logicalLatency);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), p2pBandwidthProps.physicalLatency);
+    EXPECT_EQ(ZE_LATENCY_UNIT_UNKNOWN, p2pBandwidthProps.latencyUnit);
+
+    // Check XeLink-MDFI
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Device::fromHandle(device0SubDevices[1])->getP2PProperties(device1SubDevices[1], &p2pProperties));
+    EXPECT_EQ(xeLinkBandwidth, p2pBandwidthProps.logicalBandwidth);
+    EXPECT_EQ(xeLinkBandwidth, p2pBandwidthProps.physicalBandwidth);
+    EXPECT_EQ(ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC, p2pBandwidthProps.bandwidthUnit);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), p2pBandwidthProps.logicalLatency);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), p2pBandwidthProps.physicalLatency);
+    EXPECT_EQ(ZE_LATENCY_UNIT_UNKNOWN, p2pBandwidthProps.latencyUnit);
+}
+
 TEST_F(P2pBandwidthPropertiesTest, GivenNoDirectFabricConnectionBetweenDevicesWhenQueryingBandwidthPropertiesThenBandwidthIsZero) {
 
     driverHandle->initializeVertexes();

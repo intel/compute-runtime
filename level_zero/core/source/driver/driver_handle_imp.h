@@ -133,6 +133,7 @@ struct DriverHandleImp : public DriverHandle {
     std::vector<Device *> devices;
     std::vector<FabricVertex *> fabricVertices;
     std::vector<FabricEdge *> fabricEdges;
+    std::vector<FabricEdge *> fabricIndirectEdges;
 
     std::mutex rtasLock;
 

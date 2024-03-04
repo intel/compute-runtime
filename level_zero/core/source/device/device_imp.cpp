@@ -551,7 +551,7 @@ void DeviceImp::getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,
                 ze_fabric_edge_exp_properties_t edgeProperties{};
                 fabricEdge->getProperties(&edgeProperties);
 
-                if (strcmp(edgeProperties.model, "XeLink") == 0) {
+                if (strstr(edgeProperties.model, "XeLink") != nullptr) {
                     bandwidthPropertiesDesc->logicalBandwidth = edgeProperties.bandwidth;
                     bandwidthPropertiesDesc->physicalBandwidth = edgeProperties.bandwidth;
                     bandwidthPropertiesDesc->bandwidthUnit = edgeProperties.bandwidthUnit;

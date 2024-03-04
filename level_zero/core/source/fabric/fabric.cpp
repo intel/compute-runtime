@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,33 +119,6 @@ FabricEdge *FabricEdge::create(FabricVertex *vertexA, FabricVertex *vertexB, ze_
     edge->vertexB = vertexB;
     edge->properties = properties;
     return edge;
-}
-
-void FabricEdge::createEdgesFromVertices(const std::vector<FabricVertex *> &vertices, std::vector<FabricEdge *> &edges) {
-
-    // Get all vertices and sub-vertices
-    std::vector<FabricVertex *> allVertices = {};
-    for (auto &fabricVertex : vertices) {
-        allVertices.push_back(fabricVertex);
-        for (auto &fabricSubVertex : fabricVertex->subVertices) {
-            allVertices.push_back(fabricSubVertex);
-        }
-    }
-
-    // Get edges between all vertices
-    for (uint32_t vertexAIndex = 0; vertexAIndex < allVertices.size(); vertexAIndex++) {
-        for (uint32_t vertexBIndex = vertexAIndex + 1; vertexBIndex < allVertices.size(); vertexBIndex++) {
-            ze_fabric_edge_exp_properties_t edgeProperty = {};
-
-            for (auto const &fabricDeviceInterface : allVertices[vertexAIndex]->pFabricDeviceInterfaces) {
-                bool isConnected =
-                    fabricDeviceInterface.second->getEdgeProperty(allVertices[vertexBIndex], edgeProperty);
-                if (isConnected) {
-                    edges.push_back(create(allVertices[vertexAIndex], allVertices[vertexBIndex], edgeProperty));
-                }
-            }
-        }
-    }
 }
 
 } // namespace L0
