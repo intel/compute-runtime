@@ -279,6 +279,10 @@ TEST_F(IoctlPrelimHelperTests, whenGettingFlagsForVmBindThenProperValuesAreRetur
     }
 }
 
+TEST_F(IoctlPrelimHelperTests, givenIoctlHelperisVmBindPatIndexExtSupportedReturnsTrue) {
+    ASSERT_EQ(true, ioctlHelper.isVmBindPatIndexExtSupported());
+}
+
 TEST_F(IoctlPrelimHelperTests, whenGettingVmBindExtFromHandlesThenProperStructsAreReturned) {
     StackVec<uint32_t, 2> bindExtHandles;
     bindExtHandles.push_back(1u);

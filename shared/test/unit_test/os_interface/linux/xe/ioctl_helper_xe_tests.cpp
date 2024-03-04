@@ -200,6 +200,13 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGetGemTilingThenAlwaysTrue) {
     EXPECT_FALSE(drm.ioctlCalled);
 }
 
+TEST(IoctlHelperXeTest, givenIoctlHelperXeisVmBindPatIndexExtSupportedReturnsFalse) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    ASSERT_EQ(false, xeIoctlHelper->isVmBindPatIndexExtSupported());
+}
+
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
