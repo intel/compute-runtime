@@ -10,6 +10,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "opencl/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/cl_device/cl_device.h"
@@ -19,9 +20,6 @@
 #include "opencl/source/sharings/gl/linux/gl_sharing_linux.h"
 
 #include "config.h"
-
-#include <poll.h>
-#include <unistd.h>
 
 using namespace NEO;
 
@@ -127,8 +125,8 @@ void GlBuffer::synchronizeObject(UpdateData &updateData) {
         .events = POLLIN,
         .revents = 0,
     };
-    poll(&fp, 1, 1000);
-    close(fenceFd);
+    SysCalls::poll(&fp, 1, 1000);
+    SysCalls::close(fenceFd);
 
     /* Done */
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;

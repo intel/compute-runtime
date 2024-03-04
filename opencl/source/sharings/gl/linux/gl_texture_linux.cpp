@@ -15,6 +15,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "opencl/extensions/public/cl_gl_private_intel.h"
@@ -28,9 +29,6 @@
 #include "CL/cl_gl.h"
 #include "config.h"
 #include <GL/gl.h>
-
-#include <poll.h>
-#include <unistd.h>
 
 namespace NEO {
 Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel, cl_GLuint texture,
@@ -245,8 +243,8 @@ void GlTexture::synchronizeObject(UpdateData &updateData) {
         .events = POLLIN,
         .revents = 0,
     };
-    poll(&fp, 1, 1000);
-    close(fenceFd);
+    SysCalls::poll(&fp, 1, 1000);
+    SysCalls::close(fenceFd);
 
     /* Done */
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
