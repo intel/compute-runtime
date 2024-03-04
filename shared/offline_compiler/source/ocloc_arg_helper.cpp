@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,8 @@ OclocArgHelper::OclocArgHelper() : OclocArgHelper(0, nullptr, nullptr, nullptr, 
 
 OclocArgHelper::~OclocArgHelper() {
     if (outputEnabled()) {
-        saveOutput(oclocStdoutLogName, messagePrinter.getLog());
+        auto log = messagePrinter.getLog().str();
+        OclocArgHelper::saveOutput(oclocStdoutLogName, log.c_str(), log.length() + 1);
         moveOutputs();
     }
 }
@@ -210,16 +211,5 @@ void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, 
         addOutput(filename, pData, dataSize);
     } else {
         writeDataToFile(filename.c_str(), pData, dataSize);
-    }
-}
-
-void OclocArgHelper::saveOutput(const std::string &filename, const std::ostream &stream) {
-    std::stringstream ss;
-    ss << stream.rdbuf();
-    if (outputEnabled()) {
-        addOutput(filename, ss.str().c_str(), ss.str().length());
-    } else {
-        std::ofstream file(filename);
-        file << ss.str();
     }
 }

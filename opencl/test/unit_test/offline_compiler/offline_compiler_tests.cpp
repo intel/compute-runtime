@@ -4412,7 +4412,7 @@ TEST(OclocArgHelperTest, GivenOutputSuppressMessagesAndSaveItToFile) {
 
     helper.reset(); // Delete helper. Destructor saves data to output
     EXPECT_EQ(1U, numOutputs);
-    EXPECT_EQ(printMsg.length(), lenOutputs[0]);
+    EXPECT_EQ(printMsg.length() + 1, lenOutputs[0]);
     EXPECT_STREQ("stdout.log", nameOutputs[0]);
     std::string stdoutStr = std::string(reinterpret_cast<const char *>(outputs[0]),
                                         static_cast<size_t>(lenOutputs[0]));

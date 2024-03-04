@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -131,7 +131,8 @@ int MultiCommand::initialize(const std::vector<std::string> &args) {
     runBuilds(args[0]);
 
     if (outputFileList != "") {
-        argHelper->saveOutput(outputFileList, outputFile);
+        auto outputFileString = outputFile.str();
+        argHelper->saveOutput(outputFileList, outputFileString.c_str(), outputFileString.length() + 1);
     }
     return showResults();
 }

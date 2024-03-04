@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,14 +62,14 @@ class BinaryDecoder {
     PTMap patchTokens;
     std::string binaryFile, pathToPatch, pathToDump;
 
-    void dumpField(const void *&binaryPtr, const PTField &field, std::ostream &ptmFile);
+    void dumpField(const void *&binaryPtr, const PTField &field, std::stringstream &ptmFile);
     uint8_t getSize(const std::string &typeStr);
     MOCKABLE_VIRTUAL std::pair<const void *, size_t> getDevBinary();
     std::vector<std::string> loadPatchList();
     MOCKABLE_VIRTUAL void parseTokens();
-    int processBinary(const void *&ptr, size_t sectionSize, std::ostream &ptmFile);
-    void processKernel(const void *&ptr, size_t sectionSize, std::ostream &ptmFile);
-    void readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile);
+    int processBinary(const void *&ptr, size_t sectionSize, std::stringstream &ptmFile);
+    void processKernel(const void *&ptr, size_t sectionSize, std::stringstream &ptmFile);
+    void readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::stringstream &ptmFile);
     uint32_t readStructFields(const std::vector<std::string> &patchList,
                               const size_t &structPos, std::vector<PTField> &fields);
     void validateLoadedKernelData(KernelSizeData kernelDataSize, size_t sectionSize);

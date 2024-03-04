@@ -45,7 +45,7 @@ int BinaryDecoder::decode() {
     return processBinary(ptr, size, ptmFile);
 }
 
-void BinaryDecoder::dumpField(const void *&binaryPtr, const PTField &field, std::ostream &ptmFile) {
+void BinaryDecoder::dumpField(const void *&binaryPtr, const PTField &field, std::stringstream &ptmFile) {
     ptmFile << '\t' << static_cast<int>(field.size) << ' ';
     switch (field.size) {
     case 1: {
@@ -336,7 +336,7 @@ Examples:
                       argHelper->createStringForArgs(argHelper->productConfigHelper->getDeviceAcronyms()).c_str());
 }
 
-int BinaryDecoder::processBinary(const void *&ptr, size_t sectionSize, std::ostream &ptmFile) {
+int BinaryDecoder::processBinary(const void *&ptr, size_t sectionSize, std::stringstream &ptmFile) {
     ptmFile << "ProgramBinaryHeader:\n";
     uint32_t numberOfKernels = 0, patchListSize = 0, device = 0;
     for (const auto &v : programHeader.fields) {
@@ -362,7 +362,9 @@ int BinaryDecoder::processBinary(const void *&ptr, size_t sectionSize, std::ostr
         processKernel(ptr, sectionSize, ptmFile);
     }
 
-    argHelper->saveOutput(pathToDump + "PTM.txt", ptmFile);
+    auto ptmFileString = ptmFile.str();
+
+    argHelper->saveOutput(pathToDump + "PTM.txt", ptmFileString.c_str(), ptmFileString.length() + 1);
     return 0;
 }
 
@@ -373,7 +375,7 @@ void BinaryDecoder::validateLoadedKernelData(KernelSizeData kernelLoadedData, si
     }
 }
 
-void BinaryDecoder::processKernel(const void *&ptr, size_t sectionSize, std::ostream &ptmFile) {
+void BinaryDecoder::processKernel(const void *&ptr, size_t sectionSize, std::stringstream &ptmFile) {
     KernelSizeData kernelPatchListSize{"PatchListSize", 0u},
         kernelNameSize{"KernelNameSize", 0u},
         kernelHeapSize{"KernelHeapSize", 0u},
@@ -455,7 +457,7 @@ void BinaryDecoder::processKernel(const void *&ptr, size_t sectionSize, std::ost
     readPatchTokens(ptr, kernelPatchListSize.size, ptmFile);
 }
 
-void BinaryDecoder::readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::ostream &ptmFile) {
+void BinaryDecoder::readPatchTokens(const void *&patchListPtr, uint32_t patchListSize, std::stringstream &ptmFile) {
     auto endPatchListPtr = ptrOffset(patchListPtr, patchListSize);
     while (patchListPtr != endPatchListPtr) {
         auto patchTokenPtr = patchListPtr;

@@ -103,7 +103,6 @@ class OclocArgHelper {
     }
 
     MOCKABLE_VIRTUAL void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize);
-    void saveOutput(const std::string &filename, const std::ostream &stream);
 
     MessagePrinter &getPrinterRef() { return messagePrinter; }
     void printf(const char *message) {
