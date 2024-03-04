@@ -30,8 +30,10 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/utilities/destructor_counted.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -831,32 +833,34 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelAndHostPointerC
     delete[] buffer;
 }
 
-TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemand) {
+TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemandAndHandleDestruction) {
+    uint32_t destructorId = 0u;
+
+    class MyMockDevice : public DestructorCounted<NEO::MockDevice, 1> {
+      public:
+        MyMockDevice(NEO::ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex, uint32_t &destructorId) : DestructorCounted(destructorId, executionEnvironment, rootDeviceIndex) {}
+    };
+
+    class MyMockTagAllocator : public DestructorCounted<MockTagAllocator<NEO::DeviceAllocNodeType<true>>, 0> {
+      public:
+        MyMockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, uint32_t &destructorId) : DestructorCounted(destructorId, rootDeviceIndex, memoryManager, 10) {}
+    };
+
     const uint32_t rootDeviceIndex = 0u;
     auto hwInfo = *NEO::defaultHwInfo;
-    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    neoMockDevice->incRefInternal();
-    neoMockDevice->deviceBitfield = 0b111;
+
+    auto executionEnvironment = MyMockDevice::prepareExecutionEnvironment(&hwInfo, rootDeviceIndex);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
+    auto *neoMockDevice = new MyMockDevice(executionEnvironment, rootDeviceIndex, destructorId);
+    neoMockDevice->createDeviceImpl();
 
     {
+        auto allocator = new MyMockTagAllocator(0, neoMockDevice->getMemoryManager(), destructorId);
+
         MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
-        EXPECT_EQ(nullptr, deviceImp.deviceInOrderCounterAllocator.get());
-
-        auto allocator = deviceImp.getDeviceInOrderCounterAllocator();
-        EXPECT_NE(nullptr, deviceImp.deviceInOrderCounterAllocator.get());
-
-        auto expectedOffset = alignUp(sizeof(uint64_t) * neoMockDevice->deviceBitfield.count() * 2, MemoryConstants::cacheLineSize);
-
-        auto node1 = allocator->getTag();
-        auto node2 = allocator->getTag();
-
-        EXPECT_EQ(node1->getGpuAddress() + expectedOffset, node2->getGpuAddress());
-        EXPECT_EQ(ptrOffset(node1->getCpuBase(), expectedOffset), node2->getCpuBase());
-
-        node1->returnTag();
-        node2->returnTag();
+        deviceImp.deviceInOrderCounterAllocator.reset(allocator);
+        EXPECT_EQ(allocator, deviceImp.getDeviceInOrderCounterAllocator());
     }
-    neoMockDevice->decRefInternal();
 }
 
 TEST_F(DeviceTest, givenMoreThanOneExtendedPropertiesStructuresWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {

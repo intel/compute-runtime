@@ -1465,6 +1465,7 @@ void DeviceImp::releaseResources() {
     metricContext.reset();
     builtins.reset();
     cacheReservation.reset();
+    deviceInOrderCounterAllocator.reset();
 
     if (allocationsForReuse.get()) {
         allocationsForReuse->freeAllGraphicsAllocations(neoDevice);
