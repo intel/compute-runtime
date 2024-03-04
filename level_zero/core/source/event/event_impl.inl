@@ -367,7 +367,7 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 
     auto baseHostAddr = this->hostAddress;
-    auto baseGpuAddr = getPoolAllocation(device)->getGpuAddress();
+    auto baseGpuAddr = getGpuAddress(device);
 
     uint64_t timestampStart = static_cast<uint64_t>(eventVal);
     uint64_t timestampEnd = static_cast<uint64_t>(eventVal);

@@ -268,23 +268,25 @@ bool testEventsHostSignalHostWait(ze_context_handle_t &context, ze_device_handle
 
     // Create Event Pool and kernel launch event
     ze_event_pool_handle_t eventPool;
-    uint32_t numEvents = 2;
+    uint32_t numEvents = 3;
     std::vector<ze_event_handle_t> events(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
 
-    SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdList, 1, &events[0]));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize, events[1], 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(cmdList, 2, &events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize, events[0], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
 
-    SUCCESS_OR_TERMINATE(zeEventHostSignal(events[0]));
+    SUCCESS_OR_TERMINATE(zeEventHostSignal(events[1]));
+    SUCCESS_OR_TERMINATE(zeEventHostSignal(events[2]));
 
-    SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[1], std::numeric_limits<uint64_t>::max()));
     SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[0], std::numeric_limits<uint64_t>::max()));
+    SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[1], std::numeric_limits<uint64_t>::max()));
+    SUCCESS_OR_TERMINATE(zeEventHostSynchronize(events[2], std::numeric_limits<uint64_t>::max()));
 
     // Validate
     bool outputValidationSuccessful = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, allocSize);
