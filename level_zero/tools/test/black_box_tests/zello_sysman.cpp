@@ -862,12 +862,12 @@ std::string getEngineType(zes_engine_group_t engineGroup) {
 void testSysmanEngine(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Engine tests ---- " << std::endl;
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    VALIDATECALL(zeDeviceGetProperties(device, &deviceProperties));
+    zes_device_properties_t deviceProperties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    VALIDATECALL(zesDeviceGetProperties(device, &deviceProperties));
     if (verbose) {
-        std::cout << "Device UUID: ";
+        std::cout << "Device UUID: " << std::endl;
         for (uint32_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
-            std::cout << static_cast<uint32_t>(deviceProperties.uuid.id[i]) << " ";
+            std::cout << static_cast<uint32_t>(deviceProperties.core.uuid.id[i]) << " ";
         }
         std::cout << std::endl;
     }
