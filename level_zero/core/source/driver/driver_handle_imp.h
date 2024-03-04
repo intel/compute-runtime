@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,6 +135,7 @@ struct DriverHandleImp : public DriverHandle {
     std::vector<Device *> devices;
     std::vector<FabricVertex *> fabricVertices;
     std::vector<FabricEdge *> fabricEdges;
+    std::vector<FabricEdge *> fabricIndirectEdges;
 
     std::mutex rtasLock;
 

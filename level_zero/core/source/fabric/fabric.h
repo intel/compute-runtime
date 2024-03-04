@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ struct FabricEdge : _ze_fabric_edge_handle_t {
   public:
     virtual ~FabricEdge() = default;
 
-    static void createEdgesFromVertices(const std::vector<FabricVertex *> &vertices, std::vector<FabricEdge *> &edges);
+    static void createEdgesFromVertices(const std::vector<FabricVertex *> &vertices, std::vector<FabricEdge *> &edges, std::vector<FabricEdge *> &indirectEdges);
     static FabricEdge *create(FabricVertex *vertexA, FabricVertex *vertexB, ze_fabric_edge_exp_properties_t &properties);
     ze_result_t getProperties(ze_fabric_edge_exp_properties_t *pEdgeProperties) const {
         *pEdgeProperties = properties;
