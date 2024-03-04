@@ -193,6 +193,11 @@ DriverHandleImp::~DriverHandleImp() {
     }
     this->fabricEdges.clear();
 
+    for (auto &edge : this->fabricIndirectEdges) {
+        delete edge;
+    }
+    this->fabricIndirectEdges.clear();
+
     if (this->svmAllocsManager) {
         this->svmAllocsManager->trimUSMDeviceAllocCache();
         delete this->svmAllocsManager;
@@ -903,7 +908,7 @@ void DriverHandleImp::initializeVertexes() {
         this->fabricVertices.push_back(fabricVertex);
     }
 
-    FabricEdge::createEdgesFromVertices(this->fabricVertices, this->fabricEdges);
+    FabricEdge::createEdgesFromVertices(this->fabricVertices, this->fabricEdges, this->fabricIndirectEdges);
 }
 
 ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phVertices) {
@@ -957,9 +962,9 @@ ze_result_t DriverHandleImp::fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA
     bool updateEdges = false;
 
     if (*pCount == 0) {
-        maxEdges = static_cast<uint32_t>(fabricEdges.size());
+        maxEdges = static_cast<uint32_t>(fabricEdges.size() + fabricIndirectEdges.size());
     } else {
-        maxEdges = std::min<uint32_t>(*pCount, static_cast<uint32_t>(fabricEdges.size()));
+        maxEdges = std::min<uint32_t>(*pCount, static_cast<uint32_t>(fabricEdges.size() + fabricIndirectEdges.size()));
     }
 
     if (phEdges != nullptr) {
@@ -967,7 +972,10 @@ ze_result_t DriverHandleImp::fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA
     }
 
     for (const auto &edge : fabricEdges) {
-        // Fabric Connections are bi-directional
+        if (edgeUpdateIndex >= maxEdges) {
+            break;
+        }
+        // Direct physical fabric connections are bi-directional
         if ((edge->vertexA == queryVertexA && edge->vertexB == queryVertexB) ||
             (edge->vertexA == queryVertexB && edge->vertexB == queryVertexA)) {
 
@@ -976,10 +984,18 @@ ze_result_t DriverHandleImp::fabricEdgeGetExp(ze_fabric_vertex_handle_t hVertexA
             }
             ++edgeUpdateIndex;
         }
+    }
 
-        // Stop if the edges overflow the count
+    for (const auto &edge : fabricIndirectEdges) {
         if (edgeUpdateIndex >= maxEdges) {
             break;
+        }
+        // Logical multi-hop edges might not be symmetric
+        if (edge->vertexA == queryVertexA && edge->vertexB == queryVertexB) {
+            if (updateEdges == true) {
+                phEdges[edgeUpdateIndex] = edge->toHandle();
+            }
+            ++edgeUpdateIndex;
         }
     }
 
