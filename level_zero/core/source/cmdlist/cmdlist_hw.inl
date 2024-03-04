@@ -365,7 +365,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, true, true);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, launchParams.outListCommands, relaxedOrderingDispatch, true, true, launchParams.omitAddingWaitEventsResidency);
     if (ret) {
         return ret;
     }
@@ -408,7 +408,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
                                                                                 uint32_t numWaitEvents,
                                                                                 ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) {
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, waitEventHandles, relaxedOrderingDispatch, true, true);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, waitEventHandles, nullptr, relaxedOrderingDispatch, true, true, false);
     if (ret) {
         return ret;
     }
@@ -442,7 +442,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
                                                                              uint32_t numWaitEvents,
                                                                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, true, true);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, true, true, false);
     if (ret) {
         return ret;
     }
@@ -485,7 +485,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
                                                                                       uint32_t numWaitEvents,
                                                                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, true, true);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, true, true, false);
     if (ret) {
         return ret;
     }
@@ -590,7 +590,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
                                                                             uint32_t numWaitEvents,
                                                                             ze_event_handle_t *phWaitEvents) {
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, false, true, true);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, false, true, true, false);
     if (ret) {
         return ret;
     }
@@ -1257,7 +1257,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, false, true);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, false, true, false);
     if (ret) {
         return ret;
     }
@@ -1437,7 +1437,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     bool waitForImplicitInOrderDependency = !isCopyOnly() || inOrderCopyOnlySignalingAllowed;
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, false, waitForImplicitInOrderDependency);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, false, waitForImplicitInOrderDependency, false);
 
     if (ret) {
         return ret;
@@ -1872,7 +1872,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         return status;
     }
 
-    ze_result_t res = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, false, true);
+    ze_result_t res = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, false, true, false);
     if (res) {
         return res;
     }
@@ -2106,7 +2106,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
     if (this->maxFillPaternSizeForCopyEngine < patternSize) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
     } else {
-        ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, false, true);
+        ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, false, true, false);
         if (ret) {
             return ret;
         }
@@ -2325,7 +2325,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency) {
+inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CommandToPatchContainer *outWaitCmds,
+                                                                            bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency, bool skipAddingWaitEventsToResidency) {
     bool inOrderDependenciesSent = false;
 
     if (this->latestOperationRequiredNonWalkerInOrderCmdsChaining && !relaxedOrderingAllowed) {
@@ -2342,7 +2343,7 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
 
     if (numWaitEvents > 0) {
         if (phWaitEvents) {
-            return CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents, relaxedOrderingAllowed, trackDependencies, false);
+            return CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents, outWaitCmds, relaxedOrderingAllowed, trackDependencies, false, skipAddingWaitEventsToResidency);
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
@@ -2451,7 +2452,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::canSkipInOrderEventWait(Event &event)
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
+                                                                     bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency) {
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
     if (NEO::debugManager.flags.EnableSWTags.get()) {
@@ -2508,9 +2510,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             continue;
         }
 
-        commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+        if (!skipAddingWaitEventsToResidency) {
+            commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+        }
 
-        appendWaitOnSingleEvent(event, relaxedOrderingAllowed);
+        appendWaitOnSingleEvent(event, outWaitCmds, relaxedOrderingAllowed);
     }
 
     if (isImmediateType() && isCopyOnly() && trackDependencies) {
@@ -2698,7 +2702,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     uint64_t *dstptr, ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, false, true, true);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, false, true, true, false);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -3250,7 +3254,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, relaxedOrderingDispatch, true, true);
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, true, true, false);
     if (ret) {
         return ret;
     }
@@ -3667,11 +3671,17 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event, bool relaxedOrderingAllowed) {
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     uint64_t gpuAddr = event->getCompletionFieldGpuAddress(this->device);
-    uint32_t packetsToWait = this->signalAllEventPackets ? event->getMaxPacketsCount() : event->getPacketsInUse();
+    uint32_t packetsToWait = event->getPacketsToWait();
+
+    void **outSemWaitCmdBuffer = nullptr;
+    void *outSemWaitCmd = nullptr;
+    if (outWaitCmds != nullptr) {
+        outSemWaitCmdBuffer = &outSemWaitCmd;
+    }
 
     for (uint32_t i = 0u; i < packetsToWait; i++) {
         if (relaxedOrderingAllowed) {
@@ -3681,7 +3691,14 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
             NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
                                                                        gpuAddr,
                                                                        Event::STATE_CLEARED,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, nullptr);
+                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, outSemWaitCmdBuffer);
+
+            if (outWaitCmds != nullptr) {
+                auto &semWaitCmd = outWaitCmds->emplace_back();
+                semWaitCmd.type = CommandToPatch::WaitEventSemaphoreWait;
+                semWaitCmd.offset = i * event->getSinglePacketSize() + event->getCompletionFieldOffset();
+                semWaitCmd.pDestination = outSemWaitCmd;
+            }
         }
 
         gpuAddr += event->getSinglePacketSize();

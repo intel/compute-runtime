@@ -1634,7 +1634,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAddingRelaxedOrderingEventsTh
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->addEventsToCmdList(0, nullptr, true, true, true);
+    immCmdList->addEventsToCmdList(0, nullptr, nullptr, true, true, true, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -4202,7 +4202,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignalli
 
     size_t offset = cmdStream->getUsed();
 
-    immCmdList->appendWaitOnEvents(1, &handle, false, false, true);
+    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false);
 
     EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
 
@@ -4249,7 +4249,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSi
 
     size_t offset = cmdStream->getUsed();
 
-    immCmdList->appendWaitOnEvents(1, &handle, false, false, true);
+    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false);
 
     EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
 
@@ -4300,7 +4300,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndWithoutA
 
     size_t offset = cmdStream->getUsed();
 
-    immCmdList->appendWaitOnEvents(1, &handle, false, false, true);
+    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false);
 
     EXPECT_EQ(2u, immCmdList->inOrderExecInfo->getCounterValue());
 

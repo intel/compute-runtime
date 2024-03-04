@@ -480,7 +480,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignal
         hasStallingCmds = hasStallingCmdsForRelaxedOrdering(1, relaxedOrderingDispatch);
     }
 
-    CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(event, nonWalkerSignalingHasRelaxedOrdering);
+    CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(event, nullptr, nonWalkerSignalingHasRelaxedOrdering);
     CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(event);
 }
 
@@ -697,7 +697,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phWaitEvents, CommandToPatchContainer *outWaitCmds,
+                                                                              bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency) {
     bool allSignaled = true;
     for (auto i = 0u; i < numEvents; i++) {
         allSignaled &= (!this->dcFlushSupport && Event::fromHandle(phWaitEvents[i])->isAlreadyCompleted());
@@ -707,7 +708,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
     }
     checkAvailableSpace(numEvents, false, commonImmediateCommandSize);
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents, relaxedOrderingAllowed, trackDependencies, apiRequest);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents, outWaitCmds, relaxedOrderingAllowed, trackDependencies, apiRequest, skipAddingWaitEventsToResidency);
     this->dependenciesPresent = true;
     return flushImmediate(ret, true, true, false, false, nullptr);
 }

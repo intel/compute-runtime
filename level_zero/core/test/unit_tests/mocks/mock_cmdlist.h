@@ -428,7 +428,8 @@ struct MockCommandList : public CommandList {
 
     ADDMETHOD_NOBASE(appendWaitOnEvents, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numEvents,
-                      ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest));
+                      ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
+                      bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency));
 
     ADDMETHOD_NOBASE(appendWriteGlobalTimestamp, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint64_t * dstptr,

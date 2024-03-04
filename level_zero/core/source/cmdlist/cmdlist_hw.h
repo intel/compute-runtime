@@ -170,7 +170,8 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
-    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest) override;
+    ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
+                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency) override;
     void appendWaitOnInOrderDependency(std::shared_ptr<NEO::InOrderExecInfo> &inOrderExecInfo, uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency);
     void appendSignalInOrderDependencyCounter(Event *signalEvent);
     void handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining);
@@ -183,7 +184,8 @@ struct CommandListCoreFamily : public CommandListImp {
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
     void appendMultiPartitionEpilogue() override;
     void appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency);
-    ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency);
+    ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CommandToPatchContainer *outWaitCmds,
+                                   bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency, bool skipAddingWaitEventsToResidency);
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
@@ -266,7 +268,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                           Event *signalEvent,
                                           CmdListKernelLaunchParams &launchParams);
 
-    void appendWaitOnSingleEvent(Event *event, bool relaxedOrderingAllowed);
+    void appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed);
 
     void appendSdiInOrderCounterSignalling(uint64_t baseGpuVa, uint64_t signalValue);
 

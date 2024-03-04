@@ -367,7 +367,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
-                appendWaitOnSingleEvent(eventForInOrderExec, false);
+                appendWaitOnSingleEvent(eventForInOrderExec, nullptr, false);
                 appendSignalInOrderDependencyCounter(eventForInOrderExec);
             }
         } else {

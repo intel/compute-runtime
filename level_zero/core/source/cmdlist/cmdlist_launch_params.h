@@ -56,5 +56,6 @@ struct CmdListKernelLaunchParams {
     bool pipeControlSignalling = false;
     bool omitAddingKernelResidency = false;
     bool omitAddingEventResidency = false;
+    bool omitAddingWaitEventsResidency = false;
 };
 } // namespace L0
