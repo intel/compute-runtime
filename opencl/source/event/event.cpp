@@ -779,6 +779,7 @@ bool Event::areTimestampsCompleted() {
                     }
                 }
             }
+            this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocations();
             return true;
         }
     }
