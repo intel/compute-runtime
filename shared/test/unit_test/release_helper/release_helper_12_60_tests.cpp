@@ -39,3 +39,7 @@ TEST_F(ReleaseHelper1260Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
     }
 }
+
+TEST_F(ReleaseHelper1260Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
+    whenGettingTotalMemBankSizeThenReturn32GB();
+}

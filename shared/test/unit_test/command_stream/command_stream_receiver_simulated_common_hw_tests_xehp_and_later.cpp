@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -195,7 +195,7 @@ class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing
     template <typename FamilyType>
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
-        auto releaseHelper = ReleaseHelper::create(hardwareInfo.ipVersion);
+        releaseHelper = ReleaseHelper::create(hardwareInfo.ipVersion);
         hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, releaseHelper.get());
         hardwareInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
         DeviceFixture::setUpImpl(&hardwareInfo);
@@ -208,9 +208,9 @@ class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing
         DeviceFixture::tearDown();
     }
 
-    void checkMMIOs(MMIOList &list, uint32_t tilesNumber, uint32_t localMemorySizeTotalInGB) {
+    void checkMMIOs(MMIOList &list, uint32_t tilesNumber) {
         const uint32_t numberOfTiles = tilesNumber;
-        const uint32_t totalLocalMemorySizeGB = localMemorySizeTotalInGB;
+        const uint32_t totalLocalMemorySizeGB = static_cast<uint32_t>(AubHelper::getTotalMemBankSize(releaseHelper.get()) / MemoryConstants::gigaByte);
 
         MMIOPair tileAddrRegisters[] = {{0x00004900, 0x0001},
                                         {0x00004904, 0x0001},
@@ -234,6 +234,8 @@ class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing
         }
         EXPECT_EQ(numberOfTiles, mmiosFound);
     }
+
+    std::unique_ptr<ReleaseHelper> releaseHelper;
 };
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemoryEnabledWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
@@ -245,7 +247,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemory
     csrSimulatedCommonHw->stream = stream.get();
     csrSimulatedCommonHw->initGlobalMMIO();
 
-    checkMMIOs(stream->mmioList, 1, 32);
+    checkMMIOs(stream->mmioList, 1);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemoryEnabledAnd4TileConfigWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
@@ -259,7 +261,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenLocalMemory
     csrSimulatedCommonHw->stream = stream.get();
     csrSimulatedCommonHw->initGlobalMMIO();
 
-    checkMMIOs(stream->mmioList, 4, 32);
+    checkMMIOs(stream->mmioList, 4);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenAUBDumpForceAllToLocalMemoryWhenGlobalMmiosAreInitializedThenTileRangeRegistersAreProgrammed) {
@@ -274,5 +276,5 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterTileRangeRegisterTest, givenAUBDumpForc
     csrSimulatedCommonHw->stream = stream.get();
     csrSimulatedCommonHw->initGlobalMMIO();
 
-    checkMMIOs(stream->mmioList, 1, 32);
+    checkMMIOs(stream->mmioList, 1);
 }

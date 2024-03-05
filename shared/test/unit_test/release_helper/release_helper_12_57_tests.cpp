@@ -61,3 +61,7 @@ TEST_F(ReleaseHelper1257Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreRe
 TEST_F(ReleaseHelper1257Tests, whenGettingThreadsPerEuConfigsThen4And8AreReturned) {
     whenGettingThreadsPerEuConfigsThen4And8AreReturned();
 }
+
+TEST_F(ReleaseHelper1257Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
+    whenGettingTotalMemBankSizeThenReturn32GB();
+}

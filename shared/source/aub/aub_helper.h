@@ -45,11 +45,11 @@ class AubHelper : public NonCopyableOrMovableClass {
         }
     }
 
-    static uint64_t getTotalMemBankSize();
+    static uint64_t getTotalMemBankSize(const ReleaseHelper *releaseHelper);
     static int getMemTrace(uint64_t pdEntryBits);
     static uint64_t getPTEntryBits(uint64_t pdEntryBits);
     static uint32_t getMemType(uint32_t addressSpace);
-    static uint64_t getPerTileLocalMemorySize(const HardwareInfo *pHwInfo);
+    static uint64_t getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const ReleaseHelper *releaseHelper);
     static const std::string getDeviceConfigString(const ReleaseHelper *releaseHelper, uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount);
     static MMIOList getAdditionalMmioList();
     static void setTbxConfiguration();

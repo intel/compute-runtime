@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/release_helper/release_helper.h"
 
@@ -101,6 +102,11 @@ bool ReleaseHelperHw<releaseType>::isBindlessAddressingDisabled() const {
 template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::getNumThreadsPerEu() const {
     return 8u;
+}
+
+template <ReleaseType releaseType>
+uint64_t ReleaseHelperHw<releaseType>::getTotalMemBankSize() const {
+    return 32ull * MemoryConstants::gigaByte;
 }
 
 template <ReleaseType releaseType>

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
@@ -32,6 +33,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getSupportedNumGrfs, std::vector<uint32_t>, {128}, ());
     ADDMETHOD_CONST_NOBASE(isBindlessAddressingDisabled, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getNumThreadsPerEu, uint32_t, 8u, ());
+    ADDMETHOD_CONST_NOBASE(getTotalMemBankSize, uint64_t, 32ull * MemoryConstants::gigaByte, ());
     ADDMETHOD_CONST_NOBASE(getThreadsPerEUConfigs, const ThreadsPerEUConfigs, {}, ());
     ADDMETHOD_CONST_NOBASE(getDeviceConfigString, const std::string, {}, (uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount));
     ADDMETHOD_CONST_NOBASE(isRayTracingSupported, bool, true, ());

@@ -41,7 +41,8 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
 
     forceSkipResourceCleanupRequired = true;
 
-    physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&this->peekHwInfo()));
+    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
+    physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&this->peekHwInfo(), releaseHelper));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(this->localMemoryEnabled, "", this->getType());
     auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
     UNRECOVERABLE_IF(nullptr == aubCenter);

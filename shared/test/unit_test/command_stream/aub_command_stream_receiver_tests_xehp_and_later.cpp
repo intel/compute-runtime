@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -231,24 +231,26 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhys
 
     std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
-    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo()));
+    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo(), pDevice->getReleaseHelper()));
     auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
+    auto expectedBankSize = AubHelper::getTotalMemBankSize(pDevice->getReleaseHelper());
 
-    EXPECT_EQ(32 * MemoryConstants::gigaByte, allocator->getBankSize());
+    EXPECT_EQ(expectedBankSize, allocator->getBankSize());
     EXPECT_EQ(1u, allocator->getNumberOfBanks());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedWith4TileConfigThenItHasCorrectBankSzieAndNumberOfBanks) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, whenPhysicalAllocatorIsCreatedWith4TileConfigThenItHasCorrectBankSizeAndNumberOfBanks) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(4);
     setUpImpl<FamilyType>();
 
     std::unique_ptr<MockAubCsrXeHPAndLater<FamilyType>> aubCsr(new MockAubCsrXeHPAndLater<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
-    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo()));
+    auto physicalAddressAllocator = std::unique_ptr<PhysicalAddressAllocator>(aubCsr->createPhysicalAddressAllocator(&pDevice->getHardwareInfo(), pDevice->getReleaseHelper()));
     auto allocator = reinterpret_cast<PhysicalAddressAllocatorHw<FamilyType> *>(physicalAddressAllocator.get());
+    auto expectedBankSize = AubHelper::getTotalMemBankSize(pDevice->getReleaseHelper()) / 4;
 
-    EXPECT_EQ(8 * MemoryConstants::gigaByte, allocator->getBankSize());
+    EXPECT_EQ(expectedBankSize, allocator->getBankSize());
     EXPECT_EQ(4u, allocator->getNumberOfBanks());
 }
 

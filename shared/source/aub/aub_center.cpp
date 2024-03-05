@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,8 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
     if (debugManager.flags.UseAubStream.get()) {
         auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
-        auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
+        auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+        auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo, releaseHelper);
         CommandStreamReceiverType type = csrType;
         if (debugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {
             type = static_cast<CommandStreamReceiverType>(debugManager.flags.SetCommandStreamReceiver.get());

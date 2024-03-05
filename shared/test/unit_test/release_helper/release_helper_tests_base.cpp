@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/release_helper/release_helper_tests_base.h"
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/release_helper/release_helper.h"
 
@@ -94,5 +95,14 @@ void ReleaseHelperTestsBase::whenGettingThreadsPerEuConfigsThen4And8AreReturned(
         EXPECT_EQ(2U, configs.size());
         EXPECT_EQ(4U, configs[0]);
         EXPECT_EQ(8U, configs[1]);
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingTotalMemBankSizeThenReturn32GB() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(32u * MemoryConstants::gigaByte, releaseHelper->getTotalMemBankSize());
     }
 }

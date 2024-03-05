@@ -129,7 +129,8 @@ template <typename GfxFamily>
 CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment,
                                                                                           uint32_t rootDeviceIndex,
                                                                                           const DeviceBitfield deviceBitfield)
-    : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {
+    : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield),
+      releaseHelper(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper()) {
     this->useNewResourceImplicitFlush = false;
     this->useGpuIdleImplicitFlush = false;
 }

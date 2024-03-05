@@ -21,7 +21,10 @@
 
 namespace NEO {
 
-uint64_t AubHelper::getTotalMemBankSize() {
+uint64_t AubHelper::getTotalMemBankSize(const ReleaseHelper *releaseHelper) {
+    if (releaseHelper) {
+        return releaseHelper->getTotalMemBankSize();
+    }
     return 32ull * MemoryConstants::gigaByte;
 }
 
@@ -44,11 +47,11 @@ uint32_t AubHelper::getMemType(uint32_t addressSpace) {
     return MemType::system;
 }
 
-uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo) {
+uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo, const ReleaseHelper *releaseHelper) {
     if (debugManager.flags.HBMSizePerTileInGigabytes.get() > 0) {
         return debugManager.flags.HBMSizePerTileInGigabytes.get() * MemoryConstants::gigaByte;
     }
-    return getTotalMemBankSize() / GfxCoreHelper::getSubDevicesCount(pHwInfo);
+    return getTotalMemBankSize(releaseHelper) / GfxCoreHelper::getSubDevicesCount(pHwInfo);
 }
 
 const std::string AubHelper::getDeviceConfigString(const ReleaseHelper *releaseHelper, uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) {
