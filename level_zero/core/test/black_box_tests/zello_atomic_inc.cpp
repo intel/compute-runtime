@@ -97,7 +97,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> events(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
+                                                     ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, false, 0,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_DEVICE,
                                                      0);

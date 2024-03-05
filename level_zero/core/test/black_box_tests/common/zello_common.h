@@ -106,10 +106,14 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_device_handle_t &device,
                               ze_event_pool_handle_t &eventPool,
                               ze_event_pool_flags_t poolFlag,
+                              bool counterEvents,
+                              ze_event_pool_counter_based_exp_flags_t poolCounterFlag,
                               uint32_t poolSize,
                               ze_event_handle_t *events,
                               ze_event_scope_flags_t signalScope,
                               ze_event_scope_flags_t waitScope);
+
+bool counterBasedEventsExtensionPresent(ze_driver_handle_t &driverHandle);
 
 std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, uint32_t &subDevCount);
 
@@ -276,6 +280,8 @@ void printGroupCount(ze_group_count_t &groupCount);
 void printBuildLog(std::string &buildLog);
 
 void printBuildLog(const char *strLog);
+
+void loadDriverExtensions(ze_driver_handle_t &driverHandle, std::vector<ze_driver_extension_properties_t> &driverExtensions);
 
 bool checkExtensionIsPresent(ze_driver_handle_t &driverHandle, std::vector<ze_driver_extension_properties_t> &extensionsToCheck);
 

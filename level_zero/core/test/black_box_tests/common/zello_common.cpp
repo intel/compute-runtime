@@ -19,6 +19,13 @@
 
 namespace LevelZeroBlackBoxTests {
 
+struct LoadedDriverExtensions {
+    std::vector<ze_driver_extension_properties_t> extensions;
+    bool loaded = false;
+};
+
+static LoadedDriverExtensions driverExtensions;
+
 bool verbose;
 
 bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *longName) {
@@ -354,22 +361,42 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_device_handle_t &device,
                               ze_event_pool_handle_t &eventPool,
                               ze_event_pool_flags_t poolFlag,
+                              bool counterEvents,
+                              ze_event_pool_counter_based_exp_flags_t poolCounterFlag,
                               uint32_t poolSize,
                               ze_event_handle_t *events,
                               ze_event_scope_flags_t signalScope,
                               ze_event_scope_flags_t waitScope) {
+    ze_event_pool_counter_based_exp_desc_t counterPoolDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+    counterPoolDesc.flags = poolCounterFlag;
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     eventPoolDesc.count = poolSize;
     eventPoolDesc.flags = poolFlag;
+    if (counterEvents) {
+        eventPoolDesc.pNext = &counterPoolDesc;
+    }
     SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
 
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     for (uint32_t i = 0; i < poolSize; i++) {
         eventDesc.index = i;
         eventDesc.signal = signalScope;
         eventDesc.wait = waitScope;
         SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, events + i));
     }
+}
+
+bool counterBasedEventsExtensionPresent(ze_driver_handle_t &driverHandle) {
+    std::string cbEventsExtensionString("ZE_experimental_event_pool_counter_based");
+    ze_driver_extension_properties_t cbEventsExtension{};
+
+    strncpy(cbEventsExtension.name, cbEventsExtensionString.c_str(), cbEventsExtensionString.size());
+    cbEventsExtension.version = ZE_EVENT_POOL_COUNTER_BASED_EXP_VERSION_CURRENT;
+
+    std::vector<ze_driver_extension_properties_t> extensionsToCheck;
+    extensionsToCheck.push_back(cbEventsExtension);
+
+    return LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionsToCheck);
 }
 
 std::vector<ze_device_handle_t> zelloGetSubDevices(ze_device_handle_t &device, uint32_t &subDevCount) {
@@ -673,28 +700,40 @@ void printBuildLog(const char *strLog) {
               << strLog << std::endl;
 }
 
-bool checkExtensionIsPresent(ze_driver_handle_t &driverHandle, std::vector<ze_driver_extension_properties_t> &extensionsToCheck) {
-    uint32_t numMatchedExtensions = 0;
+void loadDriverExtensions(ze_driver_handle_t &driverHandle, std::vector<ze_driver_extension_properties_t> &driverExtensions) {
     uint32_t extensionsCount = 0;
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, nullptr));
     if (extensionsCount == 0) {
         std::cerr << "No extensions supported on this driver" << std::endl;
-        return false;
+        driverExtensions.resize(extensionsCount);
+        return;
     }
 
-    std::vector<ze_driver_extension_properties_t> extensionsSupported(extensionsCount);
-    SUCCESS_OR_TERMINATE(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, extensionsSupported.data()));
+    driverExtensions.resize(extensionsCount);
+    SUCCESS_OR_TERMINATE(zeDriverGetExtensionProperties(driverHandle, &extensionsCount, driverExtensions.data()));
 
     for (uint32_t i = 0; i < extensionsCount; i++) {
-        uint32_t supportedVersion = extensionsSupported[i].version;
+        uint32_t supportedVersion = driverExtensions[i].version;
         if (verbose) {
-            std::cout << "Extension #" << i << " name: " << extensionsSupported[i].name << " version: " << ZE_MAJOR_VERSION(supportedVersion) << "." << ZE_MINOR_VERSION(supportedVersion) << std::endl;
+            std::cout << "Extension #" << i << " name: " << driverExtensions[i].name << " version: " << ZE_MAJOR_VERSION(supportedVersion) << "." << ZE_MINOR_VERSION(supportedVersion) << std::endl;
         }
+    }
+}
 
+bool checkExtensionIsPresent(ze_driver_handle_t &driverHandle, std::vector<ze_driver_extension_properties_t> &extensionsToCheck) {
+    uint32_t numMatchedExtensions = 0;
+
+    if (!driverExtensions.loaded) {
+        loadDriverExtensions(driverHandle, driverExtensions.extensions);
+        driverExtensions.loaded = true;
+    }
+
+    for (uint32_t i = 0; i < driverExtensions.extensions.size(); i++) {
         for (const auto &checkedExtension : extensionsToCheck) {
             std::string checkedExtensionName = checkedExtension.name;
-            if (strncmp(extensionsSupported[i].name, checkedExtensionName.c_str(), checkedExtensionName.size()) == 0) {
+            if (strncmp(driverExtensions.extensions[i].name, checkedExtensionName.c_str(), checkedExtensionName.size()) == 0) {
                 uint32_t version = checkedExtension.version;
+                uint32_t supportedVersion = driverExtensions.extensions[i].version;
                 if (verbose) {
                     std::cout << "Checked extension: " << checkedExtensionName << " found in the driver." << std::endl;
                 }

@@ -65,12 +65,12 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> deviceEvents(numEvents), hostEvents(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolDevice,
-                                                     0,
+                                                     0, false, 0,
                                                      numEvents, deviceEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_SUBDEVICE,
                                                      0);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolHost,
-                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, 0,
                                                      numEvents, hostEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
@@ -150,7 +150,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_
     uint32_t numEvents = 2;
     std::vector<ze_event_handle_t> hostEvents(numEvents);
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPoolHost,
-                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+                                                     ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, 0,
                                                      numEvents, hostEvents.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      0);
