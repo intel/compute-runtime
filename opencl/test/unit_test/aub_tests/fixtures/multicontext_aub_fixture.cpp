@@ -20,6 +20,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
@@ -39,7 +40,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
 
     HardwareInfo localHwInfo = *defaultHwInfo;
-    if (EnabledCommandStreamers::all == enabledCommandStreamers) {
+    if (EnabledCommandStreamers::single != enabledCommandStreamers) {
         overridePlatformConfigForAllEnginesSupport(localHwInfo);
     }
 
@@ -57,8 +58,23 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         localHwInfo.capabilityTable.blitterOperationsSupported = !!debugManager.flags.EnableBlitterOperationsSupport.get();
     }
 
+    debugManager.flags.RenderCompressedBuffersEnabled.set(enableCompression);
+    debugManager.flags.RenderCompressedImagesEnabled.set(enableCompression);
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(false);
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useHwCsr = true;
+
+    platformsImpl->clear();
+    constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&localHwInfo);
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
+    initPlatform();
+
+    rootDevice = platform()->getClDevice(0);
+
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->setRcsExposure();
     auto &gfxCoreHelper = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
-    auto engineType = getChosenEngineType(localHwInfo);
     auto renderEngine = aub_stream::NUM_ENGINES;
     for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex])) {
         if (!EngineHelpers::isCcs(engine.first)) {
@@ -66,19 +82,29 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
             break;
         }
     }
-    ASSERT_NE(aub_stream::NUM_ENGINES, renderEngine);
-
-    auto renderEngineName = gfxCoreHelper.getCsTraits(renderEngine).name;
+    bool isRenderEngineSupported = (renderEngine != aub_stream::NUM_ENGINES);
+    auto firstEngine = isRenderEngineSupported ? renderEngine : aub_stream::ENGINE_CCS;
 
     std::stringstream strfilename;
     strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
     strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_";
-    if (EnabledCommandStreamers::single == enabledCommandStreamers) {
-        strfilename << renderEngineName;
-    } else if (EnabledCommandStreamers::dual == enabledCommandStreamers) {
-        strfilename << renderEngineName << "_CCS0";
-    } else if (EnabledCommandStreamers::all == enabledCommandStreamers) {
-        strfilename << renderEngineName << "_CCS0_3"; // xehp_config_name_RCS_CCS0_3.aub
+    auto firstEngineName = gfxCoreHelper.getCsTraits(firstEngine).name;
+    auto secondEngineName = gfxCoreHelper.getCsTraits(aub_stream::ENGINE_CCS).name;
+    if (EnabledCommandStreamers::single == enabledCommandStreamers) { // name_RCS.aub or name_CCCS.aub or name_CCS.aub
+        strfilename << firstEngineName;
+    } else if (EnabledCommandStreamers::dual == enabledCommandStreamers) { // name_RCS_CCS.aub or name_CCCS_CCS.aub or name_CCS0_1.aub
+        strfilename << firstEngineName;
+        if (isRenderEngineSupported) {
+            strfilename << "_" << secondEngineName;
+        } else {
+            strfilename << "0_1";
+        }
+    } else if (EnabledCommandStreamers::all == enabledCommandStreamers) { // name_RCS_CCS0_3.aub or name_CCCS_CCS0_3.aub or name_CCS0_3.aub
+        strfilename << firstEngineName;
+        if (isRenderEngineSupported) {
+            strfilename << "_" << secondEngineName;
+        }
+        strfilename << "0_3";
     }
 
     auto filename = AUBCommandStreamReceiver::createFullFilePath(localHwInfo, strfilename.str(), rootDeviceIndex);
@@ -92,20 +118,6 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         return std::unique_ptr<CommandQueue>(castToObject<CommandQueue>(clQueue));
     };
 
-    debugManager.flags.RenderCompressedBuffersEnabled.set(enableCompression);
-    debugManager.flags.RenderCompressedImagesEnabled.set(enableCompression);
-    debugManager.flags.EnableBlitterForEnqueueOperations.set(false);
-
-    platformsImpl->clear();
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-
-    ultHwConfig.useHwCsr = true;
-    constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
-    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&localHwInfo);
-    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
-    initPlatform();
-
-    rootDevice = platform()->getClDevice(0);
     EXPECT_EQ(rootDeviceIndex, rootDevice->getRootDeviceIndex());
     {
         cl_device_id deviceId = rootDevice;
@@ -124,22 +136,25 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         tileDevices.push_back(rootDevice->getNearestGenericSubDevice(tile));
         EXPECT_NE(nullptr, tileDevices[tile]);
         if (EnabledCommandStreamers::single == enabledCommandStreamers) {
-            if (EngineHelpers::isCcs(engineType)) {
-                auto familyQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
-                commandQueues[tile].push_back(createCommandQueueForEngine(tile, familyQueue, 0));
-            } else {
-                auto familyQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
-                commandQueues[tile].push_back(createCommandQueueForEngine(tile, familyQueue, 0));
-            }
+            auto engineGroupType = isRenderEngineSupported ? EngineGroupType::renderCompute : EngineGroupType::compute;
+            auto familyQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
+            commandQueues[tile].push_back(createCommandQueueForEngine(tile, familyQueue, 0));
         } else if (EnabledCommandStreamers::dual == enabledCommandStreamers) {
-            auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
             auto ccsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
-            commandQueues[tile].push_back(createCommandQueueForEngine(tile, rcsQueue, 0));
-            commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
+            if (isRenderEngineSupported) {
+                auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
+                commandQueues[tile].push_back(createCommandQueueForEngine(tile, rcsQueue, 0));
+                commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
+            } else {
+                commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
+                commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 1));
+            }
         } else if (EnabledCommandStreamers::all == enabledCommandStreamers) {
-            auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
+            if (isRenderEngineSupported) {
+                auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
+                commandQueues[tile].push_back(createCommandQueueForEngine(tile, rcsQueue, 0));
+            }
             auto ccsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::compute);
-            commandQueues[tile].push_back(createCommandQueueForEngine(tile, rcsQueue, 0));
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 1));
             commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 2));
