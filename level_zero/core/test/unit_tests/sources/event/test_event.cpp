@@ -3425,7 +3425,8 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, neoDevice->getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, neoDevice->getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> hostTagAllocator(0, neoDevice->getMemoryManager());
 
     auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device)));
 
@@ -3440,14 +3441,12 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
-    uint64_t storage2[2] = {1, 1};
+    auto deviceMockNode = deviceTagAllocator.getTag();
+    auto hostMockNode = hostTagAllocator.getTag();
+    auto deviceSyncAllocation = deviceMockNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
+    auto hostSyncAllocation = hostMockNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
-    auto hostSyncAllocation = new NEO::MockGraphicsAllocation(&storage2, sizeof(storage2));
-
-    auto mockNode = tagAllocator.getTag();
-    auto deviceSyncAllocation = mockNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
-
-    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(mockNode, hostSyncAllocation, *neoDevice->getMemoryManager(), 1, 0, false, false);
+    auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(deviceMockNode, hostMockNode, *neoDevice->getMemoryManager(), 1, 0, false, false);
     *inOrderExecInfo->getBaseHostAddress() = 1;
 
     event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);

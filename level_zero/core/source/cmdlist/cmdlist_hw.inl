@@ -2575,7 +2575,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
     }
 
     if (inOrderExecInfo->isHostStorageDuplicated()) {
-        appendSdiInOrderCounterSignalling(inOrderExecInfo->getHostCounterAllocation()->getGpuAddress(), signalValue);
+        appendSdiInOrderCounterSignalling(inOrderExecInfo->getBaseHostGpuAddress(), signalValue);
     }
 
     if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1) && signalEvent && signalEvent->isInterruptModeEnabled()) {

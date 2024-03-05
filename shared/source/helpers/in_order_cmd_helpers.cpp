@@ -19,22 +19,12 @@
 
 namespace NEO {
 
-std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList) {
-    NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
-
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
-    bool atomicDeviceSignalling = gfxCoreHelper.inOrderAtomicSignallingEnabled(device.getRootDeviceEnvironment());
-
-    if (gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(device.getRootDeviceEnvironment())) {
-        NEO::AllocationProperties hostAllocationProperties{device.getRootDeviceIndex(), MemoryConstants::pageSize64k, NEO::AllocationType::bufferHostMemory, device.getDeviceBitfield()};
-        hostCounterAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(hostAllocationProperties);
-
-        UNRECOVERABLE_IF(!hostCounterAllocation);
-    }
+std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList) {
+    bool atomicDeviceSignalling = device.getGfxCoreHelper().inOrderAtomicSignallingEnabled(device.getRootDeviceEnvironment());
 
     UNRECOVERABLE_IF(!deviceCounterNode);
 
-    return std::make_shared<NEO::InOrderExecInfo>(deviceCounterNode, hostCounterAllocation, *device.getMemoryManager(), partitionCount, device.getRootDeviceIndex(), regularCmdList, atomicDeviceSignalling);
+    return std::make_shared<NEO::InOrderExecInfo>(deviceCounterNode, hostCounterNode, *device.getMemoryManager(), partitionCount, device.getRootDeviceIndex(), regularCmdList, atomicDeviceSignalling);
 }
 
 std::shared_ptr<InOrderExecInfo> InOrderExecInfo::createFromExternalAllocation(NEO::Device &device, uint64_t deviceAddress, uint64_t *hostAddress, uint64_t counterValue) {
@@ -52,19 +42,21 @@ InOrderExecInfo::~InOrderExecInfo() {
     if (deviceCounterNode) {
         deviceCounterNode->returnTag();
     }
-    memoryManager.freeGraphicsMemory(hostCounterAllocation);
+    if (hostCounterNode) {
+        hostCounterNode->returnTag();
+    }
 }
 
-InOrderExecInfo::InOrderExecInfo(TagNodeBase *deviceCounterNode, NEO::GraphicsAllocation *hostCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, uint32_t rootDeviceIndex,
+InOrderExecInfo::InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::MemoryManager &memoryManager, uint32_t partitionCount, uint32_t rootDeviceIndex,
                                  bool regularCmdList, bool atomicDeviceSignalling)
-    : memoryManager(memoryManager), deviceCounterNode(deviceCounterNode), hostCounterAllocation(hostCounterAllocation), rootDeviceIndex(rootDeviceIndex),
+    : memoryManager(memoryManager), deviceCounterNode(deviceCounterNode), hostCounterNode(hostCounterNode), rootDeviceIndex(rootDeviceIndex),
       regularCmdList(regularCmdList), atomicDeviceSignalling(atomicDeviceSignalling) {
 
     numDevicePartitionsToWait = atomicDeviceSignalling ? 1 : partitionCount;
     numHostPartitionsToWait = partitionCount;
 
-    if (hostCounterAllocation) {
-        hostAddress = reinterpret_cast<uint64_t *>(hostCounterAllocation->getUnderlyingBuffer());
+    if (hostCounterNode) {
+        hostAddress = reinterpret_cast<uint64_t *>(hostCounterNode->getCpuBase());
         duplicatedHostStorage = true;
     } else if (deviceCounterNode) {
         hostAddress = reinterpret_cast<uint64_t *>(deviceCounterNode->getCpuBase());
@@ -83,9 +75,9 @@ void InOrderExecInfo::initializeAllocationsFromHost() {
         memset(ptrOffset(deviceCounterNode->getCpuBase(), allocationOffset), 0, deviceAllocationWriteSize);
     }
 
-    if (hostCounterAllocation) {
+    if (hostCounterNode) {
         const size_t hostAllocationWriteSize = sizeof(uint64_t) * numHostPartitionsToWait;
-        memset(ptrOffset(hostCounterAllocation->getUnderlyingBuffer(), allocationOffset), 0, hostAllocationWriteSize);
+        memset(ptrOffset(hostCounterNode->getCpuBase(), allocationOffset), 0, hostAllocationWriteSize);
     }
 }
 
@@ -99,6 +91,14 @@ void InOrderExecInfo::reset() {
 
 NEO::GraphicsAllocation *InOrderExecInfo::getDeviceCounterAllocation() const {
     return deviceCounterNode ? deviceCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex) : nullptr;
+}
+
+NEO::GraphicsAllocation *InOrderExecInfo::getHostCounterAllocation() const {
+    return hostCounterNode ? hostCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex) : nullptr;
+}
+
+uint64_t InOrderExecInfo::getBaseHostGpuAddress() const {
+    return hostCounterNode->getGpuAddress();
 }
 
 } // namespace NEO
