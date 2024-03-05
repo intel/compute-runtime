@@ -7,6 +7,8 @@
 
 #include "opencl/source/sharings/gl/linux/gl_sharing_linux.h"
 
+#include "shared/source/os_interface/linux/sys_calls.h"
+
 #include "opencl/source/context/context.inl"
 #include "opencl/source/helpers/gl_helper.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
@@ -119,6 +121,23 @@ GLboolean GLSharingFunctionsLinux::initGLFunctions() {
     this->pfnGlArbSyncObjectWaitServer = serverWaitForArbSyncObject;
 
     return 1;
+}
+bool GLSharingFunctionsLinux::flushObjectsAndWait(unsigned count, struct mesa_glinterop_export_in *resources, struct mesa_glinterop_flush_out *out) {
+    /* Call MESA interop */
+    int retValue = flushObjects(1, resources, out);
+    if (retValue != MESA_GLINTEROP_SUCCESS) {
+        return false;
+    }
+    auto fenceFd = *out->fence_fd;
+    /* Wait on the fence fd */
+    struct pollfd fp = {
+        .fd = fenceFd,
+        .events = POLLIN,
+        .revents = 0,
+    };
+    retValue = SysCalls::poll(&fp, 1, 1000);
+    SysCalls::close(fenceFd);
+    return retValue >= 0;
 }
 
 template GLSharingFunctionsLinux *Context::getSharing<GLSharingFunctionsLinux>();

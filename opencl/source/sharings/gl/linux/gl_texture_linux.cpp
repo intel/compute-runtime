@@ -15,7 +15,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "opencl/extensions/public/cl_gl_private_intel.h"
@@ -230,24 +229,8 @@ void GlTexture::synchronizeObject(UpdateData &updateData) {
     syncOut.version = 1;
     syncOut.fence_fd = &fenceFd;
 
-    /* Call MESA interop */
-    int retValue = sharingFunctions->flushObjects(1, &texIn, &syncOut);
-    if (retValue != MESA_GLINTEROP_SUCCESS) {
-        updateData.synchronizationStatus = SynchronizeStatus::SYNCHRONIZE_ERROR;
-        return;
-    }
-
-    /* Wait on the fence fd */
-    struct pollfd fp = {
-        .fd = fenceFd,
-        .events = POLLIN,
-        .revents = 0,
-    };
-    SysCalls::poll(&fp, 1, 1000);
-    SysCalls::close(fenceFd);
-
-    /* Done */
-    updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
+    bool success = sharingFunctions->flushObjectsAndWait(1, &texIn, &syncOut);
+    updateData.synchronizationStatus = success ? SynchronizeStatus::ACQUIRE_SUCCESFUL : SynchronizeStatus::SYNCHRONIZE_ERROR;
 }
 
 cl_int GlTexture::getGlTextureInfo(cl_gl_texture_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const {

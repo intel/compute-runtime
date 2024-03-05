@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,9 +19,9 @@ class GLContextGuard {
     ~GLContextGuard();
 
   protected:
-    GLSharingFunctions *sharingFunctions;
+    GLSharingFunctions *sharingFunctions = nullptr;
 
-    GLContext currentContextHandle;
-    GLDisplay currentDisplayHandle;
+    GLContext currentContextHandle{};
+    GLDisplay currentDisplayHandle{};
 };
 } // namespace NEO

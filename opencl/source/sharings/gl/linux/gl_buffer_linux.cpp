@@ -10,7 +10,6 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "opencl/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/cl_device/cl_device.h"
@@ -112,24 +111,8 @@ void GlBuffer::synchronizeObject(UpdateData &updateData) {
     syncOut.version = 1;
     syncOut.fence_fd = &fenceFd;
 
-    /* Call MESA interop */
-    int retValue = sharingFunctions->flushObjects(1, &objIn, &syncOut);
-    if (retValue != MESA_GLINTEROP_SUCCESS) {
-        updateData.synchronizationStatus = SynchronizeStatus::SYNCHRONIZE_ERROR;
-        return;
-    }
-
-    /* Wait on the fence fd */
-    struct pollfd fp = {
-        .fd = fenceFd,
-        .events = POLLIN,
-        .revents = 0,
-    };
-    SysCalls::poll(&fp, 1, 1000);
-    SysCalls::close(fenceFd);
-
-    /* Done */
-    updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
+    bool success = sharingFunctions->flushObjectsAndWait(1, &objIn, &syncOut);
+    updateData.synchronizationStatus = success ? SynchronizeStatus::ACQUIRE_SUCCESFUL : SynchronizeStatus::SYNCHRONIZE_ERROR;
 }
 
 void GlBuffer::resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) {
