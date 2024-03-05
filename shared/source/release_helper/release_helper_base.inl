@@ -121,4 +121,9 @@ const std::string ReleaseHelperHw<releaseType>::getDeviceConfigString(uint32_t t
     return configString;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isRayTracingSupported() const {
+    return true;
+}
+
 } // namespace NEO

@@ -52,6 +52,7 @@ class ReleaseHelper {
     virtual uint32_t getNumThreadsPerEu() const = 0;
     virtual const ThreadsPerEUConfigs getThreadsPerEUConfigs() const = 0;
     virtual const std::string getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const = 0;
+    virtual bool isRayTracingSupported() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -86,6 +87,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     uint32_t getNumThreadsPerEu() const override;
     const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const override;
     const std::string getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const override;
+    bool isRayTracingSupported() const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

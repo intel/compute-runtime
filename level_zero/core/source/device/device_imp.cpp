@@ -38,6 +38,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include "level_zero/api/driver_experimental/public/zex_module.h"
@@ -742,7 +743,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     auto &compilerProductHelper = this->neoDevice->getCompilerProductHelper();
     const auto &deviceInfo = this->getDeviceInfo();
     const auto &productHelper = this->getProductHelper();
-    const auto &l0GfxCoreHelper = this->getL0GfxCoreHelper();
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
 
     std::string ilVersion = deviceInfo.ilVersion;
     size_t majorVersionPos = ilVersion.find('_');
@@ -830,7 +831,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
             ze_device_raytracing_ext_properties_t *rtProperties =
                 reinterpret_cast<ze_device_raytracing_ext_properties_t *>(extendedProperties);
 
-            if (l0GfxCoreHelper.platformSupportsRayTracing()) {
+            if (releaseHelper && releaseHelper->isRayTracingSupported()) {
                 rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
                 rtProperties->maxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
             } else {
@@ -879,6 +880,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
     const auto &l0GfxCoreHelper = this->getL0GfxCoreHelper();
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
 
     pDeviceProperties->type = ZE_DEVICE_TYPE_GPU;
 
@@ -997,7 +999,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
                 rtasProperties->rtasFormat = l0GfxCoreHelper.getSupportedRTASFormat();
                 rtasProperties->rtasBufferAlignment = 128;
 
-                if (l0GfxCoreHelper.platformSupportsRayTracing()) {
+                if (releaseHelper && releaseHelper->isRayTracingSupported()) {
                     auto driverHandle = this->getDriverHandle();
                     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
 

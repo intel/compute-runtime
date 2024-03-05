@@ -77,7 +77,6 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool platformSupportsFrontEndTracking() const = 0;
     virtual bool platformSupportsPipelineSelectTracking() const = 0;
     virtual bool platformSupportsStateBaseAddressTracking() const = 0;
-    virtual bool platformSupportsRayTracing() const = 0;
     virtual bool platformSupportsPrimaryBatchBufferCmdList() const = 0;
     virtual bool isZebinAllowed(const NEO::Debugger *debugger) const = 0;
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
@@ -120,7 +119,6 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool platformSupportsFrontEndTracking() const override;
     bool platformSupportsPipelineSelectTracking() const override;
     bool platformSupportsStateBaseAddressTracking() const override;
-    bool platformSupportsRayTracing() const override;
     bool platformSupportsPrimaryBatchBufferCmdList() const override;
     bool isZebinAllowed(const NEO::Debugger *debugger) const override;
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;

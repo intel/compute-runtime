@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,11 +39,6 @@ GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForPipelineSele
 GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForStateBaseAddressTrackingSupportThenReturnFalse) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsStateBaseAddressTracking());
-}
-
-GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForRayTracingSupportThenReturnFalse) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_FALSE(l0GfxCoreHelper.platformSupportsRayTracing());
 }
 
 GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {

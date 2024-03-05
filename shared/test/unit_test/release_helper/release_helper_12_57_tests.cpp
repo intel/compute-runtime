@@ -38,6 +38,7 @@ TEST_F(ReleaseHelper1257Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
         EXPECT_TRUE(releaseHelper->isBindlessAddressingDisabled());
         EXPECT_EQ(8u, releaseHelper->getNumThreadsPerEu());
+        EXPECT_TRUE(releaseHelper->isRayTracingSupported());
     }
 }
 

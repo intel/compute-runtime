@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -1038,9 +1039,9 @@ HWTEST2_F(DeviceTest, whenPassingRaytracingExpStructToGetPropertiesThenPropertie
     EXPECT_NE(37u, rayTracingProperties.maxBVHLevels);
 
     unsigned int expectedMaxBVHLevels = 0;
-    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (l0GfxCoreHelper.platformSupportsRayTracing()) {
+    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
         expectedMaxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
     }
 
@@ -5242,9 +5243,9 @@ HWTEST2_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesThenCo
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (l0GfxCoreHelper.platformSupportsRayTracing()) {
+    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
@@ -5267,9 +5268,9 @@ HWTEST2_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesTh
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(128u, rtasProperties.rtasBufferAlignment);
 
-    auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
 
-    if (l0GfxCoreHelper.platformSupportsRayTracing()) {
+    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
         EXPECT_NE(ZE_RTAS_FORMAT_EXP_INVALID, rtasProperties.rtasFormat);
     }
 }
