@@ -984,6 +984,17 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getCsr()->peekTaskCount(), 1u);
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
 
+    commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+
+    directSubmission->relaxedOrderingEnabled = false;
+
+    commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
+
+    EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+
     context->freeMem(srcPtr);
     context->freeMem(dstPtr);
 }

@@ -74,6 +74,7 @@ struct BcsSplit {
                                 NEO::TransferDirection direction,
                                 std::function<ze_result_t(T, K, size_t, ze_event_handle_t)> appendCall) {
         ze_result_t result = ZE_RESULT_SUCCESS;
+        const bool hasStallingCmds = !hasRelaxedOrderingDependencies;
 
         auto markerEventIndexRet = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
         if (!markerEventIndexRet.has_value()) {
@@ -120,7 +121,7 @@ struct BcsSplit {
             result = appendCall(localDstPtr, localSrcPtr, localSize, eventHandle);
 
             if (cmdList->flushTaskSubmissionEnabled()) {
-                cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, false, hasRelaxedOrderingDependencies, false, cmdQsForSplit[i]);
+                cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, false, cmdQsForSplit[i]);
             } else {
                 cmdList->executeCommandListImmediateImpl(performMigration, cmdQsForSplit[i]);
             }
