@@ -408,6 +408,16 @@ std::vector<uint32_t> ProductHelperHw<IGFX_UNKNOWN>::getSupportedNumGrfs(const R
     return {};
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
+    return false;
+}
+
 struct UnknownProduct {
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = false;

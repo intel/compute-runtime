@@ -41,7 +41,7 @@ struct ContextUsmPoolFlagValuesTest : public ::testing::Test {
 
 using ContextUsmPoolDefaultFlagsTest = ContextUsmPoolFlagValuesTest<-1, -1>;
 
-HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContextThenPoolsAreNotInitialized, IsNotXeHpgCore) {
+HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContextThenPoolsAreNotInitialized, IsBeforeXeHpgCore) {
     EXPECT_FALSE(mockDeviceUsmMemAllocPool->isInitialized());
     EXPECT_EQ(0u, mockDeviceUsmMemAllocPool->poolSize);
     EXPECT_EQ(nullptr, mockDeviceUsmMemAllocPool->pool);
@@ -61,6 +61,16 @@ HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingCont
     EXPECT_EQ(2 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolSize);
     EXPECT_NE(nullptr, mockHostUsmMemAllocPool->pool);
     EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, mockHostUsmMemAllocPool->poolMemoryType);
+}
+
+HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContextThenPoolsAreNotInitialized, IsXeHpcCore) {
+    EXPECT_FALSE(mockDeviceUsmMemAllocPool->isInitialized());
+    EXPECT_EQ(0u, mockDeviceUsmMemAllocPool->poolSize);
+    EXPECT_EQ(nullptr, mockDeviceUsmMemAllocPool->pool);
+
+    EXPECT_FALSE(mockHostUsmMemAllocPool->isInitialized());
+    EXPECT_EQ(0u, mockHostUsmMemAllocPool->poolSize);
+    EXPECT_EQ(nullptr, mockHostUsmMemAllocPool->pool);
 }
 
 using ContextUsmPoolEnabledFlagsTest = ContextUsmPoolFlagValuesTest<1, 3>;
