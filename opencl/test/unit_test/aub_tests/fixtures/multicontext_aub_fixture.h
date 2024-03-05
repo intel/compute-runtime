@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ struct MulticontextAubFixture {
     };
 
     void setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression);
-    void tearDown();
+    void tearDown() {}
 
     template <typename FamilyType>
     CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr(uint32_t tile, uint32_t engine) {

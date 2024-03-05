@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 
+#include "shared/source/aub/aub_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -17,6 +18,7 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/sys_calls_common.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <algorithm>
 #include <cstring>
@@ -34,16 +36,15 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
     uint32_t subSlicesPerSlice = gtSystemInfo.SubSliceCount / gtSystemInfo.SliceCount;
     strfilename << hwPrefix << "_";
-    if (subDevicesCount > 1) {
-        strfilename << subDevicesCount << "tx";
-    }
     std::stringstream strExtendedFileName;
 
     strExtendedFileName << filename;
     if (debugManager.flags.GenerateAubFilePerProcessId.get()) {
         strExtendedFileName << "_PID_" << SysCalls::getProcessId();
     }
-    strfilename << gtSystemInfo.SliceCount << "x" << subSlicesPerSlice << "x" << gtSystemInfo.MaxEuPerSubSlice << "_" << rootDeviceIndex << "_" << strExtendedFileName.str() << ".aub";
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    const auto deviceConfig = AubHelper::getDeviceConfigString(releaseHelper.get(), subDevicesCount, gtSystemInfo.SliceCount, subSlicesPerSlice, gtSystemInfo.MaxEuPerSubSlice);
+    strfilename << deviceConfig << "_" << rootDeviceIndex << "_" << strExtendedFileName.str() << ".aub";
 
     // clean-up any fileName issues because of the file system incompatibilities
     auto fileName = strfilename.str();

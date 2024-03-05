@@ -33,5 +33,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isBindlessAddressingDisabled, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getNumThreadsPerEu, uint32_t, 8u, ());
     ADDMETHOD_CONST_NOBASE(getThreadsPerEUConfigs, const ThreadsPerEUConfigs, {}, ());
+    ADDMETHOD_CONST_NOBASE(getDeviceConfigString, const std::string, {}, (uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount));
 };
 } // namespace NEO

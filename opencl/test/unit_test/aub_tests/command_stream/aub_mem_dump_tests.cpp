@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,9 +24,11 @@ using NEO::folderAUB;
 
 std::string getAubFileName(const NEO::Device *pDevice, const std::string baseName) {
     const auto pGtSystemInfo = &pDevice->getHardwareInfo().gtSystemInfo;
+    auto releaseHelper = pDevice->getReleaseHelper();
     std::stringstream strfilename;
     uint32_t subSlicesPerSlice = pGtSystemInfo->SubSliceCount / pGtSystemInfo->SliceCount;
-    strfilename << hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily] << "_" << pGtSystemInfo->SliceCount << "x" << subSlicesPerSlice << "x" << pGtSystemInfo->MaxEuPerSubSlice << "_" << baseName;
+    const auto deviceConfig = AubHelper::getDeviceConfigString(releaseHelper, 1, pGtSystemInfo->SliceCount, subSlicesPerSlice, pGtSystemInfo->MaxEuPerSubSlice);
+    strfilename << hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily] << "_" << deviceConfig << "_" << baseName;
 
     return strfilename.str();
 }

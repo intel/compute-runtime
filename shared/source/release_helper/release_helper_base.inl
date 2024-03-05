@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/string.h"
 #include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
@@ -106,4 +107,18 @@ template <ReleaseType releaseType>
 const ThreadsPerEUConfigs ReleaseHelperHw<releaseType>::getThreadsPerEUConfigs() const {
     return {4, 8};
 }
+
+template <ReleaseType releaseType>
+const std::string ReleaseHelperHw<releaseType>::getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const {
+    char configString[16] = {0};
+    if (tileCount > 1) {
+        auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%utx%ux%ux%u", tileCount, sliceCount, subSliceCount, euPerSubSliceCount);
+        UNRECOVERABLE_IF(err < 0);
+    } else {
+        auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%ux%ux%u", sliceCount, subSliceCount, euPerSubSliceCount);
+        UNRECOVERABLE_IF(err < 0);
+    }
+    return configString;
+}
+
 } // namespace NEO

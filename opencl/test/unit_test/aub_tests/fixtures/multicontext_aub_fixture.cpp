@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,18 +152,6 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         cl_device_id deviceId = rootDevice;
         multiTileDefaultContext.reset(MockContext::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
-    }
-}
-
-void MulticontextAubFixture::tearDown() {
-    auto filename = debugManager.flags.AUBDumpCaptureFileName.get();
-
-    std::string tileString = std::to_string(numberOfEnabledTiles) + "tx";
-
-    if (numberOfEnabledTiles > 1) {
-        EXPECT_NE(std::string::npos, filename.find(tileString));
-    } else {
-        EXPECT_EQ(std::string::npos, filename.find(tileString));
     }
 }
 

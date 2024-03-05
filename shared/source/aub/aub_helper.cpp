@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/tbx/tbx_proto.h"
 
 #include "aubstream/aubstream.h"
@@ -48,4 +50,20 @@ uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo) {
     }
     return getTotalMemBankSize() / GfxCoreHelper::getSubDevicesCount(pHwInfo);
 }
+
+const std::string AubHelper::getDeviceConfigString(const ReleaseHelper *releaseHelper, uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) {
+    if (releaseHelper) {
+        return releaseHelper->getDeviceConfigString(tileCount, sliceCount, subSliceCount, euPerSubSliceCount);
+    }
+    char configString[16] = {0};
+    if (tileCount > 1) {
+        auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%utx%ux%ux%u", tileCount, sliceCount, subSliceCount, euPerSubSliceCount);
+        UNRECOVERABLE_IF(err < 0);
+    } else {
+        auto err = snprintf_s(configString, sizeof(configString), sizeof(configString), "%ux%ux%u", sliceCount, subSliceCount, euPerSubSliceCount);
+        UNRECOVERABLE_IF(err < 0);
+    }
+    return configString;
+}
+
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -949,7 +949,7 @@ HWTEST_F(AddPatchInfoCommentsAubTests, givenAddPatchInfoCommentsCalledWhenTarget
     EXPECT_EQ(2u, mockAubFileStream->addCommentCalled);
 }
 
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices) {
+HWTEST2_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices, IsAtMostXeHpcCore) {
     DebugManagerStateRestore stateRestore;
 
     debugManager.flags.CreateMultipleSubDevices.set(1);
