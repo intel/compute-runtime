@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,8 +172,10 @@ bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEngine
     bool waited = false;
 
     if (isWaitForTimestampsEnabled()) {
-        TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
-        waited = waitForTimestampsWithinContainer<TSPacketType>(mainContainer, getGpgpuCommandStreamReceiver(), status);
+        {
+            TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
+            waited = waitForTimestampsWithinContainer<TSPacketType>(mainContainer, getGpgpuCommandStreamReceiver(), status);
+        }
 
         if (waited) {
             getGpgpuCommandStreamReceiver().downloadAllocations();
