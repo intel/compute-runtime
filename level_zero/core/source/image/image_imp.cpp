@@ -191,8 +191,9 @@ ze_result_t ImageImp::getDeviceOffset(uint64_t *deviceOffset) {
     return result;
 }
 
-size_t ImageImp::getRowPitchFor2dImage(Device *device, NEO::ImageInfo imgInfo) {
+size_t ImageImp::getRowPitchFor2dImage(Device *device, const NEO::ImageInfo &imgInfo) {
     NEO::StorageInfo storageInfo = {};
+    NEO::ImageInfo info = imgInfo;
 
     NEO::GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -200,11 +201,11 @@ size_t ImageImp::getRowPitchFor2dImage(Device *device, NEO::ImageInfo imgInfo) {
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
 
     NEO::Gmm gmm(deviceImp->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[deviceImp->getRootDeviceIndex()]->getGmmHelper(),
-                 imgInfo,
+                 info,
                  storageInfo,
                  false);
 
-    return imgInfo.rowPitch;
+    return info.rowPitch;
 }
 
 } // namespace L0
