@@ -480,10 +480,6 @@ void CommandContainer::setCmdBuffer(GraphicsAllocation *cmdBuffer) {
     }
 }
 
-GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
-    return this->allocateCommandBuffer(false);
-}
-
 GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory) {
     size_t alignedSize = getAlignedCmdBufferSize();
     AllocationProperties properties{device->getRootDeviceIndex(),
@@ -517,12 +513,12 @@ void CommandContainer::fillReusableAllocationLists() {
     }
 
     for (auto i = 0u; i < amountToFill; i++) {
-        auto allocToReuse = this->allocateCommandBuffer();
+        auto allocToReuse = obtainNextCommandBufferAllocation();
         this->immediateReusableAllocationList->pushTailOne(*allocToReuse);
         this->getResidencyContainer().push_back(allocToReuse);
 
         if (this->useSecondaryCommandStream) {
-            auto hostAllocToReuse = this->allocateCommandBuffer(true);
+            auto hostAllocToReuse = obtainNextCommandBufferAllocation(true);
             this->immediateReusableAllocationList->pushTailOne(*hostAllocToReuse);
             this->getResidencyContainer().push_back(hostAllocToReuse);
         }

@@ -149,7 +149,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     GraphicsAllocation *reuseExistingCmdBuffer();
     GraphicsAllocation *reuseExistingCmdBuffer(bool forceHostMemory);
-    GraphicsAllocation *allocateCommandBuffer();
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory);
     void setCmdBuffer(GraphicsAllocation *cmdBuffer);
     void addCurrentCommandBufferToReusableAllocationList();
