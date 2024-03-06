@@ -128,8 +128,7 @@ int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup
 }
 
 std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
-    std::string filePath = isSubdevice ? "xe_tile" + std::to_string(subDeviceId) : "xe";
-    return filePath;
+    return "xe";
 }
 
 std::optional<std::string> SysmanKmdInterfaceXe::getEngineClassString(uint16_t engineClass) {
