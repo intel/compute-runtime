@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,9 @@ GmmClientContext::GmmClientContext(const RootDeviceEnvironment &rootDeviceEnviro
     GMM_INIT_IN_ARGS inArgs{};
     GMM_INIT_OUT_ARGS outArgs{};
 
-    auto gtSystemInfo = hardwareInfo->gtSystemInfo;
+    const auto &gtSystemInfo = hardwareInfo->gtSystemInfo;
     inArgs.ClientType = GMM_CLIENT::GMM_OCL_VISTA;
-    inArgs.pGtSysInfo = &gtSystemInfo;
+    inArgs.pGtSysInfo = const_cast<GT_SYSTEM_INFO *>(&gtSystemInfo);
     inArgs.pSkuTable = &gmmFtrTable;
     inArgs.pWaTable = &gmmWaTable;
     inArgs.Platform = hardwareInfo->platform;

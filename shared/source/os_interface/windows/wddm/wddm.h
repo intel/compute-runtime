@@ -261,6 +261,9 @@ class Wddm : public DriverModel {
     std::unique_ptr<FeatureTable> featureTable;
     std::unique_ptr<WorkaroundTable> workaroundTable;
 
+    std::unique_ptr<SKU_FEATURE_TABLE_KMD> gfxFeatureTable;
+    std::unique_ptr<WA_TABLE_KMD> gfxWorkaroundTable;
+
     std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
     std::unique_ptr<GmmMemory> gmmMemory;
     std::unique_ptr<KmDafListener> kmDafListener;

@@ -62,6 +62,8 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
     workaroundTable.reset(new WorkaroundTable());
     gtSystemInfo.reset(new GT_SYSTEM_INFO);
     gfxPlatform.reset(new PLATFORM_KMD);
+    gfxFeatureTable.reset(new SKU_FEATURE_TABLE_KMD);
+    gfxWorkaroundTable.reset(new WA_TABLE_KMD);
     memset(gtSystemInfo.get(), 0, sizeof(*gtSystemInfo));
     memset(gfxPlatform.get(), 0, sizeof(*gfxPlatform));
     this->enablePreemptionRegValue = NEO::readEnablePreemptionRegKey();
@@ -267,6 +269,8 @@ bool Wddm::queryAdapterInfo() {
     if (status == STATUS_SUCCESS) {
         memcpy_s(gtSystemInfo.get(), sizeof(GT_SYSTEM_INFO), &adapterInfo.SystemInfo, sizeof(GT_SYSTEM_INFO));
         memcpy_s(gfxPlatform.get(), sizeof(PLATFORM_KMD), &adapterInfo.GfxPlatform, sizeof(PLATFORM_KMD));
+        memcpy_s(gfxFeatureTable.get(), sizeof(SKU_FEATURE_TABLE_KMD), &adapterInfo.SkuTable, sizeof(SKU_FEATURE_TABLE_KMD));
+        memcpy_s(gfxWorkaroundTable.get(), sizeof(WA_TABLE_KMD), &adapterInfo.WaTable, sizeof(WA_TABLE_KMD));
 
         if (debugManager.flags.ForceDeviceId.get() != "unk") {
             gfxPlatform->usDeviceID = static_cast<unsigned short>(std::stoi(debugManager.flags.ForceDeviceId.get(), nullptr, 16));

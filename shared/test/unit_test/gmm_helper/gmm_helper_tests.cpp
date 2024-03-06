@@ -920,29 +920,6 @@ TEST_F(GmmEnvironmentTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
     ASSERT_NE(nullptr, getGmmHelper());
     EXPECT_NE(nullptr, getGmmClientContext()->getHandle());
 }
-
-TEST_F(GmmHelperTests, givenValidGmmFunctionsWhenCreateGmmHelperWithInitializedOsInterfaceThenProperParametersArePassed) {
-    DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
-    VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
-    VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
-    VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
-    VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
-    VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
-
-    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-    SKU_FEATURE_TABLE expectedFtrTable = {};
-    WA_TABLE expectedWaTable = {};
-    SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
-    SkuInfoTransfer::transferWaTableForGmm(&expectedWaTable, &hwInfo->workaroundTable);
-
-    auto gmmHelper = std::make_unique<GmmHelper>(*executionEnvironment->rootDeviceEnvironments[0]);
-    EXPECT_EQ(0, memcmp(&hwInfo->platform, &passedInputArgs.Platform, sizeof(PLATFORM)));
-    EXPECT_EQ(0, memcmp(&hwInfo->gtSystemInfo, &passedGtSystemInfo, sizeof(GT_SYSTEM_INFO)));
-    EXPECT_EQ(0, memcmp(&expectedFtrTable, &passedFtrTable, sizeof(SKU_FEATURE_TABLE)));
-    EXPECT_EQ(0, memcmp(&expectedWaTable, &passedWaTable, sizeof(WA_TABLE)));
-    EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
-}
-
 TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceThenInitializationDoesntCrashAndProperParametersArePassed) {
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);

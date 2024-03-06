@@ -15,6 +15,8 @@ void Wddm::setGmmInputArgs(void *args) {
 
     gmmInArgs->Platform.eRenderCoreFamily = gfxPlatform->eRenderCoreFamily;
     gmmInArgs->Platform.eDisplayCoreFamily = gfxPlatform->eDisplayCoreFamily;
+    gmmInArgs->pSkuTable = gfxFeatureTable.get();
+    gmmInArgs->pWaTable = gfxWorkaroundTable.get();
 
     gmmInArgs->stAdapterBDF = this->adapterBDF;
     gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
