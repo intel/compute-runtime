@@ -96,7 +96,8 @@ std::optional<std::string> SysmanKmdInterfaceI915Prelim::getEngineClassString(ui
 }
 
 uint32_t SysmanKmdInterfaceI915Prelim::getEventType(const bool isIntegratedDevice) {
-    return 0;
+    std::string i915DirName = "i915";
+    return getEventTypeImpl(i915DirName, isIntegratedDevice);
 }
 
 void SysmanKmdInterfaceI915Prelim::getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) {

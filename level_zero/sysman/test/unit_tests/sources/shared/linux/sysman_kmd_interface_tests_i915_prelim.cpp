@@ -25,6 +25,32 @@ namespace ult {
 
 using namespace NEO;
 
+static const uint32_t mockReadVal = 23;
+
+static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
+    constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+    strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0");
+    return sizeofPath;
+}
+
+static int mockReadLinkFailure(const char *path, char *buf, size_t bufsize) {
+    errno = ENOENT;
+    return -1;
+}
+
+static ssize_t mockReadSuccess(int fd, void *buf, size_t count, off_t offset) {
+    std::ostringstream oStream;
+    oStream << mockReadVal;
+    std::string value = oStream.str();
+    memcpy(buf, value.data(), count);
+    return count;
+}
+
+static ssize_t mockReadFailure(int fd, void *buf, size_t count, off_t offset) {
+    errno = ENOENT;
+    return -1;
+}
+
 class SysmanFixtureDeviceI915Prelim : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
@@ -33,6 +59,12 @@ class SysmanFixtureDeviceI915Prelim : public SysmanDeviceFixture {
         SysmanDeviceFixture::SetUp();
         device = pSysmanDevice;
         pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getProductFamily()));
+        mockInitFsAccess();
+    }
+
+    void mockInitFsAccess() {
+        VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+        pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pLinuxSysmanImp->getDrm());
     }
 
     void TearDown() override {
@@ -109,9 +141,41 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckin
     EXPECT_TRUE(pSysmanKmdInterface->isStandbyModeControlAvailable());
 }
 
-TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEventTypeThenInvalidValueIsReturned) {
-    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    EXPECT_EQ(0u, pSysmanKmdInterface->getEventType(true));
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndIsIntegratedDeviceWhenGetEventsIsCalledThenValidEventTypeIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    bool isIntegratedDevice = true;
+    EXPECT_EQ(mockReadVal, pSysmanKmdInterface->getEventType(isIntegratedDevice));
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndIsNotIntegratedDeviceWhenGetEventsIsCalledThenValidEventTypeIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    bool isIntegratedDevice = false;
+    EXPECT_EQ(mockReadVal, pSysmanKmdInterface->getEventType(isIntegratedDevice));
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndIsNotIntegratedDeviceAndReadSymLinkFailsWhenGetEventsIsCalledThenFailureIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkFailure);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    bool isIntegratedDevice = false;
+    EXPECT_EQ(0u, pSysmanKmdInterface->getEventType(isIntegratedDevice));
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndIsNotIntegratedDeviceAndFsReadFailsWhenGetEventsIsCalledThenFailureIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadFailure);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    bool isIntegratedDevice = false;
+    EXPECT_EQ(0u, pSysmanKmdInterface->getEventType(isIntegratedDevice));
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckingAvailabilityOfFrequencyFilesThenTrueValueIsReturned) {
