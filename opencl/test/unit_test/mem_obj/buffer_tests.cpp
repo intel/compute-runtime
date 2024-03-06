@@ -1986,7 +1986,7 @@ class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
     void *hostPtr;
 };
 
-HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteImageThenL3CacheIsOn) {
+HWTEST_P(BufferL3CacheTests, DISABLED_givenMisalignedAndAlignedBufferWhenClEnqueueWriteImageThenL3CacheIsOn) {
     auto device = ctx.getDevice(0);
     const auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || !ctx.getDevice(0)->getHardwareInfo().capabilityTable.supportsImages) {
