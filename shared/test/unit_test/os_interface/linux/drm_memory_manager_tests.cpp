@@ -205,6 +205,36 @@ TEST_F(DrmMemoryManagerTest, givenEnableDirectSubmissionWhenCreateDrmMemoryManag
     EXPECT_EQ(memoryManager.peekGemCloseWorker(), nullptr);
 }
 
+TEST_F(DrmMemoryManagerTest, givenDebugFlagSetWhenUsingMmapFunctionsThenPrintContent) {
+    DebugManagerStateRestore dbgState;
+    debugManager.flags.PrintMmapAndMunMapCalls.set(1);
+
+    MockDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
+
+    testing::internal::CaptureStdout();
+    size_t len = 2;
+    off_t offset = 6;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+    void *retPtr = memoryManager.mmapFunction(ptr, len, 3, 4, 5, offset);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    char expected1[256] = {};
+
+    sprintf(expected1, "mmap(%p, %zu, %d, %d, %d, %ld) = %p", ptr, len, 3, 4, 5, offset, retPtr);
+
+    EXPECT_NE(std::string::npos, output.find(expected1));
+
+    testing::internal::CaptureStdout();
+    int retVal = memoryManager.munmapFunction(ptr, len);
+
+    output = testing::internal::GetCapturedStdout();
+    char expected2[256] = {};
+
+    sprintf(expected2, "munmap(%p, %zu) = %d", ptr, len, retVal);
+
+    EXPECT_NE(std::string::npos, output.find(expected2));
+}
+
 TEST_F(DrmMemoryManagerTest, givenDebugVariableWhenCreatingDrmMemoryManagerThenSetSupportForMultiStorageResources) {
     DebugManagerStateRestore dbgState;
 

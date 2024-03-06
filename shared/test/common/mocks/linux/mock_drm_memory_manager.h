@@ -187,6 +187,8 @@ struct MockDrmGemCloseWorker : DrmGemCloseWorker {
 struct MockDrmMemoryManager : DrmMemoryManager {
     using DrmMemoryManager::DrmMemoryManager;
     using DrmMemoryManager::gemCloseWorker;
+    using DrmMemoryManager::mmapFunction;
+    using DrmMemoryManager::munmapFunction;
 };
 
 } // namespace NEO

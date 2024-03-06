@@ -53,12 +53,33 @@ namespace NEO {
 
 using AllocationStatus = MemoryManager::AllocationStatus;
 
+int debugMunmap(void *ptr, size_t size) noexcept {
+    int returnVal = munmap(ptr, size);
+
+    printf("\n%s: munmap(%p, %zu) = %d", __FUNCTION__, ptr, size, returnVal);
+
+    return returnVal;
+}
+
+void *debugMmap(void *ptr, size_t size, int prot, int flags, int fd, off_t offset) noexcept {
+    void *returnVal = mmap(ptr, size, prot, flags, fd, offset);
+
+    printf("\n%s: mmap(%p, %zu, %d, %d, %d, %ld) = %p", __FUNCTION__, ptr, size, prot, flags, fd, offset, returnVal);
+
+    return returnVal;
+}
+
 DrmMemoryManager::DrmMemoryManager(GemCloseWorkerMode mode,
                                    bool forcePinAllowed,
                                    bool validateHostPtrMemory,
                                    ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
+
+    if (debugManager.flags.PrintMmapAndMunMapCalls.get() == 1) {
+        this->munmapFunction = debugMunmap;
+        this->mmapFunction = debugMmap;
+    }
 
     alignmentSelector.addCandidateAlignment(MemoryConstants::pageSize64k, true, AlignmentSelector::anyWastage, HeapIndex::heapStandard64KB);
     if (debugManager.flags.AlignLocalMemoryVaTo2MB.get() != 0) {
