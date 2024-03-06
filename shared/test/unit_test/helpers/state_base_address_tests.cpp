@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -702,52 +702,6 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingIndirectStateProper
 }
 
 using GlobalBaseAddressPlatforms = IsAtLeastXeHpCore;
-
-HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingIndirectStateAndGlobalAtomicsPropertyThenCommandDispatchedCorrectlyGlobalBaseAddressAndGlobalAtomics, GlobalBaseAddressPlatforms) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    constexpr uint64_t indirectHeapBase = 0x10000;
-    constexpr uint32_t indirectHeapSize = 0x10;
-    constexpr uint32_t constGlobalHeapSize = 0xfffff;
-
-    auto gmmHelper = pDevice->getGmmHelper();
-    StateBaseAddressProperties sbaProperties;
-
-    STATE_BASE_ADDRESS sbaCmd;
-    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper, &sbaProperties);
-    args.isMultiOsContextCapable = true;
-
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
-
-    EXPECT_FALSE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
-    EXPECT_FALSE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
-    EXPECT_EQ(0u, sbaCmd.getGeneralStateBaseAddress());
-    EXPECT_EQ(0u, sbaCmd.getGeneralStateBufferSize());
-
-    EXPECT_TRUE(sbaCmd.getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
-
-    sbaProperties.setPropertiesIndirectState(indirectHeapBase, indirectHeapSize);
-    sbaProperties.globalAtomics.set(1);
-
-    sbaCmd = FamilyType::cmdInitStateBaseAddress;
-
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
-
-    EXPECT_TRUE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
-    EXPECT_TRUE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
-    EXPECT_EQ(indirectHeapBase, sbaCmd.getGeneralStateBaseAddress());
-    EXPECT_EQ(constGlobalHeapSize, sbaCmd.getGeneralStateBufferSize());
-
-    EXPECT_FALSE(sbaCmd.getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
-
-    sbaProperties.globalAtomics.set(0);
-
-    sbaCmd = FamilyType::cmdInitStateBaseAddress;
-
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
-
-    EXPECT_TRUE(sbaCmd.getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
-}
 
 using BindlessSurfaceAddressPlatforms = IsAtLeastGen9;
 

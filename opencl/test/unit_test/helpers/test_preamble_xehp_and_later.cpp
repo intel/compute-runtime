@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -343,20 +343,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushi
     EXPECT_EQ(0u, stateBaseAddress->getBindlessSamplerStateBufferSize());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenMultEngineQueueFalseWhenFlushingCommandStreamReceiverThenSetPartialWriteFieldsTrue) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    flushTask(commandStreamReceiver);
-    HardwareParse hwParserCsr;
-    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    hwParserCsr.findHardwareCommands<FamilyType>();
-    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
-    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    EXPECT_TRUE(stateBaseAddress->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
-    EXPECT_TRUE(stateBaseAddress->getDisableSupportForMultiGpuPartialWritesForStatelessMessages());
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenDebugKeysThatOverrideMultiGpuSettingWhenStateBaseAddressIsProgrammedThenValuesMatch) {
     DebugManagerStateRestore restorer;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -372,22 +358,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenDebug
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
     EXPECT_EQ(0u, stateBaseAddress->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
     EXPECT_EQ(0u, stateBaseAddress->getDisableSupportForMultiGpuPartialWritesForStatelessMessages());
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenMultEngineQueueTrueWhenFlushingCommandStreamReceiverThenSetPartialWriteFieldsFalse) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.multiOsContextCapable = true;
-
-    flushTask(commandStreamReceiver);
-    HardwareParse hwParserCsr;
-    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    hwParserCsr.findHardwareCommands<FamilyType>();
-    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
-    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    EXPECT_TRUE(stateBaseAddress->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
-    EXPECT_FALSE(stateBaseAddress->getDisableSupportForMultiGpuPartialWritesForStatelessMessages());
 }
 
 using StateBaseAddressXeHPAndLaterTests = XeHpCommandStreamReceiverFlushTaskTests;

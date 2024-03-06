@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2770,8 +2770,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.EnableMemoryCompressionForAllStatelessAccesses = ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_DISABLED;
-        TheStructure.Common.DisableSupportForMultiGpuAtomicsForStatelessAccesses = 1;
-        TheStructure.Common.DisableSupportForMultiGpuPartialWritesForStatelessMessages = 1;
         TheStructure.Common.L1CachePolicyL1CacheControl = L1_CACHE_POLICY_WBP;
     }
     static tagSTATE_BASE_ADDRESS sInit() {
