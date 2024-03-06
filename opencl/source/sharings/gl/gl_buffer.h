@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,8 +26,11 @@ class GlBuffer : public GlSharing {
   protected:
     GlBuffer(GLSharingFunctions *sharingFunctions, unsigned int glObjectId)
         : GlSharing(sharingFunctions, CL_GL_OBJECT_BUFFER, glObjectId){};
-
+    ~GlBuffer() override {
+        callReleaseResource(true);
+    }
     void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
+    void callReleaseResource(bool createOrDestroy);
 
     void resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) override;
     void popGraphicsAllocationFromReuse(GraphicsAllocation *graphicsAllocation);

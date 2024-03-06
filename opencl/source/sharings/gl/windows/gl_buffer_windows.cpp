@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, uns
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
     CL_GL_BUFFER_INFO bufferInfo = {0};
     bufferInfo.bufferName = bufferId;
+    bufferInfo.createOrDestroy = true;
 
     GLSharingFunctionsWindows *sharingFunctions = context->getSharing<GLSharingFunctionsWindows>();
     if (sharingFunctions->acquireSharedBufferINTEL(&bufferInfo) == GL_FALSE) {
@@ -173,9 +174,14 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
     return graphicsAllocation;
 }
 
-void GlBuffer::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
+void GlBuffer::callReleaseResource(bool createOrDestroy) {
     auto sharingFunctions = static_cast<GLSharingFunctionsWindows *>(this->sharingFunctions);
     CL_GL_BUFFER_INFO bufferInfo = {};
     bufferInfo.bufferName = this->clGlObjectId;
+    bufferInfo.createOrDestroy = createOrDestroy;
     sharingFunctions->releaseSharedBufferINTEL(&bufferInfo);
+}
+
+void GlBuffer::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
+    callReleaseResource(false);
 }

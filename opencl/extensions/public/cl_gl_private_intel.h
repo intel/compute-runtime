@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,7 @@ typedef struct _tagCLGLBufferInfo {
     GLboolean oglSynchronized;
     GMM_STATUS status;
     GLvoid *pReleaseData;
+    GLboolean createOrDestroy;
 } CL_GL_BUFFER_INFO, *PCL_GL_BUFFER_INFO;
 
 #ifdef _WIN32

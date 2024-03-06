@@ -233,3 +233,5 @@ void GlBuffer::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
     auto memoryManager = memObject->getMemoryManager();
     memoryManager->closeSharedHandle(memObject->getGraphicsAllocation(rootDeviceIndex));
 }
+
+void GlBuffer::callReleaseResource(bool createOrDestroy) {}

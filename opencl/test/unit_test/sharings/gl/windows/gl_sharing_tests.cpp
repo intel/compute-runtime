@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -308,6 +308,35 @@ TEST_F(GlSharingTests, givenClGLBufferWhenItIsAcquireCountIsDecrementedToZeroThe
     EXPECT_EQ(bufferId, mockGlSharing->dllParam->getBufferInfo().bufferName);
 }
 
+TEST_F(GlSharingTests, givenClGlBufferWhenCreatingSharedBufferThenCreateOrDestroyFlagInBufferInfoIsSet) {
+    std::unique_ptr<Buffer> buffer(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId, nullptr));
+    CL_GL_BUFFER_INFO info = mockGlSharing->dllParam->getBufferInfo();
+    EXPECT_TRUE(info.createOrDestroy);
+}
+
+class MyGlBuffer : public GlBuffer {
+  public:
+    using GlBuffer::releaseResource;
+    MyGlBuffer(GLSharingFunctions *sharingFunctions, unsigned int glObjectId) : GlBuffer(sharingFunctions, glObjectId) {}
+};
+
+TEST_F(GlSharingTests, givenClGlBufferWhenReleaseResourceCalledThenDoNotSetCreateOrDestroyFlag) {
+    auto glSharingHandler = std::make_unique<MyGlBuffer>(context.getSharing<GLSharingFunctions>(), bufferId);
+
+    glSharingHandler->releaseResource(nullptr, 0u);
+    CL_GL_BUFFER_INFO info = mockGlSharing->dllParam->getBufferInfo();
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glReleaseSharedBufferCalled"));
+    EXPECT_FALSE(info.createOrDestroy);
+}
+
+TEST_F(GlSharingTests, givenClGlBufferWhenDestroyClGLResourceThenReleaseWithCreateOrDestroyFlagSetIs) {
+    auto glSharingHandler = std::make_unique<MyGlBuffer>(context.getSharing<GLSharingFunctions>(), bufferId);
+
+    glSharingHandler.reset();
+    CL_GL_BUFFER_INFO info = mockGlSharing->dllParam->getBufferInfo();
+    EXPECT_EQ(1, mockGlSharing->dllParam->getParam("glReleaseSharedBufferCalled"));
+    EXPECT_TRUE(info.createOrDestroy);
+}
 TEST_F(GlSharingTests, givenClGLBufferWhenItIsAcquiredWithDifferentOffsetThenGraphicsAllocationContainsLatestOffsetValue) {
     auto retVal = CL_SUCCESS;
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
