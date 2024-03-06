@@ -752,3 +752,16 @@ TEST_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFrom
     EXPECT_NE(nullptr, sipAllocation);
     EXPECT_EQ(SipKernelMock::classType, SipClassType::builtins);
 }
+
+TEST_F(DebugBuiltinSipTest, givenDumpSipHeaderFileWhenGettingSipKernelThenSipHeaderFileIsCreated) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DumpSipHeaderFile.set("sip");
+
+    pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
+
+    auto &builtins = *pDevice->getBuiltIns();
+    builtins.getSipKernel(SipKernelType::dbgCsr, *pDevice);
+
+    EXPECT_EQ(1u, NEO::virtualFileList.size());
+    EXPECT_TRUE(NEO::virtualFileList.find("sip_header.bin") != NEO::virtualFileList.end());
+}

@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -44,6 +45,11 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
         UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
+
+        if (NEO::debugManager.flags.DumpSipHeaderFile.get() != "unk") {
+            std::string name = NEO::debugManager.flags.DumpSipHeaderFile.get() + "_header.bin";
+            writeDataToFile(name.c_str(), stateSaveAreaHeader.data(), stateSaveAreaHeader.size());
+        }
 
         const auto allocType = AllocationType::kernelIsaInternal;
 

@@ -90,6 +90,7 @@ DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary; when file named *_header.* exists, it is used as header")
+DECLARE_DEBUG_VARIABLE(std::string, DumpSipHeaderFile, std::string("unk"), "Dumps binary file with sip header, value is used as NAME in filename: NAME_header.bin; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, InjectInternalBuildOptions, std::string("unk"), "Append provided string to internal build options for user modules; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, InjectApiBuildOptions, std::string("unk"), "Append provided string to api build options for user modules; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Override device name to provided string; ignored when unk")
