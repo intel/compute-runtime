@@ -447,7 +447,7 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
 
                             auto &newModule = connection->uuidToModule[handle];
                             newModule.segmentCount = 0;
-                            newModule.moduleUuidHandle = handle;
+                            newModule.moduleHandle = handle;
                             for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
                                 newModule.segmentVmBindCounter[i] = 0;
                                 newModule.loadAddresses[i].clear();
@@ -730,9 +730,9 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
 
                         if (!perKernelModules) {
                             auto &module = connection->uuidToModule[vmBind->uuids[moduleUUIDindex]];
-                            DEBUG_BREAK_IF(module.elfUuidHandle != 0 && connection->uuidMap[vmBind->uuids[index]].ptr != connection->uuidMap[module.elfUuidHandle].ptr);
+                            DEBUG_BREAK_IF(module.elfHandle != 0 && connection->uuidMap[vmBind->uuids[index]].ptr != connection->uuidMap[module.elfHandle].ptr);
 
-                            module.elfUuidHandle = vmBind->uuids[index];
+                            module.elfHandle = vmBind->uuids[index];
                             module.deviceBitfield = devices;
                         }
                     }
@@ -882,8 +882,8 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                                     debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
                                     debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
                                     debugEvent.info.module.load = loadAddress;
-                                    debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
-                                    debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
+                                    debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfHandle].ptr;
+                                    debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfHandle].ptr + connection->uuidMap[module.elfHandle].dataSize;
 
                                     if (!tileSessionsEnabled) {
                                         bool allInstancesEventsReceived = true;
@@ -925,8 +925,8 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                                     debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
                                     debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
                                     debugEvent.info.module.load = loadAddress;
-                                    debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
-                                    debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
+                                    debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfHandle].ptr;
+                                    debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfHandle].ptr + connection->uuidMap[module.elfHandle].dataSize;
                                     if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
                                         debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
                                     }
@@ -977,8 +977,8 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                                 debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
                                 debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
                                 debugEvent.info.module.load = loadAddress;
-                                debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
-                                debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
+                                debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfHandle].ptr;
+                                debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfHandle].ptr + connection->uuidMap[module.elfHandle].dataSize;
 
                                 if (tileSessionsEnabled) {
 

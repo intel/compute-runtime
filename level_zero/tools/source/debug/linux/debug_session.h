@@ -112,6 +112,18 @@ struct DebugSessionLinux : DebugSessionImp {
         std::vector<EventToAck> ackEvents;
     };
 
+    struct Module {
+        std::unordered_set<uint64_t> loadAddresses[NEO::EngineLimits::maxHandleCount];
+        uint64_t moduleHandle;
+        uint64_t elfHandle;
+        uint32_t segmentCount;
+        NEO::DeviceBitfield deviceBitfield;
+        int segmentVmBindCounter[NEO::EngineLimits::maxHandleCount];
+
+        std::vector<EventToAck> ackEvents[NEO::EngineLimits::maxHandleCount];
+        bool moduleLoadEventAcked[NEO::EngineLimits::maxHandleCount];
+    };
+
     struct ClientConnection {
         virtual ~ClientConnection() = default;
         virtual size_t getElfSize(uint64_t elfHandle) = 0;

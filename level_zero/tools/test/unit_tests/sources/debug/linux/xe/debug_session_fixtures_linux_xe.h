@@ -89,6 +89,22 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
                 }
             }
             euControlArgs.push_back(std::move(arg));
+        } else if ((request == DRM_XE_EUDEBUG_IOCTL_READ_METADATA) && (arg != nullptr)) {
+            drm_xe_eudebug_read_metadata *readMetadata = reinterpret_cast<drm_xe_eudebug_read_metadata *>(arg);
+            if (returnMetadata) {
+                readMetadata->client_handle = returnMetadata->client_handle;
+                readMetadata->metadata_handle = returnMetadata->metadata_handle;
+                readMetadata->flags = returnMetadata->flags;
+                int returnError = 0;
+                if (readMetadata->size >= returnMetadata->size) {
+                    memcpy(reinterpret_cast<void *>(readMetadata->ptr), reinterpret_cast<void *>(returnMetadata->ptr), returnMetadata->size);
+                } else {
+                    returnError = -1;
+                }
+                returnMetadata = nullptr;
+                return returnError;
+            }
+            return -1;
         }
 
         return ioctlRetVal;
@@ -115,6 +131,7 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
 
     drm_xe_eudebug_event debugEventInput = {};
     drm_xe_eudebug_vm_open vmOpen = {};
+    drm_xe_eudebug_read_metadata *returnMetadata = nullptr;
 
     int ioctlRetVal = 0;
     int debugEventRetVal = 0;

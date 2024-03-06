@@ -292,9 +292,97 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
         handleAttentionEvent(attention);
     } break;
 
+    case DRM_XE_EUDEBUG_EVENT_METADATA: {
+        drm_xe_eudebug_event_metadata *metaData = reinterpret_cast<drm_xe_eudebug_event_metadata *>(event);
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_METADATA flags = %d len = %llu client_handle = %llu metadata_handle = %llu type = %llu len = %llu\n",
+                                (int)event->flags, (uint64_t)event->len, (uint64_t)metaData->client_handle, (uint64_t)metaData->metadata_handle, (uint64_t)metaData->type, (uint64_t)metaData->len);
+
+        handleMetadataEvent(metaData);
+    } break;
+
     default:
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", (uint16_t)event->type, (uint16_t)event->flags, (uint32_t)event->len);
         break;
+    }
+}
+
+void DebugSessionLinuxXe::handleMetadataEvent(drm_xe_eudebug_event_metadata *metaData) {
+    bool destroy = metaData->base.flags & DRM_XE_EUDEBUG_EVENT_DESTROY;
+    bool create = metaData->base.flags & DRM_XE_EUDEBUG_EVENT_CREATE;
+
+    UNRECOVERABLE_IF(clientHandleToConnection.find(metaData->client_handle) == clientHandleToConnection.end());
+    const auto &connection = clientHandleToConnection[metaData->client_handle];
+
+    if (destroy && connection->metaDataMap[metaData->metadata_handle].metadata.type == DRM_XE_DEBUG_METADATA_PROGRAM_MODULE) {
+        DEBUG_BREAK_IF(connection->metaDataToModule[metaData->metadata_handle].segmentVmBindCounter[0] != 0 ||
+                       connection->metaDataToModule[metaData->metadata_handle].loadAddresses[0].size() > 0);
+
+        connection->metaDataToModule.erase(metaData->metadata_handle);
+    }
+
+    if (create) {
+        if (!metaData->len) {
+            connection->metaDataMap[metaData->metadata_handle].metadata = *metaData;
+            return;
+        }
+
+        drm_xe_eudebug_read_metadata readMetadata{};
+        auto ptr = std::make_unique<char[]>(metaData->len);
+        readMetadata.client_handle = metaData->client_handle;
+        readMetadata.metadata_handle = static_cast<decltype(readMetadata.metadata_handle)>(metaData->metadata_handle);
+        readMetadata.ptr = reinterpret_cast<uint64_t>(ptr.get());
+        readMetadata.size = metaData->len;
+        auto ret = ioctl(DRM_XE_EUDEBUG_IOCTL_READ_METADATA, &readMetadata);
+        if (ret != 0) {
+            PRINT_DEBUGGER_ERROR_LOG("DRM_XE_EUDEBUG_IOCTL_READ_METADATA ret = %d errno = %d\n", ret, errno);
+            return;
+        }
+
+        connection->metaDataMap[metaData->metadata_handle].metadata = *metaData;
+        connection->metaDataMap[metaData->metadata_handle].data = std::move(ptr);
+
+        if (metaData->type == DRM_XE_DEBUG_METADATA_PROGRAM_MODULE) {
+            auto handle = metaData->metadata_handle;
+            auto &newModule = connection->metaDataToModule[handle];
+            newModule.segmentCount = 0;
+            newModule.moduleHandle = handle;
+            for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                newModule.segmentVmBindCounter[i] = 0;
+                newModule.loadAddresses[i].clear();
+                newModule.moduleLoadEventAcked[i] = false;
+            }
+        }
+        extractMetaData(metaData->client_handle, connection->metaDataMap[metaData->metadata_handle]);
+    }
+}
+
+void DebugSessionLinuxXe::extractMetaData(uint64_t client, const MetaData &metaData) {
+    if (metaData.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SBA_AREA ||
+        metaData.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA ||
+        metaData.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA) {
+        UNRECOVERABLE_IF(metaData.metadata.len != 8);
+        uint64_t *data = (uint64_t *)metaData.data.get();
+
+        if (metaData.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SBA_AREA) {
+            clientHandleToConnection[client]->stateBaseAreaGpuVa = *data;
+            PRINT_DEBUGGER_INFO_LOG("SbaTrackingBuffer GPU VA = %p", (void *)clientHandleToConnection[clientHandle]->stateBaseAreaGpuVa);
+        }
+        if (metaData.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA) {
+            clientHandleToConnection[client]->moduleDebugAreaGpuVa = *data;
+            PRINT_DEBUGGER_INFO_LOG("ModuleHeapDebugArea GPU VA = %p", (void *)clientHandleToConnection[clientHandle]->moduleDebugAreaGpuVa);
+        }
+        if (metaData.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA) {
+            clientHandleToConnection[client]->contextStateSaveAreaGpuVa = *data;
+            PRINT_DEBUGGER_INFO_LOG("ContextSaveArea GPU VA = %p", (void *)clientHandleToConnection[clientHandle]->contextStateSaveAreaGpuVa);
+        }
+    }
+
+    if (metaData.metadata.type == DRM_XE_DEBUG_METADATA_PROGRAM_MODULE) {
+        uint32_t segmentCount = 0;
+        memcpy_s(&segmentCount, sizeof(uint32_t), metaData.data.get(), metaData.metadata.len);
+        clientHandleToConnection[client]->metaDataToModule[metaData.metadata.metadata_handle].segmentCount = segmentCount;
+        PRINT_DEBUGGER_INFO_LOG("Zebin module = %ull, segment count = %ul", metaData.metadata.metadata_handle, segmentCount);
     }
 }
 

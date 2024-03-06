@@ -84,18 +84,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
         uint64_t ptr = 0;
     };
 
-    struct Module {
-        std::unordered_set<uint64_t> loadAddresses[NEO::EngineLimits::maxHandleCount];
-        uint64_t moduleUuidHandle;
-        uint64_t elfUuidHandle;
-        uint32_t segmentCount;
-        NEO::DeviceBitfield deviceBitfield;
-        int segmentVmBindCounter[NEO::EngineLimits::maxHandleCount];
-
-        std::vector<EventToAck> ackEvents[NEO::EngineLimits::maxHandleCount];
-        bool moduleLoadEventAcked[NEO::EngineLimits::maxHandleCount];
-    };
-
     static bool apiEventCompare(const zet_debug_event_t &event1, const zet_debug_event_t &event2) {
         return memcmp(&event1, &event2, sizeof(zet_debug_event_t)) == 0;
     };

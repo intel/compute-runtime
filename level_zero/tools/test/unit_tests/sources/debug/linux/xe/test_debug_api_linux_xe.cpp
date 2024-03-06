@@ -907,6 +907,193 @@ TEST_F(DebugApiLinuxTestXe, whenHandleExecQueueEventThenProcessEnterAndProcessEx
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event2.type);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenMetadataEventWhenHandlingAndMetadataLengthIsZeroThenMetadataIsInsertedToMap) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    drm_xe_eudebug_event_metadata metadata = {};
+    metadata.base.type = DRM_XE_EUDEBUG_EVENT_METADATA;
+    metadata.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    metadata.base.len = sizeof(drm_xe_eudebug_event_metadata);
+    metadata.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    metadata.metadata_handle = 2;
+    metadata.len = 0;
+
+    auto handler = new MockIoctlHandlerXe;
+    handler->eventQueue.push({reinterpret_cast<char *>(&metadata), static_cast<uint64_t>(metadata.base.len)});
+    handler->pollRetVal = 1;
+
+    session->ioctlHandler.reset(handler);
+    session->handleEvent(&metadata.base);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[metadata.client_handle]->metaDataMap.size());
+    EXPECT_NE(session->clientHandleToConnection[metadata.client_handle]->metaDataMap.end(), session->clientHandleToConnection[metadata.client_handle]->metaDataMap.find(metadata.metadata_handle));
+
+    metadata.base.flags = DRM_XE_EUDEBUG_EVENT_DESTROY;
+    session->handleEvent(&metadata.base);
+    EXPECT_NE(session->clientHandleToConnection[metadata.client_handle]->metaDataMap.end(), session->clientHandleToConnection[metadata.client_handle]->metaDataMap.find(metadata.metadata_handle));
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenMetadataCreateEventWhenHandlingAndIoctlFailsThenEventHandlingCallImmediatelyReturns) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    drm_xe_eudebug_event_metadata metadata = {};
+    metadata.base.type = DRM_XE_EUDEBUG_EVENT_METADATA;
+    metadata.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    metadata.base.len = sizeof(drm_xe_eudebug_event_metadata);
+    metadata.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    metadata.metadata_handle = 2;
+    metadata.len = 5;
+
+    auto handler = new MockIoctlHandlerXe;
+    handler->eventQueue.push({reinterpret_cast<char *>(&metadata), static_cast<uint64_t>(metadata.base.len)});
+    handler->pollRetVal = 1;
+
+    session->ioctlHandler.reset(handler);
+    session->handleEvent(&metadata.base);
+
+    EXPECT_EQ(0u, session->clientHandleToConnection[metadata.client_handle]->metaDataMap.size());
+    EXPECT_EQ(session->clientHandleToConnection[metadata.client_handle]->metaDataMap.end(), session->clientHandleToConnection[metadata.client_handle]->metaDataMap.find(metadata.metadata_handle));
+
+    metadata.base.flags = DRM_XE_EUDEBUG_EVENT_DESTROY;
+    session->handleEvent(&metadata.base);
+    EXPECT_NE(session->clientHandleToConnection[metadata.client_handle]->metaDataMap.end(), session->clientHandleToConnection[metadata.client_handle]->metaDataMap.find(metadata.metadata_handle));
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenMetadataCreateEventForL0ZebinModuleWhenHandlingEventThenKernelCountFromReadMetadataIsRead) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t kernelCount = 5;
+    drm_xe_eudebug_event_metadata metadata;
+    metadata.base.type = DRM_XE_EUDEBUG_EVENT_METADATA;
+    metadata.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    metadata.base.len = sizeof(drm_xe_eudebug_event_metadata);
+    metadata.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    metadata.metadata_handle = 3;
+    metadata.type = DRM_XE_DEBUG_METADATA_PROGRAM_MODULE;
+    metadata.len = sizeof(kernelCount);
+
+    drm_xe_eudebug_read_metadata readMetadata{};
+    readMetadata.ptr = reinterpret_cast<uint64_t>(&kernelCount);
+    readMetadata.size = sizeof(kernelCount);
+    readMetadata.metadata_handle = 3;
+    handler->returnMetadata = &readMetadata;
+    session->handleEvent(&metadata.base);
+
+    EXPECT_NE(session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.end(),
+              session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.find(metadata.metadata_handle));
+
+    EXPECT_EQ(kernelCount, session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule[metadata.metadata_handle].segmentCount);
+
+    EXPECT_EQ(metadata.metadata_handle, session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataMap[metadata.metadata_handle].metadata.metadata_handle);
+    EXPECT_NE(nullptr, session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataMap[metadata.metadata_handle].data);
+    EXPECT_EQ(sizeof(kernelCount), session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataMap[metadata.metadata_handle].metadata.len);
+
+    EXPECT_EQ(1, handler->ioctlCalled);
+
+    // inject module segment
+    auto &module = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule[metadata.metadata_handle];
+    module.loadAddresses[0].insert(0x12340000);
+
+    metadata.base.flags = DRM_XE_EUDEBUG_EVENT_DESTROY;
+    metadata.len = 0;
+    session->handleEvent(&metadata.base);
+
+    EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.end(),
+              session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->metaDataToModule.find(metadata.metadata_handle));
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenMetadataEventWhenHandlingEventThenGpuAddressIsSavedFromReadMetadata) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = DebugSessionLinuxXe::invalidClientHandle;
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+
+    uint64_t sbaAddress = 0x1234000;
+    uint64_t moduleDebugAddress = 0x34567000;
+    uint64_t contextSaveAddress = 0x56789000;
+
+    drm_xe_eudebug_event_metadata metadataSba = {};
+    metadataSba.base.type = DRM_XE_EUDEBUG_EVENT_METADATA;
+    metadataSba.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    metadataSba.base.len = sizeof(drm_xe_eudebug_event_metadata);
+    metadataSba.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    metadataSba.metadata_handle = 4;
+    metadataSba.type = WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SBA_AREA;
+    metadataSba.len = sizeof(sbaAddress);
+
+    drm_xe_eudebug_read_metadata readMetadata = {};
+    readMetadata.ptr = reinterpret_cast<uint64_t>(&sbaAddress);
+    readMetadata.size = sizeof(sbaAddress);
+    readMetadata.metadata_handle = 4;
+
+    handler->returnMetadata = &readMetadata;
+    session->handleEvent(&metadataSba.base);
+
+    drm_xe_eudebug_event_metadata metadataModule = {};
+    metadataModule.base.type = DRM_XE_EUDEBUG_EVENT_METADATA;
+    metadataModule.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    metadataModule.base.len = sizeof(drm_xe_eudebug_event_metadata);
+    metadataModule.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    metadataModule.metadata_handle = 5;
+    metadataModule.type = WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA;
+    metadataModule.len = sizeof(moduleDebugAddress);
+
+    readMetadata = {};
+    readMetadata.ptr = reinterpret_cast<uint64_t>(&moduleDebugAddress);
+    readMetadata.size = sizeof(moduleDebugAddress);
+    readMetadata.metadata_handle = 5;
+
+    handler->returnMetadata = &readMetadata;
+    session->handleEvent(&metadataModule.base);
+
+    drm_xe_eudebug_event_metadata metadataContextSave = {};
+
+    metadataContextSave.base.type = DRM_XE_EUDEBUG_EVENT_METADATA;
+    metadataContextSave.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    metadataContextSave.base.len = sizeof(drm_xe_eudebug_event_metadata);
+    metadataContextSave.client_handle = MockDebugSessionLinuxXe::mockClientHandle,
+    metadataContextSave.metadata_handle = 6,
+    metadataContextSave.type = WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA;
+    metadataContextSave.len = sizeof(contextSaveAddress);
+
+    readMetadata = {};
+    readMetadata.ptr = reinterpret_cast<uint64_t>(&contextSaveAddress);
+    readMetadata.size = sizeof(contextSaveAddress);
+    readMetadata.metadata_handle = 6;
+
+    handler->returnMetadata = &readMetadata;
+    session->handleEvent(&metadataContextSave.base);
+
+    EXPECT_EQ(moduleDebugAddress, session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->moduleDebugAreaGpuVa);
+    EXPECT_EQ(sbaAddress, session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->stateBaseAreaGpuVa);
+    EXPECT_EQ(contextSaveAddress, session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->contextStateSaveAreaGpuVa);
+}
+
 TEST_F(DebugApiLinuxTestXe, WhenCallingReadAndWriteGpuMemoryThenFsyncIsCalledTwice) {
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/drm_debug.h"
+
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 #include "level_zero/tools/source/debug/linux/debug_session.h"
@@ -84,6 +86,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     int threadControlInterruptAll(drm_xe_eudebug_eu_control &euControl);
     int threadControlResumeAndStopped(const std::vector<EuThread::ThreadId> &threads, drm_xe_eudebug_eu_control &euControl, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut);
     void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention);
+    void handleMetadataEvent(drm_xe_eudebug_event_metadata *pMetaData);
     void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) override;
 
     void startAsyncThread() override;
@@ -138,6 +141,11 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         UNRECOVERABLE_IF(true);
     }
 
+    struct MetaData {
+        drm_xe_eudebug_event_metadata metadata;
+        std::unique_ptr<char[]> data;
+    };
+
     struct ClientConnectionXe : public ClientConnection {
         drm_xe_eudebug_event_client client = {};
         size_t getElfSize(uint64_t elfHandle) override { return 0; };
@@ -145,9 +153,12 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
         std::unordered_map<ExecQueueHandle, ExecQueueParams> execQueues;
         std::unordered_map<uint64_t, uint64_t> lrcHandleToVmHandle;
+        std::unordered_map<uint64_t, MetaData> metaDataMap;
+        std::unordered_map<uint64_t, Module> metaDataToModule;
     };
     std::unordered_map<uint64_t, std::shared_ptr<ClientConnectionXe>> clientHandleToConnection;
 
+    void extractMetaData(uint64_t client, const MetaData &metaData);
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
     bool checkAllEventsCollected();
     MOCKABLE_VIRTUAL void handleEvent(drm_xe_eudebug_event *event);
