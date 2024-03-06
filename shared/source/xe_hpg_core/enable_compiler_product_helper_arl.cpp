@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,8 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
         return hwInfo.ipVersion.value;
     }
     switch (hwInfo.platform.usDeviceID) {
-    case 0x7D67: {
+    case 0x7D67:
+    case 0x7D41: {
         switch (hwInfo.platform.usRevId) {
         case 0x0:
             return AOT::MTL_M_A0;
@@ -29,7 +30,6 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
         break;
     }
     case 0x7D51:
-    case 0x7D41:
     case 0X7DD1: {
         switch (hwInfo.platform.usRevId) {
         case 0x0:

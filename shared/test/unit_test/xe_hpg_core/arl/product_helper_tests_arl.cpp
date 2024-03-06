@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,10 +22,10 @@ ARLTEST_F(ArlProductHelper, givenArlWithoutHwIpVersionInHwInfoWhenGettingIpVersi
     auto hwInfo = *defaultHwInfo;
     hwInfo.ipVersion = {};
 
-    auto arlSDeviceIds = {0x7D67};
-    auto arlHDeviceIds = {0x7D51, 0x7DD1, 0x7D41};
+    auto arlSUDeviceIds = {0x7D67, 0x7D41};
+    auto arlHDeviceIds = {0x7D51, 0x7DD1};
 
-    for (auto &deviceId : arlSDeviceIds) {
+    for (auto &deviceId : arlSUDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
         for (auto &revision : {0}) {
             hwInfo.platform.usRevId = revision;
