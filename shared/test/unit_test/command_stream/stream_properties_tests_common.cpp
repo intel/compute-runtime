@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1079,46 +1079,6 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
-}
-
-TEST(StreamPropertiesTests, givenGlobalAtomicsStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
-    bool clearDirtyState = false;
-    MockStateBaseAddressProperties sbaProperties{};
-    sbaProperties.propertiesSupportLoaded = true;
-    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
-
-    bool globalAtomics = false;
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
-    EXPECT_FALSE(sbaProperties.isDirty());
-    EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
-
-    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
-    EXPECT_TRUE(sbaProperties.isDirty());
-    EXPECT_EQ(0, sbaProperties.globalAtomics.value);
-
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
-    EXPECT_FALSE(sbaProperties.isDirty());
-    EXPECT_EQ(0, sbaProperties.globalAtomics.value);
-
-    globalAtomics = true;
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
-    EXPECT_TRUE(sbaProperties.isDirty());
-    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
-
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
-    EXPECT_FALSE(sbaProperties.isDirty());
-    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
-
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
-    EXPECT_FALSE(sbaProperties.isDirty());
-    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
-
-    clearDirtyState = true;
-    globalAtomics = false;
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
-    EXPECT_FALSE(sbaProperties.isDirty());
-    EXPECT_EQ(0, sbaProperties.globalAtomics.value);
 }
 
 TEST(StreamPropertiesTests, givenStatelessMocsStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {

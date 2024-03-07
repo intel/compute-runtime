@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,7 +154,6 @@ struct StateBaseAddressProperties {
     void setPropertiesDynamicState(int64_t dynamicStateBaseAddress, size_t dynamicStateSize);
     void setPropertiesIndirectState(int64_t indirectObjectBaseAddress, size_t indirectObjectSize);
     void setPropertyStatelessMocs(int32_t statelessMocs);
-    void setPropertyGlobalAtomics(bool globalAtomics, bool clearDirtyState);
 
     void copyPropertiesAll(const StateBaseAddressProperties &properties);
     void copyPropertiesStatelessMocs(const StateBaseAddressProperties &properties);

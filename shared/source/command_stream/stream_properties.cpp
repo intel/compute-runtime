@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -430,20 +430,6 @@ void StateBaseAddressProperties::setPropertiesIndirectState(int64_t indirectObje
 void StateBaseAddressProperties::setPropertyStatelessMocs(int32_t statelessMocs) {
     this->statelessMocs.isDirty = false;
     this->statelessMocs.set(statelessMocs);
-}
-
-void StateBaseAddressProperties::setPropertyGlobalAtomics(bool globalAtomics, bool clearDirtyState) {
-    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
-
-    if (!clearDirtyState) {
-        this->globalAtomics.isDirty = false;
-    }
-    if (this->stateBaseAddressPropertiesSupport.globalAtomics) {
-        this->globalAtomics.set(globalAtomics);
-    }
-    if (clearDirtyState) {
-        this->globalAtomics.isDirty = false;
-    }
 }
 
 void StateBaseAddressProperties::setPropertiesAll(bool globalAtomics, int32_t statelessMocs,

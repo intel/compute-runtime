@@ -1543,7 +1543,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::handleStateBaseAddressStateTrans
             isStateBaseAddressDirty = true;
             this->lastSentUseGlobalAtomics = globalAtomics;
         }
-        this->streamProperties.stateBaseAddress.setPropertyGlobalAtomics(globalAtomics, false);
     }
 }
 
