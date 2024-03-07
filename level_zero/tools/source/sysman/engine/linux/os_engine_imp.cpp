@@ -51,9 +51,8 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
 }
 
 ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
-    if (fdList.size() == 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No Valid Fds returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (initStatus != ZE_RESULT_SUCCESS) {
+        return initStatus;
     }
     uint64_t data[2] = {};
     auto ret = pPmuInterface->pmuRead(static_cast<int>(fdList[0].first), data, sizeof(data));
@@ -74,6 +73,16 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
     return ZE_RESULT_SUCCESS;
 }
 
+void LinuxEngineImp::checkErrorNumberAndUpdateStatus() {
+    if (errno == -EMFILE || errno == -ENFILE) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
+        initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    } else {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
+        initStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+}
+
 void LinuxEngineImp::init() {
     auto i915EngineClass = engineToI915Map.find(engineGroup);
     vfConfigs.clear();
@@ -81,6 +90,8 @@ void LinuxEngineImp::init() {
     auto fd = pPmuInterface->pmuInterfaceOpen(I915_PMU_ENGINE_BUSY(i915EngineClass->second, engineInstance), -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
     if (fd >= 0) {
         fdList.push_back(std::make_pair(fd, -1));
+    } else {
+        checkErrorNumberAndUpdateStatus();
     }
 }
 
@@ -88,21 +99,21 @@ ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t 
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-LinuxEngineImp::~LinuxEngineImp() {
+void LinuxEngineImp::cleanup() {
     for (auto &fdPair : fdList) {
-        if (fdPair.first != -1) {
+        if (fdPair.first >= 0) {
             close(static_cast<int>(fdPair.first));
         }
     }
     fdList.clear();
 }
 
-bool LinuxEngineImp::isEngineModuleSupported() {
-    if (fdList.size() == 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
-        return false;
-    }
-    return true;
+LinuxEngineImp::~LinuxEngineImp() {
+    cleanup();
+}
+
+ze_result_t LinuxEngineImp::isEngineModuleSupported() {
+    return initStatus;
 }
 
 LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) : engineGroup(type), engineInstance(engineInstance), subDeviceId(subDeviceId), onSubDevice(onSubDevice) {
@@ -111,6 +122,9 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
     pDevice = pLinuxSysmanImp->getDeviceHandle();
     pPmuInterface = pLinuxSysmanImp->getPmuInterface();
     init();
+    if (initStatus != ZE_RESULT_SUCCESS) {
+        cleanup();
+    }
 }
 
 std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {

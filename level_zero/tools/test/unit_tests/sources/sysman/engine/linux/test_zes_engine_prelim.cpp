@@ -122,6 +122,40 @@ TEST_F(ZesEngineFixture, GivenPmuOpenFailsWhenCallingzesDeviceEnumEngineGroupsTh
     EXPECT_EQ(handleCount, 0u);
 }
 
+TEST_F(ZesEngineFixture, GivenPmuOpenFailsDueToTooManyOpenFilesWhenCallingzesDeviceEnumEngineGroupsThenErrorIsObserved) {
+    auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
+    pMemoryManagerTest->localMemorySupported[0] = true;
+    device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
+    pSysfsAccess->mockReadVal = 1;
+    pSysfsAccess->mockReadSymLinkSuccess = true;
+    pPmuInterface->mockPerfEventOpenRead = true;
+    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+    pPmuInterface->mockErrorNumber = -EMFILE;
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
+
+    uint32_t handleCount = 0;
+    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &handleCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(handleCount, 0u);
+}
+
+TEST_F(ZesEngineFixture, GivenPmuOpenFailsDueToTooManyOpenFilesInSystemWhenEnumeratingEngineGroupsThenErrorIsObserved) {
+    auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
+    pMemoryManagerTest->localMemorySupported[0] = true;
+    device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
+    pSysfsAccess->mockReadVal = 1;
+    pSysfsAccess->mockReadSymLinkSuccess = true;
+    pPmuInterface->mockPerfEventOpenRead = true;
+    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+    pPmuInterface->mockErrorNumber = -ENFILE;
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
+
+    uint32_t handleCount = 0;
+    EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &handleCount, nullptr), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+    EXPECT_EQ(handleCount, 0u);
+}
+
 TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
     zes_engine_properties_t properties;
     auto handles = getEngineHandles(handleComponentCount);
@@ -374,37 +408,53 @@ TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithBusyTicksInvalidVfWhenCallingZes
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
 }
 
-TEST_F(ZesEngineFixture, GivenTestDiscreteDevicesAndValidEngineHandleWhenCallingZesEngineGetActivityAndPMUGetEventTypeFailsThenVerifyEngineGetActivityReturnsFailure) {
+TEST_F(ZesEngineFixture, GivenTooManyFilesErrorWhenCallingZesEngineGetActivityExtThenReturnFailure) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
-
-    pSysfsAccess->mockReadSymLinkFailure = true;
-
-    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
-
-    zes_engine_stats_t stats = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest1->getActivity(&stats));
-
+    pSysfsAccess->mockReadVal = 1;
     pSysfsAccess->mockReadSymLinkSuccess = true;
-    pFsAccess->mockReadVal = true;
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+    auto handle = handles[0];
+    ASSERT_NE(nullptr, handle);
+    uint32_t count = 0;
+    pPmuInterface->mockPerfEventOpenRead = true;
+    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+    pPmuInterface->mockErrorNumber = -EMFILE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+    EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+    std::vector<zes_engine_stats_t> engineStats(count);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+}
 
-    auto pOsEngineTest2 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest2->getActivity(&stats));
+TEST_F(ZesEngineFixture, GivenTooManyFilesInSystemErrorWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+    auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
+    pMemoryManagerTest->localMemorySupported[0] = true;
+    device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
+    pSysfsAccess->mockReadVal = 1;
+    pSysfsAccess->mockReadSymLinkSuccess = true;
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+    auto handle = handles[0];
+    ASSERT_NE(nullptr, handle);
+    uint32_t count = 0;
+    pPmuInterface->mockPerfEventOpenRead = true;
+    pPmuInterface->mockPerfEventOpenFailAtCount = 3;
+    pPmuInterface->mockErrorNumber = -ENFILE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+    EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+    std::vector<zes_engine_stats_t> engineStats(count);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
 }
 
 TEST_F(ZesEngineFixture, GivenUnknownEngineTypeThengetEngineGroupFromTypeReturnsGroupAllEngineGroup) {
     auto group = LinuxEngineImp::getGroupFromEngineType(ZES_ENGINE_GROUP_3D_SINGLE);
     EXPECT_EQ(group, ZES_ENGINE_GROUP_ALL);
-}
-
-TEST_F(ZesEngineFixture, GivenTestIntegratedDevicesAndValidEngineHandleWhenCallingZesEngineGetActivityAndPMUGetEventTypeFailsThenVerifyEngineGetActivityReturnsFailure) {
-    zes_engine_stats_t stats = {};
-
-    pFsAccess->mockReadVal = true;
-
-    auto pOsEngineTest1 = OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest1->getActivity(&stats));
 }
 
 TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndPmuReadFailsThenVerifyEngineGetActivityReturnsFailure) {

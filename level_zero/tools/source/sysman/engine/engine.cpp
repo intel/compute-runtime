@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,9 @@ EngineHandleContext::~EngineHandleContext() {
 
 void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice) {
     std::unique_ptr<Engine> pEngine = std::make_unique<EngineImp>(pOsSysman, engineType, engineInstance, subDeviceId, onSubdevice);
-    if (pEngine->initSuccess == true) {
+    // Only store error for all engines in device incase of dependencies unavailable.
+    deviceEngineInitStatus = pEngine->initStatus != ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE ? deviceEngineInitStatus : pEngine->initStatus;
+    if (pEngine->initStatus == ZE_RESULT_SUCCESS) {
         handleList.push_back(std::move(pEngine));
     }
 }
@@ -54,6 +56,11 @@ ze_result_t EngineHandleContext::engineGet(uint32_t *pCount, zes_engine_handle_t
         this->init(pOsSysman->getDeviceHandles());
         this->engineInitDone = true;
     });
+
+    if (deviceEngineInitStatus != ZE_RESULT_SUCCESS) {
+        return deviceEngineInitStatus;
+    }
+
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

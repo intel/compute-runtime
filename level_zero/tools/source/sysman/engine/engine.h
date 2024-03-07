@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ class Engine : _zes_engine_handle_t {
         return static_cast<Engine *>(handle);
     }
     inline zes_engine_handle_t toHandle() { return this; }
-    bool initSuccess = false;
+    ze_result_t initStatus = ZE_RESULT_SUCCESS;
 };
 
 struct EngineHandleContext {
@@ -49,6 +49,7 @@ struct EngineHandleContext {
     void createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
     std::once_flag initEngineOnce;
     bool engineInitDone = false;
+    ze_result_t deviceEngineInitStatus = ZE_RESULT_SUCCESS;
 };
 
 } // namespace L0

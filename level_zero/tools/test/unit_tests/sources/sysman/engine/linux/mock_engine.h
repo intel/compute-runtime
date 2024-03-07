@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,8 +65,10 @@ struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
     MockEnginePmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 
     int64_t mockPerfEventFailureReturnValue = 0;
+    int32_t mockErrorNumber = -ENOSPC;
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
         if (mockPerfEventFailureReturnValue == -1) {
+            errno = mockErrorNumber;
             return mockPerfEventFailureReturnValue;
         }
 

@@ -105,6 +105,7 @@ struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
 
     bool mockPmuRead = false;
     bool mockPerfEventOpenRead = false;
+    int32_t mockErrorNumber = -ENOSPC;
     int32_t mockPerfEventOpenFailAtCount = 1;
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
@@ -119,6 +120,7 @@ struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
     }
 
     int64_t mockedPerfEventOpenAndFailureReturn(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
+        errno = mockErrorNumber;
         return -1;
     }
 

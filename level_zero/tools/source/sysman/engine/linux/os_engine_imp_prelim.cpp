@@ -87,10 +87,10 @@ static ze_result_t readBusynessFromGroupFd(PmuInterface *pPmuInterface, std::pai
     return ZE_RESULT_SUCCESS;
 }
 
-static void openPmuHandlesForVfs(uint32_t numberOfVfs,
-                                 PmuInterface *pPmuInterface,
-                                 std::vector<std::pair<uint64_t, uint64_t>> &vfConfigs,
-                                 std::vector<std::pair<int64_t, int64_t>> &fdList) {
+static ze_result_t openPmuHandlesForVfs(uint32_t numberOfVfs,
+                                        PmuInterface *pPmuInterface,
+                                        std::vector<std::pair<uint64_t, uint64_t>> &vfConfigs,
+                                        std::vector<std::pair<int64_t, int64_t>> &fdList) {
     // +1 to include PF
     for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
         int64_t fd[2] = {-1, -1};
@@ -100,33 +100,53 @@ static void openPmuHandlesForVfs(uint32_t numberOfVfs,
         if (fd[0] >= 0) {
             fd[1] = pPmuInterface->pmuInterfaceOpen(vfConfigs[i].second, static_cast<int>(fd[0]),
                                                     PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
-            if (fd[1] == -1) {
+            if (fd[1] < 0) {
                 NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks PMU Handle \n", __FUNCTION__);
                 close(static_cast<int>(fd[0]));
                 fd[0] = -1;
             }
         }
 
+        if (fd[1] < 0) {
+            if (errno == -EMFILE || errno == -ENFILE) {
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
+                return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+            }
+        }
+
         fdList.push_back(std::make_pair(fd[0], fd[1]));
     }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
+
+    if (initStatus != ZE_RESULT_SUCCESS) {
+        // Handles are not expected to be created in case of init failure
+        DEBUG_BREAK_IF(true);
+    }
+
     // read from global busyness fd
     return readBusynessFromGroupFd(pPmuInterface, fdList[0], pStats);
 }
 
-LinuxEngineImp::~LinuxEngineImp() {
-
+void LinuxEngineImp::cleanup() {
     for (auto &fdPair : fdList) {
-        if (fdPair.first != -1) {
+        if (fdPair.first >= 0) {
             close(static_cast<int>(fdPair.first));
         }
-        if (fdPair.second != -1) {
+        if (fdPair.second >= 0) {
             close(static_cast<int>(fdPair.second));
         }
     }
     fdList.clear();
+    vfConfigs.clear();
+    numberOfVfs = 0;
+}
+
+LinuxEngineImp::~LinuxEngineImp() {
+    cleanup();
 }
 
 ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) {
@@ -148,8 +168,22 @@ ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t 
     }
 
     // Open only if not opened previously
+    // fdList[0] has global busyness.
+    // So check if PF and VF busyness were not updated
     if (fdList.size() == 1) {
-        openPmuHandlesForVfs(numberOfVfs, pPmuInterface, vfConfigs, fdList);
+        auto status = openPmuHandlesForVfs(numberOfVfs, pPmuInterface, vfConfigs, fdList);
+        if (status != ZE_RESULT_SUCCESS) {
+            // Clean up all vf fds added
+            for (size_t i = 1; i < fdList.size(); i++) {
+                auto &fdPair = fdList[i];
+                if (fdPair.first >= 0) {
+                    close(static_cast<int32_t>(fdPair.first));
+                    close(static_cast<int32_t>(fdPair.second));
+                }
+                fdList.resize(1);
+            }
+            return status;
+        }
     }
 
     *pCount = std::min(*pCount, numberOfVfs + 1);
@@ -174,6 +208,15 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
     properties.onSubdevice = onSubDevice;
     properties.type = engineGroup;
     return ZE_RESULT_SUCCESS;
+}
+
+void LinuxEngineImp::checkErrorNumberAndUpdateStatus() {
+    if (errno == -EMFILE || errno == -ENFILE) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
+        initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    } else {
+        initStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 }
 
 void LinuxEngineImp::init() {
@@ -201,14 +244,16 @@ void LinuxEngineImp::init() {
 
     // Fds for global busyness
     fd[0] = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
-    if (fd[0] == -1) {
+    if (fd[0] < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
+        checkErrorNumberAndUpdateStatus();
         return;
     }
     fd[1] = pPmuInterface->pmuInterfaceOpen(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
 
-    if (fd[1] == -1) {
+    if (fd[1] < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
+        checkErrorNumberAndUpdateStatus();
         close(static_cast<int>(fd[0]));
         return;
     }
@@ -230,18 +275,8 @@ void LinuxEngineImp::init() {
     }
 }
 
-bool LinuxEngineImp::isEngineModuleSupported() {
-
-    if (fdList.size() == 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptors could not be opened \n", __FUNCTION__);
-        return false;
-    }
-
-    if (fdList[0].second < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d Engine Module is not supported \n", __FUNCTION__, fdList[0].second);
-        return false;
-    }
-    return true;
+ze_result_t LinuxEngineImp::isEngineModuleSupported() {
+    return initStatus;
 }
 
 LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) : engineGroup(type), engineInstance(engineInstance), subDeviceId(subDeviceId), onSubDevice(onSubDevice) {
@@ -251,6 +286,10 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
     pPmuInterface = pLinuxSysmanImp->getPmuInterface();
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     init();
+
+    if (initStatus != ZE_RESULT_SUCCESS) {
+        cleanup();
+    }
 }
 
 std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {

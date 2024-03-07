@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,8 +76,8 @@ ze_result_t WddmEngineImp::getProperties(zes_engine_properties_t &properties) {
     return ZE_RESULT_SUCCESS;
 }
 
-bool WddmEngineImp::isEngineModuleSupported() {
-    return true;
+ze_result_t WddmEngineImp::isEngineModuleSupported() {
+    return ZE_RESULT_SUCCESS;
 }
 
 WddmEngineImp::WddmEngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,9 +23,9 @@ ze_result_t EngineImp::engineGetProperties(zes_engine_properties_t *pProperties)
 }
 
 void EngineImp::init() {
-    if (pOsEngine->isEngineModuleSupported()) {
+    initStatus = pOsEngine->isEngineModuleSupported();
+    if (initStatus == ZE_RESULT_SUCCESS) {
         pOsEngine->getProperties(engineProperties);
-        this->initSuccess = true;
     }
 }
 
