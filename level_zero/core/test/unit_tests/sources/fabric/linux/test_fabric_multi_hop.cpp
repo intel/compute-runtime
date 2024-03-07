@@ -286,7 +286,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 17u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -299,7 +299,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 15u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -312,7 +312,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 15u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -325,7 +325,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenMultipleDevicesAndSubDevicesThenMultiHopE
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 17u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -541,8 +541,8 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
-    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
+    EXPECT_EQ(edgeProperties.latency, 2u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
@@ -557,8 +557,8 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
-    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
+    EXPECT_EQ(edgeProperties.latency, 2u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
@@ -624,7 +624,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -637,8 +637,8 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
-    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
+    EXPECT_EQ(edgeProperties.latency, 2u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
@@ -650,7 +650,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -663,7 +663,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 4u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -676,8 +676,8 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
-    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
+    EXPECT_EQ(edgeProperties.latency, 2u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
@@ -689,7 +689,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -702,7 +702,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -715,7 +715,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 4u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -782,8 +782,8 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
-    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
+    EXPECT_EQ(edgeProperties.latency, 2u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
@@ -795,7 +795,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -808,7 +808,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -821,8 +821,8 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
-    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
+    EXPECT_EQ(edgeProperties.latency, 2u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
@@ -834,7 +834,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 4u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -847,7 +847,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -860,7 +860,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -873,7 +873,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 4u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -966,7 +966,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -979,7 +979,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -992,7 +992,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -1005,7 +1005,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink-XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -1018,7 +1018,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 4u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -1031,8 +1031,8 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
-    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
+    EXPECT_EQ(edgeProperties.latency, 2u);
+    EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_HOP);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
 
@@ -1044,7 +1044,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "XeLink-XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -1057,7 +1057,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 4u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);
@@ -1070,7 +1070,7 @@ TEST_F(FabricMultiHopEdgeFixture, GivenSubDeviceChainConnectedThroughMDFIAndIAFT
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeFabricEdgeGetPropertiesExp(edges[0], &edgeProperties));
     EXPECT_EQ(edgeProperties.bandwidth, 3u);
     EXPECT_EQ(edgeProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
-    EXPECT_EQ(edgeProperties.latency, std::numeric_limits<uint32_t>::max());
+    EXPECT_EQ(edgeProperties.latency, 0u);
     EXPECT_EQ(edgeProperties.latencyUnit, ZE_LATENCY_UNIT_UNKNOWN);
     EXPECT_STREQ(edgeProperties.model, "MDFI-XeLink-MDFI");
     EXPECT_EQ(edgeProperties.duplexity, ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX);

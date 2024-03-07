@@ -95,12 +95,13 @@ void FabricEdge::createEdgesFromVertices(const std::vector<FabricVertex *> &vert
 
                 if (currVertexIndex != vertexBIndex) {
                     if (toVisitIaf.size() + toVisitMdfi.size() != 0) {
-                        toVisit = toVisitMdfi;
+                        toVisit.insert(toVisit.end(), toVisitMdfi.begin(), toVisitMdfi.end());
                         toVisit.insert(toVisit.end(), toVisitIaf.begin(), toVisitIaf.end());
                     } else {
                         break;
                     }
                 } else {
+                    bool hasMdfi = false;
                     std::string path = "";
                     ze_fabric_edge_exp_properties_t properties = {};
                     properties.stype = ZE_STRUCTURE_TYPE_FABRIC_EDGE_EXP_PROPERTIES;
@@ -109,8 +110,8 @@ void FabricEdge::createEdgesFromVertices(const std::vector<FabricVertex *> &vert
                     memset(properties.model, 0, ZE_MAX_FABRIC_EDGE_MODEL_EXP_SIZE);
                     properties.bandwidth = std::numeric_limits<uint32_t>::max();
                     properties.bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
-                    properties.latency = std::numeric_limits<uint32_t>::max();
-                    properties.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
+                    properties.latency = 0;
+                    properties.latencyUnit = ZE_LATENCY_UNIT_HOP;
                     properties.duplexity = ZE_FABRIC_EDGE_EXP_DUPLEXITY_FULL_DUPLEX;
 
                     while (true) {
@@ -124,9 +125,15 @@ void FabricEdge::createEdgesFromVertices(const std::vector<FabricVertex *> &vert
                         }
                         UNRECOVERABLE_IF(currEdgeProperty == nullptr);
                         path = std::string(currEdgeProperty->model) + path;
-                        if ((strncmp(currEdgeProperty->model, "XeLink", 7) == 0) &&
-                            (currEdgeProperty->bandwidth < properties.bandwidth)) {
-                            properties.bandwidth = currEdgeProperty->bandwidth;
+                        if (strncmp(currEdgeProperty->model, "XeLink", 7) == 0) {
+                            if (currEdgeProperty->bandwidth < properties.bandwidth) {
+                                properties.bandwidth = currEdgeProperty->bandwidth;
+                            }
+                            properties.latency += currEdgeProperty->latency;
+                        }
+
+                        if (strncmp(currEdgeProperty->model, "MDFI", 5) == 0) {
+                            hasMdfi = true;
                         }
 
                         currVertexIndex = parentIndex;
@@ -137,6 +144,10 @@ void FabricEdge::createEdgesFromVertices(const std::vector<FabricVertex *> &vert
                         } else {
                             path = '-' + path;
                         }
+                    }
+                    if (hasMdfi) {
+                        properties.latency = 0;
+                        properties.latencyUnit = ZE_LATENCY_UNIT_UNKNOWN;
                     }
                     indirectEdges.push_back(create(allVertices[vertexAIndex], allVertices[vertexBIndex], properties));
                     break;
