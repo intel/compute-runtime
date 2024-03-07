@@ -225,12 +225,12 @@ TEST_F(DrmMemoryManagerTest, givenDebugFlagSetWhenUsingMmapFunctionsThenPrintCon
     EXPECT_NE(std::string::npos, output.find(expected1));
 
     testing::internal::CaptureStdout();
-    int retVal = memoryManager.munmapFunction(ptr, len);
+    int retVal = memoryManager.munmapFunction(retPtr, len);
 
     output = testing::internal::GetCapturedStdout();
     char expected2[256] = {};
 
-    sprintf(expected2, "munmap(%p, %zu) = %d", ptr, len, retVal);
+    sprintf(expected2, "munmap(%p, %zu) = %d", retPtr, len, retVal);
 
     EXPECT_NE(std::string::npos, output.find(expected2));
 }

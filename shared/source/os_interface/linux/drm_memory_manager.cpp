@@ -56,7 +56,7 @@ using AllocationStatus = MemoryManager::AllocationStatus;
 int debugMunmap(void *ptr, size_t size) noexcept {
     int returnVal = munmap(ptr, size);
 
-    printf("\n%s: munmap(%p, %zu) = %d", __FUNCTION__, ptr, size, returnVal);
+    printf("\nmunmap(%p, %zu) = %d", ptr, size, returnVal);
 
     return returnVal;
 }
@@ -64,7 +64,7 @@ int debugMunmap(void *ptr, size_t size) noexcept {
 void *debugMmap(void *ptr, size_t size, int prot, int flags, int fd, off_t offset) noexcept {
     void *returnVal = mmap(ptr, size, prot, flags, fd, offset);
 
-    printf("\n%s: mmap(%p, %zu, %d, %d, %d, %ld) = %p", __FUNCTION__, ptr, size, prot, flags, fd, offset, returnVal);
+    printf("\nmmap(%p, %zu, %d, %d, %d, %ld) = %p", ptr, size, prot, flags, fd, offset, returnVal);
 
     return returnVal;
 }
