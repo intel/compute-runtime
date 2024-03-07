@@ -8,7 +8,7 @@
  */
 
 dependenciesRevision='4a647fcf3d8824899d25ec525b182bd1a6e0b0af-2211'
-kernelVersion='rel-24.1-12'
+kernelVersion='rel-24.1-13'
 buildConfig = [
 	'master-build': ['gcc7', 'gcc8', 'gcc9', 'gcc11'],
 	'master-gate': ['gcc7', 'gcc8', 'gcc9', 'gcc10', 'gcc11', 'gcc12', 'gcc13'],
