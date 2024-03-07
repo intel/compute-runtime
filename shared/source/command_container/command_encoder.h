@@ -401,8 +401,8 @@ struct EncodeComputeMode {
                                                              const PipelineSelectArgs &args, bool hasSharedHandles,
                                                              const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush);
     static void programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment);
-
     static void adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor);
+    static size_t getSizeForComputeMode();
 };
 
 template <typename GfxFamily>

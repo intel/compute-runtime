@@ -182,6 +182,30 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdsSizeForHardwareContext() const
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::addPipeControlFlushTaskIfNeeded(LinearStream &commandStreamCSR, TaskCountType taskLevel) {
+
+    if (this->requiresInstructionCacheFlush) {
+        MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(commandStreamCSR);
+        this->requiresInstructionCacheFlush = false;
+    }
+
+    // Add a Pipe Control if we have a dependency on a previous walker to avoid concurrency issues.
+    if (taskLevel > this->taskLevel) {
+        const auto programPipeControl = !timestampPacketWriteEnabled;
+        if (programPipeControl) {
+            PipeControlArgs args;
+            MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
+        }
+        this->taskLevel = taskLevel;
+        DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", peekTaskCount());
+    }
+
+    if (debugManager.flags.ForcePipeControlPriorToWalker.get()) {
+        forcePipeControl(commandStreamCSR);
+    }
+}
+
+template <typename GfxFamily>
 CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                                                  const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) {
     UNRECOVERABLE_IF(this->dispatchMode != DispatchMode::immediateDispatch);
@@ -509,25 +533,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStreamCSR, device.getRootDeviceEnvironment());
     }
 
-    if (requiresInstructionCacheFlush) {
-        MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(commandStreamCSR);
-        requiresInstructionCacheFlush = false;
-    }
-
-    // Add a Pipe Control if we have a dependency on a previous walker to avoid concurrency issues.
-    if (taskLevel > this->taskLevel) {
-        const auto programPipeControl = !timestampPacketWriteEnabled;
-        if (programPipeControl) {
-            PipeControlArgs args;
-            MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStreamCSR, args);
-        }
-        this->taskLevel = taskLevel;
-        DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", peekTaskCount());
-    }
-
-    if (debugManager.flags.ForcePipeControlPriorToWalker.get()) {
-        forcePipeControl(commandStreamCSR);
-    }
+    addPipeControlFlushTaskIfNeeded(commandStreamCSR, taskLevel);
 
     this->makeResident(*tagAllocation);
 
@@ -1453,11 +1459,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
 }
 
 template <typename GfxFamily>
-SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission() {
-    return flushTagUpdate();
-}
-
-template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(const DispatchFlags &dispatchFlags) {
     if (streamProperties.frontEndState.disableOverdispatch.value != -1) {
         lastAdditionalKernelExecInfo = streamProperties.frontEndState.disableOverdispatch.value == 1 ? AdditionalKernelExecInfo::disableOverdispatch : AdditionalKernelExecInfo::notSet;
@@ -2302,5 +2303,4 @@ inline void CommandStreamReceiverHw<GfxFamily>::chainCsrWorkToTask(LinearStream 
     this->makeResident(*chainedBatchBuffer);
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
 }
-
 } // namespace NEO

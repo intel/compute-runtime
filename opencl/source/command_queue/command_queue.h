@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -383,6 +383,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void handlePostCompletionOperations(bool checkQueueCompletion);
 
     bool getHeaplessModeEnabled() const { return this->heaplessModeEnabled; }
+    bool getHeaplessStateInitEnabled() const { return this->heaplessStateInitEnabled; }
 
     bool isBcsSplitInitialized() const { return this->bcsSplitInitialized; }
 
@@ -480,6 +481,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool splitBarrierRequired = false;
     bool gpgpuCsrClientRegistered = false;
     bool heaplessModeEnabled = false;
+    bool heaplessStateInitEnabled = false;
 };
 
 template <typename PtrType>

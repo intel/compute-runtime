@@ -55,9 +55,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::dcFlushSupport;
     using BaseClass::directSubmission;
     using BaseClass::dshState;
+    using BaseClass::getCmdSizeForHeaplessPrologue;
     using BaseClass::getCmdSizeForPrologue;
     using BaseClass::getScratchPatchAddress;
     using BaseClass::getScratchSpaceController;
+    using BaseClass::handleAllocationsResidencyForHeaplessProlog;
     using BaseClass::handleFrontEndStateTransition;
     using BaseClass::handlePipelineSelectStateTransition;
     using BaseClass::handleStateBaseAddressStateTransition;
@@ -68,6 +70,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::isDirectSubmissionEnabled;
     using BaseClass::isPerDssBackedBufferSent;
     using BaseClass::makeResident;
+    using BaseClass::pageTableManagerInitialized;
     using BaseClass::perDssBackedBuffer;
     using BaseClass::postInitFlagsSetup;
     using BaseClass::programActivePartitionConfig;
@@ -84,6 +87,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::sshState;
     using BaseClass::staticWorkPartitioningEnabled;
     using BaseClass::streamProperties;
+
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::activePartitions;
     using BaseClass::CommandStreamReceiver::activePartitionsConfig;
@@ -97,6 +101,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::commandStream;
     using BaseClass::CommandStreamReceiver::debugConfirmationFunction;
     using BaseClass::CommandStreamReceiver::debugPauseStateAddress;
+    using BaseClass::CommandStreamReceiver::debugSurface;
     using BaseClass::CommandStreamReceiver::deviceBitfield;
     using BaseClass::CommandStreamReceiver::dispatchMode;
     using BaseClass::CommandStreamReceiver::doubleSbaWa;
@@ -134,6 +139,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::ownershipMutex;
     using BaseClass::CommandStreamReceiver::perfCounterAllocator;
     using BaseClass::CommandStreamReceiver::pipelineSupportFlags;
+    using BaseClass::CommandStreamReceiver::preemptionAllocation;
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
     using BaseClass::CommandStreamReceiver::requestedPreallocationsAmount;
     using BaseClass::CommandStreamReceiver::requiredScratchSlot0Size;
@@ -145,6 +151,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::stateComputeModeDirty;
     using BaseClass::CommandStreamReceiver::submissionAggregator;
     using BaseClass::CommandStreamReceiver::tagAddress;
+    using BaseClass::CommandStreamReceiver::tagAllocation;
     using BaseClass::CommandStreamReceiver::taskCount;
     using BaseClass::CommandStreamReceiver::taskLevel;
     using BaseClass::CommandStreamReceiver::timestampPacketAllocator;

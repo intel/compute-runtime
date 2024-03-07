@@ -242,7 +242,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenSetStallingCmd
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenInitializeDeviceWithFirstSubmissionThenMiFlushDwIsFlushed) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    EXPECT_EQ(SubmissionStatus::success, bcsCsr->initializeDeviceWithFirstSubmission());
+    EXPECT_EQ(SubmissionStatus::success, bcsCsr->initializeDeviceWithFirstSubmission(device->getDevice()));
 
     auto cmdListBcs = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
 

@@ -13,6 +13,7 @@
 using Family = NEO::XeHpcCoreFamily;
 
 #include "shared/source/command_stream/command_stream_receiver_hw_dg2_and_later.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"

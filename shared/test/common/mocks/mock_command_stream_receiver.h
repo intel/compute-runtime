@@ -119,6 +119,16 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         DispatchFlags &dispatchFlags,
         Device &device) override;
 
+    CompletionStamp flushTaskStateless(
+        LinearStream &commandStream,
+        size_t commandStreamStart,
+        const IndirectHeap *dsh,
+        const IndirectHeap *ioh,
+        const IndirectHeap *ssh,
+        TaskCountType taskLevel,
+        DispatchFlags &dispatchFlags,
+        Device &device) override;
+
     CompletionStamp flushImmediateTask(
         LinearStream &immediateCommandStream,
         size_t immediateCommandStreamStart,
@@ -207,7 +217,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         }
         return isLocked;
     }
-    SubmissionStatus initializeDeviceWithFirstSubmission() override { return SubmissionStatus::success; }
+    SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) override { return SubmissionStatus::success; }
 
     static constexpr size_t tagSize = 256;
     static volatile TagAddressType mockTagAddress[tagSize];

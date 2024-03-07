@@ -87,5 +87,11 @@ if(SUPPORT_DG2_AND_LATER)
   )
 endif()
 
+if(NOT SUPPORT_HEAPLESS)
+  list(APPEND NEO_CORE_COMMAND_STREAM
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_heap_addressing.inl
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_COMMAND_STREAM ${NEO_CORE_COMMAND_STREAM})
 add_subdirectories()

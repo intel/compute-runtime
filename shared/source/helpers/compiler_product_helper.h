@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,6 +77,7 @@ class CompilerProductHelper {
     virtual StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const = 0;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
     virtual bool isHeaplessModeEnabled() const = 0;
+    virtual bool isHeaplessStateInitEnabled() const = 0;
 
     virtual ~CompilerProductHelper() = default;
     uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const;
@@ -119,6 +120,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
     bool isHeaplessModeEnabled() const override;
+    bool isHeaplessStateInitEnabled() const override;
 
     ~CompilerProductHelperHw() override = default;
 

@@ -18,6 +18,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -395,7 +396,9 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     const auto defaultEngineType = engineInstanced ? this->engineInstancedType : getChosenEngineType(hwInfo);
     const bool isDefaultEngine = defaultEngineType == engineType && engineUsage == EngineUsage::regular;
     const bool createAsEngineInstanced = engineInstanced && EngineHelpers::isCcs(engineType);
-    const bool isPrimaryEngine = gfxCoreHelper.areSecondaryContextsSupported() && EngineHelpers::isCcs(engineType) && engineUsage == EngineUsage::regular;
+
+    const bool isPrimaryEngine = EngineHelpers::isCcs(engineType) && engineUsage == EngineUsage::regular;
+    const bool useContextGroup = isPrimaryEngine && gfxCoreHelper.areSecondaryContextsSupported();
 
     UNRECOVERABLE_IF(EngineHelpers::isBcs(engineType) && !hwInfo.capabilityTable.blitterOperationsSupported);
 
@@ -416,7 +419,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, createAsEngineInstanced);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
-    osContext->setContextGroup(isPrimaryEngine);
+    osContext->setContextGroup(useContextGroup);
 
     commandStreamReceiver->setupContext(*osContext);
 
@@ -447,7 +450,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
 
             if (osContext->isDebuggableContext() ||
                 this->isInitDeviceWithFirstSubmissionSupported(commandStreamReceiver->getType())) {
-                if (SubmissionStatus::success != commandStreamReceiver->initializeDeviceWithFirstSubmission()) {
+                if (SubmissionStatus::success != commandStreamReceiver->initializeDeviceWithFirstSubmission(*this)) {
                     return false;
                 }
                 firstSubmissionDone = true;
@@ -455,8 +458,12 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         }
     }
 
-    if (isPrimaryEngine && !firstSubmissionDone) {
-        commandStreamReceiver->initializeDeviceWithFirstSubmission();
+    auto &compilerProductHelper = this->getCompilerProductHelper();
+    bool isHeaplessStateInit = isPrimaryEngine && compilerProductHelper.isHeaplessStateInitEnabled();
+    bool initializeDevice = (useContextGroup || isHeaplessStateInit) && !firstSubmissionDone;
+
+    if (initializeDevice) {
+        commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
     }
 
     if (EngineHelpers::isBcs(engineType) && (defaultBcsEngineIndex == std::numeric_limits<uint32_t>::max()) && (engineUsage == EngineUsage::regular)) {

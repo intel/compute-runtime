@@ -558,6 +558,19 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return cs;
     }
 
+    CompletionStamp flushTaskStateless(
+        LinearStream &commandStream,
+        size_t commandStreamStart,
+        const IndirectHeap *dsh,
+        const IndirectHeap *ioh,
+        const IndirectHeap *ssh,
+        TaskCountType taskLevel,
+        DispatchFlags &dispatchFlags,
+        Device &device) override {
+        CompletionStamp cs = {};
+        return cs;
+    }
+
     CompletionStamp flushImmediateTask(
         LinearStream &immediateCommandStream,
         size_t immediateCommandStreamStart,
@@ -601,7 +614,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     }
 
     void postInitFlagsSetup() override {}
-    SubmissionStatus initializeDeviceWithFirstSubmission() override { return SubmissionStatus::success; }
+    SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) override { return SubmissionStatus::success; }
 
     std::map<const void *, size_t> residency;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;

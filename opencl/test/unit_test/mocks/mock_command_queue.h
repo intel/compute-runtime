@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -272,6 +272,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::deferredTimestampPackets;
     using BaseClass::getDevice;
     using BaseClass::gpgpuEngine;
+    using BaseClass::heaplessModeEnabled;
+    using BaseClass::heaplessStateInitEnabled;
     using BaseClass::isBlitAuxTranslationRequired;
     using BaseClass::isCompleted;
     using BaseClass::latestSentEnqueueType;

@@ -59,6 +59,12 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
+    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
+                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
+
+    void addPipeControlFlushTaskIfNeeded(LinearStream &commandStreamCSR, TaskCountType taskLevel);
+
     CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart, const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override;
 
     CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
@@ -79,6 +85,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags, Device &device);
     size_t getRequiredCmdStreamSize(const DispatchBcsFlags &dispatchBcsFlags);
     size_t getRequiredCmdStreamSizeAligned(const DispatchBcsFlags &dispatchBcsFlags);
+
+    size_t getRequiredCmdStreamHeaplessSize(const DispatchFlags &dispatchFlags, Device &device);
+    size_t getRequiredCmdStreamHeaplessSizeAligned(const DispatchFlags &dispatchFlags, Device &device);
+
     size_t getRequiredCmdSizeForPreamble(Device &device) const;
     size_t getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForEpilogue(const DispatchFlags &dispatchFlags) const;
@@ -164,7 +174,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return getCmdSizeForStallingNoPostSyncCommands();
     }
     void programStallingCommandsForBarrier(LinearStream &cmdStream, TimestampPacketContainer *barrierTimestampPacketNodes, const bool isDcFlushRequired) override;
-    SubmissionStatus initializeDeviceWithFirstSubmission() override;
+    SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) override;
 
     HeapDirtyState &getDshState() {
         return dshState;
@@ -178,6 +188,12 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void dispatchRayTracingStateCommand(LinearStream &cmdStream, Device &device);
     uint64_t getScratchPatchAddress();
+
+    SubmissionStatus programHeaplessProlog(Device &device);
+    void programHeaplessStateProlog(Device &device, LinearStream &commandStream);
+    void programStateBaseAddressHeapless(Device &device, LinearStream &commandStream);
+    void programComputeModeHeapless(Device &device, LinearStream &commandStream);
+    void handleAllocationsResidencyForflushTaskStateless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh);
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
@@ -198,6 +214,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void programEnginePrologue(LinearStream &csr);
     size_t getCmdSizeForPrologue() const;
+    size_t getCmdSizeForHeaplessPrologue(Device &device) const;
+    void handleAllocationsResidencyForHeaplessProlog(LinearStream &linearStream, Device &device);
 
     void setClearSlmWorkAroundParameter(PipeControlArgs &args);
     void addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device);
@@ -328,6 +346,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     size_t cmdStreamStart = 0;
     uint32_t latestSentBcsWaValue = std::numeric_limits<uint32_t>::max();
+    bool heaplessPrologueSent = false;
 };
 
 } // namespace NEO

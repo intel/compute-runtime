@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,6 +144,11 @@ void StateBaseAddressHelper<GfxFamily>::programHeaplessStateBaseAddress(STATE_BA
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, GmmHelper *gmmHelper) {
     StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStream, ssh.getHeapGpuBase(), ssh.getHeapSizeInPages(), gmmHelper);
+}
+
+template <typename GfxFamily>
+inline size_t StateBaseAddressHelper<GfxFamily>::getSbaCmdSize() {
+    return sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
 }
 
 } // namespace NEO

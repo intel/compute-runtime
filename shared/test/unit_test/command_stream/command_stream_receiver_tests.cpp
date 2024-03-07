@@ -3028,10 +3028,10 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenInitiali
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
 
-    EXPECT_EQ(SubmissionStatus::outOfMemory, commandStreamReceiver.initializeDeviceWithFirstSubmission());
+    EXPECT_EQ(SubmissionStatus::outOfMemory, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
-    EXPECT_EQ(SubmissionStatus::outOfHostMemory, commandStreamReceiver.initializeDeviceWithFirstSubmission());
+    EXPECT_EQ(SubmissionStatus::outOfHostMemory, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag) {
@@ -5021,4 +5021,54 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenImplicitScalingEnabledWhenProgrammin
     offset += sizeof(uint32_t);
 
     EXPECT_EQ(estimatedCmdSize, offset);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenForcePipeControlPriorToWalkerWhenAddPipeControlFlushTaskIfNeededThenStallingPcIsProgrammed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ForcePipeControlPriorToWalker.set(1);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    csr.addPipeControlFlushTaskIfNeeded(commandStream, 0);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             commandStream.getCpuBase(),
+                                             commandStream.getUsed());
+
+    auto itorCmd = find<PIPE_CONTROL *>(commands.begin(), commands.end());
+    ASSERT_NE(commands.end(), itorCmd);
+
+    auto pc = genCmdCast<PIPE_CONTROL *>(*itorCmd);
+    EXPECT_TRUE(pc->getCommandStreamerStallEnable());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenBcsCsrWhenInitializeDeviceWithFirstSubmissionIsCalledThenSuccessIsReturned) {
+    MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}));
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver.setupContext(mockOsContext);
+    commandStreamReceiver.initializeTagAllocation();
+
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
+}
+
+using CommandStreamReceiverHwHeaplessTest = Test<DeviceFixture>;
+
+HWTEST_F(CommandStreamReceiverHwHeaplessTest, whenHeaplessCommandStreamReceiverFunctionsAreCalledThenExceptionIsThrown) {
+    std::unique_ptr<UltCommandStreamReceiver<FamilyType>> csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->executionEnvironment, rootDeviceIndex, pDevice->getDeviceBitfield());
+
+    LinearStream commandStream(0, 0);
+
+    EXPECT_ANY_THROW(csr->flushTaskStateless(commandStream, 0, nullptr, nullptr, nullptr, 0, csr->recordedDispatchFlags, *pDevice));
+    EXPECT_ANY_THROW(csr->programHeaplessProlog(*pDevice));
+    EXPECT_ANY_THROW(csr->programStateBaseAddressHeapless(*pDevice, commandStream));
+    EXPECT_ANY_THROW(csr->programComputeModeHeapless(*pDevice, commandStream));
+    EXPECT_ANY_THROW(csr->getCmdSizeForHeaplessPrologue(*pDevice));
+    EXPECT_ANY_THROW(csr->handleAllocationsResidencyForHeaplessProlog(commandStream, *pDevice));
+    EXPECT_ANY_THROW(csr->programHeaplessStateProlog(*pDevice, commandStream));
+    EXPECT_ANY_THROW(csr->handleAllocationsResidencyForflushTaskStateless(nullptr, nullptr, nullptr));
+    EXPECT_ANY_THROW(csr->getRequiredCmdStreamHeaplessSize(csr->recordedDispatchFlags, *pDevice));
+    EXPECT_ANY_THROW(csr->getRequiredCmdStreamHeaplessSizeAligned(csr->recordedDispatchFlags, *pDevice));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,11 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvir
         size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(rootDeviceEnvironment));
     }
     return size;
+}
+
+template <typename GfxFamily>
+inline size_t EncodeComputeMode<GfxFamily>::getSizeForComputeMode() {
+    return sizeof(typename GfxFamily::STATE_COMPUTE_MODE);
 }
 
 template <typename Family>

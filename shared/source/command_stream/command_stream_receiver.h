@@ -96,6 +96,11 @@ class CommandStreamReceiver {
     virtual CompletionStamp flushTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
+
+    virtual CompletionStamp flushTaskStateless(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
+                                               const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                               TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
+
     virtual CompletionStamp flushBcsTask(LinearStream &commandStream, size_t commandStreamStart, const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) = 0;
     virtual CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
                                                ImmediateDispatchFlags &dispatchFlags, Device &device) = 0;
@@ -414,7 +419,7 @@ class CommandStreamReceiver {
         lastPreemptionMode = value;
     }
 
-    virtual SubmissionStatus initializeDeviceWithFirstSubmission() = 0;
+    virtual SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) = 0;
 
     uint32_t getNumClients() const {
         return this->numClients.load();

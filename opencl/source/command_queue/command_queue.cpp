@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -131,6 +131,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
 
         this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled();
     }
 }
 

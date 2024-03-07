@@ -11,6 +11,7 @@
 using Family = NEO::Gen12LpFamily;
 
 #include "shared/source/command_stream/command_stream_receiver_hw_bdw_and_later.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/blit_commands_helper_bdw_and_later.inl"

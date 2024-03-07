@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw_bdw_and_later.inl"
+#include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/gen9/hw_cmds_base.h"
 #include "shared/source/helpers/blit_commands_helper_bdw_and_later.inl"

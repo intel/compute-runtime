@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,20 @@ SubmissionStatus MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, Resi
 }
 
 CompletionStamp MockCommandStreamReceiver::flushTask(
+    LinearStream &commandStream,
+    size_t commandStreamStart,
+    const IndirectHeap *dsh,
+    const IndirectHeap *ioh,
+    const IndirectHeap *ssh,
+    TaskCountType taskLevel,
+    DispatchFlags &dispatchFlags,
+    Device &device) {
+    ++taskCount;
+    CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
+    return stamp;
+}
+
+CompletionStamp MockCommandStreamReceiver::flushTaskStateless(
     LinearStream &commandStream,
     size_t commandStreamStart,
     const IndirectHeap *dsh,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,6 +92,10 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
         auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
         bool hasRootCsr = subDevicesCount > 1;
+
+        if (debugManager.flags.ContextGroupSize.get() >= 1) {
+            MemoryManager::maxOsContextCount += debugManager.flags.ContextGroupSize.get();
+        }
 
         MemoryManager::maxOsContextCount += osContextCount * subDevicesCount + hasRootCsr;
 
