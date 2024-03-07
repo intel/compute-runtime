@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
@@ -835,5 +836,178 @@ HWTEST2_F(AppendMemoryCopy,
                                            false);
 }
 
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListImmediateWithDummyBlitWaWhenCopyMemoryRegionThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeHpCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+
+    DebugManagerStateRestore restorer;
+
+    NEO::debugManager.flags.ForceDummyBlitWa.set(1);
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    constexpr size_t allocSize = 4096;
+    void *buffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &buffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t offset = 64u;
+    void *srcPtr = ptrOffset(buffer, offset);
+    void *dstPtr = buffer;
+    const auto numSlices = 32u;
+    ze_copy_region_t dstRegion = {0, 0, 0, 8, 4, numSlices};
+    ze_copy_region_t srcRegion = {0, 0, 0, 8, 4, numSlices};
+
+    constexpr auto dstPitch = 32u;
+    constexpr auto dstSlicePitch = 1024u;
+    constexpr auto srcPitch = 64u;
+    constexpr auto srcSlicePitch = 2048u;
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, dstPitch, dstSlicePitch, srcPtr, &srcRegion, srcPitch, srcSlicePitch, nullptr, 0, nullptr, false, false);
+
+    auto &cmdContainer = cmdList.getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
+    auto itors = findAll<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+
+    EXPECT_EQ(numSlices, itors.size());
+    for (auto i = 0u; i < numSlices; i++) {
+
+        auto itor = itors[i];
+        ASSERT_NE(genCmdList.end(), itor);
+
+        auto bltCmd = genCmdCast<XY_COPY_BLT *>(*itor);
+        EXPECT_EQ(bltCmd->getSourceBaseAddress(), reinterpret_cast<uintptr_t>(ptrOffset(srcPtr, srcSlicePitch * i)));
+        EXPECT_EQ(bltCmd->getSourcePitch(), srcPitch);
+        EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(ptrOffset(dstPtr, dstSlicePitch * i)));
+        EXPECT_EQ(bltCmd->getDestinationPitch(), dstPitch);
+    }
+
+    if constexpr (IsPVC::isMatched<productFamily>()) {
+        EXPECT_EQ(itors.back(), find<typename GfxFamily::MEM_SET *>(genCmdList.begin(), itors.back()));
+    }
+    EXPECT_EQ(itors.back(), find<XY_COLOR_BLT *>(genCmdList.begin(), itors.back()));
+
+    EXPECT_TRUE(cmdList.dummyBlitWa.isWaRequired);
+
+    context->freeMem(buffer);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWithDummyBlitWaWhenCopyMemoryRegionThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeHpCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+
+    DebugManagerStateRestore restorer;
+
+    NEO::debugManager.flags.ForceDummyBlitWa.set(1);
+
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    constexpr size_t allocSize = 4096;
+    void *buffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &buffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t offset = 64u;
+    void *srcPtr = ptrOffset(buffer, offset);
+    void *dstPtr = buffer;
+    const auto numSlices = 32u;
+    ze_copy_region_t dstRegion = {0, 0, 0, 8, 4, numSlices};
+    ze_copy_region_t srcRegion = {0, 0, 0, 8, 4, numSlices};
+
+    constexpr auto dstPitch = 32u;
+    constexpr auto dstSlicePitch = 1024u;
+    constexpr auto srcPitch = 64u;
+    constexpr auto srcSlicePitch = 2048u;
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, dstPitch, dstSlicePitch, srcPtr, &srcRegion, srcPitch, srcSlicePitch, nullptr, 0, nullptr, false, false);
+
+    auto &cmdContainer = cmdList.getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
+    auto itors = findAll<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+
+    EXPECT_EQ(numSlices, itors.size());
+    for (auto i = 0u; i < numSlices; i++) {
+
+        auto itor = itors[i];
+        ASSERT_NE(genCmdList.end(), itor);
+
+        auto bltCmd = genCmdCast<XY_COPY_BLT *>(*itor);
+        EXPECT_EQ(bltCmd->getSourceBaseAddress(), reinterpret_cast<uintptr_t>(ptrOffset(srcPtr, srcSlicePitch * i)));
+        EXPECT_EQ(bltCmd->getSourcePitch(), srcPitch);
+        EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(ptrOffset(dstPtr, dstSlicePitch * i)));
+        EXPECT_EQ(bltCmd->getDestinationPitch(), dstPitch);
+    }
+
+    if constexpr (IsPVC::isMatched<productFamily>()) {
+        EXPECT_EQ(itors.back(), find<typename GfxFamily::MEM_SET *>(genCmdList.begin(), itors.back()));
+    }
+    EXPECT_EQ(itors.back(), find<XY_COLOR_BLT *>(genCmdList.begin(), itors.back()));
+
+    EXPECT_TRUE(cmdList.dummyBlitWa.isWaRequired);
+
+    context->freeMem(buffer);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListImmediateWithDummyBlitWaWhenCopyMemoryThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeHpCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+
+    DebugManagerStateRestore restorer;
+
+    NEO::debugManager.flags.ForceDummyBlitWa.set(1);
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    constexpr size_t allocSize = 4096;
+    void *buffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &buffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t offset = 64u;
+    void *srcPtr = ptrOffset(buffer, offset);
+    void *dstPtr = buffer;
+    constexpr auto size = 1;
+    cmdList.appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false, false);
+
+    auto &cmdContainer = cmdList.getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
+    auto itors = findAll<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+
+    EXPECT_EQ(1u, itors.size());
+    auto itor = itors[0];
+    ASSERT_NE(genCmdList.end(), itor);
+
+    auto bltCmd = genCmdCast<XY_COPY_BLT *>(*itor);
+    EXPECT_EQ(bltCmd->getSourceBaseAddress(), reinterpret_cast<uintptr_t>(srcPtr));
+    EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(dstPtr));
+
+    if constexpr (IsPVC::isMatched<productFamily>()) {
+        EXPECT_EQ(genCmdList.end(), find<typename GfxFamily::MEM_SET *>(genCmdList.begin(), genCmdList.end()));
+    }
+    EXPECT_EQ(genCmdList.end(), find<XY_COLOR_BLT *>(genCmdList.begin(), genCmdList.end()));
+
+    EXPECT_TRUE(cmdList.dummyBlitWa.isWaRequired);
+
+    context->freeMem(buffer);
+}
 } // namespace ult
 } // namespace L0

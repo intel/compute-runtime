@@ -4827,10 +4827,6 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
         itor = ++semaphoreItor;
     }
 
-    if (device->getProductHelper().isDummyBlitWaRequired()) {
-        UnitTestHelper<FamilyType>::verifyDummyBlitWa(&device->getNEODevice()->getRootDeviceEnvironment(), itor);
-    }
-
     ASSERT_NE(nullptr, genCmdCast<MI_FLUSH_DW *>(*itor)); // marker event
 
     auto implicitCounterSdi = genCmdCast<MI_STORE_DATA_IMM *>(*(++itor));

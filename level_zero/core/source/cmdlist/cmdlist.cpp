@@ -191,13 +191,4 @@ void CommandList::synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t
         event->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 }
-
-void CommandList::makeResidentDummyAllocation() {
-    if (isCopyOnly()) {
-        const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
-        auto dummyAllocation = rootDeviceEnvironment.getDummyAllocation();
-        commandContainer.addToResidencyContainer(dummyAllocation);
-    }
-}
-
 } // namespace L0

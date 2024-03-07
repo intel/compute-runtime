@@ -540,6 +540,8 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     using BaseClass::commandContainer;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
+    using BaseClass::dummyBlitWa;
+    using BaseClass::encodeMiFlush;
     using BaseClass::ownedPrivateAllocations;
 
     ADDMETHOD(appendMemoryCopyKernelWithGA, ze_result_t, false, ZE_RESULT_SUCCESS,
@@ -632,6 +634,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::dcFlushSupport;
     using BaseClass::dependenciesPresent;
+    using BaseClass::dummyBlitWa;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;

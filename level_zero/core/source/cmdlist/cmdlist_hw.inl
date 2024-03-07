@@ -1224,7 +1224,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
     NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
 
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *this->dummyBlitWa.rootDeviceEnvironment);
-    makeResidentDummyAllocation();
+    dummyBlitWa.isWaRequired = true;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1274,7 +1274,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     } else {
         NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), rootDeviceEnvironment);
     }
-    makeResidentDummyAllocation();
+    dummyBlitWa.isWaRequired = true;
 
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false);
     return ZE_RESULT_SUCCESS;
@@ -1303,7 +1303,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
 
     appendEventForProfiling(signalEvent, nullptr, true, false, false);
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
-    makeResidentDummyAllocation();
+    dummyBlitWa.isWaRequired = true;
 
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false);
     return ZE_RESULT_SUCCESS;
@@ -2142,7 +2142,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
                                                                         *commandContainer.getCommandStream(),
                                                                         size,
                                                                         neoDevice->getRootDeviceEnvironmentRef());
-        makeResidentDummyAllocation();
+        dummyBlitWa.isWaRequired = true;
 
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false);
 
@@ -2183,8 +2183,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
         event->resetKernelCountAndPacketUsedCount();
     } else {
         NEO::MiFlushArgs args{this->dummyBlitWa};
-        NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), 0, 0, args);
-        makeResidentDummyAllocation();
+        encodeMiFlush(0, 0, args);
         dispatchEventPostSyncOperation(event, nullptr, Event::STATE_SIGNALED, true, false, false, false);
     }
     appendWriteKernelTimestamp(event, nullptr, beforeWalker, false, false);
@@ -2480,7 +2479,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     if (dcFlushRequired) {
         if (isCopyOnly()) {
             NEO::MiFlushArgs args{this->dummyBlitWa};
-            NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), 0, 0, args);
+            encodeMiFlush(0, 0, args);
         } else {
             NEO::PipeControlArgs args;
             args.dcFlushEnable = true;
@@ -2520,10 +2519,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     if (isImmediateType() && isCopyOnly() && trackDependencies) {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         args.commandWithPostSync = true;
-        args.waArgs.isWaRequired = true;
-        NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), this->csr->getBarrierCountGpuAddress(), this->csr->getNextBarrierCount() + 1, args);
+        encodeMiFlush(this->csr->getBarrierCountGpuAddress(), this->csr->getNextBarrierCount() + 1, args);
         commandContainer.addToResidencyContainer(this->csr->getTagAllocation());
-        makeResidentDummyAllocation();
     }
 
     if (apiRequest) {
@@ -2728,12 +2725,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         NEO::MiFlushArgs args{this->dummyBlitWa};
         args.timeStampOperation = true;
         args.commandWithPostSync = true;
-        args.waArgs.isWaRequired = true;
-        NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(),
-                                                       allocationStruct.alignedAllocationPtr,
-                                                       0,
-                                                       args);
-        makeResidentDummyAllocation();
+        encodeMiFlush(allocationStruct.alignedAllocationPtr, 0, args);
     } else {
         NEO::PipeControlArgs args;
         args.blockSettingPostSyncProperties = true;
@@ -3277,14 +3269,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
             TaskCountType value = 0u;
             if (isImmediateType()) {
                 args.commandWithPostSync = true;
-                args.waArgs.isWaRequired = true;
                 gpuAddress = this->csr->getBarrierCountGpuAddress();
                 value = this->csr->getNextBarrierCount() + 1;
                 commandContainer.addToResidencyContainer(this->csr->getTagAllocation());
             }
 
-            NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), gpuAddress, value, args);
-            makeResidentDummyAllocation();
+            encodeMiFlush(gpuAddress, value, args);
         } else {
             appendComputeBarrierCommand();
         }
@@ -3489,10 +3479,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     if (isCopyOnly()) {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         args.commandWithPostSync = true;
-        args.waArgs.isWaRequired = true;
-        NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), gpuAddress,
-                                                       data, args);
-        makeResidentDummyAllocation();
+        encodeMiFlush(gpuAddress,
+                      data, args);
     } else {
         NEO::PipeControlArgs args;
         args.dcFlushEnable = getDcFlushRequired(!!descriptor->writeScope);
@@ -3564,14 +3552,8 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy(uint64_t gpuAddr
 
     NEO::MiFlushArgs miFlushArgs{this->dummyBlitWa};
     miFlushArgs.commandWithPostSync = true;
-    miFlushArgs.waArgs.isWaRequired = true;
 
-    NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(
-        *commandContainer.getCommandStream(),
-        gpuAddress,
-        value,
-        miFlushArgs);
-    makeResidentDummyAllocation();
+    encodeMiFlush(gpuAddress, value, miFlushArgs);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3780,4 +3762,14 @@ uint64_t CommandListCoreFamily<gfxCoreFamily>::getInOrderIncrementValue() const 
     return (this->inOrderAtomicSignalingEnabled ? this->getPartitionCount() : 1);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::encodeMiFlush(uint64_t immediateDataGpuAddress, uint64_t immediateData, NEO::MiFlushArgs &args) {
+    auto isDummyBlitRequired = NEO::BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(args.waArgs);
+    NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), immediateDataGpuAddress, immediateData, args);
+    if (isDummyBlitRequired) {
+        const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+        auto dummyAllocation = rootDeviceEnvironment.getDummyAllocation();
+        commandContainer.addToResidencyContainer(dummyAllocation);
+    }
+}
 } // namespace L0
