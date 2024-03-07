@@ -2434,18 +2434,7 @@ struct drm_i915_reset_stats {
 	/* Number of batches lost pending for execution, for this context */
 	__u32 batch_pending;
 
-	__u32 status;
-#define I915_RESET_STATS_BANNED (1 << 0)
-
-	struct {
-		/* Page-aligned virtual address of first reported invalid fault */
-		__u64 addr;
-		__u16 type;
-		__u16 level;
-		__u16 access;
-		__u16 flags;
-#define I915_RESET_STATS_FAULT_VALID (1 << 0)
-	} fault;
+	__u32 pad;
 };
 
 /**
