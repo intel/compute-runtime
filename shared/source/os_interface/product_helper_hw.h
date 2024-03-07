@@ -118,6 +118,7 @@ class ProductHelperHw : public ProductHelper {
     bool isMidThreadPreemptionDisallowedForRayTracingKernels() const override;
     bool isBufferPoolAllocatorSupported() const override;
     bool isUsmPoolAllocatorSupported() const override;
+    bool useLocalPreferredForCacheableBuffers() const override;
     bool useGemCreateExtInAllocateMemoryByKMD() const override;
     bool isTlbFlushRequired() const override;
     bool isDummyBlitWaRequired() const override;

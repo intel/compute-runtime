@@ -418,6 +418,11 @@ bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
+    return false;
+}
+
 struct UnknownProduct {
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = false;

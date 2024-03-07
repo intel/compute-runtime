@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2999,6 +2999,55 @@ TEST(MemoryManagerTest, givenStorageInfoWithParamsWhenGettingAllocDataForLocalMe
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, storageInfo);
     EXPECT_EQ(0u, allocData.flags.useSystemMemory);
     EXPECT_FALSE(allocData.storageInfo.systemMemoryPlacement);
+}
+
+TEST(MemoryManagerTest, givenUseLocalPreferredForCacheableBuffersWhenGettingAllocDataForLocalMemoryThenLocalPreferredSetCorrectly) {
+    // localPreferred is implicit with gmm flags LocalOnly=0 and NonLocalOnly=0
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseLocalPreferredForCacheableBuffers.set(0);
+    AllocationData allocData;
+    allocData.flags.useSystemMemory = true;
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
+    MockMemoryManager mockMemoryManager;
+
+    AllocationType shouldUseLocalPreferredAllocationTypes[] = {
+        AllocationType::buffer,
+        AllocationType::svmGpu,
+        AllocationType::image};
+
+    for (auto allocationType : shouldUseLocalPreferredAllocationTypes) {
+        properties.allocationType = allocationType;
+        auto storageInfo = mockMemoryManager.createStorageInfoFromProperties(properties);
+
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, storageInfo);
+        EXPECT_EQ(AllocationType::svmGpu == allocationType || AllocationType::buffer == allocationType, allocData.storageInfo.localOnlyRequired);
+        EXPECT_EQ(true, allocData.storageInfo.systemMemoryPlacement);
+        EXPECT_EQ(false, allocData.storageInfo.systemMemoryForced);
+    }
+
+    debugManager.flags.UseLocalPreferredForCacheableBuffers.set(1);
+
+    for (auto allocationType : shouldUseLocalPreferredAllocationTypes) {
+        properties.allocationType = allocationType;
+        auto storageInfo = mockMemoryManager.createStorageInfoFromProperties(properties);
+
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, storageInfo);
+        EXPECT_EQ(false, allocData.storageInfo.localOnlyRequired);
+        EXPECT_EQ(false, allocData.storageInfo.systemMemoryPlacement);
+        EXPECT_EQ(false, allocData.storageInfo.systemMemoryForced);
+    }
+
+    properties.flags.uncacheable = true;
+
+    for (auto allocationType : shouldUseLocalPreferredAllocationTypes) {
+        properties.allocationType = allocationType;
+        auto storageInfo = mockMemoryManager.createStorageInfoFromProperties(properties);
+
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, storageInfo);
+        EXPECT_EQ(AllocationType::svmGpu == allocationType || AllocationType::buffer == allocationType, allocData.storageInfo.localOnlyRequired);
+        EXPECT_EQ(true, allocData.storageInfo.systemMemoryPlacement);
+        EXPECT_EQ(false, allocData.storageInfo.systemMemoryForced);
+    }
 }
 
 TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallbackToCopyOnCPU) {

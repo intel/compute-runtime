@@ -214,6 +214,11 @@ bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
+    return false;
+}
+
+template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Dg2;
 };

@@ -103,4 +103,9 @@ bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
+    return false;
+}
+
 } // namespace NEO

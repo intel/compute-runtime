@@ -1846,13 +1846,14 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateInDevice
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphicsMemoryInPreferredPoolThenMemoryIsNotLocableAndLocalOnlyIsSet) {
+TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphicsMemoryInPreferredPoolThenMemoryIsNotLockableAndLocalOnlyIsSetCorrectly) {
     const bool localMemoryEnabled = true;
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
     AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmGpu, mockDeviceBitfield};
@@ -1869,7 +1870,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     allocation->peekInternalHandle(memoryManager.get(), handle);
     EXPECT_NE(handle, 0u);
 
-    EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.LocalOnly);
+    EXPECT_EQ(!productHelper.useLocalPreferredForCacheableBuffers(), allocation->getDefaultGmm()->resourceParams.Flags.Info.LocalOnly);
     EXPECT_EQ(1u, allocation->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
 
     memoryManager->freeGraphicsMemory(allocation);

@@ -386,6 +386,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
 
     bool allow64KbPages = false;
     bool allow32Bit = false;
@@ -562,6 +563,23 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.storageInfo.systemMemoryPlacement = allocationData.flags.useSystemMemory;
     allocationData.storageInfo.systemMemoryForced = properties.flags.forceSystemMemory;
     allocationData.allocationMethod = getPreferredAllocationMethod(properties);
+
+    bool useLocalPreferredForCacheableBuffers = productHelper.useLocalPreferredForCacheableBuffers();
+    if (debugManager.flags.UseLocalPreferredForCacheableBuffers.get() != -1) {
+        useLocalPreferredForCacheableBuffers = debugManager.flags.UseLocalPreferredForCacheableBuffers.get() == 1;
+    }
+
+    switch (properties.allocationType) {
+    case AllocationType::buffer:
+    case AllocationType::svmGpu:
+    case AllocationType::image:
+        if (false == allocationData.flags.uncacheable && useLocalPreferredForCacheableBuffers) {
+            allocationData.storageInfo.localOnlyRequired = false;
+            allocationData.storageInfo.systemMemoryPlacement = false;
+        }
+    default:
+        break;
+    }
 
     return true;
 }
