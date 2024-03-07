@@ -2637,5 +2637,87 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     }
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel,
+          givenInOrderCmdListAndTimeStampEventWhenAppendingKernelAndEventWithOutCmdListSetThenStoreStoreDataImmClearAndSemapohreWaitPostSyncCommands,
+          IsAtLeastXeHpCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    auto cmdStream = commandContainer.getCommandStream();
+
+    ze_event_pool_counter_based_exp_desc_t counterBasedExtension = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+    counterBasedExtension.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE;
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.pNext = &counterBasedExtension;
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.index = 0;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event.get());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    CommandToPatchContainer outCbEventCmds;
+    launchParams.outListCommands = &outCbEventCmds;
+    auto commandStreamOffset = cmdStream->getUsed();
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), commandStreamOffset),
+        cmdStream->getUsed() - commandStreamOffset));
+
+    auto eventCompletionAddress = event->getCompletionFieldGpuAddress(device);
+
+    ASSERT_EQ(2u, outCbEventCmds.size());
+
+    size_t expectedSdi = commandList->inOrderAtomicSignalingEnabled ? 1 : 2;
+
+    auto storeDataImmList = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSdi, storeDataImmList.size());
+    auto computeWalkerList = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, computeWalkerList.size());
+    auto semaphoreWaitList = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, semaphoreWaitList.size());
+
+    EXPECT_EQ(CommandToPatch::CbEventTimestampClearStoreDataImm, outCbEventCmds[0].type);
+    EXPECT_EQ(*storeDataImmList[0], outCbEventCmds[0].pDestination);
+    auto storeDataImmCmd = genCmdCast<MI_STORE_DATA_IMM *>(outCbEventCmds[0].pDestination);
+    ASSERT_NE(nullptr, storeDataImmCmd);
+    EXPECT_EQ(eventCompletionAddress, storeDataImmCmd->getAddress());
+
+    EXPECT_EQ(launchParams.outWalker, *computeWalkerList[0]);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(launchParams.outWalker);
+    ASSERT_NE(nullptr, walkerCmd);
+    if constexpr (!FamilyType::template isHeaplessMode<DefaultWalkerType>()) {
+        auto eventBaseAddress = event->getGpuAddress(device);
+        EXPECT_EQ(eventBaseAddress, walkerCmd->getPostSync().getDestinationAddress());
+    }
+
+    EXPECT_EQ(CommandToPatch::CbEventTimestampPostSyncSemaphoreWait, outCbEventCmds[1].type);
+    EXPECT_EQ(*semaphoreWaitList[0], outCbEventCmds[1].pDestination);
+    auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(outCbEventCmds[1].pDestination);
+    ASSERT_NE(nullptr, semaphoreWaitCmd);
+    EXPECT_EQ(eventCompletionAddress, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
+}
+
 } // namespace ult
 } // namespace L0

@@ -297,7 +297,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
-            dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, Event::STATE_CLEARED, false, false, false, false);
+            dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false);
         } else {
             inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
             inOrderExecInfo = this->inOrderExecInfo.get();
@@ -367,7 +367,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
-                appendWaitOnSingleEvent(eventForInOrderExec, nullptr, false);
+                appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
                 appendSignalInOrderDependencyCounter(eventForInOrderExec);
             }
         } else {

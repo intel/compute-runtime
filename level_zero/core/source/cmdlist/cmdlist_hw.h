@@ -59,6 +59,7 @@ struct CmdListFillKernelArguments {
 
 struct CmdListEventOperation {
     size_t operationOffset = 0;
+    size_t completionFieldOffset = 0;
     uint32_t operationCount = 0;
     bool workPartitionOperation = false;
     bool isTimestmapEvent = false;
@@ -268,7 +269,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                           Event *signalEvent,
                                           CmdListKernelLaunchParams &launchParams);
 
-    void appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed);
+    void appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, CommandToPatch::CommandType storedSemaphore);
 
     void appendSdiInOrderCounterSignalling(uint64_t baseGpuVa, uint64_t signalValue);
 
@@ -320,11 +321,11 @@ struct CommandListCoreFamily : public CommandListImp {
     MOCKABLE_VIRTUAL void allocateOrReuseKernelPrivateMemory(Kernel *kernel, uint32_t sizePerHwThread, NEO::PrivateAllocsToReuseContainer &privateAllocsToReuse);
     virtual void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread);
     CmdListEventOperation estimateEventPostSync(Event *event, uint32_t operations);
-    void dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
-    void dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
-    void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, void **syncCmdBuffer, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming);
+    void dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition, void **outCmdBuffer);
+    void dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition, void **outCmdBuffer);
+    void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming);
     void dispatchEventRemainingPacketsPostSyncOperation(Event *event);
-    void dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming);
+    void dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming);
     bool isKernelUncachedMocsRequired(bool kernelState) {
         this->containsStatelessUncachedResource |= kernelState;
         if (this->stateBaseAddressTracking) {

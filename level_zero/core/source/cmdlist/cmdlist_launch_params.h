@@ -26,6 +26,8 @@ struct CommandToPatch {
         SignalEventPostSyncPipeControl,
         WaitEventSemaphoreWait,
         TimestampEventPostSyncStoreRegMem,
+        CbEventTimestampPostSyncSemaphoreWait,
+        CbEventTimestampClearStoreDataImm,
         Invalid
     };
     void *pDestination = nullptr;

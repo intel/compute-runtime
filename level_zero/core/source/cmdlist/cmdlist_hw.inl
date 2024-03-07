@@ -559,7 +559,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     bool useMaxPackets = event->isEventTimestampFlagSet() || (event->getPacketsInUse() < this->partitionCount);
 
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, nullptr, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync, false);
+    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync, false);
 
     if (!isCopyOnly()) {
         if (this->partitionCount > 1) {
@@ -2169,7 +2169,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
         }
 
         event->setPacketsInUse(this->partitionCount);
-        dispatchEventPostSyncOperation(event, syncCmdBuffer, Event::STATE_SIGNALED, false, false, !isCopyOnly(), false);
+        dispatchEventPostSyncOperation(event, syncCmdBuffer, nullptr, Event::STATE_SIGNALED, false, false, !isCopyOnly(), false);
     }
 }
 
@@ -2185,7 +2185,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
     } else {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         encodeMiFlush(0, 0, args);
-        dispatchEventPostSyncOperation(event, nullptr, Event::STATE_SIGNALED, true, false, false, false);
+        dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, false);
     }
     appendWriteKernelTimestamp(event, nullptr, beforeWalker, false, false);
 }
@@ -2379,7 +2379,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 
     event->setPacketsInUse(this->partitionCount);
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, nullptr, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false);
+    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false);
 
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(event);
@@ -2514,7 +2514,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
         }
 
-        appendWaitOnSingleEvent(event, outWaitCmds, relaxedOrderingAllowed);
+        appendWaitOnSingleEvent(event, outWaitCmds, relaxedOrderingAllowed, CommandToPatch::WaitEventSemaphoreWait);
     }
 
     if (isImmediateType() && isCopyOnly() && trackDependencies) {
@@ -2674,7 +2674,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             bool workloadPartition = setupTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, outTimeStampSyncCmds, beforeWalker, true, workloadPartition);
         } else {
-            dispatchEventPostSyncOperation(event, nullptr, Event::STATE_SIGNALED, true, false, false, true);
+            dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, true);
 
             const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
 
@@ -3544,12 +3544,13 @@ CmdListEventOperation CommandListCoreFamily<gfxCoreFamily>::estimateEventPostSyn
     ret.operationOffset = event->getSinglePacketSize() * this->partitionCount;
     ret.workPartitionOperation = this->partitionCount > 1;
     ret.isTimestmapEvent = event->isEventTimestampFlagSet();
+    ret.completionFieldOffset = event->getCompletionFieldOffset();
 
     return ret;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition, void **outCmdBuffer) {
 
     NEO::MiFlushArgs miFlushArgs{this->dummyBlitWa};
     miFlushArgs.commandWithPostSync = true;
@@ -3558,7 +3559,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy(uint64_t gpuAddr
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition, void **outCmdBuffer) {
     NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(
         *commandContainer.getCommandStream(),
         gpuAddress,
@@ -3566,11 +3567,11 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute(uint64_t gpuA
         0u,
         false,
         workloadPartition,
-        nullptr);
+        outCmdBuffer);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, void **syncCmdBuffer, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming) {
     decltype(&CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute) dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute;
     if (isCopyOnly()) {
         dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy;
@@ -3585,8 +3586,20 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
         appendDispatchOffsetRegister(eventOperations.workPartitionOperation, true);
     }
 
+    void **outCmdBuffer = nullptr;
+    void *outCmd = nullptr;
+    if (outListCommands != nullptr) {
+        outCmdBuffer = &outCmd;
+    }
+
     for (uint32_t i = 0; i < operationCount; i++) {
-        (this->*dispatchFunction)(gpuAddress, value, eventOperations.workPartitionOperation);
+        (this->*dispatchFunction)(gpuAddress, value, eventOperations.workPartitionOperation, outCmdBuffer);
+        if (outListCommands != nullptr) {
+            auto &cmdToPatch = outListCommands->emplace_back();
+            cmdToPatch.type = CommandToPatch::CbEventTimestampClearStoreDataImm;
+            cmdToPatch.offset = i * eventOperations.operationOffset + eventOperations.completionFieldOffset;
+            cmdToPatch.pDestination = outCmd;
+        }
 
         gpuAddress += eventOperations.operationOffset;
     }
@@ -3624,7 +3637,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming) {
     uint32_t packets = event->getPacketsInUse();
     if (this->signalAllEventPackets || useMax) {
         packets = event->getMaxPacketsCount();
@@ -3637,7 +3650,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event 
         eventPostSync.operationCount--;
     }
 
-    dispatchPostSyncCommands(eventPostSync, gpuAddress, syncCmdBuffer, value, useLastPipeControl, event->isSignalScope(), skipPartitionOffsetProgramming);
+    dispatchPostSyncCommands(eventPostSync, gpuAddress, syncCmdBuffer, outListCommands, value, useLastPipeControl, event->isSignalScope(), skipPartitionOffsetProgramming);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3650,12 +3663,12 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
         eventAddress += event->getSinglePacketSize() * event->getPacketsInUse();
 
         constexpr bool appendLastPipeControl = false;
-        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, nullptr, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope(), false);
+        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, nullptr, nullptr, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope(), false);
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed) {
+void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, CommandToPatch::CommandType storedSemaphore) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     uint64_t gpuAddr = event->getCompletionFieldGpuAddress(this->device);
@@ -3679,7 +3692,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
 
             if (outWaitCmds != nullptr) {
                 auto &semWaitCmd = outWaitCmds->emplace_back();
-                semWaitCmd.type = CommandToPatch::WaitEventSemaphoreWait;
+                semWaitCmd.type = storedSemaphore;
                 semWaitCmd.offset = i * event->getSinglePacketSize() + event->getCompletionFieldOffset();
                 semWaitCmd.pDestination = outSemWaitCmd;
             }
