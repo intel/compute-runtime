@@ -880,9 +880,9 @@ HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileDirectSubmissionComm
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
 
-    auto localMemSupported = device->getHwInfo().featureTable.flags.ftrLocalMemory;
-    EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get() != nullptr, localMemSupported);
-    if (localMemSupported) {
+    auto flatRingSupported = device->getHwInfo().featureTable.flags.ftrLocalMemory && device->getProductHelper().isFlatRingBufferSupported();
+    EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get() != nullptr, flatRingSupported);
+    if (flatRingSupported) {
         EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
     }
 }
@@ -905,7 +905,7 @@ HWTEST_F(CommandListCreate, givenMetricsImmediateCopyOnlySingleTileDirectSubmiss
 }
 
 HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenSwapCommandStreams, IsAtLeastSkl) {
-    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory) {
+    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory || !device->getProductHelper().isFlatRingBufferSupported()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
@@ -933,7 +933,7 @@ HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenC
 }
 
 HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenNotSwapCommandStreams, IsAtLeastSkl) {
-    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory) {
+    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory || !device->getProductHelper().isFlatRingBufferSupported()) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;

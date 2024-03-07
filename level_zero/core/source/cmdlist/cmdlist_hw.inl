@@ -269,7 +269,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
                                              this->csr &&
                                              this->csr->isAnyDirectSubmissionEnabled() &&
                                              !neoDevice->getExecutionEnvironment()->areMetricsEnabled() &&
-                                             neoDevice->getMemoryManager()->isLocalMemorySupported(neoDevice->getRootDeviceIndex());
+                                             neoDevice->getMemoryManager()->isLocalMemorySupported(neoDevice->getRootDeviceIndex()) &&
+                                             productHelper.isFlatRingBufferSupported();
 
     if (NEO::debugManager.flags.DirectSubmissionFlatRingBuffer.get() != -1) {
         createSecondaryCmdBufferInHostMem &= !!NEO::debugManager.flags.DirectSubmissionFlatRingBuffer.get();
