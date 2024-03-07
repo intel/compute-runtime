@@ -238,8 +238,6 @@ HWTEST2_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListI
 
     EXPECT_EQ(-1, currentCsrStreamProperties.pipelineSelect.modeSelected.value);
     EXPECT_EQ(-1, currentCsrStreamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
-
-    EXPECT_EQ(-1, currentCsrStreamProperties.stateBaseAddress.globalAtomics.value);
 }
 
 using CommandListTest = Test<DeviceFixture>;
@@ -1371,7 +1369,6 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(finalState.bindingTablePoolBaseAddress.value, requiredState.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalState.bindingTablePoolSize.value, requiredState.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalState.globalAtomics.value, requiredState.globalAtomics.value);
     EXPECT_EQ(finalState.statelessMocs.value, requiredState.statelessMocs.value);
 
     result = commandList->close();
@@ -1693,7 +1690,6 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(finalState.bindingTablePoolBaseAddress.value, requiredState.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalState.bindingTablePoolSize.value, requiredState.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalState.globalAtomics.value, requiredState.globalAtomics.value);
     EXPECT_EQ(finalState.statelessMocs.value, requiredState.statelessMocs.value);
 
     result = commandList->close();
@@ -1805,7 +1801,6 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolBaseAddress.value, requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolSize.value, requiredStatePrivateHeap.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalStatePrivateHeap.globalAtomics.value, requiredStatePrivateHeap.globalAtomics.value);
     EXPECT_EQ(finalStatePrivateHeap.statelessMocs.value, requiredStatePrivateHeap.statelessMocs.value);
 
     result = commandListPrivateHeap->close();
@@ -1932,7 +1927,6 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolBaseAddress.value, requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolSize.value, requiredStatePrivateHeap.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalStatePrivateHeap.globalAtomics.value, requiredStatePrivateHeap.globalAtomics.value);
     EXPECT_EQ(finalStatePrivateHeap.statelessMocs.value, requiredStatePrivateHeap.statelessMocs.value);
 
     result = commandListPrivateHeap->close();
@@ -2031,7 +2025,6 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(finalState.bindingTablePoolBaseAddress.value, requiredState.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalState.bindingTablePoolSize.value, requiredState.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalState.globalAtomics.value, requiredState.globalAtomics.value);
     EXPECT_EQ(finalState.statelessMocs.value, requiredState.statelessMocs.value);
 
     result = commandList->close();
@@ -2217,7 +2210,6 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolBaseAddress.value, requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolSize.value, requiredStatePrivateHeap.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalStatePrivateHeap.globalAtomics.value, requiredStatePrivateHeap.globalAtomics.value);
     EXPECT_EQ(finalStatePrivateHeap.statelessMocs.value, requiredStatePrivateHeap.statelessMocs.value);
 
     result = commandListPrivateHeap->close();
@@ -2346,7 +2338,6 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolBaseAddress.value, requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolSize.value, requiredStatePrivateHeap.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalStatePrivateHeap.globalAtomics.value, requiredStatePrivateHeap.globalAtomics.value);
     EXPECT_EQ(finalStatePrivateHeap.statelessMocs.value, requiredStatePrivateHeap.statelessMocs.value);
 
     result = commandListPrivateHeap->close();

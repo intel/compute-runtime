@@ -362,8 +362,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenDebug
 
 using StateBaseAddressXeHPAndLaterTests = XeHpCommandStreamReceiverFlushTaskTests;
 
-namespace {
-
 template <typename FamilyType, typename CommandStreamReceiverType>
 void flushTaskAndcheckForSBA(StateBaseAddressXeHPAndLaterTests *sbaTest, CommandStreamReceiverType &csr, bool shouldBePresent) {
     size_t offset = csr.commandStream.getUsed();
@@ -379,40 +377,6 @@ void flushTaskAndcheckForSBA(StateBaseAddressXeHPAndLaterTests *sbaTest, Command
         EXPECT_EQ(nullptr, hwParserCsr.cmdStateBaseAddress);
     }
 }
-
-template <typename FamilyType>
-void testGlobalAtomicsImpactOnSBA(StateBaseAddressXeHPAndLaterTests *sbaTest, bool multiOsCtx, bool multiSubDevices, bool expectSBA) {
-
-    auto &commandStreamReceiver = sbaTest->pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.multiOsContextCapable = multiOsCtx;
-    sbaTest->flushTaskFlags.areMultipleSubDevicesInContext = multiSubDevices;
-
-    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, true);
-    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, false);
-
-    commandStreamReceiver.lastSentUseGlobalAtomics ^= true;
-    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, expectSBA);
-    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, false);
-
-    commandStreamReceiver.lastSentUseGlobalAtomics ^= true;
-    flushTaskAndcheckForSBA<FamilyType>(sbaTest, commandStreamReceiver, expectSBA);
-}
-
-} /* namespace */
-
-struct GlobalAtomicsStateBaseAddressTests : public StateBaseAddressXeHPAndLaterTests,
-                                            public ::testing::WithParamInterface<std::tuple<bool, bool>> {};
-
-HWTEST_P(GlobalAtomicsStateBaseAddressTests, givenAnyMultiOSContextValueWithAnySubDeviceNumberWhenLastSentUseGlobalAtomicsIsFlippedThenStatBaseAddressProgrammingIsNeverAffected) {
-    auto [multiOsCtx, multiSubDevices] = GetParam();
-    testGlobalAtomicsImpactOnSBA<FamilyType>(this, multiOsCtx, multiSubDevices, false);
-}
-
-INSTANTIATE_TEST_CASE_P(,
-                        GlobalAtomicsStateBaseAddressTests,
-                        ::testing::Combine(
-                            ::testing::Bool(),
-                            ::testing::Bool()));
 
 using RenderSurfaceStateXeHPAndLaterTests = XeHpCommandStreamReceiverFlushTaskTests;
 

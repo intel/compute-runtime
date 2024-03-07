@@ -333,7 +333,6 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     EXPECT_EQ(-1, csr.lastMediaSamplerConfig);
     EXPECT_EQ(PreemptionMode::Initial, csr.lastPreemptionMode);
     EXPECT_EQ(0u, csr.latestSentStatelessMocsConfig);
-    EXPECT_FALSE(csr.lastSentUseGlobalAtomics);
 }
 
 TEST_F(CommandStreamReceiverTest, givenBaseDownloadAllocationCalledThenDoesNotChangeAnything) {

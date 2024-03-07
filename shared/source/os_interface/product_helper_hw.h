@@ -143,7 +143,6 @@ class ProductHelperHw : public ProductHelper {
     bool getScmPropertyLargeGrfModeSupport() const override;
     bool getScmPropertyDevicePreemptionModeSupport() const override;
 
-    bool getStateBaseAddressPropertyGlobalAtomicsSupport() const override;
     bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const override;
 
     bool getPreemptionDbgPropertyPreemptionModeSupport() const override;

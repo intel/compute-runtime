@@ -219,7 +219,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGetCommandsStreamProper
     EXPECT_TRUE(productHelper->getScmPropertyLargeGrfModeSupport());
     EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
 
-    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
     EXPECT_TRUE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
     EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());

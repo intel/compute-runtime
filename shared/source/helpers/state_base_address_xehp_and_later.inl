@@ -38,10 +38,6 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
             args.stateBaseAddressCmd->setGeneralStateBufferSizeModifyEnable(true);
             args.stateBaseAddressCmd->setGeneralStateBufferSize(0xfffff);
         }
-
-        if (args.sbaProperties->globalAtomics.value != StreamProperty::initValue) {
-            args.useGlobalAtomics = !!args.sbaProperties->globalAtomics.value;
-        }
     }
     if (args.setGeneralStateBaseAddress && is64bit) {
         args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.indirectObjectHeapBaseAddress));

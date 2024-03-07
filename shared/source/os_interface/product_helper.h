@@ -195,7 +195,6 @@ class ProductHelper {
     virtual bool getScmPropertyLargeGrfModeSupport() const = 0;
     virtual bool getScmPropertyDevicePreemptionModeSupport() const = 0;
 
-    virtual bool getStateBaseAddressPropertyGlobalAtomicsSupport() const = 0;
     virtual bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const = 0;
 
     virtual bool getPreemptionDbgPropertyPreemptionModeSupport() const = 0;

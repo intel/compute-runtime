@@ -38,7 +38,6 @@ struct XeHpcCore {
     static constexpr bool isUsingMiMathMocs = true;
 
     struct StateBaseAddressStateSupport {
-        static constexpr bool globalAtomics = false;
         static constexpr bool bindingTablePoolBaseAddress = true;
     };
 

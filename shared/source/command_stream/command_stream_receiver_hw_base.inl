@@ -1532,18 +1532,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::handleStateBaseAddressStateTrans
         isStateBaseAddressDirty = true;
         this->lastMemoryCompressionState = memoryCompressionState;
     }
-
-    if (this->sbaSupportFlags.globalAtomics) {
-        if (this->streamProperties.stateBaseAddress.globalAtomics.value != -1) {
-            this->lastSentUseGlobalAtomics = !!this->streamProperties.stateBaseAddress.globalAtomics.value;
-        }
-
-        bool globalAtomics = (this->isMultiOsContextCapable() || dispatchFlags.areMultipleSubDevicesInContext) && dispatchFlags.useGlobalAtomics;
-        if (this->lastSentUseGlobalAtomics != globalAtomics) {
-            isStateBaseAddressDirty = true;
-            this->lastSentUseGlobalAtomics = globalAtomics;
-        }
-    }
 }
 
 template <typename GfxFamily>
@@ -1710,7 +1698,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
         setGeneralStateBaseAddress,               // setGeneralStateBaseAddress
         false,                                    // useGlobalHeapsBaseAddress
         isMultiOsContextCapable(),                // isMultiOsContextCapable
-        this->lastSentUseGlobalAtomics,           // useGlobalAtomics
+        false,                                    // useGlobalAtomics
         areMultipleSubDevicesInContext,           // areMultipleSubDevicesInContext
         false,                                    // overrideSurfaceStateBaseAddress
         debuggingEnabled,                         // isDebuggerActive

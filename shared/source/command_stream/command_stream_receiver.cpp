@@ -597,9 +597,6 @@ void CommandStreamReceiver::initProgrammingFlags() {
 
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
     this->streamProperties.stateBaseAddress.statelessMocs = {};
-
-    lastSentUseGlobalAtomics = false;
-    this->streamProperties.stateBaseAddress.globalAtomics = {};
 }
 
 void CommandStreamReceiver::programForAubSubCapture(bool wasActiveInPreviousEnqueue, bool isActive) {

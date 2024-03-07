@@ -378,7 +378,6 @@ void StateBaseAddressProperties::resetState() {
     clearIsDirty();
 
     this->statelessMocs.value = StreamProperty::initValue;
-    this->globalAtomics.value = StreamProperty::initValue;
 
     this->bindingTablePoolBaseAddress.value = StreamProperty64::initValue;
     this->bindingTablePoolSize.value = StreamPropertySizeT::initValue;
@@ -440,10 +439,6 @@ void StateBaseAddressProperties::setPropertiesAll(bool globalAtomics, int32_t st
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
-    if (this->stateBaseAddressPropertiesSupport.globalAtomics) {
-        this->globalAtomics.set(globalAtomics);
-    }
-
     this->statelessMocs.set(statelessMocs);
 
     if (this->stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress) {
@@ -462,7 +457,6 @@ void StateBaseAddressProperties::setPropertiesAll(bool globalAtomics, int32_t st
 void StateBaseAddressProperties::copyPropertiesAll(const StateBaseAddressProperties &properties) {
     clearIsDirty();
 
-    this->globalAtomics.set(properties.globalAtomics.value);
     this->statelessMocs.set(properties.statelessMocs.value);
 
     this->bindingTablePoolBaseAddress.set(properties.bindingTablePoolBaseAddress.value);
@@ -516,7 +510,7 @@ void StateBaseAddressProperties::copyPropertiesDynamicState(const StateBaseAddre
 }
 
 bool StateBaseAddressProperties::isDirty() const {
-    return globalAtomics.isDirty || statelessMocs.isDirty ||
+    return statelessMocs.isDirty ||
            bindingTablePoolBaseAddress.isDirty ||
            surfaceStateBaseAddress.isDirty ||
            dynamicStateBaseAddress.isDirty ||
@@ -524,7 +518,6 @@ bool StateBaseAddressProperties::isDirty() const {
 }
 
 void StateBaseAddressProperties::clearIsDirty() {
-    globalAtomics.isDirty = false;
     statelessMocs.isDirty = false;
     bindingTablePoolBaseAddress.isDirty = false;
     surfaceStateBaseAddress.isDirty = false;

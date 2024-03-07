@@ -62,7 +62,6 @@ DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_TRUE(productHelper->getScmPropertyLargeGrfModeSupport());
     EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
 
-    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
     EXPECT_TRUE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
     EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());

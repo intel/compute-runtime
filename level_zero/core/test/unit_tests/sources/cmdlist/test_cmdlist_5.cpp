@@ -1169,7 +1169,6 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(finalState.bindingTablePoolBaseAddress.value, requiredState.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalState.bindingTablePoolSize.value, requiredState.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalState.globalAtomics.value, requiredState.globalAtomics.value);
     EXPECT_EQ(finalState.statelessMocs.value, requiredState.statelessMocs.value);
 
     result = commandList->close();
@@ -1224,7 +1223,6 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(csrState.bindingTablePoolBaseAddress.value, finalState.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(csrState.bindingTablePoolSize.value, finalState.bindingTablePoolSize.value);
 
-    EXPECT_EQ(csrState.globalAtomics.value, finalState.globalAtomics.value);
     EXPECT_EQ(csrState.statelessMocs.value, finalState.statelessMocs.value);
 
     queueBefore = cmdQueueStream.getUsed();
@@ -2178,7 +2176,6 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(finalState.bindingTablePoolBaseAddress.value, requiredState.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalState.bindingTablePoolSize.value, requiredState.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalState.globalAtomics.value, requiredState.globalAtomics.value);
     EXPECT_EQ(finalState.statelessMocs.value, requiredState.statelessMocs.value);
 
     result = commandList->close();
@@ -2206,7 +2203,6 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(csrState.bindingTablePoolBaseAddress.value, finalState.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(csrState.bindingTablePoolSize.value, finalState.bindingTablePoolSize.value);
 
-    EXPECT_EQ(csrState.globalAtomics.value, finalState.globalAtomics.value);
     EXPECT_EQ(csrState.statelessMocs.value, finalState.statelessMocs.value);
 
     cmdList.clear();
@@ -2452,7 +2448,6 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(finalState.bindingTablePoolBaseAddress.value, requiredState.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(finalState.bindingTablePoolSize.value, requiredState.bindingTablePoolSize.value);
 
-    EXPECT_EQ(finalState.globalAtomics.value, requiredState.globalAtomics.value);
     EXPECT_EQ(finalState.statelessMocs.value, requiredState.statelessMocs.value);
 
     result = commandList->close();
@@ -2478,7 +2473,6 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(csrState.bindingTablePoolBaseAddress.value, finalState.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(csrState.bindingTablePoolSize.value, finalState.bindingTablePoolSize.value);
 
-    EXPECT_EQ(csrState.globalAtomics.value, finalState.globalAtomics.value);
     EXPECT_EQ(csrState.statelessMocs.value, finalState.statelessMocs.value);
 
     cmdList.clear();

@@ -262,7 +262,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool indirectHeapInLocalMemory = false;
     bool stateBaseAddressTracking = false;
     bool lastPipelineSelectModeRequired = false;
-    bool lastSentUseGlobalAtomics = false;
     bool systolicModeSupport = false;
     bool doubleSbaWa = false;
     bool usingPrimaryBuffer = false;

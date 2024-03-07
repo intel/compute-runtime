@@ -585,7 +585,6 @@ class CommandStreamReceiver {
     bool useNewResourceImplicitFlush = false;
     bool newResources = false;
     bool useGpuIdleImplicitFlush = false;
-    bool lastSentUseGlobalAtomics = false;
     bool useNotifyEnableForPostSync = false;
     bool dcFlushSupport = false;
     bool forceSkipResourceCleanupRequired = false;

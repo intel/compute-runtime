@@ -654,12 +654,6 @@ bool ProductHelperHw<gfxProduct>::getScmPropertyDevicePreemptionModeSupport() co
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyGlobalAtomicsSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateBaseAddressStateSupport::globalAtomics;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateBaseAddressStateSupport::bindingTablePoolBaseAddress;
@@ -667,7 +661,6 @@ bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBas
 
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport) const {
-    propertiesSupport.globalAtomics = getStateBaseAddressPropertyGlobalAtomicsSupport();
     propertiesSupport.bindingTablePoolBaseAddress = getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport();
 }
 

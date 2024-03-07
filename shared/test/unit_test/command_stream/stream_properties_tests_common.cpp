@@ -883,39 +883,21 @@ TEST(StreamPropertiesTests, givenModeSelectedMediaSamplerClockGatePipelineSelect
 TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingPropertyAndCheckIfDirtyThenExpectCleanStateForNotSupportedAndDirtyForSupported) {
     MockStateBaseAddressProperties sbaProperties{};
     sbaProperties.propertiesSupportLoaded = true;
-    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = false;
 
     sbaProperties.setPropertiesAll(true, -1, 1, -1, -1, -1, -1, -1, -1, -1);
     EXPECT_FALSE(sbaProperties.isDirty());
 
-    EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
     EXPECT_EQ(-1, sbaProperties.statelessMocs.value);
     EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
 
-    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
-    sbaProperties.setPropertiesAll(true, -1, 0, -1, -1, -1, -1, -1, -1, -1);
-    EXPECT_TRUE(sbaProperties.isDirty());
-    EXPECT_TRUE(sbaProperties.globalAtomics.isDirty);
-    EXPECT_FALSE(sbaProperties.statelessMocs.isDirty);
-    EXPECT_FALSE(sbaProperties.bindingTablePoolBaseAddress.isDirty);
-    EXPECT_FALSE(sbaProperties.bindingTablePoolSize.isDirty);
-
-    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
-    EXPECT_EQ(-1, sbaProperties.statelessMocs.value);
-    EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
-    EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
-
-    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
     sbaProperties.setPropertiesAll(false, 1, 1, -1, -1, -1, -1, -1, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
-    EXPECT_FALSE(sbaProperties.globalAtomics.isDirty);
     EXPECT_TRUE(sbaProperties.statelessMocs.isDirty);
     EXPECT_FALSE(sbaProperties.bindingTablePoolBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.bindingTablePoolSize.isDirty);
 
-    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
     EXPECT_EQ(1, sbaProperties.statelessMocs.value);
     EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
@@ -923,24 +905,20 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = true;
     sbaProperties.setPropertiesAll(true, -1, 2, 2, -1, -1, -1, -1, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
-    EXPECT_FALSE(sbaProperties.globalAtomics.isDirty);
     EXPECT_FALSE(sbaProperties.statelessMocs.isDirty);
     EXPECT_TRUE(sbaProperties.bindingTablePoolBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.bindingTablePoolSize.isDirty);
 
-    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
     EXPECT_EQ(1, sbaProperties.statelessMocs.value);
     EXPECT_EQ(2, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(2u, sbaProperties.bindingTablePoolSize.value);
 
-    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
     sbaProperties.setPropertiesAll(true, 1, 2, 2, -1, -1, -1, -1, -1, -1);
     EXPECT_FALSE(sbaProperties.isDirty());
 
     sbaProperties.setPropertiesAll(false, 0, 3, 2, -1, -1, -1, -1, -1 - 1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
 
-    EXPECT_EQ(0, sbaProperties.globalAtomics.value);
     EXPECT_EQ(0, sbaProperties.statelessMocs.value);
     EXPECT_EQ(3, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(2u, sbaProperties.bindingTablePoolSize.value);
@@ -948,7 +926,6 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     sbaProperties.setPropertiesAll(false, 0, 3, 3, -1, -1, -1, -1, -1, -1);
     EXPECT_FALSE(sbaProperties.isDirty());
 
-    EXPECT_EQ(0, sbaProperties.globalAtomics.value);
     EXPECT_EQ(0, sbaProperties.statelessMocs.value);
     EXPECT_EQ(3, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(3u, sbaProperties.bindingTablePoolSize.value);
@@ -961,7 +938,6 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     copySbaProperties.copyPropertiesAll(sbaProperties);
     EXPECT_TRUE(copySbaProperties.isDirty());
 
-    EXPECT_EQ(0, copySbaProperties.globalAtomics.value);
     EXPECT_EQ(0, copySbaProperties.statelessMocs.value);
     EXPECT_EQ(3, copySbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(3u, copySbaProperties.bindingTablePoolSize.value);
@@ -980,11 +956,6 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagDefaultValueWhenSett
     sbaProperties.initSupport(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     sbaProperties.setPropertiesAll(true, 2, 3, 3, -1, -1, -1, -1, -1, -1);
-    if (sbaPropertiesSupport.globalAtomics) {
-        EXPECT_EQ(1, sbaProperties.globalAtomics.value);
-    } else {
-        EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
-    }
 
     EXPECT_EQ(2, sbaProperties.statelessMocs.value);
 
@@ -1001,7 +972,6 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     MockExecutionEnvironment mockExecutionEnvironment{};
     MockStateBaseAddressProperties sbaProperties{};
     sbaProperties.propertiesSupportLoaded = true;
-    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = false;
 
     sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, -1, -1, -1, -1, -1);
@@ -1404,10 +1374,8 @@ TEST(StreamPropertiesTests, givenIndirectObjectBaseAddressStateBaseAddressProper
 TEST(StreamPropertiesTests, givenSetAllStateBaseAddressPropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
     MockStateBaseAddressProperties sbaProperties{};
     sbaProperties.propertiesSupportLoaded = true;
-    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = true;
 
-    bool globalAtomics = true;
     int32_t statelessMocs = 1;
     int64_t bindingTablePoolBaseAddress = 2;
     size_t bindingTablePoolSize = 3;
@@ -1418,13 +1386,12 @@ TEST(StreamPropertiesTests, givenSetAllStateBaseAddressPropertiesWhenResetingSta
     int64_t indirectObjectBaseAddress = 8;
     size_t indirectObjectSize = 9;
 
-    sbaProperties.setPropertiesAll(globalAtomics, statelessMocs,
+    sbaProperties.setPropertiesAll(false, statelessMocs,
                                    bindingTablePoolBaseAddress, bindingTablePoolSize,
                                    surfaceStateBaseAddress, surfaceStateSize,
                                    dynamicStateBaseAddress, dynamicStateSize,
                                    indirectObjectBaseAddress, indirectObjectSize);
     EXPECT_TRUE(sbaProperties.isDirty());
-    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
     EXPECT_EQ(1, sbaProperties.statelessMocs.value);
     EXPECT_EQ(2, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(3u, sbaProperties.bindingTablePoolSize.value);
@@ -1437,7 +1404,6 @@ TEST(StreamPropertiesTests, givenSetAllStateBaseAddressPropertiesWhenResetingSta
 
     sbaProperties.resetState();
     EXPECT_FALSE(sbaProperties.isDirty());
-    EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
     EXPECT_EQ(-1, sbaProperties.statelessMocs.value);
     EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(StreamPropertySizeT::initValue, sbaProperties.bindingTablePoolSize.value);
@@ -1449,7 +1415,6 @@ TEST(StreamPropertiesTests, givenSetAllStateBaseAddressPropertiesWhenResetingSta
     EXPECT_EQ(StreamPropertySizeT::initValue, sbaProperties.indirectObjectSize.value);
 
     EXPECT_TRUE(sbaProperties.propertiesSupportLoaded);
-    EXPECT_TRUE(sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics);
     EXPECT_TRUE(sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress);
 }
 
@@ -1475,7 +1440,6 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
     bool systolicMode = true;
     globalStreamProperties.pipelineSelect.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
 
-    bool globalAtomics = true;
     int32_t statelessMocs = 1;
     int64_t bindingTablePoolBaseAddress = 2;
     size_t bindingTablePoolSize = 3;
@@ -1485,7 +1449,7 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
     size_t dynamicStateSize = 7;
     int64_t indirectObjectBaseAddress = 8;
     size_t indirectObjectSize = 9;
-    globalStreamProperties.stateBaseAddress.setPropertiesAll(globalAtomics, statelessMocs,
+    globalStreamProperties.stateBaseAddress.setPropertiesAll(false, statelessMocs,
                                                              bindingTablePoolBaseAddress, bindingTablePoolSize,
                                                              surfaceStateBaseAddress, surfaceStateSize,
                                                              dynamicStateBaseAddress, dynamicStateSize,
@@ -1507,7 +1471,6 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
     EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
     EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.systolicMode.value);
 
-    EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.globalAtomics.value);
     EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.statelessMocs.value);
     EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(StreamPropertySizeT::initValue, globalStreamProperties.stateBaseAddress.bindingTablePoolSize.value);

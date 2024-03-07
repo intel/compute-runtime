@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,7 +152,6 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.taskLevel = taskLevel;
 
         commandStreamReceiver.lastMediaSamplerConfig = 0;
-        commandStreamReceiver.lastSentUseGlobalAtomics = false;
         commandStreamReceiver.streamProperties.pipelineSelect.setPropertiesAll(true, false, false);
         commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(0, GrfConfig::defaultGrfNumber,
                                                                                  gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode());

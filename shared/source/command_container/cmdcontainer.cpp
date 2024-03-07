@@ -213,7 +213,6 @@ void CommandContainer::reset() {
     iddBlock = nullptr;
     nextIddInBlock = this->getNumIddPerBlock();
     lastPipelineSelectModeRequired = false;
-    lastSentUseGlobalAtomics = false;
     endCmdPtr = nullptr;
     alignedPrimarySize = 0;
 }

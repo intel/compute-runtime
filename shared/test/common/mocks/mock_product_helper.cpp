@@ -439,7 +439,6 @@ struct UnknownProduct {
     };
 
     struct StateBaseAddressStateSupport {
-        static constexpr bool globalAtomics = false;
         static constexpr bool bindingTablePoolBaseAddress = false;
     };
 
