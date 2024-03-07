@@ -5429,6 +5429,11 @@ HWTEST2_F(RTASDeviceTest, GivenRTASLibraryPreLoadedWhenQueryingRTASProptertiesTh
 }
 
 HWTEST2_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned, MatchAny) {
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
+
+    if (!releaseHelper || !releaseHelper->isRayTracingSupported()) {
+        GTEST_SKIP();
+    }
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = true;
     MockOsLibrary::failGetProcAddress = true;
@@ -5450,6 +5455,11 @@ HWTEST2_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThen
 }
 
 HWTEST2_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASProptertiesThenCorrectPropertiesIsReturned, MatchAny) {
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
+
+    if (!releaseHelper || !releaseHelper->isRayTracingSupported()) {
+        GTEST_SKIP();
+    }
     MockOsLibrary::libraryLoaded = false;
     MockOsLibrary::failLibraryLoad = false;
     MockOsLibrary::failGetProcAddress = true;
