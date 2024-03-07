@@ -73,7 +73,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenPartitionArg
                                                        dword0,
                                                        dword1,
                                                        false,
-                                                       false);
+                                                       false,
+                                                       nullptr);
 
     auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(buffer);
     ASSERT_NE(nullptr, storeDataImm);
@@ -96,7 +97,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenPartitionArg
                                                        dword0,
                                                        dword1,
                                                        false,
-                                                       true);
+                                                       true,
+                                                       nullptr);
 
     auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(buffer);
     ASSERT_NE(nullptr, storeDataImm);

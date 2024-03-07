@@ -1187,8 +1187,12 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(LinearStream &command
                                                            uint32_t dataDword0,
                                                            uint32_t dataDword1,
                                                            bool storeQword,
-                                                           bool workloadPartitionOffset) {
+                                                           bool workloadPartitionOffset,
+                                                           void **outCmdPtr) {
     auto miStoreDataImmBuffer = commandStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
+    if (outCmdPtr != nullptr) {
+        *outCmdPtr = miStoreDataImmBuffer;
+    }
     EncodeStoreMemory<Family>::programStoreDataImm(miStoreDataImmBuffer,
                                                    gpuAddress,
                                                    dataDword0,

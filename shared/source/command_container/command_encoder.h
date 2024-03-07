@@ -587,7 +587,8 @@ struct EncodeStoreMemory {
                                     uint32_t dataDword0,
                                     uint32_t dataDword1,
                                     bool storeQword,
-                                    bool workloadPartitionOffset);
+                                    bool workloadPartitionOffset,
+                                    void **outCmdPtr);
 
     static void programStoreDataImm(MI_STORE_DATA_IMM *cmdBuffer,
                                     uint64_t gpuAddress,

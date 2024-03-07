@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -170,7 +170,8 @@ char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indir
                                                               static_cast<uint32_t>((patchInfoData.sourceAllocation + patchInfoData.sourceAllocationOffset) & 0x0000FFFFFFFFULL),
                                                               static_cast<uint32_t>((patchInfoData.sourceAllocation + patchInfoData.sourceAllocationOffset) >> 32),
                                                               !is32BitAddress,
-                                                              false);
+                                                              false,
+                                                              nullptr);
 
             PatchInfoData patchInfoForAddress(patchInfoData.targetAllocation,
                                               patchInfoData.targetAllocationOffset,

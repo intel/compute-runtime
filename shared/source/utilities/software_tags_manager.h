@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,8 @@ void SWTagsManager::insertBXMLHeapAddress(LinearStream &cmdStream) {
                                                       ptr->magicNumber,
                                                       0,
                                                       false,
-                                                      false);
+                                                      false,
+                                                      nullptr);
     memoryManager->unlockResource(bxmlHeap);
 }
 
@@ -76,7 +77,8 @@ void SWTagsManager::insertSWTagHeapAddress(LinearStream &cmdStream) {
                                                       ptr->magicNumber,
                                                       0,
                                                       false,
-                                                      false);
+                                                      false,
+                                                      nullptr);
     memoryManager->unlockResource(tagHeap);
 }
 

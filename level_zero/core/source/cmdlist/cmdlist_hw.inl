@@ -3564,7 +3564,8 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute(uint64_t gpuA
         value,
         0u,
         false,
-        workloadPartition);
+        workloadPartition,
+        nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

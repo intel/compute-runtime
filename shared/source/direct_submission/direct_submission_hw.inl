@@ -655,7 +655,8 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::updateRelaxedOrderingQueueSize(u
     this->currentRelaxedOrderingQueueSize = newSize;
 
     EncodeStoreMemory<GfxFamily>::programStoreDataImm(this->ringCommandStream, this->relaxedOrderingQueueSizeLimitValueVa,
-                                                      this->currentRelaxedOrderingQueueSize, 0, false, false);
+                                                      this->currentRelaxedOrderingQueueSize, 0, false, false,
+                                                      nullptr);
 }
 
 template <typename GfxFamily, typename Dispatcher>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,14 +125,18 @@ HWTEST_F(CommandEncoderTest, GivenDwordStoreWhenAddingStoreDataImmThenExpectDwor
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
 
+    void *outSdiCmd = nullptr;
+
     EncodeStoreMemory<FamilyType>::programStoreDataImm(cmdStream,
                                                        gpuAddress,
                                                        dword0,
                                                        dword1,
                                                        false,
-                                                       false);
+                                                       false,
+                                                       &outSdiCmd);
     size_t usedAfter = cmdStream.getUsed();
     EXPECT_EQ(size, usedAfter);
+    ASSERT_NE(nullptr, outSdiCmd);
 
     auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(buffer);
     ASSERT_NE(nullptr, storeDataImm);
@@ -141,6 +145,8 @@ HWTEST_F(CommandEncoderTest, GivenDwordStoreWhenAddingStoreDataImmThenExpectDwor
     EXPECT_EQ(0u, storeDataImm->getDataDword1());
     EXPECT_FALSE(storeDataImm->getStoreQword());
     EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_DWORD, storeDataImm->getDwordLength());
+
+    EXPECT_EQ(storeDataImm, outSdiCmd);
 }
 
 HWTEST_F(CommandEncoderTest, GivenQwordStoreWhenAddingStoreDataImmThenExpectQwordProgramming) {
@@ -161,7 +167,8 @@ HWTEST_F(CommandEncoderTest, GivenQwordStoreWhenAddingStoreDataImmThenExpectQwor
                                                        dword0,
                                                        dword1,
                                                        true,
-                                                       false);
+                                                       false,
+                                                       nullptr);
     size_t usedAfter = cmdStream.getUsed();
     EXPECT_EQ(size, usedAfter);
 

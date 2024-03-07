@@ -137,7 +137,8 @@ struct TimestampPacketHelper {
     static void nonStallingContextEndNodeSignal(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode, bool multiTileOperation) {
         uint64_t contextEndAddress = getContextEndGpuAddress(timestampPacketNode);
 
-        NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream, contextEndAddress, 0, 0, false, multiTileOperation);
+        NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream, contextEndAddress, 0, 0, false, multiTileOperation,
+                                                               nullptr);
     }
 
     template <typename GfxFamily>

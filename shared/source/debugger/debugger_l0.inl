@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,8 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
                                                                    static_cast<uint32_t>(generalStateBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(generalStateBaseAddress >> 32),
                                                                    true,
-                                                                   false);
+                                                                   false,
+                                                                   nullptr);
         }
         if (sbaCanonized.surfaceStateBaseAddress) {
             auto surfaceStateBaseAddress = sbaCanonized.surfaceStateBaseAddress;
@@ -60,7 +61,8 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
                                                                    static_cast<uint32_t>(surfaceStateBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(surfaceStateBaseAddress >> 32),
                                                                    true,
-                                                                   false);
+                                                                   false,
+                                                                   nullptr);
         }
         if (sbaCanonized.dynamicStateBaseAddress) {
             auto dynamicStateBaseAddress = sbaCanonized.dynamicStateBaseAddress;
@@ -69,7 +71,8 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
                                                                    static_cast<uint32_t>(dynamicStateBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(dynamicStateBaseAddress >> 32),
                                                                    true,
-                                                                   false);
+                                                                   false,
+                                                                   nullptr);
         }
         if (sbaCanonized.indirectObjectBaseAddress) {
             auto indirectObjectBaseAddress = sbaCanonized.indirectObjectBaseAddress;
@@ -78,7 +81,8 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
                                                                    static_cast<uint32_t>(indirectObjectBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(indirectObjectBaseAddress >> 32),
                                                                    true,
-                                                                   false);
+                                                                   false,
+                                                                   nullptr);
         }
         if (sbaCanonized.instructionBaseAddress) {
             auto instructionBaseAddress = sbaCanonized.instructionBaseAddress;
@@ -87,7 +91,8 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
                                                                    static_cast<uint32_t>(instructionBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(instructionBaseAddress >> 32),
                                                                    true,
-                                                                   false);
+                                                                   false,
+                                                                   nullptr);
         }
         if (sbaCanonized.bindlessSurfaceStateBaseAddress) {
             auto bindlessSurfaceStateBaseAddress = sbaCanonized.bindlessSurfaceStateBaseAddress;
@@ -96,7 +101,8 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
                                                                    static_cast<uint32_t>(bindlessSurfaceStateBaseAddress & 0x0000FFFFFFFFULL),
                                                                    static_cast<uint32_t>(bindlessSurfaceStateBaseAddress >> 32),
                                                                    true,
-                                                                   false);
+                                                                   false,
+                                                                   nullptr);
         }
     }
 }

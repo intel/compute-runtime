@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,8 @@ inline void Dispatcher<GfxFamily>::dispatchStoreDwordCommand(LinearStream &cmdBu
                                                       value,
                                                       0,
                                                       false,
-                                                      false);
+                                                      false,
+                                                      nullptr);
 }
 
 template <typename GfxFamily>
