@@ -120,12 +120,13 @@ static_assert(offsetof(GemWait, boHandle) == offsetof(drm_i915_gem_wait, bo_hand
 static_assert(offsetof(GemWait, flags) == offsetof(drm_i915_gem_wait, flags));
 static_assert(offsetof(GemWait, timeoutNs) == offsetof(drm_i915_gem_wait, timeout_ns));
 
-static_assert(sizeof(ResetStats) >= sizeof(drm_i915_reset_stats));
+static_assert(sizeof(ResetStats) == sizeof(drm_i915_reset_stats));
 static_assert(offsetof(ResetStats, contextId) == offsetof(drm_i915_reset_stats, ctx_id));
 static_assert(offsetof(ResetStats, flags) == offsetof(drm_i915_reset_stats, flags));
 static_assert(offsetof(ResetStats, resetCount) == offsetof(drm_i915_reset_stats, reset_count));
 static_assert(offsetof(ResetStats, batchActive) == offsetof(drm_i915_reset_stats, batch_active));
 static_assert(offsetof(ResetStats, batchPending) == offsetof(drm_i915_reset_stats, batch_pending));
+static_assert(offsetof(ResetStats, reserved) == offsetof(drm_i915_reset_stats, pad));
 
 static_assert(sizeof(GetParam) == sizeof(struct drm_i915_getparam));
 static_assert(offsetof(GetParam, param) == offsetof(struct drm_i915_getparam, param));
