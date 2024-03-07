@@ -41,7 +41,7 @@ const std::string defaultPowerLimit("power1_rated_max");
 constexpr uint64_t expectedEnergyCounter = 123456785u;
 constexpr uint64_t expectedEnergyCounterTile0 = 123456785u;
 constexpr uint64_t expectedEnergyCounterTile1 = 128955785u;
-constexpr uint32_t mockDefaultPowerLimitVal = 600000000;
+constexpr uint32_t mockDefaultPowerLimitVal = 300000000;
 constexpr uint64_t mockMinPowerLimitVal = 300000000;
 constexpr uint64_t mockMaxPowerLimitVal = 600000000;
 
