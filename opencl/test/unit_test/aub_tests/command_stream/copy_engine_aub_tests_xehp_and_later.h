@@ -22,6 +22,8 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
 

@@ -23,6 +23,7 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -230,7 +231,7 @@ struct EnqueueWithWalkerPartitionFourTilesTests : public FourTilesSingleContextT
         kernelIds |= (1 << 8);
 
         FourTilesSingleContextTest::SetUp();
-        SimpleKernelFixture::setUp(rootDevice, context.get());
+        SimpleKernelFixture::setUp(rootDevice.get(), context.get());
 
         rootCsr = rootDevice->getDefaultEngine().commandStreamReceiver;
         EXPECT_EQ(4u, rootCsr->getOsContext().getNumSupportedDevices());
@@ -274,7 +275,7 @@ struct DynamicWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTile
 HWCMDTEST_F(IGFX_XE_HP_CORE, DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithAtomicThenOutputDataIsValid) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice, nullptr);
+    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
 
     commandQueues[0][0].reset(mockCommandQueue);
 
@@ -332,7 +333,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DynamicWalkerPartitionFourTilesTests, whenWalkerPar
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithoutAtomicThenOutputDataIsValid) {
 
-    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice, nullptr);
+    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
 
     commandQueues[0][0].reset(mockCommandQueue);
 
@@ -403,7 +404,7 @@ struct StaticWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTiles
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenFourTilesWhenStaticWalkerPartitionIsEnabledForKernelThenOutputDataIsValid) {
 
-    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice, nullptr);
+    auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
 
     commandQueues[0][0].reset(mockCommandQueue);
 

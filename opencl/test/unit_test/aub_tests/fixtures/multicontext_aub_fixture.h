@@ -12,7 +12,6 @@
 #include "shared/test/common/tests_configuration.h"
 
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
 
@@ -20,7 +19,8 @@
 #include <vector>
 
 namespace NEO {
-class MockDevice;
+class MockClDevice;
+class MockContext;
 
 struct MulticontextAubFixture {
     enum class EnabledCommandStreamers {
@@ -28,6 +28,9 @@ struct MulticontextAubFixture {
         dual,   // RCS + CCS0
         all,    // RCS + CCS0-3
     };
+
+    MulticontextAubFixture();
+    ~MulticontextAubFixture();
 
     void setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression);
     void tearDown() {}
@@ -103,7 +106,7 @@ struct MulticontextAubFixture {
     const uint32_t rootDeviceIndex = 0u;
     uint32_t numberOfEnabledTiles = 0;
     std::vector<ClDevice *> tileDevices;
-    ClDevice *rootDevice = nullptr;
+    std::unique_ptr<MockClDevice> rootDevice;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockContext> multiTileDefaultContext;
     std::vector<std::vector<std::unique_ptr<CommandQueue>>> commandQueues;

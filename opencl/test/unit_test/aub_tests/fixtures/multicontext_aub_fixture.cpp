@@ -26,6 +26,9 @@
 
 namespace NEO {
 
+MulticontextAubFixture::MulticontextAubFixture() = default;
+MulticontextAubFixture::~MulticontextAubFixture() = default;
+
 void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression) {
     this->numberOfEnabledTiles = numberOfTiles;
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
@@ -33,11 +36,6 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     cl_int retVal = CL_SUCCESS;
     debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::batchedDispatch));
     debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
-    if (testMode == TestMode::aubTestsWithTbx) {
-        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_TBX_WITH_AUB));
-    } else {
-        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_AUB));
-    }
 
     HardwareInfo localHwInfo = *defaultHwInfo;
     if (EnabledCommandStreamers::single != enabledCommandStreamers) {
@@ -52,34 +50,22 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
             localHwInfo.gtSystemInfo.MultiTileArchInfo.TileMask |= (1 << i);
         }
     }
-
-    localHwInfo.capabilityTable.blitterOperationsSupported = true;
-    if (debugManager.flags.EnableBlitterOperationsSupport.get() != -1) {
-        localHwInfo.capabilityTable.blitterOperationsSupported = !!debugManager.flags.EnableBlitterOperationsSupport.get();
-    }
-
     debugManager.flags.RenderCompressedBuffersEnabled.set(enableCompression);
     debugManager.flags.RenderCompressedImagesEnabled.set(enableCompression);
     debugManager.flags.EnableBlitterForEnqueueOperations.set(false);
 
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useHwCsr = true;
-
-    platformsImpl->clear();
-    constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
-    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&localHwInfo);
-    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
-    initPlatform();
-
-    rootDevice = platform()->getClDevice(0);
-
-    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->setRcsExposure();
-    auto &gfxCoreHelper = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockClDevice::prepareExecutionEnvironment(&localHwInfo, rootDeviceIndex));
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setRcsExposure();
+    localHwInfo = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     auto renderEngine = aub_stream::NUM_ENGINES;
-    for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex])) {
+    bool isCcs1Supported = false;
+    for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex])) {
         if (!EngineHelpers::isCcs(engine.first)) {
             renderEngine = engine.first;
-            break;
+        }
+        if (engine.first == aub_stream::ENGINE_CCS1) {
+            isCcs1Supported = true;
         }
     }
     bool isRenderEngineSupported = (renderEngine != aub_stream::NUM_ENGINES);
@@ -111,6 +97,22 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
 
     debugManager.flags.AUBDumpCaptureFileName.set(filename);
 
+    if (testMode == TestMode::aubTestsWithTbx) {
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_TBX_WITH_AUB));
+    } else {
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_AUB));
+    }
+
+    localHwInfo.capabilityTable.blitterOperationsSupported = true;
+    if (debugManager.flags.EnableBlitterOperationsSupport.get() != -1) {
+        localHwInfo.capabilityTable.blitterOperationsSupported = !!debugManager.flags.EnableBlitterOperationsSupport.get();
+    }
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useHwCsr = true;
+
+    rootDevice = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo, rootDeviceIndex));
+
     auto createCommandQueueForEngine = [&](uint32_t tileNumber, size_t engineFamily, size_t engineIndex) {
         cl_queue_properties properties[] = {CL_QUEUE_FAMILY_INTEL, engineFamily, CL_QUEUE_INDEX_INTEL, engineIndex, 0};
         auto clQueue = clCreateCommandQueueWithProperties(context.get(), tileDevices[tileNumber], properties, &retVal);
@@ -120,7 +122,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
 
     EXPECT_EQ(rootDeviceIndex, rootDevice->getRootDeviceIndex());
     {
-        cl_device_id deviceId = rootDevice;
+        cl_device_id deviceId = rootDevice.get();
         ClDeviceVector clDeviceVector{&deviceId, 1};
         if (numberOfTiles > 1) {
             for (uint32_t i = 0; i < numberOfTiles; i++) {
@@ -145,9 +147,12 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
                 auto rcsQueue = tileDevices[tile]->getDevice().getEngineGroupIndexFromEngineGroupType(EngineGroupType::renderCompute);
                 commandQueues[tile].push_back(createCommandQueueForEngine(tile, rcsQueue, 0));
                 commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
-            } else {
+            } else if (isCcs1Supported) {
                 commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
                 commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 1));
+            } else {
+                commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
+                commandQueues[tile].push_back(createCommandQueueForEngine(tile, ccsQueue, 0));
             }
         } else if (EnabledCommandStreamers::all == enabledCommandStreamers) {
             if (isRenderEngineSupported) {
@@ -164,7 +169,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
 
     {
         cl_int retVal = CL_SUCCESS;
-        cl_device_id deviceId = rootDevice;
+        cl_device_id deviceId = rootDevice.get();
         multiTileDefaultContext.reset(MockContext::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
