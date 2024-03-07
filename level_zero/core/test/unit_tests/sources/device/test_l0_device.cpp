@@ -4508,9 +4508,9 @@ TEST_F(DeviceSimpleTests, givenDeviceThenValidUuidIsReturned) {
     device->getProperties(&deviceProps);
     uint32_t rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
-    EXPECT_EQ(memcmp(&deviceProps.vendorId, deviceProps.uuid.id, sizeof(uint32_t)), 0);
-    EXPECT_EQ(memcmp(&deviceProps.deviceId, deviceProps.uuid.id + sizeof(uint32_t), sizeof(uint32_t)), 0);
-    EXPECT_EQ(memcmp(&rootDeviceIndex, deviceProps.uuid.id + (2 * sizeof(uint32_t)), sizeof(uint32_t)), 0);
+    EXPECT_EQ(memcmp(&deviceProps.vendorId, deviceProps.uuid.id, sizeof(uint16_t)), 0);
+    EXPECT_EQ(memcmp(&deviceProps.deviceId, deviceProps.uuid.id + sizeof(uint16_t), sizeof(uint16_t)), 0);
+    EXPECT_EQ(memcmp(&rootDeviceIndex, deviceProps.uuid.id + (3 * sizeof(uint16_t)), sizeof(uint32_t)), 0);
 }
 
 TEST_F(DeviceSimpleTests, WhenGettingKernelPropertiesThenSuccessIsReturned) {

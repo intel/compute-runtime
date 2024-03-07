@@ -901,7 +901,7 @@ bool Device::getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
 
 bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != PhysicalDevicePciBusInfo::invalidValue) {
-        uuid.fill(0);
+        generateUuid(uuid);
 
         /* Device UUID uniquely identifies a device within a system.
          * We generate it based on device information along with PCI information
@@ -927,20 +927,17 @@ bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusIn
             uint8_t reserved[4];
             uint8_t subDeviceID;
         };
+        static_assert(sizeof(DeviceUUID) == ProductHelper::uuidSize);
 
-        DeviceUUID deviceUUID = {};
-        deviceUUID.vendorID = 0x8086; // Intel
-        deviceUUID.deviceID = getHardwareInfo().platform.usDeviceID;
-        deviceUUID.revisionID = getHardwareInfo().platform.usRevId;
+        DeviceUUID deviceUUID{};
+        memcpy_s(&deviceUUID, sizeof(DeviceUUID), uuid.data(), uuid.size());
+
         deviceUUID.pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
         deviceUUID.pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
         deviceUUID.pciDev = static_cast<uint8_t>(pciBusInfo.pciDevice);
         deviceUUID.pciFunc = static_cast<uint8_t>(pciBusInfo.pciFunction);
-        deviceUUID.subDeviceID = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
 
-        static_assert(sizeof(DeviceUUID) == ProductHelper::uuidSize);
-
-        memcpy_s(uuid.data(), ProductHelper::uuidSize, &deviceUUID, sizeof(DeviceUUID));
+        memcpy_s(uuid.data(), uuid.size(), &deviceUUID, sizeof(DeviceUUID));
 
         return true;
     }
@@ -951,10 +948,16 @@ void Device::generateUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     const auto &deviceInfo = getDeviceInfo();
     const auto &hardwareInfo = getHardwareInfo();
     uint32_t rootDeviceIndex = getRootDeviceIndex();
+    uint16_t vendorId = static_cast<uint16_t>(deviceInfo.vendorId);
+    uint16_t deviceId = static_cast<uint16_t>(hardwareInfo.platform.usDeviceID);
+    uint16_t revisionId = static_cast<uint16_t>(hardwareInfo.platform.usRevId);
+    uint8_t subDeviceId = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
     uuid.fill(0);
-    memcpy_s(&uuid[0], sizeof(uint32_t), &deviceInfo.vendorId, sizeof(deviceInfo.vendorId));
-    memcpy_s(&uuid[4], sizeof(uint32_t), &hardwareInfo.platform.usDeviceID, sizeof(hardwareInfo.platform.usDeviceID));
-    memcpy_s(&uuid[8], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
+    memcpy_s(&uuid[0], sizeof(uint32_t), &vendorId, sizeof(vendorId));
+    memcpy_s(&uuid[2], sizeof(uint32_t), &deviceId, sizeof(deviceId));
+    memcpy_s(&uuid[4], sizeof(uint32_t), &revisionId, sizeof(revisionId));
+    memcpy_s(&uuid[6], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
+    uuid[15] = subDeviceId;
 }
 
 void Device::getAdapterMask(uint32_t &nodeMask) {

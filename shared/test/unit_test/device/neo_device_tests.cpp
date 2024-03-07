@@ -273,9 +273,14 @@ TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet) {
     uint32_t rootDeviceIndex = pDevice->getRootDeviceIndex();
 
     expectedUuid.fill(0);
-    memcpy_s(&expectedUuid[0], sizeof(uint32_t), &pDevice->getDeviceInfo().vendorId, sizeof(pDevice->getDeviceInfo().vendorId));
-    memcpy_s(&expectedUuid[4], sizeof(uint32_t), &pDevice->getHardwareInfo().platform.usDeviceID, sizeof(pDevice->getHardwareInfo().platform.usDeviceID));
-    memcpy_s(&expectedUuid[8], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
+    uint16_t vendorId = 0x8086; // Intel
+    uint16_t deviceId = static_cast<uint16_t>(pDevice->getHardwareInfo().platform.usDeviceID);
+    uint16_t revisionId = static_cast<uint16_t>(pDevice->getHardwareInfo().platform.usRevId);
+
+    memcpy_s(&expectedUuid[0], sizeof(uint16_t), &vendorId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[2], sizeof(uint16_t), &deviceId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[4], sizeof(uint16_t), &revisionId, sizeof(uint16_t));
+    memcpy_s(&expectedUuid[6], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
 
     EXPECT_EQ(memcmp(&uuid, &expectedUuid, ProductHelper::uuidSize), 0);
 }
