@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,15 @@ class MockSettingsReader : public SettingsReader {
     int32_t getSetting(const char *settingName, int32_t defaultValue) override { return defaultValue; };
     const char *appSpecificLocation(const std::string &name) override { return name.c_str(); };
 };
+
+namespace SettingsReaderTests {
+
+void writeDataToFile(const char *filename, const void *pData, size_t dataSize) {
+    std::ofstream file;
+    file.open(filename);
+    file.write(static_cast<const char *>(pData), dataSize);
+    file.close();
+}
 
 TEST(SettingsReader, WhenCreatingSettingsReaderThenReaderIsCreated) {
     auto reader = std::unique_ptr<SettingsReader>(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
@@ -114,3 +123,4 @@ TEST(SettingsReader, GivenFalseWhenPrintingDebugStringThenNoOutput) {
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(output.c_str(), "");
 }
+} // namespace SettingsReaderTests

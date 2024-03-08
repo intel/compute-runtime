@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,4 +47,14 @@ std::unique_ptr<char[]> loadDataFromFile(
 
     retSize = nsize;
     return ret;
+}
+
+void dumpFileIncrement(const char *data, size_t dataSize, const std::string &filename, const std::string &extension) {
+    auto filenameWithExt = filename + extension;
+    int suffix = 0;
+    while (fileExists(filenameWithExt)) {
+        filenameWithExt = filename + "_" + std::to_string(suffix) + extension;
+        suffix++;
+    }
+    writeDataToFile(filenameWithExt.c_str(), data, dataSize);
 }

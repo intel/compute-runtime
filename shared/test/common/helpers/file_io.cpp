@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,4 +62,15 @@ bool fileExistsHasSize(const std::string &fileName) {
         fclose(pFile);
     }
     return pFile != nullptr && nsize > 0;
+}
+
+void removeVirtualFile(const std::string &fileName) {
+    NEO::virtualFileList.erase(fileName);
+}
+
+bool virtualFileExists(const std::string &fileName) {
+    if (NEO::virtualFileList.count(fileName) > 0) {
+        return true;
+    }
+    return false;
 }

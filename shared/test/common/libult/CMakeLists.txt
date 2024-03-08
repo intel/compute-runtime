@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -110,6 +110,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_bdw_and_later.inl
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/file_io.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/abort.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_tbx_sockets.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/debug_settings_reader_creator.cpp

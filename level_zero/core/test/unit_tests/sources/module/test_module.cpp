@@ -16,7 +16,6 @@
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -24,6 +23,7 @@
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -3369,13 +3369,13 @@ HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebin
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
 
     std::string fileName = "dumped_zebin_module.elf";
-    EXPECT_FALSE(fileExists(fileName));
+    EXPECT_FALSE(virtualFileExists(fileName));
 
     result = moduleTu.buildFromSpirV(binary, sizeof(binary), nullptr, "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    EXPECT_TRUE(fileExistsHasSize(fileName));
-    std::remove(fileName.c_str());
+    EXPECT_TRUE(virtualFileExists(fileName));
+    removeVirtualFile(fileName);
 
     PatchTokensTestData::ValidEmptyProgram programTokens;
     mockCompilerInterface->output.intermediateRepresentation.size = programTokens.storage.size();
@@ -3389,9 +3389,8 @@ HWTEST_F(ModuleTranslationUnitTest, givenDumpZebinWhenBuildingFromSpirvThenZebin
 
     result = moduleTu2.buildFromSpirV(binary, sizeof(binary), nullptr, "", nullptr);
 
-    EXPECT_FALSE(fileExists(fileName));
-    EXPECT_FALSE(fileExistsHasSize(fileName));
-    std::remove(fileName.c_str());
+    EXPECT_FALSE(virtualFileExists(fileName));
+    removeVirtualFile(fileName);
 }
 
 HWTEST2_F(ModuleTranslationUnitTest, givenDebugFlagSetForceAllResourcesUncachedWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXeHpgCore) {

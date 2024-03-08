@@ -13,6 +13,7 @@ if(DEFINED AUB_STREAM_PROJECT_NAME)
   list(APPEND L0_AUB_TESTS__TARGET_OBJECTS
        ${CMAKE_CURRENT_SOURCE_DIR}/aub_hello_world_test.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/common_main.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
   )
 

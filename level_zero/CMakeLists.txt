@@ -221,6 +221,7 @@ if(BUILD_WITH_L0)
               ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
               ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
               ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
+              ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
               ${NEO_SHARED_DIRECTORY}/utilities/cpuintrinsics.cpp
               ${NEO_SHARED_DIRECTORY}/utilities/debug_settings_reader_creator.cpp
               ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp

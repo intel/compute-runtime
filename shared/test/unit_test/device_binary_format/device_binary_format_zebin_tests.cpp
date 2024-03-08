@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/program_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -138,12 +139,12 @@ TEST(UnpackSingleDeviceBinaryZebin, givenDumpZEBinFlagSetWhenUnpackingZebinBinar
     EXPECT_FALSE(fileExists(fileNameInc));
 
     NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_TRUE(fileExistsHasSize(fileName));
+    EXPECT_TRUE(virtualFileExists(fileName));
     NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
-    EXPECT_TRUE(fileExistsHasSize(fileNameInc));
+    EXPECT_TRUE(virtualFileExists(fileNameInc));
 
-    std::remove(fileName.c_str());
-    std::remove(fileNameInc.c_str());
+    removeVirtualFile(fileName);
+    removeVirtualFile(fileNameInc);
 }
 
 TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryForDifferentDeviceThenUnpackingFails) {

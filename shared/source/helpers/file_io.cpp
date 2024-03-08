@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,15 +60,4 @@ bool fileExistsHasSize(const std::string &fileName) {
         fclose(pFile);
     }
     return pFile != nullptr && nsize > 0;
-}
-
-void dumpFileIncrement(const char *data, size_t dataSize, const std::string &filename, const std::string &extension) {
-    std::ofstream fstream;
-    auto filenameWithExt = filename + extension;
-    int suffix = 0;
-    while (fileExists(filenameWithExt)) {
-        filenameWithExt = filename + "_" + std::to_string(suffix) + extension;
-        suffix++;
-    }
-    writeDataToFile(filenameWithExt.c_str(), data, dataSize);
 }

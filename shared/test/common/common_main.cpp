@@ -18,6 +18,7 @@
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
+#include "shared/test/common/helpers/virtual_file_system_listener.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
@@ -365,6 +366,7 @@ int main(int argc, char **argv) {
             }
 
             listeners.Append(new MemoryLeakListener);
+            listeners.Append(new NEO::VirtualFileSystemListener);
 
             addUltListener(listeners);
             ultListenersInitialized = true;

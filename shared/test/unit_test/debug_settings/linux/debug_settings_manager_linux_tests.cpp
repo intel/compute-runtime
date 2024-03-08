@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include <fstream>
 #include <unordered_map>
 
 namespace NEO {
@@ -20,9 +21,11 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerAndMockEnvVariableWhenCreate
     bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
     if (!settingsFileExists) {
         const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-        writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
+        std::ofstream file;
+        file.open(SettingsReader::settingsFileName);
+        file << data;
+        file.close();
     }
-
     SettingsReader *reader = SettingsReader::createFileReader();
     EXPECT_NE(nullptr, reader);
 

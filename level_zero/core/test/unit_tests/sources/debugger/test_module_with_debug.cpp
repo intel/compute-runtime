@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,12 @@
 
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/kernel_info_from_patchtokens.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_elf.h"
@@ -393,11 +393,11 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenDumpElfFlagAndZebinWhenInitializ
              zebin.storage.data(), zebin.storage.size());
 
     std::string fileName = "dumped_debug_module.elf";
-    EXPECT_FALSE(fileExists(fileName));
+    EXPECT_FALSE(virtualFileExists(fileName));
 
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
-    EXPECT_TRUE(fileExists(fileName));
-    std::remove(fileName.c_str());
+    EXPECT_TRUE(virtualFileExists(fileName));
+    removeVirtualFile(fileName.c_str());
 }
 
 HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinNoDebugDataWhenInitializingModuleThenDoNotRegisterElfAndDoNotNotifyModuleCreate) {

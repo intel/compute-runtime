@@ -18,6 +18,7 @@
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include <cstdio>
+#include <fstream>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -341,7 +342,10 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVar
     bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
     if (!settingsFileExists) {
         const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-        writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
+        std::ofstream file;
+        file.open(SettingsReader::settingsFileName);
+        file << data;
+        file.close();
     }
 
     SettingsReader *reader = SettingsReader::createFileReader();
@@ -355,7 +359,7 @@ TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVar
     EXPECT_EQ(0, debugManager.flags.LogApiCalls.get());
 
     if (!settingsFileExists) {
-        remove(SettingsReader::settingsFileName);
+        std::remove(SettingsReader::settingsFileName);
     }
 }
 
@@ -363,7 +367,10 @@ TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAre
     bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
     if (!settingsFileExists) {
         const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
-        writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
+        std::ofstream file;
+        file.open(SettingsReader::settingsFileName);
+        file << data;
+        file.close();
     }
 
     SettingsReader *reader = SettingsReader::createFileReader();
@@ -377,7 +384,7 @@ TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAre
     EXPECT_EQ(1, debugManager.flags.LogApiCalls.get());
 
     if (!settingsFileExists) {
-        remove(SettingsReader::settingsFileName);
+        std::remove(SettingsReader::settingsFileName);
     }
 }
 
