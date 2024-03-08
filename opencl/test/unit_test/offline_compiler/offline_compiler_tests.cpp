@@ -57,17 +57,15 @@ void MultiCommandTests::createFileWithArgs(const std::vector<std::string> &singl
         }
         myfile.close();
     } else
-        printf("Unable to open file\n");
+        ASSERT_TRUE(false) << "Unable to open file\n";
 }
 
 void MultiCommandTests::deleteFileWithArgs() {
-    if (remove(nameOfFileWithArgs.c_str()) != 0)
-        perror("Error deleting file");
+    remove(nameOfFileWithArgs.c_str());
 }
 
 void MultiCommandTests::deleteOutFileList() {
-    if (remove(outFileList.c_str()) != 0)
-        perror("Error deleting file");
+    remove(outFileList.c_str());
 }
 
 std::string getCompilerOutputFileName(const std::string &fileName, const std::string &type) {
