@@ -50,7 +50,6 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             statelessMocs,                            // statelessMocsIndex
             l1CachePolicyData.getL1CacheValue(false), // l1CachePolicy
             l1CachePolicyData.getL1CacheValue(true),  // l1CachePolicyDebuggerActive
-            false,                                    // useGlobalAtomics
             false,                                    // multiOsContextCapable
             false,                                    // isRcs
             container->doubleSbaWaRef(),              // doubleSbaWa

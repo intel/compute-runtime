@@ -303,7 +303,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             statelessMocsIndex,          // statelessMocsIndex
             l1CachePolicy,               // l1CachePolicy
             l1CachePolicyDebuggerActive, // l1CachePolicyDebuggerActive
-            args.useGlobalAtomics,       // useGlobalAtomics
             args.partitionCount > 1,     // multiOsContextCapable
             args.isRcs,                  // isRcs
             container.doubleSbaWaRef(),  // doubleSbaWa
@@ -705,7 +704,6 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         setGeneralStateBaseAddress,                         // setGeneralStateBaseAddress
         useGlobalSshAndDsh,                                 // useGlobalHeapsBaseAddress
         args.multiOsContextCapable,                         // isMultiOsContextCapable
-        args.useGlobalAtomics,                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext
         false,                                              // overrideSurfaceStateBaseAddress
         isDebuggerActive,                                   // isDebuggerActive

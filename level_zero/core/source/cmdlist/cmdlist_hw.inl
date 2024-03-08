@@ -3202,7 +3202,6 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
         statelessMocsIndex,                       // statelessMocsIndex
         l1CachePolicyData.getL1CacheValue(false), // l1CachePolicy
         l1CachePolicyData.getL1CacheValue(true),  // l1CachePolicyDebuggerActive
-        false,                                    // useGlobalAtomics
         this->partitionCount > 1,                 // multiOsContextCapable
         isRcs,                                    // isRcs
         this->doubleSbaWa,                        // doubleSbaWa

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -248,7 +248,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 statelessMocsIndex,          // statelessMocsIndex
                 l1CachePolicy,               // l1CachePolicy
                 l1CachePolicyDebuggerActive, // l1CachePolicyDebuggerActive
-                false,                       // useGlobalAtomics
                 false,                       // multiOsContextCapable
                 args.isRcs,                  // isRcs
                 container.doubleSbaWaRef(),  // doubleSbaWa
@@ -486,7 +485,6 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         false,                                              // setGeneralStateBaseAddress
         useGlobalSshAndDsh,                                 // useGlobalHeapsBaseAddress
         false,                                              // isMultiOsContextCapable
-        args.useGlobalAtomics,                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext
         false,                                              // overrideSurfaceStateBaseAddress
         isDebuggerActive,                                   // isDebuggerActive

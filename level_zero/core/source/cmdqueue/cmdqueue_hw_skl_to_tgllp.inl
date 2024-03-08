@@ -84,7 +84,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         true,                                             // setGeneralStateBaseAddress
         useGlobalSshAndDsh,                               // useGlobalHeapsBaseAddress
         false,                                            // isMultiOsContextCapable
-        false,                                            // useGlobalAtomics
         false,                                            // areMultipleSubDevicesInContext
         false,                                            // overrideSurfaceStateBaseAddress
         isDebuggerActive,                                 // isDebuggerActive

@@ -1699,7 +1699,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
         setGeneralStateBaseAddress,               // setGeneralStateBaseAddress
         false,                                    // useGlobalHeapsBaseAddress
         isMultiOsContextCapable(),                // isMultiOsContextCapable
-        false,                                    // useGlobalAtomics
         areMultipleSubDevicesInContext,           // areMultipleSubDevicesInContext
         false,                                    // overrideSurfaceStateBaseAddress
         debuggingEnabled,                         // isDebuggerActive

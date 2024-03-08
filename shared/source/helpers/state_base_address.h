@@ -49,7 +49,6 @@ struct StateBaseAddressHelperArgs {
     bool setGeneralStateBaseAddress = false;
     bool useGlobalHeapsBaseAddress = false;
     bool isMultiOsContextCapable = false;
-    bool useGlobalAtomics = false;
     bool areMultipleSubDevicesInContext = false;
     bool overrideSurfaceStateBaseAddress = false;
     bool isDebuggerActive = false;
