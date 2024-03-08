@@ -694,7 +694,7 @@ HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenPrope
     auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
     auto buffer = std::unique_ptr<Buffer>(
         Buffer::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice()),
-                       0, 0, size, static_cast<void *>(NULL), retVal));
+                       0, CL_MEM_COMPRESSED_HINT_INTEL, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
