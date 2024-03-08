@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,6 @@ struct Gen11 {
     };
 
     struct StateBaseAddressStateSupport {
-        static constexpr bool globalAtomics = false;
         static constexpr bool bindingTablePoolBaseAddress = false;
     };
 

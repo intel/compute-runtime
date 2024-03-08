@@ -431,7 +431,7 @@ void StateBaseAddressProperties::setPropertyStatelessMocs(int32_t statelessMocs)
     this->statelessMocs.set(statelessMocs);
 }
 
-void StateBaseAddressProperties::setPropertiesAll(bool globalAtomics, int32_t statelessMocs,
+void StateBaseAddressProperties::setPropertiesAll(int32_t statelessMocs,
                                                   int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
                                                   int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
                                                   int64_t dynamicStateBaseAddress, size_t dynamicStateSize,

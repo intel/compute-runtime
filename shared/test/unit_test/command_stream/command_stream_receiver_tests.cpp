@@ -3619,7 +3619,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getGSBAStateDirty());
 
-    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(false, 1, 0x1000, 0x100, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
+    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(1, 0x1000, 0x100, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
     HardwareParse hwParserCsr;
@@ -3657,7 +3657,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getGSBAStateDirty());
 
-    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(false, 1, 0x1000, 0x100, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
+    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(1, 0x1000, 0x100, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
     HardwareParse hwParserCsr;
@@ -3710,7 +3710,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_FALSE(commandStreamReceiver.getGSBAStateDirty());
 
-    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(false, 1, 0x1000, 0x100, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
+    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(1, 0x1000, 0x100, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
 
     size_t usedSize = commandStreamReceiver.commandStream.getUsed();
     commandStreamReceiver.flushImmediateTask(commandStream,
@@ -3752,7 +3752,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getGSBAStateDirty());
 
-    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(false, 1, -1, -1, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
+    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(1, -1, -1, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
     EXPECT_EQ(0x2000, commandStreamReceiver.streamProperties.stateBaseAddress.surfaceStateBaseAddress.value);
@@ -3793,7 +3793,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getGSBAStateDirty());
 
-    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(false, 1, -1, -1, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
+    this->requiredStreamProperties.stateBaseAddress.setPropertiesAll(1, -1, -1, 0x2000, 0x100, 0x3000, 0x100, 0x4000, 0x100);
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
     EXPECT_EQ(0x2000, commandStreamReceiver.streamProperties.stateBaseAddress.surfaceStateBaseAddress.value);
