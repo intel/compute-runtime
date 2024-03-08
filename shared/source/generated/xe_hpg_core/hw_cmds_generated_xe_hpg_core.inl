@@ -6388,7 +6388,6 @@ typedef struct tagMI_STORE_DATA_IMM {
         ADDRESS_ALIGN_SIZE = 0x4,
     } ADDRESS;
     inline void setAddress(const uint64_t value) {
-        DEBUG_BREAK_IF(value > 0xfffffffffffcL);
         TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
     inline uint64_t getAddress() const {
