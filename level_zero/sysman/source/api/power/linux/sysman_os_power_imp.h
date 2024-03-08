@@ -45,19 +45,16 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     SysFsAccessInterface *pSysfsAccess = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
-    virtual std::unique_lock<std::mutex> obtainMutex();
 
   private:
     std::string intelGraphicsHwmonDir = {};
     std::string criticalPowerLimit = {};
     std::string sustainedPowerLimit = {};
     std::string sustainedPowerLimitInterval = {};
-    std::mutex powerLimitMutex{};
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     uint32_t powerLimitCount = 0;
-    class PowerLimitRestorer;
 
     ze_result_t getErrorCode(ze_result_t result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
@@ -66,8 +63,6 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
         return result;
     }
 
-    ze_result_t getMinLimit(int32_t &minLimit);
-    ze_result_t getMaxLimit(int32_t &maxLimit);
     ze_result_t getDefaultLimit(int32_t &defaultLimit);
 };
 } // namespace Sysman

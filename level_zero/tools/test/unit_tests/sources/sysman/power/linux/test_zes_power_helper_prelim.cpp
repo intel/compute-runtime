@@ -70,8 +70,8 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
         } else {
             EXPECT_EQ(properties.canControl, true);
             EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
-            EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
-            EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.maxLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.minLimit, -1);
         }
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
     }
@@ -104,8 +104,8 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
             EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
             EXPECT_EQ(defaultLimit.limit, static_cast<int32_t>(mockDefaultPowerLimitVal / milliFactor));
             EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
-            EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
-            EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.maxLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.minLimit, -1);
         }
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
     }
@@ -131,8 +131,8 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleAndExtPro
             EXPECT_TRUE(properties.canControl);
             EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
             EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
-            EXPECT_EQ(properties.maxLimit, (int32_t)(mockMaxPowerLimitVal / milliFactor));
-            EXPECT_EQ(properties.minLimit, (int32_t)(mockMinPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.maxLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
+            EXPECT_EQ(properties.minLimit, -1);
         }
         EXPECT_EQ(properties.isEnergyThresholdSupported, false);
     }
