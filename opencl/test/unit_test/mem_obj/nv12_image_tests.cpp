@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -370,7 +370,7 @@ HWTEST_F(Nv12ImageTest, WhenSettingImageArgThenSurfaceStateIsCorrect) {
 
     SurfaceOffsets surfaceOffsets;
     image->getSurfaceOffsets(surfaceOffsets);
-    image->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
+    image->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
 
     EXPECT_EQ(surfaceOffsets.xOffset, surfaceState.getXOffset());
     EXPECT_EQ(surfaceOffsets.yOffset, surfaceState.getYOffset());
@@ -393,7 +393,7 @@ HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSet
     std::unique_ptr<Image> image{Image2dHelper<>::create(&context, &imageDesc, &imageFormat)};
     image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
-    image->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
+    image->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_FALSE(surfaceState.getSurfaceArray());
 }
 
@@ -419,7 +419,7 @@ HWTEST_F(Nv12ImageTest, WhenSettingImageArgUvPlaneImageThenOffsetSurfaceBaseAddr
 
     SurfaceOffsets surfaceOffsets;
     imageUVPlane->getSurfaceOffsets(surfaceOffsets);
-    imageUVPlane->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
+    imageUVPlane->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
 
     EXPECT_EQ(imageUVPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getGpuAddress() + surfaceOffsets.offset, surfaceState.getSurfaceBaseAddress());
 

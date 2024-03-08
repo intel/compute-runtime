@@ -328,7 +328,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.isPredicate,                               // isPredicate
         isTimestampEvent,                                       // isTimestampEvent
         uncachedMocsKernel,                                     // requiresUncachedMocs
-        cmdListDefaultGlobalAtomics,                            // useGlobalAtomics
         internalUsage,                                          // isInternal
         launchParams.isCooperative,                             // isCooperative
         isHostSignalScopeEvent,                                 // isHostScopeSignalEvent
@@ -389,7 +388,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
         args.allocation = device->getDebugSurface();
         args.gmmHelper = neoDevice->getGmmHelper();
-        args.useGlobalAtomics = kernelDescriptor.kernelAttributes.flags.useGlobalAtomics;
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.implicitScaling = this->partitionCount > 1;
         args.isDebuggerActive = true;

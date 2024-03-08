@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,6 @@ struct SbaFixture : public NEO::DeviceFixture {
             false,                                    // setGeneralStateBaseAddress
             false,                                    // useGlobalHeapsBaseAddress
             false,                                    // isMultiOsContextCapable
-            false,                                    // useGlobalAtomics
             false,                                    // areMultipleSubDevicesInContext
             false,                                    // overrideSurfaceStateBaseAddress
             false                                     // doubleSbaWa

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -153,7 +153,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
             auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
             size_t size = gpuAllocation->getUnderlyingBufferSize();
             Buffer::setSurfaceState(&device, pSurfaceState, false, false, size, gpuAllocation->getUnderlyingBuffer(), 0, gpuAllocation, 0, 0,
-                                    pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
+                                    pContext->getNumDevices());
             if (device.getMemoryManager()->getPageFaultManager()) {
                 device.getMemoryManager()->getPageFaultManager()->moveAllocationToGpuDomain(reinterpret_cast<void *>(gpuAllocation->getGpuAddress()));
             }
@@ -161,7 +161,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
             cl_mem buffer = (cl_mem)resource;
             auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
             pBuffer->setArgStateful(pSurfaceState, false, false, false, false, device,
-                                    pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
+                                    pContext->getNumDevices());
         }
     }
 }

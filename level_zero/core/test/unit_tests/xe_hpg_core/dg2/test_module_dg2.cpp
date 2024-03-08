@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
     patchWithImplicitSurface(ArrayRef<uint8_t>(), surfaceStateHeapRef,
                              0,
                              *device->getDebugSurface(), kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress,
-                             *device->getNEODevice(), kernel.immutableData.kernelDescriptor->kernelAttributes.flags.useGlobalAtomics, device->isImplicitScalingCapable());
+                             *device->getNEODevice(), device->isImplicitScalingCapable());
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
     debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
@@ -133,7 +133,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
     patchWithImplicitSurface(ArrayRef<uint8_t>(), surfaceStateHeapRef,
                              0,
                              *device->getDebugSurface(), kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.systemThreadSurfaceAddress,
-                             *device->getNEODevice(), kernel.immutableData.kernelDescriptor->kernelAttributes.flags.useGlobalAtomics, device->isImplicitScalingCapable());
+                             *device->getNEODevice(), device->isImplicitScalingCapable());
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
     debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));

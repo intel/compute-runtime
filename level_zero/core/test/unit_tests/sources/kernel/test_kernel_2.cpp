@@ -407,7 +407,7 @@ HWTEST_F(KernelImpTest, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledT
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  ptrToPatchInCrossThreadData,
                                  globalBuffer, ptr,
-                                 *neoDevice, false, false);
+                                 *neoDevice, false);
         EXPECT_EQ(encodeBufferSurfaceStateCalled, 0u);
     }
     {
@@ -415,7 +415,7 @@ HWTEST_F(KernelImpTest, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledT
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  ptrToPatchInCrossThreadData,
                                  globalBuffer, ptr,
-                                 *neoDevice, false, false);
+                                 *neoDevice, false);
         ASSERT_EQ(encodeBufferSurfaceStateCalled, 1u);
         EXPECT_FALSE(savedSurfaceStateArgs.isDebuggerActive);
     }
@@ -424,7 +424,7 @@ HWTEST_F(KernelImpTest, givenSurfaceStateHeapWhenPatchWithImplicitSurfaceCalledT
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  ptrToPatchInCrossThreadData,
                                  globalBuffer, ptr,
-                                 *neoDevice, false, false);
+                                 *neoDevice, false);
         ASSERT_EQ(encodeBufferSurfaceStateCalled, 2u);
         EXPECT_TRUE(savedSurfaceStateArgs.isDebuggerActive);
     }

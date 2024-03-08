@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,6 @@ struct EncodeSurfaceStateArgsBase {
     bool cpuCoherent = false;
     bool forceNonAuxMode = false;
     bool isReadOnly = false;
-    bool useGlobalAtomics = false;
     bool areMultipleSubDevicesInContext = false;
     bool implicitScaling = false;
     bool isDebuggerActive = false;

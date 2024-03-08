@@ -1366,7 +1366,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
             args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
             args.allocation = device->getDebugSurface();
             args.gmmHelper = neoDevice->getGmmHelper();
-            args.useGlobalAtomics = false;
             args.areMultipleSubDevicesInContext = neoDevice->getNumGenericSubDevices() > 1;
             args.isDebuggerActive = true;
             gfxCoreHelper.encodeBufferSurfaceState(args);

@@ -59,7 +59,6 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         false,                                      // isPredicate
         false,                                      // isTimestampEvent
         requiresUncachedMocs,                       // requiresUncachedMocs
-        false,                                      // useGlobalAtomics
         false,                                      // isInternal
         false,                                      // isCooperative
         false,                                      // isHostScopeSignalEvent

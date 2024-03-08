@@ -816,7 +816,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     auto systolicPipelineSelectMode = false;
     Kernel *kernel = nullptr;
     bool auxTranslationRequired = false;
-    bool useGlobalAtomics = false;
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
@@ -832,10 +831,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         auxTranslationRequired |= kernel->isAuxTranslationRequired();
         if (kernel->hasUncacheableStatelessArgs()) {
             anyUncacheableArgs = true;
-        }
-
-        if (kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics) {
-            useGlobalAtomics = true;
         }
     }
 
@@ -895,7 +890,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         !eventBuilder.getEvent() || getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),             // outOfOrderExecutionAllowed
         false,                                                                                                  // epilogueRequired
         false,                                                                                                  // usePerDssBackedBuffer
-        useGlobalAtomics,                                                                                       // useGlobalAtomics
         kernel->areMultipleSubDevicesInContext(),                                                               // areMultipleSubDevicesInContext
         kernel->requiresMemoryMigration(),                                                                      // memoryMigrationRequired
         isTextureCacheFlushNeeded(commandType),                                                                 // textureCacheFlush
@@ -1162,7 +1156,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed
             false,                                                               // epilogueRequired
             false,                                                               // usePerDssBackedBuffer
-            false,                                                               // useGlobalAtomics
             context->containsMultipleSubDevices(rootDeviceIndex),                // areMultipleSubDevicesInContext
             false,                                                               // memoryMigrationRequired
             false,                                                               // textureCacheFlush

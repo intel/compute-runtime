@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2376,7 +2376,7 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
         size_t sizeToPatch = gpuAllocation->getUnderlyingBufferSize();
         Buffer::setSurfaceState(&pDevice->getDevice(), &expectedSurfaceState, false, false,
                                 sizeToPatch, addressToPatch, 0, gpuAllocation, 0, 0,
-                                pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, pContext->getNumDevices());
+                                pContext->getNumDevices());
     }
     EXPECT_EQ(0, memcmp(&expectedSurfaceState, surfaceState, renderSurfaceSize));
 

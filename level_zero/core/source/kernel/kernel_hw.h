@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,7 +116,6 @@ struct KernelHw : public KernelImp {
         args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
         args.allocation = alloc;
         args.gmmHelper = neoDevice->getGmmHelper();
-        args.useGlobalAtomics = kernelImmData->getDescriptor().kernelAttributes.flags.useGlobalAtomics;
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.implicitScaling = device->isImplicitScalingCapable();
         args.isDebuggerActive = isDebuggerActive;

@@ -205,7 +205,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,                                      // isPredicate
         false,                                      // isTimestampEvent
         false,                                      // requiresUncachedMocs
-        false,                                      // useGlobalAtomics
         false,                                      // isInternal
         false,                                      // isCooperative
         false,                                      // isHostScopeSignalEvent

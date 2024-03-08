@@ -106,7 +106,7 @@ struct KernelDescriptor {
                 // 1
                 bool usesSamplers : 1;
                 bool usesSyncBuffer : 1;
-                bool useGlobalAtomics : 1;
+                bool deprecatedDoNotUse : 1;
                 bool usesStatelessWrites : 1;
                 bool passInlineData : 1;
                 bool perThreadDataHeaderIsPresent : 1;

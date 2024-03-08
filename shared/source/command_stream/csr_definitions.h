@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ struct DispatchFlags {
                   KernelExecutionType kernelExecutionTypeP, MemoryCompressionState memoryCompressionStateP,
                   uint64_t sliceCountP, bool blockingP, bool dcFlushP, bool useSLMP, bool guardCommandBufferWithPipeControlP, bool gsba32BitRequiredP,
                   bool lowPriorityP, bool implicitFlushP, bool outOfOrderExecutionAllowedP, bool epilogueRequiredP,
-                  bool usePerDSSbackedBufferP, bool useGlobalAtomicsP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
+                  bool usePerDSSbackedBufferP, bool areMultipleSubDevicesInContextP, bool memoryMigrationRequiredP, bool textureCacheFlush,
                   bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool stateCacheInvalidation, bool isStallingCommandsOnNextFlushRequired, bool isDcFlushRequiredOnStallingCommandsOnNextFlush) : barrierTimestampPacketNodes(barrierTimestampPacketNodesP),
                                                                                                                                                                                                              pipelineSelectArgs(pipelineSelectArgsP),
                                                                                                                                                                                                              flushStampReference(flushStampReferenceP),
@@ -80,7 +80,6 @@ struct DispatchFlags {
                                                                                                                                                                                                              outOfOrderExecutionAllowed(outOfOrderExecutionAllowedP),
                                                                                                                                                                                                              epilogueRequired(epilogueRequiredP),
                                                                                                                                                                                                              usePerDssBackedBuffer(usePerDSSbackedBufferP),
-                                                                                                                                                                                                             useGlobalAtomics(useGlobalAtomicsP),
                                                                                                                                                                                                              areMultipleSubDevicesInContext(areMultipleSubDevicesInContextP),
                                                                                                                                                                                                              memoryMigrationRequired(memoryMigrationRequiredP),
                                                                                                                                                                                                              textureCacheFlush(textureCacheFlush),
@@ -114,7 +113,6 @@ struct DispatchFlags {
     bool outOfOrderExecutionAllowed = false;
     bool epilogueRequired = false;
     bool usePerDssBackedBuffer = false;
-    bool useGlobalAtomics = false;
     bool areMultipleSubDevicesInContext = false;
     bool memoryMigrationRequired = false;
     bool textureCacheFlush = false;

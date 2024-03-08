@@ -190,7 +190,6 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
                 args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
                 args.allocation = this->device->getDebugSurface();
                 args.gmmHelper = neoDevice->getGmmHelper();
-                args.useGlobalAtomics = false;
                 args.areMultipleSubDevicesInContext = false;
                 args.isDebuggerActive = true;
                 NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
@@ -242,7 +241,6 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         this->csr->isNTo1SubmissionModelEnabled(),                   // outOfOrderExecutionAllowed
         false,                                                       // epilogueRequired
         false,                                                       // usePerDssBackedBuffer
-        false,                                                       // useGlobalAtomics
         this->device->getNEODevice()->getNumGenericSubDevices() > 1, // areMultipleSubDevicesInContext
         false,                                                       // memoryMigrationRequired
         false,                                                       // textureCacheFlush
@@ -304,7 +302,6 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
                 args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
                 args.allocation = this->device->getDebugSurface();
                 args.gmmHelper = neoDevice->getGmmHelper();
-                args.useGlobalAtomics = false;
                 args.areMultipleSubDevicesInContext = false;
                 args.isDebuggerActive = true;
                 NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,7 +97,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenAlignedCacheableReadOnlyBu
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
-    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false, false);
+    buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
     const auto expectedMocs = context.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
@@ -151,7 +151,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
         uint32_t forcedCompressionFormat = 3;
         debugManager.flags.ForceBufferCompressionFormat.set(forcedCompressionFormat);
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
+        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
         EXPECT_EQ(1u, surfaceState.getDecompressInL3());
         EXPECT_EQ(1u, surfaceState.getMemoryCompressionEnable());
@@ -164,7 +164,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
         debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(1);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
+        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
         EXPECT_EQ(1u, surfaceState.getDecompressInL3());
         EXPECT_EQ(1u, surfaceState.getMemoryCompressionEnable());
@@ -177,7 +177,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
         debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(0);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
+        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, surfaceState.getAuxiliarySurfaceMode());
         EXPECT_EQ(0u, surfaceState.getDecompressInL3());
         EXPECT_EQ(0u, surfaceState.getMemoryCompressionEnable());
@@ -223,7 +223,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
         debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(decompressInL3);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
+        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E, surfaceState.getAuxiliarySurfaceMode());
         EXPECT_EQ(0u, surfaceState.getDecompressInL3());
         EXPECT_EQ(0u, surfaceState.getMemoryCompressionEnable());
@@ -268,7 +268,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
         debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(decompressInL3);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
+        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
         EXPECT_EQ(0u, surfaceState.getDecompressInL3());
         EXPECT_EQ(0u, surfaceState.getMemoryCompressionEnable());
@@ -314,7 +314,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
         debugManager.flags.DecompressInL3ForImage2dFromBuffer.set(decompressInL3);
 
         auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex(), false);
+        imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
         EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, surfaceState.getAuxiliarySurfaceMode());
         EXPECT_EQ(0u, surfaceState.getDecompressInL3());
         EXPECT_EQ(1u, surfaceState.getMemoryCompressionEnable());

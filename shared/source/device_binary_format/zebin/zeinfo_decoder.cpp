@@ -676,7 +676,6 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.flags.requiresDisabledMidThreadPreemption = execEnv.disableMidThreadPreemption;
     dst.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = execEnv.subgroupIndependentForwardProgress;
     dst.kernelAttributes.flags.requiresDisabledEUFusion = execEnv.requireDisableEUFusion;
-    dst.kernelAttributes.flags.useGlobalAtomics = execEnv.hasGlobalAtomics;
     dst.kernelAttributes.flags.useStackCalls = execEnv.hasStackCalls;
     dst.kernelAttributes.flags.hasRTCalls = execEnv.hasRTCalls;
     dst.kernelAttributes.flags.usesFencesForReadWriteImages = execEnv.hasFenceForImageAccess;

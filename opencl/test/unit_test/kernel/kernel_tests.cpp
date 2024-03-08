@@ -2109,30 +2109,6 @@ HWTEST_F(KernelResidencyTest, givenEnableFullKernelTuningWhenPerformTunningThenK
     EXPECT_EQ(result->second.singleSubdevicePreferred, mockKernel.mockKernel->singleSubdevicePreferredInCurrentEnqueue);
 }
 
-HWTEST_F(KernelResidencyTest, givenSimpleKernelTunningAndNoAtomicsWhenPerformTunningThenSingleSubdeviceIsPreferred) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableKernelTunning.set(1u);
-
-    auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
-    MockKernelWithInternals mockKernel(*this->pClDevice);
-
-    Vec3<size_t> lws{1, 1, 1};
-    Vec3<size_t> gws{1, 1, 1};
-    Vec3<size_t> offsets{1, 1, 1};
-    MockKernel::KernelConfig config{gws, lws, offsets};
-
-    MockTimestampPacketContainer container(*commandStreamReceiver.getTimestampPacketAllocator(), 1);
-
-    auto result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-
-    mockKernel.mockKernel->performKernelTuning(commandStreamReceiver, lws, gws, offsets, &container);
-
-    result = mockKernel.mockKernel->kernelSubmissionMap.find(config);
-    EXPECT_EQ(result, mockKernel.mockKernel->kernelSubmissionMap.end());
-    EXPECT_NE(mockKernel.mockKernel->isSingleSubdevicePreferred(), mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
-}
-
 HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenExecEnvDoesNotHavePageFaultManagerThenPageFaultDoesNotMoveAllocation) {
     auto mockPageFaultManager = std::make_unique<MockPageFaultManager>();
     MockKernelWithInternals mockKernel(*this->pClDevice);

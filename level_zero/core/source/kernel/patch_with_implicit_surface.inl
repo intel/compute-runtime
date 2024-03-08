@@ -7,7 +7,7 @@
 
 inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef<uint8_t> surfaceStateHeap,
                                      uintptr_t ptrToPatchInCrossThreadData, NEO::GraphicsAllocation &allocation,
-                                     const NEO::ArgDescPointer &ptr, const NEO::Device &device, bool useGlobalAtomics,
+                                     const NEO::ArgDescPointer &ptr, const NEO::Device &device,
                                      bool implicitScaling) {
     if (false == crossThreadData.empty()) {
         NEO::patchPointer(crossThreadData, ptr, ptrToPatchInCrossThreadData);
@@ -26,7 +26,6 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
         args.graphicsAddress = addressToPatch;
         args.gmmHelper = device.getGmmHelper();
         args.allocation = &allocation;
-        args.useGlobalAtomics = useGlobalAtomics;
         args.numAvailableDevices = device.getNumGenericSubDevices();
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.mocs = gfxCoreHelper.getMocsIndex(*args.gmmHelper, true, false) << 1;
@@ -38,7 +37,7 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
 }
 
 inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> crossThreadData, ArrayRef<uint8_t> surfaceStateHeap, NEO::GraphicsAllocation *allocation,
-                                                             const NEO::ArgDescPointer &ptr, const NEO::Device &device, bool useGlobalAtomics, bool implicitScaling,
+                                                             const NEO::ArgDescPointer &ptr, const NEO::Device &device, bool implicitScaling,
                                                              const NEO::SurfaceStateInHeapInfo &ssInHeap, const NEO::KernelDescriptor &kernelDescriptor) {
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     void *surfaceStateAddress = nullptr;
@@ -77,7 +76,6 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
         args.numAvailableDevices = device.getNumGenericSubDevices();
         args.allocation = allocation;
         args.gmmHelper = device.getGmmHelper();
-        args.useGlobalAtomics = useGlobalAtomics;
         args.areMultipleSubDevicesInContext = args.numAvailableDevices > 1;
         args.implicitScaling = implicitScaling;
         args.isDebuggerActive = isDebuggerActive;

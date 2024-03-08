@@ -122,11 +122,6 @@ TEST(KernelDescriptorFromPatchtokens, GivenExecutionEnvironmentThenSetsProperPar
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_EQ(128, kernelDescriptor.kernelAttributes.numGrfRequired);
 
-    EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
-    execEnv.HasGlobalAtomics = 1U;
-    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
-
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites);
     execEnv.StatelessWritesCount = 1U;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);

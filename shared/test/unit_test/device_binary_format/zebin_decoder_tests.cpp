@@ -3581,7 +3581,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenMinimalExecutionEnvThenPopulateKernelDe
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.passInlineData, (Defaults::inlineDataPayloadSize != 0));
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresDisabledMidThreadPreemption, Defaults::disableMidThreadPreemption);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress, Defaults::subgroupIndependentForwardProgress);
-    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, Defaults::hasGlobalAtomics);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useStackCalls, Defaults::hasStackCalls);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasRTCalls, Defaults::hasRTCalls);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages, Defaults::hasFenceForImageAccess);
@@ -4327,7 +4326,6 @@ kernels:
     EXPECT_EQ(13U, kernelDescriptor.kernelAttributes.numGrfRequired);
     EXPECT_EQ(KernelDescriptor::Stateless, kernelDescriptor.kernelAttributes.bufferAddressingMode);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites);
     EXPECT_EQ(32, kernelDescriptor.kernelAttributes.inlineDataPayloadSize);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.passInlineData);

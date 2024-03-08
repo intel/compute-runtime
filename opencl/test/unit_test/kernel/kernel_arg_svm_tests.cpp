@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -296,7 +296,7 @@ HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {
             void *addressToPatch = svmAlloc.getUnderlyingBuffer();
             size_t sizeToPatch = svmAlloc.getUnderlyingBufferSize();
             Buffer::setSurfaceState(pDevice, &expectedSurfaceState, false, false,
-                                    sizeToPatch, addressToPatch, 0, &svmAlloc, 0, 0, false, false);
+                                    sizeToPatch, addressToPatch, 0, &svmAlloc, 0, 0, false);
         }
 
         // verify ssh was properly patched
@@ -458,7 +458,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
         }
 
         Buffer::setSurfaceState(device.get(), &expectedSurfaceState, false, false, svmAlloc.getUnderlyingBufferSize(),
-                                svmAlloc.getUnderlyingBuffer(), 0, &svmAlloc, 0, 0, false, false);
+                                svmAlloc.getUnderlyingBuffer(), 0, &svmAlloc, 0, 0, false);
 
         // verify ssh was properly patched
         int32_t cmpResult = memcmp(&expectedSurfaceState, surfState, rendSurfSize);

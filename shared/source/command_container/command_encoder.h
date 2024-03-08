@@ -64,7 +64,6 @@ struct EncodeDispatchKernelArgs {
     bool isPredicate = false;
     bool isTimestampEvent = false;
     bool requiresUncachedMocs = false;
-    bool useGlobalAtomics = false;
     bool isInternal = false;
     bool isCooperative = false;
     bool isHostScopeSignalEvent = false;

@@ -1620,30 +1620,6 @@ HWTEST_F(EnqueueKernelTest, givenVMEKernelWhenEnqueueKernelThenDispatchFlagsHave
     EXPECT_TRUE(mockCsr->passedDispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
 }
 
-HWTEST_F(EnqueueKernelTest, givenUseGlobalAtomicsSetWhenEnqueueKernelThenDispatchFlagsUseGlobalAtomicsIsSet) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    pDevice->resetCommandStreamReceiver(mockCsr);
-
-    MockKernelWithInternals mockKernel(*pClDevice, context);
-    size_t gws[3] = {1, 0, 0};
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics = true;
-    clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_TRUE(mockCsr->passedDispatchFlags.useGlobalAtomics);
-}
-
-HWTEST_F(EnqueueKernelTest, givenUseGlobalAtomicsIsNotSetWhenEnqueueKernelThenDispatchFlagsUseGlobalAtomicsIsNotSet) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
-    pDevice->resetCommandStreamReceiver(mockCsr);
-
-    MockKernelWithInternals mockKernel(*pClDevice, context);
-    size_t gws[3] = {1, 0, 0};
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.useGlobalAtomics = false;
-    clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_FALSE(mockCsr->passedDispatchFlags.useGlobalAtomics);
-}
-
 HWTEST_F(EnqueueKernelTest, givenContextWithSeveralDevicesWhenEnqueueKernelThenDispatchFlagsHaveCorrectInfoAboutMultipleSubDevicesInContext) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);

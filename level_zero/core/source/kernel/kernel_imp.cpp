@@ -132,7 +132,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(globalConstBuffer->getGpuAddressToPatch()),
                                  *globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
-                                 *neoDevice, kernelDescriptor->kernelAttributes.flags.useGlobalAtomics, deviceImp->isImplicitScalingCapable());
+                                 *neoDevice, deviceImp->isImplicitScalingCapable());
         this->residencyContainer.push_back(globalConstBuffer);
     } else if (nullptr != globalConstBuffer) {
         this->residencyContainer.push_back(globalConstBuffer);
@@ -150,7 +150,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                                          globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
-                                                         *neoDevice, kernelDescriptor->kernelAttributes.flags.useGlobalAtomics, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
+                                                         *neoDevice, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
     }
 
     if (NEO::isValidOffset(kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless)) {
@@ -159,7 +159,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(globalVarBuffer->getGpuAddressToPatch()),
                                  *globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
-                                 *neoDevice, kernelDescriptor->kernelAttributes.flags.useGlobalAtomics, deviceImp->isImplicitScalingCapable());
+                                 *neoDevice, deviceImp->isImplicitScalingCapable());
         this->residencyContainer.push_back(globalVarBuffer);
     } else if (nullptr != globalVarBuffer) {
         this->residencyContainer.push_back(globalVarBuffer);
@@ -177,7 +177,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                                          globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
-                                                         *neoDevice, kernelDescriptor->kernelAttributes.flags.useGlobalAtomics, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
+                                                         *neoDevice, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -946,7 +946,6 @@ NEO::GraphicsAllocation *KernelImp::allocatePrivateMemoryGraphicsAllocation() {
 }
 
 void KernelImp::patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) {
-    auto &kernelAttributes = kernelImmData->getDescriptor().kernelAttributes;
     auto device = module->getDevice();
 
     ArrayRef<uint8_t> crossThreadDataArrayRef = ArrayRef<uint8_t>(this->crossThreadData.get(), this->crossThreadDataSize);
@@ -955,7 +954,7 @@ void KernelImp::patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocatio
     patchWithImplicitSurface(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                              static_cast<uintptr_t>(privateAllocation->getGpuAddressToPatch()),
                              *privateAllocation, kernelImmData->getDescriptor().payloadMappings.implicitArgs.privateMemoryAddress,
-                             *device->getNEODevice(), kernelAttributes.flags.useGlobalAtomics, device->isImplicitScalingCapable());
+                             *device->getNEODevice(), device->isImplicitScalingCapable());
 }
 
 void KernelImp::setInlineSamplers() {

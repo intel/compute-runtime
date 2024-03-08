@@ -104,7 +104,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();
         Buffer::setSurfaceState(&commandQueue.getDevice(), commandQueue.getDevice().getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh),
                                 false, false, sizeToPatch, addressToPatch, 0, debugSurface, 0, 0,
-                                mainKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
                                 mainKernel->areMultipleSubDevicesInContext());
     }
 

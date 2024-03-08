@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation,
-                                         bool isReadOnlyArgument, const Device &device, bool useGlobalAtomics, bool areMultipleSubDevicesInContext) {
+                                         bool isReadOnlyArgument, const Device &device, bool areMultipleSubDevicesInContext) {
     auto rootDeviceIndex = device.getRootDeviceIndex();
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     const auto isReadOnly = isValueSet(getFlags(), CL_MEM_READ_ONLY) || isReadOnlyArgument;
@@ -36,7 +36,6 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     args.numAvailableDevices = device.getNumGenericSubDevices();
     args.allocation = graphicsAllocation;
     args.gmmHelper = device.getGmmHelper();
-    args.useGlobalAtomics = useGlobalAtomics;
     args.areMultipleSubDevicesInContext = areMultipleSubDevicesInContext;
     args.implicitScaling = ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true);
     args.isDebuggerActive = isDebuggerActive;

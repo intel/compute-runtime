@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ GEN11TEST_F(AppendSurfaceStateParamsTest, givenImageFormatWithoutAlphaChannelWhe
     createImage();
 
     auto imageHw = static_cast<ImageHw<Gen11Family> *>(image.get());
-    imageHw->appendSurfaceStateParams(&surfaceState, context.getDevice(0)->getRootDeviceIndex(), false);
+    imageHw->appendSurfaceStateParams(&surfaceState, context.getDevice(0)->getRootDeviceIndex());
 
     bool tapDiscardConfigChanged = RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE != surfaceState.getSampleTapDiscardDisable();
     EXPECT_FALSE(tapDiscardConfigChanged);
@@ -74,7 +74,7 @@ GEN11TEST_F(AppendSurfaceStateParamsTest, givenImageFormatWithAlphaChannelWhenAp
     createImage();
 
     auto imageHw = static_cast<ImageHw<Gen11Family> *>(image.get());
-    imageHw->appendSurfaceStateParams(&surfaceState, context.getDevice(0)->getRootDeviceIndex(), false);
+    imageHw->appendSurfaceStateParams(&surfaceState, context.getDevice(0)->getRootDeviceIndex());
 
     bool tapDiscardConfigChanged = RENDER_SURFACE_STATE::SAMPLE_TAP_DISCARD_DISABLE_DISABLE != surfaceState.getSampleTapDiscardDisable();
     EXPECT_TRUE(tapDiscardConfigChanged);

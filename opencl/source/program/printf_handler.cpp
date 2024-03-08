@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,6 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
         void *addressToPatch = printfSurface->getUnderlyingBuffer();
         size_t sizeToPatch = printfSurface->getUnderlyingBufferSize();
         Buffer::setSurfaceState(&device, surfaceState, false, false, sizeToPatch, addressToPatch, 0, printfSurface, 0, 0,
-                                kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics,
                                 kernel->areMultipleSubDevicesInContext());
     }
     auto pImplicitArgs = kernel->getImplicitArgs();
