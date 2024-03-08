@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
     uint32_t cmdQueueOrdinal;
     LevelZeroBlackBoxTests::initialize(driver, context, device, cmdQueue, cmdQueueOrdinal);
 
-    if (!LevelZeroBlackBoxTests::checkImageSupport(device, do1D, do2D, do3D)) {
+    if (!LevelZeroBlackBoxTests::checkImageSupport(device, do1D, do2D, do3D, false)) {
         return 0;
     }
 

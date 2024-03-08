@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -95,7 +95,13 @@ foreach(TEST_NAME ${TEST_TARGETS})
     endif()
   endif()
 
-  add_executable(${TEST_NAME} ${TEST_NAME}.cpp)
+  if(${TEST_NAME} STREQUAL "zello_bindless_kernel")
+    set(EXTRA_SOURCES ${NEO_SOURCE_DIR}/level_zero/core/source/image/image_format_desc_helper.cpp)
+  endif()
+
+  add_executable(${TEST_NAME} ${TEST_NAME}.cpp
+                 ${EXTRA_SOURCES}
+  )
 
   set_target_properties(${TEST_NAME}
                         PROPERTIES

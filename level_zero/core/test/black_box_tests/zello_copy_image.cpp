@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
     LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
-    if (!LevelZeroBlackBoxTests::checkImageSupport(device, false, true, false)) {
+    if (!LevelZeroBlackBoxTests::checkImageSupport(device, false, true, false, false)) {
         return 0;
     }
 

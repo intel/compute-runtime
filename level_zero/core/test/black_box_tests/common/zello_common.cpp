@@ -454,7 +454,7 @@ void initialize(ze_driver_handle_t &driver, ze_context_handle_t &context, ze_dev
     cmdQueue = createCommandQueue(context, device, &ordinal);
 }
 
-bool checkImageSupport(ze_device_handle_t hDevice, bool test1D, bool test2D, bool test3D) {
+bool checkImageSupport(ze_device_handle_t hDevice, bool test1D, bool test2D, bool test3D, bool testArray) {
     ze_device_image_properties_t imageProperties = {};
     imageProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_IMAGE_PROPERTIES;
 
@@ -467,6 +467,9 @@ bool checkImageSupport(ze_device_handle_t hDevice, bool test1D, bool test2D, boo
         return false;
     }
     if (test3D && (imageProperties.maxImageDims3D == 0)) {
+        return false;
+    }
+    if (testArray && (imageProperties.maxImageArraySlices == 0)) {
         return false;
     }
 

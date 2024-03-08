@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/api/driver_experimental/public/ze_bindless_image_exp.h"
+#include "level_zero/core/source/image/image_format_desc_helper.h"
 #include <level_zero/ze_api.h>
 
 #include "zello_common.h"
@@ -16,6 +17,8 @@
 #include <iostream>
 #include <numeric>
 #include <sstream>
+
+namespace {
 
 const char *source = R"===(
 typedef ulong16 TYPE;
@@ -82,6 +85,89 @@ __kernel void image_read_sampler(__global float4 *dst, image2d_t img, sampler_t 
 }
 )===";
 
+const char *source5 = R"===(
+#pragma OPENCL EXTENSION cl_khr_mipmap_image : enable
+#pragma OPENCL EXTENSION cl_khr_gl_msaa_sharing : enable
+
+kernel void image_query_1d(global int *dst, image1d_t img) {
+    dst[0] = get_image_width(img);
+    dst[1] = get_image_channel_data_type(img);
+    dst[2] = get_image_channel_order(img);
+    dst[3] = get_image_num_mip_levels(img);
+}
+kernel void image_query_1d_array(global int *dst, image1d_array_t img) {
+    dst[0] = get_image_width(img);
+    dst[1] = get_image_channel_data_type(img);
+    dst[2] = get_image_channel_order(img);
+    dst[3] = (int)get_image_array_size(img);
+    dst[4] = get_image_num_mip_levels(img);
+}
+kernel void image_query_2d(global int *dst, image2d_t img) {
+    dst[0] = get_image_width(img);
+    dst[1] = get_image_height(img);
+    dst[2] = get_image_channel_data_type(img);
+    dst[3] = get_image_channel_order(img);
+    int2 dim = get_image_dim(img);
+    dst[4] = dim.x;
+    dst[5] = dim.y;
+    dst[6] = get_image_num_mip_levels(img);
+}
+kernel void image_query_2d_array(global int *dst, image2d_array_t img) {
+    dst[0] = get_image_width(img);
+    dst[1] = get_image_height(img);
+    dst[2] = get_image_channel_data_type(img);
+    dst[3] = get_image_channel_order(img);
+    int2 dim = get_image_dim(img);
+    dst[4] = dim.x;
+    dst[5] = dim.y;
+    dst[6] = (int)get_image_array_size(img);
+    dst[7] = get_image_num_mip_levels(img);
+}
+kernel void image_query_2d_depth(global int *dst, image2d_depth_t img) {
+    dst[0] = get_image_width(img);
+    dst[1] = get_image_height(img);
+    dst[2] = get_image_channel_data_type(img);
+    dst[3] = get_image_channel_order(img);
+    int2 dim = get_image_dim(img);
+    dst[4] = dim.x;
+    dst[5] = dim.y;
+    dst[6] = get_image_num_mip_levels(img);
+}
+kernel void image_query_2d_array_depth(global int *dst, image2d_array_depth_t img) {
+    dst[0] = get_image_width(img);
+    dst[1] = get_image_height(img);
+    dst[2] = get_image_channel_data_type(img);
+    dst[3] = get_image_channel_order(img);
+    int2 dim = get_image_dim(img);
+    dst[4] = dim.x;
+    dst[5] = dim.y;
+    dst[6] = (int)get_image_array_size(img);
+    dst[7] = get_image_num_mip_levels(img);
+}
+kernel void image_query_2d_msaa(global int *dst, image2d_msaa_t img) {
+    dst[0] = get_image_width(img);
+    dst[1] = get_image_height(img);
+    dst[2] = get_image_channel_data_type(img);
+    dst[3] = get_image_channel_order(img);
+    int2 dim = get_image_dim(img);
+    dst[4] = dim.x;
+    dst[5] = dim.y;
+    dst[6] = get_image_num_samples(img);
+}
+kernel void image_query_3d(global int *dst, image3d_t img) {
+    dst[0] = get_image_width(img);
+    dst[1] = get_image_height(img);
+    dst[2] = get_image_depth(img);
+    dst[3] = get_image_channel_data_type(img);
+    dst[4] = get_image_channel_order(img);
+    int4 dim = get_image_dim(img);
+    dst[5] = dim.x;
+    dst[6] = dim.y;
+    dst[7] = dim.z;
+    dst[8] = get_image_num_mip_levels(img);
+}
+)===";
+
 static std::string kernelName = "kernel_copy";
 static std::string kernelName2 = "kernel_fill";
 static std::string kernelName3 = "image_copy";
@@ -114,18 +200,19 @@ typedef ze_result_t(ZE_APICALL *zeMemGetPitchFor2dImage_pfn)(
 
 zeMemGetPitchFor2dImage_pfn zeMemGetPitchFor2dImageFunctionPtr = nullptr;
 
-void createModule(const char *sourceCode, AddressingMode addressing, const ze_context_handle_t context, const ze_device_handle_t device, const std::string &deviceName, const std::string &revisionId, ze_module_handle_t &module) {
+void createModule(const char *sourceCode, AddressingMode addressing, const ze_context_handle_t context, const ze_device_handle_t device,
+                  const std::string &deviceName, const std::string &revisionId, ze_module_handle_t &module, const std::string &internalOption) {
     std::string buildLog;
     std::string bindlessOptions = "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode";
     std::string bindlessImagesOptions = "-cl-intel-use-bindless-images -cl-intel-use-bindless-advanced-mode";
-    std::string internalOptions = "";
+    std::string internalOptions = internalOption + " ";
     if (addressing == AddressingMode::bindless) {
-        internalOptions = bindlessOptions;
+        internalOptions += bindlessOptions;
     }
     if (addressing == AddressingMode::bindlessImages) {
-        internalOptions = bindlessImagesOptions;
+        internalOptions += bindlessImagesOptions;
     }
-    auto bin = LevelZeroBlackBoxTests::compileToNative(sourceCode, deviceName, revisionId, "", internalOptions, buildLog);
+    auto bin = LevelZeroBlackBoxTests::compileToNative(sourceCode, deviceName, revisionId, "-cl-std=CL3.0", internalOptions, buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == bin.size()));
 
@@ -224,8 +311,8 @@ bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t devi
 
     ze_module_handle_t module = nullptr;
     ze_module_handle_t module2 = nullptr;
-    createModule(source, AddressingMode::bindless, context, device, deviceId, revisionId, module);
-    createModule(source2, AddressingMode::defaultMode, context, device, deviceId, revisionId, module2);
+    createModule(source, AddressingMode::bindless, context, device, deviceId, revisionId, module, "");
+    createModule(source2, AddressingMode::defaultMode, context, device, deviceId, revisionId, module2, "");
 
     ExecutionMode executionModes[] = {ExecutionMode::commandQueue, ExecutionMode::immSyncCmdList};
     ze_kernel_handle_t copyKernel = nullptr;
@@ -257,7 +344,7 @@ bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, 
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t copyKernel = nullptr;
 
-    createModule(source3, mode, context, device, deviceId, revisionId, module);
+    createModule(source3, mode, context, device, deviceId, revisionId, module, "");
     createKernel(module, copyKernel, kernelName3.c_str());
 
     LevelZeroBlackBoxTests::CommandHandler commandHandler;
@@ -376,7 +463,7 @@ bool testBindlessImageSampled(ze_context_handle_t context, ze_device_handle_t de
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
 
-    createModule(source4, mode, context, device, deviceId, revisionId, module);
+    createModule(source4, mode, context, device, deviceId, revisionId, module, "");
     createKernel(module, kernel, kernelName4.c_str());
 
     LevelZeroBlackBoxTests::CommandHandler commandHandler;
@@ -426,7 +513,7 @@ bool testBindlessImageSampled(ze_context_handle_t context, ze_device_handle_t de
 
     ze_image_handle_t srcImg;
     ze_group_count_t dispatchTraits;
-    dispatchTraits.groupCountX = 1;
+    dispatchTraits.groupCountX = 1u;
     dispatchTraits.groupCountY = 4u;
     dispatchTraits.groupCountZ = 1u;
 
@@ -451,11 +538,11 @@ bool testBindlessImageSampled(ze_context_handle_t context, ze_device_handle_t de
 
     // Validate
     float *dst = reinterpret_cast<float *>(dstBuffer);
-    std::vector<float> groundTruth = {5.f, 15.f, 25.f, 30.f};
+    std::vector<float> reference = {5.f, 15.f, 25.f, 30.f};
     for (size_t i = 0; (i < srcImgDesc.height) && outputValidated; ++i) {
         for (size_t j = 0; j < (srcImgDesc.width * 4); ++j, ++dst) {
-            if (*dst != groundTruth[i]) {
-                std::cerr << "error: dstBuffer[" << i << "][" << j << "] = " << *dst << " is not equal to " << groundTruth[i] << "\n";
+            if (*dst != reference[i]) {
+                std::cerr << "error: dstBuffer[" << i << "][" << j << "] = " << *dst << " is not equal to " << reference[i] << "\n";
                 outputValidated = false;
                 break;
             }
@@ -471,11 +558,226 @@ bool testBindlessImageSampled(ze_context_handle_t context, ze_device_handle_t de
     return outputValidated;
 }
 
+bool runImageQuery(ze_context_handle_t context, ze_device_handle_t device, ze_module_handle_t module,
+                   const char *kernelName, ze_image_desc_t &imgDesc, std::vector<uint32_t> &reference, bool imgIsSupported) {
+    if (!imgIsSupported) {
+        std::cerr << "Kernel " << kernelName << " is not supported and skipped.\n";
+        return true;
+    }
+
+    ze_kernel_handle_t kernel = nullptr;
+    createKernel(module, kernel, kernelName);
+
+    LevelZeroBlackBoxTests::CommandHandler commandHandler;
+    bool isImmediateCmdList = false;
+
+    SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
+
+    ze_group_count_t dispatchTraits;
+    dispatchTraits.groupCountX = 1u;
+    dispatchTraits.groupCountY = 1u;
+    dispatchTraits.groupCountZ = 1u;
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+    void *dstBuffer;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, reference.size() * sizeof(int), sizeof(int), &dstBuffer));
+
+    ze_image_handle_t img;
+    SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &imgDesc, &img));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(img), &img));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, 1U, 1U, 1U));
+
+    SUCCESS_OR_TERMINATE(commandHandler.appendKernel(kernel, dispatchTraits));
+    SUCCESS_OR_TERMINATE(commandHandler.execute());
+    SUCCESS_OR_TERMINATE(commandHandler.synchronize());
+
+    // Validate
+    bool outputValidated = true;
+    auto *dst = reinterpret_cast<int *>(dstBuffer);
+    for (size_t i = 0; i < reference.size(); ++i) {
+        if (dst[i] != static_cast<int>(reference[i])) {
+            std::cerr << "Kernel " << kernelName << " error: dstBuffer[" << i << "] = " << dst[i] << " is not equal to reference[" << i << "] = " << reference[i] << "\n";
+            outputValidated = false;
+            break;
+        }
+    }
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeImageDestroy(img));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+
+    if (outputValidated) {
+        std::cout << "Kernel " << kernelName << " is successful.\n";
+    }
+
+    return outputValidated;
+}
+
+bool testBindlessImageQuery(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId,
+                            const std::string &revisionId, AddressingMode mode,
+                            bool is1dImageSupported, bool is2dImageSupported, bool is3dImageSupported, bool isImageArraySupported) {
+    ze_module_handle_t module = nullptr;
+    createModule(source5, mode, context, device, deviceId, revisionId, module, "-cl-ext=+cl_khr_gl_msaa_sharing");
+
+    ze_image_desc_t desc1D = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_1D,
+                              {ZE_IMAGE_FORMAT_LAYOUT_32, ZE_IMAGE_FORMAT_TYPE_UINT,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_X,
+                               ZE_IMAGE_FORMAT_SWIZZLE_X, ZE_IMAGE_FORMAT_SWIZZLE_X},
+                              8,
+                              1,
+                              1,
+                              0,
+                              0};
+
+    std::vector<uint32_t> reference1D = {static_cast<uint32_t>(desc1D.width),
+                                         L0::getClChannelDataType(desc1D.format), L0::getClChannelOrder(desc1D.format),
+                                         desc1D.miplevels};
+
+    ze_image_desc_t desc1DArray = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                   nullptr,
+                                   0,
+                                   ZE_IMAGE_TYPE_1DARRAY,
+                                   {ZE_IMAGE_FORMAT_LAYOUT_32_32, ZE_IMAGE_FORMAT_TYPE_SINT,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_X, ZE_IMAGE_FORMAT_SWIZZLE_X},
+                                   8,
+                                   1,
+                                   1,
+                                   3,
+                                   0};
+
+    std::vector<uint32_t> reference1DArray = {static_cast<uint32_t>(desc1DArray.width),
+                                              L0::getClChannelDataType(desc1DArray.format), L0::getClChannelOrder(desc1DArray.format),
+                                              desc1DArray.arraylevels, desc1DArray.miplevels};
+
+    ze_image_desc_t desc2D = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_2D,
+                              {ZE_IMAGE_FORMAT_LAYOUT_16_16, ZE_IMAGE_FORMAT_TYPE_UNORM,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                               ZE_IMAGE_FORMAT_SWIZZLE_X, ZE_IMAGE_FORMAT_SWIZZLE_X},
+                              16,
+                              2,
+                              1,
+                              0,
+                              0};
+
+    std::vector<uint32_t> reference2D = {static_cast<uint32_t>(desc2D.width), desc2D.height,
+                                         L0::getClChannelDataType(desc2D.format), L0::getClChannelOrder(desc2D.format),
+                                         static_cast<uint32_t>(desc2D.width), desc2D.height, desc2D.miplevels};
+
+    ze_image_desc_t desc2DArray = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                   nullptr,
+                                   0,
+                                   ZE_IMAGE_TYPE_2DARRAY,
+                                   {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_SNORM,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_X},
+                                   16,
+                                   2,
+                                   1,
+                                   5,
+                                   0};
+
+    std::vector<uint32_t> reference2DArray = {static_cast<uint32_t>(desc2DArray.width), desc2DArray.height,
+                                              L0::getClChannelDataType(desc2DArray.format), L0::getClChannelOrder(desc2DArray.format),
+                                              static_cast<uint32_t>(desc2DArray.width), desc2DArray.height, desc2DArray.arraylevels, desc2DArray.miplevels};
+
+    ze_image_desc_t desc2DDepth = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                   nullptr,
+                                   0,
+                                   ZE_IMAGE_TYPE_2D,
+                                   {ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_X},
+                                   16,
+                                   2,
+                                   1,
+                                   0,
+                                   0};
+
+    std::vector<uint32_t> reference2DDepth = {static_cast<uint32_t>(desc2DDepth.width), desc2DDepth.height,
+                                              L0::getClChannelDataType(desc2DDepth.format), L0::getClChannelOrder(desc2DDepth.format),
+                                              static_cast<uint32_t>(desc2DDepth.width), desc2DDepth.height, desc2DDepth.miplevels};
+
+    ze_image_desc_t desc2DArrayDepth = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                        nullptr,
+                                        0,
+                                        ZE_IMAGE_TYPE_2DARRAY,
+                                        {ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16, ZE_IMAGE_FORMAT_TYPE_FLOAT,
+                                         ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                         ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_X},
+                                        16,
+                                        2,
+                                        1,
+                                        3,
+                                        0};
+
+    std::vector<uint32_t> reference2DArrayDepth = {static_cast<uint32_t>(desc2DArrayDepth.width), desc2DArrayDepth.height,
+                                                   L0::getClChannelDataType(desc2DArrayDepth.format), L0::getClChannelOrder(desc2DArrayDepth.format),
+                                                   static_cast<uint32_t>(desc2DArrayDepth.width), desc2DArrayDepth.height,
+                                                   desc2DArrayDepth.arraylevels, desc2DArrayDepth.miplevels};
+
+    ze_image_desc_t desc2DMsaa = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  nullptr,
+                                  0,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16, ZE_IMAGE_FORMAT_TYPE_UNORM,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  16,
+                                  2,
+                                  1,
+                                  0,
+                                  0};
+
+    std::vector<uint32_t> reference2DMsaa = {static_cast<uint32_t>(desc2DMsaa.width), desc2DMsaa.height,
+                                             L0::getClChannelDataType(desc2DMsaa.format), L0::getClChannelOrder(desc2DMsaa.format),
+                                             static_cast<uint32_t>(desc2DMsaa.width), desc2DMsaa.height, desc2DMsaa.miplevels};
+
+    ze_image_desc_t desc3D = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_3D,
+                              {ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32, ZE_IMAGE_FORMAT_TYPE_FLOAT,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                               ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                              32,
+                              4,
+                              3,
+                              0,
+                              0};
+
+    std::vector<uint32_t> reference3D = {static_cast<uint32_t>(desc3D.width), desc3D.height, desc3D.depth,
+                                         L0::getClChannelDataType(desc3D.format), L0::getClChannelOrder(desc3D.format),
+                                         static_cast<uint32_t>(desc3D.width), desc3D.height, desc3D.depth, desc3D.miplevels};
+
+    bool res = true;
+    res &= runImageQuery(context, device, module, "image_query_1d", desc1D, reference1D, is1dImageSupported);
+    res &= runImageQuery(context, device, module, "image_query_1d_array", desc1DArray, reference1DArray, is1dImageSupported && isImageArraySupported);
+    res &= runImageQuery(context, device, module, "image_query_2d", desc2D, reference2D, is2dImageSupported);
+    res &= runImageQuery(context, device, module, "image_query_2d_array", desc2DArray, reference2DArray, is2dImageSupported && isImageArraySupported);
+    res &= runImageQuery(context, device, module, "image_query_2d_depth", desc2DDepth, reference2DDepth, is2dImageSupported);
+    res &= runImageQuery(context, device, module, "image_query_2d_array_depth", desc2DArrayDepth, reference2DArrayDepth, is2dImageSupported && isImageArraySupported);
+    res &= runImageQuery(context, device, module, "image_query_2d_msaa", desc2DMsaa, reference2DMsaa, is2dImageSupported);
+    res &= runImageQuery(context, device, module, "image_query_3d", desc3D, reference3D, is3dImageSupported);
+
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+    return res;
+}
+
 bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId, AddressingMode mode) {
     bool outputValidated = false;
 
     ze_module_handle_t module = nullptr;
-    createModule(source3, mode, context, device, deviceId, revisionId, module);
+    createModule(source3, mode, context, device, deviceId, revisionId, module, "");
 
     ze_device_compute_properties_t computeProperties = {};
     zeDeviceGetComputeProperties(device, &computeProperties);
@@ -676,6 +978,8 @@ bool testZeExperimentalBindlessImages(ze_context_handle_t context, ze_device_han
     return outputValidated;
 }
 
+} // namespace
+
 int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool outputValidated = true;
@@ -696,7 +1000,7 @@ int main(int argc, char *argv[]) {
     ze_device_uuid_t uuid = deviceProperties.uuid;
     std::string revisionId = std::to_string(reinterpret_cast<uint16_t *>(uuid.id)[2]);
 
-    int numTests = 4;
+    int numTests = 5;
     int testCase = -1;
     testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", -1);
     if (testCase < -1 || testCase >= numTests) {
@@ -709,7 +1013,10 @@ int main(int argc, char *argv[]) {
     auto bindlessImages = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "", "--bindless-images");
     AddressingMode mode = bindlessImages ? AddressingMode::bindlessImages : AddressingMode::bindless;
 
-    bool is2dImageSupported = LevelZeroBlackBoxTests::checkImageSupport(device, false, true, false);
+    bool is1dImageSupported = LevelZeroBlackBoxTests::checkImageSupport(device, true, false, false, false);
+    bool is2dImageSupported = LevelZeroBlackBoxTests::checkImageSupport(device, false, true, false, false);
+    bool is3dImageSupported = LevelZeroBlackBoxTests::checkImageSupport(device, false, false, true, false);
+    bool isImageArraySupported = LevelZeroBlackBoxTests::checkImageSupport(device, false, false, false, true);
 
     for (int i = 0; i < numTests; i++) {
         if (testCase != -1) {
@@ -754,6 +1061,19 @@ int main(int argc, char *argv[]) {
             }
             break;
         case 3:
+            std::cout << "\ntest case: testBindlessImageQuery\n"
+                      << std::endl;
+            if (!isIntegratedGPU && (is1dImageSupported || is2dImageSupported || is3dImageSupported)) {
+                if (bindlessImages) {
+                    std::cout << "--bindless-images " << std::endl;
+                }
+                outputValidated &= testBindlessImageQuery(context, device, ss.str(), revisionId, mode,
+                                                          is1dImageSupported, is2dImageSupported, is3dImageSupported, isImageArraySupported);
+            } else {
+                std::cout << "Skipped. testBindlessImageQuery not supported\n";
+            }
+            break;
+        case 4:
             std::cout << "\ntest case: testZeExperimentalBindlessImages\n"
                       << std::endl;
 
