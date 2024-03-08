@@ -92,7 +92,7 @@ TEST(ApiSpecificConfigL0Tests, WhenGettingCompilerCacheFileExtensionThenReturnPr
 }
 
 TEST(ApiSpecificConfigL0Tests, WhenCheckingIfCompilerCacheIsEnabledByDefaultThenReturnTrue) {
-    EXPECT_EQ(0l, ApiSpecificConfig::compilerCacheDefaultEnabled());
+    EXPECT_EQ(1l, ApiSpecificConfig::compilerCacheDefaultEnabled());
 }
 
 } // namespace NEO

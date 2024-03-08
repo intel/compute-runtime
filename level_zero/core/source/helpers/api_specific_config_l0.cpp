@@ -88,6 +88,6 @@ std::string ApiSpecificConfig::compilerCacheFileExtension() {
 }
 
 int64_t ApiSpecificConfig::compilerCacheDefaultEnabled() {
-    return 0l;
+    return 1l;
 }
 } // namespace NEO
