@@ -108,7 +108,7 @@ static ze_result_t openPmuHandlesForVfs(uint32_t numberOfVfs,
         }
 
         if (fd[1] < 0) {
-            if (errno == -EMFILE || errno == -ENFILE) {
+            if (errno == EMFILE || errno == ENFILE) {
                 NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
                 return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
             }
@@ -211,7 +211,7 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
 }
 
 void LinuxEngineImp::checkErrorNumberAndUpdateStatus() {
-    if (errno == -EMFILE || errno == -ENFILE) {
+    if (errno == EMFILE || errno == ENFILE) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
         initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     } else {

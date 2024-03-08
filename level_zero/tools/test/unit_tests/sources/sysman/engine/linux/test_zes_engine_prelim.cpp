@@ -130,7 +130,7 @@ TEST_F(ZesEngineFixture, GivenPmuOpenFailsDueToTooManyOpenFilesWhenCallingzesDev
     pSysfsAccess->mockReadSymLinkSuccess = true;
     pPmuInterface->mockPerfEventOpenRead = true;
     pPmuInterface->mockPerfEventOpenFailAtCount = 3;
-    pPmuInterface->mockErrorNumber = -EMFILE;
+    pPmuInterface->mockErrorNumber = EMFILE;
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
     pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
 
@@ -147,7 +147,7 @@ TEST_F(ZesEngineFixture, GivenPmuOpenFailsDueToTooManyOpenFilesInSystemWhenEnume
     pSysfsAccess->mockReadSymLinkSuccess = true;
     pPmuInterface->mockPerfEventOpenRead = true;
     pPmuInterface->mockPerfEventOpenFailAtCount = 3;
-    pPmuInterface->mockErrorNumber = -ENFILE;
+    pPmuInterface->mockErrorNumber = ENFILE;
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
     pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
 
@@ -423,7 +423,7 @@ TEST_F(ZesEngineFixture, GivenTooManyFilesErrorWhenCallingZesEngineGetActivityEx
     uint32_t count = 0;
     pPmuInterface->mockPerfEventOpenRead = true;
     pPmuInterface->mockPerfEventOpenFailAtCount = 3;
-    pPmuInterface->mockErrorNumber = -EMFILE;
+    pPmuInterface->mockErrorNumber = EMFILE;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
     EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
     std::vector<zes_engine_stats_t> engineStats(count);
@@ -445,7 +445,7 @@ TEST_F(ZesEngineFixture, GivenTooManyFilesInSystemErrorWhenCallingZesEngineGetAc
     uint32_t count = 0;
     pPmuInterface->mockPerfEventOpenRead = true;
     pPmuInterface->mockPerfEventOpenFailAtCount = 3;
-    pPmuInterface->mockErrorNumber = -ENFILE;
+    pPmuInterface->mockErrorNumber = ENFILE;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
     EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
     std::vector<zes_engine_stats_t> engineStats(count);
