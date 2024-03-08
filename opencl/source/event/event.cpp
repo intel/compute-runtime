@@ -780,6 +780,13 @@ bool Event::areTimestampsCompleted() {
                 }
             }
             this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocations();
+            const auto &bcsStates = this->cmdQueue->peekActiveBcsStates();
+            for (auto currentBcsIndex = 0u; currentBcsIndex < bcsStates.size(); currentBcsIndex++) {
+                const auto &state = bcsStates[currentBcsIndex];
+                if (state.isValid()) {
+                    this->cmdQueue->getBcsCommandStreamReceiver(state.engineType)->downloadAllocations();
+                }
+            }
             return true;
         }
     }
