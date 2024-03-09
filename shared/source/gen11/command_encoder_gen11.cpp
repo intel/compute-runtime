@@ -48,6 +48,11 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvir
 }
 
 template <>
+inline size_t EncodeComputeMode<Family>::getSizeForComputeMode() {
+    return 0;
+}
+
+template <>
 void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties,
                                                           const RootDeviceEnvironment &rootDeviceEnvironment) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;

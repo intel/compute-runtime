@@ -38,6 +38,11 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvir
     return 0u;
 }
 
+template <>
+inline size_t EncodeComputeMode<Family>::getSizeForComputeMode() {
+    return 0;
+}
+
 template <typename Family>
 void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
