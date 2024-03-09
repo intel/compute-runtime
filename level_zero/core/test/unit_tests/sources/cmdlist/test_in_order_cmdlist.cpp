@@ -396,39 +396,6 @@ HWTEST2_F(InOrderCmdListTests, whenCreatingInOrderExecInfoThenReuseDeviceAlloc, 
     tag->returnTag();
 }
 
-HWTEST2_F(InOrderCmdListTests, whenCreatingInOrderExecInfoThenReuseHostAlloc, IsAtLeastSkl) {
-    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
-
-    auto tag = device->getHostInOrderCounterAllocator()->getTag();
-
-    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
-    auto gpuVa1 = immCmdList1->inOrderExecInfo->getBaseHostAddress();
-
-    auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
-    auto gpuVa2 = immCmdList2->inOrderExecInfo->getBaseHostAddress();
-
-    EXPECT_NE(gpuVa1, gpuVa2);
-
-    // allocation from the same allocator
-    EXPECT_EQ(immCmdList1->inOrderExecInfo->getHostCounterAllocation(), tag->getBaseGraphicsAllocation()->getGraphicsAllocation(0));
-
-    immCmdList1.reset();
-
-    auto immCmdList3 = createImmCmdList<gfxCoreFamily>();
-    auto gpuVa3 = immCmdList3->inOrderExecInfo->getBaseHostAddress();
-
-    EXPECT_EQ(gpuVa1, gpuVa3);
-
-    immCmdList2.reset();
-
-    auto immCmdList4 = createImmCmdList<gfxCoreFamily>();
-    auto gpuVa4 = immCmdList4->inOrderExecInfo->getBaseHostAddress();
-
-    EXPECT_EQ(gpuVa2, gpuVa4);
-
-    tag->returnTag();
-}
-
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventWhenAppendEventResetCalledThenReturnError, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -1606,13 +1573,8 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingThenEnsureHostAll
     EXPECT_EQ(immCmdList1->inOrderExecInfo->getBaseHostAddress(), immCmdList1->inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer());
     EXPECT_FALSE(immCmdList1->inOrderExecInfo->getHostCounterAllocation()->isAllocatedInLocalMemoryPool());
 
-    EXPECT_EQ(immCmdList1->inOrderExecInfo->getHostCounterAllocation(), immCmdList2->inOrderExecInfo->getHostCounterAllocation());
-
-    auto hostAllocOffset = ptrDiff(immCmdList2->inOrderExecInfo->getBaseHostAddress(), immCmdList1->inOrderExecInfo->getBaseHostAddress());
-    EXPECT_NE(0u, hostAllocOffset);
-
     EXPECT_EQ(AllocationType::bufferHostMemory, immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getAllocationType());
-    EXPECT_EQ(immCmdList2->inOrderExecInfo->getBaseHostAddress(), ptrOffset(immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer(), hostAllocOffset));
+    EXPECT_EQ(immCmdList2->inOrderExecInfo->getBaseHostAddress(), immCmdList2->inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer());
     EXPECT_FALSE(immCmdList2->inOrderExecInfo->getHostCounterAllocation()->isAllocatedInLocalMemoryPool());
 
     immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, event0Handle, 0, nullptr, launchParams, false);
@@ -1621,7 +1583,8 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenDispatchingThenEnsureHostAll
 
     immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &event0Handle, launchParams, false);
 
-    EXPECT_EQ(2u, ultCsr->makeResidentAllocations[immCmdList1->inOrderExecInfo->getHostCounterAllocation()]);
+    // host allocation not used as Device dependency
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[immCmdList1->inOrderExecInfo->getHostCounterAllocation()]);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenClearEventCsrList, IsAtLeastSkl) {

@@ -75,20 +75,20 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingStandaloneInO
 HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecInfoThenSetupCorrectly) {
     MockDevice mockDevice;
 
-    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, mockDevice.getMemoryManager());
-    MockTagAllocator<DeviceAllocNodeType<true>> hostTagAllocator(0, mockDevice.getMemoryManager());
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, mockDevice.getMemoryManager());
 
     auto &memoryManager = *mockDevice.getMemoryManager();
-    auto tempNode1 = deviceTagAllocator.getTag();
-    auto tempNode2 = hostTagAllocator.getTag();
+    auto tempNode = tagAllocator.getTag();
+
+    uint64_t storage2[2] = {1, 1};
 
     {
-        auto deviceNode = deviceTagAllocator.getTag();
+        auto deviceNode = tagAllocator.getTag();
 
         EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation()->getGpuAddress(), deviceNode->getGpuAddress());
         EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation()->getUnderlyingBuffer(), deviceNode->getCpuBase());
 
-        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, nullptr, mockDevice, 2, false);
+        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, mockDevice, 2, false);
 
         EXPECT_EQ(deviceNode->getCpuBase(), inOrderExecInfo->getBaseHostAddress());
         EXPECT_EQ(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo->getDeviceCounterAllocation());
@@ -103,7 +103,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
     }
 
     {
-        auto deviceNode = deviceTagAllocator.getTag();
+        auto deviceNode = tagAllocator.getTag();
 
         InOrderExecInfo inOrderExecInfo(deviceNode, nullptr, memoryManager, 2, 0, true, true);
         EXPECT_TRUE(inOrderExecInfo.isRegularCmdList());
@@ -113,29 +113,26 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
     }
 
     {
-        auto deviceNode = deviceTagAllocator.getTag();
-        auto hostNode = hostTagAllocator.getTag();
-        auto offset = ptrDiff(hostNode->getCpuBase(), tempNode2->getCpuBase());
+        auto deviceNode = tagAllocator.getTag();
 
         DebugManagerStateRestore restore;
         debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
 
-        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, hostNode, mockDevice, 2, false);
+        auto inOrderExecInfo = InOrderExecInfo::create(deviceNode, mockDevice, 2, false);
 
-        EXPECT_EQ(inOrderExecInfo->getBaseHostGpuAddress(), hostNode->getGpuAddress());
         EXPECT_NE(inOrderExecInfo->getDeviceCounterAllocation(), inOrderExecInfo->getHostCounterAllocation());
         EXPECT_NE(deviceNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), inOrderExecInfo->getHostCounterAllocation());
 
         EXPECT_NE(deviceNode->getCpuBase(), inOrderExecInfo->getBaseHostAddress());
-        EXPECT_EQ(ptrOffset(inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer(), offset), inOrderExecInfo->getBaseHostAddress());
+        EXPECT_EQ(inOrderExecInfo->getHostCounterAllocation()->getUnderlyingBuffer(), inOrderExecInfo->getBaseHostAddress());
         EXPECT_TRUE(inOrderExecInfo->isHostStorageDuplicated());
     }
 
     {
-        auto deviceNode = deviceTagAllocator.getTag();
-        auto hostNode = hostTagAllocator.getTag();
+        auto deviceNode = tagAllocator.getTag();
 
-        InOrderExecInfo inOrderExecInfo(deviceNode, hostNode, memoryManager, 1, 0, false, false);
+        auto hostSyncAllocation = new MockGraphicsAllocation(&storage2, sizeof(storage2));
+        InOrderExecInfo inOrderExecInfo(deviceNode, hostSyncAllocation, memoryManager, 1, 0, false, false);
         auto deviceAllocHostAddress = reinterpret_cast<uint64_t *>(deviceNode->getCpuBase());
         EXPECT_EQ(0u, inOrderExecInfo.getCounterValue());
         EXPECT_EQ(0u, inOrderExecInfo.getRegularCmdListSubmissionCounter());
@@ -163,7 +160,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
     }
 
     {
-        auto deviceNode = deviceTagAllocator.getTag();
+        auto deviceNode = tagAllocator.getTag();
 
         InOrderExecInfo inOrderExecInfo(deviceNode, nullptr, memoryManager, 2, 0, true, false);
 
@@ -178,8 +175,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         EXPECT_EQ(4u, InOrderPatchCommandHelpers::getAppendCounterValue(inOrderExecInfo));
     }
 
-    tempNode1->returnTag();
-    tempNode2->returnTag();
+    tempNode->returnTag();
 }
 
 HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValues) {

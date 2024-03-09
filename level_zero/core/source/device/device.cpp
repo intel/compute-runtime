@@ -21,34 +21,26 @@ NEO::DebuggerL0 *Device::getL0Debugger() {
     return getNEODevice()->getL0Debugger();
 }
 
-template <typename NodeT>
-NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAllocatorBase> &allocator, std::mutex &inOrderAllocatorMutex, NEO::Device &neoDevice) {
-    if (!allocator.get()) {
+NEO::TagAllocatorBase *Device::getDeviceInOrderCounterAllocator() {
+    if (!deviceInOrderCounterAllocator.get()) {
         std::unique_lock<std::mutex> lock(inOrderAllocatorMutex);
 
-        if (!allocator.get()) {
-            RootDeviceIndicesContainer rootDeviceIndices = {neoDevice.getRootDeviceIndex()};
+        if (!deviceInOrderCounterAllocator.get()) {
+            using NodeT = typename NEO::DeviceAllocNodeType<true>;
+            RootDeviceIndicesContainer rootDeviceIndices = {getRootDeviceIndex()};
 
-            const size_t maxPartitionCount = neoDevice.getDeviceBitfield().count();
+            const size_t maxPartitionCount = getNEODevice()->getDeviceBitfield().count();
 
             const size_t nodeSize = sizeof(uint64_t) * maxPartitionCount * 2; // Multiplied by 2 to handle 32b overflow
 
             DEBUG_BREAK_IF(alignUp(nodeSize, MemoryConstants::cacheLineSize) * NodeT::defaultAllocatorTagCount > MemoryConstants::pageSize64k);
 
-            allocator = std::make_unique<NEO::TagAllocator<NodeT>>(rootDeviceIndices, neoDevice.getMemoryManager(), NodeT::defaultAllocatorTagCount,
-                                                                   MemoryConstants::cacheLineSize, nodeSize, false, neoDevice.getDeviceBitfield());
+            deviceInOrderCounterAllocator = std::make_unique<NEO::TagAllocator<NodeT>>(rootDeviceIndices, neoDevice->getMemoryManager(), NodeT::defaultAllocatorTagCount,
+                                                                                       MemoryConstants::cacheLineSize, nodeSize, false, neoDevice->getDeviceBitfield());
         }
     }
 
-    return allocator.get();
-}
-
-NEO::TagAllocatorBase *Device::getDeviceInOrderCounterAllocator() {
-    return getInOrderCounterAllocator<NEO::DeviceAllocNodeType<true>>(deviceInOrderCounterAllocator, inOrderAllocatorMutex, *getNEODevice());
-}
-
-NEO::TagAllocatorBase *Device::getHostInOrderCounterAllocator() {
-    return getInOrderCounterAllocator<NEO::DeviceAllocNodeType<false>>(hostInOrderCounterAllocator, inOrderAllocatorMutex, *getNEODevice());
+    return deviceInOrderCounterAllocator.get();
 }
 
 } // namespace L0
