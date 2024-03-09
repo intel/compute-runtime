@@ -575,6 +575,38 @@ uint32_t IoctlHelperPrelim20::getEuStallFdParameter() {
     return PRELIM_I915_PERF_FLAG_FD_EU_STALL;
 }
 
+bool IoctlHelperPrelim20::perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) {
+    NEO::PrelimI915::drm_i915_perf_open_param param = {
+        .flags = I915_PERF_FLAG_FD_CLOEXEC |
+                 euStallFdParameter |
+                 I915_PERF_FLAG_FD_NONBLOCK,
+        .num_properties = sizeof(properties) / 16,
+        .properties_ptr = reinterpret_cast<uintptr_t>(properties.data()),
+    };
+    *stream = ioctl(DrmIoctl::perfOpen, &param);
+    if (*stream < 0) {
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (*stream < 0), stderr,
+                           "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_I915_PERF_OPEN", errno, *stream);
+        return false;
+    }
+    auto ret = ioctl(*stream, DrmIoctl::perfEnable, 0);
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr,
+                       "%s failed errno = %d | ret = %d \n", "I915_PERF_IOCTL_ENABLE", errno, ret);
+    return (ret == 0) ? true : false;
+}
+
+bool IoctlHelperPrelim20::perfDisableEuStallStream(int32_t *stream) {
+    int disableStatus = ioctl(*stream, DrmIoctl::perfDisable, 0);
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
+                       "I915_PERF_IOCTL_DISABLE failed errno = %d | ret = %d \n", errno, disableStatus);
+
+    int closeStatus = NEO::SysCalls::close(*stream);
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
+                       "close() failed errno = %d | ret = %d \n", errno, closeStatus);
+    *stream = -1;
+    return ((closeStatus == 0) && (disableStatus == 0)) ? true : false;
+}
+
 std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) {
 
     if (regionInstanceClass) {

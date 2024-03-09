@@ -32,6 +32,7 @@ using NEO::PrelimI915::drm_i915_gem_vm_control;
 using NEO::PrelimI915::drm_i915_gem_wait;
 using NEO::PrelimI915::drm_i915_getparam_t;
 using NEO::PrelimI915::drm_i915_memory_region_info;
+using NEO::PrelimI915::drm_i915_perf_open_param;
 using NEO::PrelimI915::drm_i915_query;
 using NEO::PrelimI915::drm_i915_query_engine_info;
 using NEO::PrelimI915::drm_i915_query_memory_regions;

@@ -8,11 +8,13 @@
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/include/zet_intel_gpu_metric.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
@@ -55,8 +57,8 @@ bool IpSamplingMetricSourceImp::isAvailable() {
 
 void IpSamplingMetricSourceImp::cacheMetricGroup() {
 
+    const auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
     if (metricDeviceContext.isImplicitScalingCapable()) {
-        const auto deviceImp = static_cast<DeviceImp *>(&metricDeviceContext.getDevice());
         std::vector<IpSamplingMetricGroupImp *> subDeviceMetricGroup = {};
         subDeviceMetricGroup.reserve(deviceImp->subDevices.size());
 
@@ -95,23 +97,14 @@ void IpSamplingMetricSourceImp::cacheMetricGroup() {
     strcpy_s(metricProperties.resultUnits, ZET_MAX_METRIC_RESULT_UNITS, "Address");
     metrics.push_back(IpSamplingMetricImp(*this, metricProperties));
 
-    std::vector<std::pair<const char *, const char *>> metricPropertiesList = {
-        {"Active", "Active cycles"},
-        {"ControlStall", "Stall on control"},
-        {"PipeStall", "Stall on pipe"},
-        {"SendStall", "Stall on send"},
-        {"DistStall", "Stall on distance"},
-        {"SbidStall", "Stall on scoreboard"},
-        {"SyncStall", "Stall on sync"},
-        {"InstrFetchStall", "Stall on instruction fetch"},
-        {"OtherStall", "Stall on other condition"},
-    };
+    auto &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    std::vector<std::pair<const char *, const char *>> stallSamplingReportList = l0GfxCoreHelper.getStallSamplingReportMetrics();
 
     // Preparing properties for others because of common values
     metricProperties.metricType = ZET_METRIC_TYPE_EVENT;
     strcpy_s(metricProperties.resultUnits, ZET_MAX_METRIC_RESULT_UNITS, "Events");
 
-    for (auto &property : metricPropertiesList) {
+    for (auto &property : stallSamplingReportList) {
         strcpy_s(metricProperties.name, ZET_MAX_METRIC_NAME, property.first);
         strcpy_s(metricProperties.description, ZET_MAX_METRIC_DESCRIPTION, property.second);
         metrics.push_back(IpSamplingMetricImp(*this, metricProperties));
@@ -419,7 +412,7 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricValues(const zet_metric
                                                                 uint32_t &metricValueCount,
                                                                 zet_typed_value_t *pCalculatedData) {
     bool dataOverflow = false;
-    StallSumIpDataMap_t stallSumIpDataMap;
+    std::map<uint64_t, void *> stallReportDataMap;
 
     // MAX_METRIC_VALUES is not supported yet.
     if (type != ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES) {
@@ -436,127 +429,26 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricValues(const zet_metric
 
     const uint32_t rawReportCount = static_cast<uint32_t>(rawDataSize) / rawReportSize;
 
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(&this->getMetricSource().getMetricDeviceContext().getDevice());
+    auto &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
     for (const uint8_t *pRawIpData = pRawData; pRawIpData < pRawData + (rawReportCount * rawReportSize); pRawIpData += rawReportSize) {
-        dataOverflow |= stallIpDataMapUpdate(stallSumIpDataMap, pRawIpData);
+        dataOverflow |= l0GfxCoreHelper.stallIpDataMapUpdate(stallReportDataMap, pRawIpData);
     }
 
-    metricValueCount = std::min<uint32_t>(metricValueCount, static_cast<uint32_t>(stallSumIpDataMap.size()) * properties.metricCount);
+    metricValueCount = std::min<uint32_t>(metricValueCount, static_cast<uint32_t>(stallReportDataMap.size()) * properties.metricCount);
     std::vector<zet_typed_value_t> ipDataValues;
     uint32_t i = 0;
-    for (auto it = stallSumIpDataMap.begin(); it != stallSumIpDataMap.end(); ++it) {
-        stallSumIpDataToTypedValues(it->first, it->second, ipDataValues);
+    for (auto it = stallReportDataMap.begin(); it != stallReportDataMap.end(); ++it) {
+        l0GfxCoreHelper.stallSumIpDataToTypedValues(it->first, it->second, ipDataValues);
         for (auto jt = ipDataValues.begin(); (jt != ipDataValues.end()) && (i < metricValueCount); jt++, i++) {
             *(pCalculatedData + i) = *jt;
         }
         ipDataValues.clear();
     }
+    l0GfxCoreHelper.stallIpDataMapDelete(stallReportDataMap);
 
     return dataOverflow ? ZE_RESULT_WARNING_DROPPED_DATA : ZE_RESULT_SUCCESS;
-}
-
-/*
- * stall sample data item format:
- *
- * Bits		Field
- * 0  to 28	IP (addr)
- * 29 to 36	active count
- * 37 to 44	other count
- * 45 to 52	control count
- * 53 to 60	pipestall count
- * 61 to 68	send count
- * 69 to 76	dist_acc count
- * 77 to 84	sbid count
- * 85 to 92	sync count
- * 93 to 100	inst_fetch count
- *
- * bytes 49 and 50, subSlice
- * bytes 51 and 52, flags
- *
- * total size 64 bytes
- */
-bool IpSamplingMetricGroupImp::stallIpDataMapUpdate(StallSumIpDataMap_t &stallSumIpDataMap, const uint8_t *pRawIpData) {
-
-    const uint8_t *tempAddr = pRawIpData;
-    uint64_t ip = 0ULL;
-    memcpy_s(reinterpret_cast<uint8_t *>(&ip), sizeof(ip), tempAddr, sizeof(ip));
-    ip &= 0x1fffffff;
-    StallSumIpData_t &stallSumData = stallSumIpDataMap[ip];
-    tempAddr += 3;
-
-    auto getCount = [&tempAddr]() {
-        uint16_t tempCount = 0;
-        memcpy_s(reinterpret_cast<uint8_t *>(&tempCount), sizeof(tempCount), tempAddr, sizeof(tempCount));
-        tempCount = (tempCount >> 5) & 0xff;
-        tempAddr += 1;
-        return static_cast<uint8_t>(tempCount);
-    };
-
-    stallSumData.activeCount += getCount();
-    stallSumData.otherCount += getCount();
-    stallSumData.controlCount += getCount();
-    stallSumData.pipeStallCount += getCount();
-    stallSumData.sendCount += getCount();
-    stallSumData.distAccCount += getCount();
-    stallSumData.sbidCount += getCount();
-    stallSumData.syncCount += getCount();
-    stallSumData.instFetchCount += getCount();
-
-    struct StallCntrInfo {
-        uint16_t subslice;
-        uint16_t flags;
-    } stallCntrInfo = {};
-
-    tempAddr = pRawIpData + 48;
-    memcpy_s(reinterpret_cast<uint8_t *>(&stallCntrInfo), sizeof(stallCntrInfo), tempAddr, sizeof(stallCntrInfo));
-
-    constexpr int overflowDropFlag = (1 << 8);
-    return stallCntrInfo.flags & overflowDropFlag;
-}
-
-// The order of push_back calls must match the order of metricPropertiesList.
-void IpSamplingMetricGroupImp::stallSumIpDataToTypedValues(uint64_t ip,
-                                                           StallSumIpData_t &sumIpData,
-                                                           std::vector<zet_typed_value_t> &ipDataValues) {
-    zet_typed_value_t tmpValueData;
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = ip;
-    ipDataValues.push_back(tmpValueData);
-
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = sumIpData.activeCount;
-    ipDataValues.push_back(tmpValueData);
-
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = sumIpData.controlCount;
-    ipDataValues.push_back(tmpValueData);
-
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = sumIpData.pipeStallCount;
-    ipDataValues.push_back(tmpValueData);
-
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = sumIpData.sendCount;
-    ipDataValues.push_back(tmpValueData);
-
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = sumIpData.distAccCount;
-    ipDataValues.push_back(tmpValueData);
-
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = sumIpData.sbidCount;
-    ipDataValues.push_back(tmpValueData);
-
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = sumIpData.syncCount;
-    ipDataValues.push_back(tmpValueData);
-
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = sumIpData.instFetchCount;
-    ipDataValues.push_back(tmpValueData);
-
-    tmpValueData.type = ZET_VALUE_TYPE_UINT64;
-    tmpValueData.value.ui64 = sumIpData.otherCount;
-    ipDataValues.push_back(tmpValueData);
 }
 
 zet_metric_group_handle_t IpSamplingMetricGroupImp::getMetricGroupForSubDevice(const uint32_t subDeviceIndex) {

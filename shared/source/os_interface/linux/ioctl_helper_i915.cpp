@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -312,6 +312,12 @@ unsigned int IoctlHelperI915::getIoctlRequestValue(DrmIoctl ioctlRequest) const 
         return DRM_IOCTL_I915_GEM_VM_CREATE;
     case DrmIoctl::gemVmDestroy:
         return DRM_IOCTL_I915_GEM_VM_DESTROY;
+    case DrmIoctl::perfOpen:
+        return DRM_IOCTL_I915_PERF_OPEN;
+    case DrmIoctl::perfEnable:
+        return I915_PERF_IOCTL_ENABLE;
+    case DrmIoctl::perfDisable:
+        return I915_PERF_IOCTL_DISABLE;
     default:
         return getIoctlRequestValueBase(ioctlRequest);
     }
@@ -393,6 +399,12 @@ std::string IoctlHelperI915::getIoctlString(DrmIoctl ioctlRequest) const {
         return "DRM_IOCTL_I915_GEM_VM_CREATE";
     case DrmIoctl::gemVmDestroy:
         return "DRM_IOCTL_I915_GEM_VM_DESTROY";
+    case DrmIoctl::perfOpen:
+        return "DRM_IOCTL_I915_PERF_OPEN";
+    case DrmIoctl::perfEnable:
+        return "I915_PERF_IOCTL_ENABLE";
+    case DrmIoctl::perfDisable:
+        return "I915_PERF_IOCTL_DISABLE";
     default:
         return getIoctlStringBase(ioctlRequest);
     }

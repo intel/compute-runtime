@@ -83,5 +83,13 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenGettingCmdlistUpdateCa
     EXPECT_EQ(49u, l0GfxCoreHelper.getCmdListUpdateCapabilities());
 }
 
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForDeletingIpSamplingEntryWithNullValuesThenMapRemainstheSameSize) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+    stallSumIpDataMap.emplace(std::pair<uint64_t, void *>(0ull, nullptr));
+    l0GfxCoreHelper.stallIpDataMapDelete(stallSumIpDataMap);
+    EXPECT_NE(0u, stallSumIpDataMap.size());
+}
+
 } // namespace ult
 } // namespace L0

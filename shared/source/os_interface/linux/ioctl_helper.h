@@ -90,6 +90,7 @@ class IoctlHelper {
     virtual ~IoctlHelper() {}
     static std::unique_ptr<IoctlHelper> getI915Helper(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, Drm &drm);
     virtual int ioctl(DrmIoctl request, void *arg);
+    virtual int ioctl(int fd, DrmIoctl request, void *arg);
 
     virtual bool initialize() = 0;
     virtual bool isSetPairAvailable() = 0;
@@ -135,6 +136,8 @@ class IoctlHelper {
     virtual bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize,
                                       uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
+    virtual bool perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) = 0;
+    virtual bool perfDisableEuStallStream(int32_t *stream) = 0;
     virtual UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) = 0;
     virtual UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) = 0;
     virtual int unregisterUuid(uint32_t handle) = 0;
@@ -272,6 +275,8 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
                               uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
     uint32_t getEuStallFdParameter() override;
+    bool perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) override;
+    bool perfDisableEuStallStream(int32_t *stream) override;
     UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
     UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) override;
     int unregisterUuid(uint32_t handle) override;
@@ -306,7 +311,6 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
 class IoctlHelperPrelim20 : public IoctlHelperI915 {
   public:
     IoctlHelperPrelim20(Drm &drmArg);
-
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isChunkingAvailable() override;
@@ -347,6 +351,8 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
     bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
                               uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
+    bool perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) override;
+    bool perfDisableEuStallStream(int32_t *stream) override;
     uint32_t getEuStallFdParameter() override;
     UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
     UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) override;

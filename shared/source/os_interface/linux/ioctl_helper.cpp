@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "drm/drm.h"
 
@@ -23,6 +24,10 @@ namespace NEO {
 
 int IoctlHelper::ioctl(DrmIoctl request, void *arg) {
     return drm.ioctl(request, arg);
+}
+
+int IoctlHelper::ioctl(int fd, DrmIoctl request, void *arg) {
+    return NEO::SysCalls::ioctl(fd, getIoctlRequestValue(request), arg);
 }
 
 void IoctlHelper::setupIpVersion() {

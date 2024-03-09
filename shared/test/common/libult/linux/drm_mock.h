@@ -222,6 +222,7 @@ class DrmMock : public Drm {
     bool unrecoverableContextSet = false;
     bool failRetHwIpVersion = false;
     bool returnInvalidHwIpVersionLength = false;
+    bool failPerfOpen = false;
 
     bool capturedCooperativeContextRequest = false;
     bool incrementVmId = false;

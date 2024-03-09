@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -85,6 +86,9 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsRet
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemMmapOffset), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_MMAP_OFFSET));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemVmCreate), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_VM_CREATE));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemVmDestroy), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_VM_DESTROY));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::perfOpen), static_cast<unsigned int>(DRM_IOCTL_I915_PERF_OPEN));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::perfEnable), static_cast<unsigned int>(I915_PERF_IOCTL_ENABLE));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::perfDisable), static_cast<unsigned int>(I915_PERF_IOCTL_DISABLE));
 
     EXPECT_THROW(ioctlHelper.getIoctlRequestValue(DrmIoctl::dg1GemCreateExt), std::runtime_error);
 }
@@ -138,6 +142,9 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestStringThenProperStringIsRe
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemMmapOffset).c_str(), "DRM_IOCTL_I915_GEM_MMAP_OFFSET");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemVmCreate).c_str(), "DRM_IOCTL_I915_GEM_VM_CREATE");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemVmDestroy).c_str(), "DRM_IOCTL_I915_GEM_VM_DESTROY");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::perfOpen).c_str(), "DRM_IOCTL_I915_PERF_OPEN");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::perfEnable).c_str(), "I915_PERF_IOCTL_ENABLE");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::perfDisable).c_str(), "I915_PERF_IOCTL_DISABLE");
 
     EXPECT_THROW(ioctlHelper.getIoctlString(DrmIoctl::dg1GemCreateExt), std::runtime_error);
 }
@@ -376,6 +383,14 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrec
     EXPECT_EQ(properties[11], 20u);
 }
 
+TEST_F(IoctlPrelimHelperTests, givenPrelimWhenCallingPerfOpenEuStallStreamWithInvalidArgumentsThenFailureReturned) {
+    std::array<uint64_t, 12u> properties = {};
+    int32_t invalid_stream = -1;
+    DrmMock *mockDrm = reinterpret_cast<DrmMock *>(drm.get());
+    mockDrm->failPerfOpen = true;
+    EXPECT_FALSE(ioctlHelper.perfOpenEuStallStream(0u, properties, &invalid_stream));
+}
+
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorrectIoctlValueIsReturned) {
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_PERF_FLAG_FD_EU_STALL), ioctlHelper.getEuStallFdParameter());
 }
@@ -414,6 +429,19 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
 
         return IoctlHelperPrelim20::ioctl(request, arg);
     }
+    int ioctl(int fd, DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::perfDisable) {
+            if (failPerfDisable) {
+                return -1;
+            }
+        }
+        if (request == DrmIoctl::perfEnable) {
+            if (failPerfEnable) {
+                return -1;
+            }
+        }
+        return IoctlHelperPrelim20::ioctl(fd, request, arg);
+    }
     bool checkWhetherGemCreateExtContainsMemPolicy(void *arg) {
         auto &gemCreateExt = *reinterpret_cast<prelim_drm_i915_gem_create_ext *>(arg);
         auto pExtensionBase = reinterpret_cast<i915_user_extension *>(gemCreateExt.extensions);
@@ -435,6 +463,8 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
     }
     size_t ioctlCallCount = 0;
     bool lastGemCreateContainedMemPolicy = false;
+    bool failPerfDisable = false;
+    bool failPerfEnable = false;
     std::optional<int> overrideGemCreateExtReturnValue{};
     uint32_t lastPolicyMode = 0;
     uint32_t lastPolicyFlags = 0;
@@ -497,6 +527,63 @@ TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolic
     EXPECT_EQ(0u, mockIoctlHelper.lastPolicyFlags);
     EXPECT_EQ(memPolicyMode, mockIoctlHelper.lastPolicyMode);
     EXPECT_EQ(memPolicy, mockIoctlHelper.lastPolicyNodeMask);
+}
+
+TEST(IoctlPrelimHelperPerfTests, givenCalltoPerfDisableEuStallStreamWithValidStreamButCloseFailsThenFailureReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
+        return -1;
+    });
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
+
+    mockIoctlHelper.initialize();
+    NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncRetVal = -1;
+    int32_t invalidFd = 10;
+    EXPECT_FALSE(mockIoctlHelper.perfDisableEuStallStream(&invalidFd));
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(10, NEO::SysCalls::closeFuncArgPassed);
+    NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncArgPassed = 0;
+    NEO::SysCalls::closeFuncRetVal = 0;
+}
+
+TEST(IoctlPrelimHelperPerfTests, givenCalltoPerfDisableEuStallStreamWithInvalidStreamThenFailureIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
+
+    mockIoctlHelper.initialize();
+    int32_t invalidFd = -1;
+    mockIoctlHelper.failPerfDisable = true;
+    EXPECT_FALSE(mockIoctlHelper.perfDisableEuStallStream(&invalidFd));
+}
+
+TEST(IoctlPrelimHelperPerfTests, givenCalltoPerfOpenEuStallStreamWithInvalidStreamWithEnableSetToFailThenFailureReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
+
+    mockIoctlHelper.initialize();
+    int32_t invalidFd = -1;
+    mockIoctlHelper.failPerfEnable = true;
+    std::array<uint64_t, 12u> properties = {};
+    EXPECT_FALSE(mockIoctlHelper.perfOpenEuStallStream(0u, properties, &invalidFd));
+}
+
+TEST(IoctlPrelimHelperPerfTests, givenCalltoPerfDisableEuStallStreamWithValidStreamThenSuccessIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
+
+    mockIoctlHelper.initialize();
+    int32_t valid_fd = -1;
+    std::array<uint64_t, 12u> properties = {};
+    EXPECT_TRUE(mockIoctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 20u));
+    EXPECT_TRUE(mockIoctlHelper.perfOpenEuStallStream(0u, properties, &valid_fd));
+    EXPECT_TRUE(mockIoctlHelper.perfDisableEuStallStream(&valid_fd));
 }
 
 class DrmMockIoctl : public DrmMock {

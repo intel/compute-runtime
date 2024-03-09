@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "gtest/gtest.h"
 
@@ -124,6 +125,15 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
 
                 return this->storedRetVal;
             }
+        }
+    }
+
+    if ((request == DrmIoctl::perfOpen) && (arg != nullptr)) {
+        ioctlCount.perfOpen++;
+        if (failPerfOpen) {
+            return -1;
+        } else {
+            return NEO::SysCalls::ioctl(mockFd, DRM_IOCTL_I915_PERF_OPEN, arg);
         }
     }
 

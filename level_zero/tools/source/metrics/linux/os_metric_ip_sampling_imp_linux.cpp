@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
-#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -101,38 +100,19 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    struct drm_i915_perf_open_param param = {
-        .flags = I915_PERF_FLAG_FD_CLOEXEC |
-                 euStallFdParameter |
-                 I915_PERF_FLAG_FD_NONBLOCK,
-        .num_properties = sizeof(properties) / 16,
-        .properties_ptr = reinterpret_cast<uintptr_t>(properties.data()),
-    };
-
-    stream = NEO::SysCalls::ioctl(drm->getFileDescriptor(), DRM_IOCTL_I915_PERF_OPEN, &param);
-    if (stream < 0) {
+    if (!ioctlHelper->perfOpenEuStallStream(euStallFdParameter, properties, &stream)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    auto ret = NEO::SysCalls::ioctl(stream, I915_PERF_IOCTL_ENABLE, 0);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr,
-                       "PRELIM_I915_PERF_IOCTL_ENABLE failed errno = %d | ret = %d \n", errno, ret);
-
-    return (ret == 0) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {
+    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto ioctlHelper = drm->getIoctlHelper();
+    bool result = ioctlHelper->perfDisableEuStallStream(&stream);
 
-    int disableStatus = NEO::SysCalls::ioctl(stream, I915_PERF_IOCTL_DISABLE, 0);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (disableStatus < 0), stderr,
-                       "I915_PERF_IOCTL_DISABLE failed errno = %d | ret = %d \n", errno, disableStatus);
-
-    int closeStatus = NEO::SysCalls::close(stream);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (closeStatus < 0), stderr,
-                       "close() failed errno = %d | ret = %d \n", errno, closeStatus);
-    stream = -1;
-
-    return ((closeStatus == 0) && (disableStatus == 0)) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+    return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
 ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDataSize) {

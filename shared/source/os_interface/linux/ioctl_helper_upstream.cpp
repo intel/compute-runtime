@@ -205,6 +205,14 @@ uint32_t IoctlHelperUpstream::getEuStallFdParameter() {
     return 0u;
 }
 
+bool IoctlHelperUpstream::perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) {
+    return false;
+}
+
+bool IoctlHelperUpstream::perfDisableEuStallStream(int32_t *stream) {
+    return false;
+}
+
 std::unique_ptr<uint8_t[]> IoctlHelperUpstream::createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) {
     return {};
 }

@@ -265,6 +265,9 @@ enum class DrmIoctl {
     vmExport,
     metadataCreate,
     metadataDestroy,
+    perfOpen,
+    perfEnable,
+    perfDisable
 };
 
 enum class DrmParam {

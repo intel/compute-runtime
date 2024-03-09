@@ -52,6 +52,9 @@ class Ioctls {
     std::atomic<int32_t> contextSetParam;
     std::atomic<int32_t> contextCreate;
     std::atomic<int32_t> contextDestroy;
+    std::atomic<int32_t> perfOpen;
+    std::atomic<int32_t> perfEnable;
+    std::atomic<int32_t> perfDisable;
 };
 
 class DrmMockSuccess : public Drm {

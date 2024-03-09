@@ -53,20 +53,6 @@ class IpSamplingMetricSourceImp : public MetricSource {
     std::unique_ptr<MultiDomainDeferredActivationTracker> activationTracker{};
 };
 
-typedef struct StallSumIpData {
-    uint64_t activeCount;
-    uint64_t otherCount;
-    uint64_t controlCount;
-    uint64_t pipeStallCount;
-    uint64_t sendCount;
-    uint64_t distAccCount;
-    uint64_t sbidCount;
-    uint64_t syncCount;
-    uint64_t instFetchCount;
-} StallSumIpData_t;
-
-typedef std::map<uint64_t, StallSumIpData_t> StallSumIpDataMap_t;
-
 struct IpSamplingMetricGroupBase : public MetricGroupImp {
     IpSamplingMetricGroupBase(MetricSource &metricSource) : MetricGroupImp(metricSource) {}
     static constexpr uint32_t rawReportSize = 64u;
@@ -130,8 +116,6 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
     ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pRawData,
                                           uint32_t &metricValueCount,
                                           zet_typed_value_t *pCalculatedData);
-    bool stallIpDataMapUpdate(StallSumIpDataMap_t &, const uint8_t *pRawIpData);
-    void stallSumIpDataToTypedValues(uint64_t ip, StallSumIpData_t &sumIpData, std::vector<zet_typed_value_t> &ipDataValues);
     bool isMultiDeviceCaptureData(const size_t rawDataSize, const uint8_t *pRawData);
 };
 

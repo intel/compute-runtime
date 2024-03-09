@@ -26,6 +26,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_time.h"
 
 #include "drm/xe_drm.h"
@@ -769,15 +770,9 @@ std::optional<DrmParam> IoctlHelperXe::getHasPageFaultParamId() {
     return {};
 };
 
-bool IoctlHelperXe::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
-                                         uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) {
-    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return false;
-}
-
 uint32_t IoctlHelperXe::getEuStallFdParameter() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return 0;
+    return 0u;
 }
 
 std::unique_ptr<uint8_t[]> IoctlHelperXe::createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) {
