@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace NEO {
-inline const std::vector<unsigned short> tgllpDeviceIds{
+const std::vector<unsigned short> tgllpDeviceIds{
     0xFF20,
     0x9A49,
     0x9A40,

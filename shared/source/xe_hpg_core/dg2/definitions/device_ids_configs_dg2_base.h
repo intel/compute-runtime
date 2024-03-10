@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace NEO {
-inline const std::vector<unsigned short> dg2G10DeviceIds{
+const std::vector<unsigned short> dg2G10DeviceIds{
     0x4F80,
     0x4F81,
     0x4F82,
@@ -24,7 +24,7 @@ inline const std::vector<unsigned short> dg2G10DeviceIds{
     0x56A2,
     0x56C0};
 
-inline const std::vector<unsigned short> dg2G11DeviceIds{
+const std::vector<unsigned short> dg2G11DeviceIds{
     0x4F87,
     0x4F88,
     0x5693,
@@ -40,7 +40,7 @@ inline const std::vector<unsigned short> dg2G11DeviceIds{
     0x56BD,
     0x56C1};
 
-inline const std::vector<unsigned short> dg2G12DeviceIds{
+const std::vector<unsigned short> dg2G12DeviceIds{
     0x5696,
     0x5697,
     0x56A3,

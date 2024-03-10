@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,8 @@
 #include <vector>
 
 namespace NEO {
-inline const std::vector<unsigned short> amlDeviceIds{0x591C};
-inline const std::vector<unsigned short> kblDeviceIds{
+const std::vector<unsigned short> amlDeviceIds{0x591C};
+const std::vector<unsigned short> kblDeviceIds{
     0x5902,
     0x590B,
     0x590A,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace NEO {
-inline const std::vector<unsigned short> cflDeviceIds{
+const std::vector<unsigned short> cflDeviceIds{
     0x3E90,
     0x3E93,
     0x3E99,
@@ -31,14 +31,14 @@ inline const std::vector<unsigned short> cflDeviceIds{
     0x9BA0,
     0x9BC0};
 
-inline const std::vector<unsigned short> whlDeviceIds{
+const std::vector<unsigned short> whlDeviceIds{
     0x3EA1,
     0x3EA3,
     0x3EA4,
     0x3EA0,
     0x3EA2};
 
-inline const std::vector<unsigned short> cmlDeviceIds{
+const std::vector<unsigned short> cmlDeviceIds{
     0x9B21,
     0x9B41,
     0x9BA2,
