@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ const DeviceDescriptor deviceDescriptorTable[] = {
 #include "devices.inl"
 #undef DEVICE
 #undef NAMEDDEVICE
-    {0, nullptr, nullptr}};
+    {0, nullptr, nullptr, ""}};
 
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
     auto drm = std::unique_ptr<Drm>(new Drm(std::move(hwDeviceId), rootDeviceEnvironment));
