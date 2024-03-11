@@ -32,6 +32,7 @@ using namespace NEO;
 template <uint32_t numberOfTiles, MulticontextAubFixture::EnabledCommandStreamers enabledCommandStreamers>
 struct MultitileMulticontextTests : public MulticontextAubFixture, public ::testing::Test {
     void SetUp() override {
+        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
         MulticontextAubFixture::setUp(numberOfTiles, enabledCommandStreamers, false);
     }
     void TearDown() override {
