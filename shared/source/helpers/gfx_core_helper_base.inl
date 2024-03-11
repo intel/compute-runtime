@@ -766,4 +766,10 @@ bool GfxCoreHelperHw<GfxFamily>::inOrderAtomicSignallingEnabled(const RootDevice
     return (debugManager.flags.InOrderAtomicSignallingEnabled.get() == 1);
 }
 
+template <typename GfxFamily>
+void *LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap) {
+    auto lri = cmdStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+    return LriHelper<GfxFamily>::program(lri, address, value, remap);
+}
+
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,16 +22,15 @@ inline bool GfxCoreHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareI
 }
 
 template <typename GfxFamily>
-void *LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap) {
+void *LriHelper<GfxFamily>::program(MI_LOAD_REGISTER_IMM *lriCmd, uint32_t address, uint32_t value, bool remap) {
     MI_LOAD_REGISTER_IMM cmd = Family::cmdInitLoadRegisterImm;
     cmd.setRegisterOffset(address);
     cmd.setDataDword(value);
     cmd.setMmioRemapEnable(remap);
 
-    auto lri = cmdStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    *lri = cmd;
+    *lriCmd = cmd;
 
-    return lri;
+    return lriCmd;
 }
 
 template <typename GfxFamily>

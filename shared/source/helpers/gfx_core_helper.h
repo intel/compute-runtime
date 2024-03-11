@@ -441,6 +441,7 @@ struct LriHelper {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
     static void *program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap);
+    static void *program(MI_LOAD_REGISTER_IMM *lriCmd, uint32_t address, uint32_t value, bool remap);
 };
 
 template <typename GfxFamily>
