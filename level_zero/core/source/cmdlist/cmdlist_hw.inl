@@ -3817,4 +3817,24 @@ void CommandListCoreFamily<gfxCoreFamily>::encodeMiFlush(uint64_t immediateDataG
         commandContainer.addToResidencyContainer(dummyAllocation);
     }
 }
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::updateInOrderExecInfo(size_t inOrderPatchIndex, std::shared_ptr<NEO::InOrderExecInfo> *inOrderExecInfo) {
+    auto &patchCmd = inOrderPatchCmds[inOrderPatchIndex];
+    patchCmd.updateInOrderExecInfo(inOrderExecInfo);
+    patchCmd.setSkipPatching(false);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::disablePatching(size_t inOrderPatchIndex) {
+    auto &patchCmd = inOrderPatchCmds[inOrderPatchIndex];
+    patchCmd.setSkipPatching(true);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::enablePatching(size_t inOrderPatchIndex) {
+    auto &patchCmd = inOrderPatchCmds[inOrderPatchIndex];
+    patchCmd.setSkipPatching(false);
+}
+
 } // namespace L0

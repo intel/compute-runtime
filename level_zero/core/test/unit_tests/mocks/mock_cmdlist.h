@@ -30,6 +30,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     : public ::L0::CommandListCoreFamily<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
+    using BaseClass::addCmdForPatching;
     using BaseClass::addFlushRequiredCommand;
     using BaseClass::allocateOrReuseKernelPrivateMemoryIfNeeded;
     using BaseClass::appendBlitFill;
@@ -63,8 +64,10 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::currentSurfaceStateBaseAddress;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
+    using BaseClass::disablePatching;
     using BaseClass::dispatchCmdListBatchBufferAsPrimary;
     using BaseClass::doubleSbaWa;
+    using BaseClass::enablePatching;
     using BaseClass::engineGroupType;
     using BaseClass::estimateBufferSizeMultiTileBarrier;
     using BaseClass::eventSignalPipeControl;
@@ -103,6 +106,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::unifiedMemoryControls;
+    using BaseClass::updateInOrderExecInfo;
     using BaseClass::updateStreamProperties;
     using BaseClass::updateStreamPropertiesForFlushTaskDispatchFlags;
     using BaseClass::updateStreamPropertiesForRegularCommandLists;
@@ -163,6 +167,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     : public L0::CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
+    using BaseClass::addCmdForPatching;
     using BaseClass::appendBlitFill;
     using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::appendMemoryCopyBlitRegion;
@@ -177,7 +182,9 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::csr;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
+    using BaseClass::disablePatching;
     using BaseClass::doubleSbaWa;
+    using BaseClass::enablePatching;
     using BaseClass::engineGroupType;
     using BaseClass::eventSignalPipeControl;
     using BaseClass::finalStreamState;
@@ -207,6 +214,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::synchronizeInOrderExecution;
+    using BaseClass::updateInOrderExecInfo;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 

@@ -349,6 +349,10 @@ struct CommandListCoreFamily : public CommandListImp {
     bool isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const;
     void encodeMiFlush(uint64_t immediateDataGpuAddress, uint64_t immediateData, NEO::MiFlushArgs &args);
 
+    void updateInOrderExecInfo(size_t inOrderPatchIndex, std::shared_ptr<NEO::InOrderExecInfo> *inOrderExecInfo);
+    void disablePatching(size_t inOrderPatchIndex);
+    void enablePatching(size_t inOrderPatchIndex);
+
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
     uint64_t latestHostWaitedInOrderSyncValue = 0;

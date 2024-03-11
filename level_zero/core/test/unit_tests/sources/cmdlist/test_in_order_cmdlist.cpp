@@ -5732,5 +5732,35 @@ HWTEST2_F(InOrderRegularCmdListTests, givenNonInOrderRegularCmdListWhenPassingCo
     verifyPatching(2);
 }
 
+HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderInfoThenNewInfoIsSet, IsAtLeastXeHpCore) {
+    auto semaphoreCmd = FamilyType::cmdInitMiSemaphoreWait;
+
+    auto inOrderRegularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    auto &inOrderExecInfo = inOrderRegularCmdList->inOrderExecInfo;
+    inOrderExecInfo->addRegularCmdListSubmissionCounter(4);
+    inOrderExecInfo->addCounterValue(1);
+
+    auto inOrderRegularCmdList2 = createRegularCmdList<gfxCoreFamily>(false);
+    auto &inOrderExecInfo2 = inOrderRegularCmdList2->inOrderExecInfo;
+    inOrderExecInfo2->addRegularCmdListSubmissionCounter(6);
+    inOrderExecInfo2->addCounterValue(1);
+
+    inOrderRegularCmdList->addCmdForPatching(&inOrderExecInfo, &semaphoreCmd, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::semaphore);
+
+    ASSERT_EQ(1u, inOrderRegularCmdList->inOrderPatchCmds.size());
+
+    inOrderRegularCmdList->disablePatching(0);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(0u, semaphoreCmd.getSemaphoreDataDword());
+
+    inOrderRegularCmdList->enablePatching(0);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(4u, semaphoreCmd.getSemaphoreDataDword());
+
+    inOrderRegularCmdList->updateInOrderExecInfo(0, &inOrderExecInfo2);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(6u, semaphoreCmd.getSemaphoreDataDword());
+}
+
 } // namespace ult
 } // namespace L0

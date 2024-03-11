@@ -271,6 +271,66 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingWalkerThenSetCorre
     }
 }
 
+HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingDisabledThenNoCmdBufferUpdated) {
+    MockDevice mockDevice;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    MockMemoryManager memoryManager(mockExecutionEnvironment);
+
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, mockDevice.getMemoryManager());
+    auto node = tagAllocator.getTag();
+
+    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(node, nullptr, memoryManager, 1, 0, true, false);
+    inOrderExecInfo->addRegularCmdListSubmissionCounter(4);
+    inOrderExecInfo->addCounterValue(1);
+
+    auto cmd = FamilyType::cmdInitMiSemaphoreWait;
+    cmd.setSemaphoreDataDword(1);
+
+    constexpr uint64_t baseCounterValue = 1;
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &cmd, nullptr, baseCounterValue, InOrderPatchCommandHelpers::PatchCmdType::semaphore, false, false);
+
+    patchCmd.setSkipPatching(true);
+    patchCmd.patch(2);
+    EXPECT_EQ(1u, cmd.getSemaphoreDataDword());
+
+    patchCmd.setSkipPatching(false);
+    patchCmd.patch(2);
+    EXPECT_EQ(4u, cmd.getSemaphoreDataDword());
+}
+
+HWTEST_F(CommandEncoderTests, givenNewInOrderExecInfoWhenChangingInOrderExecInfoThenNewValuePatched) {
+    MockDevice mockDevice;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    MockMemoryManager memoryManager(mockExecutionEnvironment);
+
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, mockDevice.getMemoryManager());
+    auto node = tagAllocator.getTag();
+
+    auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(node, nullptr, memoryManager, 1, 0, true, false);
+    inOrderExecInfo->addRegularCmdListSubmissionCounter(4);
+    inOrderExecInfo->addCounterValue(1);
+
+    auto cmd = FamilyType::cmdInitMiSemaphoreWait;
+    cmd.setSemaphoreDataDword(1);
+
+    constexpr uint64_t baseCounterValue = 1;
+    InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &cmd, nullptr, baseCounterValue, InOrderPatchCommandHelpers::PatchCmdType::semaphore, false, false);
+
+    patchCmd.patch(2);
+    EXPECT_EQ(4u, cmd.getSemaphoreDataDword());
+
+    auto node2 = tagAllocator.getTag();
+    auto inOrderExecInfo2 = std::make_shared<InOrderExecInfo>(node2, nullptr, memoryManager, 1, 0, true, false);
+    inOrderExecInfo2->addRegularCmdListSubmissionCounter(6);
+    inOrderExecInfo2->addCounterValue(1);
+
+    patchCmd.updateInOrderExecInfo(&inOrderExecInfo2);
+    patchCmd.patch(2);
+    EXPECT_EQ(6u, cmd.getSemaphoreDataDword());
+}
+
 HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAllRequiredFields) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};

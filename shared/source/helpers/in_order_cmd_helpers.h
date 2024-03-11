@@ -123,6 +123,9 @@ struct PatchCmd {
     }
 
     void patch(uint64_t appendCounterValue) {
+        if (skipPatching) {
+            return;
+        }
         switch (patchCmdType) {
         case PatchCmdType::sdi:
             patchSdi(appendCounterValue);
@@ -142,6 +145,14 @@ struct PatchCmd {
         }
     }
 
+    void updateInOrderExecInfo(std::shared_ptr<InOrderExecInfo> *inOrderExecInfo) {
+        this->inOrderExecInfo = *inOrderExecInfo;
+    }
+
+    void setSkipPatching(bool value) {
+        skipPatching = value;
+    }
+
     bool isExternalDependency() const { return inOrderExecInfo.get(); }
 
     std::shared_ptr<InOrderExecInfo> inOrderExecInfo;
@@ -151,6 +162,7 @@ struct PatchCmd {
     const PatchCmdType patchCmdType = PatchCmdType::none;
     bool deviceAtomicSignaling = false;
     bool duplicatedHostStorage = false;
+    bool skipPatching = false;
 
   protected:
     void patchSdi(uint64_t appendCounterValue) {
