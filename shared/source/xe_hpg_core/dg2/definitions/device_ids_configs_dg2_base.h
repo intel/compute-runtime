@@ -22,7 +22,8 @@ const std::vector<unsigned short> dg2G10DeviceIds{
     0x56A0,
     0x56A1,
     0x56A2,
-    0x56C0};
+    0x56C0,
+    0x56C2};
 
 const std::vector<unsigned short> dg2G11DeviceIds{
     0x4F87,
