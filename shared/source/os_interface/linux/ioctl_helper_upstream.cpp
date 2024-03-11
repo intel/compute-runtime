@@ -247,6 +247,10 @@ int IoctlHelperUpstream::vmUnbind(const VmBindParams &vmBindParams) {
     return 0;
 }
 
+int IoctlHelperUpstream::getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) {
+    return ioctl(DrmIoctl::getResetStats, &resetStats);
+}
+
 UuidRegisterResult IoctlHelperUpstream::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
     return {0, 0};
 }
