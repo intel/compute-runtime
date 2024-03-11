@@ -28,12 +28,15 @@ struct CommandToPatch {
         TimestampEventPostSyncStoreRegMem,
         CbEventTimestampPostSyncSemaphoreWait,
         CbEventTimestampClearStoreDataImm,
+        CbWaitEventSemaphoreWait,
+        CbWaitEventLoadRegisterImm,
         Invalid
     };
     void *pDestination = nullptr;
     void *pCommand = nullptr;
     size_t offset = 0;
     CommandType type = Invalid;
+    size_t inOrderPatchListIndex = 0;
 };
 
 using CommandToPatchContainer = std::vector<CommandToPatch>;
