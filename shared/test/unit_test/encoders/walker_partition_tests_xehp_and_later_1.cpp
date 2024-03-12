@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1317,7 +1317,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, preferredStaticPartitioning, &staticPartitioning);
     EXPECT_FALSE(staticPartitioning);
     EXPECT_EQ(1u, partitionCount);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
+    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker.getPartitionType());
 
     testArgs.partitionCount = partitionCount;
     testArgs.staticPartitioning = staticPartitioning;

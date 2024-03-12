@@ -1349,7 +1349,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyAndFlushRequiredWh
 
 HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingCopyThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -1375,10 +1375,10 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingC
     } else {
         EXPECT_EQ(cmdList.end(), sdiItor);
 
-        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
@@ -1391,7 +1391,7 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingC
 
 HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlAndAllocFlushWhenDispatchingCopyThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     auto eventPool = createEvents<FamilyType>(1, false);
@@ -1416,9 +1416,9 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlAndAllocFlushWhe
 
         EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
 
-        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
         EXPECT_NE(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
@@ -1653,7 +1653,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAddingRelaxedOrderingEventsTh
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSyncAllocation, IsAtLeastXeHpCore) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -1678,10 +1678,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
@@ -1700,10 +1700,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
         if (isCompactEvent) {
@@ -1750,7 +1750,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThenClearAndChainWithSyncAllocSignaling, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -1775,10 +1775,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
     EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
 
-    auto walkerItor = find<COMPUTE_WALKER *>(sdiItor, cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(sdiItor, cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
     auto &postSync = walkerCmd->getPostSync();
 
     auto eventBaseGpuVa = events[0]->getPacketAddress(device);
@@ -1815,7 +1815,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenAskingIfSkipInOrderNonWalker
 HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventThenClearAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsAtLeastXeHpcCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
@@ -1885,10 +1885,10 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         EXPECT_TRUE(sdiOffset >= immCmdList->flushData[0]);
         EXPECT_TRUE(sdiOffset < immCmdList->flushData[1]);
 
-        auto walkerItor = find<COMPUTE_WALKER *>(sdiItor, cmdList.end());
+        auto walkerItor = find<DefaultWalkerType *>(sdiItor, cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
         auto eventBaseGpuVa = events[0]->getPacketAddress(device);
@@ -1978,7 +1978,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenClearAndChainWithSyncAllocSignaling, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -2004,10 +2004,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenCl
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
     EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
 
-    auto walkerItor = find<COMPUTE_WALKER *>(sdiItor, cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(sdiItor, cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
     auto &postSync = walkerCmd->getPostSync();
 
     auto eventBaseGpuVa = events[0]->getPacketAddress(device);
@@ -2635,7 +2635,7 @@ HWTEST2_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFro
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDontSignalFromWalker, IsAtLeastXeHpCore) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -2652,18 +2652,18 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDon
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
 
     uint32_t walkersFound = 0;
     while (cmdList.end() != walkerItor) {
         walkersFound++;
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, postSync.getOperation());
 
-        walkerItor = find<COMPUTE_WALKER *>(++walkerItor, cmdList.end());
+        walkerItor = find<DefaultWalkerType *>(++walkerItor, cmdList.end());
     }
 
     EXPECT_TRUE(walkersFound > 1);
@@ -2708,7 +2708,7 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyThenSi
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingComputeCopyThenDontSingalFromSdi, IsAtLeastXeHpCore) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -2722,9 +2722,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingComputeCopyThenDon
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
 
     auto &postSync = walkerCmd->getPostSync();
 
@@ -2737,7 +2737,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingComputeCopyThenDon
 }
 
 HWTEST2_F(InOrderCmdListTests, givenAlocFlushRequiredhenProgrammingComputeCopyThenSingalFromSdi, IsAtLeastXeHpCore) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -2750,10 +2750,10 @@ HWTEST2_F(InOrderCmdListTests, givenAlocFlushRequiredhenProgrammingComputeCopyTh
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
     auto &postSync = walkerCmd->getPostSync();
     EXPECT_EQ(0u, postSync.getDestinationAddress());
 
@@ -2822,7 +2822,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndOu
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<typename FamilyType::COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
@@ -2871,7 +2871,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndWi
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<typename FamilyType::COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
@@ -2898,7 +2898,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndWi
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithoutSplitThenSignalByWalker, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -2913,10 +2913,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithoutSplitTh
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
 
     auto &postSync = walkerCmd->getPostSync();
 
@@ -3088,7 +3088,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflowThenHandleItCorrectly, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -3109,7 +3109,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(walkerItor, cmdList.end());
@@ -3120,7 +3120,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
     if (immCmdList->isQwordInOrderCounter()) {
         expectedCounter = std::numeric_limits<uint32_t>::max();
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
         if (isCompactEvent) {
@@ -4512,7 +4512,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingTimestampEventThenHandleChaining, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
 
@@ -4529,10 +4529,10 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
                                                       cmdStream->getCpuBase(),
                                                       cmdStream->getUsed()));
 
-    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto computeWalkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto computeWalkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
     ASSERT_NE(nullptr, computeWalkerCmd);
 
     auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(walkerItor, cmdList.end());
@@ -4561,7 +4561,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingTimestampEventThenHandlePacketsChaining, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
 
@@ -4581,10 +4581,10 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
                                                       cmdStream->getCpuBase(),
                                                       cmdStream->getUsed()));
 
-    auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto computeWalkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+    auto computeWalkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
     ASSERT_NE(nullptr, computeWalkerCmd);
 
     auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(walkerItor, cmdList.end());
@@ -4623,7 +4623,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_command_queue_desc_t desc = {};
 
@@ -4641,12 +4641,12 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
 
     ASSERT_EQ(4u, regularCmdList->inOrderPatchCmds.size()); // Walker + 2x Semaphore + Walker
 
-    auto walkerFromContainer1 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[0].cmd1);
+    auto walkerFromContainer1 = genCmdCast<DefaultWalkerType *>(regularCmdList->inOrderPatchCmds[0].cmd1);
     ASSERT_NE(nullptr, walkerFromContainer1);
-    auto walkerFromContainer2 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[3].cmd1);
+    auto walkerFromContainer2 = genCmdCast<DefaultWalkerType *>(regularCmdList->inOrderPatchCmds[3].cmd1);
     ASSERT_NE(nullptr, walkerFromContainer2);
-    COMPUTE_WALKER *walkerFromParser1 = nullptr;
-    COMPUTE_WALKER *walkerFromParser2 = nullptr;
+    DefaultWalkerType *walkerFromParser1 = nullptr;
+    DefaultWalkerType *walkerFromParser2 = nullptr;
 
     {
         GenCmdList cmdList;
@@ -4654,15 +4654,15 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto itor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto itor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
 
-        walkerFromParser1 = genCmdCast<COMPUTE_WALKER *>(*itor);
+        walkerFromParser1 = genCmdCast<DefaultWalkerType *>(*itor);
 
-        itor = find<COMPUTE_WALKER *>(++itor, cmdList.end());
+        itor = find<DefaultWalkerType *>(++itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
 
-        walkerFromParser2 = genCmdCast<COMPUTE_WALKER *>(*itor);
+        walkerFromParser2 = genCmdCast<DefaultWalkerType *>(*itor);
     }
 
     EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->getCounterValue());
@@ -5350,7 +5350,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListTh
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_command_queue_desc_t desc = {};
 
@@ -5367,12 +5367,12 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
 
     ASSERT_EQ(3u, regularCmdList->inOrderPatchCmds.size()); // Walker + Semaphore + Walker
 
-    auto walkerFromContainer1 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[0].cmd1);
+    auto walkerFromContainer1 = genCmdCast<DefaultWalkerType *>(regularCmdList->inOrderPatchCmds[0].cmd1);
     ASSERT_NE(nullptr, walkerFromContainer1);
-    auto walkerFromContainer2 = genCmdCast<COMPUTE_WALKER *>(regularCmdList->inOrderPatchCmds[2].cmd1);
+    auto walkerFromContainer2 = genCmdCast<DefaultWalkerType *>(regularCmdList->inOrderPatchCmds[2].cmd1);
     ASSERT_NE(nullptr, walkerFromContainer2);
-    COMPUTE_WALKER *walkerFromParser1 = nullptr;
-    COMPUTE_WALKER *walkerFromParser2 = nullptr;
+    DefaultWalkerType *walkerFromParser1 = nullptr;
+    DefaultWalkerType *walkerFromParser2 = nullptr;
 
     {
         GenCmdList cmdList;
@@ -5380,15 +5380,15 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto itor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto itor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
 
-        walkerFromParser1 = genCmdCast<COMPUTE_WALKER *>(*itor);
+        walkerFromParser1 = genCmdCast<DefaultWalkerType *>(*itor);
 
-        itor = find<COMPUTE_WALKER *>(++itor, cmdList.end());
+        itor = find<DefaultWalkerType *>(++itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
 
-        walkerFromParser2 = genCmdCast<COMPUTE_WALKER *>(*itor);
+        walkerFromParser2 = genCmdCast<DefaultWalkerType *>(*itor);
     }
 
     EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->getCounterValue());
@@ -5419,7 +5419,7 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
 
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -5439,10 +5439,10 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto walkerItor = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
@@ -5466,10 +5466,10 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), semaphoreItor);
 
-        auto walkerItor = find<COMPUTE_WALKER *>(semaphoreItor, cmdList.end());
+        auto walkerItor = find<DefaultWalkerType *>(semaphoreItor, cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*walkerItor);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
 
         EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());

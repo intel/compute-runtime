@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,16 +127,15 @@ namespace NEO {
 
 template <>
 void HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
-    typedef typename GenGfxFamily::COMPUTE_WALKER COMPUTE_WALKER;
+    typedef typename GenGfxFamily::DefaultWalkerType DefaultWalkerType;
     typedef typename GenGfxFamily::CFE_STATE CFE_STATE;
     typedef typename GenGfxFamily::PIPELINE_SELECT PIPELINE_SELECT;
     typedef typename GenGfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-    typedef typename GenGfxFamily::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     typedef typename GenGfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GenGfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GenGfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
-    itorWalker = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     if (itorWalker != cmdList.end()) {
         cmdWalker = *itorWalker;
     }
@@ -191,20 +190,20 @@ void HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
         cmdBindingTableBaseAddress = *itorBindingTableBaseAddress;
     }
 
-    // interfaceDescriptorData should be located within COMPUTE_WALKER
+    // interfaceDescriptorData should be located within DefaultWalkerType
     if (cmdWalker) {
         // Extract the interfaceDescriptorData
-        INTERFACE_DESCRIPTOR_DATA &idd = reinterpret_cast<COMPUTE_WALKER *>(cmdWalker)->getInterfaceDescriptor();
+        auto &idd = reinterpret_cast<DefaultWalkerType *>(cmdWalker)->getInterfaceDescriptor();
         cmdInterfaceDescriptorData = &idd;
     }
 }
 
 template <>
 const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex) {
-    typedef typename GenGfxFamily::COMPUTE_WALKER COMPUTE_WALKER;
+    typedef typename GenGfxFamily::DefaultWalkerType DefaultWalkerType;
     typedef typename GenGfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
-    auto cmdWalker = (COMPUTE_WALKER *)this->cmdWalker;
+    auto cmdWalker = (DefaultWalkerType *)this->cmdWalker;
     EXPECT_NE(nullptr, cmdWalker);
     auto inlineInComputeWalker = cmdWalker->getInlineDataPointer();
 

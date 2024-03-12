@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1171,7 +1171,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
-    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     if (pCmdQ->getTimestampPacketContainer() == nullptr) {
         GTEST_SKIP();
@@ -1225,7 +1225,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenBlitBeforeBarrierWhenEnqueueingCommandT
             if (semaphore) {
                 semaphoreIndex = index;
             }
-            const auto computeWalker = genCmdCast<COMPUTE_WALKER *>(*itor);
+            const auto computeWalker = genCmdCast<DefaultWalkerType *>(*itor);
             if (computeWalker) {
                 lastComputeWalkerIndex = index;
             }

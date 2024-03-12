@@ -86,7 +86,7 @@ struct AppendFillMultiPacketEventFixture : public AppendFillFixture {
 template <GFXCORE_FAMILY gfxCoreFamily>
 void testSingleTileAppendMemoryFillManyImmediateKernels(FillTestInput &input, TestExpectedValues &arg) {
     using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -127,16 +127,16 @@ void testSingleTileAppendMemoryFillManyImmediateKernels(FillTestInput &input, Te
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(2u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
     auto secondWalker = itorWalkers[1];
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*firstWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
-    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    walkerCmd = genCmdCast<DefaultWalkerType *>(*secondWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
@@ -166,7 +166,7 @@ void testSingleTileAppendMemoryFillManyImmediateKernels(FillTestInput &input, Te
 template <GFXCORE_FAMILY gfxCoreFamily>
 void testSingleTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpectedValues &arg) {
     using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -207,16 +207,16 @@ void testSingleTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpecte
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(2u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
     auto secondWalker = itorWalkers[1];
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*firstWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
-    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    walkerCmd = genCmdCast<DefaultWalkerType *>(*secondWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
@@ -246,7 +246,7 @@ void testSingleTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpecte
 template <GFXCORE_FAMILY gfxCoreFamily>
 void testSingleTileAppendMemoryFillManyKernelsAndL3Flush(FillTestInput &input, TestExpectedValues &arg) {
     using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -288,16 +288,16 @@ void testSingleTileAppendMemoryFillManyKernelsAndL3Flush(FillTestInput &input, T
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(2u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
     auto secondWalker = itorWalkers[1];
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*firstWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
-    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    walkerCmd = genCmdCast<DefaultWalkerType *>(*secondWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
@@ -327,7 +327,7 @@ void testSingleTileAppendMemoryFillManyKernelsAndL3Flush(FillTestInput &input, T
 template <GFXCORE_FAMILY gfxCoreFamily>
 void testSingleTileAppendMemoryFillSingleKernel(FillTestInput &input, TestExpectedValues &arg) {
     using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -369,11 +369,11 @@ void testSingleTileAppendMemoryFillSingleKernel(FillTestInput &input, TestExpect
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*firstWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
@@ -403,7 +403,7 @@ void testSingleTileAppendMemoryFillSingleKernel(FillTestInput &input, TestExpect
 template <GFXCORE_FAMILY gfxCoreFamily>
 void testSingleTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, TestExpectedValues &arg) {
     using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -448,11 +448,11 @@ void testSingleTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, 
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*firstWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
@@ -508,7 +508,7 @@ void testSingleTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpectedValues &arg) {
     using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -560,16 +560,16 @@ void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpected
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(2u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
     auto secondWalker = itorWalkers[1];
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*firstWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
-    walkerCmd = genCmdCast<COMPUTE_WALKER *>(*secondWalker);
+    walkerCmd = genCmdCast<DefaultWalkerType *>(*secondWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(secondKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
@@ -623,7 +623,7 @@ void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpected
 template <GFXCORE_FAMILY gfxCoreFamily>
 void testMultiTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, TestExpectedValues &arg) {
     using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using OPERATION = typename POSTSYNC_DATA::OPERATION;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -668,11 +668,11 @@ void testMultiTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, T
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
 
-    auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*firstWalker);
     EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
     EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 

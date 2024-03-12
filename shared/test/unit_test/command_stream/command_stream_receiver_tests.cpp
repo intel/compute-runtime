@@ -4033,12 +4033,12 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskWhenCsrHasPreambleCommandsThenDispatchIndirectJumpToImmediateBatchBuffer,
           IsAtLeastXeHpCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto startOffset = commandStream.getUsed();
-    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+    *commandStream.getSpaceForCmd<DefaultWalkerType>() = FamilyType::cmdInitGpgpuWalker;
     uint64_t immediateStartAddress = commandStream.getGpuBase() + startOffset;
 
     commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
@@ -4050,7 +4050,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     EXPECT_EQ(immediateStartAddress, bbStartCmd->getBatchBufferStartAddress());
 
     startOffset = commandStream.getUsed();
-    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+    *commandStream.getSpaceForCmd<DefaultWalkerType>() = FamilyType::cmdInitGpgpuWalker;
 
     size_t usedSize = commandStreamReceiver.commandStream.getUsed();
     commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
@@ -4066,7 +4066,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     bool additionalSyncCmd = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(commandStreamReceiver.peekRootDeviceEnvironment()) > 0;
@@ -4074,7 +4074,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     auto startOffset = commandStream.getUsed();
     auto immediateListCmdBufferAllocation = commandStream.getGraphicsAllocation();
-    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+    *commandStream.getSpaceForCmd<DefaultWalkerType>() = FamilyType::cmdInitGpgpuWalker;
     auto csrTagAllocation = commandStreamReceiver.getTagAllocation();
     uint64_t postsyncAddress = csrTagAllocation->getGpuAddress();
 
@@ -4109,7 +4109,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     startOffset = commandStream.getUsed();
     EXPECT_EQ(0u, (startOffset % MemoryConstants::cacheLineSize));
 
-    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+    *commandStream.getSpaceForCmd<DefaultWalkerType>() = FamilyType::cmdInitGpgpuWalker;
 
     completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
     EXPECT_EQ(2u, completionStamp.taskCount);
@@ -4145,7 +4145,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskWhenPreambleIsUsedOrNotThenCsrBufferIsUsedOrImmediateBufferIsUsed,
           IsAtLeastXeHpCore) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -4154,7 +4154,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto startOffset = commandStream.getUsed();
     auto immediateListCmdBufferAllocation = commandStream.getGraphicsAllocation();
 
-    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+    *commandStream.getSpaceForCmd<DefaultWalkerType>() = FamilyType::cmdInitGpgpuWalker;
 
     immediateFlushTaskFlags.hasStallingCmds = true;
     auto completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
@@ -4179,7 +4179,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     startOffset = commandStream.getUsed();
 
-    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+    *commandStream.getSpaceForCmd<DefaultWalkerType>() = FamilyType::cmdInitGpgpuWalker;
 
     immediateFlushTaskFlags.hasRelaxedOrderingDependencies = true;
     completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
@@ -4204,7 +4204,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskWhenFlushOperationFailsThenExpectNoBatchBufferSentAndCorrectFailCompletionReturned,
           IsAtLeastXeHpCore) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -4213,7 +4213,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto startOffset = commandStream.getUsed();
     auto immediateListCmdBufferAllocation = commandStream.getGraphicsAllocation();
 
-    *commandStream.getSpaceForCmd<COMPUTE_WALKER>() = FamilyType::cmdInitGpgpuWalker;
+    *commandStream.getSpaceForCmd<DefaultWalkerType>() = FamilyType::cmdInitGpgpuWalker;
 
     immediateFlushTaskFlags.blockingAppend = true;
     commandStreamReceiver.flushReturnValue = NEO::SubmissionStatus::failed;

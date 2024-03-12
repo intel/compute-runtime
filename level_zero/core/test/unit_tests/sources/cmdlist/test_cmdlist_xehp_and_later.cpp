@@ -305,7 +305,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
             debugManager.flags.CreateMultipleSubDevices.set(2);
             debugManager.flags.EnableImplicitScaling.set(1);
             arg.workloadPartition = true;
-            arg.expectDcFlush = 2; // DC Flush multi-tile platforms require DC Flush + x-tile sync after implicit scaling COMPUTE_WALKER
+            arg.expectDcFlush = 2; // DC Flush multi-tile platforms require DC Flush + x-tile sync after implicit scaling DefaultWalkerType
             input.packetOffsetMul = 2;
         } else {
             arg.expectDcFlush = 1;
@@ -320,7 +320,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
     template <GFXCORE_FAMILY gfxCoreFamily>
     void testAppendLaunchKernelAndL3Flush(AppendKernelTestInput &input, TestExpectedValues &arg) {
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-        using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
         using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -361,11 +361,11 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
             cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
             commandList->commandContainer.getCommandStream()->getUsed()));
 
-        auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_EQ(1u, itorWalkers.size());
         auto firstWalker = itorWalkers[0];
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*firstWalker);
         EXPECT_EQ(static_cast<OPERATION>(arg.expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
         EXPECT_EQ(firstKernelEventAddress, walkerCmd->getPostSync().getDestinationAddress());
 
@@ -564,7 +564,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
     template <GFXCORE_FAMILY gfxCoreFamily>
     void testAppendKernel(ze_event_pool_flags_t eventPoolFlags) {
         using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-        using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
         using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
         using OPERATION = typename POSTSYNC_DATA::OPERATION;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -601,7 +601,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             ptrOffset(cmdStream->getCpuBase(), sizeBefore),
             (sizeAfter - sizeBefore)));
 
-        auto itorWalkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+        auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
         ASSERT_EQ(1u, itorWalkers.size());
         auto firstWalker = itorWalkers[0];
 
@@ -614,7 +614,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             expectedWalkerPostSyncOp = 1;
         }
 
-        auto walkerCmd = genCmdCast<COMPUTE_WALKER *>(*firstWalker);
+        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*firstWalker);
         EXPECT_EQ(static_cast<OPERATION>(expectedWalkerPostSyncOp), walkerCmd->getPostSync().getOperation());
 
         uint32_t extraCleanupStoreDataImm = 0;
@@ -1576,7 +1576,7 @@ using RayTracingCmdListTest = Test<RayTracingCmdListFixture>;
 template <typename FamilyType>
 void findStateCacheFlushPipeControlAfterWalker(LinearStream &cmdStream, size_t offset, size_t size) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1584,7 +1584,7 @@ void findStateCacheFlushPipeControlAfterWalker(LinearStream &cmdStream, size_t o
         ptrOffset(cmdStream.getCpuBase(), offset),
         size));
 
-    auto walkerIt = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    auto walkerIt = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerIt);
 
     auto pcItorList = findAll<PIPE_CONTROL *>(walkerIt, cmdList.end());
