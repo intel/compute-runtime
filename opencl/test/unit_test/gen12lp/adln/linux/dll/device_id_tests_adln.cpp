@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,12 @@
 using namespace NEO;
 
 TEST(AdlnDeviceIdTest, GivenSupportedDeviceIdThenHardwareInfoIsCorrect) {
-    std::array<DeviceDescriptor, 3> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 5> expectedDescriptors = {{
         {0x46D0, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
         {0x46D1, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
         {0x46D2, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
+        {0x46D3, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
+        {0x46D4, &AdlnHwConfig::hwInfo, &AdlnHwConfig::setupHardwareInfo},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {

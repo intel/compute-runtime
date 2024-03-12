@@ -126,6 +126,8 @@ NAMEDDEVICE(0xA78B, AdlsHwConfig, "Intel(R) UHD Graphics")
 NAMEDDEVICE(0x46D0, AdlnHwConfig, "Intel(R) UHD Graphics")
 NAMEDDEVICE(0x46D1, AdlnHwConfig, "Intel(R) UHD Graphics")
 NAMEDDEVICE(0x46D2, AdlnHwConfig, "Intel(R) UHD Graphics")
+NAMEDDEVICE(0x46D3, AdlnHwConfig, "Intel(R) Graphics")
+NAMEDDEVICE(0x46D4, AdlnHwConfig, "Intel(R) Graphics")
 #endif
 
 #ifdef SUPPORT_ADLP
