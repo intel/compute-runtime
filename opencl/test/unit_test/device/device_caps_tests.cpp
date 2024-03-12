@@ -178,7 +178,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(0u, caps.globalMemCacheSize);
     EXPECT_LT(0u, sharedCaps.globalMemSize);
     EXPECT_EQ(sharedCaps.maxMemAllocSize, caps.maxConstantBufferSize);
-    EXPECT_STREQ("SPIR-V_1.2 ", sharedCaps.ilVersion);
+    EXPECT_STREQ("SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0 ", sharedCaps.ilVersion);
     EXPECT_EQ(defaultHwInfo->capabilityTable.supportsIndependentForwardProgress, caps.independentForwardProgress);
 
     EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), caps.deviceAvailable);

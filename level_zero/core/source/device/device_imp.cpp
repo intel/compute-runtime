@@ -750,7 +750,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     size_t minorVersionPos = ilVersion.find('.');
 
     if (majorVersionPos != std::string::npos && minorVersionPos != std::string::npos) {
-        uint32_t majorSpirvVersion = static_cast<uint32_t>(std::stoul(ilVersion.substr(majorVersionPos + 1, minorVersionPos)));
+        uint32_t majorSpirvVersion = static_cast<uint32_t>(std::stoul(ilVersion.substr(majorVersionPos + 1)));
         uint32_t minorSpirvVersion = static_cast<uint32_t>(std::stoul(ilVersion.substr(minorVersionPos + 1)));
         pKernelProperties->spirvVersionSupported = ZE_MAKE_VERSION(majorSpirvVersion, minorSpirvVersion);
     } else {
