@@ -143,6 +143,19 @@ TEST(IoctlHelperUpstreamTest, whenChangingBufferBindingThenWaitIsNeverNeeded) {
     EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(true));
     EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(false));
 }
+
+TEST(IoctlHelperUpstreamTest, whenChangingBufferBindingThenWaitIsAddedWhenForced) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+
+    IoctlHelperUpstream ioctlHelper{*drm};
+
+    debugManager.flags.EnableUserFenceUponUnbind.set(1);
+    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
+    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(false));
+}
+
 TEST(IoctlHelperUpstreamTest, whenGettingIoctlRequestStringThenProperStringIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);

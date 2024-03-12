@@ -1246,6 +1246,23 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     return patIndex;
 }
 
+void programUserFence(Drm *drm, OsContext *osContext, BufferObject *bo, VmBindExtUserFenceT &vmBindExtUserFence, uint32_t vmHandleId, uint64_t nextExtension) {
+    auto ioctlHelper = drm->getIoctlHelper();
+    uint64_t address = 0;
+    uint64_t value = 0;
+
+    if (drm->isPerContextVMRequired()) {
+        auto osContextLinux = static_cast<OsContextLinux *>(osContext);
+        address = castToUint64(osContextLinux->getFenceAddr(vmHandleId));
+        value = osContextLinux->getNextFenceVal(vmHandleId);
+    } else {
+        address = castToUint64(drm->getFenceAddr(vmHandleId));
+        value = drm->getNextFenceVal(vmHandleId);
+    }
+
+    ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
+}
+
 int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) {
     auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
     auto ioctlHelper = drm->getIoctlHelper();
@@ -1322,21 +1339,8 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 
                 if (!drm->hasPageFaultSupport() || bo->isExplicitResidencyRequired()) {
                     auto nextExtension = vmBind.extensions;
-
-                    uint64_t address = 0;
-                    uint64_t value = 0;
-
-                    if (drm->isPerContextVMRequired()) {
-                        auto osContextLinux = static_cast<OsContextLinux *>(osContext);
-                        address = castToUint64(osContextLinux->getFenceAddr(vmHandleId));
-                        value = osContextLinux->getNextFenceVal(vmHandleId);
-                    } else {
-                        address = castToUint64(drm->getFenceAddr(vmHandleId));
-                        value = drm->getNextFenceVal(vmHandleId);
-                    }
-
                     incrementFenceValue = true;
-                    ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
+                    programUserFence(drm, osContext, bo, vmBindExtUserFence, vmHandleId, nextExtension);
                     ioctlHelper->setVmBindUserFence(vmBind, vmBindExtUserFence);
                 }
             }
@@ -1354,6 +1358,14 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             if (ret) {
                 break;
             }
+        }
+        bool waitOnUserFenceAfterBindAndUnbind = false;
+        if (debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get() != -1) {
+            waitOnUserFenceAfterBindAndUnbind = !!debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get();
+        }
+        if (ioctlHelper->isWaitBeforeBindRequired(bind) && waitOnUserFenceAfterBindAndUnbind && drm->useVMBindImmediate()) {
+            auto osContextLinux = static_cast<OsContextLinux *>(osContext);
+            osContextLinux->waitForPagingFence();
         }
         if (incrementFenceValue) {
             if (drm->isPerContextVMRequired()) {

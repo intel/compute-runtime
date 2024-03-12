@@ -310,6 +310,10 @@ bool IoctlHelperUpstream::getFabricLatency(uint32_t fabricId, uint32_t &latency,
 }
 
 bool IoctlHelperUpstream::isWaitBeforeBindRequired(bool bind) const {
-    return false;
+    bool userFenceOnUnbind = false;
+    if (debugManager.flags.EnableUserFenceUponUnbind.get() != -1) {
+        userFenceOnUnbind = !!debugManager.flags.EnableUserFenceUponUnbind.get();
+    }
+    return userFenceOnUnbind;
 }
 } // namespace NEO

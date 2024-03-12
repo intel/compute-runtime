@@ -936,7 +936,12 @@ bool IoctlHelperPrelim20::getFabricLatency(uint32_t fabricId, uint32_t &latency,
 }
 
 bool IoctlHelperPrelim20::isWaitBeforeBindRequired(bool bind) const {
-    return bind;
+    bool userFenceOnUnbind = false;
+    if (debugManager.flags.EnableUserFenceUponUnbind.get() != -1) {
+        userFenceOnUnbind = !!debugManager.flags.EnableUserFenceUponUnbind.get();
+    }
+
+    return (bind || userFenceOnUnbind);
 }
 
 void *IoctlHelperPrelim20::pciBarrierMmap() {

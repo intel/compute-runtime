@@ -680,6 +680,30 @@ TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingThenWaitIsNeededOnlyBefo
     EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(false));
 }
 
+TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndForcingFenceWaitThenCallReturnsTrueForBindAndUnbind) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+
+    debugManager.flags.EnableUserFenceUponUnbind.set(1);
+    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
+    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(false));
+}
+
+TEST_F(IoctlPrelimHelperTests, whenChangingBufferBindingAndNotForcingFenceWaitThenCallReturnsTrueForBindOnly) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+
+    IoctlHelperPrelim20 ioctlHelper{*drm};
+
+    debugManager.flags.EnableUserFenceUponUnbind.set(0);
+    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
+    EXPECT_FALSE(ioctlHelper.isWaitBeforeBindRequired(false));
+}
+
 TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorrectMemoryClassAndInstance) {
     DebugManagerStateRestore restorer;
 

@@ -275,6 +275,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, SetThreadPriority, -1, "-1: default, 0: Disabled
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCpuCaching, -1, "-1: default, 1: DRM_XE_GEM_CPU_CACHING_WB, 2: DRM_XE_GEM_CPU_CACHING_WC")
 DECLARE_DEBUG_VARIABLE(int32_t, FlushTlbBeforeCopy, -1, "-1: default, 0: Dont flush, 1: flush TLB as part of MI_FLUSH_DW/PIPE_CONTROL command before copy operation")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintMmapAndMunMapCalls, -1, "-1: default, If set, print all system mmap and munmap calls")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceUponUnbind, -1, "-1: default, 0: Dont enable fence, 1: Enable user fence on Vm_Unbind call")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableWaitOnUserFenceAfterBindAndUnbind, -1, "-1: default, 0: Dont wait on fence, 1: Wait on user fence after Vm_Unbind call to ensure fence completion")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
