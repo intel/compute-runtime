@@ -255,6 +255,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceInOrderImmediateCmdListExecution, -1, "-1: 
 DECLARE_DEBUG_VARIABLE(int32_t, ForceInOrderEvents, -1, "-1: default, 0: disabled, 1: Enable all Events as in-order, to rely on command list counter value")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableImplicitConvertionToCounterBasedEvents, -1, "-1: default, 0: Disable, 1: Enable. If enabled, try to convert Regular Events used on Immediate CL to CounterBased")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlush, -1, "-1: default,  0: Tlb flush disabled, 1: Tlb Flush enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, AllowDcFlush, -1, "-1: default,  0: DC flush disabled, 1: DC flush enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugSetMemoryDiagnosticsDelay, -1, "-1: default, >=0: delay time in minutes necessary for completion of Memory diagnostics")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceStateVerification, -1, "-1: default, 0: disable, 1: enable check of device state before submit on Windows")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceStateVerificationAfterFailedSubmission, -1, "-1: default, 0: disable, 1: enable check of device state after failed submit on Windows")

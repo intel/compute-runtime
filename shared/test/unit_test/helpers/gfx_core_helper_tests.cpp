@@ -376,6 +376,16 @@ HWTEST_F(PipeControlHelperTests, WhenIsDcFlushAllowedIsCalledThenCorrectResultIs
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(false, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
     EXPECT_EQ(productHelper.isDcFlushAllowed(), MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
+
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.AllowDcFlush.set(0);
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
+    EXPECT_EQ(productHelper.isDcFlushAllowed(), MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
+
+    debugManager.flags.AllowDcFlush.set(1);
+    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
+    EXPECT_EQ(productHelper.isDcFlushAllowed(), MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
 }
 
 HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncTimestampUsedThenCorrectPostSyncUsed) {

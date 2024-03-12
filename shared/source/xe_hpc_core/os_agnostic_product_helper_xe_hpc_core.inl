@@ -18,7 +18,13 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
-    return false;
+    auto dcFlushAllowed = false;
+
+    if (debugManager.flags.AllowDcFlush.get() != -1) {
+        dcFlushAllowed = debugManager.flags.AllowDcFlush.get();
+    }
+
+    return dcFlushAllowed;
 }
 
 template <>
