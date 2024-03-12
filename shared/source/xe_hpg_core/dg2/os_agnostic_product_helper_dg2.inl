@@ -215,7 +215,7 @@ bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
-    return false;
+    return true;
 }
 
 template <>

@@ -843,6 +843,9 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenAskedIfStorageInfoAdjustme
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
-
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingUseLocalPreferredForCacheableBuffersThenExpectTrue) {
+    EXPECT_TRUE(productHelper->useLocalPreferredForCacheableBuffers());
 }
