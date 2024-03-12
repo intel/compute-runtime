@@ -59,7 +59,7 @@ const char *IoctlHelperXe::xeGetClassName(int className) {
     case DRM_XE_ENGINE_CLASS_COMPUTE:
         return "ccs";
     }
-    return "???";
+    return "Unknown class name";
 }
 
 const char *IoctlHelperXe::xeGetBindOperationName(int bindOperation) {
@@ -103,7 +103,7 @@ const char *IoctlHelperXe::xeGetengineClassName(uint32_t engineClass) {
     case DRM_XE_ENGINE_CLASS_COMPUTE:
         return "DRM_XE_ENGINE_CLASS_COMPUTE";
     default:
-        return "?";
+        return "Unknown engine class";
     }
 }
 

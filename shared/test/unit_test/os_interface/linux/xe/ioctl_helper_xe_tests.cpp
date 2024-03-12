@@ -482,7 +482,7 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
     verifyXeEngineClassName("DRM_XE_ENGINE_CLASS_VIDEO_DECODE", DRM_XE_ENGINE_CLASS_VIDEO_DECODE);
     verifyXeEngineClassName("DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE", DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE);
     verifyXeEngineClassName("DRM_XE_ENGINE_CLASS_COMPUTE", DRM_XE_ENGINE_CLASS_COMPUTE);
-    verifyXeEngineClassName("?", 0xffffffff);
+    verifyXeEngineClassName("Unknown engine class", 0xffffffff);
 
     Query query{};
     QueryItem queryItem{};
