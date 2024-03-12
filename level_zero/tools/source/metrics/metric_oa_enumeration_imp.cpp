@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -433,7 +433,7 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
 
         zet_metric_properties_t properties = {};
         getL0MetricPropertiesFromMdapiMetric(properties, pSourceMetric);
-        auto pMetric = OaMetricImp::create(properties);
+        auto pMetric = OaMetricImp::create(metricSource, properties);
         UNRECOVERABLE_IF(pMetric == nullptr);
 
         metrics.push_back(pMetric);
@@ -447,7 +447,7 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
         zet_metric_properties_t properties = {};
         getL0MetricPropertiesFromMdapiInformation(properties, pSourceInformation);
 
-        auto pMetric = OaMetricImp::create(properties);
+        auto pMetric = OaMetricImp::create(metricSource, properties);
         UNRECOVERABLE_IF(pMetric == nullptr);
 
         metrics.push_back(pMetric);
@@ -1086,8 +1086,8 @@ MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
     return pMetricGroup;
 }
 
-Metric *OaMetricImp::create(zet_metric_properties_t &properties) {
-    auto pMetric = new OaMetricImp();
+Metric *OaMetricImp::create(MetricSource &metricSource, zet_metric_properties_t &properties) {
+    auto pMetric = new OaMetricImp(metricSource);
     UNRECOVERABLE_IF(pMetric == nullptr);
     pMetric->initialize(properties);
     pMetric->isPredefined = true;

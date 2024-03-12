@@ -43,10 +43,12 @@ class MetricSource {
     virtual ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups) = 0;
     virtual ze_result_t activateMetricGroupsAlreadyDeferred() = 0;
     virtual ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) = 0;
-    virtual ze_result_t metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
-                                          const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-                                          zet_metric_group_sampling_type_flag_t samplingType,
-                                          zet_metric_group_handle_t *pMetricGroupHandle) = 0;
+    ze_result_t metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
+                                  const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                  zet_metric_group_sampling_type_flag_t samplingType,
+                                  zet_metric_group_handle_t *pMetricGroupHandle) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    };
     virtual ~MetricSource() = default;
     uint32_t getType() const {
         return type;
@@ -118,6 +120,18 @@ struct Metric : _zet_metric_handle_t {
     inline zet_metric_handle_t toHandle() { return this; }
 };
 
+struct MetricImp : public Metric {
+
+    MetricSource &getMetricSource() {
+        return metricSource;
+    }
+    ~MetricImp() override = default;
+    MetricImp(MetricSource &metricSource) : metricSource(metricSource) {}
+
+  protected:
+    MetricSource &metricSource;
+};
+
 struct MetricGroup : _zet_metric_group_handle_t {
     virtual ~MetricGroup() = default;
     MetricGroup() {}
@@ -168,9 +182,11 @@ struct MetricGroupImp : public MetricGroup {
     }
     ~MetricGroupImp() override = default;
     MetricGroupImp(MetricSource &metricSource) : metricSource(metricSource) {}
+    bool isImmutable() { return isPredefined; }
 
   protected:
     MetricSource &metricSource;
+    bool isPredefined = true;
 };
 
 struct MetricGroupCalculateHeader {

@@ -13,8 +13,9 @@ namespace ult {
 
 class MockMetricSource : public L0::MetricSource {
   public:
+    bool isAvailableReturn = false;
     void enable() override {}
-    bool isAvailable() override { return false; }
+    bool isAvailable() override { return isAvailableReturn; }
     ze_result_t appendMetricMemoryBarrier(L0::CommandList &commandList) override { return ZE_RESULT_ERROR_UNKNOWN; }
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) override { return ZE_RESULT_ERROR_UNKNOWN; }
     ze_result_t getTimerResolution(uint64_t &resolution) override { return ZE_RESULT_ERROR_UNKNOWN; }
@@ -24,11 +25,8 @@ class MockMetricSource : public L0::MetricSource {
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
-                                  const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-                                  zet_metric_group_sampling_type_flag_t samplingType,
-                                  zet_metric_group_handle_t *pMetricGroupHandle) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    void setType(uint32_t type) {
+        this->type = type;
     }
     ~MockMetricSource() override = default;
 };
@@ -97,6 +95,18 @@ class MockMetricGroup : public L0::MetricGroupImp {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t close() override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t destroy() override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+};
+
+class MockMetric : public L0::MetricImp {
+  public:
+    ~MockMetric() override = default;
+    MockMetric(MetricSource &metricSource) : L0::MetricImp(metricSource) {}
+    ze_result_t getProperties(zet_metric_properties_t *pProperties) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t destroy() override {

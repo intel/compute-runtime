@@ -31,12 +31,6 @@ class IpSamplingMetricSourceImp : public MetricSource {
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
-                                  const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-                                  zet_metric_group_sampling_type_flag_t samplingType,
-                                  zet_metric_group_handle_t *pMetricGroupHandle) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
     void setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingpOsInterface);
     static std::unique_ptr<IpSamplingMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
@@ -171,9 +165,9 @@ struct MultiDeviceIpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
     std::vector<IpSamplingMetricGroupImp *> subDeviceMetricGroup = {};
 };
 
-struct IpSamplingMetricImp : public Metric {
+struct IpSamplingMetricImp : public MetricImp {
     ~IpSamplingMetricImp() override = default;
-    IpSamplingMetricImp(zet_metric_properties_t &properties);
+    IpSamplingMetricImp(MetricSource &metricSource, zet_metric_properties_t &properties);
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
     ze_result_t destroy() override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

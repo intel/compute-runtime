@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -194,6 +194,35 @@ ze_command_list_handle_t createImmediateCommandList(ze_context_handle_t &context
     ze_command_list_handle_t commandList = {};
     VALIDATECALL(zeCommandListCreateImmediate(contextHandle, deviceHandle, &queueDescription, &commandList));
     return commandList;
+}
+
+void printMetricGroupAndMetricProperties(zet_metric_group_handle_t metricGroup) {
+    if (TestSettings::get()->verboseLevel.get() >= LogLevel::DEBUG) {
+        zet_metric_group_properties_t metricGroupProperties = {};
+        // Obtain metric group properties to check the group name and sampling type.
+        VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &metricGroupProperties));
+        printMetricGroupProperties(metricGroupProperties);
+
+        // Print metrics from metric group.
+        uint32_t metricCount = 0;
+        std::vector<zet_metric_handle_t> metrics = {};
+
+        // Obtain metrics count for verbose purpose.
+        VALIDATECALL(zetMetricGet(metricGroup, &metricCount, nullptr));
+
+        // Obtain metrics for verbose purpose.
+        metrics.resize(metricCount);
+        VALIDATECALL(zetMetricGet(metricGroup, &metricCount, metrics.data()));
+
+        // Enumerate metric group metrics for verbose purpose.
+        for (uint32_t j = 0; j < metricCount; ++j) {
+
+            const zet_metric_handle_t metric = metrics[j];
+            zet_metric_properties_t metricProperties = {};
+            VALIDATECALL(zetMetricGetProperties(metric, &metricProperties));
+            printMetricProperties(metricProperties);
+        }
+    }
 }
 
 void printMetricGroupProperties(const zet_metric_group_properties_t &properties) {

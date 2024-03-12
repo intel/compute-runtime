@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ void IpSamplingMetricSourceImp::cacheMetricGroup() {
     strcpy_s(metricProperties.description, ZET_MAX_METRIC_DESCRIPTION, "IP address");
     metricProperties.metricType = ZET_METRIC_TYPE_IP;
     strcpy_s(metricProperties.resultUnits, ZET_MAX_METRIC_RESULT_UNITS, "Address");
-    metrics.push_back(IpSamplingMetricImp(metricProperties));
+    metrics.push_back(IpSamplingMetricImp(*this, metricProperties));
 
     std::vector<std::pair<const char *, const char *>> metricPropertiesList = {
         {"Active", "Active cycles"},
@@ -114,7 +114,7 @@ void IpSamplingMetricSourceImp::cacheMetricGroup() {
     for (auto &property : metricPropertiesList) {
         strcpy_s(metricProperties.name, ZET_MAX_METRIC_NAME, property.first);
         strcpy_s(metricProperties.description, ZET_MAX_METRIC_DESCRIPTION, property.second);
-        metrics.push_back(IpSamplingMetricImp(metricProperties));
+        metrics.push_back(IpSamplingMetricImp(*this, metricProperties));
     }
 
     cachedMetricGroup = IpSamplingMetricGroupImp::create(*this, metrics);
@@ -654,7 +654,7 @@ std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp> MultiDeviceIpSamplingMetric
     return std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp>(new (std::nothrow) MultiDeviceIpSamplingMetricGroupImp(metricSource, subDeviceMetricGroup));
 }
 
-IpSamplingMetricImp::IpSamplingMetricImp(zet_metric_properties_t &properties) : properties(properties) {
+IpSamplingMetricImp::IpSamplingMetricImp(MetricSource &metricSource, zet_metric_properties_t &properties) : MetricImp(metricSource), properties(properties) {
 }
 
 ze_result_t IpSamplingMetricImp::getProperties(zet_metric_properties_t *pProperties) {

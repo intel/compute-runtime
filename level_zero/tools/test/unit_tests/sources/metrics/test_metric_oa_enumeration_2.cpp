@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -344,6 +344,7 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenValidArgumentsWhenZetMetricGetProp
     EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &metricHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(metricHandle, nullptr);
     EXPECT_TRUE(static_cast<OaMetricImp *>(metricHandle)->isImmutable());
+    EXPECT_TRUE(static_cast<OaMetricImp *>(metricHandle)->getMetricSource().isAvailable());
 
     // Obtain metric params.
     EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);

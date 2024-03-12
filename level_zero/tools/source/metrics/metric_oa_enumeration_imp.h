@@ -195,7 +195,6 @@ struct OaMetricGroupImp : public MetricGroupImp {
     uint32_t getRawReportSize();
     const MetricEnumeration &getMetricEnumeration() const;
     void setCachedExportDataHeapSize(size_t size);
-    bool isImmutable() { return isPredefined; }
 
   protected:
     void copyProperties(const zet_metric_group_properties_t &source,
@@ -219,15 +218,16 @@ struct OaMetricGroupImp : public MetricGroupImp {
 
     std::vector<zet_metric_group_handle_t> metricGroups;
     size_t cachedExportDataHeapSize = 0;
-    bool isPredefined{};
 
   private:
     ze_result_t openForDevice(Device *pDevice, zet_metric_streamer_desc_t &desc,
                               zet_metric_streamer_handle_t *phMetricStreamer);
 };
 
-struct OaMetricImp : public Metric {
+struct OaMetricImp : public MetricImp {
     ~OaMetricImp() override{};
+
+    OaMetricImp(MetricSource &metricSource) : MetricImp(metricSource) {}
 
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
 
@@ -237,7 +237,7 @@ struct OaMetricImp : public Metric {
 
     ze_result_t initialize(const zet_metric_properties_t &sourceProperties);
 
-    static Metric *create(zet_metric_properties_t &properties);
+    static Metric *create(MetricSource &metricSource, zet_metric_properties_t &properties);
 
     bool isImmutable() { return isPredefined; }
 

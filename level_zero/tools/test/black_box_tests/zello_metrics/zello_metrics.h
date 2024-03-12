@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -205,6 +205,9 @@ class SingleMetricCollector : public Collector {
   protected:
     SingleMetricCollector(ExecutionContext *executionCtxt,
                           const char *metricGroupName,
+                          const zet_metric_group_sampling_type_flag_t samplingType);
+    SingleMetricCollector(ExecutionContext *executionCtxt,
+                          zet_metric_group_handle_t metricGroup,
                           const zet_metric_group_sampling_type_flag_t samplingType);
     ~SingleMetricCollector() override = default;
 

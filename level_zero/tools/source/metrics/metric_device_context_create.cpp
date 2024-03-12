@@ -29,12 +29,6 @@ ze_result_t MetricDeviceContext::metricGroupCreate(const char name[ZET_MAX_METRI
 ze_result_t OaMetricSourceImp::metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
-ze_result_t OaMetricSourceImp::metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
-                                                 const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-                                                 zet_metric_group_sampling_type_flag_t samplingType,
-                                                 zet_metric_group_handle_t *pMetricGroupHandle) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
 
 ze_result_t metricProgrammableGetProperties(
     zet_metric_programmable_exp_handle_t hMetricProgrammable,
