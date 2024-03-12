@@ -3024,7 +3024,7 @@ TEST(BuiltinTypeHelperTest, givenHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrec
     EXPECT_EQ(Builtin::fillBufferMiddleStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless));
     EXPECT_EQ(Builtin::fillBufferRightLeftoverStatelessHeapless, BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferRightLeftover>(isStateless, isHeapless));
 }
-HWTEST2_F(CommandListCreate, givenDummyBlitRequiredWhenEncodeMiFlushThenDummyBlitIsProgrammedPriorToMiFlushAndDummyAllocationIsAddedToResidencyContainer, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreate, givenDummyBlitRequiredWhenEncodeMiFlushWithPostSyncThenDummyBlitIsProgrammedPriorToMiFlushAndDummyAllocationIsAddedToResidencyContainer, IsAtLeastXeHpCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceDummyBlitWa.set(1);
@@ -3034,6 +3034,7 @@ HWTEST2_F(CommandListCreate, givenDummyBlitRequiredWhenEncodeMiFlushThenDummyBli
     auto &commandContainer = cmdlist.getCmdContainer();
     cmdlist.dummyBlitWa.isWaRequired = true;
     MiFlushArgs args{cmdlist.dummyBlitWa};
+    args.commandWithPostSync = true;
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     commandContainer.getResidencyContainer().clear();
     EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
@@ -3049,6 +3050,31 @@ HWTEST2_F(CommandListCreate, givenDummyBlitRequiredWhenEncodeMiFlushThenDummyBli
     EXPECT_NE(nullptr, rootDeviceEnvironment.getDummyAllocation());
     EXPECT_EQ(commandContainer.getResidencyContainer().size(), 1u);
     EXPECT_EQ(commandContainer.getResidencyContainer()[0], rootDeviceEnvironment.getDummyAllocation());
+}
+
+HWTEST2_F(CommandListCreate, givenDummyBlitRequiredWhenEncodeMiFlushWithoutPostSyncThenDummyBlitIsNotProgrammedAndDummyAllocationIsNotAddedToResidencyContainer, IsAtLeastXeHpCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceDummyBlitWa.set(1);
+    MockCommandListCoreFamily<gfxCoreFamily> cmdlist;
+    cmdlist.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdlist.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    auto &commandContainer = cmdlist.getCmdContainer();
+    cmdlist.dummyBlitWa.isWaRequired = true;
+    MiFlushArgs args{cmdlist.dummyBlitWa};
+    args.commandWithPostSync = false;
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    rootDeviceEnvironment.initDummyAllocation();
+    EXPECT_NE(nullptr, rootDeviceEnvironment.getDummyAllocation());
+    commandContainer.getResidencyContainer().clear();
+    cmdlist.encodeMiFlush(0, 0, args);
+    GenCmdList programmedCommands;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        programmedCommands, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<MI_FLUSH_DW *>(programmedCommands.begin(), programmedCommands.end());
+    EXPECT_EQ(programmedCommands.begin(), itor);
+    EXPECT_NE(programmedCommands.end(), itor);
+    EXPECT_EQ(commandContainer.getResidencyContainer().size(), 0u);
 }
 
 HWTEST2_F(CommandListCreate, givenDummyBlitNotRequiredWhenEncodeMiFlushThenDummyBlitIsNotProgrammedAndDummyAllocationIsNotAddedToResidencyContainer, IsAtLeastXeHpCore) {

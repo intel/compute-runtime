@@ -3809,6 +3809,7 @@ uint64_t CommandListCoreFamily<gfxCoreFamily>::getInOrderIncrementValue() const 
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::encodeMiFlush(uint64_t immediateDataGpuAddress, uint64_t immediateData, NEO::MiFlushArgs &args) {
+    args.waArgs.isWaRequired &= args.commandWithPostSync;
     auto isDummyBlitRequired = NEO::BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(args.waArgs);
     NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(*commandContainer.getCommandStream(), immediateDataGpuAddress, immediateData, args);
     if (isDummyBlitRequired) {
