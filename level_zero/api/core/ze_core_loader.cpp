@@ -439,8 +439,10 @@ zeGetEventPoolProcAddrTable(
     pDdiTable->pfnGetIpcHandle = L0::zeEventPoolGetIpcHandle;
     pDdiTable->pfnOpenIpcHandle = L0::zeEventPoolOpenIpcHandle;
     pDdiTable->pfnCloseIpcHandle = L0::zeEventPoolCloseIpcHandle;
-    pDdiTable->pfnGetContextHandle = L0::zeEventPoolGetContextHandle;
-    pDdiTable->pfnGetFlags = L0::zeEventPoolGetFlags;
+    if (version >= ZE_API_VERSION_1_9) {
+        pDdiTable->pfnGetContextHandle = L0::zeEventPoolGetContextHandle;
+        pDdiTable->pfnGetFlags = L0::zeEventPoolGetFlags;
+    }
     driverDdiTable.coreDdiTable.EventPool = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         pDdiTable->pfnCreate = zeEventPoolCreateTracing;
