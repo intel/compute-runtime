@@ -174,7 +174,8 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
                                    bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency) override;
     void appendWaitOnInOrderDependency(std::shared_ptr<NEO::InOrderExecInfo> &inOrderExecInfo, CommandToPatchContainer *outListCommands,
-                                       uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency, bool skipAddingWaitEventsToResidency);
+                                       uint64_t waitValue, uint32_t offset,
+                                       bool relaxedOrderingAllowed, bool implicitDependency, bool skipAddingWaitEventsToResidency, bool noopDispatch);
     void appendSignalInOrderDependencyCounter(Event *signalEvent);
     void handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining);
 
@@ -196,6 +197,7 @@ struct CommandListCoreFamily : public CommandListImp {
     size_t getReserveSshSize();
     void patchInOrderCmds() override;
     bool handleCounterBasedEventOperations(Event *signalEvent);
+    bool isCbEventBoundToCmdList(Event *event) const;
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernelWithGA(void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
@@ -338,7 +340,7 @@ struct CommandListCoreFamily : public CommandListImp {
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const { return false; }
     virtual void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {}
-    bool canSkipInOrderEventWait(Event &event) const;
+    bool canSkipInOrderEventWait(Event &event, bool ignorCbEventBoundToCmdList) const;
     bool handleInOrderImplicitDependencies(bool relaxedOrderingAllowed);
     bool isQwordInOrderCounter() const { return GfxFamily::isQwordInOrderCounter; }
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
@@ -349,7 +351,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const;
     void encodeMiFlush(uint64_t immediateDataGpuAddress, uint64_t immediateData, NEO::MiFlushArgs &args);
 
-    void updateInOrderExecInfo(size_t inOrderPatchIndex, std::shared_ptr<NEO::InOrderExecInfo> *inOrderExecInfo);
+    void updateInOrderExecInfo(size_t inOrderPatchIndex, std::shared_ptr<NEO::InOrderExecInfo> *inOrderExecInfo, bool disablePatchingFlag);
     void disablePatching(size_t inOrderPatchIndex);
     void enablePatching(size_t inOrderPatchIndex);
 
@@ -359,6 +361,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;
+    bool allowCbWaitEventsNoopDispatch = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

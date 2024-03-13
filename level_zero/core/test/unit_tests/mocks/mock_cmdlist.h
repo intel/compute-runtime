@@ -33,6 +33,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::addCmdForPatching;
     using BaseClass::addFlushRequiredCommand;
     using BaseClass::allocateOrReuseKernelPrivateMemoryIfNeeded;
+    using BaseClass::allowCbWaitEventsNoopDispatch;
     using BaseClass::appendBlitFill;
     using BaseClass::appendCopyImageBlit;
     using BaseClass::appendDispatchOffsetRegister;
@@ -168,6 +169,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
     using BaseClass::addCmdForPatching;
+    using BaseClass::allowCbWaitEventsNoopDispatch;
     using BaseClass::appendBlitFill;
     using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::appendMemoryCopyBlitRegion;

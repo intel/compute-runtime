@@ -5757,9 +5757,67 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderI
     inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
     EXPECT_EQ(4u, semaphoreCmd.getSemaphoreDataDword());
 
-    inOrderRegularCmdList->updateInOrderExecInfo(0, &inOrderExecInfo2);
+    inOrderRegularCmdList->updateInOrderExecInfo(0, &inOrderExecInfo2, false);
     inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
     EXPECT_EQ(6u, semaphoreCmd.getSemaphoreDataDword());
+
+    inOrderExecInfo->addRegularCmdListSubmissionCounter(1);
+    inOrderRegularCmdList->updateInOrderExecInfo(0, &inOrderExecInfo, true);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(6u, semaphoreCmd.getSemaphoreDataDword());
+
+    inOrderRegularCmdList->enablePatching(0);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(5u, semaphoreCmd.getSemaphoreDataDword());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeAndNoopWaitEventsAllowedWhenEventBoundToCmdListThenNoopSpaceForWaitCommands, IsAtLeastXeHpCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    char noopedLriBuffer[sizeof(MI_LOAD_REGISTER_IMM)] = {};
+    memset(noopedLriBuffer, 0, sizeof(MI_LOAD_REGISTER_IMM));
+    char noopedSemWaitBuffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    memset(noopedSemWaitBuffer, 0, sizeof(MI_SEMAPHORE_WAIT));
+
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    regularCmdList->allowCbWaitEventsNoopDispatch = true;
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto result = regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CommandToPatchContainer outCbWaitEventCmds;
+    launchParams.outListCommands = &outCbWaitEventCmds;
+    result = regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t expectedLoadRegImmCount = FamilyType::isQwordInOrderCounter ? 2 : 0;
+
+    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount;
+    ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());
+
+    size_t outCbWaitEventCmdsIndex = 0;
+    for (; outCbWaitEventCmdsIndex < expectedLoadRegImmCount; outCbWaitEventCmdsIndex++) {
+        EXPECT_EQ(CommandToPatch::CbWaitEventLoadRegisterImm, outCbWaitEventCmds[outCbWaitEventCmdsIndex].type);
+        auto registerNumber = 0x2600 + (4 * outCbWaitEventCmdsIndex);
+        EXPECT_EQ(registerNumber, outCbWaitEventCmds[outCbWaitEventCmdsIndex].offset);
+
+        ASSERT_NE(nullptr, outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
+        auto memCmpRet = memcmp(outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination, noopedLriBuffer, sizeof(MI_LOAD_REGISTER_IMM));
+        EXPECT_EQ(0, memCmpRet);
+    }
+
+    EXPECT_EQ(CommandToPatch::CbWaitEventSemaphoreWait, outCbWaitEventCmds[outCbWaitEventCmdsIndex].type);
+
+    ASSERT_NE(nullptr, outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination);
+    auto memCmpRet = memcmp(outCbWaitEventCmds[outCbWaitEventCmdsIndex].pDestination, noopedSemWaitBuffer, sizeof(MI_SEMAPHORE_WAIT));
+    EXPECT_EQ(0, memCmpRet);
 }
 
 } // namespace ult
