@@ -1276,6 +1276,24 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
     }
 }
 
+TEST(IoctlHelperXeTest, whenFindingEngineForIncorrectGtIdThenNullptrIsReturned) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    auto engineInfo = xeIoctlHelper->createEngineInfo(false);
+
+    EXPECT_NE(nullptr, engineInfo);
+
+    ASSERT_NE(nullptr, xeIoctlHelper->defaultEngine);
+
+    auto engine = *xeIoctlHelper->defaultEngine;
+
+    EXPECT_EQ(xeIoctlHelper->defaultEngine, xeIoctlHelper->xeFindMatchingEngine(engine.engine_class, engine.engine_instance, engine.gt_id));
+    EXPECT_EQ(nullptr, xeIoctlHelper->xeFindMatchingEngine(engine.engine_class, engine.engine_instance, 2));
+}
+
 TEST(IoctlHelperXeTest, whenCreatingMemoryInfoThenProperMemoryBanksAreDiscovered) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(1);

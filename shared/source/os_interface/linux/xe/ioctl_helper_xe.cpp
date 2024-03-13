@@ -34,8 +34,6 @@
 #include <iostream>
 #include <sstream>
 
-#define XE_FIND_INVALID_INSTANCE 16
-
 #define STRINGIFY_ME(X) return #X
 #define RETURN_ME(X) return X
 
@@ -487,7 +485,7 @@ void IoctlHelperXe::setDefaultEngine(const aub_stream::EngineType &defaultEngine
 
     for (auto i = 0u; i < allEngines.size(); i++) {
         if (allEngines[i].engine_class == defaultEngineClass) {
-            defaultEngine = xeFindMatchingEngine(defaultEngineClass, allEngines[i].engine_instance);
+            defaultEngine = &allEngines[i];
             xeLog("Found default engine of class %s\n", xeGetClassName(defaultEngineClass));
             break;
         }
@@ -1202,26 +1200,26 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     create.vm_id = drmVmId;
     create.width = 1;
     if (n == 0) {
-        currentEngine = xeFindMatchingEngine(requestClass, XE_FIND_INVALID_INSTANCE);
+        currentEngine = xeFindMatchingEngine(requestClass, std::nullopt, deviceIndex);
         if (currentEngine == nullptr) {
             xeLog("Unable to find engine %d\n", requestClass);
             UNRECOVERABLE_IF(true);
             return 0;
         }
-        currentEngine->gt_id = static_cast<uint16_t>(deviceIndex);
         engine.push_back(*currentEngine);
     } else {
         for (size_t i = 0; i < n; i++) {
             currentEngine = xeFindMatchingEngine(contextParamEngine[i].engine_class,
-                                                 contextParamEngine[i].engine_instance);
+                                                 contextParamEngine[i].engine_instance,
+                                                 contextParamEngine[i].gt_id);
             if (currentEngine == nullptr) {
-                xeLog("Unable to find engine %d:%d\n",
+                xeLog("Unable to find engine %d:%d:%d\n",
                       contextParamEngine[i].engine_class,
-                      contextParamEngine[i].engine_instance);
+                      contextParamEngine[i].engine_instance,
+                      contextParamEngine[i].gt_id);
                 UNRECOVERABLE_IF(true);
                 return 0;
             }
-            currentEngine->gt_id = static_cast<uint16_t>(deviceIndex);
             engine.push_back(*currentEngine);
         }
     }
@@ -1462,10 +1460,11 @@ std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int subDevice
     return "/device/gt" + std::to_string(subDeviceId) + "/freq_rp0";
 }
 
-drm_xe_engine_class_instance *IoctlHelperXe::xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance) {
+drm_xe_engine_class_instance *IoctlHelperXe::xeFindMatchingEngine(uint16_t engineClass, std::optional<uint16_t> engineInstance, uint16_t gtId) {
     for (auto &engine : allEngines) {
         if (engine.engine_class == engineClass &&
-            (engineInstance == XE_FIND_INVALID_INSTANCE || engine.engine_instance == engineInstance)) {
+            engine.gt_id == gtId &&
+            (!engineInstance || engine.engine_instance == *engineInstance)) {
             xeLog("\t select: %s:%d (%d)\n", xeGetClassName(engine.engine_class),
                   engine.engine_instance, engineInstance);
             return &engine;

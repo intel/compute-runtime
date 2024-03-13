@@ -13,6 +13,7 @@
 
 #include <bitset>
 #include <mutex>
+#include <optional>
 
 struct drm_xe_engine_class_instance;
 
@@ -191,10 +192,11 @@ class IoctlHelperXe : public IoctlHelper {
     };
     std::vector<DebugMetadata> debugMetadata;
 
+    drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, std::optional<uint16_t> engineInstance, uint16_t gtId);
+
   private:
     template <typename... XeLogArgs>
     void xeLog(XeLogArgs &&...args) const;
-    drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstance);
 
     struct ExecObjectXe {
         uint64_t gpuAddress;

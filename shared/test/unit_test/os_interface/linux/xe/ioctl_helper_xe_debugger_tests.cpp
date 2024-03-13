@@ -217,7 +217,7 @@ HWTEST_F(IoctlHelperXeTestFixture, givenDeviceIndexWhenCreatingContextThenSetCor
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
 
-    uint16_t deviceIndex = 2;
+    uint16_t deviceIndex = 1;
 
     xeIoctlHelper->createDrmContext(drm, osContext, 0, deviceIndex);
 
