@@ -150,10 +150,12 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getEventMaxPacketCount() const = 0;
     virtual uint32_t getEventMaxKernelCount() const = 0;
     NEO::TagAllocatorBase *getDeviceInOrderCounterAllocator();
+    NEO::TagAllocatorBase *getHostInOrderCounterAllocator();
 
   protected:
     NEO::Device *neoDevice = nullptr;
     std::unique_ptr<NEO::TagAllocatorBase> deviceInOrderCounterAllocator;
+    std::unique_ptr<NEO::TagAllocatorBase> hostInOrderCounterAllocator;
     std::mutex inOrderAllocatorMutex;
     bool implicitScalingCapable = false;
 };

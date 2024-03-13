@@ -259,8 +259,15 @@ void CommandListImp::enableInOrderExecution() {
     UNRECOVERABLE_IF(inOrderExecInfo.get());
 
     auto deviceCounterNode = this->device->getDeviceInOrderCounterAllocator()->getTag();
+    NEO::TagNodeBase *hostCounterNode = nullptr;
 
-    inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, *this->device->getNEODevice(), this->partitionCount, !isImmediateType());
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+
+    if (gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(device->getNEODevice()->getRootDeviceEnvironment())) {
+        hostCounterNode = this->device->getHostInOrderCounterAllocator()->getTag();
+    }
+
+    inOrderExecInfo = NEO::InOrderExecInfo::create(deviceCounterNode, hostCounterNode, *this->device->getNEODevice(), this->partitionCount, !isImmediateType());
 }
 
 void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {

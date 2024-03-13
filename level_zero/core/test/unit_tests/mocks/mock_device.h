@@ -105,6 +105,7 @@ struct MockDeviceImp : public L0::DeviceImp {
     using Base::debugSession;
     using Base::deviceInOrderCounterAllocator;
     using Base::getNEODevice;
+    using Base::hostInOrderCounterAllocator;
     using Base::implicitScalingCapable;
     using Base::neoDevice;
     using Base::subDeviceCopyEngineGroups;

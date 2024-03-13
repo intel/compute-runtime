@@ -837,14 +837,19 @@ TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelAndHostPointerC
 TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemandAndHandleDestruction) {
     uint32_t destructorId = 0u;
 
-    class MyMockDevice : public DestructorCounted<NEO::MockDevice, 1> {
+    class MockDeviceTagAllocator : public DestructorCounted<MockTagAllocator<NEO::DeviceAllocNodeType<true>>, 0> {
       public:
-        MyMockDevice(NEO::ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex, uint32_t &destructorId) : DestructorCounted(destructorId, executionEnvironment, rootDeviceIndex) {}
+        MockDeviceTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, uint32_t &destructorId) : DestructorCounted(destructorId, rootDeviceIndex, memoryManager, 10) {}
     };
 
-    class MyMockTagAllocator : public DestructorCounted<MockTagAllocator<NEO::DeviceAllocNodeType<true>>, 0> {
+    class MockHostTagAllocator : public DestructorCounted<MockTagAllocator<NEO::DeviceAllocNodeType<true>>, 1> {
       public:
-        MyMockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, uint32_t &destructorId) : DestructorCounted(destructorId, rootDeviceIndex, memoryManager, 10) {}
+        MockHostTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, uint32_t &destructorId) : DestructorCounted(destructorId, rootDeviceIndex, memoryManager, 10) {}
+    };
+
+    class MyMockDevice : public DestructorCounted<NEO::MockDevice, 2> {
+      public:
+        MyMockDevice(NEO::ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex, uint32_t &destructorId) : DestructorCounted(destructorId, executionEnvironment, rootDeviceIndex) {}
     };
 
     const uint32_t rootDeviceIndex = 0u;
@@ -856,11 +861,15 @@ TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemandAn
     neoMockDevice->createDeviceImpl();
 
     {
-        auto allocator = new MyMockTagAllocator(0, neoMockDevice->getMemoryManager(), destructorId);
+        auto deviceAllocator = new MockDeviceTagAllocator(0, neoMockDevice->getMemoryManager(), destructorId);
+        auto hostAllocator = new MockHostTagAllocator(0, neoMockDevice->getMemoryManager(), destructorId);
 
         MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
-        deviceImp.deviceInOrderCounterAllocator.reset(allocator);
-        EXPECT_EQ(allocator, deviceImp.getDeviceInOrderCounterAllocator());
+        deviceImp.deviceInOrderCounterAllocator.reset(deviceAllocator);
+        deviceImp.hostInOrderCounterAllocator.reset(hostAllocator);
+
+        EXPECT_EQ(deviceAllocator, deviceImp.getDeviceInOrderCounterAllocator());
+        EXPECT_EQ(hostAllocator, deviceImp.getHostInOrderCounterAllocator());
     }
 }
 

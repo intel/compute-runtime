@@ -48,16 +48,17 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     InOrderExecInfo() = delete;
 
-    static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList);
+    static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList);
     static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, uint64_t deviceAddress, uint64_t *hostAddress, uint64_t counterValue);
 
-    InOrderExecInfo(TagNodeBase *deviceCounterNode, NEO::GraphicsAllocation *hostCounterAllocation, NEO::MemoryManager &memoryManager, uint32_t partitionCount, uint32_t rootDeviceIndex,
+    InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::MemoryManager &memoryManager, uint32_t partitionCount, uint32_t rootDeviceIndex,
                     bool regularCmdList, bool atomicDeviceSignalling);
 
     NEO::GraphicsAllocation *getDeviceCounterAllocation() const;
-    NEO::GraphicsAllocation *getHostCounterAllocation() const { return hostCounterAllocation; }
+    NEO::GraphicsAllocation *getHostCounterAllocation() const;
     uint64_t *getBaseHostAddress() const { return hostAddress; }
     uint64_t getBaseDeviceAddress() const { return deviceAddress; }
+    uint64_t getBaseHostGpuAddress() const;
 
     uint64_t getCounterValue() const { return counterValue; }
     void addCounterValue(uint64_t addValue) { counterValue += addValue; }
@@ -82,7 +83,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
   protected:
     NEO::MemoryManager &memoryManager;
     NEO::TagNodeBase *deviceCounterNode = nullptr;
-    NEO::GraphicsAllocation *hostCounterAllocation = nullptr;
+    NEO::TagNodeBase *hostCounterNode = nullptr;
     uint64_t counterValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
     uint64_t deviceAddress = 0;
