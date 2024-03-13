@@ -42,8 +42,6 @@
 #define XE_USERPTR_FAKE_FLAG 0x800000
 #define XE_USERPTR_FAKE_MASK 0x7FFFFF
 
-#define USER_FENCE_VALUE 0xc0ffee0000000000ull
-
 namespace NEO {
 
 const char *IoctlHelperXe::xeGetClassName(int className) {
