@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1386,4 +1386,32 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
         size = alignUp(size, MemoryConstants::cacheLineSize);
         EXPECT_EQ(size, iohSizeWithImplicitArgs);
     }
+}
+
+HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsAndLocalWorkSizeIsSetThenIohRequiresMoreSpace) {
+    debugManager.flags.EnableHwGenerationLocalIds.set(0);
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    size_t workGroupSize[3] = {683, 1, 1};
+    cl_uint dimensions = 1;
+
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1u;
+    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(kernelInfo.kernelDescriptor);
+    MockKernel kernelWithImplicitArgs(program.get(), kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernelWithImplicitArgs.initialize());
+
+    DispatchInfo dispatchInfoWithImplicitArgs(pClDevice, const_cast<MockKernel *>(&kernelWithImplicitArgs), dimensions, workItems, workGroupSize, globalOffsets);
+    dispatchInfoWithImplicitArgs.setNumberOfWorkgroups({1, 1, 1});
+    dispatchInfoWithImplicitArgs.setTotalNumberOfWorkgroups({1, 1, 1});
+
+    auto iohSizeWithImplicitArgsWithoutLWS = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithImplicitArgs, workGroupSize);
+
+    dispatchInfoWithImplicitArgs.setLWS({683, 1, 1});
+
+    auto lws = dispatchInfoWithImplicitArgs.getLocalWorkgroupSize();
+    kernelWithImplicitArgs.setLocalWorkSizeValues(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
+
+    auto iohSizeWithImplicitArgsWithLWS = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(kernelWithImplicitArgs, workGroupSize);
+
+    EXPECT_LE(iohSizeWithImplicitArgsWithoutLWS, iohSizeWithImplicitArgsWithLWS);
 }

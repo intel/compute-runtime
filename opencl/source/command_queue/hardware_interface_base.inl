@@ -86,6 +86,12 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             const auto lws = generateWorkgroupSize(dispatchInfo);
             const_cast<DispatchInfo &>(dispatchInfo).setLWS(lws);
         }
+        if (dispatchInfo.getKernel() == mainKernel) {
+            if (!mainKernel->isLocalWorkSize2Patchable()) {
+                const auto &lws = dispatchInfo.getLocalWorkgroupSize();
+                mainKernel->setLocalWorkSizeValues(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
+            }
+        }
     }
 
     // Allocate command stream and indirect heaps
