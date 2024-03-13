@@ -112,4 +112,9 @@ bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
 } // namespace NEO

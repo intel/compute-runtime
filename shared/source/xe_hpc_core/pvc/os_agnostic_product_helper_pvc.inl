@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/os_interface/product_helper_xe_hpg_and_xe_hpc.inl"
 
 #include "aubstream/product_family.h"
 
