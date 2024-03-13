@@ -63,7 +63,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestValueThenPropertValueIsRet
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextCreateExt), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextDestroy), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::regRead), static_cast<unsigned int>(DRM_IOCTL_I915_REG_READ));
-    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::getResetStats), static_cast<unsigned int>(PRELIM_DRM_IOCTL_I915_GET_RESET_STATS));
+    EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::getResetStats), static_cast<unsigned int>(DRM_IOCTL_I915_GET_RESET_STATS));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextGetparam), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::gemContextSetparam), static_cast<unsigned int>(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM));
     EXPECT_EQ(ioctlHelper.getIoctlRequestValue(DrmIoctl::query), static_cast<unsigned int>(DRM_IOCTL_I915_QUERY));
@@ -115,7 +115,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingIoctlRequestStringThenProperStringIsRe
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextCreateExt).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_CREATE_EXT");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextDestroy).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_DESTROY");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::regRead).c_str(), "DRM_IOCTL_I915_REG_READ");
-    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::getResetStats).c_str(), "PRELIM_DRM_IOCTL_I915_GET_RESET_STATS");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::getResetStats).c_str(), "DRM_IOCTL_I915_GET_RESET_STATS");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextGetparam).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::gemContextSetparam).c_str(), "DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM");
     EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::query).c_str(), "DRM_IOCTL_I915_QUERY");
@@ -389,17 +389,6 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
                 return *overrideGemCreateExtReturnValue;
             }
         }
-        if (request == DrmIoctl::getResetStats) {
-            if (overrideResetStats.has_value()) {
-                auto resetStats = reinterpret_cast<ResetStats *>(arg);
-                *resetStats = std::get<0>(overrideResetStats.value());
-                auto resetStatsPrelim = reinterpret_cast<prelim_drm_i915_reset_stats *>(arg);
-                resetStatsPrelim->status = std::get<1>(overrideResetStats.value());
-                auto fault = std::get<2>(overrideResetStats.value());
-                resetStatsPrelim->fault = {fault.addr, fault.type, fault.level, fault.access, fault.flags};
-                return 0;
-            }
-        }
         return IoctlHelperPrelim20::ioctl(request, arg);
     }
     bool checkWhetherGemCreateExtContainsMemPolicy(void *arg) {
@@ -427,7 +416,6 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
     uint32_t lastPolicyMode = 0;
     uint32_t lastPolicyFlags = 0;
     std::vector<unsigned long> lastPolicyNodeMask{};
-    std::optional<std::tuple<ResetStats, uint32_t, ResetStatsFault>> overrideResetStats{};
 };
 
 TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolicyThenMemPolicyExtensionsIsAdded) {
@@ -822,35 +810,8 @@ TEST_F(IoctlPrelimHelperTests, givenInitializeGetGpuTimeFunctionNotCalledWhenSet
     EXPECT_EQ(false, ret);
 }
 
-TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGetFdFromVmExportIsCalledThenFalseIsReturned) {
+TEST_F(IoctlPrelimHelperTests, givenUpstreamWhenGetFdFromVmExportIsCalledThenFalseIsReturned) {
     uint32_t vmId = 0, flags = 0;
     int32_t fd = 0;
     EXPECT_FALSE(ioctlHelper.getFdFromVmExport(vmId, flags, &fd));
-}
-
-TEST_F(IoctlPrelimHelperTests, whenGetResetStatsIsCalledThenCorrectValueIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
-
-    uint32_t status = 1;
-    ResetStatsFault fault{};
-    fault.flags = 1;
-
-    ResetStats resetStats{};
-    resetStats.contextId = 0;
-    mockIoctlHelper.overrideResetStats = {resetStats, status, fault};
-
-    status = 0;
-    fault.flags = 0;
-
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, nullptr, nullptr));
-
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, nullptr));
-    EXPECT_EQ(1u, status);
-
-    status = 0;
-    EXPECT_EQ(0, mockIoctlHelper.getResetStats(resetStats, &status, &fault));
-    EXPECT_EQ(1u, status);
-    EXPECT_EQ(1, fault.flags);
 }

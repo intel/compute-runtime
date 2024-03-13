@@ -72,14 +72,6 @@ struct UuidRegisterResult {
     uint32_t handle;
 };
 
-struct ResetStatsFault {
-    uint64_t addr;
-    uint16_t type;
-    uint16_t level;
-    uint16_t access;
-    uint16_t flags;
-};
-
 using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
 using VmBindExtSetPatT = uint8_t[40];
 using VmBindExtUserFenceT = uint8_t[56];
@@ -131,7 +123,6 @@ class IoctlHelper {
     virtual uint32_t getVmAdviseAtomicAttribute() = 0;
     virtual int vmBind(const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(const VmBindParams &vmBindParams) = 0;
-    virtual int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) = 0;
     virtual bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize,
                                       uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
@@ -265,7 +256,6 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
     bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
                               uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
     uint32_t getEuStallFdParameter() override;
@@ -341,7 +331,6 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
     bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
                               uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
     uint32_t getEuStallFdParameter() override;

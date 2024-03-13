@@ -245,7 +245,7 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
         ResetStats resetStats{};
         resetStats.contextId = drmContextId;
 
-        const auto retVal{ioctlHelper->getResetStats(resetStats, nullptr, nullptr)};
+        const auto retVal{ioctlHelper->ioctl(DrmIoctl::getResetStats, &resetStats)};
         UNRECOVERABLE_IF(retVal != 0);
 
         if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {

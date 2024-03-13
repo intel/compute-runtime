@@ -93,7 +93,6 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
-    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
     bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod,
                               uint64_t engineInstance, uint64_t notifyNReports) override;
     uint32_t getEuStallFdParameter() override;

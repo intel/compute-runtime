@@ -856,10 +856,6 @@ int IoctlHelperXe::vmUnbind(const VmBindParams &vmBindParams) {
     return xeVmBind(vmBindParams, false);
 }
 
-int IoctlHelperXe::getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) {
-    return ioctl(DrmIoctl::getResetStats, &resetStats);
-}
-
 UuidRegisterResult IoctlHelperXe::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return {};
