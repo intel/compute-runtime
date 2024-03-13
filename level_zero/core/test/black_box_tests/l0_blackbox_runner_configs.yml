@@ -26,6 +26,9 @@ zello_world_gpu:
 zello_world_usm:
   skip: true
 
+zello_metrics:
+  skip: true
+
 zello_function_pointers_cl:
   exclude:
     - skl
