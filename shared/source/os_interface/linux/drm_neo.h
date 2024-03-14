@@ -344,9 +344,9 @@ class Drm : public DriverModel {
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;
     bool vmBindPatIndexProgrammingSupported = false;
-    bool disableScratch = false;
+    bool disableScratch = true;
 
-    uint32_t gpuFaultCheckThreshold = 0u;
+    uint32_t gpuFaultCheckThreshold = 10u;
     std::atomic<uint32_t> gpuFaultCheckCounter{0u};
 
   private:
