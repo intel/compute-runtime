@@ -92,6 +92,8 @@ struct XeHpgCore {
         }
     };
 
+    static constexpr bool isDcFlushAllowed = true;
+
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 

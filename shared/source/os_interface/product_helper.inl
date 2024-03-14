@@ -393,7 +393,8 @@ bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
-    auto dcFlushAllowed = true;
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    bool dcFlushAllowed = GfxProduct::isDcFlushAllowed;
 
     if (debugManager.flags.AllowDcFlush.get() != -1) {
         dcFlushAllowed = debugManager.flags.AllowDcFlush.get();

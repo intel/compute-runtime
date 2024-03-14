@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,8 @@ struct PVC : public XeHpcCoreFamily {
         return (revId <= 0x3);
     }
     static constexpr uint32_t pvcSteppingBits = 0b111;
+
+    static constexpr bool isDcFlushAllowed = false;
 };
 
 class PvcHwConfig : public PVC {

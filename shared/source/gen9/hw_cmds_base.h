@@ -86,6 +86,8 @@ struct Gen9 {
         }
     };
 
+    static constexpr bool isDcFlushAllowed = true;
+
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 

@@ -17,17 +17,6 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
-    auto dcFlushAllowed = false;
-
-    if (debugManager.flags.AllowDcFlush.get() != -1) {
-        dcFlushAllowed = debugManager.flags.AllowDcFlush.get();
-    }
-
-    return dcFlushAllowed;
-}
-
-template <>
 void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {
     using SAMPLER_STATE = typename XeHpcCoreFamily::SAMPLER_STATE;
 

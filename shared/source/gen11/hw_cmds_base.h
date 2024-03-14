@@ -86,6 +86,8 @@ struct Gen11 {
         }
     };
 
+    static constexpr bool isDcFlushAllowed = true;
+
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 struct Gen11Family : public Gen11 {
