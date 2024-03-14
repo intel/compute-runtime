@@ -85,7 +85,7 @@ static_assert(offsetof(GemSetDomain, handle) == offsetof(drm_i915_gem_set_domain
 static_assert(offsetof(GemSetDomain, readDomains) == offsetof(drm_i915_gem_set_domain, read_domains));
 static_assert(offsetof(GemSetDomain, writeDomain) == offsetof(drm_i915_gem_set_domain, write_domain));
 
-static_assert(sizeof(GemContextParam) >= sizeof(drm_i915_gem_context_param));
+static_assert(sizeof(GemContextParam) == sizeof(drm_i915_gem_context_param));
 static_assert(offsetof(GemContextParam, contextId) == offsetof(drm_i915_gem_context_param, ctx_id));
 static_assert(offsetof(GemContextParam, size) == offsetof(drm_i915_gem_context_param, size));
 static_assert(offsetof(GemContextParam, param) == offsetof(drm_i915_gem_context_param, param));
@@ -97,7 +97,7 @@ static_assert(offsetof(DrmUserExtension, name) == offsetof(i915_user_extension, 
 static_assert(offsetof(DrmUserExtension, flags) == offsetof(i915_user_extension, flags));
 static_assert(offsetof(DrmUserExtension, reserved) == offsetof(i915_user_extension, rsvd));
 
-static_assert(sizeof(GemContextCreateExtSetParam) >= sizeof(drm_i915_gem_context_create_ext_setparam));
+static_assert(sizeof(GemContextCreateExtSetParam) == sizeof(drm_i915_gem_context_create_ext_setparam));
 static_assert(offsetof(GemContextCreateExtSetParam, base) == offsetof(drm_i915_gem_context_create_ext_setparam, base));
 static_assert(offsetof(GemContextCreateExtSetParam, param) == offsetof(drm_i915_gem_context_create_ext_setparam, param));
 

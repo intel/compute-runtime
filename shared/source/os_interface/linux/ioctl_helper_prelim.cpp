@@ -807,10 +807,10 @@ int IoctlHelperPrelim20::unregisterUuid(uint32_t handle) {
 }
 
 bool IoctlHelperPrelim20::isContextDebugSupported() {
-    GemContextParam ctxParam = {};
+    drm_i915_gem_context_param ctxParam = {};
     ctxParam.size = 0;
     ctxParam.param = PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS;
-    ctxParam.contextId = 0;
+    ctxParam.ctx_id = 0;
     ctxParam.value = 0;
 
     const auto retVal = IoctlHelper::ioctl(DrmIoctl::gemContextGetparam, &ctxParam);
@@ -818,10 +818,10 @@ bool IoctlHelperPrelim20::isContextDebugSupported() {
 }
 
 int IoctlHelperPrelim20::setContextDebugFlag(uint32_t drmContextId) {
-    GemContextParam ctxParam = {};
+    drm_i915_gem_context_param ctxParam = {};
     ctxParam.size = 0;
     ctxParam.param = PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAGS;
-    ctxParam.contextId = drmContextId;
+    ctxParam.ctx_id = drmContextId;
     ctxParam.value = PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP << 32 | PRELIM_I915_CONTEXT_PARAM_DEBUG_FLAG_SIP;
 
     return IoctlHelper::ioctl(DrmIoctl::gemContextSetparam, &ctxParam);

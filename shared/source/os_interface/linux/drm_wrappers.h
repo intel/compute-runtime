@@ -119,7 +119,6 @@ struct GemContextParam {
     uint32_t size;
     uint64_t param;
     uint64_t value;
-    uint32_t gtId;
 };
 
 struct DrmUserExtension {

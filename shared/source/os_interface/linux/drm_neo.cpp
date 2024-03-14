@@ -1122,7 +1122,6 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     param.size = static_cast<uint32_t>(ptrDiff(contextEngines.engines + numEnginesInContext, &contextEngines));
     param.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamEngines);
     param.value = castToUint64(&contextEngines);
-    param.gtId = deviceIndex;
 
     auto ioctlValue = ioctlHelper->ioctl(DrmIoctl::gemContextSetparam, &param);
     UNRECOVERABLE_IF(ioctlValue != 0);
