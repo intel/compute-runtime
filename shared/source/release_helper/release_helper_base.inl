@@ -132,4 +132,9 @@ bool ReleaseHelperHw<releaseType>::isRayTracingSupported() const {
     return true;
 }
 
+template <ReleaseType releaseType>
+uint64_t ReleaseHelperHw<releaseType>::getL3CacheSizeInKb() const {
+    return 0;
+}
+
 } // namespace NEO
