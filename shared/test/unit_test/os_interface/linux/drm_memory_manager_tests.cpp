@@ -1048,7 +1048,7 @@ TEST_F(DrmMemoryManagerTest, WhenAskedButNotAllowedHostPtrThenDoNotPinAfterAlloc
 TEST_F(DrmMemoryManagerTest, WhenUnreferenceIsCalledThenCallSucceeds) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
-    BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, rootDeviceIndex);
+    BufferObject *bo = memoryManager->allocUserptr(1234, (size_t)1024, rootDeviceIndex);
     ASSERT_NE(nullptr, bo);
     memoryManager->unreference(bo, false);
 }

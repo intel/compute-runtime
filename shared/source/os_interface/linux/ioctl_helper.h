@@ -65,6 +65,7 @@ struct VmBindParams {
     uint64_t extensions;
     uint64_t userFence;
     uint64_t patIndex;
+    uint64_t userptr;
 };
 
 struct UuidRegisterResult {

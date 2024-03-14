@@ -180,6 +180,7 @@ struct Query {
 struct GemClose {
     uint32_t handle;
     uint32_t reserved;
+    uint64_t userptr;
 };
 
 struct PrimeHandle {
