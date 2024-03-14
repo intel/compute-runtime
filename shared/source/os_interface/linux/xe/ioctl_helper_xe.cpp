@@ -1023,14 +1023,13 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             auto contextEngine = reinterpret_cast<ContextParamEngines<> *>(d->value);
             int items = (d->size - sizeof(uint64_t)) / sizeof(uint32_t);
             contextParamEngine.clear();
-            if (items < 11) {
-                for (int i = 0; i < items; i++) {
+            for (int i = 0; i < items; i++) {
+                if (contextEngine->engines[i].engineClass != getDrmParamValue(DrmParam::engineClassInvalid)) {
                     drm_xe_engine_class_instance engine = {
                         contextEngine->engines[i].engineClass,
                         contextEngine->engines[i].engineInstance,
-                        0};
-                    if (engine.engine_class != 65535)
-                        contextParamEngine.push_back(engine);
+                        static_cast<uint16_t>(d->gtId)};
+                    contextParamEngine.push_back(engine);
                 }
             }
             if (contextParamEngine.size())
@@ -1221,11 +1220,6 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
             }
             engine.push_back(*currentEngine);
         }
-    }
-    if (engine.size() > 9) {
-        xeLog("Too much instances...\n", "");
-        UNRECOVERABLE_IF(true);
-        return 0;
     }
     create.instances = castToUint64(engine.data());
     create.num_placements = engine.size();
