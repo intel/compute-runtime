@@ -40,12 +40,9 @@
 
 class ZelloMetricsTestList {
   public:
-    static bool add(std::string testName, std::function<bool()> testFunction);
+    bool add(std::string testName, std::function<bool()> testFunction);
     static ZelloMetricsTestList &get();
-    static std::map<std::string, std::function<bool()>> &getTests();
-
-  protected:
-    static std::map<std::string, std::function<bool()>> tests;
+    std::map<std::string, std::function<bool()>> &getTests();
 };
 
 class SystemParameter {

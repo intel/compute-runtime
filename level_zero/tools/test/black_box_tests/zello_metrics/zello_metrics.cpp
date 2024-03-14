@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,19 +20,19 @@
 
 namespace zmu = ZelloMetricsUtility;
 
-std::map<std::string, std::function<bool()>> ZelloMetricsTestList::tests = {};
-
 ZelloMetricsTestList &ZelloMetricsTestList::get() {
     static ZelloMetricsTestList testList;
     return testList;
 }
 
 bool ZelloMetricsTestList::add(std::string testName, std::function<bool()> testFunction) {
+    auto &tests = getTests();
     tests[testName] = testFunction;
     return true;
 }
 
 std::map<std::string, std::function<bool()>> &ZelloMetricsTestList::getTests() {
+    static std::map<std::string, std::function<bool()>> tests;
     return tests;
 }
 
@@ -114,7 +114,7 @@ bool SingleDeviceTestRunner::run() {
 
 int main(int argc, char *argv[]) {
 
-    auto &tests = ZelloMetricsTestList::getTests();
+    auto &tests = ZelloMetricsTestList::get().getTests();
 
     auto testSettings = zmu::TestSettings::get();
     testSettings->parseArguments(argc, argv);
