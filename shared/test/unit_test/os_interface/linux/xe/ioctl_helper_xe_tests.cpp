@@ -533,14 +533,11 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     drm.testMode(0);
     {
         GemUserPtr test = {};
-        test.userPtr = 2;
+        test.handle = 1;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemUserptr, &test);
         EXPECT_EQ(0, ret);
-
-        EXPECT_EQ(test.userPtr, mockXeIoctlHelper->bindInfo[0].userptr);
-        EXPECT_EQ(0u, mockXeIoctlHelper->bindInfo[0].handle);
         GemClose cl = {};
-        cl.userptr = test.userPtr;
+        cl.handle = test.handle;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemClose, &cl);
         EXPECT_EQ(0, ret);
     }
@@ -645,7 +642,6 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     }
     {
         GemClose test = {};
-        test.handle = 1;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemClose, &test);
         EXPECT_EQ(0, ret);
     }

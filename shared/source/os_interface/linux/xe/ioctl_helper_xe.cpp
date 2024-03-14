@@ -37,6 +37,9 @@
 #define STRINGIFY_ME(X) return #X
 #define RETURN_ME(X) return X
 
+#define XE_USERPTR_FAKE_FLAG 0x800000
+#define XE_USERPTR_FAKE_MASK 0x7FFFFF
+
 namespace NEO {
 
 const char *IoctlHelperXe::xeGetClassName(int className) {
@@ -972,7 +975,8 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::gemUserptr: {
         GemUserPtr *d = static_cast<GemUserPtr *>(arg);
-        updateBindInfo(0, d->userPtr, d->userSize);
+        d->handle = userPtrHandle++ | XE_USERPTR_FAKE_FLAG;
+        updateBindInfo(d->handle, d->userPtr, d->userSize);
         ret = 0;
         xeLog(" -> IoctlHelperXe::ioctl GemUserptr p=0x%llx s=0x%llx f=0x%x h=0x%x r=%d\n", d->userPtr,
               d->userSize, d->flags, d->handle, ret);
@@ -1050,15 +1054,9 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         struct GemClose *d = static_cast<struct GemClose *>(arg);
         int found = -1;
         xeShowBindTable();
-        bool isUserptr = false;
         for (unsigned int i = 0; i < bindInfo.size(); i++) {
             if (d->handle == bindInfo[i].handle) {
                 found = i;
-                break;
-            }
-            if (d->userptr == bindInfo[i].userptr) {
-                found = i;
-                isUserptr = true;
                 break;
             }
         }
@@ -1072,7 +1070,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
                 std::unique_lock<std::mutex> lock(xeLock);
                 bindInfo.erase(bindInfo.begin() + found);
             }
-            if (isUserptr) {
+            if (d->handle & XE_USERPTR_FAKE_FLAG) {
                 // nothing to do under XE
                 ret = 0;
             } else {
@@ -1310,7 +1308,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         if (isBind) {
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
             bind.bind.obj = vmBindParams.handle;
-            if (bindInfo[index].userptr) {
+            if (bindInfo[index].handle & XE_USERPTR_FAKE_FLAG) {
                 bind.bind.op = DRM_XE_VM_BIND_OP_MAP_USERPTR;
                 bind.bind.obj = 0;
                 bind.bind.obj_offset = bindInfo[index].userptr;
@@ -1318,7 +1316,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         } else {
             bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
             bind.bind.obj = 0;
-            if (bindInfo[index].userptr) {
+            if (bindInfo[index].handle & XE_USERPTR_FAKE_FLAG) {
                 bind.bind.obj_offset = bindInfo[index].userptr;
             }
         }
