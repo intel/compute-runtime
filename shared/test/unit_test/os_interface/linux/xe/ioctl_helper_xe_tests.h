@@ -49,6 +49,20 @@ inline constexpr uint32_t testValueGemCreate = 0x8273;
 class DrmMockXe : public DrmMockCustom {
   public:
     DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
+        auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(queryEngines);
+        xeQueryEngines->num_engines = 11;
+        xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_RENDER, 0, 0}, {}};
+        xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, 0}, {}};
+        xeQueryEngines->engines[2] = {{DRM_XE_ENGINE_CLASS_COPY, 2, 0}, {}};
+        xeQueryEngines->engines[3] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0}, {}};
+        xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0}, {}};
+        xeQueryEngines->engines[5] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1}, {}};
+        xeQueryEngines->engines[6] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1}, {}};
+        xeQueryEngines->engines[7] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1}, {}};
+        xeQueryEngines->engines[8] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1}, {}};
+        xeQueryEngines->engines[9] = {{DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1}, {}};
+        xeQueryEngines->engines[10] = {{DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}, {}};
+
         auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(queryMemUsage);
         xeQueryMemUsage->num_mem_regions = 3;
         xeQueryMemUsage->mem_regions[0] = {
@@ -251,19 +265,9 @@ class DrmMockXe : public DrmMockCustom {
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
     int gemVmBindReturn = 0;
-    const drm_xe_engine_class_instance queryEngines[11] = {
-        {DRM_XE_ENGINE_CLASS_RENDER, 0, 0},
-        {DRM_XE_ENGINE_CLASS_COPY, 1, 0},
-        {DRM_XE_ENGINE_CLASS_COPY, 2, 0},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1},
-        {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1},
-        {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}};
 
+    static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
+    uint64_t queryEngines[45]{}; // 1 qword for num engines and 4 qwords per engine
     static_assert(sizeof(drm_xe_mem_region) == 11 * sizeof(uint64_t), "");
     uint64_t queryMemUsage[34]{}; // 1 qword for num regions and 11 qwords per region
     static_assert(sizeof(drm_xe_gt) == 12 * sizeof(uint64_t), "");

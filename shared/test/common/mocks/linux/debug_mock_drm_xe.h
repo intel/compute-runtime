@@ -44,6 +44,19 @@ class DrmMockXeDebug : public DrmMockCustom {
   public:
     DrmMockXeDebug(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
         this->ioctlHelper = std::make_unique<IoctlHelperXe>(*this);
+        auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(queryEngines);
+        xeQueryEngines->num_engines = 11;
+        xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_RENDER, 0, 0}, {}};
+        xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, 0}, {}};
+        xeQueryEngines->engines[2] = {{DRM_XE_ENGINE_CLASS_COPY, 2, 0}, {}};
+        xeQueryEngines->engines[3] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0}, {}};
+        xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0}, {}};
+        xeQueryEngines->engines[5] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1}, {}};
+        xeQueryEngines->engines[6] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1}, {}};
+        xeQueryEngines->engines[7] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1}, {}};
+        xeQueryEngines->engines[8] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1}, {}};
+        xeQueryEngines->engines[9] = {{DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1}, {}};
+        xeQueryEngines->engines[10] = {{DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}, {}};
     };
 
     int getErrno() override {
@@ -160,18 +173,8 @@ class DrmMockXeDebug : public DrmMockCustom {
         return allowDebugAttach;
     }
 
-    const drm_xe_engine_class_instance queryEngines[11] = {
-        {DRM_XE_ENGINE_CLASS_RENDER, 0, 0},
-        {DRM_XE_ENGINE_CLASS_COPY, 1, 0},
-        {DRM_XE_ENGINE_CLASS_COPY, 2, 0},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1},
-        {DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1},
-        {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1},
-        {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}};
+    static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
+    uint64_t queryEngines[45]{}; // 1 qword for num engines and 4 qwords per engine
 
     struct drm_xe_ext_set_property receivedContextCreateSetParam = {};
     bool allowDebugAttachCallBase = false;

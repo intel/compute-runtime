@@ -191,29 +191,29 @@ std::vector<DataType> IoctlHelperXe::queryData(uint32_t queryId) {
 }
 
 std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled) {
-    auto enginesData = queryData<uint16_t>(DRM_XE_DEVICE_QUERY_ENGINES);
-
-    auto numberHwEngines = enginesData.size() * sizeof(uint16_t) /
-                           sizeof(struct drm_xe_engine_class_instance);
-
-    xeLog("numberHwEngines=%d\n", numberHwEngines);
+    auto enginesData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_ENGINES);
 
     if (enginesData.empty()) {
         return {};
     }
 
-    auto queriedEngines = reinterpret_cast<struct drm_xe_engine_class_instance *>(enginesData.data());
+    auto queryEngines = reinterpret_cast<struct drm_xe_query_engines *>(enginesData.data());
+
+    auto numberHwEngines = queryEngines->num_engines;
+
+    xeLog("numberHwEngines=%d\n", numberHwEngines);
 
     StackVec<std::vector<EngineClassInstance>, 2> enginesPerTile{};
     std::bitset<8> multiTileMask{};
 
     for (auto i = 0u; i < numberHwEngines; i++) {
-        auto tile = queriedEngines[i].gt_id;
+        const auto &engine = queryEngines->engines[i].instance;
+        auto tile = engine.gt_id;
         multiTileMask.set(tile);
         EngineClassInstance engineClassInstance{};
-        engineClassInstance.engineClass = queriedEngines[i].engine_class;
-        engineClassInstance.engineInstance = queriedEngines[i].engine_instance;
-        xeLog("\t%s:%d\n", xeGetClassName(engineClassInstance.engineClass), engineClassInstance.engineInstance);
+        engineClassInstance.engineClass = engine.engine_class;
+        engineClassInstance.engineInstance = engine.engine_instance;
+        xeLog("\t%s:%d:%d\n", xeGetClassName(engineClassInstance.engineClass), engineClassInstance.engineInstance, engine.gt_id);
 
         if (engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCompute) ||
             engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassRender) ||
@@ -225,7 +225,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
                 enginesPerTile.resize(tile + 1);
             }
             enginesPerTile[tile].push_back(engineClassInstance);
-            allEngines.push_back(queriedEngines[i]);
+            allEngines.push_back(engine);
         }
     }
 
