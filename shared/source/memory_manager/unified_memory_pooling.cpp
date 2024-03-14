@@ -21,7 +21,7 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, const Unifi
     }
     this->svmMemoryManager = svmMemoryManager;
     this->poolEnd = ptrOffset(this->pool, poolSize);
-    this->chunkAllocator.reset(new HeapAllocator(startingOffset,
+    this->chunkAllocator.reset(new HeapAllocator(castToUint64(this->pool),
                                                  poolSize,
                                                  chunkAlignment));
     this->poolSize = poolSize;
@@ -64,16 +64,14 @@ void *UsmMemAllocPool::createUnifiedMemoryAllocation(size_t requestedSize, const
         }
         std::unique_lock<std::mutex> lock(mtx);
         auto actualSize = requestedSize;
-        size_t offset = static_cast<size_t>(this->chunkAllocator->allocateWithCustomAlignment(actualSize, memoryProperties.alignment));
-        if (offset == 0) {
+        auto pooledAddress = this->chunkAllocator->allocateWithCustomAlignment(actualSize, memoryProperties.alignment);
+        if (!pooledAddress) {
             return nullptr;
         }
-        offset -= startingOffset;
-        DEBUG_BREAK_IF(offset >= poolSize);
-        pooledPtr = ptrOffset(this->pool, offset);
-        {
-            this->allocations.insert(pooledPtr, AllocationInfo{offset, actualSize, requestedSize});
-        }
+
+        pooledPtr = addrToPtr(pooledAddress);
+        this->allocations.insert(pooledPtr, AllocationInfo{pooledAddress, actualSize, requestedSize});
+
         ++this->svmMemoryManager->allocationsCounter;
     }
     return pooledPtr;
@@ -85,17 +83,11 @@ bool UsmMemAllocPool::isInPool(const void *ptr) {
 
 bool UsmMemAllocPool::freeSVMAlloc(void *ptr, bool blocking) {
     if (isInitialized() && isInPool(ptr)) {
-        size_t offset = 0u, size = 0u;
-        {
-            std::unique_lock<std::mutex> lock(mtx);
-            auto allocationInfo = allocations.extract(ptr);
-            if (allocationInfo) {
-                offset = allocationInfo->offset;
-                size = allocationInfo->size;
-            }
-        }
-        if (size > 0u) {
-            this->chunkAllocator->free(offset + startingOffset, size);
+        std::unique_lock<std::mutex> lock(mtx);
+        auto allocationInfo = allocations.extract(ptr);
+        if (allocationInfo) {
+            DEBUG_BREAK_IF(allocationInfo->size == 0 || allocationInfo->address == 0);
+            this->chunkAllocator->free(allocationInfo->address, allocationInfo->size);
             return true;
         }
     }
@@ -118,7 +110,7 @@ void *UsmMemAllocPool::getPooledAllocationBasePtr(const void *ptr) {
         std::unique_lock<std::mutex> lock(mtx);
         auto allocationInfo = allocations.get(ptr);
         if (allocationInfo) {
-            return ptrOffset(this->pool, allocationInfo->offset);
+            return addrToPtr(allocationInfo->address);
         }
     }
     return nullptr;

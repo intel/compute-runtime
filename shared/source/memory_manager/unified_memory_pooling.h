@@ -16,7 +16,7 @@ class UsmMemAllocPool {
   public:
     using UnifiedMemoryProperties = SVMAllocsManager::UnifiedMemoryProperties;
     struct AllocationInfo {
-        size_t offset;
+        uint64_t address;
         size_t size;
         size_t requestedSize;
     };
