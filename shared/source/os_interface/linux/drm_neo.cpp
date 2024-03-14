@@ -67,8 +67,10 @@ Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &r
         disableScratch = debugManager.flags.DisableScratchPages.get();
     }
     auto threshold = debugManager.flags.GpuFaultCheckThreshold.get();
-    if (disableScratch && threshold != -1) {
+    if (threshold != -1) {
         gpuFaultCheckThreshold = threshold;
+    } else if (!disableScratch) {
+        gpuFaultCheckThreshold = 0;
     }
 }
 
