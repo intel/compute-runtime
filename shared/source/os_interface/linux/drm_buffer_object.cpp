@@ -120,6 +120,7 @@ bool BufferObject::close() {
 
     GemClose close{};
     close.handle = this->handle.getBoHandle();
+    close.userptr = this->userptr;
 
     PRINT_DEBUG_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle.getBoHandle());
 

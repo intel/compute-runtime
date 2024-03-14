@@ -173,7 +173,6 @@ class IoctlHelperXe : public IoctlHelper {
     int defaultAlignment = 0;
     int hasVram = 0;
     uint32_t xeVmId = 0;
-    uint32_t userPtrHandle = 0;
     int xeFileHandle = 0;
     std::mutex xeLock;
     std::vector<BindInfo> bindInfo;
