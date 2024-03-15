@@ -251,7 +251,7 @@ int Drm::queryGttSize(uint64_t &gttSizeOutput) {
 bool Drm::isGpuHangDetected(OsContext &osContext) {
     bool ret = checkResetStatus(osContext);
     if (gpuFaultCheckThreshold != 0) {
-        if (gpuFaultCheckCounter == gpuFaultCheckThreshold) {
+        if (gpuFaultCheckCounter >= gpuFaultCheckThreshold) {
             auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
             memoryManager->checkUnexpectedGpuPageFault();
             gpuFaultCheckCounter = 0;

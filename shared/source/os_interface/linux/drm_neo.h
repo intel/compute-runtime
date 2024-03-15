@@ -19,6 +19,7 @@
 #include "igfxfmid.h"
 
 #include <array>
+#include <atomic>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -346,7 +347,7 @@ class Drm : public DriverModel {
     bool disableScratch = false;
 
     uint32_t gpuFaultCheckThreshold = 0u;
-    uint32_t gpuFaultCheckCounter = 0u;
+    std::atomic<uint32_t> gpuFaultCheckCounter{0u};
 
   private:
     int getParamIoctl(DrmParam param, int *dstValue);
