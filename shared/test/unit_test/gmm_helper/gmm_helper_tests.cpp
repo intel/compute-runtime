@@ -941,6 +941,35 @@ TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceT
     EXPECT_EQ(0, memcmp(&expectedWaTable, &passedWaTable, sizeof(WA_TABLE)));
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
 }
+TEST(GmmHelperTest, givenEnableFtrTile64OptimizationDebugKeyWhenSetThenProperValueIsPassedToGmmlib) {
+    DebugManagerStateRestore restorer;
+    VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
+    VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
+    VariableBackup<decltype(passedGtSystemInfo)> passedGtSystemInfoBackup(&passedGtSystemInfo);
+    VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
+    VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
+
+    auto hwInfo = defaultHwInfo.get();
+    {
+        MockExecutionEnvironment executionEnvironment{hwInfo};
+        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
+    }
+    {
+        debugManager.flags.EnableFtrTile64Optimization.set(-1);
+        MockExecutionEnvironment executionEnvironment{hwInfo};
+        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
+    }
+    {
+        debugManager.flags.EnableFtrTile64Optimization.set(0);
+        MockExecutionEnvironment executionEnvironment{hwInfo};
+        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
+    }
+    {
+        debugManager.flags.EnableFtrTile64Optimization.set(1);
+        MockExecutionEnvironment executionEnvironment{hwInfo};
+        EXPECT_EQ(1u, passedFtrTable.FtrTile64Optimization);
+    }
+}
 
 TEST(GmmHelperTest, givenGmmHelperAndL3CacheDisabledForDebugThenCorrectMOCSIsReturned) {
     decltype(GmmHelper::createGmmContextWrapperFunc) createGmmContextSave = GmmHelper::createGmmContextWrapperFunc;

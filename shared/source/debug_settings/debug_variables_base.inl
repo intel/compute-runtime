@@ -507,6 +507,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, SignalAllEventPackets, -1, "All packets of event
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBcsSwControlWa, -1, "Enable BCS WA via BCSSWCONTROL MMIO. -1: default, 0: disabled, 1: if src in system mem, 2: if dst in system mem, 3: if src and dst in system mem, 4: always")
 DECLARE_DEBUG_VARIABLE(bool, EnableHostAllocationMemPolicy, false, "Enables Memory Policy for host allocation")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideHostAllocationMemPolicyMode, -1, "Override Memory Policy mode for host allocation -1: default (use the system configuration), 0: MPOL_DEFAULT, 1: MPOL_PREFERRED, 2: MPOL_BIND, 3: MPOL_INTERLEAVED, 4: MPOL_LOCAL, 5: MPOL_PREFERRED_MANY")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableFtrTile64Optimization, 0, "Control feature Tile64 Optimization flag passed to gmmlib. -1: pass as-is, 0: disable flag(default due to NEO-10623), 1: enable flag");
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")
