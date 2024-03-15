@@ -385,10 +385,10 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrec
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenCallingPerfOpenEuStallStreamWithInvalidArgumentsThenFailureReturned) {
     std::array<uint64_t, 12u> properties = {};
-    int32_t invalid_stream = -1;
+    int32_t invalidStream = -1;
     DrmMock *mockDrm = reinterpret_cast<DrmMock *>(drm.get());
     mockDrm->failPerfOpen = true;
-    EXPECT_FALSE(ioctlHelper.perfOpenEuStallStream(0u, properties, &invalid_stream));
+    EXPECT_FALSE(ioctlHelper.perfOpenEuStallStream(0u, properties, &invalidStream));
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorrectIoctlValueIsReturned) {
@@ -579,11 +579,11 @@ TEST(IoctlPrelimHelperPerfTests, givenCalltoPerfDisableEuStallStreamWithValidStr
     MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
 
     mockIoctlHelper.initialize();
-    int32_t valid_fd = -1;
+    int32_t validFd = -1;
     std::array<uint64_t, 12u> properties = {};
     EXPECT_TRUE(mockIoctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 20u));
-    EXPECT_TRUE(mockIoctlHelper.perfOpenEuStallStream(0u, properties, &valid_fd));
-    EXPECT_TRUE(mockIoctlHelper.perfDisableEuStallStream(&valid_fd));
+    EXPECT_TRUE(mockIoctlHelper.perfOpenEuStallStream(0u, properties, &validFd));
+    EXPECT_TRUE(mockIoctlHelper.perfDisableEuStallStream(&validFd));
 }
 
 class DrmMockIoctl : public DrmMock {
