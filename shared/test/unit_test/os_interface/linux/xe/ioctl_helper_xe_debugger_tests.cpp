@@ -267,7 +267,7 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenContextCreatedForCopyEngineWhenCreateDrm
       public:
         DrmMockXeDebugTest(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXeDebug(rootDeviceEnvironment){};
         unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) override {
-            return static_cast<unsigned int>(DrmParam::execBlt);
+            return DRM_XE_ENGINE_CLASS_COPY;
         }
     };
 

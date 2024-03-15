@@ -69,7 +69,7 @@ class DrmMockXeDebug : public DrmMockCustom {
     int errnoRetVal = 0;
 
     unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) override {
-        return static_cast<unsigned int>(DrmParam::execDefault);
+        return DRM_XE_ENGINE_CLASS_COMPUTE;
     }
 
     void setPciPath(const char *pciPath) {

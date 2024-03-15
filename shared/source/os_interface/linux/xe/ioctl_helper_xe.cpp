@@ -898,6 +898,12 @@ int IoctlHelperXe::getDrmParamValue(DrmParam drmParam) const {
         return DRM_XE_ENGINE_CLASS_COMPUTE;
     case DrmParam::engineClassInvalid:
         return -1;
+    case DrmParam::execDefault:
+        return DRM_XE_ENGINE_CLASS_COMPUTE;
+    case DrmParam::execBlt:
+        return DRM_XE_ENGINE_CLASS_COPY;
+    case DrmParam::execRender:
+        return DRM_XE_ENGINE_CLASS_RENDER;
 
     default:
         return getDrmParamValueBase(drmParam);
@@ -1025,12 +1031,13 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             contextParamEngine.clear();
             if (items < 11) {
                 for (int i = 0; i < items; i++) {
-                    drm_xe_engine_class_instance engine = {
-                        contextEngine->engines[i].engineClass,
-                        contextEngine->engines[i].engineInstance,
-                        0};
-                    if (engine.engine_class != 65535)
+                    if (contextEngine->engines[i].engineClass != static_cast<uint16_t>(getDrmParamValue(DrmParam::engineClassInvalid))) {
+                        drm_xe_engine_class_instance engine = {
+                            contextEngine->engines[i].engineClass,
+                            contextEngine->engines[i].engineInstance,
+                            static_cast<uint16_t>(d->gtId)};
                         contextParamEngine.push_back(engine);
+                    }
                 }
             }
             if (contextParamEngine.size())
@@ -1177,24 +1184,10 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     uint32_t drmContextId = 0;
     drm_xe_engine_class_instance *currentEngine = nullptr;
     std::vector<drm_xe_engine_class_instance> engine;
-    int requestClass = 0;
 
     xeLog("createDrmContext VM=0x%x\n", drmVmId);
-    auto engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, osContext.getEngineType(), osContext.isEngineInstanced());
-    switch (engineFlag) {
-    case static_cast<int>(DrmParam::execRender):
-        requestClass = DRM_XE_ENGINE_CLASS_RENDER;
-        break;
-    case static_cast<int>(DrmParam::execBlt):
-        requestClass = DRM_XE_ENGINE_CLASS_COPY;
-        break;
-    case static_cast<int>(DrmParam::execDefault):
-        requestClass = DRM_XE_ENGINE_CLASS_COMPUTE;
-        break;
-    default:
-        xeLog("unexpected engineFlag=0x%x\n", engineFlag);
-        UNRECOVERABLE_IF(true);
-    }
+    auto requestClass = drm.bindDrmContext(drmContextId, deviceIndex, osContext.getEngineType(), osContext.isEngineInstanced());
+
     size_t n = contextParamEngine.size();
     create.vm_id = drmVmId;
     create.width = 1;

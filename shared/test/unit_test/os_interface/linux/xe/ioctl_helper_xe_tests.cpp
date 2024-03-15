@@ -321,9 +321,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(0, xeIoctlHelper->setContextDebugFlag(0));
 
-    // Default no translation:
-    verifyDrmGetParamValue(static_cast<int>(DrmParam::execRender), DrmParam::execRender);
-    // test exception:
     verifyDrmGetParamValue(DRM_XE_MEM_REGION_CLASS_VRAM, DrmParam::memoryClassDevice);
     verifyDrmGetParamValue(DRM_XE_MEM_REGION_CLASS_SYSMEM, DrmParam::memoryClassSystem);
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_RENDER, DrmParam::engineClassRender);
@@ -332,6 +329,9 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, DrmParam::engineClassVideoEnhance);
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_COMPUTE, DrmParam::engineClassCompute);
     verifyDrmGetParamValue(-1, DrmParam::engineClassInvalid);
+    verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_RENDER, DrmParam::execRender);
+    verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_COPY, DrmParam::execBlt);
+    verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_COMPUTE, DrmParam::execDefault);
 
     // Expect stringify
     verifyDrmParamString("ContextCreateExtSetparam", DrmParam::contextCreateExtSetparam);
@@ -1739,6 +1739,57 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenPatIndexIsSet) {
     ASSERT_EQ(1u, drm.vmBindInputs.size());
 
     EXPECT_EQ(drm.vmBindInputs[0].bind.pat_index, expectedPatIndex);
+}
+
+TEST(IoctlHelperXeTest, whenBindingDrmContextWithoutVirtualEnginesThenProperEnginesAreSelected) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm.ioctlHelper.get());
+    drm.queryEngineInfo();
+
+    unsigned int expectedValue = DRM_XE_ENGINE_CLASS_COMPUTE;
+    EXPECT_EQ(expectedValue, drm.bindDrmContext(0, 1, aub_stream::EngineType::ENGINE_CCS, true));
+
+    EXPECT_EQ(1u, ioctlHelper->contextParamEngine.size());
+    auto expectedEngine = drm.getEngineInfo()->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS);
+    auto notExpectedEngine = drm.getEngineInfo()->getEngineInstance(0, aub_stream::EngineType::ENGINE_CCS);
+    EXPECT_NE(expectedEngine->engineInstance, notExpectedEngine->engineInstance);
+    EXPECT_EQ(expectedEngine->engineInstance, ioctlHelper->contextParamEngine[0].engine_instance);
+    EXPECT_EQ(expectedEngine->engineClass, ioctlHelper->contextParamEngine[0].engine_class);
+    EXPECT_EQ(1u, ioctlHelper->contextParamEngine[0].gt_id);
+}
+
+TEST(IoctlHelperXeTest, whenBindingDrmContextWithVirtualEnginesThenProperEnginesAreSelected) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm.ioctlHelper.get());
+    drm.queryEngineInfo();
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    unsigned int expectedValue = DRM_XE_ENGINE_CLASS_COMPUTE;
+    EXPECT_EQ(expectedValue, drm.bindDrmContext(0, 1, aub_stream::EngineType::ENGINE_CCS, false));
+
+    EXPECT_EQ(2u, ioctlHelper->contextParamEngine.size());
+    {
+        auto expectedEngine = drm.getEngineInfo()->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS);
+        auto notExpectedEngine = drm.getEngineInfo()->getEngineInstance(0, aub_stream::EngineType::ENGINE_CCS);
+        EXPECT_NE(expectedEngine->engineInstance, notExpectedEngine->engineInstance);
+        EXPECT_EQ(expectedEngine->engineInstance, ioctlHelper->contextParamEngine[0].engine_instance);
+        EXPECT_EQ(expectedEngine->engineClass, ioctlHelper->contextParamEngine[0].engine_class);
+        EXPECT_EQ(1u, ioctlHelper->contextParamEngine[0].gt_id);
+    }
+    {
+        auto expectedEngine = drm.getEngineInfo()->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS1);
+        auto notExpectedEngine = drm.getEngineInfo()->getEngineInstance(0, aub_stream::EngineType::ENGINE_CCS1);
+        EXPECT_NE(expectedEngine->engineInstance, notExpectedEngine->engineInstance);
+        EXPECT_EQ(expectedEngine->engineInstance, ioctlHelper->contextParamEngine[1].engine_instance);
+        EXPECT_EQ(expectedEngine->engineClass, ioctlHelper->contextParamEngine[1].engine_class);
+        EXPECT_EQ(1u, ioctlHelper->contextParamEngine[1].gt_id);
+    }
 }
 
 TEST(IoctlHelperXeTest, whenCallingGetResetStatsThenSuccessIsReturned) {
