@@ -219,7 +219,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
     CmdBufferContainer cmdBufferAllocations;
     ResidencyContainer residencyContainer;
     std::vector<GraphicsAllocation *> deallocationContainer;
-    std::vector<GraphicsAllocation *> storedHeapsContainer;
     HeapContainer sshAllocations;
 
     HeapReserveData dynamicStateHeapReserveData;
