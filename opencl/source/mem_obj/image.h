@@ -59,7 +59,7 @@ class Image : public MemObj {
     const static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
     static const cl_ulong objectMagic = MemObj::objectMagic | 0x01;
 
-    ~Image() override = default;
+    ~Image() override;
 
     static Image *create(Context *context,
                          const MemoryProperties &memoryProperties,

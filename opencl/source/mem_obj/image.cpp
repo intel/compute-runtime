@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/mem_obj/image.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
@@ -15,6 +16,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -22,6 +24,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -91,6 +94,30 @@ Image::Image(Context *context,
         setSurfaceOffsets(surfaceOffsets->offset, surfaceOffsets->xOffset, surfaceOffsets->yOffset, surfaceOffsets->yOffsetForUVplane);
     else
         setSurfaceOffsets(0, 0, 0, 0);
+}
+
+Image::~Image() {
+
+    auto &multiGa = getMultiGraphicsAllocation();
+
+    for (const auto &ga : multiGa.getGraphicsAllocations()) {
+        if (ga == nullptr || getMemoryManager() == nullptr || isObjectRedescribed == true) {
+            continue;
+        }
+
+        auto deviceIndex = ga->getRootDeviceIndex();
+
+        for (auto &engine : getMemoryManager()->getRegisteredEngines(deviceIndex)) {
+            if (NEO::EngineHelpers::isComputeEngine(engine.getEngineType()) && engine.commandStreamReceiver->isDirectSubmissionEnabled()) {
+                auto contextId = engine.osContext->getContextId();
+                if (ga->isUsedByOsContext(contextId)) {
+
+                    auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                    engine.commandStreamReceiver->sendRenderStateCacheFlush();
+                }
+            }
+        }
+    }
 }
 
 void Image::transferData(void *dest, size_t destRowPitch, size_t destSlicePitch,
