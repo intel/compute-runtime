@@ -576,13 +576,12 @@ uint32_t IoctlHelperPrelim20::getEuStallFdParameter() {
 }
 
 bool IoctlHelperPrelim20::perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) {
-    NEO::PrelimI915::drm_i915_perf_open_param param = {
-        .flags = I915_PERF_FLAG_FD_CLOEXEC |
-                 euStallFdParameter |
-                 I915_PERF_FLAG_FD_NONBLOCK,
-        .num_properties = sizeof(properties) / 16,
-        .properties_ptr = reinterpret_cast<uintptr_t>(properties.data()),
-    };
+    NEO::PrelimI915::drm_i915_perf_open_param param = {};
+    param.flags = I915_PERF_FLAG_FD_CLOEXEC |
+                  euStallFdParameter |
+                  I915_PERF_FLAG_FD_NONBLOCK;
+    param.num_properties = sizeof(properties) / 16;
+    param.properties_ptr = reinterpret_cast<uintptr_t>(properties.data());
     *stream = ioctl(DrmIoctl::perfOpen, &param);
     if (*stream < 0) {
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (*stream < 0), stderr,
