@@ -1215,11 +1215,6 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
             engine.push_back(*currentEngine);
         }
     }
-    if (engine.size() > 9) {
-        xeLog("Too much instances...\n", "");
-        UNRECOVERABLE_IF(true);
-        return 0;
-    }
     create.instances = castToUint64(engine.data());
     create.num_placements = engine.size();
 
