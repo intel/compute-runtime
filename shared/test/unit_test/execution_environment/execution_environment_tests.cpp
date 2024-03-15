@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -314,7 +314,8 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInf
                                                   sizeof(NEO::DebuggingMode) +
                                                   (is64bit ? 18 : 14) +
                                                   sizeof(std::mutex) +
-                                                  sizeof(std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>>),
+                                                  sizeof(std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>>) +
+                                                  sizeof(std::vector<std::tuple<std::string, uint32_t>>),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {

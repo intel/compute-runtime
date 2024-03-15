@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,12 @@
 namespace NEO {
 
 void ExecutionEnvironment::adjustRootDeviceEnvironments() {
+}
+
+void ExecutionEnvironment::configureCcsMode() {
+}
+
+void ExecutionEnvironment::restoreCcsMode() {
 }
 
 } // namespace NEO

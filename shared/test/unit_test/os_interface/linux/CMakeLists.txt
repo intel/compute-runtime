@@ -7,6 +7,7 @@
 set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccs_mode_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests_linux.h

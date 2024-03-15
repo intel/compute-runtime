@@ -72,6 +72,7 @@ extern int flockCalled;
 extern int fsyncCalled;
 extern int fsyncArgPassed;
 extern int fsyncRetVal;
+extern uint32_t writeFuncCalled;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <mutex>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -37,6 +38,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void setDeviceHierarchy(const GfxCoreHelper &gfxCoreHelper);
     void adjustRootDeviceEnvironments();
     void prepareForCleanup() const;
+    void configureCcsMode();
     void setDebuggingMode(DebuggingMode debuggingMode) {
         debuggingEnabledMode = debuggingMode;
     }
@@ -77,6 +79,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void parseCcsCountLimitations();
     void adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const;
     void configureNeoEnvironment();
+    void restoreCcsMode();
     bool metricsEnabled = false;
     bool fp64EmulationEnabled = false;
     bool subDevicesAsDevices = false;
@@ -85,5 +88,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
     std::mutex initializeDirectSubmissionControllerMutex;
+    std::vector<std::tuple<std::string, uint32_t>> deviceCcsModeVec;
 };
 } // namespace NEO

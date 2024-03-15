@@ -51,6 +51,7 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     }
     rootDeviceEnvironments.clear();
     mapOfSubDeviceIndices.clear();
+    this->restoreCcsMode();
 }
 
 bool ExecutionEnvironment::initializeMemoryManager() {

@@ -48,6 +48,7 @@ int fstatFuncRetVal = 0;
 int flockRetVal = 0;
 uint32_t preadFuncCalled = 0u;
 uint32_t pwriteFuncCalled = 0u;
+uint32_t writeFuncCalled = 0u;
 bool isInvalidAILTest = false;
 const char *drmVersion = "i915";
 int passedFileDescriptorFlagsToSet = 0;
@@ -347,6 +348,7 @@ ssize_t write(int fd, void *buf, size_t count) {
     if (sysCallsWrite != nullptr) {
         return sysCallsWrite(fd, buf, count);
     }
+    writeFuncCalled++;
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,8 +161,9 @@ static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,
 }
 
 bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
-    using HwDeviceIds = std::vector<std::unique_ptr<HwDeviceId>>;
+    executionEnvironment.configureCcsMode();
 
+    using HwDeviceIds = std::vector<std::unique_ptr<HwDeviceId>>;
     HwDeviceIds hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     if (hwDeviceIds.empty()) {
         return false;
