@@ -533,14 +533,11 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     drm.testMode(0);
     {
         GemUserPtr test = {};
-        test.userPtr = 2;
+        test.handle = 1;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemUserptr, &test);
         EXPECT_EQ(0, ret);
-
-        EXPECT_EQ(test.userPtr, mockXeIoctlHelper->bindInfo[0].userptr);
-        EXPECT_EQ(0u, mockXeIoctlHelper->bindInfo[0].handle);
         GemClose cl = {};
-        cl.userptr = test.userPtr;
+        cl.handle = test.handle;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemClose, &cl);
         EXPECT_EQ(0, ret);
     }
@@ -645,7 +642,6 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     }
     {
         GemClose test = {};
-        test.handle = 1;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemClose, &test);
         EXPECT_EQ(0, ret);
     }
@@ -1769,121 +1765,4 @@ TEST(IoctlHelperXeTest, whenCallingGetStatusAndFlagsForResetStatsThenZeroIsRetur
     EXPECT_EQ(0u, ioctlHelper->getStatusForResetStats(false));
 
     EXPECT_FALSE(ioctlHelper->validPageFault(0u));
-}
-
-TEST(IoctlHelperXeTest, givenMultipleBindInfosWhenGemCloseIsCalledThenProperHandleIsTaken) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    auto ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
-
-    drm.gemCloseCalled = 0;
-
-    BindInfo bindInfo{};
-
-    bindInfo.handle = 1;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-    bindInfo.handle = 2;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-
-    bindInfo = {};
-    bindInfo.userptr = 1;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-    bindInfo.userptr = 2;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-
-    GemClose gemClose{};
-    gemClose.handle = 0;
-    gemClose.userptr = 2;
-    EXPECT_EQ(0, ioctlHelper->ioctl(DrmIoctl::gemClose, &gemClose));
-    EXPECT_EQ(0, drm.gemCloseCalled);
-
-    gemClose.handle = 2;
-    gemClose.userptr = 0;
-    EXPECT_EQ(0, ioctlHelper->ioctl(DrmIoctl::gemClose, &gemClose));
-    EXPECT_EQ(1, drm.gemCloseCalled);
-    EXPECT_EQ(2u, drm.passedGemClose.handle);
-
-    gemClose.handle = 0;
-    gemClose.userptr = 1;
-    EXPECT_EQ(0, ioctlHelper->ioctl(DrmIoctl::gemClose, &gemClose));
-    EXPECT_EQ(1, drm.gemCloseCalled);
-
-    gemClose.handle = 1;
-    gemClose.userptr = 0;
-    EXPECT_EQ(0, ioctlHelper->ioctl(DrmIoctl::gemClose, &gemClose));
-    EXPECT_EQ(2, drm.gemCloseCalled);
-    EXPECT_EQ(1u, drm.passedGemClose.handle);
-
-    EXPECT_EQ(0ul, ioctlHelper->bindInfo.size());
-}
-
-TEST(IoctlHelperXeTest, givenMultipleBindInfosWhenVmBindIsCalledThenProperHandleIsTaken) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    auto ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
-
-    drm.vmBindInputs.clear();
-
-    BindInfo bindInfo{};
-
-    bindInfo.handle = 1;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-    bindInfo.handle = 2;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-
-    bindInfo = {};
-    bindInfo.userptr = 1;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-    bindInfo.userptr = 2;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-
-    MockIoctlHelperXe::UserFenceExtension userFence{};
-    userFence.tag = userFence.tagValue;
-    VmBindParams vmBindParams{};
-    vmBindParams.userFence = castToUint64(&userFence);
-    vmBindParams.handle = 0;
-    vmBindParams.userptr = 2;
-    EXPECT_EQ(0, ioctlHelper->vmBind(vmBindParams));
-
-    EXPECT_EQ(1ul, drm.vmBindInputs.size());
-    EXPECT_EQ(0u, drm.vmBindInputs[0].bind.obj);
-    EXPECT_EQ(2u, drm.vmBindInputs[0].bind.obj_offset);
-    drm.vmBindInputs.clear();
-
-    vmBindParams.handle = 2;
-    vmBindParams.userptr = 0;
-    EXPECT_EQ(0, ioctlHelper->vmBind(vmBindParams));
-
-    EXPECT_EQ(1ul, drm.vmBindInputs.size());
-    EXPECT_EQ(2u, drm.vmBindInputs[0].bind.obj);
-    EXPECT_EQ(0u, drm.vmBindInputs[0].bind.obj_offset);
-    drm.vmBindInputs.clear();
-
-    vmBindParams.handle = 0;
-    vmBindParams.userptr = 1;
-    EXPECT_EQ(0, ioctlHelper->vmBind(vmBindParams));
-
-    EXPECT_EQ(1ul, drm.vmBindInputs.size());
-    EXPECT_EQ(0u, drm.vmBindInputs[0].bind.obj);
-    EXPECT_EQ(1u, drm.vmBindInputs[0].bind.obj_offset);
-    drm.vmBindInputs.clear();
-
-    vmBindParams.handle = 1;
-    vmBindParams.userptr = 0;
-    EXPECT_EQ(0, ioctlHelper->vmBind(vmBindParams));
-
-    EXPECT_EQ(1ul, drm.vmBindInputs.size());
-    EXPECT_EQ(1u, drm.vmBindInputs[0].bind.obj);
-    EXPECT_EQ(0u, drm.vmBindInputs[0].bind.obj_offset);
-    drm.vmBindInputs.clear();
-
-    vmBindParams.handle = 0;
-    vmBindParams.userptr = 0;
-    EXPECT_NE(0, ioctlHelper->vmBind(vmBindParams));
-
-    EXPECT_EQ(0ul, drm.vmBindInputs.size());
-
-    ioctlHelper->bindInfo.clear();
 }

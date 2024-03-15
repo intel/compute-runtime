@@ -33,7 +33,6 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::getFdFromVmExport;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::setDefaultEngine;
-    using IoctlHelperXe::UserFenceExtension;
     using IoctlHelperXe::xeFindMatchingEngine;
     using IoctlHelperXe::xeGetBindFlagsName;
     using IoctlHelperXe::xeGetBindOperationName;
@@ -135,15 +134,10 @@ class DrmMockXe : public DrmMockCustom {
             v->vm_id = testValueVmId;
             ret = 0;
         } break;
-        case DrmIoctl::gemUserptr: {
+        case DrmIoctl::gemUserptr:
+        case DrmIoctl::gemClose:
             ret = 0;
-        } break;
-        case DrmIoctl::gemClose: {
-            auto gemClose = reinterpret_cast<GemClose *>(arg);
-            passedGemClose = *gemClose;
-            gemCloseCalled++;
-            ret = 0;
-        } break;
+            break;
         case DrmIoctl::gemVmDestroy: {
             struct drm_xe_vm_destroy *v = static_cast<struct drm_xe_vm_destroy *>(arg);
             if (v->vm_id == testValueVmId)
@@ -271,8 +265,6 @@ class DrmMockXe : public DrmMockCustom {
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
     int gemVmBindReturn = 0;
-    GemClose passedGemClose{};
-    int gemCloseCalled = 0;
 
     static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
     uint64_t queryEngines[45]{}; // 1 qword for num engines and 4 qwords per engine

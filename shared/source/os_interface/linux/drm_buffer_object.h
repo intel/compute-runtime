@@ -214,9 +214,6 @@ class BufferObject {
     BOType peekBOType() const { return boType; }
     void setBOType(BOType newBoType) { this->boType = newBoType; }
 
-    void setUserptr(uint64_t ptr) { this->userptr = ptr; };
-    uint64_t getUserptr() const { return this->userptr; };
-
     static constexpr int gpuHangDetected{-7171};
 
     uint32_t getOsContextId(OsContext *osContext);
@@ -248,7 +245,6 @@ class BufferObject {
     uint64_t size;
     uint64_t unmapSize = 0;
     uint64_t patIndex = CommonConstants::unsupportedPatIndex;
-    uint64_t userptr = 0u;
     CacheRegion cacheRegion = CacheRegion::defaultRegion;
     CachePolicy cachePolicy = CachePolicy::writeBack;
     StackVec<uint32_t, 2> bindExtHandles;
