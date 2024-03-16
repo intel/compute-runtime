@@ -306,7 +306,7 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesWhenCreateDrmVirtualMemo
     EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
 }
 
-TEST(DrmBufferObjectTestPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsSet) {
+TEST(DrmBufferObjectTestPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsNotSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
 
@@ -317,7 +317,7 @@ TEST(DrmBufferObjectTestPrelim, givenDebuggingEnabledWithoutDisableScratchPagesF
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
 
-    EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
+    EXPECT_FALSE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
 }
 
 TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesAndDebuggingEnabledWhenCreateDrmVirtualMemoryThenEnvVariableIsPriority) {
