@@ -383,6 +383,52 @@ HWTEST_F(BcsTests, givenDebugFlagSetWhenDispatchingThenFlushTlb) {
     }
 }
 
+HWTEST_F(BcsTests, givenDebugFlagSetToForceTlbAfterCopyWhenDispatchingThenFlushTlb) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceTlbFlushWithTaskCountAfterCopy.set(1);
+
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+
+    auto hostAllocationPtr = allocateAlignedMemory(1, MemoryConstants::cacheLineSize);
+    void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
+
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
+                                                                          csr, graphicsAllocation, nullptr, hostPtr,
+                                                                          graphicsAllocation->getGpuAddress(), 0,
+                                                                          0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    if (!csr.globalFenceAllocation) {
+        csr.globalFenceAllocation = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, AllocationType::globalFence, 1});
+    }
+
+    {
+        auto offset = csr.commandStream.getUsed();
+        flushBcsTask(&csr, blitProperties, true, *pDevice);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
+
+        bool tlbFlushFound = false;
+
+        for (auto cmdIterator = hwParser.cmdList.begin(); cmdIterator != hwParser.cmdList.end(); cmdIterator++) {
+            auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
+            if (miFlushCmd && miFlushCmd->getTlbInvalidate()) {
+                tlbFlushFound = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(tlbFlushFound);
+    }
+}
+
 HWTEST_F(BcsTests, givenDebugFlagSetWhenAskingForStreamSizeThenAddMiFlushDw) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
@@ -568,6 +614,109 @@ HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferThenCommandBufferIsConstru
     ASSERT_NE(cmdList.end(), cmdIterator);
     cmdIterator = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(++cmdIterator, cmdList.end());
     ASSERT_NE(cmdList.end(), cmdIterator);
+}
+
+HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferAndForceTlbFlushAfterCopyThenCommandBufferIsConstructedProperlyAndTlbFlushDetected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceTlbFlushWithTaskCountAfterCopy.set(1);
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, pDevice->getRootDeviceIndex(), 0,
+                                                                     EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, pDevice->getDeviceBitfield())));
+    auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    bcsCsr->setupContext(*bcsOsContext);
+    bcsCsr->initializeTagAllocation();
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+
+    constexpr size_t hostAllocationSize = MemoryConstants::pageSize;
+    auto hostAllocationPtr = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
+    void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
+
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
+                                                                          *bcsCsr, graphicsAllocation, nullptr, hostPtr,
+                                                                          graphicsAllocation->getGpuAddress(), 0,
+                                                                          0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    MockTimestampPacketContainer timestamp(*bcsCsr->getTimestampPacketAllocator(), 1u);
+    blitProperties.outputTimestampPacket = timestamp.getNode(0);
+
+    BlitPropertiesContainer blitPropertiesContainer;
+    blitPropertiesContainer.push_back(blitProperties);
+
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, true, *pDevice);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
+    auto &cmdList = hwParser.cmdList;
+
+    auto cmdIterator = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+    cmdIterator = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(++cmdIterator, cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+    cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(++cmdIterator, cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+
+    bool tlbFlushFound = false;
+    cmdIterator++;
+    for (; cmdIterator != hwParser.cmdList.end(); cmdIterator++) {
+        auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
+        if (miFlushCmd && miFlushCmd->getTlbInvalidate()) {
+            tlbFlushFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(tlbFlushFound);
+}
+
+HWTEST_F(BcsTests, givenProfilingDisabledWhenBlitBufferAndForceTlbFlushAfterCopyThenCommandBufferIsConstructedProperlyAndTlbFlushDetected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceTlbFlushWithTaskCountAfterCopy.set(1);
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, pDevice->getRootDeviceIndex(), 0,
+                                                                     EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, pDevice->getDeviceBitfield())));
+    auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    bcsCsr->setupContext(*bcsOsContext);
+    bcsCsr->initializeTagAllocation();
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+
+    constexpr size_t hostAllocationSize = MemoryConstants::pageSize;
+    auto hostAllocationPtr = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
+    void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
+
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
+                                                                          *bcsCsr, graphicsAllocation, nullptr, hostPtr,
+                                                                          graphicsAllocation->getGpuAddress(), 0,
+                                                                          0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    BlitPropertiesContainer blitPropertiesContainer;
+    blitPropertiesContainer.push_back(blitProperties);
+
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
+    auto &cmdList = hwParser.cmdList;
+
+    auto cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+
+    bool tlbFlushFound = false;
+    cmdIterator++;
+    for (; cmdIterator != hwParser.cmdList.end(); cmdIterator++) {
+        auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
+        if (miFlushCmd && miFlushCmd->getTlbInvalidate()) {
+            tlbFlushFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(tlbFlushFound);
 }
 
 HWTEST_F(BcsTests, givenNotInitializedOsContextWhenBlitBufferIsCalledThenInitializeContext) {

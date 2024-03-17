@@ -220,6 +220,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
         NEO::MiFlushArgs args{waArgs};
         args.commandWithPostSync = true;
         args.notifyEnable = isUsedNotifyEnableForPostSync();
+        args.tlbFlush |= (debugManager.flags.ForceTlbFlushWithTaskCountAfterCopy.get() == 1);
 
         NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(commandStreamTask, postSyncAddress, postSyncData, args);
     }
@@ -1098,6 +1099,9 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         args.commandWithPostSync = true;
         args.waArgs.isWaRequired = true;
         args.notifyEnable = isUsedNotifyEnableForPostSync();
+
+        args.tlbFlush |= (debugManager.flags.ForceTlbFlushWithTaskCountAfterCopy.get() == 1);
+
         EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, tagAllocation->getGpuAddress(), newTaskCount, args);
         auto dummyAllocation = rootDeviceEnvironment->getDummyAllocation();
         if (dummyAllocation) {

@@ -3121,7 +3121,7 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenFiveRootDevicesWhengetMultiRootDevice
     };
     EXPECT_EQ(reinterpret_cast<MockTagAllocatorBase *>(allocator.get())->maxRootDeviceIndex, 3u);
 }
-HWTEST_F(CommandStreamReceiverHwTest, givenMultiRootDeviceSyncNodeWhenFlushBcsTAskThenMiFlushAdded) {
+HWTEST_F(CommandStreamReceiverHwTest, givenMultiRootDeviceSyncNodeWhenFlushBcsTaskThenMiFlushAdded) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
