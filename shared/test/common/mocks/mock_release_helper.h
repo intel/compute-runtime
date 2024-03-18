@@ -37,6 +37,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getThreadsPerEUConfigs, const ThreadsPerEUConfigs, {}, ());
     ADDMETHOD_CONST_NOBASE(getDeviceConfigString, const std::string, {}, (uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount));
     ADDMETHOD_CONST_NOBASE(isRayTracingSupported, bool, true, ());
+    ADDMETHOD_CONST_NOBASE(getL3BankCount, uint32_t, 0u, ());
     ADDMETHOD_CONST_NOBASE(getL3CacheSizeInKb, uint64_t, {}, ());
 };
 } // namespace NEO
