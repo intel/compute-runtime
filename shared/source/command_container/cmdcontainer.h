@@ -202,6 +202,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
     }
     void endAlignedPrimaryBuffer();
 
+    void *findCpuBaseForCmdBufferAddress(void *cmdBufferAddress);
+
   protected:
     size_t getAlignedCmdBufferSize() const;
     size_t getMaxUsableSpace() const {

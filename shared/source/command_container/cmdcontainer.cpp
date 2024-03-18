@@ -591,4 +591,22 @@ size_t CommandContainer::getHeapSize(HeapType heapType) {
     return HeapSize::getDefaultHeapSize(defaultHeapSize);
 }
 
+void *CommandContainer::findCpuBaseForCmdBufferAddress(void *cmdBufferAddress) {
+    uintptr_t cmdBufferAddressValue = reinterpret_cast<uintptr_t>(cmdBufferAddress);
+    uintptr_t cpuBaseValue = reinterpret_cast<uintptr_t>(commandStream->getCpuBase());
+    if ((cpuBaseValue <= cmdBufferAddressValue) &&
+        ((cpuBaseValue + commandStream->getMaxAvailableSpace()) > cmdBufferAddressValue)) {
+        return reinterpret_cast<void *>(cpuBaseValue);
+    }
+    // last cmd buffer allocation is assisgned to commandStream, no need to check it
+    for (size_t i = 0; i < cmdBufferAllocations.size() - 1; i++) {
+        cpuBaseValue = reinterpret_cast<uintptr_t>(cmdBufferAllocations[i]->getUnderlyingBuffer());
+        if ((cpuBaseValue <= cmdBufferAddressValue) &&
+            ((cpuBaseValue + getMaxUsableSpace()) > cmdBufferAddressValue)) {
+            return reinterpret_cast<void *>(cpuBaseValue);
+        }
+    }
+    return nullptr;
+}
+
 } // namespace NEO

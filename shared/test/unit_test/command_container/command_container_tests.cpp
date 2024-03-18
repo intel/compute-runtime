@@ -33,6 +33,7 @@ using CommandContainerTest = Test<CommandContainerFixture>;
 class MyMockCommandContainer : public CommandContainer {
   public:
     using CommandContainer::allocationIndirectHeaps;
+    using CommandContainer::cmdBufferAllocations;
     using CommandContainer::defaultSshSize;
     using CommandContainer::dirtyHeaps;
     using CommandContainer::getAlignedCmdBufferSize;
@@ -1985,4 +1986,46 @@ TEST_F(CommandContainerTest, givenHeaplessCmdContainerWhenResetContainerThenNoHe
 
     cmdContainer.reset();
     EXPECT_EQ(0u, deallocationList.size());
+}
+
+TEST_F(CommandContainerTest, givenInitializedContainerWhenSearchedAddressIsWithinCommandStreamThenReturnCommandStreamCpuBase) {
+    MyMockCommandContainer cmdContainer;
+
+    auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, false, false);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, status);
+
+    void *cmdBuffer = ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0x100);
+    void *cpuBase = cmdContainer.findCpuBaseForCmdBufferAddress(cmdBuffer);
+    EXPECT_EQ(cmdContainer.getCommandStream()->getCpuBase(), cpuBase);
+}
+
+TEST_F(CommandContainerTest, givenInitializedContainerWithTwoCommandBuffersWhenSearchedAddressIsWithinOldCommandBufferThenReturnOldCommandBufferCpuBase) {
+    MyMockCommandContainer cmdContainer;
+
+    auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, false, false);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, status);
+
+    void *expectedCpuBase = cmdContainer.getCommandStream()->getCpuBase();
+    void *cmdBuffer = ptrOffset(expectedCpuBase, 0x200);
+    cmdContainer.allocateNextCommandBuffer();
+    EXPECT_NE(expectedCpuBase, cmdContainer.getCommandStream()->getCpuBase());
+
+    void *cpuBase = cmdContainer.findCpuBaseForCmdBufferAddress(cmdBuffer);
+    EXPECT_EQ(expectedCpuBase, cpuBase);
+}
+
+TEST_F(CommandContainerTest, givenInitializedContainerWhenSearchedAddressIsOutsideCommandStreamThenReturnNullptr) {
+    MyMockCommandContainer cmdContainer;
+
+    auto status = cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, false, false);
+    EXPECT_EQ(CommandContainer::ErrorCode::success, status);
+    cmdContainer.allocateNextCommandBuffer();
+
+    void *cmdBuffer = reinterpret_cast<void *>(0x1);
+    void *cpuBase = cmdContainer.findCpuBaseForCmdBufferAddress(cmdBuffer);
+    EXPECT_EQ(nullptr, cpuBase);
+
+    cmdBuffer = reinterpret_cast<void *>(std::numeric_limits<uintptr_t>::max());
+    cpuBase = cmdContainer.findCpuBaseForCmdBufferAddress(cmdBuffer);
+    EXPECT_EQ(nullptr, cpuBase);
 }
