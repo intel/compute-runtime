@@ -5,7 +5,7 @@
 #
 
 if(UNIX)
-  if(NEO_ENABLE_XE_DRM_DETECTION)
+  if(NEO_ENABLE_XE_EU_DEBUG_SUPPORT)
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
                    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt

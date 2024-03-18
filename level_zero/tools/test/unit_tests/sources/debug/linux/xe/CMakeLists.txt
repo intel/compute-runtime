@@ -5,7 +5,7 @@
 #
 
 if(UNIX)
-  if(NEO_ENABLE_XE_DRM_DETECTION)
+  if(NEO_ENABLE_XE_EU_DEBUG_SUPPORT)
     target_sources(${TARGET_NAME} PRIVATE
                    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                    ${CMAKE_CURRENT_SOURCE_DIR}/test_debug_api_linux_xe.cpp
