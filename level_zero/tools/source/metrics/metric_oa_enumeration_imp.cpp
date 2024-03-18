@@ -123,9 +123,9 @@ ze_result_t MetricEnumeration::loadMetricsDiscovery() {
         }
 
         if (openAdapterGroup == nullptr) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "cannot load %s exported functions\n", name);
+            METRICS_LOG_ERR("cannot load %s exported functions", name);
         } else {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "loaded %s exported functions\n", name);
+            METRICS_LOG_DBG("loaded %s exported functions", name);
             break;
         }
     }
@@ -150,7 +150,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
     // Open adapter group.
     openAdapterGroup((MetricsDiscovery::IAdapterGroupLatest **)&pAdapterGroup);
     if (pAdapterGroup == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics adapter groups %s\n", " ");
+        METRICS_LOG_ERR("unable to open metrics adapter groups %s", " ");
         cleanupMetricsDiscovery();
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -158,7 +158,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
     // Obtain metrics adapter that matches adapter used by l0.
     pAdapter = getMetricsAdapter();
     if (pAdapter == nullptr) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics adapter %s\n", " ");
+        METRICS_LOG_ERR("unable to open metrics adapter %s", " ");
         cleanupMetricsDiscovery();
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -176,7 +176,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
             openMetricsSubDeviceFromAdapter(pAdapter, subDeviceImp->getPhysicalSubDeviceId(), &metricsDevice);
             subDeviceMetricEnumeraion.pAdapter = pAdapter;
             if (metricsDevice == nullptr) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", i);
+                METRICS_LOG_ERR("unable to open metrics device %u", i);
                 cleanupMetricsDiscovery();
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
@@ -186,7 +186,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
 
         openMetricsDeviceFromAdapter(pAdapter, &pMetricsDevice);
         if (pMetricsDevice == nullptr) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", 0);
+            METRICS_LOG_ERR("unable to open metrics device %u", 0);
             cleanupMetricsDiscovery();
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -203,7 +203,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
         }
 
         if (pMetricsDevice == nullptr) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", subDeviceIndex);
+            METRICS_LOG_ERR("unable to open metrics device %u", subDeviceIndex);
             cleanupMetricsDiscovery();
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
@@ -712,9 +712,8 @@ ze_result_t OaMetricGroupImp::calculateMetricValues(const zet_metric_group_calcu
 
     const MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const MetricGroupCalculateHeader *>(pRawData);
     if (pRawHeader->magic == MetricGroupCalculateHeader::magicValue) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s",
-                              "INFO: The call is not supported for multiple devices\n"
-                              "INFO: Please use zetMetricGroupCalculateMultipleMetricValuesExp instead\n");
+        METRICS_LOG_INFO("The call is not supported for multiple devices");
+        METRICS_LOG_INFO("Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

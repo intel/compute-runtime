@@ -23,6 +23,21 @@ struct _zet_metric_query_handle_t {};
 struct _zet_metric_programmable_exp_handle_t {};
 
 namespace L0 {
+
+#define METRICS_LOG(out, ...)                              \
+    if (NEO::debugManager.flags.PrintL0MetricLogs.get()) { \
+        NEO::printDebugString(true, out, __VA_ARGS__);     \
+    }
+
+#define METRICS_LOG_INFO(...) \
+    METRICS_LOG(stdout, "\nL0Metrics[I]: " __VA_ARGS__)
+
+#define METRICS_LOG_DBG(str, ...) \
+    METRICS_LOG(stdout, "\nL0Metrics[D][@fn:%s,ln:%d]: " str, __FUNCTION__, __LINE__, __VA_ARGS__)
+
+#define METRICS_LOG_ERR(str, ...) \
+    METRICS_LOG(stderr, "\nL0Metrics[E][@fn:%s,ln:%d]: " str, __FUNCTION__, __LINE__, __VA_ARGS__)
+
 struct CommandList;
 struct MetricStreamer;
 

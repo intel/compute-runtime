@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,10 +134,9 @@ ze_result_t MetricOaExporter01::assignTypedValue(zet_intel_metric_df_gpu_typed_v
         break;
 
     default:
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Error: Unknown Typed value 0x%x at %s():%d returning 0x%x\n",
-                              static_cast<uint32_t>(mdTypedValue.ValueType),
-                              __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
+        METRICS_LOG_ERR("Unknown Typed value 0x%x returning 0x%x",
+                        static_cast<uint32_t>(mdTypedValue.ValueType),
+                        ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
     assignUnaligned(&typedValue->valueType, &type);
@@ -162,10 +161,9 @@ ze_result_t MetricOaExporter01::assignAdapterId(zet_intel_metric_df_gpu_adapter_
         break;
 
     default:
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Error: Unknown Adapter Type 0x%x at %s():%d returning 0x%x\n",
-                              static_cast<uint32_t>(mAdapterId->Type),
-                              __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
+        METRICS_LOG_ERR("Unknown Adapter Type 0x%x, returning 0x%x",
+                        static_cast<uint32_t>(mAdapterId->Type),
+                        ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
     assignUnaligned(&adapterId->type, &type);
@@ -206,10 +204,9 @@ ze_result_t MetricOaExporter01::getEquationOperation(zet_intel_metric_df_gpu_equ
     };
 
     if (equationOperationMap.find(mdEquationOperation) == equationOperationMap.end()) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Error: Unknown Equation Operation 0x%x at %s():%d returning 0x%x\n",
-                              static_cast<uint32_t>(mdEquationOperation),
-                              __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
+        METRICS_LOG_ERR("Unknown Equation Operation 0x%x, returning 0x%x",
+                        static_cast<uint32_t>(mdEquationOperation),
+                        ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     }
 
@@ -324,10 +321,9 @@ ze_result_t MetricOaExporter01::assignEquation(zet_intel_metric_df_gpu_equation_
             break;
 
         default:
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "Error: Unknown Equation Element Type 0x%x at %s():%d returning 0x%x\n",
-                                  static_cast<uint32_t>(mdElement->Type),
-                                  __FUNCTION__, __LINE__, ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
+            METRICS_LOG_ERR("Unknown Equation Element Type 0x%x returning 0x%x",
+                            static_cast<uint32_t>(mdElement->Type),
+                            ZE_RESULT_ERROR_UNSUPPORTED_VERSION);
             return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
         }
         if (status != ZE_RESULT_SUCCESS) {
