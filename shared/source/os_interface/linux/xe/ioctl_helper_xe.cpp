@@ -22,6 +22,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/memory_info.h"
@@ -1435,4 +1436,37 @@ void IoctlHelperXe::insertEngineToContextParams(ContextParamEngines<> &contextPa
         contextParamEngines.numEnginesInContext = std::max(contextParamEngines.numEnginesInContext, engineId + 1);
     }
 }
+
+void IoctlHelperXe::registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) {
+    DrmResourceClass resourceClass = DrmResourceClass::maxSize;
+
+    switch (drmAllocation->getAllocationType()) {
+    case AllocationType::debugContextSaveArea:
+        resourceClass = DrmResourceClass::contextSaveArea;
+        break;
+    case AllocationType::debugSbaTrackingBuffer:
+        resourceClass = DrmResourceClass::sbaTrackingBuffer;
+        break;
+    case AllocationType::debugModuleArea:
+        resourceClass = DrmResourceClass::moduleHeapDebugArea;
+        break;
+    default:
+        return;
+        break;
+    }
+
+    uint64_t gpuAddress = drmAllocation->getGpuAddress();
+    auto handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
+    drmAllocation->addRegisteredBoBindHandle(handle);
+    auto &bos = drmAllocation->getBOs();
+    for (auto bo : bos) {
+        if (!bo) {
+            continue;
+        }
+        bo->addBindExtHandle(handle);
+        bo->markForCapture();
+        bo->requireImmediateBinding(true);
+    }
+}
+
 } // namespace NEO

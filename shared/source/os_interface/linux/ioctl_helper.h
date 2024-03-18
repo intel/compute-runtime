@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/topology_map.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/utilities/stackvec.h"
@@ -192,6 +193,7 @@ class IoctlHelper {
 
     virtual bool validPageFault(uint16_t flags) { return false; }
     virtual uint32_t getStatusForResetStats(bool banned) { return 0u; }
+    virtual void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) { return; }
 
     virtual void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) = 0;
 
@@ -388,6 +390,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
 
     bool validPageFault(uint16_t flags) override;
     uint32_t getStatusForResetStats(bool banned) override;
+    void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
 
   protected:
     bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);

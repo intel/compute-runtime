@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -15,12 +16,15 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/linux/cache_info.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -1171,6 +1175,74 @@ uint32_t IoctlHelperPrelim20::getStatusForResetStats(bool banned) {
         retVal |= I915_RESET_STATS_BANNED;
     }
     return retVal;
+}
+
+void IoctlHelperPrelim20::registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) {
+    DrmResourceClass resourceClass = DrmResourceClass::maxSize;
+
+    switch (drmAllocation->getAllocationType()) {
+    case AllocationType::debugContextSaveArea:
+        resourceClass = DrmResourceClass::contextSaveArea;
+        break;
+    case AllocationType::debugSbaTrackingBuffer:
+        resourceClass = DrmResourceClass::sbaTrackingBuffer;
+        break;
+    case AllocationType::kernelIsa:
+        resourceClass = DrmResourceClass::isa;
+        break;
+    case AllocationType::debugModuleArea:
+        resourceClass = DrmResourceClass::moduleHeapDebugArea;
+        break;
+    default:
+        break;
+    }
+
+    if (resourceClass != DrmResourceClass::maxSize) {
+        auto handle = 0;
+        if (resourceClass == DrmResourceClass::isa) {
+            auto deviceBitfiled = static_cast<uint32_t>(drmAllocation->storageInfo.subDeviceBitfield.to_ulong());
+            handle = drm->registerResource(resourceClass, &deviceBitfiled, sizeof(deviceBitfiled));
+        } else {
+            uint64_t gpuAddress = drmAllocation->getGpuAddress();
+            handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
+        }
+
+        drmAllocation->addRegisteredBoBindHandle(handle);
+
+        auto &bos = drmAllocation->getBOs();
+        uint32_t boIndex = 0u;
+
+        for (auto bo : bos) {
+            if (bo) {
+                bo->addBindExtHandle(handle);
+                bo->markForCapture();
+                if (resourceClass == DrmResourceClass::isa && drmAllocation->storageInfo.tileInstanced == true) {
+                    auto cookieHandle = drm->registerIsaCookie(handle);
+                    bo->addBindExtHandle(cookieHandle);
+                    drmAllocation->addRegisteredBoBindHandle(cookieHandle);
+                }
+                auto storageInfo = drmAllocation->storageInfo;
+                if (resourceClass == DrmResourceClass::sbaTrackingBuffer && drmAllocation->getOsContext()) {
+                    auto deviceIndex = [=]() -> uint32_t {
+                        if (storageInfo.tileInstanced == true) {
+                            return boIndex;
+                        }
+                        auto deviceBitfield = storageInfo.subDeviceBitfield;
+                        return deviceBitfield.any() ? static_cast<uint32_t>(Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()))) : 0u;
+                    }();
+
+                    auto contextId = drmAllocation->getOsContext()->getOfflineDumpContextId(deviceIndex);
+                    auto externalHandle = drm->registerResource(resourceClass, &contextId, sizeof(uint64_t));
+
+                    bo->addBindExtHandle(externalHandle);
+                    drmAllocation->addRegisteredBoBindHandle(externalHandle);
+                }
+
+                bo->requireImmediateBinding(true);
+            }
+            boIndex++;
+        }
+    }
 }
 
 static_assert(sizeof(MemoryClassInstance) == sizeof(prelim_drm_i915_gem_memory_class_instance));

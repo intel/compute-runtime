@@ -16,6 +16,8 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/debug_mock_drm_xe.h"
+#include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -357,6 +359,33 @@ TEST(IoctlHelperXeTest, givenXeRegisterResourceThenCorrectIoctlCalled) {
     EXPECT_EQ(drm.metadataAddr, buffer);
     EXPECT_EQ(drm.metadataSize, bufferSize);
     EXPECT_EQ(drm.metadataType, static_cast<uint64_t>(DRM_XE_DEBUG_METADATA_PROGRAM_MODULE));
+
+    drm.metadataID = 0;
+    drm.metadataAddr = nullptr;
+    drm.metadataSize = 0;
+    id = xeIoctlHelper->registerResource(DrmResourceClass::contextSaveArea, buffer, bufferSize);
+    EXPECT_EQ(drm.metadataID, id);
+    EXPECT_EQ(drm.metadataAddr, buffer);
+    EXPECT_EQ(drm.metadataSize, bufferSize);
+    EXPECT_EQ(drm.metadataType, static_cast<uint64_t>(WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA));
+
+    drm.metadataID = 0;
+    drm.metadataAddr = nullptr;
+    drm.metadataSize = 0;
+    id = xeIoctlHelper->registerResource(DrmResourceClass::sbaTrackingBuffer, buffer, bufferSize);
+    EXPECT_EQ(drm.metadataID, id);
+    EXPECT_EQ(drm.metadataAddr, buffer);
+    EXPECT_EQ(drm.metadataSize, bufferSize);
+    EXPECT_EQ(drm.metadataType, static_cast<uint64_t>(WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SBA_AREA));
+
+    drm.metadataID = 0;
+    drm.metadataAddr = nullptr;
+    drm.metadataSize = 0;
+    id = xeIoctlHelper->registerResource(DrmResourceClass::moduleHeapDebugArea, buffer, bufferSize);
+    EXPECT_EQ(drm.metadataID, id);
+    EXPECT_EQ(drm.metadataAddr, buffer);
+    EXPECT_EQ(drm.metadataSize, bufferSize);
+    EXPECT_EQ(drm.metadataType, static_cast<uint64_t>(WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA));
 }
 
 TEST(IoctlHelperXeTest, givenXeunregisterResourceThenCorrectIoctlCalled) {
@@ -379,10 +408,80 @@ TEST(IoctlHelperXeTest, whenGettingVmBindExtFromHandlesThenProperStructsAreRetur
     auto vmBindExt = reinterpret_cast<drm_xe_vm_bind_op_ext_attach_debug *>(retVal.get());
 
     for (size_t i = 0; i < bindExtHandles.size(); i++) {
+
         EXPECT_EQ(bindExtHandles[i], vmBindExt[i].metadata_id);
         EXPECT_EQ(static_cast<uint32_t>(XE_VM_BIND_OP_EXTENSIONS_ATTACH_DEBUG), vmBindExt[i].base.name);
     }
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[1]), vmBindExt[0].base.next_extension);
     EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[2]), vmBindExt[1].base.next_extension);
+}
+
+TEST(IoctlHelperXeTest, givenResourceRegistrationEnabledWhenAllocationTypeShouldBeRegisteredThenBoHasBindExtHandleAdded) {
+    const uint32_t rootDeviceIndex = 0u;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+
+    drm.ioctlHelper.reset(xeIoctlHelper.release());
+
+    {
+        MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugContextSaveArea, MemoryPool::system4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+        EXPECT_EQ(DrmResourceClass::contextSaveArea, drm.registeredClass);
+    }
+    drm.registeredClass = DrmResourceClass::maxSize;
+
+    {
+        MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugSbaTrackingBuffer, MemoryPool::system4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+        EXPECT_EQ(DrmResourceClass::sbaTrackingBuffer, drm.registeredClass);
+    }
+    drm.registeredClass = DrmResourceClass::maxSize;
+
+    {
+        MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::debugModuleArea, MemoryPool::system4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+        EXPECT_EQ(DrmResourceClass::moduleHeapDebugArea, drm.registeredClass);
+    }
+
+    drm.registeredClass = DrmResourceClass::maxSize;
+
+    {
+        MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::bufferHostMemory, MemoryPool::system4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(0u, bo.bindExtHandles.size());
+        EXPECT_EQ(DrmResourceClass::maxSize, drm.registeredClass);
+    }
+}
+
+TEST(IoctlHelperXeTest, givenResourceRegistrationEnabledWhenAllocationTypeShouldNotBeRegisteredThenNoBindHandleCreated) {
+    const uint32_t rootDeviceIndex = 0u;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+
+    drm.registeredClass = DrmResourceClass::maxSize;
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+
+    drm.ioctlHelper.reset(xeIoctlHelper.release());
+
+    {
+        MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
+        MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsaInternal, MemoryPool::system4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(0u, bo.bindExtHandles.size());
+    }
+    EXPECT_EQ(DrmResourceClass::maxSize, drm.registeredClass);
 }

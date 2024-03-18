@@ -142,6 +142,8 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;
     void unregisterResource(uint32_t handle) override;
     void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) override;
+    void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
+    bool resourceRegistrationEnabled() override { return true; }
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

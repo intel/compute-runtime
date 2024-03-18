@@ -142,6 +142,7 @@ class DrmAllocation : public GraphicsAllocation {
     MOCKABLE_VIRTUAL int bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     MOCKABLE_VIRTUAL bool prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t subDeviceId);
     MOCKABLE_VIRTUAL void registerBOBindExtHandle(Drm *drm);
+    void addRegisteredBoBindHandle(uint32_t handle) { registeredBoBindHandles.push_back(handle); }
     void freeRegisteredBOBindExtHandles(Drm *drm);
     void linkWithRegisteredHandle(uint32_t handle);
     MOCKABLE_VIRTUAL void markForCapture();

@@ -164,6 +164,18 @@ uint32_t IoctlHelperXe::registerResource(DrmResourceClass classType, const void 
         metadata.type = DRM_XE_DEBUG_METADATA_PROGRAM_MODULE;
         metadata.user_addr = reinterpret_cast<uintptr_t>(data);
         metadata.len = size;
+    } else if (classType == DrmResourceClass::contextSaveArea) {
+        metadata.type = WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA;
+        metadata.user_addr = reinterpret_cast<uintptr_t>(data);
+        metadata.len = size;
+    } else if (classType == DrmResourceClass::sbaTrackingBuffer) {
+        metadata.type = WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SBA_AREA;
+        metadata.user_addr = reinterpret_cast<uintptr_t>(data);
+        metadata.len = size;
+    } else if (classType == DrmResourceClass::moduleHeapDebugArea) {
+        metadata.type = WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA;
+        metadata.user_addr = reinterpret_cast<uintptr_t>(data);
+        metadata.len = size;
     } else {
         UNRECOVERABLE_IF(true);
     }
