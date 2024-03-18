@@ -207,7 +207,7 @@ void ExecutionEnvironment::parseAffinityMask() {
 
         // tiles as devices
         if (exposeSubDevicesAsApiDevices) {
-            if (rootDeviceIndex > numRootDevices) {
+            if (rootDeviceIndex >= numRootDevices) {
                 continue;
             }
 

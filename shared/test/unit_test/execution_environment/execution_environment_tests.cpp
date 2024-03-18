@@ -489,6 +489,40 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSettingFP64EmulationEnab
     EXPECT_TRUE(executionEnvironment.isFP64EmulationEnabled());
 }
 
+TEST(ExecutionEnvironment, givenCorrectZeAffinityMaskWhenExposeSubDevicesAsApiDevicesIsSetThenMapOfSubDeviceIndicesIsSet) {
+    DebugManagerStateRestore restore;
+
+    debugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.ZE_AFFINITY_MASK.set("3");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.incRefInternal();
+    executionEnvironment.setExposeSubDevicesAsDevices(true);
+
+    DeviceFactory::createDevices(executionEnvironment);
+
+    EXPECT_FALSE(executionEnvironment.mapOfSubDeviceIndices.empty());
+}
+
+TEST(ExecutionEnvironment, givenIncorrectZeAffinityMaskWhenExposeSubDevicesAsApiDevicesIsSetThenMapOfSubDeviceIndicesIsEmpty) {
+    DebugManagerStateRestore restore;
+
+    debugManager.flags.CreateMultipleSubDevices.set(4);
+    debugManager.flags.ZE_AFFINITY_MASK.set("4");
+    debugManager.flags.SetCommandStreamReceiver.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.incRefInternal();
+    executionEnvironment.setExposeSubDevicesAsDevices(true);
+
+    DeviceFactory::createDevices(executionEnvironment);
+
+    EXPECT_TRUE(executionEnvironment.mapOfSubDeviceIndices.empty());
+}
+
 TEST(ExecutionEnvironmentWithAILTests, whenAILConfigurationIsNullptrAndEnableAILFlagIsTrueWhenInitializingAILThenReturnFalse) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableAIL.set(true);
