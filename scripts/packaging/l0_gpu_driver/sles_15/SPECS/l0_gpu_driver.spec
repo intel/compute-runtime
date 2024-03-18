@@ -5,6 +5,7 @@
 %global rel xxx
 %global build_id xxx
 %global NEO_RELEASE_WITH_REGKEYS FALSE
+%global NEO_ENABLE_XE_DRM_DETECTION FALSE
 %global I915_HEADERS_DIR %{nil}
 
 %define gmmlib_sover 12
@@ -75,6 +76,7 @@ Intel(R) Graphics Compute Runtime for oneAPI Level Zero - development headers
    -DNEO_BUILD_WITH_OCL=FALSE \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
+   -DNEO_ENABLE_XE_DRM_DETECTION=%{NEO_ENABLE_XE_DRM_DETECTION} \
    -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
    -DL0_INSTALL_UDEV_RULES=1 \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/ \

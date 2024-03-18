@@ -522,6 +522,14 @@ if(UNIX)
   endif()
   message(STATUS "i915 prelim headers detection: ${NEO_ENABLE_i915_PRELIM_DETECTION}")
 
+  # drm-xe support
+  if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
+    set(NEO_ENABLE_XE_DRM_DETECTION TRUE)
+  elseif(NOT DEFINED NEO_ENABLE_XE_DRM_DETECTION)
+    set(NEO_ENABLE_XE_DRM_DETECTION FALSE)
+  endif()
+  message(STATUS "Xe drm detection: ${NEO_ENABLE_XE_DRM_DETECTION}")
+
   get_filename_component(THIRD_PARTY_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}" ABSOLUTE)
   include_directories(BEFORE ${THIRD_PARTY_DIR})
 
