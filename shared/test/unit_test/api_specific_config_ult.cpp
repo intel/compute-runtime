@@ -26,7 +26,10 @@ bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return isStatelessCompressionSupportedForUlts;
 }
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
-    return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
+    if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
+        return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
+    }
+    return false;
 }
 bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *) {
     if (debugManager.flags.UseBindlessMode.get() != -1) {
