@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "base_ult_config_listener.h"
 
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 
@@ -19,6 +20,7 @@ namespace NEO {
 extern unsigned int testCaseMaxTimeInMs;
 
 void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
+    maxOsContextCountBackup = MemoryManager::maxOsContextCount;
     debugVarSnapshot = debugManager.flags;
     injectFcnSnapshot = debugManager.injectFcn;
 
@@ -55,5 +57,6 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
     EXPECT_EQ(1, referencedHwInfo.featureTable.asHash() == defaultHwInfo->featureTable.asHash());
     EXPECT_EQ(1, referencedHwInfo.workaroundTable.asHash() == defaultHwInfo->workaroundTable.asHash());
     EXPECT_EQ(1, referencedHwInfo.capabilityTable == defaultHwInfo->capabilityTable);
+    MemoryManager::maxOsContextCount = maxOsContextCountBackup;
 }
 } // namespace NEO
