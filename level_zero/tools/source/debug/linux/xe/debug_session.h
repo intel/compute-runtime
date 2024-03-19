@@ -29,16 +29,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     bool closeConnection() override;
 
-    ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override {
-        UNRECOVERABLE_IF(true);
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override {
-        UNRECOVERABLE_IF(true);
-        return ZE_RESULT_SUCCESS;
-    }
-
     ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override {
         UNRECOVERABLE_IF(true);
         return ZE_RESULT_SUCCESS;
