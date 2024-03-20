@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,7 +147,8 @@ void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(bool enableLocal
     regionInfo[1].probedSize = 16 * MemoryConstants::gigaByte;
     mock->memoryInfo.reset(new MockedMemoryInfo(regionInfo, *mock));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
-    memoryManager.reset(new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment));
+    memoryManager = new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
 
     ASSERT_NE(nullptr, memoryManager);
     if (memoryManager->getgemCloseWorker()) {

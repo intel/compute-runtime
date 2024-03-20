@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ void ClDeviceFixture::setUp() {
 
 void ClDeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     pDevice = MockClDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo, rootDeviceIndex);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
     ASSERT_NE(nullptr, pDevice);
     pClExecutionEnvironment = static_cast<MockClExecutionEnvironment *>(pDevice->getExecutionEnvironment());
     pClDevice = new MockClDevice{pDevice};

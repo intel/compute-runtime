@@ -115,7 +115,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
   public:
     DrmMemoryManagerFixtureWithoutQuietIoctlExpectation();
     DrmMemoryManagerFixtureWithoutQuietIoctlExpectation(uint32_t numRootDevices, uint32_t rootIndex);
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager;
+    TestedDrmMemoryManager *memoryManager = nullptr;
     DrmMockCustom *mock;
 
     void setUp();

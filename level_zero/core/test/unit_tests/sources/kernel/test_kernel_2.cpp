@@ -651,10 +651,9 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getMemoryManager(),
-                                                               device->getNumGenericSubDevices() > 1,
-                                                               device->getRootDeviceIndex(),
-                                                               device->getDeviceBitfield());
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device.get(),
+                                                               device->getNumGenericSubDevices() > 1);
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
     static EncodeSurfaceStateArgs savedSurfaceStateArgs{};
@@ -731,10 +730,9 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getMemoryManager(),
-                                                               device->getNumGenericSubDevices() > 1,
-                                                               device->getRootDeviceIndex(),
-                                                               device->getDeviceBitfield());
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device.get(),
+                                                               device->getNumGenericSubDevices() > 1);
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
     static EncodeSurfaceStateArgs savedSurfaceStateArgs{};

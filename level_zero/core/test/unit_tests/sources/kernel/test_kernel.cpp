@@ -2139,10 +2139,8 @@ using KernelImpPatchBindlessTest = Test<ModuleFixture>;
 TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledThenOffsetPatchedCorrectly) {
     Mock<KernelImp> kernel;
     neoDevice->incRefInternal();
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
     Mock<Module> mockModule(device, nullptr);
     kernel.module = &mockModule;
     NEO::MockGraphicsAllocation alloc;
@@ -2204,10 +2202,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessT
     const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
@@ -2245,10 +2241,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSur
     const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
     const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).initBindlessOffsetToSurfaceState();
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
@@ -2307,10 +2301,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessImplicitArgAndBindlessHeapsHe
     EXPECT_EQ(0u, mockKernel.getSurfaceStateHeapDataSize());
 
     const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 0x20;
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
     EXPECT_EQ(0u, mockKernel.getSurfaceStateHeapDataSize());
 }
 
@@ -2333,10 +2325,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhen
     const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
     const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).initBindlessOffsetToSurfaceState();
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
@@ -2379,10 +2369,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulTh
     arg.bindless = undefined<CrossThreadDataOffset>;
     arg.bindful = 0x40;
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
@@ -2417,10 +2405,8 @@ HWTEST2_F(KernelImpL3CachingTests, GivenKernelImpWhenSetSurfaceStateWithUnaligne
     arg.bindless = undefined<CrossThreadDataOffset>;
     arg.bindful = 0x40;
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t size = gfxCoreHelper.getRenderSurfaceStateSize();
     uint64_t gpuAddress = 0x2000;
@@ -2754,10 +2740,8 @@ struct MyMockImage : public WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> {
 HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
     createKernel();
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
     auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
     const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
@@ -2808,10 +2792,8 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgIma
     createKernel();
 
     auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
-    auto bindlessHelper = new MockBindlesHeapsHelper(mockMemManager,
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
@@ -2842,10 +2824,8 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgIma
 HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopyImplicitArgsSurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
     createKernel();
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
     auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
     const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
@@ -2875,10 +2855,8 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopyImplic
 HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetArgRedescribedImageCalledThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
     createKernel();
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
     auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
     const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
@@ -2908,10 +2886,8 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
 HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperAndImageViewWhenAllocatingBindlessSlotThenViewHasDifferentSlotThanParentImage, ImageSupport) {
     createKernel();
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
     auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
     const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
@@ -2951,10 +2927,8 @@ HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperAndImageViewWhenAllocatingBindl
 HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperImageViewAndNoAvailableSpaceOnSshWhenAllocatingBindlessSlotThenOutOfMemoryErrorReturned, ImageSupport) {
     createKernel();
     auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
-    auto bindlessHelper = new MockBindlesHeapsHelper(mockMemManager,
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
@@ -3065,10 +3039,8 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgRed
     createKernel();
 
     auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
-    auto bindlessHelper = new MockBindlesHeapsHelper(mockMemManager,
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
@@ -3099,10 +3071,8 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgRed
 HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgBufferCalledThenOutOfMemoryErrorReturned, MatchAny) {
 
     auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
-    auto bindlessHelper = new MockBindlesHeapsHelper(mockMemManager,
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     ze_kernel_desc_t desc = {};

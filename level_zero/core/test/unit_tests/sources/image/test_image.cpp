@@ -148,10 +148,8 @@ HWTEST2_F(ImageCreate, givenBindlessImageWhenImageInitializeThenImageImplicitArg
         GTEST_SKIP();
     }
 
-    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
@@ -1604,10 +1602,8 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenGettingDeviceOffsetThenBindlessSlot
     const size_t height = 32;
     const size_t depth = 1;
 
-    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     ze_image_bindless_exp_desc_t bindlessExtDesc = {};
@@ -1650,10 +1646,8 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenBindlessSlotAllocationFailsThenImag
     const size_t height = 32;
     const size_t depth = 1;
 
-    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     ze_image_bindless_exp_desc_t bindlessExtDesc = {};
@@ -1687,10 +1681,8 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithInvalidPitchedPtrTh
     const size_t height = 32;
     const size_t depth = 1;
 
-    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     ze_image_pitched_exp_desc_t pitchedDesc = {};
@@ -1724,10 +1716,8 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithDeviceUMSPitchedPtr
     const size_t height = 32;
     const size_t depth = 1;
 
-    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     const size_t size = 4096;
@@ -1797,10 +1787,8 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithDeviceUMSPitche
     const size_t height = 32;
     const size_t depth = 1;
 
-    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     const size_t size = 4096;
@@ -1844,10 +1832,8 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithTheSameFormatTh
     const size_t height = 32;
     const size_t depth = 1;
 
-    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     const size_t size = 4096;
@@ -1906,10 +1892,8 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenInitializedThenSurfaceStateCopiedTo
     const size_t height = 32;
     const size_t depth = 1;
 
-    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice->getMemoryManager(),
-                                                     neoDevice->getNumGenericSubDevices() > 1,
-                                                     neoDevice->getRootDeviceIndex(),
-                                                     neoDevice->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
 
     ze_image_bindless_exp_desc_t bindlessExtDesc = {};

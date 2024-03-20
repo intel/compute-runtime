@@ -746,10 +746,8 @@ struct DebuggerWithGlobalBindlessFixture : public L0DebuggerFixture {
         NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         L0DebuggerFixture::setUp(false);
 
-        auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice->getMemoryManager(),
-                                                                   neoDevice->getNumGenericSubDevices() > 1,
-                                                                   neoDevice->getRootDeviceIndex(),
-                                                                   neoDevice->getDeviceBitfield());
+        auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice,
+                                                                   neoDevice->getNumGenericSubDevices() > 1);
         mockHelper->globalBindlessDsh = false;
         bindlessHelper = mockHelper.get();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/bindless_heaps_helper.h"
 
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -15,6 +16,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
@@ -23,12 +25,12 @@ constexpr size_t globalSshAllocationSize = 4 * MemoryConstants::pageSize64k;
 constexpr size_t borderColorAlphaOffset = alignUp(4 * sizeof(float), MemoryConstants::cacheLineSize);
 using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
 
-BindlessHeapsHelper::BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable,
-                                         const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) : surfaceStateSize(memManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>().getRenderSurfaceStateSize()),
-                                                                                                          memManager(memManager),
-                                                                                                          isMultiOsContextCapable(isMultiOsContextCapable),
-                                                                                                          rootDeviceIndex(rootDeviceIndex),
-                                                                                                          deviceBitfield(deviceBitfield) {
+BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : rootDevice(rootDevice),
+                                                                                             surfaceStateSize(rootDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getRenderSurfaceStateSize()),
+                                                                                             memManager(rootDevice->getMemoryManager()),
+                                                                                             isMultiOsContextCapable(isMultiOsContextCapable),
+                                                                                             rootDeviceIndex(rootDevice->getRootDeviceIndex()),
+                                                                                             deviceBitfield(rootDevice->getDeviceBitfield()) {
 
     for (auto heapType = 0; heapType < BindlesHeapType::numHeapTypes; heapType++) {
         auto size = MemoryConstants::pageSize64k;
@@ -60,7 +62,14 @@ GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size
     properties.flags.use32BitFrontWindow = allocInFrontWindow;
     properties.alignment = alignment;
 
-    return this->memManager->allocateGraphicsMemoryWithProperties(properties);
+    GraphicsAllocation *allocation = memManager->allocateGraphicsMemoryWithProperties(properties);
+    MemoryOperationsHandler *memoryOperationsIface = rootDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.get();
+    auto result = memoryOperationsIface->makeResident(rootDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
+    if (result != NEO::MemoryOperationsStatus::success) {
+        memManager->freeGraphicsMemory(allocation);
+        return nullptr;
+    }
+    return allocation;
 }
 
 void BindlessHeapsHelper::clearStateDirtyForContext(uint32_t osContextId) {

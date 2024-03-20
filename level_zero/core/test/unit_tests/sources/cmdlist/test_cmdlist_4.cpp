@@ -402,10 +402,8 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenBindlessModeAndUseCsrIm
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
     NEO::debugManager.flags.UseBindlessMode.set(1);
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice->getMemoryManager(),
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             neoDevice->getRootDeviceIndex(),
-                                                                                                                             neoDevice->getDeviceBitfield());
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
 
     size_t size = 0x100000001;
     NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::AllocationType::internalHostMemory,

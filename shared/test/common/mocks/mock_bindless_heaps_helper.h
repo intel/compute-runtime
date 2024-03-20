@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 class MockBindlesHeapsHelper : public BindlessHeapsHelper {
   public:
     using BaseClass = BindlessHeapsHelper;
-    MockBindlesHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) : BaseClass(memManager, isMultiOsContextCapable, rootDeviceIndex, deviceBitfield) {
+    MockBindlesHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : BindlessHeapsHelper(rootDevice, isMultiOsContextCapable) {
         globalSsh = surfaceStateHeaps[BindlesHeapType::globalSsh].get();
         specialSsh = surfaceStateHeaps[BindlesHeapType::specialSsh].get();
         scratchSsh = surfaceStateHeaps[BindlesHeapType::specialSsh].get();

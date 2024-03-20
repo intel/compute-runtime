@@ -676,10 +676,8 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenSettingKernelA
 
 HWTEST_F(KernelArgBufferTestBindless, givenBindlessBuffersWhenPatchBindlessOffsetCalledThenBindlessOffsetToSurfaceStateWrittenInCrossThreadData) {
 
-    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pClDevice->getMemoryManager(),
-                                                                                                                             pClDevice->getNumGenericSubDevices() > 1,
-                                                                                                                             pClDevice->getRootDeviceIndex(),
-                                                                                                                             pClDevice->getDeviceBitfield());
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice,
+                                                                                                                             pClDevice->getNumGenericSubDevices() > 1);
 
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), bindlessOffset));

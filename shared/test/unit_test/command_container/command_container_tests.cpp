@@ -1531,10 +1531,7 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
 
     auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
 
-    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice->getMemoryManager(),
-                                                               pDevice->getNumGenericSubDevices() > 1,
-                                                               pDevice->getRootDeviceIndex(),
-                                                               pDevice->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice, pDevice->getNumGenericSubDevices() > 1);
     mockHelper->globalBindlessDsh = false;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 

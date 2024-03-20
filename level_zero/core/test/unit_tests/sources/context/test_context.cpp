@@ -1971,11 +1971,11 @@ HWTEST2_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageI
     auto mockMemoryOperationsInterface = new NEO::MockMemoryOperations();
     mockMemoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(mockMemoryOperationsInterface);
-    auto bindlessHelper = new MockBindlesHeapsHelper(device->getNEODevice()->getMemoryManager(),
-                                                     device->getNEODevice()->getNumGenericSubDevices() > 1,
-                                                     device->getNEODevice()->getRootDeviceIndex(),
-                                                     device->getNEODevice()->getDeviceBitfield());
+    auto bindlessHelper = new MockBindlesHeapsHelper(device->getNEODevice(),
+                                                     device->getNEODevice()->getNumGenericSubDevices() > 1);
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+    // Reset ResidentCalledCount to 0 since bindlessHeapsHelper constructor changes the value.
+    mockMemoryOperationsInterface->makeResidentCalledCount = 0;
 
     ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
 

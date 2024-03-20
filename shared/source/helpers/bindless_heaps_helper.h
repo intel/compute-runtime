@@ -27,7 +27,7 @@ class BindlessHeapsHelper {
         globalDsh,
         numHeapTypes
     };
-    BindlessHeapsHelper(MemoryManager *memManager, bool isMultiOsContextCapable, const uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
+    BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable);
     MOCKABLE_VIRTUAL ~BindlessHeapsHelper();
 
     BindlessHeapsHelper(const BindlessHeapsHelper &) = delete;
@@ -59,6 +59,7 @@ class BindlessHeapsHelper {
     void clearStateDirtyForContext(uint32_t osContextId);
 
   protected:
+    Device *rootDevice = nullptr;
     const size_t surfaceStateSize;
     bool growHeap(BindlesHeapType heapType);
     MemoryManager *memManager = nullptr;

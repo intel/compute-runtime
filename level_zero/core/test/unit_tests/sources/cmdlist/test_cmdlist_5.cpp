@@ -1461,10 +1461,8 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice()->getMemoryManager(),
-                                                               device->getNEODevice()->getNumGenericSubDevices() > 1,
-                                                               device->getNEODevice()->getRootDeviceIndex(),
-                                                               device->getNEODevice()->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
+                                                               device->getNEODevice()->getNumGenericSubDevices() > 1);
     mockHelper->globalBindlessDsh = false;
     auto globalBindlessBase = mockHelper->getGlobalHeapsBase();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
@@ -1610,10 +1608,8 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice()->getMemoryManager(),
-                                                               device->getNEODevice()->getNumGenericSubDevices() > 1,
-                                                               device->getNEODevice()->getRootDeviceIndex(),
-                                                               device->getNEODevice()->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
+                                                               device->getNEODevice()->getNumGenericSubDevices() > 1);
     mockHelper->globalBindlessDsh = true;
     auto globalBindlessBase = mockHelper->getGlobalHeapsBase();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
@@ -1666,10 +1662,8 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice()->getMemoryManager(),
-                                                               device->getNEODevice()->getNumGenericSubDevices() > 1,
-                                                               device->getNEODevice()->getRootDeviceIndex(),
-                                                               device->getNEODevice()->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
+                                                               device->getNEODevice()->getNumGenericSubDevices() > 1);
     mockHelper->globalBindlessDsh = false;
     auto globalBindlessBase = mockHelper->getGlobalHeapsBase();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
@@ -1739,10 +1733,8 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice()->getMemoryManager(),
-                                                               device->getNEODevice()->getNumGenericSubDevices() > 1,
-                                                               device->getNEODevice()->getRootDeviceIndex(),
-                                                               device->getNEODevice()->getDeviceBitfield());
+    auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
+                                                               device->getNEODevice()->getNumGenericSubDevices() > 1);
     mockHelper->globalBindlessDsh = false;
     auto globalBindlessBase = mockHelper->getGlobalHeapsBase();
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ using DrmGlobalBindlessAllocatorTests = Test<GlobalBindlessDrmMemManagerFixture>
 
 TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocationCreatedThenGpuBaseAddressIsSetToCorrectBaseAddress) {
     MockAllocationProperties properties(rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::linearStream);
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(device.get(), false);
     auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
     ASSERT_NE(nullptr, allocation);
     auto gmmHelper = memoryManager->getGmmHelper(rootDeviceIndex);
@@ -55,7 +55,7 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocat
     allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(device.get(), false);
     MemoryManager::AllocationStatus status;
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
@@ -75,7 +75,7 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreate
     allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->createBindlessHeapsHelper(device.get(), false);
 
     auto gmmHelper = memoryManager->getGmmHelper(rootDeviceIndex);
     EXPECT_EQ(gmmHelper->canonize(memoryManager->getExternalHeapBaseAddress(rootDeviceIndex, true)),
@@ -92,7 +92,7 @@ TEST_F(DrmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAllocat
     allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
-    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memoryManager.get(), false, rootDeviceIndex, 1);
+    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(device.get(), false);
 
     AllocationProperties properties = {rootDeviceIndex, MemoryConstants::pageSize64k, AllocationType::linearStream, {}};
     auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);

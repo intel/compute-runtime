@@ -46,16 +46,23 @@ class BindlessHeapsHelperFixture {
     void setUp() {
 
         debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-        memManager = std::make_unique<MockMemoryManager>();
+        rootDevice = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex));
+        memManager = static_cast<MockMemoryManager *>(rootDevice->getMemoryManager());
+        rootDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
     }
     void tearDown() {}
 
+    Device *getDevice() {
+        return rootDevice.get();
+    }
+
     MemoryManager *getMemoryManager() {
-        return memManager.get();
+        return memManager;
     }
 
     DebugManagerStateRestore dbgRestorer;
-    std::unique_ptr<MockMemoryManager> memManager;
+    std::unique_ptr<MockDevice> rootDevice;
+    MockMemoryManager *memManager = nullptr;
     uint32_t rootDeviceIndex = 0;
     DeviceBitfield devBitfield = 1;
     int genericSubDevices = 1;
@@ -64,13 +71,13 @@ class BindlessHeapsHelperFixture {
 using BindlessHeapsHelperTests = Test<BindlessHeapsHelperFixture>;
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenItsCreatedThenSpecialSshAllocatedAtHeapBegining) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     auto specialSshAllocation = bindlessHeapHelper->specialSsh->getGraphicsAllocation();
     EXPECT_EQ(specialSshAllocation->getGpuAddress(), specialSshAllocation->getGpuBaseAddress());
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapThenHeapUsedSpaceGrow) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     auto usedBefore = bindlessHeapHelper->globalSsh->getUsed();
 
     MockGraphicsAllocation alloc;
@@ -81,7 +88,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapThen
 }
 
 TEST_F(BindlessHeapsHelperTests, givenNoMemoryAvailableWhenAllocateSsInHeapThenNullptrIsReturned) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
 
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
@@ -96,9 +103,9 @@ TEST_F(BindlessHeapsHelperTests, givenNoMemoryAvailableWhenAllocateSsInHeapThenN
 }
 
 TEST_F(BindlessHeapsHelperTests, givenNoMemoryAvailableWhenAllocatingBindlessSlotThenFalseIsReturned) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     auto bindlessHeapHelperPtr = bindlessHeapHelper.get();
-    memManager->mockExecutionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
+    memManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
     MockGraphicsAllocation alloc;
 
     bindlessHeapHelperPtr->globalSsh->getSpace(bindlessHeapHelperPtr->globalSsh->getAvailableSpace());
@@ -110,7 +117,7 @@ TEST_F(BindlessHeapsHelperTests, givenNoMemoryAvailableWhenAllocatingBindlessSlo
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapThenMemoryAtReturnedOffsetIsCorrect) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
 
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
@@ -121,9 +128,9 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapThen
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapForImageThenThreeBindlessSlotsAreAllocated) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     auto surfaceStateSize = bindlessHeapHelper->surfaceStateSize;
-    memManager->mockExecutionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
+    memManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
 
     MockGraphicsAllocation alloc;
     alloc.allocationType = AllocationType::image;
@@ -141,7 +148,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapForI
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapTwiceForTheSameAllocationThenTheSameOffsetReturned) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
 
     MockGraphicsAllocation alloc;
 
@@ -154,7 +161,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapTwic
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapTwiceForDifferentAllocationsThenDifferentOffsetsReturned) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
 
     MockGraphicsAllocation alloc1;
     MockGraphicsAllocation alloc2;
@@ -168,7 +175,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapTwic
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingMoreSsThenNewHeapAllocationCreated) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     size_t ssSize = 0x40;
     auto ssCount = bindlessHeapHelper->globalSsh->getAvailableSpace() / ssSize;
     auto graphicsAllocations = std::make_unique<MockGraphicsAllocation[]>(ssCount);
@@ -185,27 +192,27 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingMoreSsThen
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenCreatedThenAllocationsHaveTheSameBaseAddress) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     for (auto allocation : bindlessHeapHelper->ssHeapsAllocations) {
         EXPECT_EQ(allocation->getGpuBaseAddress(), bindlessHeapHelper->getGlobalHeapsBase());
     }
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenGetDefaultBorderColorOffsetCalledThenCorrectOffsetReturned) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     auto expectedOffset = bindlessHeapHelper->borderColorStates->getGpuAddress() - bindlessHeapHelper->borderColorStates->getGpuBaseAddress();
     EXPECT_EQ(bindlessHeapHelper->getDefaultBorderColorOffset(), expectedOffset);
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenGetAlphaBorderColorOffsetCalledThenCorrectOffsetReturned) {
     auto borderColorSize = 0x40;
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     auto expectedOffset = bindlessHeapHelper->borderColorStates->getGpuAddress() - bindlessHeapHelper->borderColorStates->getGpuBaseAddress() + borderColorSize;
     EXPECT_EQ(bindlessHeapHelper->getAlphaBorderColorOffset(), expectedOffset);
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInSpecialHeapThenFirstSlotIsAtOffsetZero) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::specialSsh);
@@ -216,7 +223,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInSpecialH
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalHeapThenOffsetLessThanHeapSize) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::globalSsh);
@@ -225,7 +232,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalHe
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalDshThenOffsetLessThanHeapSize) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     MockGraphicsAllocation alloc;
     size_t size = 0x40;
     auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(size, &alloc, BindlessHeapsHelper::BindlesHeapType::globalDsh);
@@ -236,9 +243,9 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInGlobalDs
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIsCalledThenSSinHeapInfoShouldBePlacedInReuseVector) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(1);
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     MockBindlesHeapsHelper *bindlessHeapHelperPtr = bindlessHeapHelper.get();
-    memManager->mockExecutionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
+    memManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation;
     memManager->allocateBindlessSlot(alloc);
 
@@ -269,8 +276,8 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenFreeGraphicsMemoryIs
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingBindlessSlotTwiceThenNewSlotIsNotAllocatedAndTrueIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(1);
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
-    memManager->mockExecutionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+    memManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation;
     EXPECT_TRUE(memManager->allocateBindlessSlot(alloc));
     auto ssInHeapInfo = alloc->getBindlessInfo();
@@ -286,10 +293,10 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocatingBindlessSl
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperPreviousAllocationThenItShouldNotBeReusedIfThresholdNotReached) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(1);
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     MockBindlesHeapsHelper *bindlessHeapHelperPtr = bindlessHeapHelper.get();
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation;
-    memManager->mockExecutionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
+    memManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->bindlessHeapsHelper.reset(bindlessHeapHelper.release());
     memManager->allocateBindlessSlot(alloc);
 
     auto ssInHeapInfo = alloc->getBindlessInfo();
@@ -312,13 +319,12 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperPreviousAllocationThenIt
 TEST_F(BindlessHeapsHelperTests, givenDeviceWhenBindlessHeapHelperInitializedThenCorrectDeviceBitFieldIsUsed) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(1);
-    DeviceBitfield deviceBitfield = 7;
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, deviceBitfield);
-    EXPECT_EQ(reinterpret_cast<MockMemoryManager *>(getMemoryManager())->recentlyPassedDeviceBitfield, deviceBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+    EXPECT_EQ(reinterpret_cast<MockMemoryManager *>(getMemoryManager())->recentlyPassedDeviceBitfield, getDevice()->getDeviceBitfield());
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenCreatedThenAllocateAndReleasePoolIndicesAreInitializedToZero) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
 
     EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
     EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
@@ -328,7 +334,7 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenCreatedThenAllocateA
 }
 
 TEST_F(BindlessHeapsHelperTests, givenFreeSlotsExceedingThresholdInResuePoolWhenNewSlotsAllocatedThenSlotsAreAllocatedFromReusePool) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     bindlessHeapHelper->reuseSlotCountThreshold = 4;
 
     size_t size = bindlessHeapHelper->surfaceStateSize;
@@ -359,7 +365,7 @@ TEST_F(BindlessHeapsHelperTests, givenFreeSlotsExceedingThresholdInResuePoolWhen
 }
 
 TEST_F(BindlessHeapsHelperTests, givenReusePoolExhaustedWhenNewSlotsAllocatedThenSlotsAreNotResuedAndStateCacheDirtyFlagsAreNotSet) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     bindlessHeapHelper->reuseSlotCountThreshold = 4;
 
     size_t size = bindlessHeapHelper->surfaceStateSize;
@@ -411,7 +417,7 @@ TEST_F(BindlessHeapsHelperTests, givenReusePoolExhaustedWhenNewSlotsAllocatedThe
 }
 
 TEST_F(BindlessHeapsHelperTests, givenReleasedSlotsToSecondPoolWhenThresholdReachedThenPoolsAreSwitchedAndSlotsAllocatedFromReusePool) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     bindlessHeapHelper->reuseSlotCountThreshold = 4;
 
     size_t size = bindlessHeapHelper->surfaceStateSize;
@@ -500,7 +506,7 @@ TEST_F(BindlessHeapsHelperTests, givenReleasedSlotsToSecondPoolWhenThresholdReac
 }
 
 TEST_F(BindlessHeapsHelperTests, givenFreeSlotsInReusePoolForONeSizeWhenAllocatingDifferentSizeThenNewSlotFromHeapIsAllocated) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
     bindlessHeapHelper->reuseSlotCountThreshold = 4;
 
     size_t size = bindlessHeapHelper->surfaceStateSize;
@@ -532,7 +538,7 @@ TEST_F(BindlessHeapsHelperTests, givenFreeSlotsInReusePoolForONeSizeWhenAllocati
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHelperWhenGettingAndClearingDirstyStateForContextThenCorrectFlagIsReturnedAdCleard) {
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getMemoryManager(), false, rootDeviceIndex, devBitfield);
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
 
     EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(1));
     bindlessHeapHelper->stateCacheDirtyForContext.set(3);
@@ -540,4 +546,14 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHelperWhenGettingAndClearingDirsty
 
     bindlessHeapHelper->clearStateDirtyForContext(3);
     EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(3));
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenItsCreatedThenSshAllocationsAreResident) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+    MemoryOperationsHandler *memoryOperationsIface = getDevice()->getRootDeviceEnvironmentRef().memoryOperationsInterface.get();
+
+    for (int heapType = 0; heapType < BindlessHeapsHelper::BindlesHeapType::numHeapTypes; heapType++) {
+        auto *allocation = bindlessHeapHelper->getHeap(static_cast<BindlessHeapsHelper::BindlesHeapType>(heapType))->getGraphicsAllocation();
+        EXPECT_EQ(memoryOperationsIface->isResident(getDevice(), *allocation), MemoryOperationsStatus::success);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1430,10 +1430,8 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
     debugManager.flags.UseBindlessMode.set(1);
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
 
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice,
+                                                                                                                         pDevice->getNumGenericSubDevices() > 1);
 
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
@@ -1467,10 +1465,8 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindles
     commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
     commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
-                                                                                                                         pDevice->getNumGenericSubDevices() > 1,
-                                                                                                                         pDevice->getRootDeviceIndex(),
-                                                                                                                         pDevice->getDeviceBitfield());
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice,
+                                                                                                                         pDevice->getNumGenericSubDevices() > 1);
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 

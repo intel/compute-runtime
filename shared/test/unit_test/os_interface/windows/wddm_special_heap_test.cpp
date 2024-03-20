@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -32,7 +33,7 @@ class GlobalBindlessWddmMemManagerFixture {
     void setUp() {
 
         debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        executionEnvironment = new ExecutionEnvironment{};
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -40,13 +41,16 @@ class GlobalBindlessWddmMemManagerFixture {
         DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
         auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
         wddm->callBaseMapGpuVa = false;
-        memManager = std::unique_ptr<FrontWindowMemManagerMock>(new FrontWindowMemManagerMock(*executionEnvironment));
+        memManager = new FrontWindowMemManagerMock(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memManager);
+        device.reset(Device::create<MockDevice>(executionEnvironment, 0u));
     }
     void tearDown() {
     }
 
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
-    std::unique_ptr<FrontWindowMemManagerMock> memManager;
+    std::unique_ptr<MockDevice> device;
+    ExecutionEnvironment *executionEnvironment = nullptr;
+    FrontWindowMemManagerMock *memManager = nullptr;
     DebugManagerStateRestore dbgRestorer;
 };
 
@@ -77,9 +81,10 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
     MockAllocationProperties properties(0, true, MemoryConstants::pageSize64k, AllocationType::linearStream);
     properties.flags.use32BitFrontWindow = true;
 
-    memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
+    memManager = new FrontWindowMemManagerMock(true, true, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memManager);
 
-    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memManager.get(), false, 0, 1);
+    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(device.get(), false);
 
     auto allocation = memManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
     ASSERT_NE(nullptr, allocation);
@@ -102,9 +107,10 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
     auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
     wddm->callBaseMapGpuVa = true;
 
-    memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
+    memManager = new FrontWindowMemManagerMock(true, true, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memManager);
 
-    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memManager.get(), false, 0, 1);
+    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(device.get(), false);
 
     MemoryManager::AllocationStatus status;
     auto allocation = memManager->allocateGraphicsMemoryInDevicePool(allocData, status);
@@ -128,9 +134,10 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSpecialSshHeapCreat
     auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Wddm>());
     wddm->callBaseMapGpuVa = true;
 
-    memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
+    memManager = new FrontWindowMemManagerMock(true, true, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memManager);
 
-    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memManager.get(), false, 0, 1);
+    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(device.get(), false);
 
     auto gmmHelper = memManager->getGmmHelper(0);
     EXPECT_EQ(gmmHelper->canonize(memManager->getExternalHeapBaseAddress(0, true)),
@@ -147,9 +154,10 @@ TEST_F(WddmGlobalBindlessAllocatorTests, givenLocalMemoryWhenSurfaceStatesAlloca
     allocData.type = AllocationType::linearStream;
     allocData.size = MemoryConstants::pageSize64k;
 
-    memManager.reset(new FrontWindowMemManagerMock(true, true, *executionEnvironment));
+    memManager = new FrontWindowMemManagerMock(true, true, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(memManager);
 
-    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(memManager.get(), false, 0, 1);
+    executionEnvironment->rootDeviceEnvironments[0]->createBindlessHeapsHelper(device.get(), false);
 
     AllocationProperties properties = {0, MemoryConstants::pageSize64k, AllocationType::linearStream, {}};
     auto allocation = memManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
