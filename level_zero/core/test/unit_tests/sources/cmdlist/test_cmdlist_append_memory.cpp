@@ -719,6 +719,37 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenTimestampPassedToMemoryCopyT
     EXPECT_EQ(cmdList.end(), itor);
 }
 
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenForcingTlbFlushBeforeCopyThenMiFlushProgrammedAndTlbFlushDetected, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+
+    NEO::debugManager.flags.FlushTlbBeforeCopy.set(1);
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
+
+    MockCommandListCoreFamily<gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    commandList.appendMemoryCopy(dstPtr, srcPtr, 0x100, nullptr, 0, nullptr, false, false);
+    EXPECT_EQ(commandList.appendMemoryCopyBlitCalled, 1u);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0), commandList.commandContainer.getCommandStream()->getUsed()));
+
+    bool tlbFlushFound = false;
+    for (auto cmdIterator = cmdList.begin(); cmdIterator != cmdList.end(); cmdIterator++) {
+        auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*cmdIterator);
+        if (miFlushCmd && miFlushCmd->getTlbInvalidate()) {
+            tlbFlushFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(tlbFlushFound);
+}
+
 using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
 HWTEST2_F(AppendMemoryCopy,
           givenCommandListUsesTimestampPassedToMemoryCopyWhenTwoKernelsAreUsedThenAppendProfilingCalledForSinglePacket, SupportedPlatforms) {

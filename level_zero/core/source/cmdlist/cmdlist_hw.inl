@@ -1472,6 +1472,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false);
 
     if (isCopyOnly()) {
+        if (NEO::debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
+            NEO::MiFlushArgs args{this->dummyBlitWa};
+            args.tlbFlush = true;
+            encodeMiFlush(0, 0, args);
+        }
         ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                    dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                    srcAllocationStruct.alignedAllocationPtr,
