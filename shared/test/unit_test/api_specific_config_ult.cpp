@@ -25,7 +25,7 @@ StackVec<NEO::DebugVarPrefix, 4> validUltOclPrefixTypes = {DebugVarPrefix::neoOc
 bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return isStatelessCompressionSupportedForUlts;
 }
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper) {
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
         return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
     }

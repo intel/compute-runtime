@@ -149,11 +149,28 @@ TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensio
 
 TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertiesThenBindlessImageExtensionIsReturned) {
     DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.UseBindlessMode.set(1);
     NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
 
+    auto hwInfo = *NEO::defaultHwInfo;
+    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    NEO::MockDevice *neoDevice2 = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+
+    NEO::debugManager.flags.UseBindlessMode.set(0);
+    NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
+    NEO::MockDevice *neoDevice3 = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice3));
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice2));
+
+    ze_result_t res;
+    auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &res);
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
+
     uint32_t count = 0;
-    ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
-    EXPECT_GT(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size()));
+    res = driverHandle->getExtensionProperties(&count, nullptr);
+    EXPECT_GT(count, static_cast<uint32_t>(driverHandleImp->extensionsSupported.size()));
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ze_driver_extension_properties_t *extensionProperties = new ze_driver_extension_properties_t[count];
@@ -164,12 +181,15 @@ TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertie
     for (uint32_t i = 0; i < count; i++) {
         auto extension = extensionProperties[i];
         if (strcmp(extension.name, ZE_BINDLESS_IMAGE_EXP_NAME) == 0) {
+            EXPECT_FALSE(extensionFound);
             extensionFound = true;
         }
     }
     EXPECT_TRUE(extensionFound);
 
     delete[] extensionProperties;
+    delete driverHandle;
+    L0::globalDriver = nullptr;
 }
 
 TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsReturned) {

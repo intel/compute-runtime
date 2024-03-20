@@ -73,7 +73,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         anyLocalMemorySupported |= this->localMemorySupported[rootDeviceIndex];
         isLocalMemoryUsedForIsa(rootDeviceIndex);
 
-        auto globalHeap = ApiSpecificConfig::getGlobalBindlessHeapConfiguration();
+        auto globalHeap = ApiSpecificConfig::getGlobalBindlessHeapConfiguration(rootDeviceEnvironment.getReleaseHelper());
         heapAssigners.push_back(std::make_unique<HeapAssigner>(globalHeap));
     }
 

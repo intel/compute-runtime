@@ -21,7 +21,7 @@ bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return false;
 }
 
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper) {
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
         return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
     }

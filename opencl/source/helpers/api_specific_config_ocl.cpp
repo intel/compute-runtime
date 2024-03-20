@@ -20,7 +20,7 @@ bool ApiSpecificConfig::isStatelessCompressionSupported() {
     return true;
 }
 
-bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration() {
+bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper) {
     return false;
 }
 

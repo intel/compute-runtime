@@ -143,10 +143,12 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 
     std::vector<std::pair<std::string, uint32_t>> additionalExtensions;
 
-    if (NEO::ApiSpecificConfig::getGlobalBindlessHeapConfiguration()) {
-        additionalExtensions.push_back({ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT});
+    for (const auto device : devices) {
+        if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
+            additionalExtensions.push_back({ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT});
+            break;
+        }
     }
-
     devices[0]->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, devices[0]->getProductHelper());
 
     auto extensionCount = static_cast<uint32_t>(this->extensionsSupported.size() + additionalExtensions.size());
