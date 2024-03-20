@@ -138,7 +138,7 @@ uint32_t ReleaseHelperHw<releaseType>::getL3BankCount() const {
 }
 
 template <ReleaseType releaseType>
-uint64_t ReleaseHelperHw<releaseType>::getL3CacheSizeInKb() const {
+uint64_t ReleaseHelperHw<releaseType>::getL3CacheBankSizeInKb() const {
     return 0;
 }
 
