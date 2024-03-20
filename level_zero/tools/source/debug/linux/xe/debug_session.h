@@ -83,16 +83,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     static void *asyncThreadFunction(void *arg);
     void handleEventsAsync();
 
-    bool readModuleDebugArea() override {
-        UNRECOVERABLE_IF(true);
-        return true;
-    }
-
-    ze_result_t readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) override {
-        UNRECOVERABLE_IF(true);
-        return ZE_RESULT_SUCCESS;
-    }
-
     void cleanRootSessionAfterDetach(uint32_t deviceIndex) override {
         UNRECOVERABLE_IF(true);
     }
@@ -112,16 +102,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
         UNRECOVERABLE_IF(true);
-    }
-
-    uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
-        UNRECOVERABLE_IF(true);
-        return 0;
-    }
-
-    size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override {
-        UNRECOVERABLE_IF(true);
-        return 0;
     }
 
     void attachTile() override {

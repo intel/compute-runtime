@@ -173,15 +173,9 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     void extractUuidData(uint64_t client, const UuidData &uuidData);
     uint64_t extractVaFromUuidString(std::string &uuid);
 
-    bool readModuleDebugArea() override;
-    ze_result_t readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) override;
-    void readStateSaveAreaHeader() override;
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
 
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override;
-    uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override;
-    size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override;
-    virtual uint64_t getSbaBufferGpuVa(uint64_t memoryHandle);
     void printContextVms();
 
     bool isTileWithinDeviceBitfield(uint32_t tileIndex) {

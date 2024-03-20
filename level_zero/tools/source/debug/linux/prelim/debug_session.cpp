@@ -571,51 +571,6 @@ bool DebugSessionLinuxi915::checkAllEventsCollected() {
     return allEventsCollected;
 }
 
-bool DebugSessionLinuxi915::readModuleDebugArea() {
-    auto vm = clientHandleToConnection[clientHandle]->vmToModuleDebugAreaBindInfo.begin()->first;
-    auto gpuVa = clientHandleToConnection[clientHandle]->vmToModuleDebugAreaBindInfo.begin()->second.gpuVa;
-
-    memset(this->debugArea.magic, 0, sizeof(this->debugArea.magic));
-    auto retVal = readGpuMemory(vm, reinterpret_cast<char *>(&this->debugArea), sizeof(this->debugArea), gpuVa);
-
-    if (retVal != ZE_RESULT_SUCCESS || strncmp(this->debugArea.magic, "dbgarea", sizeof(NEO::DebugAreaHeader::magic)) != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("Reading Module Debug Area failed, error = %d\n", retVal);
-        return false;
-    }
-
-    return true;
-}
-
-void DebugSessionLinuxi915::readStateSaveAreaHeader() {
-    if (clientHandle == invalidClientHandle) {
-        return;
-    }
-
-    uint64_t vm = 0;
-    uint64_t gpuVa = 0;
-    size_t totalSize = 0;
-
-    {
-        std::lock_guard<std::mutex> lock(asyncThreadMutex);
-        if (clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.size() > 0) {
-            vm = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.begin()->first;
-            gpuVa = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.begin()->second.gpuVa;
-            totalSize = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.begin()->second.size;
-        }
-    }
-
-    if (gpuVa > 0) {
-        auto headerSize = sizeof(SIP::StateSaveAreaHeader);
-
-        if (totalSize < headerSize) {
-            PRINT_DEBUGGER_ERROR_LOG("Context State Save Area size incorrect\n", "");
-            return;
-        } else {
-            validateAndSetStateSaveAreaHeader(vm, gpuVa);
-        }
-    }
-}
-
 ze_result_t DebugSessionLinuxi915::readEventImp(prelim_drm_i915_debug_event *drmDebugEvent) {
     auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_EVENT, drmDebugEvent);
     if (ret != 0) {
@@ -1486,55 +1441,6 @@ ze_result_t DebugSessionLinuxi915::acknowledgeEvent(const zet_debug_event_t *eve
     }
 
     return ZE_RESULT_ERROR_UNINITIALIZED;
-}
-
-ze_result_t DebugSessionLinuxi915::readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) {
-    auto vmHandle = allThreads[threadId]->getMemoryHandle();
-
-    if (vmHandle == invalidHandle) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    auto gpuVa = getSbaBufferGpuVa(vmHandle);
-    if (gpuVa == 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    return readGpuMemory(vmHandle, reinterpret_cast<char *>(&sbaBuffer), sizeof(sbaBuffer), gpuVa);
-}
-
-uint64_t DebugSessionLinuxi915::getSbaBufferGpuVa(uint64_t memoryHandle) {
-    std::lock_guard<std::mutex> lock(asyncThreadMutex);
-    auto bindInfo = clientHandleToConnection[clientHandle]->vmToStateBaseAreaBindInfo.find(memoryHandle);
-    if (bindInfo == clientHandleToConnection[clientHandle]->vmToStateBaseAreaBindInfo.end()) {
-        return 0;
-    }
-
-    return bindInfo->second.gpuVa;
-}
-
-uint64_t DebugSessionLinuxi915::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) {
-    std::lock_guard<std::mutex> lock(asyncThreadMutex);
-    auto bindInfo = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.find(memoryHandle);
-    if (bindInfo == clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.end()) {
-        return 0;
-    }
-
-    return bindInfo->second.gpuVa;
-}
-
-size_t DebugSessionLinuxi915::getContextStateSaveAreaSize(uint64_t memoryHandle) {
-    std::lock_guard<std::mutex> lock(asyncThreadMutex);
-    if (clientHandleToConnection[clientHandle]->contextStateSaveAreaSize != 0) {
-        return clientHandleToConnection[clientHandle]->contextStateSaveAreaSize;
-    }
-
-    auto bindInfo = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.find(memoryHandle);
-    if (bindInfo == clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.end()) {
-        return 0;
-    }
-    clientHandleToConnection[clientHandle]->contextStateSaveAreaSize = static_cast<size_t>(bindInfo->second.size);
-    return clientHandleToConnection[clientHandle]->contextStateSaveAreaSize;
 }
 
 void TileDebugSessionLinuxi915::readStateSaveAreaHeader() {

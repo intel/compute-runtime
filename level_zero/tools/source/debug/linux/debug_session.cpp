@@ -744,4 +744,98 @@ bool DebugSessionLinux::getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitf
     return isaFound > 0;
 }
 
+bool DebugSessionLinux::readModuleDebugArea() {
+    auto vm = getClientConnection(clientHandle)->vmToModuleDebugAreaBindInfo.begin()->first;
+    auto gpuVa = getClientConnection(clientHandle)->vmToModuleDebugAreaBindInfo.begin()->second.gpuVa;
+
+    memset(this->debugArea.magic, 0, sizeof(this->debugArea.magic));
+    auto retVal = readGpuMemory(vm, reinterpret_cast<char *>(&this->debugArea), sizeof(this->debugArea), gpuVa);
+
+    if (retVal != ZE_RESULT_SUCCESS || strncmp(this->debugArea.magic, "dbgarea", sizeof(NEO::DebugAreaHeader::magic)) != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("Reading Module Debug Area failed, error = %d\n", retVal);
+        return false;
+    }
+
+    return true;
+}
+
+ze_result_t DebugSessionLinux::readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) {
+    auto vmHandle = allThreads[threadId]->getMemoryHandle();
+
+    if (vmHandle == invalidHandle) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    auto gpuVa = getSbaBufferGpuVa(vmHandle);
+    if (gpuVa == 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    return readGpuMemory(vmHandle, reinterpret_cast<char *>(&sbaBuffer), sizeof(sbaBuffer), gpuVa);
+}
+
+uint64_t DebugSessionLinux::getSbaBufferGpuVa(uint64_t memoryHandle) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    auto bindInfo = getClientConnection(clientHandle)->vmToStateBaseAreaBindInfo.find(memoryHandle);
+    if (bindInfo == getClientConnection(clientHandle)->vmToStateBaseAreaBindInfo.end()) {
+        return 0;
+    }
+
+    return bindInfo->second.gpuVa;
+}
+
+uint64_t DebugSessionLinux::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    auto bindInfo = getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.find(memoryHandle);
+    if (bindInfo == getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.end()) {
+        return 0;
+    }
+
+    return bindInfo->second.gpuVa;
+}
+
+size_t DebugSessionLinux::getContextStateSaveAreaSize(uint64_t memoryHandle) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    if (getClientConnection(clientHandle)->contextStateSaveAreaSize != 0) {
+        return getClientConnection(clientHandle)->contextStateSaveAreaSize;
+    }
+
+    auto bindInfo = getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.find(memoryHandle);
+    if (bindInfo == getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.end()) {
+        return 0;
+    }
+    getClientConnection(clientHandle)->contextStateSaveAreaSize = static_cast<size_t>(bindInfo->second.size);
+    return getClientConnection(clientHandle)->contextStateSaveAreaSize;
+}
+
+void DebugSessionLinux::readStateSaveAreaHeader() {
+    if (clientHandle == invalidClientHandle) {
+        return;
+    }
+
+    uint64_t vm = 0;
+    uint64_t gpuVa = 0;
+    size_t totalSize = 0;
+
+    {
+        std::lock_guard<std::mutex> lock(asyncThreadMutex);
+        if (getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.size() > 0) {
+            vm = getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.begin()->first;
+            gpuVa = getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.begin()->second.gpuVa;
+            totalSize = getClientConnection(clientHandle)->vmToContextStateSaveAreaBindInfo.begin()->second.size;
+        }
+    }
+
+    if (gpuVa > 0) {
+        auto headerSize = sizeof(SIP::StateSaveAreaHeader);
+
+        if (totalSize < headerSize) {
+            PRINT_DEBUGGER_ERROR_LOG("Context State Save Area size incorrect\n", "");
+            return;
+        } else {
+            validateAndSetStateSaveAreaHeader(vm, gpuVa);
+        }
+    }
+}
+
 } // namespace L0
