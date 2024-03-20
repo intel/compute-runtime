@@ -539,9 +539,6 @@ size_t BlitCommandsHelper<GfxFamily>::getProfilingMmioCmdsSize() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendBaseAddressOffset(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t originalSliceIndex, const bool isSource) {}
-
-template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::encodeWa(LinearStream &cmdStream, const BlitProperties &blitProperties, uint32_t &latestSentBcsWaValue) {
 }
 
