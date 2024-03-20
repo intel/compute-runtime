@@ -891,7 +891,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperOnGenPlatformsWhenGettingPlat
 HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperOnGenPlatformsWhenGettingCmdlistUpdateCapabilityThenReturnZero, IsAtMostGen12lp) {
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(0u, l0GfxCoreHelper.getCmdListUpdateCapabilities());
+    EXPECT_EQ(0u, l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities());
 }
 
 HWTEST_F(L0GfxCoreHelperTest, whenAskingForUnifiedPostSyncAllocLayoutThenCheckImmWriteOffset) {
@@ -929,6 +929,25 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGetting
     debugManager.flags.UseImmediateFlushTask.set(1);
 
     EXPECT_TRUE(L0GfxCoreHelper::useImmediateComputeFlushTask(rootDeviceEnvironment));
+}
+
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingCmdListUpdateCapabilityThenUseDbgKeyValue) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment;
+    const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+
+    constexpr uint32_t expectedValue = 2359;
+    debugManager.flags.OverrideCmdListUpdateCapability.set(static_cast<int32_t>(expectedValue));
+
+    EXPECT_EQ(expectedValue, L0GfxCoreHelper::getCmdListUpdateCapabilities(rootDeviceEnvironment));
+}
+
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultCmdlistUpdateCapabilityThenUsePlatformDefaultSetting) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_EQ(l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities(), L0GfxCoreHelper::getCmdListUpdateCapabilities(rootDeviceEnvironment));
 }
 
 } // namespace ult

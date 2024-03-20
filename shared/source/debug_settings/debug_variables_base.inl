@@ -278,6 +278,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PrintMmapAndMunMapCalls, -1, "-1: default, If se
 DECLARE_DEBUG_VARIABLE(int32_t, EnableUserFenceUponUnbind, -1, "-1: default, 0: Dont enable fence, 1: Enable user fence on Vm_Unbind call")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWaitOnUserFenceAfterBindAndUnbind, -1, "-1: default, 0: Dont wait on fence, 1: Wait on user fence after Vm_Unbind call to ensure fence completion")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlushWithTaskCountAfterCopy, -1, "-1: default, 0: Do not force TLB flush (default), 1: Force TLB flush with task count update after copy")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdListUpdateCapability, -1, "-1: default, >=0: Use value to report command list update capability")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
