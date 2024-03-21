@@ -1799,3 +1799,22 @@ TEST(IoctlHelperXeTest, whenCallingGetStatusAndFlagsForResetStatsThenZeroIsRetur
 
     EXPECT_FALSE(ioctlHelper->validPageFault(0u));
 }
+
+TEST(IoctlHelperXeTest, whenInitializeThenProperHwInfoIsSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    hwInfo->platform.usDeviceID = 0;
+    hwInfo->platform.usRevId = 0;
+    hwInfo->capabilityTable.gpuAddressSpace = 0;
+
+    auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm.ioctlHelper.get());
+    ioctlHelper->initialize();
+    EXPECT_EQ(drm.revId, hwInfo->platform.usRevId);
+    EXPECT_EQ(drm.devId, hwInfo->platform.usDeviceID);
+    EXPECT_EQ((1ull << 48) - 1, hwInfo->capabilityTable.gpuAddressSpace);
+}

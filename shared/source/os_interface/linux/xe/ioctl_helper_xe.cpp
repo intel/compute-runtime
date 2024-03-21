@@ -155,6 +155,7 @@ bool IoctlHelperXe::initialize() {
     auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.usDeviceID = chipsetId;
     hwInfo->platform.usRevId = revId;
+    hwInfo->capabilityTable.gpuAddressSpace = (1ull << config->info[DRM_XE_QUERY_CONFIG_VA_BITS]) - 1;
 
     return true;
 }

@@ -49,6 +49,12 @@ inline constexpr uint32_t testValueGemCreate = 0x8273;
 class DrmMockXe : public DrmMockCustom {
   public:
     DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
+
+        auto xeQueryConfig = reinterpret_cast<drm_xe_query_config *>(queryConfig);
+        xeQueryConfig->num_params = 5;
+        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] = (revId << 16) | devId;
+        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_VA_BITS] = 48;
+
         auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(queryEngines);
         xeQueryEngines->num_engines = 11;
         xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_RENDER, 0, 0}, {}};
@@ -184,6 +190,12 @@ class DrmMockXe : public DrmMockCustom {
         case DrmIoctl::query: {
             struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
             switch (deviceQuery->query) {
+            case DRM_XE_DEVICE_QUERY_CONFIG:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryConfig, sizeof(queryConfig));
+                }
+                deviceQuery->size = sizeof(queryConfig);
+                break;
             case DRM_XE_DEVICE_QUERY_ENGINES:
                 if (deviceQuery->data) {
                     memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryEngines, sizeof(queryEngines));
@@ -266,6 +278,10 @@ class DrmMockXe : public DrmMockCustom {
     int setIoctlAnswer = 0;
     int gemVmBindReturn = 0;
 
+    const uint16_t revId = 0x12;
+    const uint16_t devId = 0xabc;
+
+    uint64_t queryConfig[6]{}; // 1 qword for num params and 1 qwords per param
     static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
     uint64_t queryEngines[45]{}; // 1 qword for num engines and 4 qwords per engine
     static_assert(sizeof(drm_xe_mem_region) == 11 * sizeof(uint64_t), "");
