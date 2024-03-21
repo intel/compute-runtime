@@ -2969,13 +2969,13 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
     bool expectedFrontEndTracking = l0GfxCoreHelper.platformSupportsFrontEndTracking();
     EXPECT_EQ(expectedFrontEndTracking, commandList->frontEndStateTracking);
 
-    bool expectedStateBaseAddressTracking = l0GfxCoreHelper.platformSupportsStateBaseAddressTracking();
+    bool expectedStateBaseAddressTracking = l0GfxCoreHelper.platformSupportsStateBaseAddressTracking(device->getNEODevice()->getRootDeviceEnvironment());
     EXPECT_EQ(expectedStateBaseAddressTracking, commandList->getCmdListStateBaseAddressTracking());
 
     bool expectedDoubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(device->getHwInfo());
     EXPECT_EQ(expectedDoubleSbaWa, commandList->doubleSbaWa);
 
-    auto expectedHeapAddressModel = l0GfxCoreHelper.getPlatformHeapAddressModel();
+    auto expectedHeapAddressModel = l0GfxCoreHelper.getPlatformHeapAddressModel(device->getNEODevice()->getRootDeviceEnvironment());
     EXPECT_EQ(expectedHeapAddressModel, commandList->getCmdListHeapAddressModel());
     EXPECT_EQ(expectedHeapAddressModel, commandList->getCmdContainer().getHeapAddressModel());
 

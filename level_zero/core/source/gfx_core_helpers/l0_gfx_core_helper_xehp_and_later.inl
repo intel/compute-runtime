@@ -33,7 +33,7 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsPipelineSelectTracking() const {
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking() const {
+bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
     return false;
 }
 
@@ -63,7 +63,7 @@ bool L0GfxCoreHelperHw<Family>::isZebinAllowed(const NEO::Debugger *debugger) co
 }
 
 template <typename Family>
-NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel() const {
+NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
     return NEO::HeapAddressModel::privateHeaps;
 }
 

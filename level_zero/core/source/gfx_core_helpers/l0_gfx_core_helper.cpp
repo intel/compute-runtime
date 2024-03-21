@@ -55,7 +55,7 @@ bool L0GfxCoreHelper::enableStateBaseAddressTracking(const NEO::RootDeviceEnviro
         return !!NEO::debugManager.flags.EnableStateBaseAddressTracking.get();
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-    return l0GfxCoreHelper.platformSupportsStateBaseAddressTracking();
+    return l0GfxCoreHelper.platformSupportsStateBaseAddressTracking(rootDeviceEnvironment);
 }
 
 bool L0GfxCoreHelper::enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool cmdlistSupport) {
@@ -100,7 +100,7 @@ NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDevice
         return static_cast<NEO::HeapAddressModel>(NEO::debugManager.flags.SelectCmdListHeapAddressModel.get());
     }
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-    return l0GfxCoreHelper.getPlatformHeapAddressModel();
+    return l0GfxCoreHelper.getPlatformHeapAddressModel(rootDeviceEnvironment);
 }
 
 bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool allowPrimary) {

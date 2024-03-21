@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
 }
 
 template <>
-bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking() const {
+bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
     return true;
 }
 

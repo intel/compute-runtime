@@ -823,7 +823,7 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultHeapModelThenU
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
 
-    EXPECT_EQ(l0GfxCoreHelper.getPlatformHeapAddressModel(), L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+    EXPECT_EQ(l0GfxCoreHelper.getPlatformHeapAddressModel(rootDeviceEnvironment), L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 }
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingDefaultHeapModelThenUseDebugKeySelectedModel) {
