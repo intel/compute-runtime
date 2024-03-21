@@ -240,7 +240,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
-    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, gfxCoreHelper);
+    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
     {
         auto heap = container.getIndirectHeap(HeapType::indirectObject);
@@ -254,11 +254,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
         UNRECOVERABLE_IF(!ptr);
         offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData);
-
+        auto &rootDeviceEnvironment = args.device->getRootDeviceEnvironment();
         if (pImplicitArgs) {
             offsetThreadData -= ImplicitArgs::getSize();
             pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
-            ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(localIdsGenerationByRuntime, requiredWorkgroupOrder), gfxCoreHelper);
+            ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(localIdsGenerationByRuntime, requiredWorkgroupOrder), rootDeviceEnvironment);
         }
 
         if (sizeCrossThreadData > 0) {
@@ -313,7 +313,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
+        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false));
         args.additionalCommands->push_back(commandBuffer);
 
         EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);

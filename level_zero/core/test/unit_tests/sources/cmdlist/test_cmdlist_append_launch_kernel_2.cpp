@@ -996,8 +996,9 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        const auto &gfxCoreHelper = device->getGfxCoreHelper();
-        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&expectedImplicitArgs, *kernelDescriptor, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
+        const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+        const auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
+        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&expectedImplicitArgs, *kernelDescriptor, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
         auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
         auto sizePerThreadDataForWholeGroup = kernel->getPerThreadDataSizeForWholeThreadGroup();
         EXPECT_EQ(indirectHeap->getUsed(), alignUp(sizeCrossThreadData + sizePerThreadDataForWholeGroup + implicitArgsProgrammingSize, gfxCoreHelper.getIOHAlignment()));
@@ -1029,11 +1030,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
-    const auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
-    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, gfxCoreHelper);
+    const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, rootDeviceEnvironment);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
-    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
+    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
@@ -1075,11 +1076,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
-    const auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
-    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, gfxCoreHelper);
+    const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, rootDeviceEnvironment);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
-    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper);
+    size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);

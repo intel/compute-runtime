@@ -48,12 +48,11 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(const Kernel &kerne
 
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kernel,
-                                                             const size_t localWorkSizes[3]) {
+                                                             const size_t localWorkSizes[3], const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto localWorkSize = Math::computeTotalElementsCount(localWorkSizes);
     typedef typename GfxFamily::DefaultWalkerType DefaultWalkerType;
     const auto &kernelDescriptor = kernel.getDescriptor();
     const auto &hwInfo = kernel.getHardwareInfo();
-    const auto &gfxCoreHelper = kernel.getGfxCoreHelper();
 
     auto numChannels = kernelDescriptor.kernelAttributes.numLocalIdChannels;
     uint32_t grfSize = hwInfo.capabilityTable.grfSize;
@@ -70,11 +69,11 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kerne
         requiredWalkOrder,
         simdSize);
     auto size = kernel.getCrossThreadDataSize() +
-                getPerThreadDataSizeTotal(simdSize, grfSize, numChannels, localWorkSize, isHwLocalIdGeneration, gfxCoreHelper);
+                getPerThreadDataSizeTotal(simdSize, grfSize, numChannels, localWorkSize, isHwLocalIdGeneration, rootDeviceEnvironment);
 
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {
-        size += ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, gfxCoreHelper);
+        size += ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, rootDeviceEnvironment);
     }
     return alignUp(size, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
 }
@@ -110,7 +109,8 @@ size_t HardwareCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(
     const MultiDispatchInfo &multiDispatchInfo) {
     return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredIOH(
                                                                                          *dispatchInfo.getKernel(),
-                                                                                         dispatchInfo.getLocalWorkgroupSize().values); });
+                                                                                         dispatchInfo.getLocalWorkgroupSize().values,
+                                                                                         dispatchInfo.getClDevice().getRootDeviceEnvironment()); });
 }
 
 template <typename GfxFamily>
@@ -270,14 +270,14 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto grfSize = kernel.getDescriptor().kernelAttributes.numGrfRequired;
     auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
-    auto threadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkItems), grfSize, !localIdsGenerationByRuntime);
+    auto threadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkItems), grfSize, !localIdsGenerationByRuntime, device.getRootDeviceEnvironment());
 
     uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize();
 
     auto inlineDataProgrammingRequired = EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelInfo().kernelDescriptor);
     size_t offsetCrossThreadData = HardwareCommandsHelper<GfxFamily>::sendCrossThreadData<WalkerType>(
         ioh, kernel, inlineDataProgrammingRequired,
-        walkerCmd, sizeCrossThreadData, scratchAddress);
+        walkerCmd, sizeCrossThreadData, scratchAddress, device.getRootDeviceEnvironment());
 
     size_t sizePerThreadDataTotal = 0;
     size_t sizePerThreadData = 0;

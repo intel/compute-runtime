@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include <algorithm>
@@ -112,8 +113,9 @@ TEST(LocalIdTest, givenVariadicGrfSizeWhenLocalSizesAreEmittedThenUseFullRowSize
     std::array<uint16_t, 3u> localSizes = {{2u, 2u, 1u}};
     std::array<uint8_t, 3u> dimensionsOrder = {{0u, 1u, 2u}};
 
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
-    generateLocalIDs(localIdsPtr.get(), 16u, localSizes, dimensionsOrder, false, 64u, *gfxCoreHelper.get());
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    generateLocalIDs(localIdsPtr.get(), 16u, localSizes, dimensionsOrder, false, 64u, rootDeviceEnvironment);
     EXPECT_EQ(localIdsView[0], 0u);
     EXPECT_EQ(localIdsView[1], 1u);
     EXPECT_EQ(localIdsView[2], 0u);
@@ -308,42 +310,47 @@ struct LocalIDFixture : ::testing::TestWithParam<std::tuple<int, int, int, int, 
 };
 
 HWTEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenIdsAreWithinLimits) {
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize, *gfxCoreHelper.get());
+                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize, rootDeviceEnvironment);
     validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
 HWTEST_P(LocalIDFixture, WhenGeneratingLocalIdsThenAllWorkItemsCovered) {
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize, *gfxCoreHelper.get());
+                     std::array<uint8_t, 3>{{0, 1, 2}}, false, grfSize, rootDeviceEnvironment);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
 HWTEST_P(LocalIDFixture, WhenWalkOrderIsXyzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{0, 1, 2}};
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     dimensionsOrder, false, grfSize, *gfxCoreHelper.get());
+                     dimensionsOrder, false, grfSize, rootDeviceEnvironment);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 
 HWTEST_P(LocalIDFixture, WhenWalkOrderIsYxzThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{1, 0, 2}};
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     dimensionsOrder, false, grfSize, *gfxCoreHelper.get());
+                     dimensionsOrder, false, grfSize, rootDeviceEnvironment);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 
 HWTEST_P(LocalIDFixture, WhenWalkOrderIsZyxThenProperLocalIdsAreGenerated) {
     auto dimensionsOrder = std::array<uint8_t, 3>{{2, 1, 0}};
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
-                     dimensionsOrder, false, grfSize, *gfxCoreHelper.get());
+                     dimensionsOrder, false, grfSize, rootDeviceEnvironment);
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
     validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
@@ -383,8 +390,9 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
         memset(memory.get(), 0xff, size);
         buffer = reinterpret_cast<uint16_t *>(memory.get());
         EXPECT_TRUE(isCompatibleWithLayoutForImages(localWorkSize, dimensionsOrder, simd));
-        auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
-        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true, grfSize, *gfxCoreHelper.get());
+        NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+        auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true, grfSize, rootDeviceEnvironment);
     }
     void validateGRF() {
         uint32_t totalLocalIds = localWorkSize.at(0) * localWorkSize.at(1);
@@ -484,9 +492,10 @@ TEST_P(LocalIdsLayoutTest, givenLocalWorkgroupSize4x4x1WhenGenerateLocalIdsThenH
     auto alignedMemory2 = allocateAlignedMemory(size, 32);
     auto buffer2 = reinterpret_cast<uint16_t *>(alignedMemory2.get());
     memset(buffer2, 0xff, size);
-    auto gfxCoreHelper = GfxCoreHelper::create(defaultHwInfo->platform.eRenderCoreFamily);
-    generateLocalIDs(buffer1, simd, localWorkSize, dimensionsOrder, false, grfSize, *gfxCoreHelper.get());
-    generateLocalIDs(buffer2, simd, localWorkSize, dimensionsOrder, true, grfSize, *gfxCoreHelper.get());
+    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    generateLocalIDs(buffer1, simd, localWorkSize, dimensionsOrder, false, grfSize, rootDeviceEnvironment);
+    generateLocalIDs(buffer2, simd, localWorkSize, dimensionsOrder, true, grfSize, rootDeviceEnvironment);
 
     for (auto i = 0u; i < elemsInBuffer / rowWidth; i++) {
         for (auto j = 0u; j < rowWidth; j++) {

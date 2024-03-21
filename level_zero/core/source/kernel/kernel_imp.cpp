@@ -381,13 +381,13 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     this->numThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(
-        simdSize, static_cast<uint32_t>(itemsInGroup), grfSize, !kernelRequiresGenerationOfLocalIdsByRuntime);
+        simdSize, static_cast<uint32_t>(itemsInGroup), grfSize, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
 
     if (kernelRequiresGenerationOfLocalIdsByRuntime) {
         auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
         uint32_t perThreadDataSizeForWholeThreadGroupNeeded =
             static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                simdSize, grfSize, numChannels, itemsInGroup, !kernelRequiresGenerationOfLocalIdsByRuntime, gfxCoreHelper));
+                simdSize, grfSize, numChannels, itemsInGroup, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment));
         if (perThreadDataSizeForWholeThreadGroupNeeded >
             perThreadDataSizeForWholeThreadGroupAllocated) {
             alignedFree(perThreadDataForWholeThreadGroup);
@@ -405,7 +405,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                          static_cast<uint16_t>(groupSizeY),
                                          static_cast<uint16_t>(groupSizeZ)}},
                 std::array<uint8_t, 3>{{0, 1, 2}},
-                false, grfSize, gfxCoreHelper);
+                false, grfSize, rootDeviceEnvironment);
         }
 
         this->perThreadDataSize = perThreadDataSizeForWholeThreadGroup / numThreadsPerThreadGroup;
@@ -902,8 +902,8 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
     memset(pKernelProperties->uuid.mid, 0, ZE_MAX_MODULE_UUID_SIZE);
 
     uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getMaxGroupSize(kernelDescriptor));
-
-    maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, !kernelRequiresGenerationOfLocalIdsByRuntime, maxKernelWorkGroupSize);
+    const auto &rootDeviceEnvironment = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
+    maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, !kernelRequiresGenerationOfLocalIdsByRuntime, maxKernelWorkGroupSize, rootDeviceEnvironment);
     pKernelProperties->maxNumSubgroups = maxKernelWorkGroupSize / kernelDescriptor.kernelAttributes.simdSize;
 
     void *pNext = pKernelProperties->pNext;

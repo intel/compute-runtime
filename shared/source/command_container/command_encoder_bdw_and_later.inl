@@ -181,7 +181,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     bool isHwLocalIdGeneration = false;
-    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, gfxCoreHelper);
+    uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, rootDeviceEnvironment);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
     uint64_t offsetThreadData = 0u;
     {
@@ -203,7 +203,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             auto implicitArgsCrossThreadPtr = ptrOffset(const_cast<uint64_t *>(reinterpret_cast<const uint64_t *>(args.dispatchInterface->getCrossThreadData())), kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
             *implicitArgsCrossThreadPtr = implicitArgsGpuVA;
 
-            ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, {}, gfxCoreHelper);
+            ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, {}, rootDeviceEnvironment);
         }
 
         memcpy_s(ptr, sizeCrossThreadData,

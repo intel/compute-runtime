@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/local_id_gen.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen_special.inl"
@@ -45,9 +46,10 @@ LocalIDHelper::LocalIDHelper() {
 LocalIDHelper LocalIDHelper::initializer;
 
 // traditional function to generate local IDs
-void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize, const GfxCoreHelper &gfxCoreHelper) {
+void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize, const RootDeviceEnvironment &rootDeviceEnvironment) {
     bool localIdsGeneratedByHw = false;
-    auto threadsPerWorkGroup = static_cast<uint16_t>(gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]), grfSize, localIdsGeneratedByHw));
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+    auto threadsPerWorkGroup = static_cast<uint16_t>(gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]), grfSize, localIdsGeneratedByHw, rootDeviceEnvironment));
     bool useLayoutForImages = isImageOnlyKernel && isCompatibleWithLayoutForImages(localWorkgroupSize, dimensionsOrder, simd);
     if (useLayoutForImages) {
         generateLocalIDsWithLayoutForImages(buffer, localWorkgroupSize, simd);

@@ -59,7 +59,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     bool inlineDataProgrammingRequired,
     WalkerType *walkerCmd,
     uint32_t &sizeCrossThreadData,
-    [[maybe_unused]] uint64_t scratchAddress) {
+    [[maybe_unused]] uint64_t scratchAddress,
+    const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     indirectHeap.align(GfxFamily::indirectDataAlignment);
 
@@ -87,15 +88,14 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
             requiredWalkOrder,
             kernelDescriptor.kernelAttributes.simdSize);
 
-        const auto &gfxCoreHelper = kernel.getGfxCoreHelper();
-        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !generationOfLocalIdsByRuntime, gfxCoreHelper);
+        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !generationOfLocalIdsByRuntime, rootDeviceEnvironment);
 
         auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - ImplicitArgs::getSize();
         offsetCrossThreadData += sizeForLocalIdsProgramming;
 
         auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
 
-        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder), gfxCoreHelper);
+        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder), rootDeviceEnvironment);
     }
 
     uint32_t sizeToCopy = sizeCrossThreadData;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/kernel/implicit_args_helper.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_walk_order.h"
@@ -43,7 +44,7 @@ uint32_t getGrfSize(uint32_t simd) {
     return 32u;
 }
 
-uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const KernelDescriptor &kernelDescriptor, bool isHwLocalIdGeneration, const GfxCoreHelper &gfxCoreHelper) {
+uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const KernelDescriptor &kernelDescriptor, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (!pImplicitArgs) {
         return 0;
     }
@@ -58,15 +59,15 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
         auto itemsInGroup = Math::computeTotalElementsCount(localWorkSize);
         uint32_t localIdsSizeNeeded =
             alignUp(static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                        simdSize, grfSize, 3u, itemsInGroup, isHwLocalIdGeneration, gfxCoreHelper)),
+                        simdSize, grfSize, 3u, itemsInGroup, isHwLocalIdGeneration, rootDeviceEnvironment)),
                     MemoryConstants::cacheLineSize);
         return implicitArgsSize + localIdsSizeNeeded;
     }
 }
 
-void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, const KernelDescriptor &kernelDescriptor, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams, const GfxCoreHelper &gfxCoreHelper) {
+void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, const KernelDescriptor &kernelDescriptor, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams, const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto localIdsGeneratedByHw = hwGenerationOfLocalIdsParams.has_value() ? hwGenerationOfLocalIdsParams.value().first : false;
-    auto totalSizeToProgram = getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, localIdsGeneratedByHw, gfxCoreHelper);
+    auto totalSizeToProgram = getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, localIdsGeneratedByHw, rootDeviceEnvironment);
     auto retVal = ptrOffset(ptrToPatch, totalSizeToProgram);
 
     auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
@@ -82,7 +83,7 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
                                      static_cast<uint16_t>(implicitArgs.localSizeY),
                                      static_cast<uint16_t>(implicitArgs.localSizeZ)}},
             dimensionOrder,
-            false, grfSize, gfxCoreHelper);
+            false, grfSize, rootDeviceEnvironment);
         auto sizeForLocalIdsProgramming = totalSizeToProgram - ImplicitArgs::getSize();
         ptrToPatch = ptrOffset(ptrToPatch, sizeForLocalIdsProgramming);
     }

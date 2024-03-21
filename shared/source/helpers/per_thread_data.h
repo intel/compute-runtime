@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/simd_helper.h"
@@ -23,12 +24,13 @@ struct PerThreadDataHelper {
         uint32_t numChannels,
         size_t localWorkSize,
         bool isHwLocalIdGeneration,
-        const GfxCoreHelper &gfxCoreHelper) {
+        const RootDeviceEnvironment &rootDeviceEnvironment) {
         auto perThreadSizeLocalIDs = static_cast<size_t>(getPerThreadSizeLocalIDs(simd, grfSize, numChannels));
         if (isSimd1(simd)) {
             return perThreadSizeLocalIDs * localWorkSize;
         }
-        return perThreadSizeLocalIDs * gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkSize), grfSize, isHwLocalIdGeneration);
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+        return perThreadSizeLocalIDs * gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkSize), grfSize, isHwLocalIdGeneration, rootDeviceEnvironment);
     }
 }; // namespace PerThreadDataHelper
 } // namespace NEO

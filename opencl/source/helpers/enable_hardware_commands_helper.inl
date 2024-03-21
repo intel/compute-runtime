@@ -33,7 +33,8 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendCrossThreadDat
     bool inlineDataProgrammingRequired,
     FamilyType::DefaultWalkerType *walkerCmd,
     uint32_t &sizeCrossThreadData,
-    uint64_t scratchAddress);
+    uint64_t scratchAddress,
+    const RootDeviceEnvironment &rootDeviceEnvironment);
 
 template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendInterfaceDescriptorData<NEO::FamilyType::DefaultWalkerType, NEO::FamilyType::INTERFACE_DESCRIPTOR_DATA>(
     const IndirectHeap &indirectHeap,

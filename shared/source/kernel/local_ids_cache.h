@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include <mutex>
 
 namespace NEO {
-class GfxCoreHelper;
+struct RootDeviceEnvironment;
 class LocalIdsCache {
   public:
     struct LocalIdsCacheEntry {
@@ -30,13 +30,13 @@ class LocalIdsCache {
     LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint8_t simdSize, uint8_t grfSize, bool usesOnlyImages = false);
     ~LocalIdsCache();
 
-    void setLocalIdsForGroup(const Vec3<uint16_t> &group, void *destination, const GfxCoreHelper &gfxCoreHelper);
-    size_t getLocalIdsSizeForGroup(const Vec3<uint16_t> &group, const GfxCoreHelper &gfxCoreHelper) const;
+    void setLocalIdsForGroup(const Vec3<uint16_t> &group, void *destination, const RootDeviceEnvironment &rootDeviceEnvironment);
+    size_t getLocalIdsSizeForGroup(const Vec3<uint16_t> &group, const RootDeviceEnvironment &rootDeviceEnvironment) const;
     size_t getLocalIdsSizePerThread() const;
 
   protected:
     void setLocalIdsForEntry(LocalIdsCacheEntry &entry, void *destination);
-    void commitNewEntry(LocalIdsCacheEntry &entry, const Vec3<uint16_t> &group, const GfxCoreHelper &gfxCoreHelper);
+    void commitNewEntry(LocalIdsCacheEntry &entry, const Vec3<uint16_t> &group, const RootDeviceEnvironment &rootDeviceEnvironment);
     std::unique_lock<std::mutex> lock();
 
     StackVec<LocalIdsCacheEntry, 4> cache;

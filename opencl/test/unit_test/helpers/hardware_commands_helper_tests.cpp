@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -171,7 +171,9 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
         *kernel,
         false,
         nullptr,
-        sizeCrossThreadData, 0);
+        sizeCrossThreadData,
+        0,
+        pClDevice->getRootDeviceEnvironment());
 
     auto usedAfter = indirectHeap.getUsed();
     EXPECT_EQ(kernel->getCrossThreadDataSize(), usedAfter - usedBefore);
@@ -199,7 +201,8 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
         false,
         nullptr,
         sizeCrossThreadData,
-        0);
+        0,
+        pClDevice->getRootDeviceEnvironment());
 
     ASSERT_EQ(1u, kernel->getPatchInfoDataList().size());
     EXPECT_EQ(0xaaaaaaaa, kernel->getPatchInfoDataList()[0].sourceAllocation);
@@ -222,7 +225,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenIndirectHeapNotAllocatedF
         false,
         nullptr,
         sizeCrossThreadData,
-        0);
+        0,
+        pClDevice->getRootDeviceEnvironment());
     EXPECT_EQ(0u, offset);
     pDevice->getMemoryManager()->freeGraphicsMemory(nonInternalAllocation);
 }
@@ -240,7 +244,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenIndirectHeapAllocatedFrom
         false,
         nullptr,
         sizeCrossThreadData,
-        0);
+        0,
+        pClDevice->getRootDeviceEnvironment());
     EXPECT_EQ(expectedOffset, offset);
 
     pDevice->getMemoryManager()->freeGraphicsMemory(internalAllocation);
@@ -275,7 +280,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenSendCrossThreadDataWhenWh
         false,
         nullptr,
         sizeCrossThreadData,
-        0);
+        0,
+        pClDevice->getRootDeviceEnvironment());
 
     ASSERT_NE(0u, offsetCrossThreadData);
     EXPECT_EQ(128u, offsetCrossThreadData);
@@ -373,7 +379,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
     auto sizeRequiredDSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto sizeRequiredIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel, localWorkSizes);
+    auto sizeRequiredIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel, localWorkSizes, pDevice->getRootDeviceEnvironment());
     auto sizeRequiredSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
     EXPECT_GE(sizeRequiredDSH, usedAfterDSH - usedBeforeDSH);
@@ -559,8 +565,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     constexpr uint32_t grfSize = sizeof(typename FamilyType::GRF);
     size_t localWorkSize = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     auto numChannels = modifiedKernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
-    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    size_t expectedIohSize = PerThreadDataHelper::getPerThreadDataSizeTotal(modifiedKernelInfo.getMaxSimdSize(), grfSize, numChannels, localWorkSize, !kernelUsesLocalIds, gfxCoreHelper);
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    size_t expectedIohSize = PerThreadDataHelper::getPerThreadDataSizeTotal(modifiedKernelInfo.getMaxSimdSize(), grfSize, numChannels, localWorkSize, !kernelUsesLocalIds, rootDeviceEnvironment);
     ASSERT_LE(expectedIohSize, ioh.getUsed());
 
     auto expectedLocalIds = alignedMalloc(expectedIohSize, 64);
@@ -569,7 +575,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
                      std::array<uint8_t, 3>{{modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
                                              modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
                                              modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
-                     false, grfSize, gfxCoreHelper);
+                     false, grfSize, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, ioh.getCpuBase(), expectedIohSize));
     alignedFree(expectedLocalIds);
@@ -1153,8 +1159,8 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
         kernel.setGlobalWorkSizeValues(static_cast<uint32_t>(expectedImplicitArgs.globalSizeX), static_cast<uint32_t>(expectedImplicitArgs.globalSizeY), static_cast<uint32_t>(expectedImplicitArgs.globalSizeZ));
         kernel.setGlobalWorkOffsetValues(static_cast<uint32_t>(expectedImplicitArgs.globalOffsetX), static_cast<uint32_t>(expectedImplicitArgs.globalOffsetY), static_cast<uint32_t>(expectedImplicitArgs.globalOffsetZ));
         kernel.setNumWorkGroupsValues(expectedImplicitArgs.groupCountX, expectedImplicitArgs.groupCountY, expectedImplicitArgs.groupCountZ);
-        const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernel.getDescriptor(), false, gfxCoreHelper);
+        const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernel.getDescriptor(), false, rootDeviceEnvironment);
 
         auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
         using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
@@ -1164,7 +1170,8 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
             false,
             nullptr,
             sizeCrossThreadData,
-            0);
+            0,
+            pClDevice->getRootDeviceEnvironment());
 
         EXPECT_LE(implicitArgsProgrammingSize, indirectHeap.getUsed());
 
@@ -1218,11 +1225,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
-    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, gfxCoreHelper);
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, rootDeviceEnvironment);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
-    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, false, gfxCoreHelper);
+    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, false, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
@@ -1252,11 +1259,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
-    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, gfxCoreHelper);
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, rootDeviceEnvironment);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
-    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, false, gfxCoreHelper);
+    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, false, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
@@ -1308,7 +1315,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenIndirectHeap
         false,
         nullptr,
         sizeCrossThreadData,
-        0);
+        0,
+        pClDevice->getRootDeviceEnvironment());
     EXPECT_EQ(expectedOffset, offset);
     pDevice->getMemoryManager()->freeGraphicsMemory(nonInternalAllocation);
 }
@@ -1326,7 +1334,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenIndirectHeap
         false,
         nullptr,
         sizeCrossThreadData,
-        0);
+        0,
+        pClDevice->getRootDeviceEnvironment());
     EXPECT_EQ(expectedOffset, offset);
 
     pDevice->getMemoryManager()->freeGraphicsMemory(internalAllocation);
@@ -1362,7 +1371,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
         false,
         nullptr,
         sizeCrossThreadData,
-        0);
+        0,
+        pClDevice->getRootDeviceEnvironment());
 
     auto expectedOffsetRelativeToIohBase = 128u;
     auto iohBaseAddress = is64bit ? 0u : indirectHeap.getHeapGpuBase();

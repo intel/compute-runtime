@@ -304,7 +304,9 @@ TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeEnabledWhenSett
     mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime = true; // although it is enabled for SIMD 1, make sure it is enforced
     mockKernel.descriptor.kernelAttributes.numLocalIdChannels = 3;
     mockKernel.module = &mockModule;
-    auto grfSize = mockModule.getDevice()->getHwInfo().capabilityTable.grfSize;
+    const auto &device = mockModule.getDevice();
+    auto grfSize = device->getHwInfo().capabilityTable.grfSize;
+    const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     uint32_t groupSize[3] = {2, 3, 5};
     auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
@@ -314,7 +316,8 @@ TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeEnabledWhenSett
         mockKernel.descriptor.kernelAttributes.simdSize,
         groupSize[0] * groupSize[1] * groupSize[2],
         grfSize,
-        mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime);
+        mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime,
+        rootDeviceEnvironment);
     auto perThreadDataSizeForWholeTGNeeded =
         static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
             mockKernel.descriptor.kernelAttributes.simdSize,
@@ -322,7 +325,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeEnabledWhenSett
             mockKernel.descriptor.kernelAttributes.numLocalIdChannels,
             groupSize[0] * groupSize[1] * groupSize[2],
             !mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime,
-            gfxHelper));
+            rootDeviceEnvironment));
 
     EXPECT_EQ(numThreadsPerTG, mockKernel.getNumThreadsPerThreadGroup());
     EXPECT_EQ((perThreadDataSizeForWholeTGNeeded / numThreadsPerTG), mockKernel.perThreadDataSize);
@@ -1692,9 +1695,9 @@ TEST_F(KernelPropertiesTests, whenPassingKernelMaxGroupSizePropertiesStructToGet
 
     ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto &gfxCoreHelper = module->getDevice()->getGfxCoreHelper();
-    uint32_t maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, false, static_cast<uint32_t>(this->module->getMaxGroupSize(kernelDescriptor)));
+    auto &device = *module->getDevice();
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+    uint32_t maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, false, static_cast<uint32_t>(this->module->getMaxGroupSize(kernelDescriptor)), device.getNEODevice()->getRootDeviceEnvironment());
     EXPECT_EQ(maxKernelWorkGroupSize, maxGroupSizeProperties.maxGroupSize);
 }
 

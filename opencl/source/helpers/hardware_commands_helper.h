@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,7 +72,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         bool inlineDataProgrammingRequired,
         WalkerType *walkerCmd,
         uint32_t &sizeCrossThreadData,
-        uint64_t scratchAddress);
+        uint64_t scratchAddress,
+        const RootDeviceEnvironment &rootDeviceEnvironment);
 
     template <typename WalkerType, typename InterfaceDescriptorType>
     static size_t sendIndirectState(
@@ -111,7 +112,8 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const Kernel &kernel);
     static size_t getSizeRequiredIOH(
         const Kernel &kernel,
-        const size_t localWorkSizes[3]);
+        const size_t localWorkSizes[3],
+        const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeRequiredSSH(
         const Kernel &kernel);
 

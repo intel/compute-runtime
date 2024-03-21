@@ -1589,25 +1589,27 @@ HWTEST_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustM
 
 HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     constexpr auto defaultMaxGroupSize = 1024u;
 
     uint32_t simdSize = 16u;
     uint32_t isHwLocalIdGeneration = true;
     uint32_t numGrfRequired = GrfConfig::largeGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, isHwLocalIdGeneration, defaultMaxGroupSize));
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, isHwLocalIdGeneration, defaultMaxGroupSize, rootDeviceEnvironment));
 
     simdSize = 32u;
     numGrfRequired = GrfConfig::largeGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, isHwLocalIdGeneration, defaultMaxGroupSize));
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, isHwLocalIdGeneration, defaultMaxGroupSize, rootDeviceEnvironment));
 
     simdSize = 16u;
     isHwLocalIdGeneration = false;
     numGrfRequired = GrfConfig::defaultGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, isHwLocalIdGeneration, defaultMaxGroupSize));
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, isHwLocalIdGeneration, defaultMaxGroupSize, rootDeviceEnvironment));
 }
 
 HWTEST2_F(GfxCoreHelperTest, givenParamsWhenCalculateNumThreadsPerThreadGroupThenMethodReturnProperValue, IsAtMostXeHpcCore) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     std::array<std::array<uint32_t, 3>, 8> values = {{
         {32u, 32u, 1u}, // SIMT Size, totalWorkItems, Max Num of threads
         {32u, 64u, 2u},
@@ -1620,7 +1622,7 @@ HWTEST2_F(GfxCoreHelperTest, givenParamsWhenCalculateNumThreadsPerThreadGroupThe
     }};
 
     for (auto &[simtSize, totalWgSize, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, 32u, true));
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, 32u, true, rootDeviceEnvironment));
     }
 }
 
@@ -1634,6 +1636,7 @@ HWTEST_F(GfxCoreHelperTest, givenFlagRemoveRestrictionsOnNumberOfThreadsInGpgpuT
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup.set(1);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
 
     std::array<std::array<uint32_t, 5>, 8> values = {{
         {32u, 32u, 128u, 1, 1u}, // SIMT Size, totalWorkItems, Max Num of threads, Grf size, Hw local id generation
@@ -1647,7 +1650,7 @@ HWTEST_F(GfxCoreHelperTest, givenFlagRemoveRestrictionsOnNumberOfThreadsInGpgpuT
     }};
 
     for (auto &[simtSize, totalWgSize, grfsize, isHwLocalIdGeneration, expectedNumThreadsPerThreadGroup] : values) {
-        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfsize, isHwLocalIdGeneration));
+        EXPECT_EQ(expectedNumThreadsPerThreadGroup, gfxCoreHelper.calculateNumThreadsPerThreadGroup(simtSize, totalWgSize, grfsize, isHwLocalIdGeneration, rootDeviceEnvironment));
     }
 }
 
