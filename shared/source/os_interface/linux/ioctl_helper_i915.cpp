@@ -640,4 +640,17 @@ bool IoctlHelperI915::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime)
 
     return true;
 }
+void IoctlHelperI915::insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) {
+    auto engines = reinterpret_cast<EngineClassInstance *>(contextParamEngines.enginesData);
+    if (!engineClassInstance) {
+        engines[engineId].engineClass = getDrmParamValue(DrmParam::engineClassInvalid);
+        engines[engineId].engineInstance = getDrmParamValue(DrmParam::engineClassInvalidNone);
+    } else {
+        auto index = engineId;
+        if (hasVirtualEngines) {
+            index++;
+        }
+        engines[index] = *engineClassInstance;
+    }
+}
 } // namespace NEO

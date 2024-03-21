@@ -119,7 +119,6 @@ struct GemContextParam {
     uint32_t size;
     uint64_t param;
     uint64_t value;
-    uint32_t gtId;
 };
 
 struct DrmUserExtension {
@@ -192,7 +191,8 @@ struct PrimeHandle {
 template <uint32_t numEngines = 10> // 1 + max engines
 struct ContextParamEngines {
     uint64_t extensions;
-    EngineClassInstance engines[numEngines];
+    uint64_t enginesData[numEngines];
+    uint32_t numEnginesInContext;
 };
 
 template <uint32_t numEngines>

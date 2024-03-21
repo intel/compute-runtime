@@ -192,6 +192,8 @@ class IoctlHelper {
     virtual bool validPageFault(uint16_t flags) { return false; }
     virtual uint32_t getStatusForResetStats(bool banned) { return 0u; }
 
+    virtual void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) = 0;
+
   protected:
     Drm &drm;
 };
@@ -222,6 +224,7 @@ class IoctlHelperI915 : public IoctlHelper {
     bool setGemTiling(void *setTiling) override;
     bool getGemTiling(void *setTiling) override;
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
+    void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) override;
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);

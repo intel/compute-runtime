@@ -141,6 +141,7 @@ class IoctlHelperXe : public IoctlHelper {
     void addDebugMetadataCookie(uint64_t cookie);
     uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;
     void unregisterResource(uint32_t handle) override;
+    void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) override;
 
   protected:
     const char *xeGetClassName(int className);
@@ -194,8 +195,6 @@ class IoctlHelperXe : public IoctlHelper {
         bool isCookie;
     };
     std::vector<DebugMetadata> debugMetadata;
-
-    drm_xe_engine_class_instance *xeFindMatchingEngine(uint16_t engineClass, std::optional<uint16_t> engineInstance, uint16_t gtId);
 
   private:
     template <typename... XeLogArgs>

@@ -1086,10 +1086,10 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
 
     uint32_t numEnginesInContext = 1;
 
-    ContextParamEngines<1 + maxEngines> contextEngines{};
+    ContextParamEngines<> contextEngines{};
     ContextEnginesLoadBalance<maxEngines> balancer{};
 
-    contextEngines.engines[0] = {engine->engineClass, engine->engineInstance};
+    ioctlHelper->insertEngineToContextParams(contextEngines, 0u, engine, deviceIndex, false);
 
     bool setupVirtualEngines = false;
     unsigned int engineCount = static_cast<unsigned int>(numberOfCCS);
@@ -1117,8 +1117,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     if (setupVirtualEngines) {
         balancer.base.name = ioctlHelper->getDrmParamValue(DrmParam::contextEnginesExtLoadBalance);
         contextEngines.extensions = castToUint64(&balancer);
-        contextEngines.engines[0].engineClass = ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalid);
-        contextEngines.engines[0].engineInstance = ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalidNone);
+        ioctlHelper->insertEngineToContextParams(contextEngines, 0u, nullptr, deviceIndex, true);
 
         for (auto engineIndex = 0u; engineIndex < engineCount; engineIndex++) {
             if (useVirtualEnginesForBcs && engine->engineClass == ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)) {
@@ -1138,16 +1137,15 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
             }
             UNRECOVERABLE_IF(!engine);
             balancer.engines[engineIndex] = {engine->engineClass, engine->engineInstance};
-            contextEngines.engines[1 + engineIndex] = {engine->engineClass, engine->engineInstance};
+            ioctlHelper->insertEngineToContextParams(contextEngines, engineIndex, engine, deviceIndex, true);
         }
     }
 
     GemContextParam param{};
     param.contextId = drmContextId;
-    param.size = static_cast<uint32_t>(ptrDiff(contextEngines.engines + numEnginesInContext, &contextEngines));
+    param.size = static_cast<uint32_t>(ptrDiff(contextEngines.enginesData, &contextEngines) + sizeof(EngineClassInstance) * numEnginesInContext);
     param.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamEngines);
     param.value = castToUint64(&contextEngines);
-    param.gtId = deviceIndex;
 
     auto ioctlValue = ioctlHelper->ioctl(DrmIoctl::gemContextSetparam, &param);
     UNRECOVERABLE_IF(ioctlValue != 0);

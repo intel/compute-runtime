@@ -1019,27 +1019,21 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         xeLog(" -> IoctlHelperXe::ioctl GemContextGetparam r=%d\n", ret);
     } break;
     case DrmIoctl::gemContextSetparam: {
-        GemContextParam *d = static_cast<GemContextParam *>(arg);
-        switch (d->param) {
+        GemContextParam *gemContextParam = static_cast<GemContextParam *>(arg);
+        switch (gemContextParam->param) {
         case static_cast<int>(DrmParam::contextParamPersistence):
-            if (d->value == 0)
+            if (gemContextParam->value == 0)
                 ret = 0;
             break;
         case static_cast<int>(DrmParam::contextParamEngines): {
-            auto contextEngine = reinterpret_cast<ContextParamEngines<> *>(d->value);
-            int items = (d->size - sizeof(uint64_t)) / sizeof(uint32_t);
-            contextParamEngine.clear();
-            for (int i = 0; i < items; i++) {
-                if (contextEngine->engines[i].engineClass != static_cast<uint16_t>(getDrmParamValue(DrmParam::engineClassInvalid))) {
-                    drm_xe_engine_class_instance engine = {
-                        contextEngine->engines[i].engineClass,
-                        contextEngine->engines[i].engineInstance,
-                        static_cast<uint16_t>(d->gtId)};
-                    contextParamEngine.push_back(engine);
-                }
+            auto contextEngine = reinterpret_cast<ContextParamEngines<> *>(gemContextParam->value);
+            if (!contextEngine || contextEngine->numEnginesInContext == 0) {
+                break;
             }
-            if (contextParamEngine.size())
-                ret = 0;
+            auto numEngines = contextEngine->numEnginesInContext;
+            contextParamEngine.resize(numEngines);
+            memcpy_s(contextParamEngine.data(), numEngines * sizeof(uint64_t), contextEngine->enginesData, numEngines * sizeof(uint64_t));
+            ret = 0;
         } break;
         case contextPrivateParamBoost:
             ret = 0;
@@ -1180,45 +1174,20 @@ void IoctlHelperXe::xeShowBindTable() {
 int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) {
     drm_xe_exec_queue_create create = {};
     uint32_t drmContextId = 0;
-    drm_xe_engine_class_instance *currentEngine = nullptr;
-    std::vector<drm_xe_engine_class_instance> engine;
 
     xeLog("createDrmContext VM=0x%x\n", drmVmId);
-    auto requestClass = drm.bindDrmContext(drmContextId, deviceIndex, osContext.getEngineType(), osContext.isEngineInstanced());
+    drm.bindDrmContext(drmContextId, deviceIndex, osContext.getEngineType(), osContext.isEngineInstanced());
 
     size_t n = contextParamEngine.size();
+    UNRECOVERABLE_IF(n == 0);
     create.vm_id = drmVmId;
     create.width = 1;
-    if (n == 0) {
-        currentEngine = xeFindMatchingEngine(requestClass, std::nullopt, deviceIndex);
-        if (currentEngine == nullptr) {
-            xeLog("Unable to find engine %d\n", requestClass);
-            UNRECOVERABLE_IF(true);
-            return 0;
-        }
-        engine.push_back(*currentEngine);
-    } else {
-        for (size_t i = 0; i < n; i++) {
-            currentEngine = xeFindMatchingEngine(contextParamEngine[i].engine_class,
-                                                 contextParamEngine[i].engine_instance,
-                                                 contextParamEngine[i].gt_id);
-            if (currentEngine == nullptr) {
-                xeLog("Unable to find engine %d:%d:%d\n",
-                      contextParamEngine[i].engine_class,
-                      contextParamEngine[i].engine_instance,
-                      contextParamEngine[i].gt_id);
-                UNRECOVERABLE_IF(true);
-                return 0;
-            }
-            engine.push_back(*currentEngine);
-        }
-    }
-    create.instances = castToUint64(engine.data());
-    create.num_placements = engine.size();
+    create.instances = castToUint64(contextParamEngine.data());
+    create.num_placements = contextParamEngine.size();
 
     struct drm_xe_ext_set_property ext {};
     auto &gfxCoreHelper = drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    if ((engine[0].engine_class == DRM_XE_ENGINE_CLASS_RENDER) || (engine[0].engine_class == DRM_XE_ENGINE_CLASS_COMPUTE)) {
+    if ((contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_RENDER) || (contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_COMPUTE)) {
         if (gfxCoreHelper.isRunaloneModeRequired(drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode())) {
             ext.base.next_extension = 0;
             ext.base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
@@ -1231,8 +1200,8 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
 
     int ret = IoctlHelper::ioctl(DrmIoctl::gemContextCreateExt, &create);
     drmContextId = create.exec_queue_id;
-    xeLog("%s:%d (%d) vmid=0x%x ctx=0x%x r=0x%x\n", xeGetClassName(engine[0].engine_class),
-          engine[0].engine_instance, create.num_placements, drmVmId, drmContextId, ret);
+    xeLog("%s:%d (%d) vmid=0x%x ctx=0x%x r=0x%x\n", xeGetClassName(contextParamEngine[0].engine_class),
+          contextParamEngine[0].engine_instance, create.num_placements, drmVmId, drmContextId, ret);
     if (ret != 0) {
         UNRECOVERABLE_IF(true);
     }
@@ -1445,19 +1414,6 @@ std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int subDevice
     return "/device/gt" + std::to_string(subDeviceId) + "/freq_rp0";
 }
 
-drm_xe_engine_class_instance *IoctlHelperXe::xeFindMatchingEngine(uint16_t engineClass, std::optional<uint16_t> engineInstance, uint16_t gtId) {
-    for (auto &engine : allEngines) {
-        if (engine.engine_class == engineClass &&
-            engine.gt_id == gtId &&
-            (!engineInstance || engine.engine_instance == *engineInstance)) {
-            xeLog("\t select: %s:%d (%d)\n", xeGetClassName(engine.engine_class),
-                  engine.engine_instance, engineInstance);
-            return &engine;
-        }
-    }
-    return nullptr;
-}
-
 bool IoctlHelperXe::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) {
     return false;
 }
@@ -1481,5 +1437,15 @@ void IoctlHelperXe::fillBindInfoForIpcHandle(uint32_t handle, size_t size) {
 
 bool IoctlHelperXe::isImmediateVmBindRequired() const {
     return true;
+}
+
+void IoctlHelperXe::insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) {
+    auto engines = reinterpret_cast<drm_xe_engine_class_instance *>(contextParamEngines.enginesData);
+    if (engineClassInstance) {
+        engines[engineId].engine_class = engineClassInstance->engineClass;
+        engines[engineId].engine_instance = engineClassInstance->engineInstance;
+        engines[engineId].gt_id = tileId;
+        contextParamEngines.numEnginesInContext = std::max(contextParamEngines.numEnginesInContext, engineId + 1);
+    }
 }
 } // namespace NEO

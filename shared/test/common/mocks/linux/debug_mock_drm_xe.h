@@ -42,6 +42,7 @@ inline constexpr uint32_t testValueGemCreate = 0x8273;
 
 class DrmMockXeDebug : public DrmMockCustom {
   public:
+    using Drm::engineInfo;
     DrmMockXeDebug(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
         this->ioctlHelper = std::make_unique<IoctlHelperXe>(*this);
         auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(queryEngines);
@@ -67,10 +68,6 @@ class DrmMockXeDebug : public DrmMockCustom {
     }
     bool baseErrno = false;
     int errnoRetVal = 0;
-
-    unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) override {
-        return DRM_XE_ENGINE_CLASS_COMPUTE;
-    }
 
     void setPciPath(const char *pciPath) {
         hwDeviceId = std::make_unique<HwDeviceIdDrm>(getFileDescriptor(), pciPath);

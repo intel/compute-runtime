@@ -193,12 +193,16 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnFalseWhenCreat
     rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
     rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
     DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm.getIoctlHelper());
+
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
+    drm.engineInfo = std::move(engineInfo);
 
-    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    xeIoctlHelper->createDrmContext(drm, osContext, 0, 0);
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
+    uint16_t deviceIndex = 1;
+    xeIoctlHelper->createDrmContext(drm, osContext, 0, deviceIndex);
 
     auto ext = drm.receivedContextCreateSetParam;
     EXPECT_NE(ext.property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_EU_DEBUG));
@@ -211,11 +215,16 @@ HWTEST_F(IoctlHelperXeTestFixture, givenDeviceIndexWhenCreatingContextThenSetCor
     rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
     rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
     DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm.getIoctlHelper());
+
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
+    drm.engineInfo = std::move(engineInfo);
 
-    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular});
+    engineDescriptor.isEngineInstanced = true;
+    OsContextLinux osContext(drm, 0, 0u, engineDescriptor);
 
     uint16_t deviceIndex = 1;
 
@@ -241,12 +250,15 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnTrueWhenCreate
     rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
     rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
     DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm.getIoctlHelper());
+
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
+    drm.engineInfo = std::move(engineInfo);
 
-    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    xeIoctlHelper->createDrmContext(drm, osContext, 0, 0);
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}));
+    xeIoctlHelper->createDrmContext(drm, osContext, 0, 1);
 
     auto ext = drm.receivedContextCreateSetParam;
     EXPECT_EQ(ext.base.name, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY));
@@ -263,25 +275,20 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenContextCreatedForCopyEngineWhenCreateDrm
         }
     };
 
-    class DrmMockXeDebugTest : public DrmMockXeDebug {
-      public:
-        DrmMockXeDebugTest(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXeDebug(rootDeviceEnvironment){};
-        unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) override {
-            return DRM_XE_ENGINE_CLASS_COPY;
-        }
-    };
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
     auto raiiFactory = RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw>(rootDeviceEnvironment);
     rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
     rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
-    DrmMockXeDebugTest drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm.getIoctlHelper());
+
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
+    drm.engineInfo = std::move(engineInfo);
 
-    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_BCS1, EngineUsage::regular}));
     xeIoctlHelper->createDrmContext(drm, osContext, 0, 0);
 
     auto ext = drm.receivedContextCreateSetParam;

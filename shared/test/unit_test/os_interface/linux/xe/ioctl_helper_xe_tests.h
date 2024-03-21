@@ -34,7 +34,6 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::getFdFromVmExport;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::setDefaultEngine;
-    using IoctlHelperXe::xeFindMatchingEngine;
     using IoctlHelperXe::xeGetBindFlagsName;
     using IoctlHelperXe::xeGetBindOperationName;
     using IoctlHelperXe::xeGetClassName;
