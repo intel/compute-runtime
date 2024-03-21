@@ -1408,8 +1408,10 @@ class MockIoctlHelperResetStats : public MockIoctlHelper {
 };
 
 TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcessTerminated) {
-    MockExecutionEnvironment executionEnvironment{};
+    DebugManagerStateRestore restore;
+    debugManager.flags.DisableScratchPages.set(true);
 
+    MockExecutionEnvironment executionEnvironment{};
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};

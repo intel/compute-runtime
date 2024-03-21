@@ -273,10 +273,10 @@ bool Drm::checkResetStatus(OsContext &osContext) {
         uint32_t status = 0;
         const auto retVal{ioctlHelper->getResetStats(resetStats, &status, &fault)};
         UNRECOVERABLE_IF(retVal != 0);
-        if (ioctlHelper->validPageFault(fault.flags)) {
-            UNRECOVERABLE_IF((status & ioctlHelper->getStatusForResetStats(true)) == 0);
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ERROR: Unexpected page fault from GPU at 0x%llx, type: %d, level: %d, access: %d, aborting.\n",
-                               fault.addr, fault.type, fault.level, fault.access);
+        if (disableScratch && ioctlHelper->validPageFault(fault.flags)) {
+            bool banned = ((status & ioctlHelper->getStatusForResetStats(true)) == 0);
+            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ERROR: Unexpected page fault from GPU at 0x%llx, type: %d, level: %d, access: %d, banned: %d, aborting.\n",
+                               fault.addr, fault.type, fault.level, fault.access, banned);
             UNRECOVERABLE_IF(true);
         }
         if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {
