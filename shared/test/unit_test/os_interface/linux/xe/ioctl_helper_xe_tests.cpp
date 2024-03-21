@@ -611,10 +611,10 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::contextParamPersistence);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextSetparam, &test);
-        EXPECT_EQ(0, ret);
+        EXPECT_EQ(-1, ret);
         test.param = contextPrivateParamBoost;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextSetparam, &test);
-        EXPECT_EQ(0, ret);
+        EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::contextParamEngines);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextSetparam, &test);
         EXPECT_EQ(-1, ret);
@@ -633,12 +633,10 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         EXPECT_EQ(expectedAddressWidth, test.value);
         test.param = static_cast<int>(DrmParam::contextParamSseu);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextGetparam, &test);
-        EXPECT_EQ(0, ret);
-        EXPECT_EQ(0x55fdd94d4e40ull, test.value);
+        EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::contextParamPersistence);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemContextGetparam, &test);
-        EXPECT_EQ(0, ret);
-        EXPECT_EQ(0x1ull, test.value);
+        EXPECT_EQ(-1, ret);
     }
     {
         GemClose test = {};

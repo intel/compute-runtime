@@ -984,9 +984,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
               d->userSize, d->flags, d->handle, ret);
         xeShowBindTable();
     } break;
-    case DrmIoctl::gemContextCreateExt: {
-        UNRECOVERABLE_IF(true);
-    } break;
     case DrmIoctl::gemContextDestroy: {
         GemContextDestroy *d = static_cast<GemContextDestroy *>(arg);
         struct drm_xe_exec_queue_destroy destroy = {};
@@ -1007,12 +1004,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         case static_cast<int>(DrmParam::contextParamGttSize):
             d->value = addressSpace + 1u;
             break;
-        case static_cast<int>(DrmParam::contextParamSseu):
-            d->value = 0x55fdd94d4e40;
-            break;
-        case static_cast<int>(DrmParam::contextParamPersistence):
-            d->value = 0x1;
-            break;
         default:
             ret = -1;
             break;
@@ -1022,10 +1013,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::gemContextSetparam: {
         GemContextParam *gemContextParam = static_cast<GemContextParam *>(arg);
         switch (gemContextParam->param) {
-        case static_cast<int>(DrmParam::contextParamPersistence):
-            if (gemContextParam->value == 0)
-                ret = 0;
-            break;
         case static_cast<int>(DrmParam::contextParamEngines): {
             auto contextEngine = reinterpret_cast<ContextParamEngines<> *>(gemContextParam->value);
             if (!contextEngine || contextEngine->numEnginesInContext == 0) {
@@ -1036,9 +1023,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             memcpy_s(contextParamEngine.data(), numEngines * sizeof(uint64_t), contextEngine->enginesData, numEngines * sizeof(uint64_t));
             ret = 0;
         } break;
-        case contextPrivateParamBoost:
-            ret = 0;
-            break;
         default:
             ret = -1;
             break;
