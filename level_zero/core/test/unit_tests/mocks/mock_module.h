@@ -22,6 +22,7 @@ namespace ult {
 
 struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
     using BaseClass = L0::ModuleTranslationUnit;
+    using BaseClass::isGeneratedByIgc;
 
     MockModuleTranslationUnit(L0::Device *device) : BaseClass{device} {}
 

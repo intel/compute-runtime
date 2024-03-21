@@ -2615,8 +2615,10 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(nullptr, dsh);
 }
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
-          givenKernelUsingStatefulAccessWhenAppendingKernelOnGlobalStatelessThenExpectError,
+          givenUserKernelCreatedByIgcUsingStatefulAccessWhenAppendingKernelOnGlobalStatelessThenExpectError,
           IsAtLeastXeHpCore) {
+    module->translationUnit->isGeneratedByIgc = true;
+    module->type = ModuleType::user;
     mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.resize(1);
 
     auto ptrArg = ArgDescriptor(ArgDescriptor::argTPointer);
@@ -2634,6 +2636,72 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenUserKernelNotCreatedByIgcUsingStatefulAccessWhenAppendingKernelOnGlobalStatelessThenExpectSuccess,
+          IsAtLeastXeHpCore) {
+    module->translationUnit->isGeneratedByIgc = false;
+    module->type = ModuleType::user;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.resize(1);
+
+    auto ptrArg = ArgDescriptor(ArgDescriptor::argTPointer);
+    ptrArg.as<ArgDescPointer>().bindless = 0x40;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = ptrArg;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ptrArg.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
+    ptrArg.as<ArgDescPointer>().bindful = 0x40;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = ptrArg;
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenBuiltinKernelCreatedByIgcUsingStatefulAccessWhenAppendingKernelOnGlobalStatelessThenExpectSuccess,
+          IsAtLeastXeHpCore) {
+    module->translationUnit->isGeneratedByIgc = true;
+    module->type = ModuleType::builtin;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.resize(1);
+
+    auto ptrArg = ArgDescriptor(ArgDescriptor::argTPointer);
+    ptrArg.as<ArgDescPointer>().bindless = 0x40;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = ptrArg;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ptrArg.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
+    ptrArg.as<ArgDescPointer>().bindful = 0x40;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = ptrArg;
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenUserKernelCreatedByIgcUsingStatelessAccessWhenAppendingKernelOnGlobalStatelessThenExpectSuccess,
+          IsAtLeastXeHpCore) {
+    module->translationUnit->isGeneratedByIgc = true;
+    module->type = ModuleType::user;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.resize(1);
+
+    auto ptrArg = ArgDescriptor(ArgDescriptor::argTPointer);
+    ptrArg.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
+    ptrArg.as<ArgDescPointer>().bindful = undefined<CrossThreadDataOffset>;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = ptrArg;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult

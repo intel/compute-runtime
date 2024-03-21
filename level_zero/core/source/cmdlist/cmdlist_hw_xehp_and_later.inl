@@ -9,7 +9,6 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/preemption.h"
-#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
@@ -99,13 +98,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
-        if (NEO::AddressingModeHelper::containsStatefulAccess(kernelDescriptor, false)) {
+        if (kernelImp->checkKernelContainsStatefulAccess()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     }
 
-    KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     if (kernelImp->usesRayTracing()) {
         NEO::GraphicsAllocation *memoryBackedBuffer = device->getNEODevice()->getRTMemoryBackedBuffer();
         if (memoryBackedBuffer == nullptr) {

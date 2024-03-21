@@ -159,6 +159,9 @@ struct ModuleImp : public Module {
     std::vector<std::shared_ptr<Kernel>> &getPrintfKernelContainer() { return this->printfKernelContainer; }
     std::weak_ptr<Kernel> getPrintfKernelWeakPtr(ze_kernel_handle_t kernelHandle) const;
     ze_result_t destroyPrintfKernel(ze_kernel_handle_t kernelHandle);
+    ModuleType getModuleType() const {
+        return this->type;
+    }
 
   protected:
     MOCKABLE_VIRTUAL ze_result_t initializeTranslationUnit(const ze_module_desc_t *desc, NEO::Device *neoDevice);

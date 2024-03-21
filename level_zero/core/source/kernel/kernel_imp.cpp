@@ -12,6 +12,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
@@ -1379,6 +1380,14 @@ void KernelImp::patchBindlessOffsetsForImplicitArgs(uint64_t bindlessSurfaceStat
             }
         }
     }
+}
+
+bool KernelImp::checkKernelContainsStatefulAccess() {
+    auto moduleImp = static_cast<ModuleImp *>(this->module);
+    auto isUserKernel = (moduleImp->getModuleType() == ModuleType::user);
+    auto isGeneratedByIgc = moduleImp->getTranslationUnit()->isGeneratedByIgc;
+    auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(getKernelDescriptor(), false);
+    return containsStatefulAccess && isUserKernel && isGeneratedByIgc;
 }
 
 } // namespace L0

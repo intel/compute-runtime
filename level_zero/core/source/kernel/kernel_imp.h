@@ -186,6 +186,8 @@ struct KernelImp : Kernel {
 
     KernelExt *getExtension(uint32_t extensionType);
 
+    bool checkKernelContainsStatefulAccess();
+
   protected:
     KernelImp() = default;
 
