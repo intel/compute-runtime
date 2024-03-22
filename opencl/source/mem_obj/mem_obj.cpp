@@ -82,7 +82,8 @@ MemObj::~MemObj() {
         needWait |= multiGraphicsAllocation.getGraphicsAllocations().size() > 1u;
         for (auto graphicsAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
             auto rootDeviceIndex = graphicsAllocation ? graphicsAllocation->getRootDeviceIndex() : 0;
-            bool doAsyncDestructions = debugManager.flags.EnableAsyncDestroyAllocations.get();
+
+            bool doAsyncDestructions = debugManager.flags.EnableAsyncDestroyAllocations.get() && !this->memoryProperties.flags.useHostPtr;
             if (graphicsAllocation && !associatedMemObject && !isHostPtrSVM && graphicsAllocation->peekReuseCount() == 0) {
                 memoryManager->removeAllocationFromHostPtrManager(graphicsAllocation);
                 if (!doAsyncDestructions) {
