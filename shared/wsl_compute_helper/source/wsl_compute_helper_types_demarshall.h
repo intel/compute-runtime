@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1850,6 +1850,9 @@ struct Demarshaller<TOK_S_SKU_FEATURE_TABLE> {
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_DRIVER_FLR: {
                     dst.FtrDriverFLR = readTokValue<decltype(dst.FtrDriverFLR)>(*tok);
                 } break;
+                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_HW_SCHEDULING: {
+                    dst.FtrHwScheduling = readTokValue<decltype(dst.FtrHwScheduling)>(*tok);
+                } break;
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC_LDR2D: {
                     dst.FtrAstcLdr2D = readTokValue<decltype(dst.FtrAstcLdr2D)>(*tok);
                 } break;
@@ -3049,6 +3052,9 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                             } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_DRIVER_FLR: {
                                 dst.SkuTable.FtrDriverFLR = readTokValue<decltype(dst.SkuTable.FtrDriverFLR)>(*tokSkuTable);
+                            } break;
+                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_HW_SCHEDULING: {
+                                dst.SkuTable.FtrHwScheduling = readTokValue<decltype(dst.SkuTable.FtrHwScheduling)>(*tokSkuTable);
                             } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC_LDR2D: {
                                 dst.SkuTable.FtrAstcLdr2D = readTokValue<decltype(dst.SkuTable.FtrAstcLdr2D)>(*tokSkuTable);

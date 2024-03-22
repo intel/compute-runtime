@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -525,6 +525,7 @@ struct TOKSTR__SKU_FEATURE_TABLE {
         TokenDword FtrKmdDaf = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_KMD_DAF};
         TokenDword FtrFrameBufferLLC = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_FRAME_BUFFER_LLC};
         TokenDword FtrDriverFLR = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_DRIVER_FLR};
+        TokenDword FtrHwScheduling = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_HW_SCHEDULING};
     };
     static_assert(std::is_standard_layout_v<TOKSTR_ANONYMOUS21990>, "");
     static_assert(sizeof(TOKSTR_ANONYMOUS21990) % sizeof(uint32_t) == 0, "");
@@ -643,6 +644,7 @@ struct TOKSTR__SKU_FEATURE_TABLE {
     TokenDword FtrKmdDaf = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_KMD_DAF};                                                 // Indirect field from anonymous struct
     TokenDword FtrFrameBufferLLC = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_FRAME_BUFFER_LLC};                                // Indirect field from anonymous struct
     TokenDword FtrDriverFLR = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_DRIVER_FLR};                                           // Indirect field from anonymous struct
+    TokenDword FtrHwScheduling = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_HW_SCHEDULING};                                     // Indirect field from anonymous struct
     TokenDword FtrAstcLdr2D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC_LDR2D};                                           // Indirect field from anonymous struct
     TokenDword FtrAstcHdr2D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC_HDR2D};                                           // Indirect field from anonymous struct
     TokenDword FtrAstc3D = {TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS37751__FTR_ASTC3D};                                                  // Indirect field from anonymous struct
