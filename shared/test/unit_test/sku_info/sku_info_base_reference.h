@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,6 +112,8 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrUnified3DMediaCompressionFormats = true;
         refFtrTable.flags.ftr57bGPUAddressing = true;
         refFtrTable.flags.ftrTile64Optimization = true;
+
+        refFtrTable.flags.ftrWddmHwQueues = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {

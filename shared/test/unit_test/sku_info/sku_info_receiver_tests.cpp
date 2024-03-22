@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,4 +89,13 @@ TEST(SkuInfoReceiverTest, givenAdapterInfoWhenReceivingThenUpdateWaTable) {
     SkuInfoBaseReference::fillReferenceWaToReceive(refWaTable);
 
     EXPECT_TRUE(memcmp(&requestedWaTable, &refWaTable, sizeof(WorkaroundTable)) == 0);
+}
+
+TEST(SkuInfoReceiverTest, givenFtrHwSchedulingFlagWenReceivingThenSetFtrWddmHwQueues) {
+    FeatureTable requestedFeatureTable = {};
+    ADAPTER_INFO adapterInfo = {};
+    adapterInfo.SkuTable.FtrHwScheduling = 1;
+    SkuInfoReceiver::receiveFtrTableFromAdapterInfo(&requestedFeatureTable, &adapterInfo);
+
+    EXPECT_TRUE(requestedFeatureTable.flags.ftrWddmHwQueues);
 }
