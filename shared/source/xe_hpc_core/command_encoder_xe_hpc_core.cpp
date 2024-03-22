@@ -28,8 +28,8 @@ namespace NEO {
 
 template <>
 template <typename WalkerType, typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd) {
-    EncodeDispatchKernel<Family>::adjustInterfaceDescriptorDataForOverdispatch(interfaceDescriptor, device, hwInfo, threadGroupCount, numGrf, walkerCmd);
+void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd) {
+    EncodeDispatchKernel<Family>::adjustInterfaceDescriptorDataForOverdispatch(interfaceDescriptor, device, hwInfo, threadGroupCount, grfCount, walkerCmd);
 }
 
 template <>

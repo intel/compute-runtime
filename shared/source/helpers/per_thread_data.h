@@ -21,6 +21,7 @@ struct PerThreadDataHelper {
     static inline size_t getPerThreadDataSizeTotal(
         uint32_t simd,
         uint32_t grfSize,
+        uint32_t grfCount,
         uint32_t numChannels,
         size_t localWorkSize,
         bool isHwLocalIdGeneration,
@@ -30,7 +31,7 @@ struct PerThreadDataHelper {
             return perThreadSizeLocalIDs * localWorkSize;
         }
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-        return perThreadSizeLocalIDs * gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkSize), grfSize, isHwLocalIdGeneration, rootDeviceEnvironment);
+        return perThreadSizeLocalIDs * gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkSize), grfCount, isHwLocalIdGeneration, rootDeviceEnvironment);
     }
 }; // namespace PerThreadDataHelper
 } // namespace NEO

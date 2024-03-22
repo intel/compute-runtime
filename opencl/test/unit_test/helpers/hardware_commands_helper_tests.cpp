@@ -565,8 +565,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     constexpr uint32_t grfSize = sizeof(typename FamilyType::GRF);
     size_t localWorkSize = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     auto numChannels = modifiedKernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
+    auto numGrf = GrfConfig::defaultGrfNumber;
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    size_t expectedIohSize = PerThreadDataHelper::getPerThreadDataSizeTotal(modifiedKernelInfo.getMaxSimdSize(), grfSize, numChannels, localWorkSize, !kernelUsesLocalIds, rootDeviceEnvironment);
+    size_t expectedIohSize = PerThreadDataHelper::getPerThreadDataSizeTotal(modifiedKernelInfo.getMaxSimdSize(), grfSize, numGrf, numChannels, localWorkSize, !kernelUsesLocalIds, rootDeviceEnvironment);
     ASSERT_LE(expectedIohSize, ioh.getUsed());
 
     auto expectedLocalIds = alignedMalloc(expectedIohSize, 64);
@@ -575,7 +576,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
                      std::array<uint8_t, 3>{{modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
                                              modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
                                              modifiedKernelInfo.kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
-                     false, grfSize, rootDeviceEnvironment);
+                     false, grfSize, numGrf, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, ioh.getCpuBase(), expectedIohSize));
     alignedFree(expectedLocalIds);
@@ -1224,12 +1225,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
     dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
+    auto numGrf = GrfConfig::defaultGrfNumber;
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, rootDeviceEnvironment);
+    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, numGrf, rootDeviceEnvironment);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
-    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, false, rootDeviceEnvironment);
+    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, numGrf, 3u, totalLocalSize, false, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
@@ -1258,12 +1260,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsImplicitArgsTests, givenKernelWithI
     dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
+    auto numGrf = GrfConfig::defaultGrfNumber;
     auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, rootDeviceEnvironment);
+    generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, numGrf, rootDeviceEnvironment);
 
     auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
-    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, 3u, totalLocalSize, false, rootDeviceEnvironment);
+    size_t sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, numGrf, 3u, totalLocalSize, false, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);

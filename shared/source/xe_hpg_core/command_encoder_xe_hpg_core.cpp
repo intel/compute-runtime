@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptor
 
 template <>
 template <typename WalkerType, typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd) {
+void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd) {
     const auto &productHelper = device.getProductHelper();
     if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
         if (interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup() == 1) {

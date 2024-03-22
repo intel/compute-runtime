@@ -27,7 +27,7 @@ class LocalIdsCache {
     LocalIdsCache(LocalIdsCache &) = delete;
     LocalIdsCache &operator=(const LocalIdsCache &other) = delete;
 
-    LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint8_t simdSize, uint8_t grfSize, bool usesOnlyImages = false);
+    LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint32_t grfCount, uint8_t simdSize, uint8_t grfSize, bool usesOnlyImages = false);
     ~LocalIdsCache();
 
     void setLocalIdsForGroup(const Vec3<uint16_t> &group, void *destination, const RootDeviceEnvironment &rootDeviceEnvironment);
@@ -43,6 +43,7 @@ class LocalIdsCache {
     std::mutex setLocalIdsMutex;
     const std::array<uint8_t, 3> wgDimOrder;
     const uint32_t localIdsSizePerThread;
+    const uint32_t grfCount;
     const uint8_t grfSize;
     const uint8_t simdSize;
     const bool usesOnlyImages;

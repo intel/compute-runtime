@@ -13,14 +13,15 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/simd_helper.h"
+#include "shared/source/kernel/grf_config.h"
 
 #include <cstring>
 
 namespace NEO {
 
-LocalIdsCache::LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint8_t simdSize, uint8_t grfSize, bool usesOnlyImages)
+LocalIdsCache::LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint32_t grfCount, uint8_t simdSize, uint8_t grfSize, bool usesOnlyImages)
     : wgDimOrder(wgDimOrder), localIdsSizePerThread(getPerThreadSizeLocalIDs(static_cast<uint32_t>(simdSize), static_cast<uint32_t>(grfSize))),
-      grfSize(grfSize), simdSize(simdSize), usesOnlyImages(usesOnlyImages) {
+      grfCount(grfCount), grfSize(grfSize), simdSize(simdSize), usesOnlyImages(usesOnlyImages) {
     UNRECOVERABLE_IF(cacheSize == 0)
     cache.resize(cacheSize);
 }
@@ -41,7 +42,7 @@ size_t LocalIdsCache::getLocalIdsSizeForGroup(const Vec3<uint16_t> &group, const
         return static_cast<size_t>(numElementsInGroup * localIdsSizePerThread);
     }
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-    const auto numberOfThreads = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simdSize, numElementsInGroup, grfSize, false, rootDeviceEnvironment);
+    const auto numberOfThreads = gfxCoreHelper.calculateNumThreadsPerThreadGroup(simdSize, numElementsInGroup, grfCount, false, rootDeviceEnvironment);
     return static_cast<size_t>(numberOfThreads * localIdsSizePerThread);
 }
 
@@ -81,7 +82,7 @@ void LocalIdsCache::commitNewEntry(LocalIdsCacheEntry &entry, const Vec3<uint16_
         entry.localIdsSizeAllocated = entry.localIdsSize;
     }
     NEO::generateLocalIDs(entry.localIdsData, static_cast<uint16_t>(simdSize),
-                          {group[0], group[1], group[2]}, wgDimOrder, usesOnlyImages, grfSize, rootDeviceEnvironment);
+                          {group[0], group[1], group[2]}, wgDimOrder, usesOnlyImages, grfSize, grfCount, rootDeviceEnvironment);
 }
 
 } // namespace NEO

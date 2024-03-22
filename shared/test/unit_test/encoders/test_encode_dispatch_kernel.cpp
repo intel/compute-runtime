@@ -1124,7 +1124,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenPrintKernelDispatchParametersWhenEncodi
     std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
 
     EXPECT_NE(std::string::npos, outputString.find("kernel"));
-    EXPECT_NE(std::string::npos, outputString.find("numGrf"));
+    EXPECT_NE(std::string::npos, outputString.find("grfCount"));
     EXPECT_NE(std::string::npos, outputString.find("simdSize"));
     EXPECT_NE(std::string::npos, outputString.find("tilesCount"));
     EXPECT_NE(std::string::npos, outputString.find("implicitScaling"));

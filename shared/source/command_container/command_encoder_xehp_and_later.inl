@@ -41,7 +41,7 @@ constexpr size_t immWriteDestinationAddressAlignment = 8;
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t numGrf,
+void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
@@ -377,7 +377,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto threadGroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
     EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, *args.device, hwInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, walkerCmd);
     if (debugManager.flags.PrintKernelDispatchParameters.get()) {
-        fprintf(stdout, "kernel, %s, numGrf, %d, simdSize, %d, tilesCount, %d, implicitScaling, %s, threadGroupCount, %d, numberOfThreadsInGpgpuThreadGroup, %d, threadGroupDimensions, %d, %d, %d, threadGroupDispatchSize enum, %d\n",
+        fprintf(stdout, "kernel, %s, grfCount, %d, simdSize, %d, tilesCount, %d, implicitScaling, %s, threadGroupCount, %d, numberOfThreadsInGpgpuThreadGroup, %d, threadGroupDimensions, %d, %d, %d, threadGroupDispatchSize enum, %d\n",
                 kernelDescriptor.kernelMetadata.kernelName.c_str(),
                 kernelDescriptor.kernelAttributes.numGrfRequired,
                 kernelDescriptor.kernelAttributes.simdSize,

@@ -729,7 +729,7 @@ void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPT
 
 template <typename Family>
 template <typename WalkerType, typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd) {}
+void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd) {}
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount) {
@@ -759,7 +759,7 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &
 
 template <typename GfxFamily>
 template <typename WalkerType, typename InterfaceDescriptorType>
-void EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorDataForOverdispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd) {
+void EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorDataForOverdispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd) {
     const auto &productHelper = device.getProductHelper();
 
     if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
@@ -777,7 +777,7 @@ void EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorDataForOverdispat
 
         if (algorithmVersion == 2) {
             auto threadsPerXeCore = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.MaxSubSlicesSupported;
-            if (numGrf == 256) {
+            if (grfCount == 256) {
                 threadsPerXeCore /= 2;
             }
             auto tgDispatchSizeSelected = 8;
@@ -819,11 +819,11 @@ void EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorDataForOverdispat
             }
         } else {
             if (adjustTGDispatchSize) {
-                UNRECOVERABLE_IF(numGrf == 0u);
+                UNRECOVERABLE_IF(grfCount == 0u);
                 constexpr uint32_t maxThreadsInTGForTGDispatchSize8 = 16u;
                 constexpr uint32_t maxThreadsInTGForTGDispatchSize4 = 32u;
                 auto &gfxCoreHelper = device.getGfxCoreHelper();
-                uint32_t availableThreadCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, numGrf);
+                uint32_t availableThreadCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount);
                 if (ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true)) {
                     const uint32_t tilesCount = device.getNumSubDevices();
                     availableThreadCount *= tilesCount;

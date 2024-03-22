@@ -137,7 +137,7 @@ struct EncodeDispatchKernel {
                                  const RootDeviceEnvironment &rootDeviceEnvironment);
 
     template <typename InterfaceDescriptorType>
-    static void setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData,
+    static void setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount, const size_t &sizeCrossThreadData,
                            const size_t &sizePerThreadData, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void *getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset);
@@ -155,10 +155,10 @@ struct EncodeDispatchKernel {
     static void programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
 
     template <typename WalkerType, typename InterfaceDescriptorType>
-    static void adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd);
+    static void adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd);
 
     template <typename WalkerType, typename InterfaceDescriptorType>
-    static void adjustInterfaceDescriptorDataForOverdispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf, WalkerType &walkerCmd);
+    static void adjustInterfaceDescriptorDataForOverdispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd);
 
     static void adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount);
 

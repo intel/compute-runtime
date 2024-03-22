@@ -54,12 +54,13 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
         return alignUp(implicitArgsSize, MemoryConstants::cacheLineSize);
     } else {
         auto simdSize = pImplicitArgs->simdWidth;
+        auto grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
         auto grfSize = NEO::ImplicitArgsHelper::getGrfSize(simdSize);
         Vec3<size_t> localWorkSize = {pImplicitArgs->localSizeX, pImplicitArgs->localSizeY, pImplicitArgs->localSizeZ};
         auto itemsInGroup = Math::computeTotalElementsCount(localWorkSize);
         uint32_t localIdsSizeNeeded =
             alignUp(static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                        simdSize, grfSize, 3u, itemsInGroup, isHwLocalIdGeneration, rootDeviceEnvironment)),
+                        simdSize, grfSize, grfCount, 3u, itemsInGroup, isHwLocalIdGeneration, rootDeviceEnvironment)),
                     MemoryConstants::cacheLineSize);
         return implicitArgsSize + localIdsSizeNeeded;
     }
@@ -74,6 +75,7 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
     if (!patchImplicitArgsBufferInCrossThread) {
         auto simdSize = implicitArgs.simdWidth;
         auto grfSize = getGrfSize(simdSize);
+        auto grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
         auto dimensionOrder = getDimensionOrderForLocalIds(kernelDescriptor.kernelAttributes.workgroupDimensionsOrder, hwGenerationOfLocalIdsParams);
 
         NEO::generateLocalIDs(
@@ -83,7 +85,7 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
                                      static_cast<uint16_t>(implicitArgs.localSizeY),
                                      static_cast<uint16_t>(implicitArgs.localSizeZ)}},
             dimensionOrder,
-            false, grfSize, rootDeviceEnvironment);
+            false, grfSize, grfCount, rootDeviceEnvironment);
         auto sizeForLocalIdsProgramming = totalSizeToProgram - ImplicitArgs::getSize();
         ptrToPatch = ptrOffset(ptrToPatch, sizeForLocalIdsProgramming);
     }

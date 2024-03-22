@@ -1379,9 +1379,10 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
         auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
         auto simdSize = kernelInfo.getMaxSimdSize();
         uint32_t grfSize = sizeof(typename FamilyType::GRF);
+        auto numGrf = GrfConfig::defaultGrfNumber;
 
         auto size = kernelWithImplicitArgs.getCrossThreadDataSize() +
-                    HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numChannels, Math::computeTotalElementsCount(workGroupSize), false, rootDeviceEnvironment) +
+                    HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numGrf, numChannels, Math::computeTotalElementsCount(workGroupSize), false, rootDeviceEnvironment) +
                     ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernelWithImplicitArgs.getImplicitArgs(), kernelWithImplicitArgs.getDescriptor(), false, rootDeviceEnvironment);
 
         size = alignUp(size, MemoryConstants::cacheLineSize);

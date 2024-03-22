@@ -31,7 +31,7 @@ namespace NEO {
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t numGrf,
+void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto grfSize = sizeof(typename Family::GRF);

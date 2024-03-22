@@ -377,17 +377,17 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     }
     evaluateIfRequiresGenerationOfLocalIdsByRuntime(kernelDescriptor);
 
-    auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
+    auto grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
     auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     this->numThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(
-        simdSize, static_cast<uint32_t>(itemsInGroup), grfSize, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
+        simdSize, static_cast<uint32_t>(itemsInGroup), grfCount, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
 
     if (kernelRequiresGenerationOfLocalIdsByRuntime) {
         auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
         uint32_t perThreadDataSizeForWholeThreadGroupNeeded =
             static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                simdSize, grfSize, numChannels, itemsInGroup, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment));
+                simdSize, grfSize, grfCount, numChannels, itemsInGroup, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment));
         if (perThreadDataSizeForWholeThreadGroupNeeded >
             perThreadDataSizeForWholeThreadGroupAllocated) {
             alignedFree(perThreadDataForWholeThreadGroup);
@@ -405,7 +405,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                          static_cast<uint16_t>(groupSizeY),
                                          static_cast<uint16_t>(groupSizeZ)}},
                 std::array<uint8_t, 3>{{0, 1, 2}},
-                false, grfSize, rootDeviceEnvironment);
+                false, grfSize, grfCount, rootDeviceEnvironment);
         }
 
         this->perThreadDataSize = perThreadDataSizeForWholeThreadGroup / numThreadsPerThreadGroup;

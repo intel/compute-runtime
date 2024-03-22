@@ -79,7 +79,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-    auto localIdsSize = alignUp(PerThreadDataHelper::getPerThreadDataSizeTotal(implicitArgs.simdWidth, 32u /* grfSize */, 3u /* num channels */, totalWorkgroupSize, false, rootDeviceEnvironment), MemoryConstants::cacheLineSize);
+    auto localIdsSize = alignUp(PerThreadDataHelper::getPerThreadDataSizeTotal(implicitArgs.simdWidth, 32u /* grfSize */, GrfConfig::defaultGrfNumber /* numGrf */, 3u /* num channels */, totalWorkgroupSize, false, rootDeviceEnvironment), MemoryConstants::cacheLineSize);
     EXPECT_EQ(localIdsSize + ImplicitArgs::getSize(), ImplicitArgsHelper::getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, false, rootDeviceEnvironment));
 }
 

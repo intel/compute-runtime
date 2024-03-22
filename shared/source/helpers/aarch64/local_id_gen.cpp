@@ -43,10 +43,10 @@ LocalIDHelper::LocalIDHelper() {
 
 LocalIDHelper LocalIDHelper::initializer;
 
-void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel, uint32_t grfSize, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) {
     bool localIdsGeneratedByHw = false;
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-    auto threadsPerWorkGroup = static_cast<uint16_t>(gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]), grfSize, localIdsGeneratedByHw, rootDeviceEnvironment));
+    auto threadsPerWorkGroup = static_cast<uint16_t>(gfxCoreHelper.calculateNumThreadsPerThreadGroup(simd, static_cast<uint32_t>(localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]), grfCount, localIdsGeneratedByHw, rootDeviceEnvironment));
     bool useLayoutForImages = isImageOnlyKernel && isCompatibleWithLayoutForImages(localWorkgroupSize, dimensionsOrder, simd);
     if (useLayoutForImages) {
         generateLocalIDsWithLayoutForImages(buffer, localWorkgroupSize, simd);

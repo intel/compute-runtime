@@ -306,6 +306,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeEnabledWhenSett
     mockKernel.module = &mockModule;
     const auto &device = mockModule.getDevice();
     auto grfSize = device->getHwInfo().capabilityTable.grfSize;
+    auto numGrf = GrfConfig::defaultGrfNumber;
     const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     uint32_t groupSize[3] = {2, 3, 5};
     auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
@@ -315,13 +316,14 @@ TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeEnabledWhenSett
     auto numThreadsPerTG = gfxHelper.calculateNumThreadsPerThreadGroup(
         mockKernel.descriptor.kernelAttributes.simdSize,
         groupSize[0] * groupSize[1] * groupSize[2],
-        grfSize,
+        numGrf,
         mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime,
         rootDeviceEnvironment);
     auto perThreadDataSizeForWholeTGNeeded =
         static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
             mockKernel.descriptor.kernelAttributes.simdSize,
             grfSize,
+            numGrf,
             mockKernel.descriptor.kernelAttributes.numLocalIdChannels,
             groupSize[0] * groupSize[1] * groupSize[2],
             !mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime,

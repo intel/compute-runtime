@@ -10,6 +10,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/per_thread_data.h"
+#include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/local_ids_cache.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -22,7 +23,7 @@ class MockLocalIdsCache : public NEO::LocalIdsCache {
     using Base::Base;
     using Base::cache;
     MockLocalIdsCache(size_t cacheSize) : MockLocalIdsCache(cacheSize, 32u){};
-    MockLocalIdsCache(size_t cacheSize, uint8_t simd) : Base(cacheSize, {0, 1, 2}, simd, 32, false){};
+    MockLocalIdsCache(size_t cacheSize, uint8_t simd) : Base(cacheSize, {0, 1, 2}, GrfConfig::defaultGrfNumber, simd, 32, false){};
 };
 struct LocalIdsCacheFixture {
     void setUp() {
