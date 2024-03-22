@@ -672,7 +672,7 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                 auto isa = std::make_unique<IsaAllocation>();
                 isa->bindInfo = {vmBind->va_start, vmBind->va_length};
                 isa->vmHandle = vmHandle;
-                isa->elfUuidHandle = invalidHandle;
+                isa->elfHandle = invalidHandle;
                 isa->moduleBegin = 0;
                 isa->moduleEnd = 0;
                 isa->tileInstanced = tileInstanced;
@@ -681,7 +681,7 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
 
                 for (index = 1; index < vmBind->num_uuids; index++) {
                     if (connection->uuidMap[vmBind->uuids[index]].classIndex == NEO::DrmResourceClass::elf) {
-                        isa->elfUuidHandle = vmBind->uuids[index];
+                        isa->elfHandle = vmBind->uuids[index];
 
                         if (!perKernelModules) {
                             auto &module = connection->uuidToModule[vmBind->uuids[moduleUUIDindex]];
@@ -693,10 +693,10 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                     }
                 }
 
-                if (isa->elfUuidHandle != invalidHandle) {
-                    isa->moduleBegin = connection->uuidMap[isa->elfUuidHandle].ptr;
-                    isa->moduleEnd = isa->moduleBegin + connection->uuidMap[isa->elfUuidHandle].dataSize;
-                    elfMap[isa->moduleBegin] = isa->elfUuidHandle;
+                if (isa->elfHandle != invalidHandle) {
+                    isa->moduleBegin = connection->uuidMap[isa->elfHandle].ptr;
+                    isa->moduleEnd = isa->moduleBegin + connection->uuidMap[isa->elfHandle].dataSize;
+                    elfMap[isa->moduleBegin] = isa->elfHandle;
                 } else {
                     PRINT_DEBUGGER_ERROR_LOG("No ELF provided by application\n", "");
                 }

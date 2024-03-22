@@ -104,7 +104,7 @@ struct DebugSessionLinux : DebugSessionImp {
     };
     struct IsaAllocation {
         BindInfo bindInfo;
-        uint64_t elfUuidHandle;
+        uint64_t elfHandle;
         uint64_t vmHandle;
         bool tileInstanced = false;
         bool perKernelModule = true;
@@ -170,6 +170,28 @@ struct DebugSessionLinux : DebugSessionImp {
         uint32_t bitmaskSize;
         uint8_t *bitmask;
     };
+
+    std::vector<std::pair<zet_debug_event_t, uint64_t>> eventsToAck; // debug event, handle to module
+    void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
+        pushApiEvent(debugEvent);
+    }
+
+    void pushApiEvent(zet_debug_event_t &debugEvent) {
+        return pushApiEvent(debugEvent, invalidHandle);
+    }
+
+    void pushApiEvent(zet_debug_event_t &debugEvent, uint64_t moduleHandle) {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+
+        if (moduleHandle != invalidHandle && (debugEvent.flags & ZET_DEBUG_EVENT_FLAG_NEED_ACK)) {
+            eventsToAck.push_back(
+                std::pair<zet_debug_event_t, uint64_t>(debugEvent, moduleHandle));
+        }
+
+        apiEvents.push(debugEvent);
+
+        apiEventCondition.notify_all();
+    }
 
     void updateStoppedThreadsAndCheckTriggerEvents(AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention);
     virtual void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) = 0;

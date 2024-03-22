@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/debug/linux/xe/debug_session.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
@@ -170,17 +171,11 @@ ze_result_t DebugSessionLinuxXe::readEventImp(drm_xe_eudebug_event *drmDebugEven
     if (ret != 0) {
         PRINT_DEBUGGER_ERROR_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT failed: retCode: %d errno = %d\n", ret, errno);
         return ZE_RESULT_NOT_READY;
-    } else if (drmDebugEvent->flags & ~static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_CREATE | DRM_XE_EUDEBUG_EVENT_DESTROY | DRM_XE_EUDEBUG_EVENT_STATE_CHANGE)) {
+    } else if (drmDebugEvent->flags & ~static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_CREATE | DRM_XE_EUDEBUG_EVENT_DESTROY | DRM_XE_EUDEBUG_EVENT_STATE_CHANGE | DRM_XE_EUDEBUG_EVENT_NEED_ACK)) {
         PRINT_DEBUGGER_ERROR_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT unsupported flag = %d\n", (int)drmDebugEvent->flags);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
     return ZE_RESULT_SUCCESS;
-}
-
-void DebugSessionLinuxXe::pushApiEvent(zet_debug_event_t &debugEvent) {
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
-    apiEvents.push(debugEvent);
-    apiEventCondition.notify_all();
 }
 
 bool DebugSessionLinuxXe::closeConnection() {
@@ -208,16 +203,16 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
             clientHandleClosed = clientEvent->client_handle;
         }
 
-        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_OPEN flags = %u len = %lu client.handle = %llu\n",
-                                (uint16_t)event->flags, (uint32_t)event->len, (uint64_t)clientEvent->client_handle);
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_OPEN client.handle = %llu\n",
+                                (uint64_t)clientEvent->client_handle);
 
     } break;
 
     case DRM_XE_EUDEBUG_EVENT_VM: {
         drm_xe_eudebug_event_vm *vm = reinterpret_cast<drm_xe_eudebug_event_vm *>(event);
 
-        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_VM flags = %u size = %lu client_handle = %llu vm_handle = %llu\n",
-                                (uint16_t)event->flags, (uint32_t)event->len, (uint64_t)vm->client_handle, (uint64_t)vm->vm_handle);
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_VM client_handle = %llu vm_handle = %llu\n",
+                                (uint64_t)vm->client_handle, (uint64_t)vm->vm_handle);
 
         if (event->flags & DRM_XE_EUDEBUG_EVENT_CREATE) {
             UNRECOVERABLE_IF(clientHandleToConnection.find(vm->client_handle) == clientHandleToConnection.end());
@@ -275,35 +270,221 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
             }
         }
 
-        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE flags = %u len = %lu client_handle = %llu\
-        vm_handle = %llu exec_queue_handle = %llu engine_class = %u\n",
-                                (uint16_t)event->flags, (uint32_t)event->len, (uint64_t)execQueue->client_handle, (uint64_t)execQueue->vm_handle,
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE client_handle = %llu vm_handle = %llu exec_queue_handle = %llu engine_class = %u\n",
+                                (uint64_t)execQueue->client_handle, (uint64_t)execQueue->vm_handle,
                                 (uint64_t)execQueue->exec_queue_handle, (uint16_t)execQueue->engine_class);
     } break;
 
     case DRM_XE_EUDEBUG_EVENT_EU_ATTENTION: {
         drm_xe_eudebug_event_eu_attention *attention = reinterpret_cast<drm_xe_eudebug_event_eu_attention *>(event);
 
-        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_EU_ATTENTION flags = %d, seqno = %llu, len = %lu"
-                                " client_handle = %llu flags = %llu bitmask_size = %lu exec_queue_handle = %llu lrc_handle = %llu\n",
-                                (int)attention->base.flags, (uint64_t)attention->base.seqno, (uint32_t)attention->base.len,
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_EU_ATTENTION client_handle = %llu flags = %llu bitmask_size = %lu exec_queue_handle = %llu lrc_handle = %llu\n",
                                 (uint64_t)attention->client_handle, (uint64_t)attention->flags,
                                 (uint32_t)attention->bitmask_size, uint64_t(attention->exec_queue_handle), uint64_t(attention->lrc_handle));
         handleAttentionEvent(attention);
     } break;
 
+    case DRM_XE_EUDEBUG_EVENT_VM_BIND: {
+        drm_xe_eudebug_event_vm_bind *vmBind = reinterpret_cast<drm_xe_eudebug_event_vm_bind *>(event);
+        UNRECOVERABLE_IF(clientHandleToConnection.find(vmBind->client_handle) == clientHandleToConnection.end());
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_VM_BIND client_handle = %llu vm_handle = %llu num_binds = %llu vmBindflag=%lu\n",
+                                static_cast<uint64_t>(vmBind->client_handle), static_cast<uint64_t>(vmBind->vm_handle),
+                                static_cast<uint64_t>(vmBind->num_binds), static_cast<uint32_t>(vmBind->flags));
+
+        auto &connection = clientHandleToConnection[vmBind->client_handle];
+        UNRECOVERABLE_IF(connection->vmBindMap.find(vmBind->base.seqno) != connection->vmBindMap.end());
+        auto &vmBindData = connection->vmBindMap[vmBind->base.seqno];
+        vmBindData.vmBind = *vmBind;
+        vmBindData.pendingNumBinds = vmBind->num_binds;
+    } break;
+
+    case DRM_XE_EUDEBUG_EVENT_VM_BIND_OP: {
+        drm_xe_eudebug_event_vm_bind_op *vmBindOp = reinterpret_cast<drm_xe_eudebug_event_vm_bind_op *>(event);
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: drm_xe_eudebug_event_vm_bind_op vm_bind_ref_seqno = %llu num_extensions = %llu addr = %llu range = %llu\n",
+                                static_cast<uint64_t>(vmBindOp->vm_bind_ref_seqno), static_cast<uint64_t>(vmBindOp->num_extensions),
+                                static_cast<uint64_t>(vmBindOp->addr), static_cast<uint64_t>(vmBindOp->range));
+
+        auto &vmBindMap = clientHandleToConnection[clientHandle]->vmBindMap;
+        UNRECOVERABLE_IF(vmBindMap.find(vmBindOp->vm_bind_ref_seqno) == vmBindMap.end());
+        auto &vmBindData = vmBindMap[vmBindOp->vm_bind_ref_seqno];
+        UNRECOVERABLE_IF(!vmBindData.pendingNumBinds);
+
+        auto &vmBindOpData = vmBindData.vmBindOpMap[vmBindOp->base.seqno];
+        vmBindOpData.pendingNumExtensions = vmBindOp->num_extensions;
+        vmBindOpData.vmBindOp = *vmBindOp;
+        vmBindData.pendingNumBinds--;
+        clientHandleToConnection[clientHandle]->vmBindIdentifierMap[vmBindOp->base.seqno] = vmBindOp->vm_bind_ref_seqno;
+        handleVmBindWithoutUfence(vmBindData, vmBindOpData);
+    } break;
+
+    case DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE: {
+        drm_xe_eudebug_event_vm_bind_ufence *vmBindUfence = reinterpret_cast<drm_xe_eudebug_event_vm_bind_ufence *>(event);
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE vm_bind_ref_seqno = %llu\n",
+                                static_cast<uint64_t>(vmBindUfence->vm_bind_ref_seqno));
+
+        auto &vmBindMap = clientHandleToConnection[clientHandle]->vmBindMap;
+        UNRECOVERABLE_IF(vmBindMap.find(vmBindUfence->vm_bind_ref_seqno) == vmBindMap.end());
+        uint32_t uFenceRequired = vmBindMap[vmBindUfence->vm_bind_ref_seqno].vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
+        UNRECOVERABLE_IF(!uFenceRequired);
+        UNRECOVERABLE_IF(vmBindMap[vmBindUfence->vm_bind_ref_seqno].pendingNumBinds);
+        vmBindMap[vmBindUfence->vm_bind_ref_seqno].vmBindUfence = *vmBindUfence;
+        handleVmBind(vmBindMap[vmBindUfence->vm_bind_ref_seqno]);
+    } break;
+
     case DRM_XE_EUDEBUG_EVENT_METADATA: {
         drm_xe_eudebug_event_metadata *metaData = reinterpret_cast<drm_xe_eudebug_event_metadata *>(event);
 
-        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_METADATA flags = %d len = %llu client_handle = %llu metadata_handle = %llu type = %llu len = %llu\n",
-                                (int)event->flags, (uint64_t)event->len, (uint64_t)metaData->client_handle, (uint64_t)metaData->metadata_handle, (uint64_t)metaData->type, (uint64_t)metaData->len);
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_METADATA client_handle = %llu metadata_handle = %llu type = %llu len = %llu\n",
+                                (uint64_t)metaData->client_handle, (uint64_t)metaData->metadata_handle, (uint64_t)metaData->type, (uint64_t)metaData->len);
 
         handleMetadataEvent(metaData);
+    } break;
+
+    case DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA: {
+        drm_xe_eudebug_event_vm_bind_op_metadata *vmBindOpMetadata = reinterpret_cast<drm_xe_eudebug_event_vm_bind_op_metadata *>(event);
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA vm_bind_op_ref_seqno = %llu metadata_handle = %llu metadata_cookie = %llu\n",
+                                static_cast<uint64_t>(vmBindOpMetadata->vm_bind_op_ref_seqno), static_cast<uint64_t>(vmBindOpMetadata->metadata_handle),
+                                static_cast<uint64_t>(vmBindOpMetadata->metadata_cookie));
+
+        auto &vmBindMap = clientHandleToConnection[clientHandle]->vmBindMap;
+        auto &vmBindIdentifierMap = clientHandleToConnection[clientHandle]->vmBindIdentifierMap;
+        UNRECOVERABLE_IF(vmBindIdentifierMap.find(vmBindOpMetadata->vm_bind_op_ref_seqno) == vmBindIdentifierMap.end());
+        VmBindSeqNo vmBindSeqNo = vmBindIdentifierMap[vmBindOpMetadata->vm_bind_op_ref_seqno];
+        UNRECOVERABLE_IF(vmBindMap.find(vmBindSeqNo) == vmBindMap.end());
+        auto &vmBindOpData = vmBindMap[vmBindSeqNo].vmBindOpMap[vmBindOpMetadata->vm_bind_op_ref_seqno];
+        UNRECOVERABLE_IF(!vmBindOpData.pendingNumExtensions);
+        vmBindOpData.vmBindOpMetadataVec.push_back(*vmBindOpMetadata);
+        vmBindOpData.pendingNumExtensions--;
+        handleVmBindWithoutUfence(vmBindMap[vmBindSeqNo], vmBindOpData);
     } break;
 
     default:
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", (uint16_t)event->type, (uint16_t)event->flags, (uint32_t)event->len);
         break;
+    }
+}
+
+void DebugSessionLinuxXe::handleVmBindWithoutUfence(VmBindData &vmBindData, VmBindOpData &vmBindOpData) {
+    uint32_t uFenceRequired = vmBindData.vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
+    if (uFenceRequired) {
+        return;
+    }
+    if (vmBindData.pendingNumBinds || vmBindOpData.pendingNumExtensions) {
+        return;
+    }
+    handleVmBind(vmBindData);
+}
+
+void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
+    bool shouldAckEvent = vmBindData.vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
+    auto connection = clientHandleToConnection[clientHandle].get();
+    for (auto &vmBindOpData : vmBindData.vmBindOpMap) {
+        UNRECOVERABLE_IF(vmBindOpData.second.pendingNumExtensions);
+        for (const auto &vmBindOpMetadata : vmBindOpData.second.vmBindOpMetadataVec) {
+            auto &vmBindOp = vmBindOpData.second.vmBindOp;
+            auto &metaDataEntry = connection->metaDataMap[vmBindOpMetadata.metadata_handle];
+            if (vmBindOp.base.flags & DRM_XE_EUDEBUG_EVENT_CREATE) {
+                {
+                    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+                    if (metaDataEntry.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SBA_AREA) {
+                        connection->vmToStateBaseAreaBindInfo[vmBindData.vmBind.vm_handle] = {vmBindOp.addr, vmBindOp.range};
+                    }
+                    if (metaDataEntry.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA) {
+                        connection->vmToContextStateSaveAreaBindInfo[vmBindData.vmBind.vm_handle] = {vmBindOp.addr, vmBindOp.range};
+                    }
+                    if (metaDataEntry.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA) {
+                        connection->vmToModuleDebugAreaBindInfo[vmBindData.vmBind.vm_handle] = {vmBindOp.addr, vmBindOp.range};
+                    }
+                }
+
+                if (metaDataEntry.metadata.type == DRM_XE_DEBUG_METADATA_ELF_BINARY) {
+                    if (connection->isaMap[0].find(vmBindOp.addr) == connection->isaMap[0].end()) {
+                        auto &isaMap = connection->isaMap[0];
+                        auto &elfMap = connection->elfMap;
+
+                        auto isa = std::make_unique<IsaAllocation>();
+                        isa->bindInfo = {vmBindOp.addr, vmBindOp.range};
+                        isa->vmHandle = vmBindData.vmBind.vm_handle;
+                        isa->elfHandle = vmBindOpMetadata.metadata_handle;
+                        isa->moduleBegin = reinterpret_cast<uint64_t>(metaDataEntry.data.get());
+                        isa->moduleEnd = isa->moduleBegin + metaDataEntry.metadata.len;
+                        isa->tileInstanced = false;
+                        isa->perKernelModule = false;
+                        elfMap[isa->moduleBegin] = isa->elfHandle;
+                        isaMap[vmBindOp.addr] = std::move(isa);
+                        isaMap[vmBindOp.addr]->moduleLoadEventAck = true;
+                    }
+                }
+                if (metaDataEntry.metadata.type == DRM_XE_DEBUG_METADATA_PROGRAM_MODULE) {
+                    auto &module = connection->metaDataToModule[vmBindOpMetadata.metadata_handle];
+                    uint64_t loadAddress = 0;
+                    module.segmentVmBindCounter[0]++;
+                    DEBUG_BREAK_IF(module.loadAddresses[0].size() > module.segmentCount);
+
+                    bool canTriggerEvent = module.loadAddresses[0].size() == (module.segmentCount - 1);
+                    module.loadAddresses[0].insert(vmBindOp.addr);
+                    if (canTriggerEvent && module.loadAddresses[0].size() == module.segmentCount) {
+                        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                        loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[0].begin(), module.loadAddresses[0].end()));
+                        PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
+
+                        zet_debug_event_t debugEvent = {};
+                        debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+                        debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                        debugEvent.info.module.load = loadAddress;
+                        debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(metaDataEntry.data.get());
+                        debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(metaDataEntry.data.get()) + metaDataEntry.metadata.len;
+                        debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+
+                        pushApiEvent(debugEvent, metaDataEntry.metadata.metadata_handle);
+                        {
+                            std::lock_guard<std::mutex> lock(asyncThreadMutex);
+                            if (vmBindData.vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE) {
+                                if (vmBindData.vmBindUfence.base.flags & DRM_XE_EUDEBUG_EVENT_NEED_ACK) {
+                                    EventToAck ackEvent(vmBindData.vmBindUfence.base.seqno, vmBindData.vmBindUfence.base.type);
+                                    module.ackEvents[0].push_back(ackEvent);
+                                    shouldAckEvent = false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            bool destroy = vmBindOp.base.flags & DRM_XE_EUDEBUG_EVENT_DESTROY;
+            if (destroy && metaDataEntry.metadata.type == DRM_XE_DEBUG_METADATA_PROGRAM_MODULE) {
+                auto &module = connection->metaDataToModule[vmBindOpMetadata.metadata_handle];
+                module.segmentVmBindCounter[0]--;
+                if (module.segmentVmBindCounter[0] == 0) {
+                    zet_debug_event_t debugEvent = {};
+
+                    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                    auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[0].begin(), module.loadAddresses[0].end()));
+                    debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
+                    debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                    debugEvent.info.module.load = loadAddress;
+                    debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(metaDataEntry.data.get());
+                    debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(metaDataEntry.data.get()) + metaDataEntry.metadata.len;
+                    pushApiEvent(debugEvent, metaDataEntry.metadata.metadata_handle);
+                    shouldAckEvent = false;
+                    module.loadAddresses[0].clear();
+                    module.moduleLoadEventAcked[0] = false;
+                }
+            }
+        }
+    }
+
+    if (shouldAckEvent && (vmBindData.vmBindUfence.base.flags & DRM_XE_EUDEBUG_EVENT_NEED_ACK)) {
+        drm_xe_eudebug_ack_event eventToAck = {};
+        eventToAck.type = vmBindData.vmBindUfence.base.type;
+        eventToAck.seqno = vmBindData.vmBindUfence.base.seqno;
+        eventToAck.flags = 0;
+        auto ret = ioctl(DRM_XE_EUDEBUG_IOCTL_ACK_EVENT, &eventToAck);
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", static_cast<uint64_t>(eventToAck.seqno), ret, ret != 0 ? errno : 0);
     }
 }
 

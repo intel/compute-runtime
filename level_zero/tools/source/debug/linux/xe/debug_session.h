@@ -77,6 +77,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     int threadControlResumeAndStopped(const std::vector<EuThread::ThreadId> &threads, drm_xe_eudebug_eu_control &euControl, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut);
     void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention);
     void handleMetadataEvent(drm_xe_eudebug_event_metadata *pMetaData);
+    bool handleMetadataOpEvent(drm_xe_eudebug_event_vm_bind_op_metadata *vmBindOpMetadata);
     void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) override;
 
     void startAsyncThread() override;
@@ -100,10 +101,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
     int flushVmCache(int vmfd) override;
 
-    void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
-        UNRECOVERABLE_IF(true);
-    }
-
     void attachTile() override {
         UNRECOVERABLE_IF(true);
     }
@@ -116,6 +113,21 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         std::unique_ptr<char[]> data;
     };
 
+    using VmBindOpSeqNo = uint64_t;
+    using VmBindSeqNo = uint64_t;
+    struct VmBindOpData {
+        uint64_t pendingNumExtensions = 0;
+        drm_xe_eudebug_event_vm_bind_op vmBindOp;
+        std::vector<drm_xe_eudebug_event_vm_bind_op_metadata> vmBindOpMetadataVec;
+    };
+
+    struct VmBindData {
+        uint64_t pendingNumBinds = 0;
+        drm_xe_eudebug_event_vm_bind vmBind;
+        drm_xe_eudebug_event_vm_bind_ufence vmBindUfence;
+        std::unordered_map<VmBindOpSeqNo, VmBindOpData> vmBindOpMap;
+    };
+
     struct ClientConnectionXe : public ClientConnection {
         drm_xe_eudebug_event_client client = {};
         size_t getElfSize(uint64_t elfHandle) override { return 0; };
@@ -125,15 +137,18 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         std::unordered_map<uint64_t, uint64_t> lrcHandleToVmHandle;
         std::unordered_map<uint64_t, MetaData> metaDataMap;
         std::unordered_map<uint64_t, Module> metaDataToModule;
+        std::unordered_map<VmBindSeqNo, VmBindData> vmBindMap;
+        std::unordered_map<VmBindOpSeqNo, VmBindSeqNo> vmBindIdentifierMap;
     };
     std::unordered_map<uint64_t, std::shared_ptr<ClientConnectionXe>> clientHandleToConnection;
+    void handleVmBind(VmBindData &vmBindData);
+    void handleVmBindWithoutUfence(VmBindData &vmBindData, VmBindOpData &vmBindOpData);
 
     void extractMetaData(uint64_t client, const MetaData &metaData);
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
     bool checkAllEventsCollected();
     MOCKABLE_VIRTUAL void handleEvent(drm_xe_eudebug_event *event);
     void readInternalEventsAsync() override;
-    void pushApiEvent(zet_debug_event_t &debugEvent);
     std::atomic<bool> detached{false};
 
     uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) override;

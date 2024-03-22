@@ -24,7 +24,7 @@ extern "C" {
 #define DRM_XE_EUDEBUG_IOCTL_EU_CONTROL		_IOWR('j', 0x2, struct drm_xe_eudebug_eu_control)
 #define DRM_XE_EUDEBUG_IOCTL_VM_OPEN		_IOW('j', 0x1, struct drm_xe_eudebug_vm_open)
 #define DRM_XE_EUDEBUG_IOCTL_READ_METADATA	_IOWR('j', 0x3, struct drm_xe_eudebug_read_metadata)
-#define DRM_XE_EUDEBUG_IOCTL_ACK_EVENT		_IOW('j', 0x4, struct drm_xe_eudebug_event_ack)
+#define DRM_XE_EUDEBUG_IOCTL_ACK_EVENT		_IOW('j', 0x4, struct drm_xe_eudebug_ack_event)
 
 /* XXX: Document events to match their internal counterparts when moved to xe_drm.h */
 struct drm_xe_eudebug_event {
@@ -43,7 +43,9 @@ struct drm_xe_eudebug_event {
 #define DRM_XE_EUDEBUG_EVENT_METADATA 9
 #define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA 10
 #define DRM_XE_EUDEBUG_EVENT_VM_SET_METADATA 11
-#define DRM_XE_EUDEBUG_EVENT_MAX_EVENT DRM_XE_EUDEBUG_EVENT_VM_SET_METADATA
+#define DRM_XE_EUDEBUG_EVENT_PAGEFAULT 12
+#define DRM_XE_EUDEBUG_EVENT_SYNC_HOST 13
+#define DRM_XE_EUDEBUG_EVENT_MAX_EVENT DRM_XE_EUDEBUG_EVENT_SYNC_HOST
 
 	__u16 flags;
 #define DRM_XE_EUDEBUG_EVENT_CREATE		(1 << 0)
@@ -74,13 +76,14 @@ struct drm_xe_eudebug_event_exec_queue {
 	__u64 client_handle;
 	__u64 vm_handle;
 	__u64 exec_queue_handle;
-	__u16 engine_class;
-	__u16 width;
+	__u32 engine_class;
+	__u32 width;
 	__u64 lrc_handle[0];
 } __attribute__((packed));
 
 struct drm_xe_eudebug_event_eu_attention {
 	struct drm_xe_eudebug_event base;
+
 	__u64 client_handle;
 	__u64 exec_queue_handle;
 	__u64 lrc_handle;
@@ -94,7 +97,10 @@ struct drm_xe_eudebug_event_vm_bind {
 
 	__u64 client_handle;
 	__u64 vm_handle;
-	__u64 num_binds;
+	__u32 flags;
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE (1 << 0)
+
+	__u32 num_binds;
 } __attribute__((packed));
 
 struct drm_xe_eudebug_event_vm_bind_op {
@@ -121,13 +127,13 @@ struct drm_xe_eudebug_event_metadata {
 	__u64 len;
 } __attribute__((packed));
 
-struct drm_xe_eudebug_vm_bind_op_metadata {
+struct drm_xe_eudebug_event_vm_bind_op_metadata {
 	struct drm_xe_eudebug_event base;
 	__u64 vm_bind_op_ref_seqno; /* *_event_vm_bind_op.base.seqno */
 
 	__u64 metadata_handle;
 	__u64 metadata_cookie;
-};
+} __attribute__((packed));
 
 struct drm_xe_eudebug_event_vm_set_metadata {
 	struct drm_xe_eudebug_event base;
@@ -142,6 +148,27 @@ struct drm_xe_eudebug_event_vm_set_metadata {
 		__u64 offset;
 	};
 	__u64 len;
+} __attribute__((packed));
+
+struct drm_xe_eudebug_event_pagefault {
+	struct drm_xe_eudebug_event base;
+
+	__u64 client_handle;
+	__u64 exec_queue_handle;
+	__u64 lrc_handle;
+	__u64 pagefault_address;
+
+	__u32 fault_flags;
+
+	__u32 bitmask_size;
+	__u8 bitmask[0];
+} __attribute__((packed));
+
+struct drm_xe_eudebug_event_sync_host {
+	struct drm_xe_eudebug_event base;
+	__u64 client_handle;
+	__u64 exec_queue_handle;
+	__u64 lrc_handle;
 } __attribute__((packed));
 
 /*
@@ -163,10 +190,13 @@ struct drm_xe_eudebug_connect {
 
 struct drm_xe_eudebug_eu_control {
 	__u64 client_handle;
-	__u32 cmd;
+
 #define DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL	0
 #define DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED		1
 #define DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME		2
+#define DRM_XE_EUDEBUG_EU_CONTROL_CMD_UNLOCK		3
+	__u32 cmd;
+
 	__u32 flags;
 	__u64 seqno;
 
@@ -174,7 +204,7 @@ struct drm_xe_eudebug_eu_control {
 	__u64 lrc_handle;
 	__u32 bitmask_size;
 	__u64 bitmask_ptr;
-} __attribute__((packed));
+};
 
 struct drm_xe_eudebug_vm_open {
 	/** @extensions: Pointer to the first extension struct, if any */
@@ -202,7 +232,7 @@ struct drm_xe_eudebug_read_metadata {
 	__u64 size;
 };
 
-struct drm_xe_eudebug_event_ack {
+struct drm_xe_eudebug_ack_event {
 	__u32 type;
 	__u32 flags; /* MBZ */
 	__u64 seqno;

@@ -597,7 +597,7 @@ TEST_F(DebugApiLinuxTest, GivenEventRequiringAckWhenAcknowledgeEventCalledThenSu
     auto isa = std::make_unique<DebugSessionLinuxi915::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
     isa->vmHandle = 3;
-    isa->elfUuidHandle = DebugSessionLinuxi915::invalidHandle;
+    isa->elfHandle = DebugSessionLinuxi915::invalidHandle;
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
 
@@ -1508,7 +1508,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAThenMemoryIsRead) {
     auto isa = std::make_unique<DebugSessionLinuxi915::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
     isa->vmHandle = 3;
-    isa->elfUuidHandle = DebugSessionLinuxi915::invalidHandle;
+    isa->elfHandle = DebugSessionLinuxi915::invalidHandle;
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
 
@@ -1550,7 +1550,7 @@ TEST_F(DebugApiLinuxTest, GivenCanonizedAddressWhenGettingIsaVmHandleThenCorrect
     auto isa = std::make_unique<DebugSessionLinuxi915::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
     isa->vmHandle = 3;
-    isa->elfUuidHandle = DebugSessionLinuxi915::invalidHandle;
+    isa->elfHandle = DebugSessionLinuxi915::invalidHandle;
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
 
@@ -1747,7 +1747,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAForExpectedFailureCasesThen
     auto isa = std::make_unique<DebugSessionLinuxi915::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
     isa->vmHandle = 3;
-    isa->elfUuidHandle = DebugSessionLinuxi915::invalidHandle;
+    isa->elfHandle = DebugSessionLinuxi915::invalidHandle;
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
     isaMap[isaGpuVa] = std::move(isa);
@@ -1897,7 +1897,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForISAThenMemoryIsWritten) {
     auto isa = std::make_unique<DebugSessionLinuxi915::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
     isa->vmHandle = 3;
-    isa->elfUuidHandle = DebugSessionLinuxi915::invalidHandle;
+    isa->elfHandle = DebugSessionLinuxi915::invalidHandle;
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
 
@@ -2050,7 +2050,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
     auto isa = std::make_unique<DebugSessionLinuxi915::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
     isa->vmHandle = 3;
-    isa->elfUuidHandle = DebugSessionLinuxi915::invalidHandle;
+    isa->elfHandle = DebugSessionLinuxi915::invalidHandle;
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
     isaMap[isaGpuVa] = std::move(isa);
@@ -4133,7 +4133,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithAckNeededForIsaWhenHandlingE
     auto isaAllocation = isaMap[isaGpuVa].get();
     EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
     EXPECT_EQ(isaSize, isaAllocation->bindInfo.size);
-    EXPECT_EQ(elfUUID, isaAllocation->elfUuidHandle);
+    EXPECT_EQ(elfUUID, isaAllocation->elfHandle);
     EXPECT_EQ(3u, isaAllocation->vmHandle);
     EXPECT_TRUE(isaAllocation->tileInstanced);
 
@@ -4177,7 +4177,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenCookieWhenHandlingVmBindForIsaThenIsaAlloca
     auto isaAllocation = isaMap[isaGpuVa].get();
     EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
     EXPECT_EQ(isaSize, isaAllocation->bindInfo.size);
-    EXPECT_EQ(elfUUID, isaAllocation->elfUuidHandle);
+    EXPECT_EQ(elfUUID, isaAllocation->elfHandle);
     EXPECT_EQ(3u, isaAllocation->vmHandle);
     EXPECT_TRUE(isaAllocation->tileInstanced);
 }
@@ -4215,7 +4215,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenNoCookieWhenHandlingVmBindForIsaThenIsaAllo
     auto isaAllocation = isaMap[isaGpuVa].get();
     EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
     EXPECT_EQ(isaSize, isaAllocation->bindInfo.size);
-    EXPECT_EQ(elfUUID, isaAllocation->elfUuidHandle);
+    EXPECT_EQ(elfUUID, isaAllocation->elfHandle);
     EXPECT_EQ(3u, isaAllocation->vmHandle);
     EXPECT_FALSE(isaAllocation->tileInstanced);
 }
@@ -4405,7 +4405,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenIsaBoundMultipleTimesWhenHandlingVmBindDest
     auto isa = std::make_unique<DebugSessionLinuxi915::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
     isa->vmHandle = 3;
-    isa->elfUuidHandle = DebugSessionLinuxi915::invalidHandle;
+    isa->elfHandle = DebugSessionLinuxi915::invalidHandle;
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
     isa->vmBindCounter = 5;

@@ -114,27 +114,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
     ze_result_t readEventImp(prelim_drm_i915_debug_event *drmDebugEvent);
 
-    void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
-        pushApiEvent(debugEvent);
-    }
-
-    void pushApiEvent(zet_debug_event_t &debugEvent) {
-        return pushApiEvent(debugEvent, invalidHandle);
-    }
-
-    void pushApiEvent(zet_debug_event_t &debugEvent, uint64_t moduleUuidHandle) {
-        std::unique_lock<std::mutex> lock(asyncThreadMutex);
-
-        if (moduleUuidHandle != invalidHandle && (debugEvent.flags & ZET_DEBUG_EVENT_FLAG_NEED_ACK)) {
-            eventsToAck.push_back(
-                std::pair<zet_debug_event_t, uint64_t>(debugEvent, moduleUuidHandle));
-        }
-
-        apiEvents.push(debugEvent);
-
-        apiEventCondition.notify_all();
-    }
-
     MOCKABLE_VIRTUAL void createTileSessionsIfEnabled();
     MOCKABLE_VIRTUAL TileDebugSessionLinuxi915 *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession);
 
@@ -234,7 +213,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
         return allInstancesRemoved;
     }
 
-    std::vector<std::pair<zet_debug_event_t, uint64_t>> eventsToAck; // debug event, uuid handle to module
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
 
     uint32_t i915DebuggerVersion = 0;
