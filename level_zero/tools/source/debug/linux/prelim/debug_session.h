@@ -42,7 +42,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     ze_result_t initialize() override;
 
     bool closeConnection() override;
-    ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;
 
     struct IoctlHandleri915 : DebugSessionLinux::IoctlHandler {
         int ioctl(int fd, unsigned long request, void *arg) override {
@@ -82,10 +81,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
         size_t dataSize = 0;
 
         uint64_t ptr = 0;
-    };
-
-    static bool apiEventCompare(const zet_debug_event_t &event1, const zet_debug_event_t &event2) {
-        return memcmp(&event1, &event2, sizeof(zet_debug_event_t)) == 0;
     };
 
     struct ClientConnectioni915 : public ClientConnection {
@@ -129,8 +124,12 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     void handleAttentionEvent(prelim_drm_i915_debug_event_eu_attention *attention);
     void handleEnginesEvent(prelim_drm_i915_debug_event_engines *engines);
     void handlePageFaultEvent(prelim_drm_i915_debug_event_page_fault *pf);
-    virtual bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa);
-    virtual bool ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle);
+    int eventAckIoctl(EventToAck &event) override;
+    Module &getModule(uint64_t moduleHandle) override {
+        auto connection = clientHandleToConnection[clientHandle].get();
+        DEBUG_BREAK_IF(connection->uuidToModule.find(moduleHandle) == connection->uuidToModule.end());
+        return connection->uuidToModule[moduleHandle];
+    }
 
     MOCKABLE_VIRTUAL void processPendingVmBindEvents();
 

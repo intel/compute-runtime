@@ -29,11 +29,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     bool closeConnection() override;
 
-    ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override {
-        UNRECOVERABLE_IF(true);
-        return ZE_RESULT_SUCCESS;
-    }
-
     struct IoctlHandlerXe : DebugSessionLinux::IoctlHandler {
         int ioctl(int fd, unsigned long request, void *arg) override {
             int ret = 0;
@@ -79,6 +74,12 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     void handleMetadataEvent(drm_xe_eudebug_event_metadata *pMetaData);
     bool handleMetadataOpEvent(drm_xe_eudebug_event_vm_bind_op_metadata *vmBindOpMetadata);
     void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) override;
+    int eventAckIoctl(EventToAck &event) override;
+    Module &getModule(uint64_t moduleHandle) override {
+        auto connection = clientHandleToConnection[clientHandle].get();
+        DEBUG_BREAK_IF(connection->metaDataToModule.find(moduleHandle) == connection->metaDataToModule.end());
+        return connection->metaDataToModule[moduleHandle];
+    }
 
     void startAsyncThread() override;
     static void *asyncThreadFunction(void *arg);
@@ -86,16 +87,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     void cleanRootSessionAfterDetach(uint32_t deviceIndex) override {
         UNRECOVERABLE_IF(true);
-    }
-
-    ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override {
-        UNRECOVERABLE_IF(true);
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t interruptImp(uint32_t deviceIndex) override {
-        UNRECOVERABLE_IF(true);
-        return ZE_RESULT_SUCCESS;
     }
 
     int openVmFd(uint64_t vmHandle, bool readOnly) override;

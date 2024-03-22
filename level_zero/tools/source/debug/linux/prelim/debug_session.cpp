@@ -1320,61 +1320,15 @@ void DebugSessionLinuxi915::printContextVms() {
     }
 }
 
-bool DebugSessionLinuxi915::ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa) {
-    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+int DebugSessionLinuxi915::eventAckIoctl(EventToAck &event) {
+    prelim_drm_i915_debug_event_ack eventToAck = {};
+    eventToAck.type = event.type;
+    eventToAck.seqno = event.seqno;
+    eventToAck.flags = 0;
 
-    auto connection = clientHandleToConnection[clientHandle].get();
-
-    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-    auto isaVaStart = gmmHelper->decanonize(isaVa);
-    auto isa = connection->isaMap[deviceIndex].find(isaVaStart);
-
-    if (isa != connection->isaMap[deviceIndex].end()) {
-
-        // zebin modules do not store ackEvents per ISA
-        UNRECOVERABLE_IF(isa->second->ackEvents.size() > 0 && isa->second->perKernelModule == false);
-
-        for (auto &event : isa->second->ackEvents) {
-            prelim_drm_i915_debug_event_ack eventToAck = {};
-            eventToAck.type = event.type;
-            eventToAck.seqno = event.seqno;
-            eventToAck.flags = 0;
-
-            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
-            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
-        }
-
-        isa->second->ackEvents.clear();
-        isa->second->moduleLoadEventAck = true;
-        return true;
-    }
-    return false;
-}
-
-bool DebugSessionLinuxi915::ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle) {
-    std::lock_guard<std::mutex> lock(asyncThreadMutex);
-
-    auto connection = clientHandleToConnection[clientHandle].get();
-
-    if (connection->uuidToModule.find(moduleUuidHandle) != connection->uuidToModule.end()) {
-        auto &module = connection->uuidToModule[moduleUuidHandle];
-        for (auto &event : module.ackEvents[deviceIndex]) {
-
-            prelim_drm_i915_debug_event_ack eventToAck = {};
-            eventToAck.type = event.type;
-            eventToAck.seqno = event.seqno;
-            eventToAck.flags = 0;
-
-            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
-            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
-        }
-        module.ackEvents[deviceIndex].clear();
-        module.moduleLoadEventAcked[deviceIndex] = true;
-
-        return true;
-    }
-    DEBUG_BREAK_IF(true);
-    return false;
+    auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+    PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
+    return ret;
 }
 
 void DebugSessionLinuxi915::cleanRootSessionAfterDetach(uint32_t deviceIndex) {
@@ -1398,49 +1352,6 @@ void DebugSessionLinuxi915::cleanRootSessionAfterDetach(uint32_t deviceIndex) {
         isa.second->ackEvents.clear();
         isa.second->moduleLoadEventAck = true;
     }
-}
-
-ze_result_t DebugSessionLinuxi915::acknowledgeEvent(const zet_debug_event_t *event) {
-
-    const zet_debug_event_t apiEventToAck = *event;
-    {
-        std::unique_lock<std::mutex> lock(asyncThreadMutex);
-
-        for (size_t i = 0; i < eventsToAck.size(); i++) {
-            if (apiEventCompare(apiEventToAck, eventsToAck[i].first)) {
-
-                auto moduleUUID = eventsToAck[i].second;
-                auto iter = eventsToAck.begin() + i;
-                eventsToAck.erase(iter);
-
-                lock.unlock();
-
-                for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
-                    if (connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
-                        ackModuleEvents(i, moduleUUID);
-                    }
-                }
-
-                return ZE_RESULT_SUCCESS;
-            }
-        }
-    }
-
-    if (apiEventToAck.type == ZET_DEBUG_EVENT_TYPE_MODULE_LOAD) {
-        bool allIsaAcked = true;
-        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
-            if (connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
-                if (!ackIsaEvents(i, apiEventToAck.info.module.load)) {
-                    allIsaAcked = false;
-                }
-            }
-        }
-        if (allIsaAcked) {
-            return ZE_RESULT_SUCCESS;
-        }
-    }
-
-    return ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
 void TileDebugSessionLinuxi915::readStateSaveAreaHeader() {

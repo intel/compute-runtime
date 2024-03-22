@@ -43,6 +43,10 @@ struct DebugSessionLinux : DebugSessionImp {
     virtual int flushVmCache(int vmfd) { return 0; };
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override;
     ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override;
+    ze_result_t acknowledgeEvent(const zet_debug_event_t *event) override;
+    static bool apiEventCompare(const zet_debug_event_t &event1, const zet_debug_event_t &event2) {
+        return memcmp(&event1, &event2, sizeof(zet_debug_event_t)) == 0;
+    };
 
     ThreadHelper internalEventThread;
     std::mutex internalEventThreadMutex;
@@ -224,6 +228,10 @@ struct DebugSessionLinux : DebugSessionImp {
     virtual bool tryAccessIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status);
     ze_result_t getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle);
     bool getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status);
+    virtual bool ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa);
+    virtual bool ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle);
+    virtual int eventAckIoctl(EventToAck &event) = 0;
+    virtual Module &getModule(uint64_t moduleHandle) = 0;
 
     virtual std::vector<uint64_t> getAllMemoryHandles();
 

@@ -479,12 +479,8 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
     }
 
     if (shouldAckEvent && (vmBindData.vmBindUfence.base.flags & DRM_XE_EUDEBUG_EVENT_NEED_ACK)) {
-        drm_xe_eudebug_ack_event eventToAck = {};
-        eventToAck.type = vmBindData.vmBindUfence.base.type;
-        eventToAck.seqno = vmBindData.vmBindUfence.base.seqno;
-        eventToAck.flags = 0;
-        auto ret = ioctl(DRM_XE_EUDEBUG_IOCTL_ACK_EVENT, &eventToAck);
-        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", static_cast<uint64_t>(eventToAck.seqno), ret, ret != 0 ? errno : 0);
+        EventToAck ackEvent(vmBindData.vmBindUfence.base.seqno, vmBindData.vmBindUfence.base.type);
+        eventAckIoctl(ackEvent);
     }
 }
 
@@ -711,6 +707,16 @@ int DebugSessionLinuxXe::threadControl(const std::vector<EuThread::ThreadId> &th
 void DebugSessionLinuxXe::updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) {
     allThreads[threadId]->setContextHandle(attention.contextHandle);
     allThreads[threadId]->setLrcHandle(attention.lrcHandle);
+}
+
+int DebugSessionLinuxXe::eventAckIoctl(EventToAck &event) {
+    drm_xe_eudebug_ack_event eventToAck = {};
+    eventToAck.type = event.type;
+    eventToAck.seqno = event.seqno;
+    eventToAck.flags = 0;
+    auto ret = ioctl(DRM_XE_EUDEBUG_IOCTL_ACK_EVENT, &eventToAck);
+    PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", static_cast<uint64_t>(eventToAck.seqno), ret, ret != 0 ? errno : 0);
+    return ret;
 }
 
 } // namespace L0

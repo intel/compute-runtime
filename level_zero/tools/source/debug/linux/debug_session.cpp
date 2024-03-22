@@ -838,4 +838,84 @@ void DebugSessionLinux::readStateSaveAreaHeader() {
     }
 }
 
+bool DebugSessionLinux::ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+
+    auto connection = getClientConnection(clientHandle).get();
+
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto isaVaStart = gmmHelper->decanonize(isaVa);
+    auto isa = connection->isaMap[deviceIndex].find(isaVaStart);
+
+    if (isa != connection->isaMap[deviceIndex].end()) {
+
+        // zebin modules do not store ackEvents per ISA
+        UNRECOVERABLE_IF(isa->second->ackEvents.size() > 0 && isa->second->perKernelModule == false);
+
+        for (auto &event : isa->second->ackEvents) {
+            eventAckIoctl(event);
+        }
+
+        isa->second->ackEvents.clear();
+        isa->second->moduleLoadEventAck = true;
+        return true;
+    }
+    return false;
+}
+
+bool DebugSessionLinux::ackModuleEvents(uint32_t deviceIndex, uint64_t moduleHandle) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+
+    auto &module = getModule(moduleHandle);
+    for (auto &event : module.ackEvents[deviceIndex]) {
+        eventAckIoctl(event);
+    }
+    module.ackEvents[deviceIndex].clear();
+    module.moduleLoadEventAcked[deviceIndex] = true;
+    return true;
+}
+
+ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) {
+
+    const zet_debug_event_t apiEventToAck = *event;
+    {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+
+        for (size_t i = 0; i < eventsToAck.size(); i++) {
+            if (apiEventCompare(apiEventToAck, eventsToAck[i].first)) {
+
+                auto moduleHandle = eventsToAck[i].second;
+                auto iter = eventsToAck.begin() + i;
+                eventsToAck.erase(iter);
+
+                lock.unlock();
+
+                for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                    if (connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                        ackModuleEvents(i, moduleHandle);
+                    }
+                }
+
+                return ZE_RESULT_SUCCESS;
+            }
+        }
+    }
+
+    if (apiEventToAck.type == ZET_DEBUG_EVENT_TYPE_MODULE_LOAD) {
+        bool allIsaAcked = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (!ackIsaEvents(i, apiEventToAck.info.module.load)) {
+                    allIsaAcked = false;
+                }
+            }
+        }
+        if (allIsaAcked) {
+            return ZE_RESULT_SUCCESS;
+        }
+    }
+
+    return ZE_RESULT_ERROR_UNINITIALIZED;
+}
+
 } // namespace L0
