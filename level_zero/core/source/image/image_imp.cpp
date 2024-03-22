@@ -182,13 +182,11 @@ ze_result_t ImageImp::getDeviceOffset(uint64_t *deviceOffset) {
     if (!this->bindlessImage) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
-    auto result = allocateBindlessSlot();
 
-    if (result == ZE_RESULT_SUCCESS) {
-        DEBUG_BREAK_IF(this->getBindlessSlot() == nullptr);
-        *deviceOffset = this->getBindlessSlot()->surfaceStateOffset;
-    }
-    return result;
+    DEBUG_BREAK_IF(this->getBindlessSlot() == nullptr);
+    *deviceOffset = this->getBindlessSlot()->surfaceStateOffset;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 size_t ImageImp::getRowPitchFor2dImage(Device *device, const NEO::ImageInfo &imgInfo) {
