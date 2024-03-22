@@ -34,6 +34,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::getFdFromVmExport;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::setDefaultEngine;
+    using IoctlHelperXe::UserFenceExtension;
     using IoctlHelperXe::xeGetBindFlagsName;
     using IoctlHelperXe::xeGetBindOperationName;
     using IoctlHelperXe::xeGetClassName;
@@ -140,10 +141,15 @@ class DrmMockXe : public DrmMockCustom {
             v->vm_id = testValueVmId;
             ret = 0;
         } break;
-        case DrmIoctl::gemUserptr:
-        case DrmIoctl::gemClose:
+        case DrmIoctl::gemUserptr: {
             ret = 0;
-            break;
+        } break;
+        case DrmIoctl::gemClose: {
+            auto gemClose = reinterpret_cast<GemClose *>(arg);
+            passedGemClose = *gemClose;
+            gemCloseCalled++;
+            ret = 0;
+        } break;
         case DrmIoctl::gemVmDestroy: {
             struct drm_xe_vm_destroy *v = static_cast<struct drm_xe_vm_destroy *>(arg);
             if (v->vm_id == testValueVmId)
@@ -277,6 +283,8 @@ class DrmMockXe : public DrmMockCustom {
     int forceIoctlAnswer = 0;
     int setIoctlAnswer = 0;
     int gemVmBindReturn = 0;
+    GemClose passedGemClose{};
+    int gemCloseCalled = 0;
 
     const uint16_t revId = 0x12;
     const uint16_t devId = 0xabc;
