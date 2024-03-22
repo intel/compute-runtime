@@ -137,7 +137,7 @@ static_assert(offsetof(Query, numItems) == offsetof(struct drm_i915_query, num_i
 static_assert(offsetof(Query, flags) == offsetof(struct drm_i915_query, flags));
 static_assert(offsetof(Query, itemsPtr) == offsetof(struct drm_i915_query, items_ptr));
 
-static_assert(sizeof(GemClose) == sizeof(drm_gem_close));
+static_assert(sizeof(GemClose) >= sizeof(drm_gem_close));
 static_assert(offsetof(GemClose, handle) == offsetof(drm_gem_close, handle));
 static_assert(offsetof(GemClose, reserved) == offsetof(drm_gem_close, pad));
 

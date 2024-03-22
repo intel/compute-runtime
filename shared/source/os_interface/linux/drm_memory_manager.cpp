@@ -321,8 +321,9 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
         DEBUG_BREAK_IF(true);
         return nullptr;
     }
-    res->setAddress(address);
 
+    res->setAddress(address);
+    res->setUserptr(address);
     return res;
 }
 

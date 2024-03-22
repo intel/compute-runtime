@@ -1336,6 +1336,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         vmBind.length = bo->peekSize();
         vmBind.offset = 0;
         vmBind.start = bo->peekAddress();
+        vmBind.userptr = bo->getUserptr();
 
         if (bo->getColourWithBind()) {
             vmBind.length = bo->getColourChunk();
