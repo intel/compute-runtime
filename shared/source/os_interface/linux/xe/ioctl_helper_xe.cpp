@@ -929,15 +929,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         case static_cast<int>(DrmParam::paramRevision):
             *d->value = revId;
             break;
-        case static_cast<int>(DrmParam::paramHasPageFault):
-            *d->value = 0;
-            break;
-        case static_cast<int>(DrmParam::paramHasExecSoftpin):
-            *d->value = 1;
-            break;
-        case static_cast<int>(DrmParam::paramHasScheduler):
-            *d->value = static_cast<int>(0x80000037);
-            break;
         case static_cast<int>(DrmParam::paramCsTimestampFrequency): {
             uint64_t frequency = 0;
             if (getTimestampFrequency(frequency)) {
