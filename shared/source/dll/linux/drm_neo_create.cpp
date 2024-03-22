@@ -63,20 +63,6 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
         return nullptr;
     }
 
-    // Detect device parameters
-    int hasExecSoftPin = 0;
-    ret = drm->getExecSoftPin(hasExecSoftPin);
-    if (ret != 0) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query Soft Pin parameter!\n");
-        return nullptr;
-    }
-
-    if (!hasExecSoftPin) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s",
-                         "FATAL: Device doesn't support Soft-Pin but this is required.\n");
-        return nullptr;
-    }
-
     // Activate the Turbo Boost Frequency feature
     ret = drm->enableTurboBoost();
     if (ret != 0) {

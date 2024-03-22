@@ -929,9 +929,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         case static_cast<int>(DrmParam::paramHasPageFault):
             *d->value = 0;
             break;
-        case static_cast<int>(DrmParam::paramHasExecSoftpin):
-            *d->value = 1;
-            break;
         case static_cast<int>(DrmParam::paramHasScheduler):
             *d->value = static_cast<int>(0x80000037);
             break;
@@ -1351,8 +1348,6 @@ std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
         return "ParamChipsetId";
     case DrmParam::paramRevision:
         return "ParamRevision";
-    case DrmParam::paramHasExecSoftpin:
-        return "ParamHasExecSoftpin";
     case DrmParam::paramHasPooledEu:
         return "ParamHasPooledEu";
     case DrmParam::paramHasScheduler:

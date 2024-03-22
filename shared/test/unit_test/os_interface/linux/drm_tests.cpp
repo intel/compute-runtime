@@ -481,23 +481,6 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
 }
 
-TEST(DrmTest, WhenGettingExecSoftPinThenCorrectValueIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    int execSoftPin = 0;
-
-    int ret = pDrm->getExecSoftPin(execSoftPin);
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(0, execSoftPin);
-
-    pDrm->storedExecSoftPin = 1;
-    ret = pDrm->getExecSoftPin(execSoftPin);
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(1, execSoftPin);
-
-    delete pDrm;
-}
-
 TEST(DrmTest, WhenEnablingTurboBoostThenSucceeds) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -1594,7 +1577,6 @@ TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
 
     MockIoctlHelper ioctlHelper{drm};
     std::map<DrmParam, const char *> ioctlCodeStringMap = {
-        {DrmParam::paramHasExecSoftpin, "I915_PARAM_HAS_EXEC_SOFTPIN"},
         {DrmParam::paramHasPooledEu, "I915_PARAM_HAS_POOLED_EU"},
         {DrmParam::paramHasScheduler, "I915_PARAM_HAS_SCHEDULER"},
         {DrmParam::paramEuTotal, "I915_PARAM_EU_TOTAL"},

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,6 @@ int fakeFd = 1023;
 int haveDri = 0;                                       // index of dri to serve, -1 - none
 int deviceId = NEO::deviceDescriptorTable[0].deviceId; // default supported DeviceID
 int revisionId = 17;
-int haveSoftPin = 1;
 int havePreemption = I915_SCHEDULER_CAP_ENABLED |
                      I915_SCHEDULER_CAP_PRIORITY |
                      I915_SCHEDULER_CAP_PREEMPTION;
@@ -34,7 +33,6 @@ int failOnDeviceId = 0;
 int failOnEuTotal = 0;
 int failOnSubsliceTotal = 0;
 int failOnRevisionId = 0;
-int failOnSoftPin = 0;
 int failOnParamBoost = 0;
 int failOnSetParamSseu = 0;
 int failOnGetParamSseu = 0;
@@ -155,10 +153,6 @@ int drmGetParam(NEO::GetParam *param) {
     case I915_PARAM_REVISION:
         *param->value = revisionId;
         ret = failOnRevisionId;
-        break;
-    case I915_PARAM_HAS_EXEC_SOFTPIN:
-        *param->value = haveSoftPin;
-        ret = failOnSoftPin;
         break;
 #if defined(I915_PARAM_HAS_SCHEDULER)
     case I915_PARAM_HAS_SCHEDULER:

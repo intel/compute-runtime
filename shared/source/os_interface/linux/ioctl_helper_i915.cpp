@@ -136,8 +136,6 @@ int IoctlHelperI915::getDrmParamValueBase(DrmParam drmParam) const {
         return I915_PARAM_CHIPSET_ID;
     case DrmParam::paramRevision:
         return I915_PARAM_REVISION;
-    case DrmParam::paramHasExecSoftpin:
-        return I915_PARAM_HAS_EXEC_SOFTPIN;
     case DrmParam::paramHasPooledEu:
         return I915_PARAM_HAS_POOLED_EU;
     case DrmParam::paramHasScheduler:
@@ -339,8 +337,6 @@ std::string IoctlHelperI915::getDrmParamString(DrmParam drmParam) const {
         return "I915_PARAM_CHIPSET_ID";
     case DrmParam::paramRevision:
         return "I915_PARAM_REVISION";
-    case DrmParam::paramHasExecSoftpin:
-        return "I915_PARAM_HAS_EXEC_SOFTPIN";
     case DrmParam::paramHasPooledEu:
         return "I915_PARAM_HAS_POOLED_EU";
     case DrmParam::paramHasScheduler:

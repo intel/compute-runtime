@@ -82,7 +82,6 @@ class Drm : public DriverModel {
         return 0;
     }
     PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override;
-    int getExecSoftPin(int &execSoftPin);
     int enableTurboBoost();
     int getEuTotal(int &euTotal);
     int getSubsliceTotal(int &subsliceTotal);

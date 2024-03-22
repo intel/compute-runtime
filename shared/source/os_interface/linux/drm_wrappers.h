@@ -300,7 +300,6 @@ enum class DrmParam {
     mmapOffsetWc,
     paramChipsetId,
     paramRevision,
-    paramHasExecSoftpin,
     paramHasPooledEu,
     paramHasScheduler,
     paramEuTotal,

@@ -535,14 +535,6 @@ TEST_F(DrmTests, GivenKnownDeviceWhenCreatingDrmThenHwInfoIsProperlySet) {
     EXPECT_EQ(deviceId, mockRootDeviceEnvironment->getHardwareInfo()->platform.usDeviceID);
 }
 
-TEST_F(DrmTests, GivenNoSoftPinWhenCreatingDrmThenNullIsReturned) {
-    VariableBackup<decltype(haveSoftPin)> backupHaveSoftPin(&haveSoftPin);
-    haveSoftPin = 0;
-
-    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
-    EXPECT_EQ(drm, nullptr);
-}
-
 TEST_F(DrmTests, WhenCantFindDeviceIdThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnDeviceId)> backupFailOnDeviceId(&failOnDeviceId);
     failOnDeviceId = -1;
@@ -570,14 +562,6 @@ TEST_F(DrmTests, WhenCantQuerySubsliceCountThenDrmIsNotCreated) {
 TEST_F(DrmTests, WhenCantQueryRevisionIdThenDrmIsNotCreated) {
     VariableBackup<decltype(failOnRevisionId)> backupFailOnRevisionId(&failOnRevisionId);
     failOnRevisionId = -1;
-
-    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
-    EXPECT_EQ(drm, nullptr);
-}
-
-TEST_F(DrmTests, WhenCantQuerySoftPinSupportThenDrmIsNotCreated) {
-    VariableBackup<decltype(failOnSoftPin)> backupFailOnSoftPin(&failOnSoftPin);
-    failOnSoftPin = -1;
 
     auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);

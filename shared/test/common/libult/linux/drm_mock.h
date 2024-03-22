@@ -205,7 +205,6 @@ class DrmMock : public Drm {
     int storedRetValForPersistant = 0;
     int storedRetValForVmCreate = 0;
     int storedPreemptionSupport = 0;
-    int storedExecSoftPin = 0;
     int storedRetValForVmId = 1;
     int storedCsTimestampFrequency = 1000;
     int storedOaTimestampFrequency = 123456;

@@ -166,10 +166,6 @@ int Drm::getParamIoctl(DrmParam param, int *dstValue) {
     return retVal;
 }
 
-int Drm::getExecSoftPin(int &execSoftPin) {
-    return getParamIoctl(DrmParam::paramHasExecSoftpin, &execSoftPin);
-}
-
 bool Drm::queryI915DeviceIdAndRevision() {
     HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     int deviceId = hwInfo->platform.usDeviceID;

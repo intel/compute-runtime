@@ -94,10 +94,6 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
             *gp->value = this->storedPreemptionSupport;
             return this->storedRetVal;
         }
-        if (gp->param == I915_PARAM_HAS_EXEC_SOFTPIN) {
-            *gp->value = this->storedExecSoftPin;
-            return this->storedRetVal;
-        }
         if (gp->param == I915_PARAM_CS_TIMESTAMP_FREQUENCY) {
             *gp->value = this->storedCsTimestampFrequency;
             return this->storedRetVal;

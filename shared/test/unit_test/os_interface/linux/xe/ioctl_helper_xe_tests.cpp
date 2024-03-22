@@ -362,7 +362,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyDrmParamString("MmapOffsetWc", DrmParam::mmapOffsetWc);
     verifyDrmParamString("ParamChipsetId", DrmParam::paramChipsetId);
     verifyDrmParamString("ParamRevision", DrmParam::paramRevision);
-    verifyDrmParamString("ParamHasExecSoftpin", DrmParam::paramHasExecSoftpin);
     verifyDrmParamString("ParamHasPooledEu", DrmParam::paramHasPooledEu);
     verifyDrmParamString("ParamHasScheduler", DrmParam::paramHasScheduler);
     verifyDrmParamString("ParamEuTotal", DrmParam::paramEuTotal);
@@ -667,10 +666,6 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(dstvalue, 0);
-        test.param = static_cast<int>(DrmParam::paramHasExecSoftpin);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
-        EXPECT_EQ(0, ret);
-        EXPECT_EQ(dstvalue, 1);
         test.param = static_cast<int>(DrmParam::paramHasScheduler);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);

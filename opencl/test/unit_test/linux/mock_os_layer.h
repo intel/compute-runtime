@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,13 +26,11 @@ extern int fakeFd;
 extern int haveDri;  // index of dri to serve, -1 - none
 extern int deviceId; // known DeviceID
 extern int revisionId;
-extern int haveSoftPin;
 extern int vmId;
 extern int failOnDeviceId;
 extern int failOnEuTotal;
 extern int failOnSubsliceTotal;
 extern int failOnRevisionId;
-extern int failOnSoftPin;
 extern int failOnParamBoost;
 extern int failOnContextCreate;
 extern int failOnVirtualMemoryCreate;
