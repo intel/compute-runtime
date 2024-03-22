@@ -290,6 +290,30 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
     }
 }
 
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCreatingCmdListThenEnableSynchronizedDispatch, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, immCmdList->synchronizedDispatchMode);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, regularCmdList->synchronizedDispatchMode);
+
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(0);
+
+    immCmdList = createImmCmdList<gfxCoreFamily>();
+    regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, immCmdList->synchronizedDispatchMode);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, regularCmdList->synchronizedDispatchMode);
+
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+
+    immCmdList = createImmCmdList<gfxCoreFamily>();
+    regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList->synchronizedDispatchMode);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, regularCmdList->synchronizedDispatchMode);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallWaitUserFence, IsAtLeastXeHpCore) {
     NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
 

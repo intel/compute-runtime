@@ -299,6 +299,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         enableInOrderExecution();
     }
 
+    if (NEO::debugManager.flags.ForceSynchronizedDispatchMode.get() != -1) {
+        enableSynchronizedDispatch((NEO::debugManager.flags.ForceSynchronizedDispatchMode.get() == 1) ? NEO::SynchronizedDispatchMode::full : NEO::SynchronizedDispatchMode::disabled);
+    }
+
     return returnType;
 }
 

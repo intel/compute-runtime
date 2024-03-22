@@ -88,4 +88,10 @@ enum class AtomicAccessMode : uint32_t {
     system = 4
 };
 
+enum class SynchronizedDispatchMode : uint32_t {
+    disabled = 0,
+    full = 1,
+    limited = 2
+};
+
 } // namespace NEO
