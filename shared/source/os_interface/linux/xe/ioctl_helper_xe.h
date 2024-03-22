@@ -145,6 +145,8 @@ class IoctlHelperXe : public IoctlHelper {
     void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) override;
 
   protected:
+    static constexpr uint32_t maxContextSetProperties = 4;
+
     const char *xeGetClassName(int className);
     const char *xeGetBindOperationName(int bindOperation);
     const char *xeGetBindFlagsName(int bindFlags);
@@ -171,6 +173,7 @@ class IoctlHelperXe : public IoctlHelper {
     };
 
     void setDefaultEngine(const aub_stream::EngineType &defaultEngineType);
+    void setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut);
 
     int chipsetId = 0;
     int revId = 0;

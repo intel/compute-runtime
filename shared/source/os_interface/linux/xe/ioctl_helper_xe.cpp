@@ -1145,17 +1145,23 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     create.instances = castToUint64(contextParamEngine.data());
     create.num_placements = contextParamEngine.size();
 
-    struct drm_xe_ext_set_property ext {};
+    std::array<drm_xe_ext_set_property, maxContextSetProperties> extProperties{};
+    uint32_t extPropertyIndex = 0;
+
     auto &gfxCoreHelper = drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     if ((contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_RENDER) || (contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_COMPUTE)) {
         if (gfxCoreHelper.isRunaloneModeRequired(drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode())) {
-            ext.base.next_extension = 0;
-            ext.base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
-            ext.property = getRunaloneExtProperty();
-            ext.value = 1;
-
-            create.extensions = castToUint64(&ext);
+            extProperties[extPropertyIndex].base.next_extension = 0;
+            extProperties[extPropertyIndex].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
+            extProperties[extPropertyIndex].property = getRunaloneExtProperty();
+            extProperties[extPropertyIndex].value = 1;
+            extPropertyIndex++;
         }
+    }
+    setContextProperties(osContext, &extProperties, extPropertyIndex);
+
+    if (extPropertyIndex > 0) {
+        create.extensions = castToUint64(&extProperties[0]);
     }
 
     int ret = IoctlHelper::ioctl(DrmIoctl::gemContextCreateExt, &create);
