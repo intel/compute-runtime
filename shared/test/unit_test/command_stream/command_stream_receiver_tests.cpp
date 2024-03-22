@@ -43,6 +43,7 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
+#include "shared/test/common/mocks/mock_kmd_notify_helper.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_scratch_space_controller_xehp_and_later.h"
@@ -5043,6 +5044,26 @@ HWTEST_F(CommandStreamReceiverHwTest, givenForcePipeControlPriorToWalkerWhenAddP
 
     auto pc = genCmdCast<PIPE_CONTROL *>(*itorCmd);
     EXPECT_TRUE(pc->getCommandStreamerStallEnable());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenGetAcLineConnectedCalledThenCorrectValueIsReturned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto mockKmdNotifyHelper = new MockKmdNotifyHelper(&pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties);
+    csr.resetKmdNotifyHelper(mockKmdNotifyHelper);
+
+    EXPECT_EQ(1u, mockKmdNotifyHelper->updateAcLineStatusCalled);
+
+    csr.getAcLineConnected(false);
+    EXPECT_EQ(1u, mockKmdNotifyHelper->updateAcLineStatusCalled);
+
+    csr.getAcLineConnected(true);
+    EXPECT_EQ(2u, mockKmdNotifyHelper->updateAcLineStatusCalled);
+
+    mockKmdNotifyHelper->acLineConnected.store(false);
+    EXPECT_FALSE(csr.getAcLineConnected(false));
+
+    mockKmdNotifyHelper->acLineConnected.store(true);
+    EXPECT_TRUE(csr.getAcLineConnected(false));
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenBcsCsrWhenInitializeDeviceWithFirstSubmissionIsCalledThenSuccessIsReturned) {

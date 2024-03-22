@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,6 +94,10 @@ class DirectSubmissionHw {
     }
 
     virtual void flushMonitorFence(){};
+
+    QueueThrottle getLastSubmittedThrottle() {
+        return this->lastSubmittedThrottle;
+    }
 
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;

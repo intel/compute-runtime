@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/task_count_helper.h"
 
 #include "aubstream/engine_node.h"
@@ -39,6 +40,7 @@ class ReleaseHelper;
 class GraphicsAllocation;
 class MemoryManager;
 struct RootDeviceEnvironment;
+struct TimeoutParams;
 class OSInterface;
 class DriverModel;
 enum class DriverModelType;
@@ -112,6 +114,7 @@ class ProductHelper {
     virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const = 0;
     virtual bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const = 0;
+    virtual TimeoutParams getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const = 0;
     virtual std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const = 0;
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) = 0;

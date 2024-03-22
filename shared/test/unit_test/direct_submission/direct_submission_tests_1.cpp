@@ -161,6 +161,48 @@ HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionAndWaitForCompleti
     csr.blitterDirectSubmission.release();
 }
 
+HWTEST_F(DirectSubmissionTest, givenCsrWhenGetLastDirectSubmissionThrottleCalledThenDirectSubmissionLastSubmittedThrottleReturned) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallDirectSubmissionAvailable = false;
+    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = false;
+
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.directSubmission.reset(&directSubmission);
+    csr.directSubmissionAvailable = true;
+
+    directSubmission.lastSubmittedThrottle = QueueThrottle::LOW;
+    EXPECT_EQ(QueueThrottle::LOW, csr.getLastDirectSubmissionThrottle());
+
+    csr.directSubmissionAvailable = false;
+    EXPECT_EQ(QueueThrottle::MEDIUM, csr.getLastDirectSubmissionThrottle());
+
+    csr.directSubmission.release();
+}
+
+HWTEST_F(DirectSubmissionTest, givenBcsCsrWhenGetLastDirectSubmissionThrottleCalledThenDirectSubmissionLastSubmittedThrottleReturned) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallDirectSubmissionAvailable = false;
+    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = false;
+
+    MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
+    csr.blitterDirectSubmission.reset(&directSubmission);
+    csr.setupContext(*osContext);
+    csr.blitterDirectSubmissionAvailable = true;
+
+    directSubmission.lastSubmittedThrottle = QueueThrottle::LOW;
+    EXPECT_EQ(QueueThrottle::LOW, csr.getLastDirectSubmissionThrottle());
+
+    csr.blitterDirectSubmissionAvailable = false;
+    EXPECT_EQ(QueueThrottle::MEDIUM, csr.getLastDirectSubmissionThrottle());
+
+    csr.blitterDirectSubmission.release();
+}
+
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStopRingBufferBlockingCalledAndRingBufferIsNotStartedThenEnsureRingCompletionCalled) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     bool ret = directSubmission.initialize(false, false);

@@ -1363,6 +1363,18 @@ inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocki
 }
 
 template <typename GfxFamily>
+inline QueueThrottle CommandStreamReceiverHw<GfxFamily>::getLastDirectSubmissionThrottle() {
+    if (this->isAnyDirectSubmissionEnabled()) {
+        if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+            return this->blitterDirectSubmission->getLastSubmittedThrottle();
+        } else {
+            return this->directSubmission->getLastSubmittedThrottle();
+        }
+    }
+    return QueueThrottle::MEDIUM;
+}
+
+template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
     bool ret = true;
 

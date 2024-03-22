@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::immWritePostSyncOffset;
     using BaseClass::inputMonitorFenceDispatchRequirement;
     using BaseClass::isDisablePrefetcherRequired;
+    using BaseClass::lastSubmittedThrottle;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContext;
     using BaseClass::partitionConfigSet;

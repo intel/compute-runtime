@@ -13,6 +13,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/spinlock.h"
 
@@ -323,6 +324,8 @@ class CommandStreamReceiver {
 
     virtual void stopDirectSubmission(bool blocking) {}
 
+    virtual QueueThrottle getLastDirectSubmissionThrottle() = 0;
+
     bool isStaticWorkPartitioningEnabled() const {
         return staticWorkPartitioningEnabled;
     }
@@ -458,6 +461,13 @@ class CommandStreamReceiver {
 
     bool isInitialized() const {
         return this->resourcesInitialized;
+    }
+
+    MOCKABLE_VIRTUAL bool getAcLineConnected(bool updateStatus) const {
+        if (updateStatus) {
+            this->kmdNotifyHelper->updateAcLineStatus();
+        }
+        return this->kmdNotifyHelper->getAcLineConnected();
     }
 
     uint32_t getRequiredScratchSlot0Size() { return requiredScratchSlot0Size; }

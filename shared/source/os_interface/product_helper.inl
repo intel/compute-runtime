@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
@@ -354,6 +355,16 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const {
     return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const {
+    TimeoutParams params{};
+    params.maxTimeout = std::chrono::microseconds{DirectSubmissionController::defaultTimeout};
+    params.timeout = std::chrono::microseconds{DirectSubmissionController::defaultTimeout};
+    params.timeoutDivisor = 1;
+    params.directSubmissionEnabled = true;
+    return params;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

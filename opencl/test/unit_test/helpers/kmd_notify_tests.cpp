@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_kmd_notify_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -44,30 +45,6 @@ struct KmdNotifyTests : public ::testing::Test {
         properties.enableQuickKmdSleepForDirectSubmission = quickKmdSleepEnableForDirectSubmission;
         properties.delayQuickKmdSleepForDirectSubmissionMicroseconds = quickKmdSleepDelayForDirectSubmission;
     }
-
-    class MockKmdNotifyHelper : public KmdNotifyHelper {
-      public:
-        using KmdNotifyHelper::acLineConnected;
-        using KmdNotifyHelper::getMicrosecondsSinceEpoch;
-        using KmdNotifyHelper::lastWaitForCompletionTimestampUs;
-        using KmdNotifyHelper::properties;
-
-        MockKmdNotifyHelper() = delete;
-        MockKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties){};
-
-        void updateLastWaitForCompletionTimestamp() override {
-            KmdNotifyHelper::updateLastWaitForCompletionTimestamp();
-            updateLastWaitForCompletionTimestampCalled++;
-        }
-
-        void updateAcLineStatus() override {
-            KmdNotifyHelper::updateAcLineStatus();
-            updateAcLineStatusCalled++;
-        }
-
-        uint32_t updateLastWaitForCompletionTimestampCalled = 0u;
-        uint32_t updateAcLineStatusCalled = 0u;
-    };
 
     template <typename Family>
     class MockKmdNotifyCsr : public UltCommandStreamReceiver<Family> {

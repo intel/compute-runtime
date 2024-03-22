@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,7 @@ class KmdNotifyHelper {
     bool quickKmdSleepForSporadicWaitsEnabled() const { return properties->enableQuickKmdSleepForSporadicWaits; }
     MOCKABLE_VIRTUAL void updateLastWaitForCompletionTimestamp();
     MOCKABLE_VIRTUAL void updateAcLineStatus();
+    bool getAcLineConnected() const { return acLineConnected.load(); }
 
     static void overrideFromDebugVariable(int32_t debugVariableValue, int64_t &destination);
     static void overrideFromDebugVariable(int32_t debugVariableValue, bool &destination);

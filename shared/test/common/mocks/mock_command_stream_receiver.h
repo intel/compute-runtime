@@ -219,6 +219,14 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
     SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) override { return SubmissionStatus::success; }
 
+    QueueThrottle getLastDirectSubmissionThrottle() override {
+        return getLastDirectSubmissionThrottleReturnValue;
+    }
+
+    bool getAcLineConnected(bool updateStatus) const override {
+        return getAcLineConnectedReturnValue;
+    }
+
     static constexpr size_t tagSize = 256;
     static volatile TagAddressType mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
@@ -242,6 +250,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::ready};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
     BatchBuffer latestFlushedBatchBuffer = {};
+    QueueThrottle getLastDirectSubmissionThrottleReturnValue = QueueThrottle::MEDIUM;
+    bool getAcLineConnectedReturnValue = true;
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {

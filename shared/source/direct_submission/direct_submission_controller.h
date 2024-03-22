@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/device_bitfield.h"
 
@@ -21,8 +22,16 @@ namespace NEO {
 class MemoryManager;
 class CommandStreamReceiver;
 class Thread;
+class ProductHelper;
 
 using SteadyClock = std::chrono::steady_clock;
+
+struct TimeoutParams {
+    std::chrono::microseconds maxTimeout;
+    std::chrono::microseconds timeout;
+    int timeoutDivisor;
+    bool directSubmissionEnabled;
+};
 
 class DirectSubmissionController {
   public:
@@ -30,6 +39,7 @@ class DirectSubmissionController {
     DirectSubmissionController();
     virtual ~DirectSubmissionController();
 
+    void setTimeoutParamsForPlatform(const ProductHelper &helper);
     void registerDirectSubmission(CommandStreamReceiver *csr);
     void unregisterDirectSubmission(CommandStreamReceiver *csr);
 
@@ -50,6 +60,9 @@ class DirectSubmissionController {
 
     void adjustTimeout(CommandStreamReceiver *csr);
     void recalculateTimeout();
+    void applyTimeoutForAcLineStatusAndThrottle(bool acLineConnected);
+    void updateLastSubmittedThrottle(QueueThrottle throttle);
+    size_t getTimeoutParamsMapKey(QueueThrottle throttle, bool acLineStatus);
 
     uint32_t maxCcsCount = 1u;
     std::array<uint32_t, DeviceBitfield().size()> ccsCount = {};
@@ -64,5 +77,8 @@ class DirectSubmissionController {
     std::chrono::microseconds maxTimeout{defaultTimeout};
     std::chrono::microseconds timeout{defaultTimeout};
     int timeoutDivisor = 1;
+    std::unordered_map<size_t, TimeoutParams> timeoutParamsMap;
+    QueueThrottle lowestThrottleSubmitted = QueueThrottle::HIGH;
+    bool adjustTimeoutOnThrottleAndAcLineStatus = true;
 };
 } // namespace NEO

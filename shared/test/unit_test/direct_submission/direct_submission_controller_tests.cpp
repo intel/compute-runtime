@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,6 +128,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorD
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionControllerMaxTimeout.set(200'000);
     debugManager.flags.DirectSubmissionControllerDivisor.set(1);
+    debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.set(0);
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -202,6 +203,140 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorD
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
         EXPECT_EQ(controller.timeout.count(), 5'000);
     }
+    controller.unregisterDirectSubmission(&csr);
+}
+
+void fillTimeoutParamsMap(DirectSubmissionControllerMock &controller) {
+    controller.timeoutParamsMap.clear();
+    for (auto throttle : {QueueThrottle::LOW, QueueThrottle::MEDIUM, QueueThrottle::HIGH}) {
+        for (auto acLineStatus : {false, true}) {
+            auto key = controller.getTimeoutParamsMapKey(throttle, acLineStatus);
+            TimeoutParams params{};
+            params.maxTimeout = std::chrono::microseconds{500u + static_cast<size_t>(throttle) * 500u + (acLineStatus ? 0u : 1500u)};
+            params.timeout = params.maxTimeout;
+            params.timeoutDivisor = 1;
+            params.directSubmissionEnabled = true;
+            auto keyValue = std::make_pair(key, params);
+            bool result = false;
+            std::tie(std::ignore, result) = controller.timeoutParamsMap.insert(keyValue);
+            EXPECT_TRUE(result);
+        }
+    }
+}
+
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOnThrottleAndAcLineStatusEnabledWhenThrottleOrAcLineStatusChangesThenTimeoutIsChanged) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DirectSubmissionControllerDivisor.set(1);
+    debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.set(1);
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    csr.setupContext(*osContext.get());
+
+    DirectSubmissionControllerMock controller;
+    controller.keepControlling.store(false);
+    controller.directSubmissionControllingThread->join();
+    controller.directSubmissionControllingThread.reset();
+    controller.registerDirectSubmission(&csr);
+    EXPECT_TRUE(controller.adjustTimeoutOnThrottleAndAcLineStatus);
+    fillTimeoutParamsMap(controller);
+
+    {
+        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
+        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::LOW;
+        csr.getAcLineConnectedReturnValue = true;
+        csr.taskCount.store(1u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
+
+        EXPECT_EQ(std::chrono::microseconds{500u}, controller.timeout);
+        EXPECT_EQ(std::chrono::microseconds{500u}, controller.maxTimeout);
+        EXPECT_EQ(1, controller.timeoutDivisor);
+    }
+
+    {
+        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
+        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::MEDIUM;
+        csr.getAcLineConnectedReturnValue = true;
+        csr.taskCount.store(2u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
+
+        EXPECT_EQ(std::chrono::microseconds{1000u}, controller.timeout);
+        EXPECT_EQ(std::chrono::microseconds{1000u}, controller.maxTimeout);
+        EXPECT_EQ(1, controller.timeoutDivisor);
+    }
+
+    {
+        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
+        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::HIGH;
+        csr.getAcLineConnectedReturnValue = true;
+        csr.taskCount.store(3u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
+
+        EXPECT_EQ(std::chrono::microseconds{1500u}, controller.timeout);
+        EXPECT_EQ(std::chrono::microseconds{1500u}, controller.maxTimeout);
+        EXPECT_EQ(1, controller.timeoutDivisor);
+    }
+
+    {
+        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
+        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::LOW;
+        csr.getAcLineConnectedReturnValue = false;
+        csr.taskCount.store(4u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
+
+        EXPECT_EQ(std::chrono::microseconds{2000u}, controller.timeout);
+        EXPECT_EQ(std::chrono::microseconds{2000u}, controller.maxTimeout);
+        EXPECT_EQ(1, controller.timeoutDivisor);
+    }
+
+    {
+        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
+        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::MEDIUM;
+        csr.getAcLineConnectedReturnValue = false;
+        csr.taskCount.store(5u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
+
+        EXPECT_EQ(std::chrono::microseconds{2500u}, controller.timeout);
+        EXPECT_EQ(std::chrono::microseconds{2500u}, controller.maxTimeout);
+        EXPECT_EQ(1, controller.timeoutDivisor);
+    }
+
+    {
+        controller.lowestThrottleSubmitted = QueueThrottle::HIGH;
+        csr.getLastDirectSubmissionThrottleReturnValue = QueueThrottle::HIGH;
+        csr.getAcLineConnectedReturnValue = false;
+        csr.taskCount.store(6u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
+
+        EXPECT_EQ(std::chrono::microseconds{3000u}, controller.timeout);
+        EXPECT_EQ(std::chrono::microseconds{3000u}, controller.maxTimeout);
+        EXPECT_EQ(1, controller.timeoutDivisor);
+    }
+
+    {
+        controller.lowestThrottleSubmitted = QueueThrottle::LOW;
+        controller.checkNewSubmissions();
+        EXPECT_EQ(QueueThrottle::HIGH, controller.lowestThrottleSubmitted);
+    }
+
     controller.unregisterDirectSubmission(&csr);
 }
 

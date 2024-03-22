@@ -156,6 +156,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void stopDirectSubmission(bool blocking) override;
 
+    QueueThrottle getLastDirectSubmissionThrottle() override;
+
     virtual bool isKmdWaitModeActive() { return true; }
 
     bool initDirectSubmission() override;

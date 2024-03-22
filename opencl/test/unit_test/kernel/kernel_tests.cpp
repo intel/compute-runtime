@@ -616,6 +616,10 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     void postInitFlagsSetup() override {}
     SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) override { return SubmissionStatus::success; }
 
+    QueueThrottle getLastDirectSubmissionThrottle() override {
+        return QueueThrottle::MEDIUM;
+    }
+
     std::map<const void *, size_t> residency;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
     bool passResidencyCallToBaseClass = true;
