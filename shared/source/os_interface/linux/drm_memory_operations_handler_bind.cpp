@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,13 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *devi
     return result;
 }
 
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
+    for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
+        (*gfxAllocation)->setLockedMemory(true);
+    }
+    return makeResident(device, gfxAllocations);
+}
+
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
     auto deviceBitfield = osContext->getDeviceBitfield();
 
@@ -59,12 +66,12 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
             }
 
             if (!bo->bindInfo[bo->getOsContextId(osContext)][drmIterator]) {
+                bo->requireExplicitLockedMemory(drmAllocation->isLockedMemory());
                 int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
                 if (result) {
                     return MemoryOperationsStatus::outOfMemory;
                 }
             }
-
             if (!evictable) {
                 drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
             }
@@ -77,6 +84,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evict(Device *device, GraphicsAllocation &gfxAllocation) {
     auto &engines = device->getAllEngines();
     auto retVal = MemoryOperationsStatus::success;
+    gfxAllocation.setLockedMemory(false);
     for (const auto &engine : engines) {
         retVal = this->evictWithinOsContext(engine.osContext, gfxAllocation);
         if (retVal != MemoryOperationsStatus::success) {
@@ -185,7 +193,10 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImp
                         evict = false;
                         break;
                     }
-
+                    if (allocation->isLockedMemory()) {
+                        evict = false;
+                        break;
+                    }
                     if (waitForCompletion) {
                         const auto waitStatus = engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, 0}, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
                         if (waitStatus == WaitStatus::gpuHang) {

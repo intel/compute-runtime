@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 
 #include <algorithm>
 
@@ -29,6 +31,18 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *d
     return this->makeResidentWithinOsContext(osContext, gfxAllocations, false);
 }
 
+MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
+    OsContext *osContext = nullptr;
+    for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
+        auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
+        drmAllocation->setLockedMemory(true);
+        for (auto bo : drmAllocation->getBOs()) {
+            bo->requireExplicitLockedMemory(true);
+        }
+    }
+    return this->makeResidentWithinOsContext(osContext, gfxAllocations, false);
+}
+
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
     this->residency.erase(&gfxAllocation);
@@ -37,6 +51,16 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(O
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evict(Device *device, GraphicsAllocation &gfxAllocation) {
     OsContext *osContext = nullptr;
+    auto drmAllocation = static_cast<DrmAllocation *>(&gfxAllocation);
+    drmAllocation->setLockedMemory(false);
+    if (drmAllocation->storageInfo.isChunked || drmAllocation->storageInfo.getNumBanks() == 1) {
+        auto bo = drmAllocation->getBO();
+        bo->requireExplicitLockedMemory(false);
+    } else {
+        for (auto bo : drmAllocation->getBOs()) {
+            bo->requireExplicitLockedMemory(false);
+        }
+    }
     return this->evictWithinOsContext(osContext, gfxAllocation);
 }
 

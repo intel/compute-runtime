@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,4 +18,5 @@ ze_result_t ContextImp::getVirtualAddressSpaceIpcHandle(ze_device_handle_t hDevi
 ze_result_t ContextImp::putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
+
 } // namespace L0

@@ -266,20 +266,23 @@ TEST_F(IoctlPrelimHelperTests, whenGettingFlagsForVmBindThenProperValuesAreRetur
     for (auto &bindCapture : ::testing::Bool()) {
         for (auto &bindImmediate : ::testing::Bool()) {
             for (auto &bindMakeResident : ::testing::Bool()) {
-                auto flags = ioctlHelper.getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident);
-                if (bindCapture) {
-                    EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_CAPTURE, (flags & PRELIM_I915_GEM_VM_BIND_CAPTURE));
-                }
-                if (bindImmediate) {
-                    EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_IMMEDIATE, (flags & PRELIM_I915_GEM_VM_BIND_IMMEDIATE));
-                }
-                if (bindMakeResident) {
-                    EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT, (flags & PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT));
-                }
-                if (flags == 0) {
-                    EXPECT_FALSE(bindCapture);
-                    EXPECT_FALSE(bindImmediate);
-                    EXPECT_FALSE(bindMakeResident);
+                for (auto &bindLockedMemory : ::testing::Bool()) {
+                    auto flags = ioctlHelper.getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLockedMemory);
+                    if (bindCapture) {
+                        EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_CAPTURE, (flags & PRELIM_I915_GEM_VM_BIND_CAPTURE));
+                    }
+                    if (bindImmediate) {
+                        EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_IMMEDIATE, (flags & PRELIM_I915_GEM_VM_BIND_IMMEDIATE));
+                    }
+                    if (bindMakeResident || bindLockedMemory) {
+                        EXPECT_EQ(PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT, (flags & PRELIM_I915_GEM_VM_BIND_MAKE_RESIDENT));
+                    }
+                    if (flags == 0) {
+                        EXPECT_FALSE(bindCapture);
+                        EXPECT_FALSE(bindImmediate);
+                        EXPECT_FALSE(bindMakeResident);
+                        EXPECT_FALSE(bindLockedMemory);
+                    }
                 }
             }
         }

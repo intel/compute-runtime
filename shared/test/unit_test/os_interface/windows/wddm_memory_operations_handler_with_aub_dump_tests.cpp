@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,4 +121,8 @@ TEST_F(WddmMemoryOperationsHandlerWithAubDumpTest, whenConstructingWddmMemoryOpe
     ASSERT_EQ(nullptr, rootDeviceEnvironment->aubCenter.get());
     auto wddmMemoryOperationsHandlerWithAubDump = std::make_unique<WddmMemoryOperationsHandlerWithAubDump<WddmMemoryOperationsHandler>>(wddm, *rootDeviceEnvironment);
     EXPECT_NE(nullptr, rootDeviceEnvironment->aubCenter.get());
+}
+
+TEST_F(WddmMemoryOperationsHandlerWithAubDumpTest, givenRegularAllocationWhenLockingAllocationThenUnsupportIsReturned) {
+    EXPECT_EQ(wddmMemoryOperationsHandlerWithAubDumpMock->lock(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::unsupported);
 }

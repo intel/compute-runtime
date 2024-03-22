@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,11 @@ class DrmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
         aubMemoryOperationsHandler->makeResident(device, gfxAllocations);
         return BaseOperationsHandler::makeResident(device, gfxAllocations);
+    }
+
+    MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
+        aubMemoryOperationsHandler->makeResident(device, gfxAllocations);
+        return BaseOperationsHandler::lock(device, gfxAllocations);
     }
 
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {

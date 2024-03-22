@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override;
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
+    MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,6 +67,10 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
         }
     }
     return MemoryOperationsStatus::success;
+}
+
+MemoryOperationsStatus AubMemoryOperationsHandler::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
+    return makeResident(device, gfxAllocations);
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::evict(Device *device, GraphicsAllocation &gfxAllocation) {

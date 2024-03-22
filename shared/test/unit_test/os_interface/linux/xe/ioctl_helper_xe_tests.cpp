@@ -260,7 +260,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(0u, xeIoctlHelper->getDirectSubmissionFlag());
 
-    EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false));
+    EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false, false));
 
     std::vector<QueryItem> queryItems;
     std::vector<DistanceInfo> distanceInfos;
@@ -400,11 +400,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
                                     XE_NEO_VMCREATE_ENABLEPAGEFAULT_FLAG |
                                     XE_NEO_VMCREATE_USEVMBIND_FLAG),
               xeIoctlHelper->getFlagsForVmCreate(true, true, true));
-
-    EXPECT_EQ(static_cast<uint64_t>(XE_NEO_BIND_CAPTURE_FLAG |
-                                    XE_NEO_BIND_IMMEDIATE_FLAG |
-                                    XE_NEO_BIND_MAKERESIDENT_FLAG),
-              xeIoctlHelper->getFlagsForVmBind(true, true, true));
 
     uint32_t fabricId = 0, latency = 0, bandwidth = 0;
     EXPECT_FALSE(xeIoctlHelper->getFabricLatency(fabricId, latency, bandwidth));

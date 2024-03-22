@@ -20,7 +20,8 @@ struct drm_xe_engine_class_instance;
 // Arbitratry value for easier identification in the logs for now
 #define XE_NEO_BIND_CAPTURE_FLAG 0x1
 #define XE_NEO_BIND_IMMEDIATE_FLAG 0x20
-#define XE_NEO_BIND_MAKERESIDENT_FLAG 0x300
+#define XE_NEO_BIND_PIN_FLAG (1 << 3) // value for DRM_XE_VM_BIND_FLAG_PIN
+#define XE_NEO_BIND_MAKERESIDENT_FLAG XE_NEO_BIND_PIN_FLAG
 
 #define XE_NEO_VMCREATE_DISABLESCRATCH_FLAG 0x100000
 #define XE_NEO_VMCREATE_ENABLEPAGEFAULT_FLAG 0x20000
@@ -76,7 +77,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool getGemTiling(void *setTiling) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
-    uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) override;
+    uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock) override;
     int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) override;

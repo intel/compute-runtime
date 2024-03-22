@@ -743,21 +743,6 @@ bool IoctlHelperXe::completionFenceExtensionSupported(const bool isVmBindAvailab
     return isVmBindAvailable;
 }
 
-uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) {
-    uint64_t ret = 0;
-    xeLog(" -> IoctlHelperXe::%s %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident);
-    if (bindCapture) {
-        ret |= XE_NEO_BIND_CAPTURE_FLAG;
-    }
-    if (bindImmediate) {
-        ret |= XE_NEO_BIND_IMMEDIATE_FLAG;
-    }
-    if (bindMakeResident) {
-        ret |= XE_NEO_BIND_MAKERESIDENT_FLAG;
-    }
-    return ret;
-}
-
 int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return 0;
@@ -1236,6 +1221,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
 
         if (isBind) {
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
+            bind.bind.flags = static_cast<uint32_t>(vmBindParams.flags);
             bind.bind.obj = vmBindParams.handle;
             if (bindInfo[index].userptr) {
                 bind.bind.op = DRM_XE_VM_BIND_OP_MAP_USERPTR;

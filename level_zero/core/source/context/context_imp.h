@@ -66,6 +66,7 @@ struct ContextImp : Context {
                                  void **ptr) override;
     ze_result_t getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) override;
     ze_result_t getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) override;
+    ze_result_t lockMemory(ze_device_handle_t hDevice, void *ptr, size_t size) override;
 
     ze_result_t
     getIpcMemHandles(
