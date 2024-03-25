@@ -524,7 +524,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     ASSERT_NE(nullptr, wddmAllocation);
 
     EXPECT_EQ(ALLOCATION_HANDLE, wddmAllocation->peekSharedHandle());
-    EXPECT_EQ(RESOURCE_HANDLE, wddmAllocation->resourceHandle);
+    EXPECT_EQ(RESOURCE_HANDLE, wddmAllocation->getResourceHandle());
     EXPECT_NE(0u, wddmAllocation->getDefaultHandle());
     EXPECT_EQ(ALLOCATION_HANDLE, wddmAllocation->getDefaultHandle());
     EXPECT_NE(0u, wddmAllocation->getGpuAddress());
@@ -568,7 +568,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     ASSERT_NE(nullptr, wddmAllocation);
 
     EXPECT_EQ(ALLOCATION_HANDLE, wddmAllocation->peekSharedHandle());
-    EXPECT_EQ(RESOURCE_HANDLE, wddmAllocation->resourceHandle);
+    EXPECT_EQ(RESOURCE_HANDLE, wddmAllocation->getResourceHandle());
     EXPECT_NE(0u, wddmAllocation->getDefaultHandle());
     EXPECT_EQ(ALLOCATION_HANDLE, wddmAllocation->getDefaultHandle());
     EXPECT_EQ(reservedAddress, reinterpret_cast<void *>(wddmAllocation->getGpuAddress()));
@@ -1238,13 +1238,13 @@ TEST_F(WddmLockWithMakeResidentTests, whenEvictingTemporaryResourceThenOtherReso
 TEST_F(WddmLockWithMakeResidentTests, whenAlllocationNeedsBlockingMakeResidentBeforeLockThenLockWithBlockingMakeResident) {
     WddmMemoryManager memoryManager(*executionEnvironment);
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
-    allocation.needsMakeResidentBeforeLock = false;
+    allocation.setMakeResidentBeforeLockRequired(false);
     memoryManager.lockResource(&allocation);
     EXPECT_EQ(1u, wddm->lockResult.called);
     EXPECT_EQ(rootDeviceEnvironment->getHelper<GfxCoreHelper>().makeResidentBeforeLockNeeded(false), wddm->lockResult.uint64ParamPassed);
     memoryManager.unlockResource(&allocation);
 
-    allocation.needsMakeResidentBeforeLock = true;
+    allocation.setMakeResidentBeforeLockRequired(true);
     memoryManager.lockResource(&allocation);
     EXPECT_EQ(2u, wddm->lockResult.called);
     EXPECT_EQ(1u, wddm->lockResult.uint64ParamPassed);

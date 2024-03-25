@@ -381,7 +381,7 @@ class MemoryManagerEventPoolIpcMock : public NEO::MockMemoryManager {
     MemoryManagerEventPoolIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(executionEnvironment) {}
     void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
         alloc = new EventPoolIpcMockGraphicsAllocation(&buffer, sizeof(buffer));
-        alloc->isShareableHostMemory = true;
+        alloc->setShareableHostMemory(true);
         multiGraphicsAllocation.addAllocation(alloc);
         return reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
     }
@@ -390,7 +390,7 @@ class MemoryManagerEventPoolIpcMock : public NEO::MockMemoryManager {
             return NEO::MockMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
         }
         alloc = new EventPoolIpcMockGraphicsAllocation(&buffer, sizeof(buffer));
-        alloc->isShareableHostMemory = true;
+        alloc->setShareableHostMemory(true);
         return alloc;
     }
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
@@ -398,7 +398,7 @@ class MemoryManagerEventPoolIpcMock : public NEO::MockMemoryManager {
             return NEO::MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);
         }
         alloc = new EventPoolIpcMockGraphicsAllocation(&buffer, sizeof(buffer));
-        alloc->isShareableHostMemory = true;
+        alloc->setShareableHostMemory(true);
         return alloc;
     }
     char buffer[256];
@@ -820,7 +820,7 @@ TEST_F(EventPoolIPCHandleTests, GivenEventPoolWithIPCEventFlagAndHostMemoryThenS
     uint32_t minAllocationSize = eventPool->getEventSize();
     EXPECT_GE(allocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex())->getUnderlyingBufferSize(),
               minAllocationSize);
-    EXPECT_FALSE(allocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex())->isShareableHostMemory);
+    EXPECT_FALSE(allocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex())->isShareableHostMemory());
 }
 
 TEST_F(EventPoolIPCHandleTests, GivenIpcEventPoolWhenCreatingEventFromIpcPoolThenExpectIpcFlag) {

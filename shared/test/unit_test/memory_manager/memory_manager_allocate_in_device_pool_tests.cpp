@@ -337,7 +337,7 @@ TEST(BaseMemoryManagerTest, givenDebugVariableSetWhenCompressedBufferIsCreatedTh
     auto allocationBufferCompressed = memoryManager.allocateGraphicsMemoryInPreferredPool(allocPropertiesBufferCompressed, nullptr);
     EXPECT_EQ(nullptr, allocationBuffer->getDefaultGmm());
     EXPECT_NE(nullptr, allocationBufferCompressed->getDefaultGmm());
-    EXPECT_TRUE(allocationBufferCompressed->getDefaultGmm()->isCompressionEnabled);
+    EXPECT_TRUE(allocationBufferCompressed->getDefaultGmm()->isCompressionEnabled());
     memoryManager.freeGraphicsMemory(allocationBuffer);
     memoryManager.freeGraphicsMemory(allocationBufferCompressed);
 

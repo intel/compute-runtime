@@ -1161,7 +1161,7 @@ TEST(OsAgnosticMemoryManager, givenCompressionEnabledWhenAllocateGraphicsMemoryW
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
     EXPECT_NE(nullptr, allocation->getDefaultGmm());
-    EXPECT_EQ(true, allocation->getDefaultGmm()->isCompressionEnabled);
+    EXPECT_EQ(true, allocation->getDefaultGmm()->isCompressionEnabled());
     EXPECT_EQ(MemoryConstants::pageSize, allocation->getDefaultGmm()->resourceParams.BaseAlignment);
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -2833,7 +2833,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
 
     MockGraphicsAllocation allocation(1u, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
-    gmm.isCompressionEnabled = true;
+    gmm.setCompressionEnabled(true);
     allocation.setDefaultGmm(&gmm);
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
     expectedDdiUpdateAuxTable.BaseGpuVA = allocation.getGpuAddress();
@@ -2877,7 +2877,7 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
 
     MockGraphicsAllocation allocation(1u, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
-    gmm.isCompressionEnabled = true;
+    gmm.setCompressionEnabled(true);
     allocation.setDefaultGmm(&gmm);
 
     bool result = memoryManager->mapAuxGpuVA(&allocation);
@@ -2909,7 +2909,7 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThr
 
     MockGraphicsAllocation allocation(1u, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
     MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
-    gmm.isCompressionEnabled = true;
+    gmm.setCompressionEnabled(true);
     allocation.setDefaultGmm(&gmm);
 
     EXPECT_NO_THROW(memoryManager->mapAuxGpuVA(&allocation));

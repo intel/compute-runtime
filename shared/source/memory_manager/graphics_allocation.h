@@ -316,6 +316,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return bindlessInfo;
     }
     MOCKABLE_VIRTUAL void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId);
+    void setShareableHostMemory(bool shareableHostMemory) { this->shareableHostMemory = shareableHostMemory; }
+    bool isShareableHostMemory() const { return shareableHostMemory; }
 
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
@@ -325,8 +327,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     constexpr static TaskCountType objectNotResident = std::numeric_limits<TaskCountType>::max();
     constexpr static TaskCountType objectNotUsed = std::numeric_limits<TaskCountType>::max();
     constexpr static TaskCountType objectAlwaysResident = std::numeric_limits<TaskCountType>::max() - 1;
+
     std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
-    bool isShareableHostMemory = false;
 
   protected:
     struct UsageInfo {
@@ -388,8 +390,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     AllocationType allocationType = AllocationType::unknown;
 
     StackVec<UsageInfo, 32> usageInfos;
-    std::atomic<uint32_t> registeredContextsNum{0};
     StackVec<Gmm *, EngineLimits::maxHandleCount> gmms;
     ResidencyData residency;
+    std::atomic<uint32_t> registeredContextsNum{0};
+    bool shareableHostMemory = false;
 };
 } // namespace NEO

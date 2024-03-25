@@ -152,14 +152,14 @@ class DrmAllocation : public GraphicsAllocation {
     OsContextLinux *osContext = nullptr;
     BufferObjects bufferObjects{};
     StackVec<uint32_t, 1> registeredBoBindHandles;
-    MemAdviseFlags enabledMemAdviseFlags{};
     StackVec<MemoryToUnmap, 1> memoryToUnmap;
-    uint32_t numHandles = 0u;
     std::vector<uint64_t> handles;
 
     void *mmapPtr = nullptr;
     void *importedMmapPtr = nullptr;
     size_t mmapSize = 0u;
+    uint32_t numHandles = 0u;
+    MemAdviseFlags enabledMemAdviseFlags{};
 
     bool usmHostAllocation = false;
 };

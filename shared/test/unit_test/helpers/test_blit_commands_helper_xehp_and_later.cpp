@@ -61,7 +61,7 @@ HWTEST2_F(BlitTests, givenGmmWithDisabledCompresionWhenAppendBlitCommandsForFill
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    gmm->isCompressionEnabled = false;
+    gmm->setCompressionEnabled(false);
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -75,7 +75,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    gmm->isCompressionEnabled = true;
+    gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -91,7 +91,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
 
     auto gmmContext = pDevice->getGmmHelper();
     auto gmm = std::make_unique<MockGmm>(gmmContext);
-    gmm->isCompressionEnabled = true;
+    gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
@@ -111,7 +111,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionAndDebugFlagSetWhenAppendBlitC
     debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(newCompressionFormat));
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    gmm->isCompressionEnabled = true;
+    gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);

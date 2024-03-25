@@ -573,7 +573,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
         gfxAllocation.setAllocationType(type.allocationType);
 
         pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
-        gmm->isCompressionEnabled = type.compressed;
+        gmm->setCompressionEnabled(type.compressed);
 
         auto kernelObjsForAuxTranslation = pKernel->fillWithKernelObjsForAuxTranslation();
 
@@ -619,7 +619,7 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
     for (const auto type : allocationTypes) {
         gfxAllocation.setAllocationType(type.allocationType);
 
-        gmm->isCompressionEnabled = type.compressed;
+        gmm->setCompressionEnabled(type.compressed);
 
         pContext->getSVMAllocsManager()->insertSVMAlloc(allocData);
 

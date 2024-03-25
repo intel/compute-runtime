@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -333,7 +333,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedAllocationWhenCloningPageTa
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm gmm(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gmm.isCompressionEnabled = true;
+    gmm.setCompressionEnabled(true);
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
@@ -366,7 +366,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedAllocationWhenCloningPageTabl
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm gmm(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, {}, gmmRequirements);
-    gmm.isCompressionEnabled = false;
+    gmm.setCompressionEnabled(false);
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
@@ -429,7 +429,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenCompressedTileInstancedAllocationWhen
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm gmm(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gmm.isCompressionEnabled = true;
+    gmm.setCompressionEnabled(true);
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,
@@ -471,7 +471,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenUncachedTileInstancedAllocationWhenWr
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm gmm(csr->peekGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, {}, gmmRequirements);
-    gmm.isCompressionEnabled = false;
+    gmm.setCompressionEnabled(false);
 
     int dummy = 1;
     GraphicsAllocation graphicsAllocation{0, AllocationType::unknown,

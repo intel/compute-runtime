@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,7 +104,7 @@ bool WddmMock::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t si
 }
 NTSTATUS WddmMock::createAllocation(WddmAllocation *wddmAllocation) {
     if (wddmAllocation) {
-        return createAllocation(wddmAllocation->getAlignedCpuPtr(), wddmAllocation->getDefaultGmm(), wddmAllocation->getHandleToModify(0u), wddmAllocation->resourceHandle, wddmAllocation->getSharedHandleToModify());
+        return createAllocation(wddmAllocation->getAlignedCpuPtr(), wddmAllocation->getDefaultGmm(), wddmAllocation->getHandleToModify(0u), wddmAllocation->getResourceHandleToModify(), wddmAllocation->getSharedHandleToModify());
     }
     return false;
 }
@@ -150,7 +150,7 @@ bool WddmMock::destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext)
     D3DKMT_HANDLE resourceHandle = 0;
     void *reserveAddress = alloc->getReservedAddressPtr();
     if (alloc->peekSharedHandle()) {
-        resourceHandle = alloc->resourceHandle;
+        resourceHandle = alloc->getResourceHandle();
     } else {
         allocationHandles = &alloc->getHandles()[0];
         allocationCount = static_cast<uint32_t>(alloc->getHandles().size());

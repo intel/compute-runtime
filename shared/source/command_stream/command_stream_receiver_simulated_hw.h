@@ -111,7 +111,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         auto gmm = graphicsAllocation.getDefaultGmm();
 
         if (gmm) {
-            allocationParams.additionalParams.compressionEnabled = gmm->isCompressionEnabled;
+            allocationParams.additionalParams.compressionEnabled = gmm->isCompressionEnabled();
             allocationParams.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->resourceParams.Usage);
         }
 

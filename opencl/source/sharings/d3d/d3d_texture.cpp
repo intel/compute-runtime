@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,8 +120,8 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
 
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
         const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        alloc->getDefaultGmm()->isCompressionEnabled = productHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
-                                                                                                          : true;
+        alloc->getDefaultGmm()->setCompressionEnabled(productHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                         : true);
     }
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(alloc);
@@ -212,8 +212,8 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
 
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
         const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        alloc->getDefaultGmm()->isCompressionEnabled = productHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
-                                                                                                          : true;
+        alloc->getDefaultGmm()->setCompressionEnabled(productHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                         : true);
     }
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(alloc);

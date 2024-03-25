@@ -6857,7 +6857,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
         auto gmm = allocation->getDefaultGmm();
 
         {
-            gmm->isCompressionEnabled = true;
+            gmm->setCompressionEnabled(true);
             gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 1;
 
             mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
@@ -6867,7 +6867,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
         }
 
         {
-            gmm->isCompressionEnabled = false;
+            gmm->setCompressionEnabled(false);
             gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 0;
 
             mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);

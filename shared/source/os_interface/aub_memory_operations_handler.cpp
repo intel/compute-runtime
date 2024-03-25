@@ -48,7 +48,7 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
         auto gmm = allocation->getDefaultGmm();
 
         if (gmm) {
-            params.additionalParams.compressionEnabled = gmm->isCompressionEnabled;
+            params.additionalParams.compressionEnabled = gmm->isCompressionEnabled();
             params.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->resourceParams.Usage);
         }
 

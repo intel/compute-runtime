@@ -71,8 +71,8 @@ class Gmm {
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 
     const char *getUsageTypeString();
-
-    bool isCompressionEnabled = false;
+    void setCompressionEnabled(bool compresionEnabled) { this->compressionEnabled = compresionEnabled; }
+    bool isCompressionEnabled() const { return compressionEnabled; }
 
   protected:
     void applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed);
@@ -82,6 +82,7 @@ class Gmm {
     void applyDebugOverrides();
     GmmHelper *gmmHelper = nullptr;
 
+    bool compressionEnabled = false;
     bool preferNoCpuAccess = false;
 };
 } // namespace NEO

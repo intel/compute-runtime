@@ -773,7 +773,7 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
     auto gmm = new Gmm(device->getGmmHelper(), static_cast<const void *>(nullptr), t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, info, gmmRequirements);
-    gmm->isCompressionEnabled = true;
+    gmm->setCompressionEnabled(true);
 
     auto graphicsAllocation = mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
 
@@ -846,7 +846,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
     auto gmm = new Gmm(device->getGmmHelper(), (const void *)nullptr, t, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, info, gmmRequirements);
-    gmm->isCompressionEnabled = false;
+    gmm->setCompressionEnabled(false);
 
     mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm);
     cl_mem mem = mockBuffer.get();

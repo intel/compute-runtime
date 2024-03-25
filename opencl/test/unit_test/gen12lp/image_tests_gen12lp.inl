@@ -168,7 +168,7 @@ GEN12LPTEST_F(gen12LpImageTests, givenNoCompressionWhenProgramingImageSurfaceSta
     surfaceState.setMemoryCompressionEnable(true);
     surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled = false;
+    imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->setCompressionEnabled(false);
     imageHw->setImageArg(&surfaceState, false, 0, 0);
 
     EXPECT_FALSE(surfaceState.getMemoryCompressionEnable());

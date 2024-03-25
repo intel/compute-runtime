@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -175,7 +175,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         }
 
         if (graphicsAllocation->getDefaultGmm()) {
-            graphicsAllocation->getDefaultGmm()->isCompressionEnabled = compressed;
+            graphicsAllocation->getDefaultGmm()->setCompressionEnabled(compressed);
         }
     }
 

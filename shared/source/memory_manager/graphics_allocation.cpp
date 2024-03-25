@@ -107,7 +107,7 @@ void GraphicsAllocation::setTbxWritable(bool writable, uint32_t banks) {
 }
 
 bool GraphicsAllocation::isCompressionEnabled() const {
-    return (getDefaultGmm() && getDefaultGmm()->isCompressionEnabled);
+    return (getDefaultGmm() && getDefaultGmm()->isCompressionEnabled());
 }
 
 bool GraphicsAllocation::isTbxWritable(uint32_t banks) const {

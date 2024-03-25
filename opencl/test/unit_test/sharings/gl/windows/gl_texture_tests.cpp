@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -563,7 +563,7 @@ TEST_F(GlSharingTextureTests, givenAuxDisabledAndUnifiedAuxCapableWhenGlTextureI
     auto glTexture = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_WRITE_ONLY, GL_SRGB8_ALPHA8, 0, textureId, &retVal));
     EXPECT_EQ(0u, tempMM->mapAuxGpuVACalled);
     auto graphicsAllocation = glTexture->getGraphicsAllocation(device->getRootDeviceIndex());
-    EXPECT_FALSE(graphicsAllocation->getDefaultGmm()->isCompressionEnabled);
+    EXPECT_FALSE(graphicsAllocation->getDefaultGmm()->isCompressionEnabled());
 }
 
 class GetGlTextureInfoTests : public GlSharingTextureTests,

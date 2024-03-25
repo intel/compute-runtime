@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,10 +136,10 @@ PVCTEST_F(PVcBcsTests, givenCompressibleBuffersWhenStatefulCompressionIsEnabledT
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto srcAllocation = srcBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    EXPECT_TRUE(srcAllocation->getDefaultGmm()->isCompressionEnabled);
+    EXPECT_TRUE(srcAllocation->getDefaultGmm()->isCompressionEnabled());
 
     auto dstAllocation = dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    EXPECT_TRUE(dstAllocation->getDefaultGmm()->isCompressionEnabled);
+    EXPECT_TRUE(dstAllocation->getDefaultGmm()->isCompressionEnabled());
 
     auto blitProperties = BlitProperties::constructPropertiesForCopy(srcAllocation, dstAllocation, 0, 0,
                                                                      {BlitterConstants::maxBlitWidth - 1, 1, 1}, 0, 0, 0, 0, &clearColorAlloc);

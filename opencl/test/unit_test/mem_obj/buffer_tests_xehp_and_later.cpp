@@ -40,7 +40,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgr
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    gmm->isCompressionEnabled = true;
+    gmm->setCompressionEnabled(true);
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
@@ -82,7 +82,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterBufferTests, givenBufferAllocationInDev
     auto &device = context.getDevice(0)->getDevice();
     auto allocation = buffer->getGraphicsAllocation(device.getRootDeviceIndex());
     auto gmm = new MockGmm(device.getGmmHelper());
-    gmm->isCompressionEnabled = true;
+    gmm->setCompressionEnabled(true);
     allocation->setDefaultGmm(gmm);
 
     EXPECT_TRUE(!MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));

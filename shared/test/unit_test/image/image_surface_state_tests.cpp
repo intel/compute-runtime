@@ -108,7 +108,7 @@ HWTEST_F(ImageSurfaceStateTests, givenGmmWhenSetAuxParamsForCCSThenAuxiliarySurf
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
     EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(castSurfaceState, mockGmm.get());
 
-    mockGmm->isCompressionEnabled = true;
+    mockGmm->setCompressionEnabled(true);
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(castSurfaceState, mockGmm.get()));
 }
 

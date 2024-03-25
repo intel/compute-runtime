@@ -1189,7 +1189,7 @@ TEST(ImageTest, givenImageWhenGettingCompressionOfImageThenCorrectValueIsReturne
     EXPECT_NE(nullptr, image);
 
     auto allocation = image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    allocation->getDefaultGmm()->isCompressionEnabled = true;
+    allocation->getDefaultGmm()->setCompressionEnabled(true);
     size_t sizeReturned = 0;
     cl_bool usesCompression;
     cl_int retVal = CL_SUCCESS;
@@ -1202,7 +1202,7 @@ TEST(ImageTest, givenImageWhenGettingCompressionOfImageThenCorrectValueIsReturne
     ASSERT_EQ(sizeof(cl_bool), sizeReturned);
     EXPECT_TRUE(usesCompression);
 
-    allocation->getDefaultGmm()->isCompressionEnabled = false;
+    allocation->getDefaultGmm()->setCompressionEnabled(false);
     sizeReturned = 0;
     usesCompression = cl_bool{CL_FALSE};
     retVal = image->getMemObjectInfo(

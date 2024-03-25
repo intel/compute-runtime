@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -326,9 +326,9 @@ TEST(MemObj, givenCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
                   1, allocation->getUnderlyingBuffer(), nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), false, false, false);
 
-    allocation->getDefaultGmm()->isCompressionEnabled = false;
+    allocation->getDefaultGmm()->setCompressionEnabled(false);
     EXPECT_TRUE(memObj.mappingOnCpuAllowed());
-    allocation->getDefaultGmm()->isCompressionEnabled = true;
+    allocation->getDefaultGmm()->setCompressionEnabled(true);
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
 

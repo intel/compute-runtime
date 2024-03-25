@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,17 +18,17 @@ extern BOOL systemPowerStatusRetVal;
 extern BYTE systemPowerStatusACLineStatusOverride;
 } // namespace SysCalls
 
-class MockKmdNotifyHelper : public KmdNotifyHelper {
+class PublicKmdNotifyHelper : public KmdNotifyHelper {
   public:
     using KmdNotifyHelper::acLineConnected;
     using KmdNotifyHelper::updateAcLineStatus;
 
-    MockKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties){};
+    PublicKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties){};
 };
 
 TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnSuccessThenUpdateAcLineStatus) {
     auto properties = &(defaultHwInfo->capabilityTable.kmdNotifyProperties);
-    MockKmdNotifyHelper helper(properties);
+    PublicKmdNotifyHelper helper(properties);
     EXPECT_TRUE(helper.acLineConnected);
 
     VariableBackup<BOOL> systemPowerStatusRetValBkp(&SysCalls::systemPowerStatusRetVal);
@@ -47,7 +47,7 @@ TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnSuccessThenUpdateAcLin
 
 TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnErrorThenDontUpdateAcLineStatus) {
     auto properties = &(defaultHwInfo->capabilityTable.kmdNotifyProperties);
-    MockKmdNotifyHelper helper(properties);
+    PublicKmdNotifyHelper helper(properties);
     EXPECT_TRUE(helper.acLineConnected);
 
     VariableBackup<BOOL> systemPowerStatusRetValBkp(&SysCalls::systemPowerStatusRetVal);

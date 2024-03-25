@@ -43,7 +43,7 @@ void MockBuffer::setAllocationType(GraphicsAllocation *graphicsAllocation, GmmHe
     }
 
     if (graphicsAllocation->getDefaultGmm()) {
-        graphicsAllocation->getDefaultGmm()->isCompressionEnabled = compressed;
+        graphicsAllocation->getDefaultGmm()->setCompressionEnabled(compressed);
     }
 }
 

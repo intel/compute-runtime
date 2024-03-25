@@ -98,16 +98,16 @@ void WddmMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physica
     physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
     physicalAllocation->setReservedAddressRange(nullptr, 0u);
     WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
-    wddmAllocation->mappedPhysicalMemoryReservation = false;
+    wddmAllocation->setMappedPhysicalMemoryReservation(false);
 }
 
 bool WddmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
     WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
     auto decanonizedAddress = getGmmHelper(physicalAllocation->getRootDeviceIndex())->decanonize(gpuRange);
-    wddmAllocation->mappedPhysicalMemoryReservation = mapGpuVirtualAddress(wddmAllocation, reinterpret_cast<void *>(decanonizedAddress));
+    wddmAllocation->setMappedPhysicalMemoryReservation(mapGpuVirtualAddress(wddmAllocation, reinterpret_cast<void *>(decanonizedAddress)));
     physicalAllocation->setCpuPtrAndGpuAddress(nullptr, gpuRange);
     physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
-    return wddmAllocation->mappedPhysicalMemoryReservation;
+    return wddmAllocation->isMappedPhysicalMemoryReservation();
 }
 
 GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
@@ -239,7 +239,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
         return nullptr;
     }
 
-    auto cpuPtr = gmm->isCompressionEnabled ? nullptr : lockResource(wddmAllocation.get());
+    auto cpuPtr = gmm->isCompressionEnabled() ? nullptr : lockResource(wddmAllocation.get());
 
     [[maybe_unused]] auto status = true;
 
@@ -541,7 +541,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     wddmAllocation->setDriverAllocatedCpuPtr(pSysMem);
     wddmAllocation->set32BitAllocation(true);
     wddmAllocation->setAllocationOffset(offset);
-    wddmAllocation->allocInFrontWindowPool = allocationData.flags.use32BitFrontWindow;
+    wddmAllocation->setAllocInFrontWindowPool(allocationData.flags.use32BitFrontWindow);
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
@@ -668,19 +668,19 @@ void WddmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *g
 
 void *WddmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
-    return getWddm(graphicsAllocation.getRootDeviceIndex()).lockResource(wddmAllocation.getDefaultHandle(), this->peekExecutionEnvironment().rootDeviceEnvironments[wddmAllocation.getRootDeviceIndex()]->getHelper<GfxCoreHelper>().makeResidentBeforeLockNeeded(wddmAllocation.needsMakeResidentBeforeLock), wddmAllocation.getAlignedSize());
+    return getWddm(graphicsAllocation.getRootDeviceIndex()).lockResource(wddmAllocation.getDefaultHandle(), this->peekExecutionEnvironment().rootDeviceEnvironments[wddmAllocation.getRootDeviceIndex()]->getHelper<GfxCoreHelper>().makeResidentBeforeLockNeeded(wddmAllocation.needsMakeResidentBeforeLock()), wddmAllocation.getAlignedSize());
 }
 void WddmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation) {
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
     getWddm(graphicsAllocation.getRootDeviceIndex()).unlockResource(wddmAllocation.getDefaultHandle());
-    if (wddmAllocation.needsMakeResidentBeforeLock) {
+    if (wddmAllocation.needsMakeResidentBeforeLock()) {
         [[maybe_unused]] auto evictionStatus = getWddm(graphicsAllocation.getRootDeviceIndex()).getTemporaryResourcesContainer()->evictResource(wddmAllocation.getDefaultHandle());
         DEBUG_BREAK_IF(evictionStatus == MemoryOperationsStatus::failed);
     }
 }
 void WddmMemoryManager::freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) {
     auto &wddmAllocation = static_cast<WddmAllocation &>(graphicsAllocation);
-    if (wddmAllocation.needsMakeResidentBeforeLock) {
+    if (wddmAllocation.needsMakeResidentBeforeLock()) {
         for (auto i = 0u; i < wddmAllocation.getNumGmms(); i++) {
             getWddm(graphicsAllocation.getRootDeviceIndex()).getTemporaryResourcesContainer()->removeResource(wddmAllocation.getHandles()[i]);
         }
@@ -747,8 +747,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         input->fragmentsStorage.fragmentCount > 0) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
-        if (input->resourceHandle != 0) {
-            [[maybe_unused]] auto status = tryDeferDeletions(nullptr, 0, input->resourceHandle, gfxAllocation->getRootDeviceIndex());
+        if (input->getResourceHandle() != 0) {
+            [[maybe_unused]] auto status = tryDeferDeletions(nullptr, 0, input->getResourceHandle(), gfxAllocation->getRootDeviceIndex());
             DEBUG_BREAK_IF(!status);
         } else {
             for (auto handle : input->getHandles()) {
@@ -762,12 +762,12 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     if (input->getReservedAddressPtr()) {
         releaseReservedCpuAddressRange(input->getReservedAddressPtr(), input->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());
     }
-    if (input->reservedGpuVirtualAddress) {
-        getWddm(gfxAllocation->getRootDeviceIndex()).freeGpuVirtualAddress(input->reservedGpuVirtualAddress, input->reservedSizeForGpuVirtualAddress);
+    if (input->getReservedGpuVirtualAddress()) {
+        getWddm(gfxAllocation->getRootDeviceIndex()).freeGpuVirtualAddress(input->getReservedGpuVirtualAddressToModify(), input->getReservedSizeForGpuVirtualAddress());
     }
 
-    if (input->allocInFrontWindowPool) {
-        auto heapIndex = selectHeap(input, false, is32bit || executionEnvironment.rootDeviceEnvironments[input->getRootDeviceIndex()]->isFullRangeSvm(), input->allocInFrontWindowPool);
+    if (input->isAllocInFrontWindowPool()) {
+        auto heapIndex = selectHeap(input, false, is32bit || executionEnvironment.rootDeviceEnvironments[input->getRootDeviceIndex()]->isFullRangeSvm(), input->isAllocInFrontWindowPool());
         auto alignedSize = input->getAlignedSize();
         auto gfxPartition = getGfxPartition(input->getRootDeviceIndex());
         gfxPartition->heapFree(heapIndex, input->getGpuAddress(), alignedSize);
@@ -811,7 +811,7 @@ bool WddmMemoryManager::isMemoryBudgetExhausted() const {
 bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
     if (alloc == nullptr)
         return false;
-    if (alloc->physicalMemoryReservation && !alloc->mappedPhysicalMemoryReservation) {
+    if (alloc->isPhysicalMemoryReservation() && !alloc->isMappedPhysicalMemoryReservation()) {
         return true;
     }
     if (alloc->getGpuAddress() == 0u || (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0))
@@ -942,7 +942,7 @@ bool WddmMemoryManager::createPhysicalAllocation(WddmAllocation *allocation) {
     if (!status) {
         return false;
     }
-    allocation->physicalMemoryReservation = true;
+    allocation->setPhysicalMemoryReservation(true);
     return true;
 }
 
@@ -995,15 +995,15 @@ void WddmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootD
 
 bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocation, const void *preferredGpuVirtualAddress) {
     D3DGPU_VIRTUAL_ADDRESS addressToMap = castToUint64(preferredGpuVirtualAddress);
-    auto heapIndex = selectHeap(allocation, preferredGpuVirtualAddress != nullptr, is32bit || executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm(), allocation->allocInFrontWindowPool);
+    auto heapIndex = selectHeap(allocation, preferredGpuVirtualAddress != nullptr, is32bit || executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm(), allocation->isAllocInFrontWindowPool());
     if (!executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm() && !is32bit) {
         addressToMap = 0u;
     }
-    if (allocation->reservedGpuVirtualAddress) {
-        addressToMap = allocation->reservedGpuVirtualAddress;
+    if (allocation->getReservedGpuVirtualAddress()) {
+        addressToMap = allocation->getReservedGpuVirtualAddress();
     }
     auto gfxPartition = getGfxPartition(allocation->getRootDeviceIndex());
-    if (allocation->allocInFrontWindowPool) {
+    if (allocation->isAllocInFrontWindowPool()) {
         auto alignedSize = allocation->getAlignedSize();
         addressToMap = gfxPartition->heapAllocate(heapIndex, alignedSize);
     }
@@ -1017,10 +1017,10 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
         status = getWddm(allocation->getRootDeviceIndex()).mapGpuVirtualAddress(allocation->getDefaultGmm(), allocation->getDefaultHandle(), minimumAddress, maximumAddress, addressToMap, allocation->getGpuAddressToModify());
     }
     if (!status) {
-        if (allocation->reservedGpuVirtualAddress) {
-            getWddm(allocation->getRootDeviceIndex()).freeGpuVirtualAddress(allocation->reservedGpuVirtualAddress, allocation->reservedSizeForGpuVirtualAddress);
+        if (allocation->getReservedGpuVirtualAddress()) {
+            getWddm(allocation->getRootDeviceIndex()).freeGpuVirtualAddress(allocation->getReservedGpuVirtualAddressToModify(), allocation->getReservedSizeForGpuVirtualAddress());
         }
-        getWddm(allocation->getRootDeviceIndex()).destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->resourceHandle);
+        getWddm(allocation->getRootDeviceIndex()).destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->getResourceHandle());
         return false;
     }
 
@@ -1044,13 +1044,13 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
         addressToMap = castToUint64(preferredGpuVirtualAddress);
         allocation->getGpuAddressToModify() = addressToMap;
     } else {
-        allocation->reservedSizeForGpuVirtualAddress = alignUp(alignedSize, MemoryConstants::pageSize64k);
+        allocation->setReservedSizeForGpuVirtualAddress(alignUp(alignedSize, MemoryConstants::pageSize64k));
         auto status = wddm.reserveGpuVirtualAddress(0ull, gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
-                                                    allocation->reservedSizeForGpuVirtualAddress, &allocation->reservedGpuVirtualAddress);
+                                                    allocation->getReservedSizeForGpuVirtualAddress(), &allocation->getReservedGpuVirtualAddressToModify());
         UNRECOVERABLE_IF(status != STATUS_SUCCESS);
         auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
-        allocation->getGpuAddressToModify() = gmmHelper->canonize(allocation->reservedGpuVirtualAddress);
-        addressToMap = allocation->reservedGpuVirtualAddress;
+        allocation->getGpuAddressToModify() = gmmHelper->canonize(allocation->getReservedGpuVirtualAddress());
+        addressToMap = allocation->getReservedGpuVirtualAddress();
     }
 
     for (auto currentHandle = 0u; currentHandle < allocation->getNumGmms(); currentHandle++) {
@@ -1064,10 +1064,10 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
                                                gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex), addressToMap, gpuAddress);
         }
         if (!status) {
-            if (allocation->reservedGpuVirtualAddress) {
-                wddm.freeGpuVirtualAddress(allocation->reservedGpuVirtualAddress, allocation->reservedSizeForGpuVirtualAddress);
+            if (allocation->getReservedGpuVirtualAddress()) {
+                wddm.freeGpuVirtualAddress(allocation->getReservedGpuVirtualAddressToModify(), allocation->getReservedSizeForGpuVirtualAddress());
             }
-            wddm.destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->resourceHandle);
+            wddm.destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->getResourceHandle());
             return false;
         }
         gpuAddress = getGmmHelper(allocation->getRootDeviceIndex())->decanonize(gpuAddress);
@@ -1080,13 +1080,13 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
 bool WddmMemoryManager::createGpuAllocationsWithRetry(WddmAllocation *allocation) {
     for (auto handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
         auto gmm = allocation->getGmm(handleId);
-        auto status = getWddm(allocation->getRootDeviceIndex()).createAllocation(gmm->gmmResourceInfo->getSystemMemPointer(), gmm, allocation->getHandleToModify(handleId), allocation->resourceHandle, allocation->getSharedHandleToModify());
+        auto status = getWddm(allocation->getRootDeviceIndex()).createAllocation(gmm->gmmResourceInfo->getSystemMemPointer(), gmm, allocation->getHandleToModify(handleId), allocation->getResourceHandleToModify(), allocation->getSharedHandleToModify());
         if (status == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
             deferredDeleter->drain(true);
-            status = getWddm(allocation->getRootDeviceIndex()).createAllocation(gmm->gmmResourceInfo->getSystemMemPointer(), gmm, allocation->getHandleToModify(handleId), allocation->resourceHandle, allocation->getSharedHandleToModify());
+            status = getWddm(allocation->getRootDeviceIndex()).createAllocation(gmm->gmmResourceInfo->getSystemMemPointer(), gmm, allocation->getHandleToModify(handleId), allocation->getResourceHandleToModify(), allocation->getSharedHandleToModify());
         }
         if (status != STATUS_SUCCESS) {
-            getWddm(allocation->getRootDeviceIndex()).destroyAllocations(&allocation->getHandles()[0], handleId, allocation->resourceHandle);
+            getWddm(allocation->getRootDeviceIndex()).destroyAllocations(&allocation->getHandles()[0], handleId, allocation->getResourceHandle());
             return false;
         }
     }
@@ -1197,7 +1197,7 @@ bool WddmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphics
         if (!handleMask.test(handleId)) {
             continue;
         }
-        auto ptr = wddm.lockResource(wddmAllocation->getHandles()[handleId], wddmAllocation->needsMakeResidentBeforeLock, wddmAllocation->getAlignedSize());
+        auto ptr = wddm.lockResource(wddmAllocation->getHandles()[handleId], wddmAllocation->needsMakeResidentBeforeLock(), wddmAllocation->getAlignedSize());
         if (!ptr) {
             return false;
         }
@@ -1335,7 +1335,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     }
     wddmAllocation->storageInfo = allocationData.storageInfo;
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
-    wddmAllocation->needsMakeResidentBeforeLock = true;
+    wddmAllocation->setMakeResidentBeforeLockRequired(true);
 
     auto &wddm = getWddm(allocationData.rootDeviceIndex);
 
@@ -1421,9 +1421,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     }
     wddmAllocation->storageInfo = allocationData.storageInfo;
     wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
-    wddmAllocation->needsMakeResidentBeforeLock = true;
+    wddmAllocation->setMakeResidentBeforeLockRequired(true);
     if (heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type)) {
-        wddmAllocation->allocInFrontWindowPool = allocationData.flags.use32BitFrontWindow;
+        wddmAllocation->setAllocInFrontWindowPool(allocationData.flags.use32BitFrontWindow);
     }
 
     void *requiredGpuVa = nullptr;
@@ -1468,7 +1468,7 @@ bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const v
             return mapTileInstancedAllocation(allocation,
                                               requiredPtr,
                                               &getWddm(allocation->getRootDeviceIndex()),
-                                              selectHeap(allocation, requiredPtr != nullptr, executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm(), allocation->allocInFrontWindowPool),
+                                              selectHeap(allocation, requiredPtr != nullptr, executionEnvironment.rootDeviceEnvironments[allocation->getRootDeviceIndex()]->isFullRangeSvm(), allocation->isAllocInFrontWindowPool()),
                                               *getGfxPartition(allocation->getRootDeviceIndex()));
         } else if (allocation->storageInfo.multiStorage) {
             return mapMultiHandleAllocationWithRetry(allocation, requiredPtr);

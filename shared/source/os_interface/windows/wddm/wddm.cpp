@@ -575,7 +575,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     kmDafListener->notifyMapGpuVA(featureTable->flags.ftrKmdDaf, getAdapter(), device, handle, mapGPUVA.VirtualAddress, getGdi()->escape);
     bool ret = true;
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    if (gmm->isCompressionEnabled && productHelper.isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
+    if (gmm->isCompressionEnabled() && productHelper.isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
         this->forEachContextWithinWddm([&](const EngineControl &engine) {
             if (engine.commandStreamReceiver->pageTableManager.get()) {
                 ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
@@ -834,7 +834,7 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
     alloc->setDefaultHandle(allocationInfo[0].hAllocation);
-    alloc->resourceHandle = openResource.hResource;
+    alloc->setResourceHandle(openResource.hResource);
 
     auto resourceInfo = const_cast<void *>(allocationInfo[0].pPrivateDriverData);
     alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
@@ -883,7 +883,7 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo), hwDeviceId->getUmKmDataTranslator()->enabled()));
 
     alloc->setDefaultHandle(allocationInfo2[0].hAllocation);
-    alloc->resourceHandle = openResourceFromNtHandle.hResource;
+    alloc->setResourceHandle(openResourceFromNtHandle.hResource);
 
     return true;
 }

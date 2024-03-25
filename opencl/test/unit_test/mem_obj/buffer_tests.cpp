@@ -1754,7 +1754,7 @@ HWTEST_F(BufferSetSurfaceTests, givenCompressedGmmResourceWhenSurfaceStateIsProg
     gmmRequirements.preferCompressed = false;
     auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     graphicsAllocation->setDefaultGmm(gmm);
-    gmm->isCompressionEnabled = true;
+    gmm->setCompressionEnabled(true);
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
@@ -1778,7 +1778,7 @@ HWTEST_F(BufferSetSurfaceTests, givenNonCompressedGmmResourceWhenSurfaceStateIsP
     gmmRequirements.preferCompressed = false;
     auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     buffer->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(gmm);
-    gmm->isCompressionEnabled = false;
+    gmm->setCompressionEnabled(false);
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 

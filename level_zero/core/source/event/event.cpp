@@ -135,7 +135,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
                                                                                                    allocationProperties,
                                                                                                    *eventPoolAllocations);
         if (isIpcPoolFlagSet()) {
-            this->isShareableEventMemory = eventPoolAllocations->getDefaultGraphicsAllocation()->isShareableHostMemory;
+            this->isShareableEventMemory = eventPoolAllocations->getDefaultGraphicsAllocation()->isShareableHostMemory();
         }
         allocatedMemory = (nullptr != eventPoolPtr);
     }

@@ -152,7 +152,7 @@ void Gmm::applyAuxFlagsForBuffer(bool preferCompression) {
         gfxCoreHelper.applyRenderCompressionFlag(*this, 1);
         resourceParams.Flags.Gpu.CCS = 1;
         resourceParams.Flags.Gpu.UnifiedAuxSurface = 1;
-        isCompressionEnabled = true;
+        compressionEnabled = true;
     }
 
     if (debugManager.flags.PrintGmmCompressionParams.get()) {
@@ -160,7 +160,7 @@ void Gmm::applyAuxFlagsForBuffer(bool preferCompression) {
                resourceParams.Flags.Gpu.CCS, resourceParams.Flags.Gpu.UnifiedAuxSurface, resourceParams.Flags.Info.RenderCompressed);
     }
 
-    gfxCoreHelper.applyAdditionalCompressionSettings(*this, !isCompressionEnabled);
+    gfxCoreHelper.applyAdditionalCompressionSettings(*this, !compressionEnabled);
 }
 
 void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
@@ -199,7 +199,7 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
             this->resourceParams.Flags.Gpu.CCS = 1;
             this->resourceParams.Flags.Gpu.UnifiedAuxSurface = 1;
             this->resourceParams.Flags.Gpu.IndirectClearColor = 1;
-            this->isCompressionEnabled = true;
+            this->compressionEnabled = true;
         }
     }
 
@@ -208,7 +208,7 @@ void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo, bool preferCompressed) {
                resourceParams.Flags.Gpu.CCS, resourceParams.Flags.Gpu.UnifiedAuxSurface, resourceParams.Flags.Info.RenderCompressed);
     }
 
-    gfxCoreHelper.applyAdditionalCompressionSettings(*this, !isCompressionEnabled);
+    gfxCoreHelper.applyAdditionalCompressionSettings(*this, !compressionEnabled);
 }
 
 void Gmm::queryImageParams(ImageInfo &imgInfo) {
@@ -371,7 +371,7 @@ void Gmm::applyMemoryFlags(const StorageInfo &storageInfo) {
             if (extraMemoryFlagsRequired()) {
                 applyExtraMemoryFlags(storageInfo);
             } else if (!storageInfo.isLockable) {
-                if (isCompressionEnabled || storageInfo.localOnlyRequired) {
+                if (isCompressionEnabled() || storageInfo.localOnlyRequired) {
                     resourceParams.Flags.Info.LocalOnly = 1;
                 }
             }

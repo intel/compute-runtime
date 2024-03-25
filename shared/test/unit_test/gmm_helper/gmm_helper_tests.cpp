@@ -1073,7 +1073,7 @@ TEST_F(GmmCompressionTests, givenEnabledAndNotPreferredE2ECWhenApplyingForBuffer
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_FALSE(gmm->isCompressionEnabled);
+    EXPECT_FALSE(gmm->isCompressionEnabled());
 }
 
 TEST_F(GmmCompressionTests, givenDisabledAndPreferredE2ECWhenApplyingForBuffersThenDontSetValidFlags) {
@@ -1089,7 +1089,7 @@ TEST_F(GmmCompressionTests, givenDisabledAndPreferredE2ECWhenApplyingForBuffersT
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.RenderCompressed);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_FALSE(gmm->isCompressionEnabled);
+    EXPECT_FALSE(gmm->isCompressionEnabled());
 }
 
 HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateFlags) {
@@ -1108,7 +1108,7 @@ HWTEST_F(GmmCompressionTests, givenAllValidInputsWhenQueryingThenSetAppropriateF
     EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
     EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
-    EXPECT_TRUE(queryGmm->isCompressionEnabled);
+    EXPECT_TRUE(queryGmm->isCompressionEnabled());
 }
 
 TEST_F(GmmCompressionTests, givenAllValidInputsAndNoLocalMemoryRequestWhenQueryingThenRenderCompressionFlagsAreNotSet) {
@@ -1127,7 +1127,7 @@ TEST_F(GmmCompressionTests, givenAllValidInputsAndNoLocalMemoryRequestWhenQueryi
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
-    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }
 
 TEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionWhenQueryingThenSetAppropriateFlags) {
@@ -1139,7 +1139,7 @@ TEST_F(GmmCompressionTests, givenNotAllowedRenderCompressionWhenQueryingThenSetA
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
-    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }
 
 HWTEST_F(GmmCompressionTests, givenNotAllowedCompressionAndEnabledDebugFlagWhenQueryingThenSetAppropriateFlags) {
@@ -1153,7 +1153,7 @@ HWTEST_F(GmmCompressionTests, givenNotAllowedCompressionAndEnabledDebugFlagWhenQ
     EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
     EXPECT_EQ(1u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
-    EXPECT_TRUE(queryGmm->isCompressionEnabled);
+    EXPECT_TRUE(queryGmm->isCompressionEnabled());
 
     debugManager.flags.RenderCompressedImagesEnabled.set(0);
     localPlatformDevice->capabilityTable.ftrRenderCompressedImages = true;
@@ -1163,13 +1163,13 @@ HWTEST_F(GmmCompressionTests, givenNotAllowedCompressionAndEnabledDebugFlagWhenQ
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.IndirectClearColor);
-    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }
 
 TEST_F(GmmCompressionTests, givenNotPreferredCompressionFlagWhenQueryingThenDisallow) {
     auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
 
-    EXPECT_FALSE(queryGmm->isCompressionEnabled);
+    EXPECT_FALSE(queryGmm->isCompressionEnabled());
 }
 
 TEST_F(GmmCompressionTests, givenPlaneFormatWhenQueryingThenDisallow) {
@@ -1180,7 +1180,7 @@ TEST_F(GmmCompressionTests, givenPlaneFormatWhenQueryingThenDisallow) {
         imgInfo.plane = plane;
         auto queryGmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, true);
 
-        EXPECT_EQ(queryGmm->isCompressionEnabled,
+        EXPECT_EQ(queryGmm->isCompressionEnabled(),
                   plane == GMM_YUV_PLANE::GMM_NO_PLANE);
     }
 }
@@ -1209,7 +1209,7 @@ TEST_F(GmmCompressionTests, givenMediaCompressedImageApplyAuxFlagsForImageThenSe
     gmm.resourceParams.Flags.Info.RenderCompressed = false;
     gmm.setupImageResourceParams(imgInfo, true);
 
-    EXPECT_TRUE(gmm.isCompressionEnabled);
+    EXPECT_TRUE(gmm.isCompressionEnabled());
 }
 
 TEST_F(GmmCompressionTests, givenRenderCompressedImageApplyAuxFlagsForImageThenSetFlagsToCompressed) {
@@ -1221,7 +1221,7 @@ TEST_F(GmmCompressionTests, givenRenderCompressedImageApplyAuxFlagsForImageThenS
     gmm.resourceParams.Flags.Info.RenderCompressed = true;
     gmm.setupImageResourceParams(imgInfo, true);
 
-    EXPECT_TRUE(gmm.isCompressionEnabled);
+    EXPECT_TRUE(gmm.isCompressionEnabled());
 }
 
 HWTEST_F(GmmCompressionTests, givenEnabledAndPreferredE2ECWhenApplyingForBuffersThenSetValidFlags) {
@@ -1237,7 +1237,7 @@ HWTEST_F(GmmCompressionTests, givenEnabledAndPreferredE2ECWhenApplyingForBuffers
     EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.RenderCompressed);
     EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(1u, gmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_TRUE(gmm->isCompressionEnabled);
+    EXPECT_TRUE(gmm->isCompressionEnabled());
 }
 
 HWTEST_F(GmmCompressionTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingForBuffersThenSetValidFlags) {
@@ -1255,10 +1255,10 @@ HWTEST_F(GmmCompressionTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingFo
     EXPECT_EQ(1u, gmm.resourceParams.Flags.Info.RenderCompressed);
     EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(1u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_TRUE(gmm.isCompressionEnabled);
+    EXPECT_TRUE(gmm.isCompressionEnabled());
 
     gmm.resourceParams = {};
-    gmm.isCompressionEnabled = false;
+    gmm.setCompressionEnabled(false);
     debugManager.flags.RenderCompressedBuffersEnabled.set(0);
     localPlatformDevice->capabilityTable.ftrRenderCompressedBuffers = true;
 
@@ -1266,7 +1266,7 @@ HWTEST_F(GmmCompressionTests, givenDisabledE2ECAndEnabledDebugFlagWhenApplyingFo
     EXPECT_EQ(0u, gmm.resourceParams.Flags.Info.RenderCompressed);
     EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(0u, gmm.resourceParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_FALSE(gmm.isCompressionEnabled);
+    EXPECT_FALSE(gmm.isCompressionEnabled());
 }
 
 struct GmmLocalMemoryTests : public ::testing::Test, MockExecutionEnvironmentGmmFixture {
@@ -1395,7 +1395,7 @@ TEST_F(GmmHelperTests, givenCompressionEnabledWhenUsingLocalMemoryAndAllocationI
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-    EXPECT_TRUE(gmm->isCompressionEnabled);
+    EXPECT_TRUE(gmm->isCompressionEnabled());
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
     EXPECT_EQ(defaultHwInfo->featureTable.flags.ftrLocalMemory, gmm->resourceParams.Flags.Info.LocalOnly);
     EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.NotLockable);
@@ -1412,7 +1412,7 @@ TEST_F(GmmHelperTests, givenCompressionSupportedWhenAllocationIsLockableThenGmmH
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
-    EXPECT_FALSE(gmm->isCompressionEnabled);
+    EXPECT_FALSE(gmm->isCompressionEnabled());
     EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NotLockable);
 }
 

@@ -401,12 +401,12 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenProgrammingBltCom
 
     cl_int retVal = CL_SUCCESS;
     auto bufferCompressed = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
-    bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled = true;
+    bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm()->setCompressionEnabled(true);
     auto bufferNotCompressed = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_UNCOMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
 
     auto notCompressedGmm = bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm();
     if (notCompressedGmm) {
-        notCompressedGmm->isCompressionEnabled = false;
+        notCompressedGmm->setCompressionEnabled(false);
     }
 
     auto gmmHelper = clDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmHelper();
@@ -466,12 +466,12 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenDebugFlagSetWhenCompressionEnabledThe
 
     cl_int retVal = CL_SUCCESS;
     auto bufferCompressed = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
-    bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm()->isCompressionEnabled = true;
+    bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm()->setCompressionEnabled(true);
     auto bufferNotCompressed = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_UNCOMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
 
     auto uncompressedGmm = bufferNotCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm();
     if (uncompressedGmm) {
-        uncompressedGmm->isCompressionEnabled = false;
+        uncompressedGmm->setCompressionEnabled(false);
     }
 
     {
