@@ -29,6 +29,8 @@ class GlBuffer : public GlSharing {
     ~GlBuffer() override {
         callReleaseResource(true);
     }
+    GlBuffer(const GlBuffer &other) = delete;
+    GlBuffer &operator=(const GlBuffer &other) = delete;
     void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
     void callReleaseResource(bool createOrDestroy);
 
