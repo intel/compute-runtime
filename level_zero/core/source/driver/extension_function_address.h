@@ -12,9 +12,9 @@
 
 namespace L0 {
 struct ExtensionFunctionAddressHelper {
-    static void *getExtensionFunctionAddress(std::string functionName);
+    static void *getExtensionFunctionAddress(const std::string &functionName);
 
   protected:
-    static void *getAdditionalExtensionFunctionAddress(std::string functionName);
+    static void *getAdditionalExtensionFunctionAddress(const std::string &functionName);
 };
 } // namespace L0

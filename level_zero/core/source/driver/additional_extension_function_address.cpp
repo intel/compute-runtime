@@ -8,7 +8,7 @@
 #include "level_zero/core/source/driver/extension_function_address.h"
 
 namespace L0 {
-void *ExtensionFunctionAddressHelper::getAdditionalExtensionFunctionAddress(std::string functionName) {
+void *ExtensionFunctionAddressHelper::getAdditionalExtensionFunctionAddress(const std::string &functionName) {
     return nullptr;
 }
 

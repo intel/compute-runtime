@@ -13,7 +13,7 @@
 #include <cstring>
 
 namespace L0 {
-void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(std::string functionName) {
+void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::string &functionName) {
 #define RETURN_FUNC_PTR_IF_EXIST(name)    \
     {                                     \
         if (functionName == #name) {      \
