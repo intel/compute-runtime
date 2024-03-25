@@ -209,9 +209,6 @@ class BufferObject {
     std::vector<uint64_t> &getColourAddresses() {
         return this->bindAddresses;
     }
-    void requireExplicitLockedMemory(bool locked) { requiresLocked = locked; }
-    bool isExplicitLockedMemoryRequired() { return requiresLocked; }
-
     uint64_t peekPatIndex() const { return patIndex; }
     void setPatIndex(uint64_t newPatIndex) { this->patIndex = newPatIndex; }
     BOType peekBOType() const { return boType; }
@@ -261,7 +258,6 @@ class BufferObject {
     bool allowCapture = false;
     bool requiresImmediateBinding = false;
     bool requiresExplicitResidency = false;
-    bool requiresLocked = false;
     bool chunked = false;
     bool isReused = false;
 };

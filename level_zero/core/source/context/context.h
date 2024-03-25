@@ -162,7 +162,7 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t getVirtualAddressSpaceIpcHandle(ze_device_handle_t hDevice,
                                                         ze_ipc_mem_handle_t *pIpcHandle) = 0;
     virtual ze_result_t putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle) = 0;
-    virtual ze_result_t lockMemory(ze_device_handle_t hDevice, void *ptr, size_t size) = 0;
+
     virtual bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) = 0;
     virtual void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, ze_ipc_memory_flags_t flags) = 0;
 

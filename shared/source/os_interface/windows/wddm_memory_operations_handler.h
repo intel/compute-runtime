@@ -27,9 +27,6 @@ class WddmMemoryOperationsHandler : public MemoryOperationsHandler {
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
 
-    MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
-        return MemoryOperationsStatus::unsupported;
-    }
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
         return makeResident(nullptr, gfxAllocations);
     }

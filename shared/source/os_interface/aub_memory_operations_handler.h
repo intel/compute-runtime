@@ -23,7 +23,6 @@ class AubMemoryOperationsHandler : public MemoryOperationsHandler {
     ~AubMemoryOperationsHandler() override = default;
 
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
-    MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
 

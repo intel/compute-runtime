@@ -843,23 +843,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationDataWithFlagsWhenAllocateGrap
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWhenCallingSetLockedMemoryThenFlagIsSetCorrectly) {
-    class MockGraphicsAllocation : public GraphicsAllocation {
-      public:
-        using GraphicsAllocation::allocationInfo;
-    };
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    AllocationData allocationData;
-    auto allocation = static_cast<MockGraphicsAllocation *>(memoryManager->allocateGraphicsMemory64kb(allocationData));
-    EXPECT_NE(nullptr, allocation);
-    EXPECT_FALSE(allocation->allocationInfo.flags.lockedMemory);
-    allocation->setLockedMemory(true);
-    EXPECT_TRUE(allocation->allocationInfo.flags.lockedMemory);
-    EXPECT_TRUE(allocation->isLockedMemory());
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     if (memoryManager->isLimitedGPU(0)) {

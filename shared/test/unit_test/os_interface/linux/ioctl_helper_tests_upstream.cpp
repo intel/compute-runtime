@@ -318,10 +318,8 @@ TEST(IoctlHelperUpstreamTest, whenGettingFlagsForVmBindThenZeroIsReturned) {
     for (auto &bindCapture : ::testing::Bool()) {
         for (auto &bindImmediate : ::testing::Bool()) {
             for (auto &bindMakeResident : ::testing::Bool()) {
-                for (auto &bindLock : ::testing::Bool()) {
-                    auto flags = ioctlHelper.getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLock);
-                    EXPECT_EQ(0u, flags);
-                }
+                auto flags = ioctlHelper.getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident);
+                EXPECT_EQ(0u, flags);
             }
         }
     }

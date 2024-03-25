@@ -581,31 +581,6 @@ TEST_F(ContextMakeMemoryResidentTests,
 }
 
 TEST_F(ContextMakeMemoryResidentTests,
-       givenValidAllocationwithLockedWhenCallingMakeMemoryResidentThenInvalidArgumentIsReturned) {
-    const size_t size = 4096;
-    void *ptr = nullptr;
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t res = context->allocSharedMem(device->toHandle(),
-                                              &deviceDesc,
-                                              &hostDesc,
-                                              size,
-                                              0,
-                                              &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(hostDriverHandle.get());
-    auto allocation = driverHandleImp->getDriverSystemMemoryAllocation(ptr, size, neoDevice->getRootDeviceIndex(), nullptr);
-    allocation->setLockedMemory(true);
-
-    mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
-    res = context->makeMemoryResident(device, ptr, size);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
-
-    context->freeMem(ptr);
-}
-
-TEST_F(ContextMakeMemoryResidentTests,
        whenMakingASharedMemoryResidentThenIsAddedToVectorOfResidentAllocations) {
     const size_t size = 4096;
     void *ptr = nullptr;

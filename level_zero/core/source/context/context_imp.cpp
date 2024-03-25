@@ -471,9 +471,6 @@ ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
     }
-    if (allocation->isLockedMemory()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
 
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
     auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
