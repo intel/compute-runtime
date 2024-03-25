@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-std::vector<uint8_t> packDeviceBinary(const SingleDeviceBinary binary, std::string &outErrReason, std::string &outWarning) {
+std::vector<uint8_t> packDeviceBinary(const SingleDeviceBinary &binary, std::string &outErrReason, std::string &outWarning) {
     if (NEO::isAnyPackedDeviceBinaryFormat(binary.deviceBinary)) {
         return std::vector<uint8_t>(binary.deviceBinary.begin(), binary.deviceBinary.end());
     }

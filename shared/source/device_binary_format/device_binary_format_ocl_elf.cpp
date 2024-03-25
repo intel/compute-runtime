@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,7 +118,7 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(ProgramInf
 }
 
 template <>
-std::vector<uint8_t> packDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(const SingleDeviceBinary binary, std::string &outErrReason, std::string &outWarning) {
+std::vector<uint8_t> packDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(const SingleDeviceBinary &binary, std::string &outErrReason, std::string &outWarning) {
     using namespace NEO::Elf;
     NEO::Elf::ElfEncoder<EI_CLASS_64> elfEncoder;
     elfEncoder.getElfFileHeader().type = ET_OPENCL_EXECUTABLE;
