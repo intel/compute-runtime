@@ -1356,7 +1356,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 
     size_t middleElSize = sizeof(uint32_t) * 4;
     uintptr_t rightSize = size % middleElSize;
-    bool isStateless = false;
+    bool isStateless = this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless;
 
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
@@ -1441,7 +1441,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     uintptr_t leftSize = 0;
     uintptr_t rightSize = 0;
     uintptr_t middleSizeBytes = 0;
-    bool isStateless = false;
+    bool isStateless = this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless;
     const bool isHeapless = this->isHeaplessModeEnabled();
 
     if (!isCopyOnly()) {
@@ -1887,7 +1887,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    ze_event_handle_t hSignalEvent,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    bool isStateless = false;
+    bool isStateless = this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless;
     const bool isHeapless = this->isHeaplessModeEnabled();
 
     NEO::Device *neoDevice = device->getNEODevice();

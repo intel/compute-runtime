@@ -16,6 +16,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -2702,6 +2703,85 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     CmdListKernelLaunchParams launchParams = {};
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenCommandListUsingGlobalHeapsWhenAppendingCopyKernelThenStatelessKernelUsedAndNoSurfaceHeapUsed,
+          IsAtLeastXeHpCore) {
+    auto &container = commandList->getCmdContainer();
+
+    auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
+    EXPECT_EQ(nullptr, ssh);
+
+    void *hostPtr = nullptr;
+    void *devicePtr = nullptr;
+
+    constexpr size_t size = 1;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, size, 1u, &hostPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 1u, &devicePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendMemoryCopy(devicePtr, hostPtr, size, nullptr, 0, nullptr, false, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
+    EXPECT_EQ(nullptr, ssh);
+
+    context->freeMem(hostPtr);
+    context->freeMem(devicePtr);
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenCommandListUsingGlobalHeapsWhenAppendingFillKernelThenStatelessKernelUsedAndNoSurfaceHeapUsed,
+          IsAtLeastXeHpCore) {
+    auto &container = commandList->getCmdContainer();
+
+    auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
+    EXPECT_EQ(nullptr, ssh);
+
+    char pattern = 1;
+    void *patternPtr = &pattern;
+    void *devicePtr = nullptr;
+
+    constexpr size_t size = 128;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 1u, &devicePtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendMemoryFill(devicePtr, patternPtr, sizeof(pattern), size, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
+    EXPECT_EQ(nullptr, ssh);
+
+    context->freeMem(devicePtr);
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenCommandListUsingGlobalHeapsWhenAppendingPageFaultCopyThenStatelessKernelUsedAndNoSurfaceHeapUsed,
+          IsAtLeastXeHpCore) {
+    auto &container = commandList->getCmdContainer();
+
+    auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
+    EXPECT_EQ(nullptr, ssh);
+
+    constexpr size_t size = 64;
+    uint8_t *buffer[size];
+    uint64_t gpuAddress = 0x1200;
+
+    NEO::MockGraphicsAllocation mockSrcAllocation(buffer, gpuAddress, size);
+    NEO::MockGraphicsAllocation mockDstAllocation(buffer, gpuAddress, size);
+
+    auto result = commandList->appendPageFaultCopy(&mockDstAllocation, &mockSrcAllocation, size, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
+    EXPECT_EQ(nullptr, ssh);
 }
 
 } // namespace ult
