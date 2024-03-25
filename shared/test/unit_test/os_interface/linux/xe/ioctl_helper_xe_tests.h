@@ -33,6 +33,8 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::defaultEngine;
     using IoctlHelperXe::getFdFromVmExport;
     using IoctlHelperXe::IoctlHelperXe;
+    using IoctlHelperXe::maxContextSetProperties;
+    using IoctlHelperXe::setContextProperties;
     using IoctlHelperXe::setDefaultEngine;
     using IoctlHelperXe::UserFenceExtension;
     using IoctlHelperXe::xeGetBindFlagsName;
@@ -252,6 +254,27 @@ class DrmMockXe : public DrmMockCustom {
             waitUserFenceInputs.push_back(*waitUserFenceInput);
         } break;
 
+        case DrmIoctl::gemContextCreateExt: {
+            auto queueCreate = static_cast<drm_xe_exec_queue_create *>(arg);
+
+            auto extension = queueCreate->extensions;
+            while (extension) {
+                auto ext = reinterpret_cast<drm_xe_user_extension *>(extension);
+                if (ext->name == DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY) {
+                    auto setProperty = reinterpret_cast<drm_xe_ext_set_property *>(ext);
+                    execQueueProperties.push_back(*setProperty);
+                }
+                extension = ext->next_extension;
+            }
+            queueCreate->exec_queue_id = mockExecQueueId;
+            ret = 0;
+        } break;
+        case DrmIoctl::gemContextDestroy: {
+            auto queueDestroy = static_cast<drm_xe_exec_queue_destroy *>(arg);
+            if (queueDestroy->exec_queue_id == mockExecQueueId) {
+                ret = 0;
+            }
+        } break;
         case DrmIoctl::gemContextSetparam:
         case DrmIoctl::gemContextGetparam:
 
@@ -290,6 +313,8 @@ class DrmMockXe : public DrmMockCustom {
     const uint16_t devId = 0xabc;
 
     uint64_t queryConfig[6]{}; // 1 qword for num params and 1 qwords per param
+    static constexpr uint32_t mockExecQueueId = 1234;
+
     static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
     uint64_t queryEngines[45]{}; // 1 qword for num engines and 4 qwords per engine
     static_assert(sizeof(drm_xe_mem_region) == 11 * sizeof(uint64_t), "");
@@ -302,6 +327,8 @@ class DrmMockXe : public DrmMockCustom {
     StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
     StackVec<drm_xe_vm_bind, 1> vmBindInputs;
     StackVec<drm_xe_sync, 1> syncInputs;
+    StackVec<drm_xe_ext_set_property, 1> execQueueProperties;
+
     int waitUserFenceReturn = 0;
     uint32_t createParamsFlags = 0u;
     uint16_t createParamsCpuCaching = 0u;

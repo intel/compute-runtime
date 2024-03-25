@@ -137,9 +137,13 @@ bool IoctlHelperXe::initialize() {
     xeLog("DRM_XE_QUERY_CONFIG_VA_BITS\t\t%#llx\n",
           config->info[DRM_XE_QUERY_CONFIG_VA_BITS]);
 
+    xeLog("DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY\t\t%#llx\n",
+          config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY]);
+
     chipsetId = config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
     revId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
     hasVram = config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_VRAM ? 1 : 0;
+    maxExecQueuePriority = config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] & 0xffff;
 
     memset(&queryConfig, 0, sizeof(queryConfig));
     queryConfig.query = DRM_XE_DEVICE_QUERY_HWCONFIG;

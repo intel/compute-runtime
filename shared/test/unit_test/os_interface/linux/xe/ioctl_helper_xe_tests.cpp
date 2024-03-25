@@ -7,6 +7,9 @@
 
 #include "shared/test/unit_test/os_interface/linux/xe/ioctl_helper_xe_tests.h"
 
+#include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+
 using namespace NEO;
 
 TEST(IoctlHelperXeTest, givenXeDrmVersionsWhenGettingIoctlHelperThenValidIoctlHelperIsReturned) {
@@ -1929,4 +1932,37 @@ TEST(IoctlHelperXeTest, givenMultipleBindInfosWhenVmBindIsCalledThenProperHandle
     EXPECT_EQ(0ul, drm.vmBindInputs.size());
 
     ioctlHelper->bindInfo.clear();
+}
+
+TEST(IoctlHelperXeTest, givenLowPriorityContextWhenSettingPropertiesThenCorrectIndexIsUsedAndReturend) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    auto mockXeHelper = xeHelper.get();
+    drm.ioctlHelper = std::move(xeHelper);
+
+    OsContextLinux osContext(drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}));
+    std::array<drm_xe_ext_set_property, MockIoctlHelperXe::maxContextSetProperties> extProperties{};
+    uint32_t extIndex = 1;
+    mockXeHelper->setContextProperties(osContext, &extProperties, extIndex);
+
+    EXPECT_EQ(reinterpret_cast<uint64_t>(&extProperties[1]), extProperties[0].base.next_extension);
+    EXPECT_EQ(0u, extProperties[1].base.next_extension);
+    EXPECT_EQ(2u, extIndex);
+}
+
+TEST(IoctlHelperXeTest, givenLowPriorityContextWhenCreatingDrmContextThenExtPropertyIsSetCorrectly) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    drm.queryEngineInfo();
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    OsContextLinux osContext(drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}));
+    osContext.ensureContextInitialized();
+
+    ASSERT_LE(1u, drm.execQueueProperties.size());
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY), drm.execQueueProperties[0].property);
+    EXPECT_EQ(0u, drm.execQueueProperties[0].value);
 }

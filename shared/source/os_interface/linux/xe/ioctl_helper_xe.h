@@ -178,6 +178,7 @@ class IoctlHelperXe : public IoctlHelper {
     int revId = 0;
     int defaultAlignment = 0;
     int hasVram = 0;
+    int maxExecQueuePriority = 0;
     uint32_t xeVmId = 0;
     int xeFileHandle = 0;
     std::mutex xeLock;
