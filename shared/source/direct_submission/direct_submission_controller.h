@@ -79,6 +79,6 @@ class DirectSubmissionController {
     int timeoutDivisor = 1;
     std::unordered_map<size_t, TimeoutParams> timeoutParamsMap;
     QueueThrottle lowestThrottleSubmitted = QueueThrottle::HIGH;
-    bool adjustTimeoutOnThrottleAndAcLineStatus = true;
+    bool adjustTimeoutOnThrottleAndAcLineStatus = false;
 };
 } // namespace NEO

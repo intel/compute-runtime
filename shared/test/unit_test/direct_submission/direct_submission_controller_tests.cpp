@@ -102,10 +102,12 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
     }
     while (!controller.directSubmissions[&csr].isStopped) {
     }
-
-    EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
-    EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
-    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 9u);
+    {
+        std::lock_guard<std::mutex> lock(controller.directSubmissionsMutex);
+        EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
+        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 9u);
+    }
 
     controller.unregisterDirectSubmission(&csr);
     executionEnvironment.directSubmissionController.release();
@@ -240,6 +242,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
     csr.setupContext(*osContext.get());
 
     DirectSubmissionControllerMock controller;
+    controller.setTimeoutParamsForPlatform(csr.getProductHelper());
     controller.keepControlling.store(false);
     controller.directSubmissionControllingThread->join();
     controller.directSubmissionControllingThread.reset();

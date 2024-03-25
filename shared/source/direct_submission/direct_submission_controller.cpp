@@ -29,10 +29,6 @@ DirectSubmissionController::DirectSubmissionController() {
         maxTimeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerMaxTimeout.get()};
     }
 
-    if (debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.get() != -1) {
-        adjustTimeoutOnThrottleAndAcLineStatus = debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.get();
-    }
-
     directSubmissionControllingThread = Thread::create(controlDirectSubmissionsState, reinterpret_cast<void *>(this));
 };
 
@@ -51,11 +47,19 @@ void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver 
 }
 
 void DirectSubmissionController::setTimeoutParamsForPlatform(const ProductHelper &helper) {
-    for (auto throttle : {QueueThrottle::LOW, QueueThrottle::MEDIUM, QueueThrottle::HIGH}) {
-        for (auto acLineStatus : {false, true}) {
-            auto key = this->getTimeoutParamsMapKey(throttle, acLineStatus);
-            auto timeoutParam = std::make_pair(key, helper.getDirectSubmissionControllerTimeoutParams(acLineStatus, throttle));
-            this->timeoutParamsMap.insert(timeoutParam);
+    adjustTimeoutOnThrottleAndAcLineStatus = helper.isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled();
+
+    if (debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.get() != -1) {
+        adjustTimeoutOnThrottleAndAcLineStatus = debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.get();
+    }
+
+    if (adjustTimeoutOnThrottleAndAcLineStatus) {
+        for (auto throttle : {QueueThrottle::LOW, QueueThrottle::MEDIUM, QueueThrottle::HIGH}) {
+            for (auto acLineStatus : {false, true}) {
+                auto key = this->getTimeoutParamsMapKey(throttle, acLineStatus);
+                auto timeoutParam = std::make_pair(key, helper.getDirectSubmissionControllerTimeoutParams(acLineStatus, throttle));
+                this->timeoutParamsMap.insert(timeoutParam);
+            }
         }
     }
 }
@@ -110,9 +114,8 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
 void DirectSubmissionController::checkNewSubmissions() {
     std::lock_guard<std::mutex> lock(this->directSubmissionsMutex);
     bool shouldRecalculateTimeout = false;
-    CommandStreamReceiver *csr = nullptr;
     for (auto &directSubmission : this->directSubmissions) {
-        csr = directSubmission.first;
+        auto csr = directSubmission.first;
         auto &state = directSubmission.second;
 
         auto taskCount = csr->peekTaskCount();

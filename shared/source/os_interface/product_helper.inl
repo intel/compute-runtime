@@ -358,6 +358,11 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionConstantCacheInvalidationNee
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const {
     TimeoutParams params{};
     params.maxTimeout = std::chrono::microseconds{DirectSubmissionController::defaultTimeout};
