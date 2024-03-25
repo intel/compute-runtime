@@ -77,7 +77,11 @@ void programEventL3Flush(Event *event,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(const Event *event) const {
-    return (!this->duplicatedInOrderCounterStorageEnabled && event && (event->isUsingContextEndOffset() || !event->isCounterBased() || compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))));
+    if (event && compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {
+        return true;
+    }
+
+    return (!this->duplicatedInOrderCounterStorageEnabled && event && (event->isUsingContextEndOffset() || !event->isCounterBased()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -352,6 +356,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             syncCmdBuffer = &launchParams.outSyncCommand->pDestination;
         }
         appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, launchParams.outListCommands, false, true, launchParams.omitAddingEventResidency);
+        if (compactEvent->isInterruptModeEnabled()) {
+            NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+        }
     } else if (event) {
         event->setPacketsInUse(partitionCount);
         if (l3FlushEnable) {

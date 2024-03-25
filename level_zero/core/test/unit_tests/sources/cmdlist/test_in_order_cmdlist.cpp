@@ -2189,7 +2189,9 @@ HWTEST2_F(InOrderCmdListTests, givenMultipleAllocationsForWriteWhenAskingForNonW
     auto eventPool2 = createEvents<FamilyType>(1, false);
     events[2]->makeCounterBasedInitiallyDisabled();
 
+    bool isCompactEvent0 = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[0]->isSignalScope()));
     bool isCompactEvent1 = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[1]->isSignalScope()));
+    bool isCompactEvent2 = immCmdList->compactL3FlushEvent(immCmdList->getDcFlushRequired(events[2]->isSignalScope()));
 
     EXPECT_TRUE(immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
     EXPECT_EQ(isCompactEvent1, immCmdList->isInOrderNonWalkerSignalingRequired(events[1].get()));
@@ -2199,9 +2201,9 @@ HWTEST2_F(InOrderCmdListTests, givenMultipleAllocationsForWriteWhenAskingForNonW
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
     auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
 
-    EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(events[0].get()));
-    EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(events[1].get()));
-    EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(events[2].get()));
+    EXPECT_EQ(isCompactEvent0, immCmdList2->isInOrderNonWalkerSignalingRequired(events[0].get()));
+    EXPECT_EQ(isCompactEvent1, immCmdList2->isInOrderNonWalkerSignalingRequired(events[1].get()));
+    EXPECT_EQ(isCompactEvent2, immCmdList2->isInOrderNonWalkerSignalingRequired(events[2].get()));
     EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(nullptr));
 }
 
@@ -4460,7 +4462,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
             ASSERT_NE(nullptr, semaphoreCmd);
 
             EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(gpuAddress + sizeof(uint64_t), semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(gpuAddress + events[0]->getSinglePacketSize(), semaphoreCmd->getSemaphoreGraphicsAddress());
         }
     }
 
