@@ -2024,7 +2024,7 @@ bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *alloc
 
     allocation->getBufferObjectToModify(0) = bo;
 
-    bo->isChunked = 1;
+    bo->setChunked(true);
 
     storageInfo.isChunked = true;
     storageInfo.numOfChunks = numOfChunks;
@@ -2480,7 +2480,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
         bo->setAddress(castToUint64(currentAddress));
 
-        bo->isChunked = useChunking;
+        bo->setChunked(useChunking);
 
         bos.push_back(bo.release());
 

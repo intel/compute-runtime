@@ -570,7 +570,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest,
     auto size = 4096u;
     BufferObjects bos;
     MockBufferObject mockBo(device->getRootDeviceIndex(), mock, 3, 0, 0, 1);
-    mockBo.isChunked = 1;
+    mockBo.setChunked(true);
     mockBo.setSize(1024);
     bos.push_back(&mockBo);
 

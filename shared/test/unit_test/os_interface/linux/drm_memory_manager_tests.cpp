@@ -6417,7 +6417,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
         auto bo = bos[handleId];
         auto contextId = bo->getOsContextId(osContext);
         ASSERT_NE(nullptr, bo);
-        EXPECT_FALSE(bo->bindInfo[contextId][handleId]);
+        EXPECT_FALSE(bo->getBindInfo()[contextId][handleId]);
     }
     EXPECT_EQ(0u, allocation->getGpuAddress());
     memoryManager->freeGraphicsMemory(allocation);

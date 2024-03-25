@@ -65,7 +65,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
                 bo = drmAllocation->getBO();
             }
 
-            if (!bo->bindInfo[bo->getOsContextId(osContext)][drmIterator]) {
+            if (!bo->getBindInfo()[bo->getOsContextId(osContext)][drmIterator]) {
                 bo->requireExplicitLockedMemory(drmAllocation->isLockedMemory());
                 int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
                 if (result) {

@@ -515,7 +515,7 @@ bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
         }
     } else {
         auto bo = this->getBO();
-        if (bo->isChunked) {
+        if (bo->isChunked()) {
             auto drm = bo->peekDrm();
             success = prefetchBOWithChunking(const_cast<Drm *>(drm));
         } else {

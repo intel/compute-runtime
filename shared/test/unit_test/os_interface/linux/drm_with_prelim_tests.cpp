@@ -573,7 +573,7 @@ TEST_F(IoctlHelperPrelimFixture,
 
     drm->ioctlCallsCount = 0;
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    bo.isChunked = 1;
+    bo.setChunked(true);
     bo.setSize(1024);
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
@@ -602,7 +602,7 @@ TEST_F(IoctlHelperPrelimFixture,
 
     drm->ioctlCallsCount = 0;
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
-    bo.isChunked = 1;
+    bo.setChunked(true);
     bo.setSize(1024);
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ TEST(DrmVmBindTest,
 
     for (auto requireResidency : {false, true}) {
         MockBufferObject bo(0, &drm, 3, 0, 0, 1);
-        bo.isChunked = true;
+        bo.setChunked(true);
         bo.requireExplicitResidency(requireResidency);
 
         OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());

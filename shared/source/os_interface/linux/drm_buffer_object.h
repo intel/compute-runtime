@@ -223,9 +223,11 @@ class BufferObject {
     static constexpr int gpuHangDetected{-7171};
 
     uint32_t getOsContextId(OsContext *osContext);
-    std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
 
-    bool isChunked = false;
+    const auto &getBindInfo() const { return bindInfo; }
+
+    void setChunked(bool chunked) { this->chunked = chunked; }
+    bool isChunked() const { return this->chunked; }
 
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
@@ -233,35 +235,34 @@ class BufferObject {
     void printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal);
 
     Drm *drm = nullptr;
-    bool perContextVmsUsed = false;
-    std::atomic<uint32_t> refCount;
-    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
-    uint32_t tilingMode;
     BufferObjectHandleWrapper handle; // i915 gem object handle
+    void *lockedAddress = nullptr;    // CPU side virtual address
 
-    bool isReused = false;
-    bool boHandleShared = false;
-
-    bool allowCapture = false;
-    bool requiresImmediateBinding = false;
-    bool requiresExplicitResidency = false;
-    void *lockedAddress = nullptr; // CPU side virtual address
-    bool requiresLocked = false;
-
-    BOType boType = BOType::legacy;
-    uint64_t size;
+    uint64_t size = 0;
     uint64_t unmapSize = 0;
     uint64_t patIndex = CommonConstants::unsupportedPatIndex;
     uint64_t userptr = 0u;
-    CacheRegion cacheRegion = CacheRegion::defaultRegion;
-    CachePolicy cachePolicy = CachePolicy::writeBack;
-    StackVec<uint32_t, 2> bindExtHandles;
-    bool colourWithBind = false;
-
     size_t colourChunk = 0;
-    std::vector<uint64_t> bindAddresses;
-
-  private:
     uint64_t gpuAddress = 0llu;
+
+    std::vector<uint64_t> bindAddresses;
+    std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
+    StackVec<uint32_t, 2> bindExtHandles;
+    BOType boType = BOType::legacy;
+    std::atomic<uint32_t> refCount;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
+    uint32_t tilingMode = 0;
+    CachePolicy cachePolicy = CachePolicy::writeBack;
+    CacheRegion cacheRegion = CacheRegion::defaultRegion;
+
+    bool colourWithBind = false;
+    bool perContextVmsUsed = false;
+    bool boHandleShared = false;
+    bool allowCapture = false;
+    bool requiresImmediateBinding = false;
+    bool requiresExplicitResidency = false;
+    bool requiresLocked = false;
+    bool chunked = false;
+    bool isReused = false;
 };
 } // namespace NEO
