@@ -82,7 +82,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     void setContextGroup(bool value) {
         isContextGroup = value;
     }
-    bool isPartOfContextGroup() {
+    bool isPartOfContextGroup() const {
         return isContextGroup;
     }
 
