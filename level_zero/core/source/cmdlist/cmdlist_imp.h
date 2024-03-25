@@ -44,11 +44,12 @@ struct CommandListImp : public CommandList {
     const std::vector<Event *> &peekMappedEventList() { return mappedTsEventList; }
     void addRegularCmdListSubmissionCounter();
     virtual void patchInOrderCmds() = 0;
-    void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode) { synchronizedDispatchMode = mode; }
+    void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
 
   protected:
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
     NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
+    uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();
 
     ~CommandListImp() override = default;
 

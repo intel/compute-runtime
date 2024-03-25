@@ -298,4 +298,13 @@ void CommandListImp::addRegularCmdListSubmissionCounter() {
     }
 }
 
+void CommandListImp::enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode) {
+    if (!device->isImplicitScalingCapable()) {
+        return;
+    }
+
+    this->synchronizedDispatchMode = mode;
+    this->syncDispatchQueueId = device->getNextSyncDispatchQueueId();
+}
+
 } // namespace L0

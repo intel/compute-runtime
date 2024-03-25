@@ -51,4 +51,12 @@ NEO::TagAllocatorBase *Device::getHostInOrderCounterAllocator() {
     return getInOrderCounterAllocator<NEO::DeviceAllocNodeType<false>>(hostInOrderCounterAllocator, inOrderAllocatorMutex, *getNEODevice());
 }
 
+uint32_t Device::getNextSyncDispatchQueueId() {
+    auto newValue = syncDispatchQueueIdAllocator.fetch_add(1);
+
+    UNRECOVERABLE_IF(newValue == (std::numeric_limits<uint32_t>::max() - 1));
+
+    return newValue;
+}
+
 } // namespace L0

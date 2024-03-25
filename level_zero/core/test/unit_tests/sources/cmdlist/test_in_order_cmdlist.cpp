@@ -290,30 +290,6 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
     }
 }
 
-HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCreatingCmdListThenEnableSynchronizedDispatch, IsAtLeastSkl) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
-
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, immCmdList->synchronizedDispatchMode);
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, regularCmdList->synchronizedDispatchMode);
-
-    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(0);
-
-    immCmdList = createImmCmdList<gfxCoreFamily>();
-    regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
-
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, immCmdList->synchronizedDispatchMode);
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, regularCmdList->synchronizedDispatchMode);
-
-    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
-
-    immCmdList = createImmCmdList<gfxCoreFamily>();
-    regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
-
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList->synchronizedDispatchMode);
-    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, regularCmdList->synchronizedDispatchMode);
-}
-
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallWaitUserFence, IsAtLeastXeHpCore) {
     NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
 
@@ -4142,6 +4118,15 @@ struct MultiTileInOrderCmdListTests : public InOrderCmdListTests {
         return cmdList;
     }
 
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>> createMultiTileRegularCmdList(bool copyOnly) {
+        auto cmdList = createRegularCmdList<gfxCoreFamily>(copyOnly);
+
+        cmdList->partitionCount = partitionCount;
+
+        return cmdList;
+    }
+
     const uint32_t partitionCount = 2;
 };
 
@@ -5881,5 +5866,73 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeAndNoopWaitEventsAllowedWhenEvent
     EXPECT_EQ(0, memCmpRet);
 }
 
+using SynchronizedDispatchTests = InOrderCmdListFixture;
+using MultiTileSynchronizedDispatchTests = MultiTileInOrderCmdListTests;
+
+HWTEST2_F(SynchronizedDispatchTests, givenSingleTileSyncDispatchQueueWhenCreatingThenDontAssignQueueId, IsAtLeastSkl) {
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+
+    auto regularCmdList0 = createRegularCmdList<gfxCoreFamily>(false);
+    auto regularCmdList1 = createRegularCmdList<gfxCoreFamily>(false);
+    auto immCmdList0 = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
+
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), regularCmdList0->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, regularCmdList0->synchronizedDispatchMode);
+
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), regularCmdList1->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, regularCmdList1->synchronizedDispatchMode);
+
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), immCmdList0->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, immCmdList0->synchronizedDispatchMode);
+
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), immCmdList1->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, immCmdList1->synchronizedDispatchMode);
+}
+
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenDebugFlagSetWhenCreatingCmdListThenEnableSynchronizedDispatch, IsAtLeastSkl) {
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    auto regularCmdList = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, immCmdList->synchronizedDispatchMode);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, regularCmdList->synchronizedDispatchMode);
+
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(0);
+
+    immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    regularCmdList = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, immCmdList->synchronizedDispatchMode);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, regularCmdList->synchronizedDispatchMode);
+
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+
+    immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    regularCmdList = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList->synchronizedDispatchMode);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, regularCmdList->synchronizedDispatchMode);
+}
+
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenMultiTileSyncDispatchQueueWhenCreatingThenAssignQueueId, IsAtLeastSkl) {
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+
+    auto regularCmdList0 = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+    auto regularCmdList1 = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+    auto immCmdList0 = createMultiTileImmCmdList<gfxCoreFamily>();
+    auto immCmdList1 = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    EXPECT_EQ(0u, regularCmdList0->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, regularCmdList0->synchronizedDispatchMode);
+
+    EXPECT_EQ(1u, regularCmdList1->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, regularCmdList1->synchronizedDispatchMode);
+
+    EXPECT_EQ(2u, immCmdList0->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList0->synchronizedDispatchMode);
+
+    EXPECT_EQ(3u, immCmdList1->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList1->synchronizedDispatchMode);
+}
 } // namespace ult
 } // namespace L0
