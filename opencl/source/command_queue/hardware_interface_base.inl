@@ -293,7 +293,7 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
             EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandStream,
                                                                   address,
                                                                   static_cast<uint32_t>(waitCondition),
-                                                                  COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, nullptr);
+                                                                  COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, false, false, false, false, nullptr);
         }
     }
 }

@@ -2509,7 +2509,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 
             if (!noopDispatch) {
                 NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                        false, true, isQwordInOrderCounter(), indirectMode);
+                                                                        false, true, isQwordInOrderCounter(), indirectMode, false);
             } else {
                 memset(semaphoreCommand, 0, sizeof(MI_SEMAPHORE_WAIT));
             }
@@ -3533,7 +3533,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         UNRECOVERABLE_IF(getHighPart(data) != 0);
     }
 
-    NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), gpuAddress, data, comparator, false, useQwordData, indirectMode, nullptr);
+    NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), gpuAddress, data, comparator, false, useQwordData, indirectMode, false, nullptr);
 
     const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto allocType = srcAllocationStruct.alloc->getAllocationType();
@@ -3785,7 +3785,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
             NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
                                                                        gpuAddr,
                                                                        Event::STATE_CLEARED,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, outSemWaitCmdBuffer);
+                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, false, outSemWaitCmdBuffer);
 
             if (outWaitCmds != nullptr) {
                 auto &semWaitCmd = outWaitCmds->emplace_back();

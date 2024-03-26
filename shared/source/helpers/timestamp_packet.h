@@ -104,7 +104,7 @@ struct TimestampPacketHelper {
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.getPacketsUsed(); packetId++) {
             uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
-            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, TimestampPacketConstants::initValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, nullptr);
+            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, TimestampPacketConstants::initValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, false, nullptr);
         }
     }
 

@@ -26,6 +26,7 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
                                                         false,
                                                         true,
                                                         false,
+                                                        false,
                                                         false);
 
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore1.getCompareOperation());
@@ -38,6 +39,7 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
                                                         0x123400,
                                                         4,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                        false,
                                                         false,
                                                         false,
                                                         false,
@@ -57,7 +59,7 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(stream,
                                                            0xFF00FF000u,
                                                            5u,
-                                                           compareMode, false, false, false, nullptr);
+                                                           compareMode, false, false, false, false, nullptr);
 
     EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), stream.getUsed());
 
@@ -85,7 +87,7 @@ HWTEST2_F(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreTh
     EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(stream,
                                                            0xFF00FF000u,
                                                            5u,
-                                                           compareMode, false, false, true, &outSemWait);
+                                                           compareMode, false, false, true, false, &outSemWait);
 
     EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), stream.getUsed());
 

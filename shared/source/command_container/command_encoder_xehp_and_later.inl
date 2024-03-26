@@ -828,7 +828,8 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      bool registerPollMode,
                                                      bool waitMode,
                                                      bool useQwordData,
-                                                     bool indirect) {
+                                                     bool indirect,
+                                                     bool switchOnUnsuccessful) {
     MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
     localCmd.setCompareOperation(compareMode);
     localCmd.setSemaphoreDataDword(static_cast<uint32_t>(compareData));
@@ -837,7 +838,7 @@ void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
     localCmd.setRegisterPollMode(registerPollMode ? MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL : MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL);
     localCmd.setIndirectSemaphoreDataDword(indirect);
 
-    EncodeSemaphore<Family>::appendSemaphoreCommand(localCmd, compareData, indirect, useQwordData);
+    EncodeSemaphore<Family>::appendSemaphoreCommand(localCmd, compareData, indirect, useQwordData, switchOnUnsuccessful);
 
     *cmd = localCmd;
 }

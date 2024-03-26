@@ -916,7 +916,7 @@ inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(con
 }
 
 template <typename Family>
-void EncodeSemaphore<Family>::appendSemaphoreCommand(MI_SEMAPHORE_WAIT &cmd, uint64_t compareData, bool indirect, bool useQwordData) {
+void EncodeSemaphore<Family>::appendSemaphoreCommand(MI_SEMAPHORE_WAIT &cmd, uint64_t compareData, bool indirect, bool useQwordData, bool switchOnUnsuccessful) {
     constexpr uint64_t upper32b = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) << 32;
     UNRECOVERABLE_IF(useQwordData || (compareData & upper32b));
 }
@@ -929,12 +929,13 @@ void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
                                                         bool registerPollMode,
                                                         bool useQwordData,
                                                         bool indirect,
+                                                        bool switchOnUnsuccessful,
                                                         void **outSemWaitCmd) {
     auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
     if (outSemWaitCmd != nullptr) {
         *outSemWaitCmd = semaphoreCommand;
     }
-    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect);
+    programMiSemaphoreWait(semaphoreCommand, compareAddress, compareData, compareMode, registerPollMode, true, useQwordData, indirect, switchOnUnsuccessful);
 }
 template <typename Family>
 void EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(LinearStream &commandStream, std::list<void *> &commandsList) {

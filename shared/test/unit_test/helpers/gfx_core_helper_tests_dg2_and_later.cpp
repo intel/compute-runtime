@@ -131,6 +131,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
                                                                     false,
                                                                     true,
                                                                     false,
+                                                                    false,
                                                                     false);
                 auto pMiSemaphoreWait = genCmdCast<MI_SEMAPHORE_WAIT *>(*(++it));
                 ASSERT_NE(nullptr, pMiSemaphoreWait);

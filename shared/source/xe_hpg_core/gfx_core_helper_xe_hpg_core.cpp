@@ -91,7 +91,7 @@ template <>
 void MemorySynchronizationCommands<Family>::addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using COMPARE_OPERATION = typename Family::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-    EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(commandStream, gpuAddress, EncodeSemaphore<Family>::invalidHardwareTag, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, nullptr);
+    EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(commandStream, gpuAddress, EncodeSemaphore<Family>::invalidHardwareTag, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, false, nullptr);
 }
 
 template <>
