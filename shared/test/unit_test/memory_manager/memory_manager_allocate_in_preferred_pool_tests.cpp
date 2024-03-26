@@ -515,6 +515,15 @@ TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThenSyst
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
+TEST(MemoryManagerTest, givenSyncTokenTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequestedAndAllow64kPages) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::syncDispatchToken, mockDeviceBitfield};
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.allow64kbPages);
+}
+
 TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThen64kbPagesAllowed) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
@@ -523,20 +532,15 @@ TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThen64kb
     EXPECT_TRUE(allocData.flags.allow64kbPages);
 }
 
-TEST(MemoryManagerTest, givenPreemptionTypeWhenGetAllocationDataIsCalledThen48BitResourceIsTrue) {
-    AllocationData allocData;
+TEST(MemoryManagerTest, givenAllocationTypeWhenGetAllocationDataIsCalledThen48BitResourceIsTrue) {
     MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::preemption, mockDeviceBitfield};
-    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_TRUE(allocData.flags.resource48Bit);
-}
 
-TEST(MemoryManagerTest, givenDeferredTasksListTypeWhenGetAllocationDataIsCalledThen48BitResourceIsTrue) {
-    AllocationData allocData;
-    MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::deferredTasksList, mockDeviceBitfield};
-    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_TRUE(allocData.flags.resource48Bit);
+    for (auto &type : {AllocationType::preemption, AllocationType::deferredTasksList, AllocationType::syncDispatchToken}) {
+        AllocationData allocData;
+        AllocationProperties properties{mockRootDeviceIndex, 1, type, mockDeviceBitfield};
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+        EXPECT_TRUE(allocData.flags.resource48Bit);
+    }
 }
 
 TEST(MemoryManagerTest, givenMCSTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
@@ -1090,6 +1094,7 @@ static const AllocationType allocationHaveToBeForcedTo48Bit[] = {
     AllocationType::timestampPacketTagBuffer,
     AllocationType::semaphoreBuffer,
     AllocationType::deferredTasksList,
+    AllocationType::syncDispatchToken,
 };
 
 static const AllocationType allocationsOptionallyForcedTo48Bit[] = {

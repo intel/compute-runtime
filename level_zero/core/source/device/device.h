@@ -152,12 +152,15 @@ struct Device : _ze_device_handle_t {
     NEO::TagAllocatorBase *getDeviceInOrderCounterAllocator();
     NEO::TagAllocatorBase *getHostInOrderCounterAllocator();
     uint32_t getNextSyncDispatchQueueId();
+    void ensureSyncDispatchTokenAllocation();
 
   protected:
     NEO::Device *neoDevice = nullptr;
     std::unique_ptr<NEO::TagAllocatorBase> deviceInOrderCounterAllocator;
     std::unique_ptr<NEO::TagAllocatorBase> hostInOrderCounterAllocator;
+    NEO::GraphicsAllocation *syncDispatchTokenAllocation = nullptr;
     std::mutex inOrderAllocatorMutex;
+    std::mutex syncDispatchTokenMutex;
     std::atomic<uint32_t> syncDispatchQueueIdAllocator = 0;
     bool implicitScalingCapable = false;
 };

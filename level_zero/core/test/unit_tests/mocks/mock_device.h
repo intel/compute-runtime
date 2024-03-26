@@ -109,6 +109,7 @@ struct MockDeviceImp : public L0::DeviceImp {
     using Base::implicitScalingCapable;
     using Base::neoDevice;
     using Base::subDeviceCopyEngineGroups;
+    using Base::syncDispatchTokenAllocation;
 
     MockDeviceImp(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
         device->incRefInternal();

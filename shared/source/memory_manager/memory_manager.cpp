@@ -416,6 +416,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::svmZeroCopy:
     case AllocationType::gpuTimestampDeviceBuffer:
     case AllocationType::preemption:
+    case AllocationType::syncDispatchToken:
         allow64KbPages = true;
     default:
         break;
@@ -501,6 +502,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::debugModuleArea:
     case AllocationType::gpuTimestampDeviceBuffer:
     case AllocationType::semaphoreBuffer:
+    case AllocationType::syncDispatchToken:
         allocationData.flags.resource48Bit = true;
         break;
     default:

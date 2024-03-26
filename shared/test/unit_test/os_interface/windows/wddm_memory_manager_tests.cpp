@@ -576,7 +576,8 @@ TEST_F(WddmMemoryManagerTests, givenTypeWhenCallIsStatelessAccessRequiredThenPro
                       AllocationType::gpuTimestampDeviceBuffer,
                       AllocationType::swTagBuffer,
                       AllocationType::deferredTasksList,
-                      AllocationType::assertBuffer}) {
+                      AllocationType::assertBuffer,
+                      AllocationType::syncDispatchToken}) {
         EXPECT_FALSE(wddmMemoryManager->isStatelessAccessRequired(type));
     }
 }

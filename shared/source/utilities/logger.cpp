@@ -246,6 +246,8 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "DEFERRED_TASKS_LIST";
     case AllocationType::assertBuffer:
         return "ASSERT_BUFFER";
+    case AllocationType::syncDispatchToken:
+        return "SYNC_DISPATCH_TOKEN";
     default:
         return "ILLEGAL_VALUE";
     }

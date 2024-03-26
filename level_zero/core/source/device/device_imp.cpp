@@ -1438,6 +1438,8 @@ void DeviceImp::releaseResources() {
 
     UNRECOVERABLE_IF(neoDevice == nullptr);
 
+    getNEODevice()->getMemoryManager()->freeGraphicsMemory(syncDispatchTokenAllocation);
+
     this->bcsSplit.releaseResources();
 
     if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get()) {

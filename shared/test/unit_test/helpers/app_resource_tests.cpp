@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,7 +101,8 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::gpuTimestampDeviceBuffer, "GPUTSDBF"},
     {AllocationType::swTagBuffer, "SWTAGBF"},
     {AllocationType::deferredTasksList, "TSKLIST"},
-    {AllocationType::assertBuffer, "ASSRTBUF"}};
+    {AllocationType::assertBuffer, "ASSRTBUF"},
+    {AllocationType::syncDispatchToken, "SYNCTOK"}};
 class AllocationTypeTagString : public ::testing::TestWithParam<AllocationTypeTagTestCase> {};
 
 TEST_P(AllocationTypeTagString, givenGraphicsAllocationTypeWhenCopyTagToStorageInfoThenCorrectTagIsReturned) {

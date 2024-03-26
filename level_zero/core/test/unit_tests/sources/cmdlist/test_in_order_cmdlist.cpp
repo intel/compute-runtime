@@ -5936,5 +5936,27 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenMultiTileSyncDispatchQueueWhe
     EXPECT_EQ(3u, immCmdList1->syncDispatchQueueId);
     EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList1->synchronizedDispatchMode);
 }
+
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchEnabledWhenAllocatingQueueIdThenEnsureTokenAllocation, IsAtLeastSkl) {
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+
+    auto mockDevice = static_cast<MockDeviceImp *>(device);
+
+    EXPECT_EQ(nullptr, mockDevice->syncDispatchTokenAllocation);
+
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList->synchronizedDispatchMode);
+
+    auto syncAllocation = mockDevice->syncDispatchTokenAllocation;
+    EXPECT_NE(nullptr, syncAllocation);
+
+    EXPECT_EQ(syncAllocation->getAllocationType(), NEO::AllocationType::syncDispatchToken);
+
+    immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList->synchronizedDispatchMode);
+
+    EXPECT_EQ(mockDevice->syncDispatchTokenAllocation, syncAllocation);
+}
+
 } // namespace ult
 } // namespace L0

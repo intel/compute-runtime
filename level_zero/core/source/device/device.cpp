@@ -56,7 +56,27 @@ uint32_t Device::getNextSyncDispatchQueueId() {
 
     UNRECOVERABLE_IF(newValue == (std::numeric_limits<uint32_t>::max() - 1));
 
+    ensureSyncDispatchTokenAllocation();
+
     return newValue;
+}
+
+void Device::ensureSyncDispatchTokenAllocation() {
+    if (!syncDispatchTokenAllocation) {
+        std::unique_lock<std::mutex> lock(syncDispatchTokenMutex);
+
+        if (!syncDispatchTokenAllocation) {
+
+            const NEO::AllocationProperties allocationProperties(getRootDeviceIndex(), true, MemoryConstants::pageSize,
+                                                                 NEO::AllocationType::syncDispatchToken,
+                                                                 true, false, getNEODevice()->getDeviceBitfield());
+
+            syncDispatchTokenAllocation = getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(allocationProperties);
+            UNRECOVERABLE_IF(syncDispatchTokenAllocation == nullptr);
+
+            memset(syncDispatchTokenAllocation->getUnderlyingBuffer(), 0, syncDispatchTokenAllocation->getUnderlyingBufferSize());
+        }
+    }
 }
 
 } // namespace L0
