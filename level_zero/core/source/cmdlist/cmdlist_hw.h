@@ -95,6 +95,17 @@ struct CommandListCoreFamily : public CommandListImp {
                                         const ze_image_region_t *pSrcRegion, ze_event_handle_t hEvent,
                                         uint32_t numWaitEvents,
                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+    ze_result_t appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage, const void *srcptr,
+                                             const ze_image_region_t *pDstRegion,
+                                             uint32_t srcRowPitch, uint32_t srcSlicePitch,
+                                             ze_event_handle_t hEvent,
+                                             uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+    ze_result_t appendImageCopyToMemoryExt(void *dstptr, ze_image_handle_t hSrcImage,
+                                           const ze_image_region_t *pSrcRegion,
+                                           uint32_t destRowPitch, uint32_t destSlicePitch,
+                                           ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                           ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
     ze_result_t appendImageCopyRegion(ze_image_handle_t hDstImage, ze_image_handle_t hSrcImage,
                                       const ze_image_region_t *pDstRegion, const ze_image_region_t *pSrcRegion,
                                       ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
@@ -302,7 +313,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void appendMultiTileBarrier(NEO::Device &neoDevice);
     void appendDispatchOffsetRegister(bool workloadPartitionEvent, bool beforeProfilingCmds);
     size_t estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
-    uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
+    uint64_t getInputBufferSize(NEO::ImageType imageType, uint32_t bufferRowPitch, uint32_t bufferSlicePitch, const ze_image_region_t *region);
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocationData(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
     size_t getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation);
     uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);

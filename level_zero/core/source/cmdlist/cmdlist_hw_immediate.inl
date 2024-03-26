@@ -803,6 +803,46 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMemoryExt(
+    ze_image_handle_t hDstImage,
+    const void *srcPtr,
+    const ze_image_region_t *pDstRegion,
+    uint32_t srcRowPitch,
+    uint32_t srcSlicePitch,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
+
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
+
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(hDstImage, srcPtr, pDstRegion, srcRowPitch, srcSlicePitch,
+                                                                                  hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+
+    return flushImmediate(ret, true, hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch), relaxedOrderingDispatch, true, hSignalEvent);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemoryExt(
+    void *dstPtr,
+    ze_image_handle_t hSrcImage,
+    const ze_image_region_t *pSrcRegion,
+    uint32_t destRowPitch,
+    uint32_t destSlicePitch,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
+
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
+
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(dstPtr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch,
+                                                                                hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+
+    return flushImmediate(ret, true, hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch), relaxedOrderingDispatch, true, hSignalEvent);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBarrier(uint32_t numRanges,
                                                                                      const size_t *pRangeSizes,
                                                                                      const void **pRanges,

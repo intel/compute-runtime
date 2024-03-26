@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,6 +92,32 @@ ze_result_t zeCommandListAppendImageCopyFromMemory(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     return L0::CommandList::fromHandle(hCommandList)->appendImageCopyFromMemory(hDstImage, srcptr, pDstRegion, hSignalEvent, numWaitEvents, phWaitEvents, false);
+}
+
+ze_result_t zeCommandListAppendImageCopyToMemoryExt(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    ze_image_handle_t hSrcImage,
+    const ze_image_region_t *pSrcRegion,
+    uint32_t destRowPitch,
+    uint32_t destSlicePitch,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyToMemoryExt(dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hSignalEvent, numWaitEvents, phWaitEvents, false);
+}
+
+ze_result_t zeCommandListAppendImageCopyFromMemoryExt(
+    ze_command_list_handle_t hCommandList,
+    ze_image_handle_t hDstImage,
+    const void *srcptr,
+    const ze_image_region_t *pDstRegion,
+    uint32_t srcRowPitch,
+    uint32_t srcSlicePitch,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::CommandList::fromHandle(hCommandList)->appendImageCopyFromMemoryExt(hDstImage, srcptr, pDstRegion, srcRowPitch, srcSlicePitch, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 ze_result_t zeCommandListAppendMemoryPrefetch(
@@ -278,6 +304,50 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendImageCopyFromMemory(
         hDstImage,
         srcptr,
         pDstRegion,
+        hSignalEvent,
+        numWaitEvents,
+        phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendImageCopyToMemoryExt(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    ze_image_handle_t hSrcImage,
+    const ze_image_region_t *pSrcRegion,
+    uint32_t destRowPitch,
+    uint32_t destSlicePitch,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListAppendImageCopyToMemoryExt(
+        hCommandList,
+        dstptr,
+        hSrcImage,
+        pSrcRegion,
+        destRowPitch,
+        destSlicePitch,
+        hSignalEvent,
+        numWaitEvents,
+        phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendImageCopyFromMemoryExt(
+    ze_command_list_handle_t hCommandList,
+    ze_image_handle_t hDstImage,
+    const void *srcptr,
+    const ze_image_region_t *pDstRegion,
+    uint32_t srcRowPitch,
+    uint32_t srcSlicePitch,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListAppendImageCopyFromMemoryExt(
+        hCommandList,
+        hDstImage,
+        srcptr,
+        pDstRegion,
+        srcRowPitch,
+        srcSlicePitch,
         hSignalEvent,
         numWaitEvents,
         phWaitEvents);

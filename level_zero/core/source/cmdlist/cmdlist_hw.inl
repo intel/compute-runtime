@@ -630,6 +630,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
                                                                             ze_event_handle_t hEvent,
                                                                             uint32_t numWaitEvents,
                                                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    return appendImageCopyFromMemoryExt(hDstImage, srcPtr, pDstRegion, 0, 0,
+                                        hEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage,
+                                                                               const void *srcPtr,
+                                                                               const ze_image_region_t *pDstRegion,
+                                                                               uint32_t srcRowPitch,
+                                                                               uint32_t srcSlicePitch,
+                                                                               ze_event_handle_t hEvent,
+                                                                               uint32_t numWaitEvents,
+                                                                               ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
 
     auto image = Image::fromHandle(hDstImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
@@ -662,16 +675,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
         pDstRegion = &tmpRegion;
     }
 
-    uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pDstRegion);
+    if (srcRowPitch == 0) {
+        srcRowPitch = pDstRegion->width * bytesPerPixel;
+    }
+    if (srcSlicePitch == 0) {
+        srcSlicePitch = image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height * srcRowPitch;
+    }
+
+    uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, srcRowPitch, srcSlicePitch, pDstRegion);
 
     auto allocationStruct = getAlignedAllocationData(this->device, srcPtr, bufferSize, true);
     if (allocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
-
-    auto rowPitch = pDstRegion->width * bytesPerPixel;
-    auto slicePitch =
-        image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height * rowPitch;
 
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (driverHandle->isRemoteImageNeeded(image, device)) {
@@ -686,8 +702,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
 
     if (isCopyOnly()) {
         auto status = appendCopyImageBlit(allocationStruct.alloc, image->getAllocation(),
-                                          {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, rowPitch, slicePitch,
-                                          rowPitch, slicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize, event);
+                                          {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, srcRowPitch, srcSlicePitch,
+                                          srcRowPitch, srcSlicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize, event);
         addToMappedEventList(Event::fromHandle(hEvent));
         return status;
     }
@@ -731,8 +747,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     builtinKernel->setArgumentValue(3u, sizeof(origin), &origin);
 
     uint32_t pitch[] = {
-        rowPitch,
-        slicePitch};
+        srcRowPitch,
+        srcSlicePitch};
     builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
 
     uint32_t groupSizeX = pDstRegion->width;
@@ -782,6 +798,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
                                                                           ze_event_handle_t hEvent,
                                                                           uint32_t numWaitEvents,
                                                                           ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    return appendImageCopyToMemoryExt(dstPtr, hSrcImage, pSrcRegion, 0, 0,
+                                      hEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(void *dstPtr,
+                                                                             ze_image_handle_t hSrcImage,
+                                                                             const ze_image_region_t *pSrcRegion,
+                                                                             uint32_t destRowPitch,
+                                                                             uint32_t destSlicePitch,
+                                                                             ze_event_handle_t hEvent,
+                                                                             uint32_t numWaitEvents,
+                                                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
 
     auto image = Image::fromHandle(hSrcImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
@@ -814,16 +843,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
         pSrcRegion = &tmpRegion;
     }
 
-    uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pSrcRegion);
+    if (destRowPitch == 0) {
+        destRowPitch = pSrcRegion->width * bytesPerPixel;
+    }
+    if (destSlicePitch == 0) {
+        destSlicePitch =
+            (image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * destRowPitch;
+    }
+
+    uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, destRowPitch, destSlicePitch, pSrcRegion);
 
     auto allocationStruct = getAlignedAllocationData(this->device, dstPtr, bufferSize, false);
     if (allocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
-
-    auto rowPitch = pSrcRegion->width * bytesPerPixel;
-    auto slicePitch =
-        (image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * rowPitch;
 
     DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     if (driverHandle->isRemoteImageNeeded(image, device)) {
@@ -838,8 +871,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
 
     if (isCopyOnly()) {
         auto status = appendCopyImageBlit(image->getAllocation(), allocationStruct.alloc,
-                                          {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, rowPitch, slicePitch,
-                                          rowPitch, slicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event);
+                                          {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, destRowPitch, destSlicePitch,
+                                          destRowPitch, destSlicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth},
+                                          imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event);
         addToMappedEventList(event);
         return status;
     }
@@ -886,8 +920,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     builtinKernel->setArgumentValue(3u, sizeof(size_t), &allocationStruct.offset);
 
     uint32_t pitch[] = {
-        rowPitch,
-        slicePitch};
+        destRowPitch,
+        destSlicePitch};
     builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
 
     uint32_t groupSizeX = pSrcRegion->width;
@@ -2202,7 +2236,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::ImageType imageType,
-                                                                         uint64_t bytesPerPixel,
+                                                                         uint32_t bufferRowPitch,
+                                                                         uint32_t bufferSlicePitch,
                                                                          const ze_image_region_t *region) {
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     switch (imageType) {
@@ -2213,12 +2248,12 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
         break;
     case NEO::ImageType::image1D:
     case NEO::ImageType::image1DArray:
-        return bytesPerPixel * region->width;
+        return bufferRowPitch;
     case NEO::ImageType::image2D:
     case NEO::ImageType::image2DArray:
-        return bytesPerPixel * region->width * region->height;
+        return bufferRowPitch * region->height;
     case NEO::ImageType::image3D:
-        return bytesPerPixel * region->width * region->height * region->depth;
+        return bufferSlicePitch * region->depth;
     }
 }
 

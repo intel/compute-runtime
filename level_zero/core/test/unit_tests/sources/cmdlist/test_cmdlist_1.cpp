@@ -1177,12 +1177,17 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
         ze_image_desc_t zeDesc = {};
         zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
         image->initialize(device, &zeDesc);
+        auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
 
         verifyFlags(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, nullptr, 0, nullptr, false), false, false);
 
         verifyFlags(commandList->appendImageCopyFromMemory(image->toHandle(), dstPtr, &imgRegion, nullptr, 0, nullptr, false), false, false);
 
         verifyFlags(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, nullptr, 0, nullptr, false), false, false);
+
+        verifyFlags(commandList->appendImageCopyFromMemoryExt(image->toHandle(), dstPtr, &imgRegion, bytesPerPixel, bytesPerPixel, nullptr, 0, nullptr, false), false, false);
+
+        verifyFlags(commandList->appendImageCopyToMemoryExt(dstPtr, image->toHandle(), &imgRegion, bytesPerPixel, bytesPerPixel, nullptr, 0, nullptr, false), false, false);
     }
 
     size_t rangeSizes = 1;
@@ -1302,6 +1307,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDi
             ze_image_desc_t zeDesc = {};
             zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
             image->initialize(device, &zeDesc);
+            auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
 
             resetFlags();
             verifyFlags(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, nullptr, numWaitEvents, waitlist, false));
@@ -1311,6 +1317,12 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDi
 
             resetFlags();
             verifyFlags(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, nullptr, numWaitEvents, waitlist, false));
+
+            resetFlags();
+            verifyFlags(commandList->appendImageCopyFromMemoryExt(image->toHandle(), dstPtr, &imgRegion, bytesPerPixel, bytesPerPixel, nullptr, numWaitEvents, waitlist, false));
+
+            resetFlags();
+            verifyFlags(commandList->appendImageCopyToMemoryExt(dstPtr, image->toHandle(), &imgRegion, bytesPerPixel, bytesPerPixel, nullptr, numWaitEvents, waitlist, false));
         }
 
         resetFlags();
@@ -1553,6 +1565,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
             ze_image_desc_t zeDesc = {};
             zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
             image->initialize(device, &zeDesc);
+            auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
 
             verifyFlags(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, nullptr, numWaitlistEvents, waitlist, false),
                         hasEventDependencies, hasEventDependencies);
@@ -1561,6 +1574,12 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
                         hasEventDependencies, hasEventDependencies);
 
             verifyFlags(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, nullptr, numWaitlistEvents, waitlist, false),
+                        hasEventDependencies, hasEventDependencies);
+
+            verifyFlags(commandList->appendImageCopyFromMemoryExt(image->toHandle(), dstPtr, &imgRegion, bytesPerPixel, bytesPerPixel, nullptr, numWaitlistEvents, waitlist, false),
+                        hasEventDependencies, hasEventDependencies);
+
+            verifyFlags(commandList->appendImageCopyToMemoryExt(dstPtr, image->toHandle(), &imgRegion, bytesPerPixel, bytesPerPixel, nullptr, numWaitlistEvents, waitlist, false),
                         hasEventDependencies, hasEventDependencies);
         }
 

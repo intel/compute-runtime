@@ -375,6 +375,24 @@ struct MockCommandList : public CommandList {
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
 
+    ADDMETHOD_NOBASE(appendImageCopyFromMemoryExt, ze_result_t, ZE_RESULT_SUCCESS,
+                     (ze_image_handle_t hDstImage,
+                      const void *srcptr,
+                      const ze_image_region_t *pDstRegion,
+                      uint32_t srcRowPitch, uint32_t srcSlicePitch,
+                      ze_event_handle_t hEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
+
+    ADDMETHOD_NOBASE(appendImageCopyToMemoryExt, ze_result_t, ZE_RESULT_SUCCESS,
+                     (void *dstptr,
+                      ze_image_handle_t hSrcImage,
+                      const ze_image_region_t *pSrcRegion,
+                      uint32_t destRowPitch, uint32_t destSlicePitch,
+                      ze_event_handle_t hEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
+
     ADDMETHOD_NOBASE(appendImageCopyRegion, ze_result_t, ZE_RESULT_SUCCESS,
                      (ze_image_handle_t hDstImage,
                       ze_image_handle_t hSrcImage,

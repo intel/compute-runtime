@@ -342,6 +342,10 @@ zeGetCommandListProcAddrTable(
     pDdiTable->pfnAppendImageCopyRegion = L0::zeCommandListAppendImageCopyRegion;
     pDdiTable->pfnAppendImageCopyToMemory = L0::zeCommandListAppendImageCopyToMemory;
     pDdiTable->pfnAppendImageCopyFromMemory = L0::zeCommandListAppendImageCopyFromMemory;
+    if (version >= ZE_API_VERSION_1_3) {
+        pDdiTable->pfnAppendImageCopyToMemoryExt = L0::zeCommandListAppendImageCopyToMemoryExt;
+        pDdiTable->pfnAppendImageCopyFromMemoryExt = L0::zeCommandListAppendImageCopyFromMemoryExt;
+    }
     pDdiTable->pfnAppendMemoryPrefetch = L0::zeCommandListAppendMemoryPrefetch;
     pDdiTable->pfnAppendMemAdvise = L0::zeCommandListAppendMemAdvise;
     pDdiTable->pfnAppendSignalEvent = L0::zeCommandListAppendSignalEvent;
