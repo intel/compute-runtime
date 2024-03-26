@@ -26,6 +26,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
 namespace L0 {
@@ -33,6 +34,7 @@ namespace ult {
 
 using L0DebuggerTest = Test<L0DebuggerHwFixture>;
 using L0DebuggerParameterizedTests = L0DebuggerHwParameterizedFixture;
+using L0DebuggerGlobalStatelessTest = Test<L0DebuggerHwGlobalStatelessFixture>;
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingL0DebuggerThenValidDebuggerInstanceIsReturned) {
     EXPECT_NE(nullptr, device->getL0Debugger());
@@ -863,6 +865,69 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingToI
                                bindlessHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
     EXPECT_EQ(memoryOperationsHandler->gfxAllocationsForMakeResident.end(), allocIter);
     commandList->destroy();
+}
+
+HWTEST2_F(L0DebuggerGlobalStatelessTest,
+          givenGlobalStatelessWhenCmdListExecutedOnQueueThenQueueDispatchesSurfaceStateOnceToGlobalStatelessHeap,
+          IsAtLeastXeHpCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, csr, &queueDesc, false, false, false, returnValue));
+    ASSERT_NE(nullptr, commandQueue);
+
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    auto cmdListHandle = commandList->toHandle();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    Mock<Module> module(device, nullptr, ModuleType::user);
+    Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
+
+    auto statelessSurfaceHeap = csr->getGlobalStatelessHeap();
+    ASSERT_NE(nullptr, statelessSurfaceHeap);
+
+    returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    commandList->close();
+
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(statelessSurfaceHeap->getCpuBase());
+    ASSERT_NE(debugSurfaceState, nullptr);
+    auto debugSurface = static_cast<::L0::DeviceImp *>(device)->getDebugSurface();
+    ASSERT_NE(debugSurface, nullptr);
+    ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
+
+    const auto mocsNoCache = device->getNEODevice()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    const auto actualMocs = debugSurfaceState->getMemoryObjectControlState();
+
+    EXPECT_EQ(actualMocs, mocsNoCache);
+
+    SurfaceStateBufferLength length;
+    length.length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
+
+    EXPECT_EQ(length.surfaceState.depth + 1u, debugSurfaceState->getDepth());
+    EXPECT_EQ(length.surfaceState.width + 1u, debugSurfaceState->getWidth());
+    EXPECT_EQ(length.surfaceState.height + 1u, debugSurfaceState->getHeight());
+
+    memset(debugSurfaceState, 0, sizeof(RENDER_SURFACE_STATE));
+
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    char zeroBuffer[sizeof(RENDER_SURFACE_STATE)];
+    memset(zeroBuffer, 0, sizeof(RENDER_SURFACE_STATE));
+
+    auto memCmpResult = memcmp(debugSurfaceState, zeroBuffer, sizeof(RENDER_SURFACE_STATE));
+    EXPECT_EQ(0, memCmpResult);
+
+    commandQueue->destroy();
 }
 
 } // namespace ult

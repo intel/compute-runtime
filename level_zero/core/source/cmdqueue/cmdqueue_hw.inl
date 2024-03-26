@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
@@ -41,6 +42,8 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
+
+#include "encode_surface_state_args.h"
 
 #include <algorithm>
 #include <limits>
@@ -152,6 +155,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
+
+    this->updateDebugSurfaceState(ctx);
 
     this->getGlobalFenceAndMakeItResident();
     this->getWorkPartitionAndMakeItResident();
@@ -1425,6 +1430,31 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
 
     auto ioh = commandContainer.getIndirectHeap(NEO::HeapType::indirectObject);
     csrHw->getIohState().updateAndCheck(ioh);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::updateDebugSurfaceState(CommandListExecutionContext &ctx) {
+    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
+        if (ctx.isNEODebuggerActive(this->device) && ctx.gsbaStateDirty) {
+            auto globalStatelessHeap = this->csr->getGlobalStatelessHeap();
+
+            auto surfaceStateSpace = this->device->getNEODevice()->getDebugger()->getDebugSurfaceReservedSurfaceState(*globalStatelessHeap);
+            auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
+
+            NEO::EncodeSurfaceStateArgs args;
+            args.outMemory = &surfaceState;
+            args.graphicsAddress = this->device->getDebugSurface()->getGpuAddress();
+            args.size = this->device->getDebugSurface()->getUnderlyingBufferSize();
+            args.mocs = this->device->getMOCS(false, false);
+            args.numAvailableDevices = this->device->getNEODevice()->getNumGenericSubDevices();
+            args.allocation = this->device->getDebugSurface();
+            args.gmmHelper = this->device->getNEODevice()->getGmmHelper();
+            args.areMultipleSubDevicesInContext = false;
+            args.isDebuggerActive = true;
+            NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
+            *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
+        }
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

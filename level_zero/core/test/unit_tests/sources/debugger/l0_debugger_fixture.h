@@ -133,5 +133,14 @@ struct L0DebuggerHwParameterizedFixture : ::testing::TestWithParam<int>, public 
     DebugManagerStateRestore restorer;
 };
 
+struct L0DebuggerHwGlobalStatelessFixture : public L0DebuggerHwFixture {
+    void setUp() {
+        NEO::debugManager.flags.SelectCmdListHeapAddressModel.set(1);
+        L0DebuggerHwFixture::setUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
 } // namespace ult
 } // namespace L0

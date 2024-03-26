@@ -233,6 +233,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                               NEO::LinearStream &commandStream,
                                                               CommandListRequiredStateChange &cmdListRequired);
     inline void updateBaseAddressState(CommandList *lastCommandList);
+    inline void updateDebugSurfaceState(CommandListExecutionContext &ctx);
 
     size_t alignedChildStreamPadding{};
 };
