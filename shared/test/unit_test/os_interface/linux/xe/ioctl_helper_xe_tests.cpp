@@ -1812,6 +1812,8 @@ TEST(IoctlHelperXeTest, whenInitializeThenProperHwInfoIsSet) {
     EXPECT_EQ(drm.revId, hwInfo->platform.usRevId);
     EXPECT_EQ(drm.devId, hwInfo->platform.usDeviceID);
     EXPECT_EQ((1ull << 48) - 1, hwInfo->capabilityTable.gpuAddressSpace);
+
+    EXPECT_EQ(DrmMockXe::mockMaxExecQueuePriority, ioctlHelper->maxExecQueuePriority);
 }
 
 TEST(IoctlHelperXeTest, givenMultipleBindInfosWhenGemCloseIsCalledThenProperHandleIsTaken) {
