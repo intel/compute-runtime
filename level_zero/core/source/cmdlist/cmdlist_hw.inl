@@ -376,6 +376,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         return ret;
     }
 
+    appendSynchronizedDispatchInitializationSection();
+
     Event *event = nullptr;
     if (hEvent) {
         event = Event::fromHandle(hEvent);
@@ -419,6 +421,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
         return ret;
     }
 
+    appendSynchronizedDispatchInitializationSection();
+
     Event *event = nullptr;
     if (hSignalEvent) {
         event = Event::fromHandle(hSignalEvent);
@@ -452,6 +456,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     if (ret) {
         return ret;
     }
+
+    appendSynchronizedDispatchInitializationSection();
 
     CmdListKernelLaunchParams launchParams = {};
     Event *event = nullptr;
@@ -495,6 +501,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     if (ret) {
         return ret;
     }
+
+    appendSynchronizedDispatchInitializationSection();
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isIndirect = true;
@@ -556,6 +564,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0));
     }
 
+    appendSynchronizedDispatchInitializationSection();
+
     event->resetPackets(false);
     event->disableHostCaching(!isImmediateType());
     commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
@@ -600,6 +610,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
     if (ret) {
         return ret;
     }
+
+    appendSynchronizedDispatchInitializationSection();
 
     Event *signalEvent = nullptr;
     if (hSignalEvent) {
@@ -1483,6 +1495,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         return ret;
     }
 
+    appendSynchronizedDispatchInitializationSection();
+
     bool dcFlush = false;
     Event *signalEvent = nullptr;
     CmdListKernelLaunchParams launchParams = {};
@@ -1921,6 +1935,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     if (res) {
         return res;
     }
+
+    appendSynchronizedDispatchInitializationSection();
 
     if (!handleCounterBasedEventOperations(signalEvent)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -2803,6 +2819,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         return ret;
     }
 
+    appendSynchronizedDispatchInitializationSection();
+
     Event *signalEvent = nullptr;
     if (hSignalEvent) {
         signalEvent = Event::fromHandle(hSignalEvent);
@@ -3348,6 +3366,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     if (ret) {
         return ret;
     }
+
+    appendSynchronizedDispatchInitializationSection();
 
     Event *signalEvent = nullptr;
     if (hSignalEvent) {
@@ -3910,6 +3930,21 @@ inline void CommandListCoreFamily<gfxCoreFamily>::enablePatching(size_t inOrderP
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline bool CommandListCoreFamily<gfxCoreFamily>::isCbEventBoundToCmdList(Event *event) const {
     return event->isCounterBased() && event->getInOrderExecInfo().get() == inOrderExecInfo.get();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchInitializationSection() {
+    auto syncAlloc = device->getSyncDispatchTokenAllocation();
+
+    if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
+        commandContainer.addToResidencyContainer(syncAlloc);
+    }
+
+    if (this->synchronizedDispatchMode == NEO::SynchronizedDispatchMode::limited) {
+        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), syncAlloc->getGpuAddress() + sizeof(uint32_t), 0u,
+                                                                   GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                                   false, false, false, true, nullptr);
+    }
 }
 
 } // namespace L0

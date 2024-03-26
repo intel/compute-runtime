@@ -201,6 +201,8 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CommandToPatchContainer *outWaitCmds,
                                    bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency, bool skipAddingWaitEventsToResidency);
 
+    void appendSynchronizedDispatchInitializationSection();
+
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
     ze_result_t executeCommandListImmediate(bool performMigration) override;

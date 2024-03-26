@@ -5869,7 +5869,13 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeAndNoopWaitEventsAllowedWhenEvent
 }
 
 using SynchronizedDispatchTests = InOrderCmdListFixture;
-using MultiTileSynchronizedDispatchTests = MultiTileInOrderCmdListTests;
+
+struct MultiTileSynchronizedDispatchTests : public MultiTileInOrderCmdListTests {
+    void SetUp() override {
+        NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+        MultiTileInOrderCmdListTests::SetUp();
+    }
+};
 
 HWTEST2_F(SynchronizedDispatchTests, givenSingleTileSyncDispatchQueueWhenCreatingThenDontAssignQueueId, IsAtLeastSkl) {
     NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
@@ -5893,6 +5899,8 @@ HWTEST2_F(SynchronizedDispatchTests, givenSingleTileSyncDispatchQueueWhenCreatin
 }
 
 HWTEST2_F(MultiTileSynchronizedDispatchTests, givenDebugFlagSetWhenCreatingCmdListThenEnableSynchronizedDispatch, IsAtLeastSkl) {
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(-1);
+
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
     auto regularCmdList = createMultiTileRegularCmdList<gfxCoreFamily>(false);
 
@@ -5917,8 +5925,6 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenDebugFlagSetWhenCreatingCmdLi
 }
 
 HWTEST2_F(MultiTileSynchronizedDispatchTests, givenMultiTileSyncDispatchQueueWhenCreatingThenAssignQueueId, IsAtLeastSkl) {
-    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
-
     auto regularCmdList0 = createMultiTileRegularCmdList<gfxCoreFamily>(false);
     auto regularCmdList1 = createMultiTileRegularCmdList<gfxCoreFamily>(false);
     auto immCmdList0 = createMultiTileImmCmdList<gfxCoreFamily>();
@@ -5938,8 +5944,6 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenMultiTileSyncDispatchQueueWhe
 }
 
 HWTEST2_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchEnabledWhenAllocatingQueueIdThenEnsureTokenAllocation, IsAtLeastSkl) {
-    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
-
     auto mockDevice = static_cast<MockDeviceImp *>(device);
 
     EXPECT_EQ(nullptr, mockDevice->syncDispatchTokenAllocation);
@@ -5956,6 +5960,170 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchEnabledWhenAlloca
     EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList->synchronizedDispatchMode);
 
     EXPECT_EQ(mockDevice->syncDispatchTokenAllocation, syncAllocation);
+}
+
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchWhenAppendingThenHandleResidency, IsAtLeastSkl) {
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[device->getSyncDispatchTokenAllocation()]);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(2u, ultCsr->makeResidentAllocations[device->getSyncDispatchTokenAllocation()]);
+}
+
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendingThenProgramTokenCheck, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using COMPARE_OPERATION = typename MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    void *alloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    immCmdList->synchronizedDispatchMode = NEO::SynchronizedDispatchMode::limited;
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->makeCounterBasedInitiallyDisabled();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    size_t offset = cmdStream->getUsed();
+
+    auto verifyTokenCheck = [&](uint32_t numDependencies) {
+        GenCmdList cmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        auto semaphore = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), semaphore);
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        for (uint32_t i = 0; i < numDependencies; i++) {
+            for (uint32_t j = 1; j < partitionCount; j++) {
+                semaphore++;
+                semaphore = find<MI_SEMAPHORE_WAIT *>(semaphore, cmdList.end());
+                EXPECT_NE(cmdList.end(), semaphore);
+            }
+            semaphore++;
+        }
+
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+        EXPECT_NE(nullptr, semaphoreCmd);
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        EXPECT_EQ(0u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(device->getSyncDispatchTokenAllocation()->getGpuAddress() + sizeof(uint32_t), semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+
+        return !::testing::Test::HasFailure();
+    };
+
+    // first run without dependency
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_TRUE(verifyTokenCheck(0));
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_TRUE(verifyTokenCheck(1));
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, false);
+    EXPECT_TRUE(verifyTokenCheck(1));
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernelIndirect(kernel->toHandle(), *static_cast<ze_group_count_t *>(alloc), nullptr, 0, nullptr, false);
+    EXPECT_TRUE(verifyTokenCheck(1));
+
+    offset = cmdStream->getUsed();
+    const ze_kernel_handle_t launchKernels = kernel->toHandle();
+    immCmdList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, reinterpret_cast<const uint32_t *>(alloc), &groupCount, nullptr, 0, nullptr, false);
+    EXPECT_TRUE(verifyTokenCheck(1));
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendEventReset(events[0]->toHandle());
+    EXPECT_TRUE(verifyTokenCheck(1));
+
+    offset = cmdStream->getUsed();
+    size_t rangeSizes = 1;
+    const void **ranges = const_cast<const void **>(&alloc);
+    immCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr);
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(alloc, alloc, 1, nullptr, 0, nullptr, false, false);
+    EXPECT_TRUE(verifyTokenCheck(1));
+
+    offset = cmdStream->getUsed();
+    ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+    immCmdList->appendMemoryCopyRegion(alloc, &region, 1, 1, alloc, &region, 1, 1, nullptr, 0, nullptr, false, false);
+    EXPECT_TRUE(verifyTokenCheck(1));
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryFill(alloc, alloc, 1, 1, nullptr, 0, nullptr, false);
+    EXPECT_TRUE(verifyTokenCheck(1));
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(alloc), nullptr, 0, nullptr);
+    EXPECT_TRUE(verifyTokenCheck(1));
+
+    offset = cmdStream->getUsed();
+    auto handle = events[0]->toHandle();
+    events[0]->unsetCmdQueue();
+    immCmdList->appendBarrier(nullptr, 1, &handle, false);
+    EXPECT_TRUE(verifyTokenCheck(2));
+
+    context->freeMem(alloc);
+}
+
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppendingThenDontProgramTokenCheck, IsAtLeastSkl) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    immCmdList->synchronizedDispatchMode = NEO::SynchronizedDispatchMode::full;
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    size_t offset = cmdStream->getUsed();
+
+    auto verifyTokenCheck = [&](bool hasDependencySemaphore) {
+        GenCmdList cmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        for (auto &semaphore : semaphores) {
+            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+            EXPECT_NE(nullptr, semaphoreCmd);
+            if (::testing::Test::HasFailure()) {
+                return false;
+            }
+
+            EXPECT_NE(device->getSyncDispatchTokenAllocation()->getGpuAddress() + sizeof(uint32_t), semaphoreCmd->getSemaphoreGraphicsAddress());
+            if (::testing::Test::HasFailure()) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    // first run without dependency
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_TRUE(verifyTokenCheck(false));
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_TRUE(verifyTokenCheck(true));
 }
 
 } // namespace ult

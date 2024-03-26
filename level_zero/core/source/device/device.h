@@ -151,6 +151,7 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getEventMaxKernelCount() const = 0;
     NEO::TagAllocatorBase *getDeviceInOrderCounterAllocator();
     NEO::TagAllocatorBase *getHostInOrderCounterAllocator();
+    NEO::GraphicsAllocation *getSyncDispatchTokenAllocation() const { return syncDispatchTokenAllocation; }
     uint32_t getNextSyncDispatchQueueId();
     void ensureSyncDispatchTokenAllocation();
 
