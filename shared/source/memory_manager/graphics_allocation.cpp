@@ -138,6 +138,16 @@ void GraphicsAllocation::updateCompletionDataForAllocationAndFragments(uint64_t 
     }
 }
 
+bool GraphicsAllocation::hasAllocationReadOnlyType() {
+    if (getAllocationType() == AllocationType::kernelIsa ||
+        getAllocationType() == AllocationType::kernelIsaInternal ||
+        getAllocationType() == AllocationType::commandBuffer ||
+        getAllocationType() == AllocationType::linearStream) {
+        return true;
+    }
+    return false;
+}
+
 constexpr TaskCountType GraphicsAllocation::objectNotUsed;
 constexpr TaskCountType GraphicsAllocation::objectNotResident;
 constexpr TaskCountType GraphicsAllocation::objectAlwaysResident;

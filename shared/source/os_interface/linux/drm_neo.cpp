@@ -1309,11 +1309,13 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bool bindCapture = bo->isMarkedForCapture();
         bool bindImmediate = bo->isImmediateBindingRequired();
         bool bindMakeResident = false;
+        bool readOnlyResource = bo->isReadOnlyGpuResource();
+
         if (drm->useVMBindImmediate()) {
             bindMakeResident = bo->isExplicitResidencyRequired();
             bindImmediate = true;
         }
-        flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident);
+        flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, readOnlyResource);
     }
 
     auto &bindAddresses = bo->getColourAddresses();

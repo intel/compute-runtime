@@ -148,6 +148,7 @@ class DrmAllocation : public GraphicsAllocation {
     MOCKABLE_VIRTUAL void markForCapture();
     MOCKABLE_VIRTUAL bool shouldAllocationPageFault(const Drm *drm);
     void registerMemoryToUnmap(void *pointer, size_t size, MemoryUnmapFunction unmapFunction);
+    void setAsReadOnly() override;
 
   protected:
     OsContextLinux *osContext = nullptr;

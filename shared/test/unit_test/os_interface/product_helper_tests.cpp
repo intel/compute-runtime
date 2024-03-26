@@ -913,3 +913,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForExtraKerneCapabilitie
     productHelper->getKernelCapabilitiesExtra(extraKernelCapabilities);
     EXPECT_EQ(0u, extraKernelCapabilities);
 }
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSupportThenFalseReturned) {
+    EXPECT_FALSE(productHelper->supportReadOnlyAllocations());
+}

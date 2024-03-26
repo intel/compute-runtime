@@ -155,6 +155,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     AllocationType getAllocationType() const { return allocationType; }
 
     MemoryPool getMemoryPool() const { return memoryPool; }
+    virtual void setAsReadOnly(){};
 
     bool isUsed() const { return registeredContextsNum > 0; }
     bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
@@ -316,6 +317,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     MOCKABLE_VIRTUAL void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId);
     void setShareableHostMemory(bool shareableHostMemory) { this->shareableHostMemory = shareableHostMemory; }
     bool isShareableHostMemory() const { return shareableHostMemory; }
+    MOCKABLE_VIRTUAL bool hasAllocationReadOnlyType();
 
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
