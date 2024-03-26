@@ -75,10 +75,6 @@ const char *IoctlHelperXe::xeGetBindOperationName(int bindOperation) {
 
 const char *IoctlHelperXe::xeGetBindFlagsName(int bindFlags) {
     switch (bindFlags) {
-    case DRM_XE_VM_BIND_FLAG_READONLY:
-        return "READ_ONLY";
-    case DRM_XE_VM_BIND_FLAG_IMMEDIATE:
-        return "IMMEDIATE";
     case DRM_XE_VM_BIND_FLAG_NULL:
         return "NULL";
     }

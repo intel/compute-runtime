@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ namespace PROD_DG1 {
 #undef DRM_IOCTL_I915_GEM_CREATE_EXT
 #undef __I915_EXEC_UNKNOWN_FLAGS
 #undef __I915_PMU_OTHER
+#undef _I915_DRM_H_
 #include "third_party/uapi/dg1/drm/i915_drm.h"
 } // namespace PROD_DG1
 

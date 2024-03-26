@@ -9,7 +9,6 @@
 // Force prelim headers over upstream headers
 // prevent including any other headers to avoid redefintion errors
 #define _I915_DRM_H_
-#define _UAPI_I915_DRM_H_
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"

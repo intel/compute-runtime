@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#ifndef _UAPI_I915_DRM_H_
+#ifndef _I915_DRM_H_
 #include <linux/types.h>
 #include <sys/ioctl.h>
 namespace NEO {

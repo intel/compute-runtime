@@ -473,8 +473,6 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
     verifyXeOperationBindName("PREFETCH", DRM_XE_VM_BIND_OP_PREFETCH);
     verifyXeOperationBindName("Unknown operation", -1);
 
-    verifyXeFlagsBindName("READ_ONLY", DRM_XE_VM_BIND_FLAG_READONLY);
-    verifyXeFlagsBindName("IMMEDIATE", DRM_XE_VM_BIND_FLAG_IMMEDIATE);
     verifyXeFlagsBindName("NULL", DRM_XE_VM_BIND_FLAG_NULL);
     verifyXeFlagsBindName("Unknown flag", -1);
 
