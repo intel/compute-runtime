@@ -781,15 +781,9 @@ std::unique_ptr<uint8_t[]> IoctlHelperXe::createVmControlExtRegion(const std::op
 
 uint32_t IoctlHelperXe::getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) {
     xeLog(" -> IoctlHelperXe::%s %d,%d,%d\n", __FUNCTION__, disableScratch, enablePageFault, useVmBind);
-    uint32_t flags = 0u;
-    if (disableScratch) {
-        flags |= XE_NEO_VMCREATE_DISABLESCRATCH_FLAG;
-    }
+    uint32_t flags = DRM_XE_VM_CREATE_FLAG_LR_MODE;
     if (enablePageFault) {
-        flags |= XE_NEO_VMCREATE_ENABLEPAGEFAULT_FLAG;
-    }
-    if (useVmBind) {
-        flags |= XE_NEO_VMCREATE_USEVMBIND_FLAG;
+        flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
     }
     return flags;
 }
@@ -1052,12 +1046,9 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         xeLog(" -> IoctlHelperXe::ioctl GemClose found=%d h=0x%x r=%d\n", found, d->handle, ret);
     } break;
     case DrmIoctl::gemVmCreate: {
-        GemVmControl *d = static_cast<GemVmControl *>(arg);
+        GemVmControl *vmControl = static_cast<GemVmControl *>(arg);
         struct drm_xe_vm_create args = {};
-        args.flags = DRM_XE_VM_CREATE_FLAG_LR_MODE;
-        if (drm.hasPageFaultSupport()) {
-            args.flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
-        }
+        args.flags = vmControl->flags;
 
         if (drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() != DebuggingMode::disabled) {
             args.extensions = reinterpret_cast<unsigned long long>(allocateDebugMetadata());
@@ -1067,9 +1058,8 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
             args.extensions = reinterpret_cast<unsigned long long>(freeDebugMetadata(reinterpret_cast<void *>(args.extensions)));
         }
 
-        d->vmId = ret ? 0 : args.vm_id;
-        d->flags = ret ? 0 : args.flags;
-        xeLog(" -> IoctlHelperXe::ioctl gemVmCreate f=0x%x vmid=0x%x r=%d\n", d->flags, d->vmId, ret);
+        vmControl->vmId = args.vm_id;
+        xeLog(" -> IoctlHelperXe::ioctl gemVmCreate f=0x%x vmid=0x%x r=%d\n", vmControl->flags, vmControl->vmId, ret);
 
     } break;
     case DrmIoctl::gemVmDestroy: {

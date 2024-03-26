@@ -279,8 +279,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(nullptr, xeIoctlHelper->createVmControlExtRegion({}));
 
-    EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmCreate(false, false, false));
-
     GemContextCreateExt gcc;
     EXPECT_EQ(0u, xeIoctlHelper->createContextWithAccessCounters(gcc));
 
@@ -398,10 +396,16 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
 
-    EXPECT_EQ(static_cast<uint32_t>(XE_NEO_VMCREATE_DISABLESCRATCH_FLAG |
-                                    XE_NEO_VMCREATE_ENABLEPAGEFAULT_FLAG |
-                                    XE_NEO_VMCREATE_USEVMBIND_FLAG),
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE |
+                                    DRM_XE_VM_CREATE_FLAG_FAULT_MODE),
               xeIoctlHelper->getFlagsForVmCreate(true, true, true));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE |
+                                    DRM_XE_VM_CREATE_FLAG_FAULT_MODE),
+              xeIoctlHelper->getFlagsForVmCreate(false, true, false));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE),
+              xeIoctlHelper->getFlagsForVmCreate(true, false, true));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE),
+              xeIoctlHelper->getFlagsForVmCreate(false, false, false));
 
     EXPECT_EQ(static_cast<uint64_t>(XE_NEO_BIND_CAPTURE_FLAG |
                                     XE_NEO_BIND_IMMEDIATE_FLAG |
@@ -545,16 +549,16 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     }
     {
         GemVmControl test = {};
-        drm.pageFaultSupported = false;
         uint32_t expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_LR_MODE;
+        test.flags = expectedVmCreateFlags;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemVmCreate, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
         EXPECT_EQ(test.flags, expectedVmCreateFlags);
 
-        drm.pageFaultSupported = true;
         expectedVmCreateFlags = DRM_XE_VM_CREATE_FLAG_LR_MODE |
                                 DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
+        test.flags = expectedVmCreateFlags;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemVmCreate, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.vmId), testValueVmId);
