@@ -26,11 +26,6 @@ struct drm_xe_engine_class_instance;
 
 #define XE_ONE_SEC 1000000000
 
-#define DRM_XE_UFENCE_WAIT_MASK_U8 0xffu
-#define DRM_XE_UFENCE_WAIT_MASK_U16 0xffffu
-#define DRM_XE_UFENCE_WAIT_MASK_U32 0xffffffffu
-#define DRM_XE_UFENCE_WAIT_MASK_U64 0xffffffffffffffffu
-
 namespace NEO {
 
 enum class EngineClass : uint16_t;
@@ -151,7 +146,7 @@ class IoctlHelperXe : public IoctlHelper {
     const char *xeGetengineClassName(uint32_t engineClass);
     template <typename DataType>
     std::vector<DataType> queryData(uint32_t queryId);
-    int xeWaitUserFence(uint32_t ctxId, uint64_t mask, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout);
+    int xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout);
     int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
     void xeShowBindTable();
     void updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size);

@@ -243,8 +243,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(CacheRegion::none, xeIoctlHelper->closFree(CacheRegion::none));
 
-    EXPECT_EQ(0, xeIoctlHelper->waitUserFence(0, 0, 0, 0, 0, 0));
-
     EXPECT_EQ(0u, xeIoctlHelper->getAtomicAdvise(false));
 
     EXPECT_EQ(0u, xeIoctlHelper->getAtomicAccess(AtomicAccessMode::none));
@@ -1417,6 +1415,7 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
     EXPECT_EQ(1u, drm.vmBindInputs.size());
     EXPECT_EQ(1u, drm.syncInputs.size());
     EXPECT_EQ(1u, drm.waitUserFenceInputs.size());
+    auto expectedMask = std::numeric_limits<uint64_t>::max();
     {
         auto &sync = drm.syncInputs[0];
 
@@ -1429,7 +1428,7 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
         EXPECT_EQ(0u, waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
-        EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_MASK_U64), waitUserFence.mask);
+        EXPECT_EQ(expectedMask, waitUserFence.mask);
         EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
         EXPECT_EQ(0u, waitUserFence.exec_queue_id);
     }
@@ -1452,7 +1451,7 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
         EXPECT_EQ(0u, waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
-        EXPECT_EQ(static_cast<uint64_t>(DRM_XE_UFENCE_WAIT_MASK_U64), waitUserFence.mask);
+        EXPECT_EQ(expectedMask, waitUserFence.mask);
         EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
         EXPECT_EQ(0u, waitUserFence.exec_queue_id);
     }
