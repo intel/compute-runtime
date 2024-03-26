@@ -120,6 +120,7 @@ DirectSubmissionController *ExecutionEnvironment::initializeDirectSubmissionCont
 
     if (initializeDirectSubmissionController && this->directSubmissionController == nullptr) {
         this->directSubmissionController = std::make_unique<DirectSubmissionController>();
+        this->directSubmissionController->startThread();
     }
 
     return directSubmissionController.get();

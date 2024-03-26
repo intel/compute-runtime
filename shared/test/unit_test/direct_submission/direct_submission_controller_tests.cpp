@@ -48,9 +48,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     csr.taskCount.store(5u);
 
     DirectSubmissionControllerMock controller;
-    controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread->join();
-    controller.directSubmissionControllingThread.reset();
     controller.registerDirectSubmission(&csr);
 
     controller.checkNewSubmissions();
@@ -95,6 +92,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
 
     DirectSubmissionControllerMock controller;
     executionEnvironment.directSubmissionController.reset(&controller);
+    controller.startThread();
     csr.startControllingDirectSubmissions();
     controller.registerDirectSubmission(&csr);
 
@@ -115,8 +113,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithStartedControllingWhenShuttingDownThenNoHang) {
     DirectSubmissionControllerMock controller;
+    controller.startThread();
     EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
-
     controller.startControlling();
 
     while (!controller.sleepCalled) {
@@ -143,9 +141,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorD
     csr.setupContext(*osContext.get());
 
     DirectSubmissionControllerMock controller;
-    controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread->join();
-    controller.directSubmissionControllingThread.reset();
     controller.registerDirectSubmission(&csr);
     {
         csr.taskCount.store(1u);
@@ -243,9 +238,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
 
     DirectSubmissionControllerMock controller;
     controller.setTimeoutParamsForPlatform(csr.getProductHelper());
-    controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread->join();
-    controller.directSubmissionControllingThread.reset();
     controller.registerDirectSubmission(&csr);
     EXPECT_TRUE(controller.adjustTimeoutOnThrottleAndAcLineStatus);
     fillTimeoutParamsMap(controller);
@@ -345,6 +337,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithNotStartedControllingWhenShuttingDownThenNoHang) {
     DirectSubmissionControllerMock controller;
+    controller.startThread();
     EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
 
     while (!controller.sleepCalled) {
@@ -391,9 +384,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     csr4.setupContext(*osContext4.get());
 
     DirectSubmissionControllerMock controller;
-    controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread->join();
-    controller.directSubmissionControllingThread.reset();
 
     EXPECT_EQ(controller.timeout.count(), 5'000);
 
@@ -495,9 +485,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     csr10.setupContext(*osContext10.get());
 
     DirectSubmissionControllerMock controller;
-    controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread->join();
-    controller.directSubmissionControllingThread.reset();
 
     EXPECT_EQ(controller.timeout.count(), 5'000);
 
@@ -578,9 +565,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerDirectSubmi
     csr4.setupContext(*osContext4.get());
 
     DirectSubmissionControllerMock controller;
-    controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread->join();
-    controller.directSubmissionControllingThread.reset();
 
     EXPECT_EQ(controller.timeout.count(), 5'000);
 

@@ -28,8 +28,6 @@ DirectSubmissionController::DirectSubmissionController() {
     if (debugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
         maxTimeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerMaxTimeout.get()};
     }
-
-    directSubmissionControllingThread = Thread::create(controlDirectSubmissionsState, reinterpret_cast<void *>(this));
 };
 
 DirectSubmissionController::~DirectSubmissionController() {
@@ -84,6 +82,10 @@ size_t DirectSubmissionController::getTimeoutParamsMapKey(QueueThrottle throttle
 void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
     directSubmissions.erase(csr);
+}
+
+void DirectSubmissionController::startThread() {
+    directSubmissionControllingThread = Thread::create(controlDirectSubmissionsState, reinterpret_cast<void *>(this));
 }
 
 void DirectSubmissionController::startControlling() {

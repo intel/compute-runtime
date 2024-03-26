@@ -43,6 +43,7 @@ class DirectSubmissionController {
     void registerDirectSubmission(CommandStreamReceiver *csr);
     void unregisterDirectSubmission(CommandStreamReceiver *csr);
 
+    void startThread();
     void startControlling();
 
     static bool isSupported();
