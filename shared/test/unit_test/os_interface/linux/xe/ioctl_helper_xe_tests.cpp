@@ -394,21 +394,25 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
 
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE |
-                                    DRM_XE_VM_CREATE_FLAG_FAULT_MODE),
-              xeIoctlHelper->getFlagsForVmCreate(true, true, true));
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE |
-                                    DRM_XE_VM_CREATE_FLAG_FAULT_MODE),
-              xeIoctlHelper->getFlagsForVmCreate(false, true, false));
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE),
-              xeIoctlHelper->getFlagsForVmCreate(true, false, true));
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE),
-              xeIoctlHelper->getFlagsForVmCreate(false, false, false));
-
     EXPECT_EQ(0ull, xeIoctlHelper->getFlagsForVmBind(true, true, true, true));
 
     uint32_t fabricId = 0, latency = 0, bandwidth = 0;
     EXPECT_FALSE(xeIoctlHelper->getFabricLatency(fabricId, latency, bandwidth));
+}
+
+TEST(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE), xeIoctlHelper->getFlagsForVmCreate(true, true, true));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE), xeIoctlHelper->getFlagsForVmCreate(true, true, false));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, true, true));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, true, false));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), xeIoctlHelper->getFlagsForVmCreate(true, false, true));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), xeIoctlHelper->getFlagsForVmCreate(true, false, false));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, false, true));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, false, false));
 }
 
 TEST(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) {
