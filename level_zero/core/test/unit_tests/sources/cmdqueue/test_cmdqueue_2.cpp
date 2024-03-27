@@ -879,7 +879,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
 
     auto scratch = static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get());
     scratch->scratchAllocation = &graphicsAllocation;
-    commandQueueHw->handleScratchSpace(heapContainer, scratchController.get(), gsbaStateDirty, frontEndStateDirty, 0x1000, 0u);
+    commandQueueHw->handleScratchSpace(heapContainer, scratchController.get(), nullptr, gsbaStateDirty, frontEndStateDirty, 0x1000, 0u);
 
     EXPECT_TRUE(scratch->programHeapsCalled);
     EXPECT_GT(csr.makeResidentCalledTimes, 0u);
@@ -933,7 +933,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
 
     auto scratch = static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get());
     scratch->scratchSlot0Allocation = &graphicsAllocation;
-    commandQueueHw->handleScratchSpace(heapContainer, scratchController.get(), gsbaStateDirty, frontEndStateDirty, 0x1000, 0u);
+    commandQueueHw->handleScratchSpace(heapContainer, scratchController.get(), nullptr, gsbaStateDirty, frontEndStateDirty, 0x1000, 0u);
 
     EXPECT_FALSE(scratch->programHeapsCalled);
     scratch->scratchSlot0Allocation = nullptr;

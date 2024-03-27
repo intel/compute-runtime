@@ -78,6 +78,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::dispatchCmdListBatchBufferAsPrimary;
     using L0::CommandQueue::doubleSbaWa;
     using L0::CommandQueue::frontEndStateTracking;
+    using L0::CommandQueue::heaplessModeEnabled;
     using L0::CommandQueue::internalQueueForImmediateCommandList;
     using L0::CommandQueue::internalUsage;
     using L0::CommandQueue::partitionCount;
@@ -114,11 +115,26 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         return BaseClass::submitBatchBuffer(offset, residencyContainer, endingCmdPtr, isCooperative);
     }
 
+    ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
+                                           uint32_t numCommandLists,
+                                           ze_command_list_handle_t *commandListHandles,
+                                           ze_fence_handle_t hFence,
+                                           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                           ze_event_handle_t *phWaitEvents) override {
+        recordedGlobalStatelessAllocation = ctx.globalStatelessAllocation;
+        recordedScratchController = ctx.scratchSpaceController;
+        recordedLockScratchController = ctx.lockScratchController;
+        return BaseClass::executeCommandListsRegular(ctx, numCommandLists, commandListHandles, hFence, hSignalEvent, numWaitEvents, phWaitEvents);
+    }
+
+    NEO::GraphicsAllocation *recordedGlobalStatelessAllocation = nullptr;
+    NEO::ScratchSpaceController *recordedScratchController = nullptr;
     uint32_t synchronizedCalled = 0;
     NEO::ResidencyContainer residencyContainerSnapshot;
     ze_result_t synchronizeReturnValue{ZE_RESULT_SUCCESS};
     std::optional<NEO::WaitStatus> reserveLinearStreamSizeReturnValue{};
     std::optional<NEO::SubmissionStatus> submitBatchBufferReturnValue{};
+    bool recordedLockScratchController = false;
 };
 
 struct Deleter {

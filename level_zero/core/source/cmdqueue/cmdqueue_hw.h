@@ -52,6 +52,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
     MOCKABLE_VIRTUAL void handleScratchSpace(NEO::HeapContainer &heapContainer,
                                              NEO::ScratchSpaceController *scratchController,
+                                             NEO::GraphicsAllocation *globalStatelessAllocation,
                                              bool &gsbaState, bool &frontEndState,
                                              uint32_t perThreadScratchSpaceSlot0Size,
                                              uint32_t perThreadScratchSpaceSlot1Size);
@@ -68,6 +69,8 @@ struct CommandQueueHw : public CommandQueueImp {
                                     uint32_t numCommandLists,
                                     NEO::PreemptionMode contextPreemptionMode,
                                     Device *device,
+                                    NEO::ScratchSpaceController *scratchSpaceController,
+                                    NEO::GraphicsAllocation *globalStatelessAllocation,
                                     bool debugEnabled,
                                     bool programActivePartitionConfig,
                                     bool performMigration,
@@ -83,6 +86,8 @@ struct CommandQueueHw : public CommandQueueImp {
         CommandList *firstCommandList = nullptr;
         CommandList *lastCommandList = nullptr;
         void *currentPatchForChainedBbStart = nullptr;
+        NEO::ScratchSpaceController *scratchSpaceController = nullptr;
+        NEO::GraphicsAllocation *globalStatelessAllocation = nullptr;
 
         NEO::PreemptionMode preemptionMode{};
         NEO::PreemptionMode statePreemption{};
@@ -109,14 +114,15 @@ struct CommandQueueHw : public CommandQueueImp {
         bool hasIndirectAccess{};
         bool rtDispatchRequired = false;
         bool globalInit = false;
+        bool lockScratchController = false;
     };
 
-    ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
-                                           uint32_t numCommandLists,
-                                           ze_command_list_handle_t *commandListHandles,
-                                           ze_fence_handle_t hFence,
-                                           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                           ze_event_handle_t *phWaitEvents);
+    MOCKABLE_VIRTUAL ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
+                                                            uint32_t numCommandLists,
+                                                            ze_command_list_handle_t *commandListHandles,
+                                                            ze_fence_handle_t hFence,
+                                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                                            ze_event_handle_t *phWaitEvents);
     inline ze_result_t executeCommandListsCopyOnly(CommandListExecutionContext &ctx,
                                                    uint32_t numCommandLists,
                                                    ze_command_list_handle_t *phCommandLists,
@@ -144,7 +150,7 @@ struct CommandQueueHw : public CommandQueueImp {
     MOCKABLE_VIRTUAL ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize);
     inline void getGlobalFenceAndMakeItResident();
     inline void getWorkPartitionAndMakeItResident();
-    inline void getGlobalStatelessHeapAndMakeItResident();
+    inline void getGlobalStatelessHeapAndMakeItResident(CommandListExecutionContext &ctx);
     inline void getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(NEO::LinearStream &commandStream);
     inline void makeSbaTrackingBufferResidentIfL0DebuggerEnabled(bool isDebugEnabled);
     inline void programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(bool isDebugEnabled, NEO::LinearStream &commandStream);

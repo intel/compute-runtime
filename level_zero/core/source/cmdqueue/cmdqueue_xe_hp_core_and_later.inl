@@ -135,12 +135,12 @@ constexpr uint32_t maxPtssIndex = 15u;
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHeaps,
                                                        NEO::ScratchSpaceController *scratchController,
+                                                       NEO::GraphicsAllocation *globalStatelessAllocation,
                                                        bool &gsbaState, bool &frontEndState,
                                                        uint32_t perThreadScratchSpaceSlot0Size, uint32_t perThreadScratchSpaceSlot1Size) {
     if (perThreadScratchSpaceSlot0Size > 0 || perThreadScratchSpaceSlot1Size > 0) {
         if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
-            auto globalStatelessHeapAllocation = csr->getGlobalStatelessHeapAllocation();
-            scratchController->setRequiredScratchSpace(globalStatelessHeapAllocation->getUnderlyingBuffer(), 0, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size, csr->peekTaskCount(),
+            scratchController->setRequiredScratchSpace(globalStatelessAllocation->getUnderlyingBuffer(), 0, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size, csr->peekTaskCount(),
                                                        csr->getOsContext(), gsbaState, frontEndState);
         }
         if (sshHeaps.size() > 0) {

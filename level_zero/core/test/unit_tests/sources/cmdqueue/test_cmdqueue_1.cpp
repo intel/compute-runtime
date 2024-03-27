@@ -1110,6 +1110,7 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
     NEO::HeapContainer mockHeapContainer;
     void handleScratchSpace(NEO::HeapContainer &heapContainer,
                             NEO::ScratchSpaceController *scratchController,
+                            NEO::GraphicsAllocation *globalStatelessAllocation,
                             bool &gsbaState, bool &frontEndState,
                             uint32_t perThreadScratchSpaceSlot0Size,
                             uint32_t perThreadScratchSpaceSlot1Size) override {

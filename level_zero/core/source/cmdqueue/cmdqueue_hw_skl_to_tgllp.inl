@@ -120,6 +120,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &heapContainer,
                                                        NEO::ScratchSpaceController *scratchController,
+                                                       NEO::GraphicsAllocation *globalStatelessAllocation,
                                                        bool &gsbaState, bool &frontEndState,
                                                        uint32_t perThreadScratchSpaceSlot0Size, uint32_t perThreadScratchSpaceSlot1Size) {
 

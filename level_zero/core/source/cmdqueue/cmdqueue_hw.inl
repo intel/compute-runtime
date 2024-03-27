@@ -69,24 +69,35 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     auto ret = ZE_RESULT_SUCCESS;
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
+    auto neoDevice = device->getNEODevice();
 
     if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
         auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
-        svmAllocMgr->prefetchSVMAllocs(*device->getNEODevice(), *csr);
+        svmAllocMgr->prefetchSVMAllocs(*neoDevice, *csr);
     }
 
     registerCsrClient();
 
-    auto neoDevice = device->getNEODevice();
+    auto scratchController = this->csr->getScratchSpaceController();
+    auto globalStatelessHeapAllocation = this->csr->getGlobalStatelessHeapAllocation();
+    bool lockScratchController = false;
+    if (this->heaplessModeEnabled) {
+        scratchController = neoDevice->getDefaultEngine().commandStreamReceiver->getScratchSpaceController();
+        globalStatelessHeapAllocation = neoDevice->getDefaultEngine().commandStreamReceiver->getGlobalStatelessHeapAllocation();
+        lockScratchController = scratchController != this->csr->getScratchSpaceController();
+    }
     auto ctx = CommandListExecutionContext{phCommandLists,
                                            numCommandLists,
                                            this->isCopyOnlyCommandQueue ? NEO::PreemptionMode::Disabled : csr->getPreemptionMode(),
                                            device,
+                                           scratchController,
+                                           globalStatelessHeapAllocation,
                                            NEO::Debugger::isDebugEnabled(internalUsage),
                                            csr->isProgramActivePartitionConfigRequired(),
                                            performMigration,
                                            csr->getSipSentFlag()};
     ctx.globalInit |= ctx.isDebugEnabled && !this->commandQueueDebugCmdsProgrammed && device->getL0Debugger();
+    ctx.lockScratchController = lockScratchController;
 
     this->startingCmdBuffer = &this->commandStream;
     this->device->activateMetricGroups();
@@ -160,7 +171,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     this->getGlobalFenceAndMakeItResident();
     this->getWorkPartitionAndMakeItResident();
-    this->getGlobalStatelessHeapAndMakeItResident();
+    this->getGlobalStatelessHeapAndMakeItResident(ctx);
     this->makePreemptionAllocationResidentForModeMidThread(ctx.isDevicePreemptionModeMidThread);
     this->makeSipIsaResidentIfSipKernelUsed(ctx);
     this->makeDebugSurfaceResidentIfNEODebuggerActive(ctx.isNEODebuggerActive(this->device));
@@ -473,10 +484,14 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
     uint32_t numCommandLists,
     NEO::PreemptionMode contextPreemptionMode,
     Device *device,
+    NEO::ScratchSpaceController *scratchSpaceController,
+    NEO::GraphicsAllocation *globalStatelessAllocation,
     bool debugEnabled,
     bool programActivePartitionConfig,
     bool performMigration,
-    bool sipSent) : preemptionMode{contextPreemptionMode},
+    bool sipSent) : scratchSpaceController(scratchSpaceController),
+                    globalStatelessAllocation(globalStatelessAllocation),
+                    preemptionMode{contextPreemptionMode},
                     statePreemption{contextPreemptionMode},
                     isPreemptionModeInitial{contextPreemptionMode == NEO::PreemptionMode::Initial},
                     isDebugEnabled{debugEnabled},
@@ -689,13 +704,17 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx) {
-    auto scratchController = this->csr->getScratchSpaceController();
+    std::unique_lock<NEO::CommandStreamReceiver::MutexType> defaultCsrLock;
+    if (ctx.lockScratchController) {
+        defaultCsrLock = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->obtainUniqueOwnership();
+    }
     handleScratchSpace(this->heapContainer,
-                       scratchController,
+                       ctx.scratchSpaceController,
+                       ctx.globalStatelessAllocation,
                        ctx.gsbaStateDirty, ctx.frontEndStateDirty,
                        ctx.perThreadScratchSpaceSlot0Size, ctx.perThreadScratchSpaceSlot1Size);
     ctx.gsbaStateDirty |= this->csr->getGSBAStateDirty();
-    ctx.scratchGsba = scratchController->calculateNewGSH();
+    ctx.scratchGsba = ctx.scratchSpaceController->calculateNewGSH();
 
     ctx.globalInit |= ctx.gsbaStateDirty;
 }
@@ -814,10 +833,9 @@ void CommandQueueHw<gfxCoreFamily>::getWorkPartitionAndMakeItResident() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::getGlobalStatelessHeapAndMakeItResident() {
-    const auto globalStatelessAllocation = this->csr->getGlobalStatelessHeapAllocation();
-    if (globalStatelessAllocation) {
-        this->csr->makeResident(*globalStatelessAllocation);
+void CommandQueueHw<gfxCoreFamily>::getGlobalStatelessHeapAndMakeItResident(CommandListExecutionContext &ctx) {
+    if (ctx.globalStatelessAllocation) {
+        this->csr->makeResident(*ctx.globalStatelessAllocation);
     }
 }
 

@@ -12,6 +12,8 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -2782,6 +2784,38 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
     ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
     EXPECT_EQ(nullptr, ssh);
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenCommandQueueUsingGlobalStatelessWhenQueueInHeaplessModeThenUsingScratchControllerAndHeapAllocationFromDefaultEngine,
+          IsAtLeastXeHpCore) {
+    auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    defaultCsr->createGlobalStatelessHeap();
+
+    auto otherCsr = std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(static_cast<UltCommandStreamReceiver<FamilyType> *>(createCommandStream(*device->getNEODevice()->getExecutionEnvironment(), 0, 1)));
+
+    otherCsr->setupContext(*neoDevice->getDefaultEngine().osContext);
+    otherCsr->initializeResources();
+    otherCsr->initializeTagAllocation();
+    otherCsr->createGlobalFenceAllocation();
+    otherCsr->createPreemptionAllocation();
+    otherCsr->createGlobalStatelessHeap();
+
+    ze_command_queue_desc_t desc = {};
+    auto otherCommandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, otherCsr.get(), &desc);
+    otherCommandQueue->initialize(false, false, false);
+    otherCommandQueue->heaplessModeEnabled = true;
+
+    commandList->close();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+
+    auto result = otherCommandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(defaultCsr->getScratchSpaceController(), otherCommandQueue->recordedScratchController);
+    EXPECT_EQ(defaultCsr->getGlobalStatelessHeapAllocation(), otherCommandQueue->recordedGlobalStatelessAllocation);
+    EXPECT_TRUE(otherCommandQueue->recordedLockScratchController);
+    otherCommandQueue->destroy();
 }
 
 } // namespace ult
