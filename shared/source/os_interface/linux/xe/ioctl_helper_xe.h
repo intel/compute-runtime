@@ -106,6 +106,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
     size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const override;
+    void setupIpVersion() override;
     void getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss, std::vector<std::bitset<8>> *euDss, DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty);
     void getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap);
 
@@ -158,6 +159,13 @@ class IoctlHelperXe : public IoctlHelper {
 
     uint16_t getDefaultEngineClass(const aub_stream::EngineType &defaultEngineType);
     virtual void setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut);
+
+    struct GtIpVersion {
+        uint16_t major;
+        uint16_t minor;
+        uint16_t revision;
+    };
+    bool queryHwIpVersion(GtIpVersion &gtIpVersion);
 
     int maxExecQueuePriority = 0;
     std::mutex xeLock;

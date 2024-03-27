@@ -209,6 +209,8 @@ std::vector<DataType> IoctlHelperXe::queryData(uint32_t queryId) {
 
     return retVal;
 }
+template std::vector<uint8_t> IoctlHelperXe::queryData(uint32_t queryId);
+template std::vector<uint64_t> IoctlHelperXe::queryData(uint32_t queryId);
 
 std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled) {
     auto enginesData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_ENGINES);
@@ -329,6 +331,20 @@ size_t IoctlHelperXe::getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, ui
         }
     }
     return size;
+}
+
+void IoctlHelperXe::setupIpVersion() {
+    auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+
+    if (auto hwIpVersion = GtIpVersion{}; queryHwIpVersion(hwIpVersion)) {
+        hwInfo->ipVersion.architecture = hwIpVersion.major;
+        hwInfo->ipVersion.release = hwIpVersion.minor;
+        hwInfo->ipVersion.revision = hwIpVersion.revision;
+    } else {
+        xeLog("No HW IP version received from drm_xe_gt. Falling back to default value.");
+        IoctlHelper::setupIpVersion();
+    }
 }
 
 bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
