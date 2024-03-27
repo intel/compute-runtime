@@ -604,24 +604,24 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsLinearS
     graphicsAllocation.allocationType = AllocationType::linearStream;
     EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
 }
-TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsKernelIsaAndMaskDoesNotSupportItThenAllocationHasNotReadonlyType) {
+TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsKernelIsaAndMaskDoesNotSupportItThenAllocationHasReadonlyType) {
     DebugManagerStateRestore restorer;
     auto mask = 1llu << (static_cast<int64_t>(AllocationType::linearStream) - 1);
     debugManager.flags.ReadOnlyAllocationsTypeMask.set(mask);
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
     graphicsAllocation.allocationType = AllocationType::kernelIsa;
-    EXPECT_FALSE(graphicsAllocation.hasAllocationReadOnlyType());
+    EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
 }
 
-TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsInternalIsaAndMaskDoesNotSupportItThenAllocationHasNotReadonlyType) {
+TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsInternalIsaAndMaskDoesNotSupportItThenAllocationHasReadonlyType) {
     DebugManagerStateRestore restorer;
     auto mask = 1llu << (static_cast<int64_t>(AllocationType::kernelIsa) - 1);
     debugManager.flags.ReadOnlyAllocationsTypeMask.set(mask);
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
     graphicsAllocation.allocationType = AllocationType::kernelIsaInternal;
-    EXPECT_FALSE(graphicsAllocation.hasAllocationReadOnlyType());
+    EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
 }
 TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsCommandBufferAndMaskDoesNotSupportItThenAllocationHasNotReadonlyType) {
     DebugManagerStateRestore restorer;

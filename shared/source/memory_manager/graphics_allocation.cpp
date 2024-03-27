@@ -139,6 +139,10 @@ void GraphicsAllocation::updateCompletionDataForAllocationAndFragments(uint64_t 
 }
 
 bool GraphicsAllocation::hasAllocationReadOnlyType() {
+    if (allocationType == AllocationType::kernelIsa ||
+        allocationType == AllocationType::kernelIsaInternal) {
+        return true;
+    }
     if (debugManager.flags.ReadOnlyAllocationsTypeMask.get() != 0) {
         UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
         auto maskVal = debugManager.flags.ReadOnlyAllocationsTypeMask.get();
