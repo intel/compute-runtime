@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,6 +13,7 @@ REPO_DIR="$( cd "$( dirname "${DIR}/../../../../" )" && pwd )"
 
 BUILD_DIR="${REPO_DIR}/../build_opencl"
 NEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS:-FALSE}
+NEO_SKIP_AUB_TESTS_RUN=${NEO_SKIP_AUB_TESTS_RUN:-TRUE}
 NEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION:-FALSE}
 SPEC_FILE="${SPEC_FILE:-${OS_TYPE}}"
 
@@ -27,7 +28,7 @@ LOG_CCACHE_STATS="${LOG_CCACHE_STATS:-0}"
 
 export BUILD_ID="${BUILD_ID:-1}"
 export CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
-export DO_NOT_RUN_AUB_TESTS="${DO_NOT_RUN_AUB_TESTS:-FALSE}"
+export NEO_SKIP_AUB_TESTS_RUN="${NEO_SKIP_AUB_TESTS_RUN:-TRUE}"
 
 source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/functions.sh"
 source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/opencl/opencl.sh"

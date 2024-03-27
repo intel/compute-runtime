@@ -1,10 +1,10 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-if(DEFINED AUB_STREAM_PROJECT_NAME)
+if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
   project(igdrcl_aub_tests)
 
   set(OPENCL_AUB_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})

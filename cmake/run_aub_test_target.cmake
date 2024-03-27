@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -47,7 +47,7 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
 
 endif()
 
-if(NOT NEO_SKIP_OCL_UNIT_TESTS)
+if(TARGET igdrcl_aub_tests)
   add_dependencies(aub_tests igdrcl_aub_tests)
   add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_ocl)
 
@@ -71,7 +71,7 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS)
   )
 endif()
 
-if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
+if(TARGET ze_intel_gpu_aub_tests)
   add_dependencies(aub_tests ze_intel_gpu_aub_tests)
   add_dependencies(run_${product}_${revision_id}_aub_tests prepare_test_kernels_for_l0)
 
@@ -95,7 +95,7 @@ if(NOT NEO_SKIP_L0_UNIT_TESTS AND BUILD_WITH_L0)
   )
 endif()
 
-if(DO_NOT_RUN_AUB_TESTS)
+if(NEO_SKIP_AUB_TESTS_RUN)
   set_target_properties(run_${product}_${revision_id}_aub_tests PROPERTIES
                         EXCLUDE_FROM_DEFAULT_BUILD TRUE
                         EXCLUDE_FROM_ALL TRUE
