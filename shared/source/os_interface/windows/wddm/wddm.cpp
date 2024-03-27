@@ -201,7 +201,7 @@ bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
         std::vector<int> subSliceIndices;
         subSliceIndices.reserve((gtSystemInfo.SliceInfo[x].DualSubSliceEnabledCount) * GT_MAX_SUBSLICE_PER_DSS);
 
-        // subSliceIndex is used to track the index number of subslices from all DSS in this slice
+        // subSliceIndex is used to track the index number of subslices from all SS or DSS in this slice
         int subSliceIndex = -1;
         for (uint32_t dss = 0; dss < GT_MAX_DUALSUBSLICE_PER_SLICE; dss++) {
             if (!gtSystemInfo.SliceInfo[x].DSSInfo[dss].Enabled) {
@@ -218,6 +218,20 @@ bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
                 subSliceIndices.push_back(subSliceIndex);
 
                 euCount += gtSystemInfo.SliceInfo[x].DSSInfo[dss].SubSlice[y].EuEnabledCount;
+            }
+        }
+
+        if (subSliceCount == 0) {
+            for (uint32_t sss = 0; sss < GT_MAX_SUBSLICE_PER_SLICE; sss++) {
+                subSliceIndex++;
+                if (!gtSystemInfo.SliceInfo[x].SubSliceInfo[sss].Enabled) {
+                    continue;
+                }
+
+                subSliceCount++;
+                subSliceIndices.push_back(subSliceIndex);
+
+                euCount += gtSystemInfo.SliceInfo[x].SubSliceInfo[sss].EuEnabledCount;
             }
         }
 

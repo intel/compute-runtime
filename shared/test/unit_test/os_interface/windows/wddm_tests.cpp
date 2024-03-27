@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -414,6 +414,84 @@ TEST_F(WddmTests, GivenNoSliceEnabledWhenQueryingTopologyThenExpectFalse) {
     }
     wddm->rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     EXPECT_FALSE(wddm->buildTopologyMapping());
+}
+
+TEST_F(WddmTests, GivenOnlySubsliceEnabledWhenQueryingTopologyThenExpectTrue) {
+    HardwareInfo hwInfo = *defaultHwInfo.get();
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = GT_MAX_SLICE;
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+    hwInfo.gtSystemInfo.SliceCount = 1; // Only one slice enabled
+
+    for (auto &sliceInfo : hwInfo.gtSystemInfo.SliceInfo) {
+        sliceInfo.Enabled = false;
+    }
+
+    hwInfo.gtSystemInfo.SliceInfo[0].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 0;
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceEnabledCount = 2;
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[0].Enabled = false; // SS[0] disabled
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[1].Enabled = true;  // SS[1] enabled
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[1].EuEnabledCount = 4;
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[2].Enabled = false; // SS[2] disabled
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[3].Enabled = true;  // SS[3] enabled
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[3].EuEnabledCount = 4;
+
+    wddm->rootDeviceEnvironment.setHwInfoAndInitHelpers(&hwInfo);
+    EXPECT_TRUE(wddm->buildTopologyMapping());
+    const auto &topologyMap = wddm->getTopologyMap();
+    EXPECT_EQ(topologyMap.size(), 1u);
+    EXPECT_EQ(topologyMap.at(0).sliceIndices.size(), 1u);
+    EXPECT_EQ(topologyMap.at(0).sliceIndices[0], 0);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices.size(), 2u);
+    const auto base = 2 * GT_MAX_DUALSUBSLICE_PER_SLICE;
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[0], base + 1);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[1], base + 3);
+}
+
+TEST_F(WddmTests, GivenBothSublicesAndDualSubslicesEnabledWhenQueryingTopologyThenOnlyDSSInfoCounted) {
+    HardwareInfo hwInfo = *defaultHwInfo.get();
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = GT_MAX_SLICE;
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+    hwInfo.gtSystemInfo.SliceCount = 1; // Only one slice enabled
+
+    for (auto &sliceInfo : hwInfo.gtSystemInfo.SliceInfo) {
+        sliceInfo.Enabled = false;
+    }
+
+    hwInfo.gtSystemInfo.SliceInfo[0].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 2;
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[0].Enabled = false; // DSS[0] disabled
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[1].Enabled = true;  // DSS[1] enabled
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[1].SubSlice[0].Enabled = false;
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[1].SubSlice[1].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[1].SubSlice[1].EuEnabledCount = 4;
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[2].Enabled = false; // DSS[2] disabled
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[3].Enabled = true;  // DSS[3] enabled
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[3].SubSlice[0].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[3].SubSlice[1].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[0].DSSInfo[3].SubSlice[1].EuEnabledCount = 4;
+
+    hwInfo.gtSystemInfo.SliceInfo[0].DualSubSliceEnabledCount = 2;
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceEnabledCount = 2;
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[0].Enabled = false; // SS[0] disabled
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[1].Enabled = true;  // SS[1] enabled
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[1].EuEnabledCount = 4;
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[2].Enabled = true; // SS[2] enabled
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[3].Enabled = true; // SS[3] enabled
+    hwInfo.gtSystemInfo.SliceInfo[0].SubSliceInfo[3].EuEnabledCount = 4;
+
+    wddm->rootDeviceEnvironment.setHwInfoAndInitHelpers(&hwInfo);
+    EXPECT_TRUE(wddm->buildTopologyMapping());
+    const auto &topologyMap = wddm->getTopologyMap();
+    EXPECT_EQ(topologyMap.size(), 1u);
+    EXPECT_EQ(topologyMap.at(0).sliceIndices.size(), 1u);
+    EXPECT_EQ(topologyMap.at(0).sliceIndices[0], 0);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices.size(), 3u);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[0], 3);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[1], 6);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[2], 7);
 }
 
 TEST_F(WddmTests, GivenPlatformSupportsEvictIfNecessaryWhenAdjustingEvictNeededTrueThenExpectTrue) {
