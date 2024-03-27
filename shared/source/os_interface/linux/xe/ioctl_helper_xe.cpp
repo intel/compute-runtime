@@ -733,15 +733,6 @@ bool IoctlHelperXe::completionFenceExtensionSupported(const bool isVmBindAvailab
 uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident) {
     uint64_t ret = 0;
     xeLog(" -> IoctlHelperXe::%s %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident);
-    if (bindCapture) {
-        ret |= XE_NEO_BIND_CAPTURE_FLAG;
-    }
-    if (bindImmediate) {
-        ret |= XE_NEO_BIND_IMMEDIATE_FLAG;
-    }
-    if (bindMakeResident) {
-        ret |= XE_NEO_BIND_MAKERESIDENT_FLAG;
-    }
     return ret;
 }
 
@@ -1216,6 +1207,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         bind.bind.obj_offset = vmBindParams.offset;
         bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
         bind.bind.extensions = vmBindParams.extensions;
+        bind.bind.flags = static_cast<uint32_t>(vmBindParams.flags);
 
         if (isBind) {
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
@@ -1256,9 +1248,10 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             return ret;
         }
 
+        constexpr auto oneSecTimeout = 1000000;
         return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
                                sync[0].addr,
-                               sync[0].timeline_value, XE_ONE_SEC);
+                               sync[0].timeline_value, oneSecTimeout);
     }
 
     xeLog("error:  -> IoctlHelperXe::%s %s index=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx pat=%hu r=%d\n",

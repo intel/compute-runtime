@@ -406,10 +406,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE),
               xeIoctlHelper->getFlagsForVmCreate(false, false, false));
 
-    EXPECT_EQ(static_cast<uint64_t>(XE_NEO_BIND_CAPTURE_FLAG |
-                                    XE_NEO_BIND_IMMEDIATE_FLAG |
-                                    XE_NEO_BIND_MAKERESIDENT_FLAG),
-              xeIoctlHelper->getFlagsForVmBind(true, true, true));
+    EXPECT_EQ(0ull, xeIoctlHelper->getFlagsForVmBind(true, true, true));
 
     uint32_t fabricId = 0, latency = 0, bandwidth = 0;
     EXPECT_FALSE(xeIoctlHelper->getFabricLatency(fabricId, latency, bandwidth));
@@ -1412,11 +1409,16 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
     drm.vmBindInputs.clear();
     drm.syncInputs.clear();
     drm.waitUserFenceInputs.clear();
+
+    EXPECT_EQ(0u, vmBindParams.flags);
+    vmBindParams.flags = 0x12345; // set non-zero to check if flags are passed
+    auto expectedFlags = vmBindParams.flags;
     EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
     EXPECT_EQ(1u, drm.vmBindInputs.size());
     EXPECT_EQ(1u, drm.syncInputs.size());
     EXPECT_EQ(1u, drm.waitUserFenceInputs.size());
     auto expectedMask = std::numeric_limits<uint64_t>::max();
+    auto expectedTimeout = 1000000ll;
     {
         auto &sync = drm.syncInputs[0];
 
@@ -1430,8 +1432,10 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         EXPECT_EQ(0u, waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
         EXPECT_EQ(expectedMask, waitUserFence.mask);
-        EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
+        EXPECT_EQ(expectedTimeout, waitUserFence.timeout);
         EXPECT_EQ(0u, waitUserFence.exec_queue_id);
+
+        EXPECT_EQ(expectedFlags, drm.vmBindInputs[0].bind.flags);
     }
     drm.vmBindInputs.clear();
     drm.syncInputs.clear();
@@ -1453,8 +1457,10 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         EXPECT_EQ(0u, waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
         EXPECT_EQ(expectedMask, waitUserFence.mask);
-        EXPECT_EQ(static_cast<int64_t>(XE_ONE_SEC), waitUserFence.timeout);
+        EXPECT_EQ(expectedTimeout, waitUserFence.timeout);
         EXPECT_EQ(0u, waitUserFence.exec_queue_id);
+
+        EXPECT_EQ(expectedFlags, drm.vmBindInputs[0].bind.flags);
     }
 }
 

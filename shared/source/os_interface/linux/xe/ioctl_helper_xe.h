@@ -17,15 +17,6 @@
 
 struct drm_xe_engine_class_instance;
 
-// Arbitratry value for easier identification in the logs for now
-#define XE_NEO_BIND_CAPTURE_FLAG 0x1
-#define XE_NEO_BIND_IMMEDIATE_FLAG 0x20
-#define XE_NEO_BIND_MAKERESIDENT_FLAG 0x300
-
-#define PRELIM_I915_UFENCE_WAIT_SOFT (1 << 15)
-
-#define XE_ONE_SEC 1000000000
-
 namespace NEO {
 
 enum class EngineClass : uint16_t;
