@@ -237,9 +237,4 @@ bool ProductHelperHw<gfxProduct>::isSkippingStatefulInformationRequired(const Ke
     return isGeneratedByNgen;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
-    return true;
-}
-
 } // namespace NEO

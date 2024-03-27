@@ -164,14 +164,6 @@ class BufferObject {
     bool isImmediateBindingRequired() {
         return requiresImmediateBinding;
     }
-    bool isReadOnlyGpuResource() {
-        return readOnlyGpuResource;
-    }
-
-    void setAsReadOnly(bool isReadOnly) {
-        readOnlyGpuResource = isReadOnly;
-    }
-
     void requireImmediateBinding(bool required) {
         requiresImmediateBinding = required;
     }
@@ -268,6 +260,5 @@ class BufferObject {
     bool requiresExplicitResidency = false;
     bool chunked = false;
     bool isReused = false;
-    bool readOnlyGpuResource = false;
 };
 } // namespace NEO

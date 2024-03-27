@@ -642,14 +642,6 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
         return nullptr;
     }
 
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
-    auto &productHelper = rootDeviceEnvironment.getProductHelper();
-    if (productHelper.supportReadOnlyAllocations() &&
-        allocation->hasAllocationReadOnlyType() &&
-        !productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *allocation)) {
-        allocation->setAsReadOnly();
-    }
-
     fileLoggerInstance().logAllocation(allocation);
     registerAllocationInOs(allocation);
     return allocation;

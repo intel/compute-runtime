@@ -560,34 +560,3 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationsWithFragmentsWhenCallingFor
         EXPECT_EQ(residencyData->getFenceValueForContextId(contextId), newFenceValue);
     }
 }
-TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsKernelIsaThenAllocationHasReadonlyType) {
-    MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
-    graphicsAllocation.allocationType = AllocationType::kernelIsa;
-    EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
-}
-
-TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsInternalIsaThenAllocationHasReadonlyType) {
-    MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
-    graphicsAllocation.allocationType = AllocationType::kernelIsaInternal;
-    EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
-}
-TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsCommandBufferThenAllocationHasReadonlyType) {
-    MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
-    graphicsAllocation.allocationType = AllocationType::commandBuffer;
-    EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
-}
-TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsLinearStreamThenAllocationHasReadonlyType) {
-    MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
-    graphicsAllocation.allocationType = AllocationType::linearStream;
-    EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
-}
-TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsBufferThenAllocationHasNotReadonlyType) {
-    MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
-    graphicsAllocation.allocationType = AllocationType::buffer;
-    EXPECT_FALSE(graphicsAllocation.hasAllocationReadOnlyType());
-}

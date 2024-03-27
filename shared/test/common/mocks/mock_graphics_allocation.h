@@ -19,7 +19,6 @@ inline constexpr DeviceBitfield mockDeviceBitfield(0b1);
 
 class MockGraphicsAllocation : public MemoryAllocation {
   public:
-    using BaseClass = MemoryAllocation;
     using MemoryAllocation::allocationOffset;
     using MemoryAllocation::allocationType;
     using MemoryAllocation::aubInfo;
@@ -63,8 +62,6 @@ class MockGraphicsAllocation : public MemoryAllocation {
         updateCompletionDataForAllocationAndFragmentsCalledtimes++;
         MemoryAllocation::updateCompletionDataForAllocationAndFragments(newFenceValue, contextId);
     }
-    ADDMETHOD(hasAllocationReadOnlyType, bool, false, false, (), ());
-    ADDMETHOD_VOIDRETURN(setAsReadOnly, false, (), ());
 
     uint64_t updateCompletionDataForAllocationAndFragmentsCalledtimes = 0;
     int peekInternalHandleResult = 0;
