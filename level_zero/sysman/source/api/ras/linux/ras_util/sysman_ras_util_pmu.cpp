@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
+#include <algorithm>
 #include <cstring>
 #include <sstream>
 
