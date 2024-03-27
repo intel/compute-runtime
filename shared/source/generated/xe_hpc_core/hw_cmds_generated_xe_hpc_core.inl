@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1094,6 +1094,7 @@ typedef struct tagMI_ATOMIC {
         ATOMIC_8B_MOVE = 0x24,
         ATOMIC_8B_INCREMENT = 0x25,
         ATOMIC_8B_DECREMENT = 0x26,
+        ATOMIC_8B_CMP_WR = 0x2E,
     } ATOMIC_OPCODES;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,11 +110,12 @@ HWTEST_F(MiAtomicAubTest, WhenDispatchingAtomicMoveOperationThenExpectCorrectEnd
 
     uint32_t operation3dword0 = 0xF0;
     uint32_t operation3dword1 = 0x1F;
+    uint64_t operation3qword = (static_cast<uint64_t>(operation3dword1) << 32) | operation3dword0;
+
     EncodeAtomic<FamilyType>::programMiAtomic(taskStream, expectedGpuAddressQwordOp3,
                                               MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_MOVE,
                                               MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD,
-                                              0, 0, operation3dword0, operation3dword1);
-    uint64_t operation3qword = (static_cast<uint64_t>(operation3dword1) << 32) | operation3dword0;
+                                              0, 0, operation3qword, 0);
 
     flushStream();
 

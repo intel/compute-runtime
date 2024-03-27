@@ -451,8 +451,8 @@ struct EncodeAtomic {
                                 DATA_SIZE dataSize,
                                 uint32_t returnDataControl,
                                 uint32_t csStall,
-                                uint32_t operand1dword0,
-                                uint32_t operand1dword1);
+                                uint64_t operand1Data,
+                                uint64_t operand2Data);
 
     static void programMiAtomic(MI_ATOMIC *atomic,
                                 uint64_t writeAddress,
@@ -460,8 +460,8 @@ struct EncodeAtomic {
                                 DATA_SIZE dataSize,
                                 uint32_t returnDataControl,
                                 uint32_t csStall,
-                                uint32_t operand1dword0,
-                                uint32_t operand1dword1);
+                                uint64_t operand1Data,
+                                uint64_t operand2Data);
 
     static void setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress);
 };
