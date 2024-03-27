@@ -5930,6 +5930,12 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenMultiTileSyncDispatchQueueWhe
     auto immCmdList0 = createMultiTileImmCmdList<gfxCoreFamily>();
     auto immCmdList1 = createMultiTileImmCmdList<gfxCoreFamily>();
 
+    auto limitedRegularCmdList = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+    limitedRegularCmdList->synchronizedDispatchMode = NEO::SynchronizedDispatchMode::limited;
+
+    auto limitedImmCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    limitedImmCmdList->synchronizedDispatchMode = NEO::SynchronizedDispatchMode::limited;
+
     EXPECT_EQ(0u, regularCmdList0->syncDispatchQueueId);
     EXPECT_EQ(NEO::SynchronizedDispatchMode::full, regularCmdList0->synchronizedDispatchMode);
 
@@ -5941,6 +5947,47 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenMultiTileSyncDispatchQueueWhe
 
     EXPECT_EQ(3u, immCmdList1->syncDispatchQueueId);
     EXPECT_EQ(NEO::SynchronizedDispatchMode::full, immCmdList1->synchronizedDispatchMode);
+}
+
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenMultiTileSyncDispatchQueueWhenCreatingThenDontAssignQueueIdForLimitedMode, IsAtLeastSkl) {
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(0);
+
+    auto mockDevice = static_cast<MockDeviceImp *>(device);
+
+    constexpr uint32_t limitedQueueId = std::numeric_limits<uint32_t>::max();
+
+    EXPECT_EQ(nullptr, mockDevice->syncDispatchTokenAllocation);
+
+    auto limitedRegularCmdList = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+    limitedRegularCmdList->enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::limited);
+
+    EXPECT_NE(nullptr, mockDevice->syncDispatchTokenAllocation);
+
+    auto limitedImmCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    limitedImmCmdList->enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::limited);
+
+    EXPECT_EQ(limitedQueueId, limitedRegularCmdList->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::limited, limitedRegularCmdList->synchronizedDispatchMode);
+
+    EXPECT_EQ(limitedQueueId, limitedImmCmdList->syncDispatchQueueId);
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::limited, limitedImmCmdList->synchronizedDispatchMode);
+
+    auto regularCmdList = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+    regularCmdList->enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::full);
+    EXPECT_EQ(0u, regularCmdList->syncDispatchQueueId);
+
+    regularCmdList = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+    regularCmdList->enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::full);
+    EXPECT_EQ(1u, regularCmdList->syncDispatchQueueId);
+
+    limitedImmCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+    limitedImmCmdList->enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::limited);
+
+    EXPECT_EQ(limitedQueueId, limitedRegularCmdList->syncDispatchQueueId);
+
+    regularCmdList = createMultiTileRegularCmdList<gfxCoreFamily>(false);
+    regularCmdList->enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::full);
+    EXPECT_EQ(2u, regularCmdList->syncDispatchQueueId);
 }
 
 HWTEST2_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchEnabledWhenAllocatingQueueIdThenEnsureTokenAllocation, IsAtLeastSkl) {

@@ -304,7 +304,13 @@ void CommandListImp::enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mo
     }
 
     this->synchronizedDispatchMode = mode;
-    this->syncDispatchQueueId = device->getNextSyncDispatchQueueId();
+
+    if (mode == NEO::SynchronizedDispatchMode::full) {
+        this->syncDispatchQueueId = device->getNextSyncDispatchQueueId();
+    } else {
+        // Limited mode doesnt acquire new token during execution. It only checks if token is already acquired by full sync dispatch.
+        device->ensureSyncDispatchTokenAllocation();
+    }
 }
 
 } // namespace L0
