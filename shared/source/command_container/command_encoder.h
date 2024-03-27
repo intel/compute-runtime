@@ -189,6 +189,8 @@ struct EncodeDispatchKernel {
 
     template <bool isHeapless>
     static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr);
+
+    static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);
 };
 
 template <typename GfxFamily>

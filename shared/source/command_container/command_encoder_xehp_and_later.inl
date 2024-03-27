@@ -320,6 +320,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if constexpr (heaplessModeEnabled) {
+        auto inlineDataPointer = reinterpret_cast<char *>(walkerCmd.getInlineDataPointer());
+        auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;
+        auto heap = container.getIndirectHeap(HeapType::indirectObject);
+        auto address = heap->getHeapGpuBase() + offsetThreadData;
+        std::memcpy(inlineDataPointer + indirectDataPointerAddress.offset, &address, indirectDataPointerAddress.pointerSize);
 
         auto requiredScratchSlot0Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
         auto requiredScratchSlot1Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
@@ -327,18 +332,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         auto ssh = container.getIndirectHeap(HeapType::surfaceState);
 
         uint64_t scratchAddress = 0u;
-
         EncodeDispatchKernel<Family>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr);
-
-        auto inlineDataPointer = reinterpret_cast<char *>(walkerCmd.getInlineDataPointer());
-        auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;
-        auto heap = container.getIndirectHeap(HeapType::indirectObject);
-        auto address = heap->getHeapGpuBase() + offsetThreadData;
-        std::memcpy(inlineDataPointer + indirectDataPointerAddress.offset, &address, indirectDataPointerAddress.pointerSize);
-
         auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
         std::memcpy(inlineDataPointer + scratchPointerAddress.offset, &scratchAddress, scratchPointerAddress.pointerSize);
-
     } else {
         walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
         walkerCmd.setIndirectDataLength(sizeThreadData);
@@ -924,6 +920,12 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount) {
     return 0u;
+}
+
+template <typename Family>
+inline size_t EncodeDispatchKernel<Family>::getInlineDataOffset(EncodeDispatchKernelArgs &args) {
+    using DefaultWalkerType = typename Family::DefaultWalkerType;
+    return offsetof(DefaultWalkerType, TheStructure.Common.InlineData);
 }
 
 template <typename Family>

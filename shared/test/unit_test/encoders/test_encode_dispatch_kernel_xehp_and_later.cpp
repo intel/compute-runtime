@@ -1557,3 +1557,13 @@ HWTEST2_F(EncodeKernelScratchProgrammingTest, givenHeaplessModeDisabledWhenSetSc
     uint64_t expectedScratchAddress = 0;
     EXPECT_EQ(expectedScratchAddress, scratchAddress);
 }
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetThenReturnWalkerInlineOffset, IsAtLeastXeHpCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    EncodeDispatchKernelArgs dispatchArgs = {};
+
+    size_t expectedOffset = offsetof(DefaultWalkerType, TheStructure.Common.InlineData);
+
+    EXPECT_EQ(expectedOffset, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
+}

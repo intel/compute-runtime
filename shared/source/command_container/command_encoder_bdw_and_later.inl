@@ -631,6 +631,11 @@ size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount
 }
 
 template <typename Family>
+inline size_t EncodeDispatchKernel<Family>::getInlineDataOffset(EncodeDispatchKernelArgs &args) {
+    return 0;
+}
+
+template <typename Family>
 size_t EncodeStates<Family>::getSshHeapSize() {
     return 64 * MemoryConstants::kiloByte;
 }

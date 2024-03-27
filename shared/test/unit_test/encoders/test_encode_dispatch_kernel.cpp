@@ -1629,3 +1629,9 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenIsKernelDispatchedFro
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
     EXPECT_NE(0u, cmdContainer->getHeapWithRequiredSizeAndAlignmentCalled);
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetThenReturnZero) {
+    EncodeDispatchKernelArgs dispatchArgs = {};
+
+    EXPECT_EQ(0u, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
+}
