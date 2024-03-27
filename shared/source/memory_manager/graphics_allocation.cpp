@@ -138,6 +138,17 @@ void GraphicsAllocation::updateCompletionDataForAllocationAndFragments(uint64_t 
     }
 }
 
+bool GraphicsAllocation::hasAllocationReadOnlyType() {
+    if (debugManager.flags.ReadOnlyAllocationsTypeMask.get() != 0) {
+        UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
+        auto maskVal = debugManager.flags.ReadOnlyAllocationsTypeMask.get();
+        if (maskVal & (1llu << (static_cast<int64_t>(getAllocationType()) - 1))) {
+            return true;
+        }
+    }
+    return false;
+}
+
 constexpr TaskCountType GraphicsAllocation::objectNotUsed;
 constexpr TaskCountType GraphicsAllocation::objectNotResident;
 constexpr TaskCountType GraphicsAllocation::objectAlwaysResident;

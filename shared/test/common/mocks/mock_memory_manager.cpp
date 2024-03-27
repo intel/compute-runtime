@@ -143,6 +143,10 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(const Allocati
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
+    if (returnMockGAFromDevicePool) {
+        status = AllocationStatus::Success;
+        return mockGa;
+    }
     if (failInDevicePool) {
         status = AllocationStatus::RetryInNonDevicePool;
         return nullptr;

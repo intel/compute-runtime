@@ -261,8 +261,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(0u, xeIoctlHelper->getDirectSubmissionFlag());
 
-    EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false));
-
+    EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false, false));
     std::vector<QueryItem> queryItems;
     std::vector<DistanceInfo> distanceInfos;
     EXPECT_EQ(0, xeIoctlHelper->queryDistances(queryItems, distanceInfos));
@@ -406,7 +405,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE),
               xeIoctlHelper->getFlagsForVmCreate(false, false, false));
 
-    EXPECT_EQ(0ull, xeIoctlHelper->getFlagsForVmBind(true, true, true));
+    EXPECT_EQ(0ull, xeIoctlHelper->getFlagsForVmBind(true, true, true, true));
 
     uint32_t fabricId = 0, latency = 0, bandwidth = 0;
     EXPECT_FALSE(xeIoctlHelper->getFabricLatency(fabricId, latency, bandwidth));

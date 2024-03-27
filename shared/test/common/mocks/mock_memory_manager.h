@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
@@ -212,6 +213,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return OsAgnosticMemoryManager::mapPhysicalToVirtualMemory(physicalAllocation, gpuRange, bufferSize);
     };
 
+    MockGraphicsAllocation *mockGa;
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
     uint32_t populateOsHandlesCalled = 0u;
     uint32_t allocateGraphicsMemoryForNonSvmHostPtrCalled = 0u;
@@ -261,6 +263,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool callBasePopulateOsHandles = true;
     bool callBaseAllocateGraphicsMemoryForNonSvmHostPtr = true;
     bool failMapPhysicalToVirtualMemory = false;
+    bool returnMockGAFromDevicePool = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;

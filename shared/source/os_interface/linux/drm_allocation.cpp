@@ -339,6 +339,15 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     drm->getIoctlHelper()->registerBOBindHandle(drm, this);
 }
 
+void DrmAllocation::setAsReadOnly() {
+    auto &bos = getBOs();
+    for (auto &bo : bos) {
+        if (bo) {
+            bo->setAsReadOnly(true);
+        }
+    }
+}
+
 void DrmAllocation::linkWithRegisteredHandle(uint32_t handle) {
     auto &bos = getBOs();
     for (auto bo : bos) {

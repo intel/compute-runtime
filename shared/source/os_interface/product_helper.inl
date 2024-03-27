@@ -868,6 +868,11 @@ bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes() const {
     return {};
 }
