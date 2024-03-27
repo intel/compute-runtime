@@ -3955,7 +3955,74 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchInitializat
         NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), syncAlloc->getGpuAddress() + sizeof(uint32_t), 0u,
                                                                    GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
                                                                    false, false, false, true, nullptr);
+    } else if (this->synchronizedDispatchMode == NEO::SynchronizedDispatchMode::full) {
+        appendFullSynchronizedDispatchInit();
     }
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendFullSynchronizedDispatchInit() {
+    using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
+    using ATOMIC_OPCODES = typename MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename MI_ATOMIC::DATA_SIZE;
+
+    constexpr size_t conditionalDataMemBbStartSize = NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataMemBatchBufferStart(false);
+
+    const uint32_t queueId = this->syncDispatchQueueId + 1;
+    const uint64_t queueIdToken = static_cast<uint64_t>(queueId) << 32;
+    const uint64_t tokenInitialValue = queueIdToken + this->partitionCount;
+
+    auto syncAllocationGpuVa = device->getSyncDispatchTokenAllocation()->getGpuAddress();
+    auto workPartitionAllocationGpuVa = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation()->getGpuAddress();
+    auto cmdStream = commandContainer.getCommandStream();
+
+    // If Secondary Tile, then jump to Secondary Tile section
+    // Reserve space for now. Will be patched later
+    NEO::LinearStream skipPrimaryTileSectionCmdStream(cmdStream->getSpace(conditionalDataMemBbStartSize), conditionalDataMemBbStartSize);
+
+    // If token acquired, jump to the end
+    NEO::LinearStream jumpToEndSectionFromPrimaryTile;
+
+    // Primary Tile section
+    {
+        // Try acquire token
+        uint64_t acquireTokenCmdBufferVa = cmdStream->getCurrentGpuAddressPosition();
+        NEO::EncodeMiPredicate<GfxFamily>::encode(*cmdStream, NEO::MiPredicateType::disable);
+        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_CMP_WR,
+                                                      DATA_SIZE::DATA_SIZE_QWORD, 1, 1, 0, tokenInitialValue);
+
+        // If token acquired, jump to the end
+        // Reserve space for now. Will be patched later
+        jumpToEndSectionFromPrimaryTile.replaceBuffer(cmdStream->getSpace(conditionalDataMemBbStartSize), conditionalDataMemBbStartSize);
+
+        // Semaphore for potential switch
+        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*cmdStream, syncAllocationGpuVa + sizeof(uint32_t), 0u,
+                                                                   GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                                   false, false, false, true, nullptr);
+
+        // Loop back to acquire again
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(cmdStream, acquireTokenCmdBufferVa, false, false, false);
+    }
+
+    // Patch Primary Tile section skip (to Secondary Tile section)
+    NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(skipPrimaryTileSectionCmdStream, cmdStream->getCurrentGpuAddressPosition(), workPartitionAllocationGpuVa, 0,
+                                                                                           NEO::CompareOperation::notEqual, false, false);
+
+    // Secondary Tile section
+    {
+        NEO::EncodeMiPredicate<GfxFamily>::encode(*cmdStream, NEO::MiPredicateType::disable);
+
+        // Wait for token acquisition by Primary Tile
+        NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*cmdStream, syncAllocationGpuVa + sizeof(uint32_t), queueId,
+                                                                   GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                                   false, false, false, true, nullptr);
+    }
+
+    // Patch Primary Tile section jump to end
+    NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(jumpToEndSectionFromPrimaryTile, cmdStream->getCurrentGpuAddressPosition(), syncAllocationGpuVa + sizeof(uint32_t), queueId,
+                                                                                           NEO::CompareOperation::equal, false, false);
+
+    // End section
+    NEO::EncodeMiPredicate<GfxFamily>::encode(*cmdStream, NEO::MiPredicateType::disable);
+}
 } // namespace L0

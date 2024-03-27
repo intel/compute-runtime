@@ -6131,34 +6131,116 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppend
     context->freeMem(alloc);
 }
 
-HWTEST2_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppendingThenDontProgramTokenCheck, IsAtLeastSkl) {
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppendingThenProgramTokenAcquire, IsAtLeastXeHpcCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_SET_PREDICATE = typename FamilyType::MI_SET_PREDICATE;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
     immCmdList->synchronizedDispatchMode = NEO::SynchronizedDispatchMode::full;
+    immCmdList->syncDispatchQueueId = 0x1234;
+
+    const uint32_t queueId = immCmdList->syncDispatchQueueId + 1;
+    const uint64_t queueIdToken = static_cast<uint64_t>(queueId) << 32;
+    const uint64_t tokenInitialValue = queueIdToken + partitionCount;
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     size_t offset = cmdStream->getUsed();
 
-    auto verifyTokenCheck = [&](bool hasDependencySemaphore) {
+    auto verifyTokenAcquisition = [&](bool hasDependencySemaphore) {
         GenCmdList cmdList;
         EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
         if (::testing::Test::HasFailure()) {
             return false;
         }
 
-        auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-        for (auto &semaphore : semaphores) {
-            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
-            EXPECT_NE(nullptr, semaphoreCmd);
-            if (::testing::Test::HasFailure()) {
-                return false;
+        auto itor = cmdList.begin();
+        if (hasDependencySemaphore) {
+            for (uint32_t i = 0; i < partitionCount; i++) {
+                itor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
+                EXPECT_NE(cmdList.end(), itor);
+                itor++;
             }
+        }
 
-            EXPECT_NE(device->getSyncDispatchTokenAllocation()->getGpuAddress() + sizeof(uint32_t), semaphoreCmd->getSemaphoreGraphicsAddress());
-            if (::testing::Test::HasFailure()) {
-                return false;
-            }
+        // Primary-secondaty path selection
+        void *primaryTileSectionSkipVa = *itor;
+
+        // Primary Tile section
+        auto miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(
+            ptrOffset(primaryTileSectionSkipVa, NEO::EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false)));
+        void *loopBackToAcquireVa = miPredicate;
+
+        if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::disable)) {
+            return false;
+        }
+
+        auto miAtomic = reinterpret_cast<MI_ATOMIC *>(++miPredicate);
+        EXPECT_EQ(MI_ATOMIC::DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, miAtomic->getDwordLength());
+        EXPECT_EQ(1u, miAtomic->getInlineData());
+
+        EXPECT_EQ(0u, miAtomic->getOperand1DataDword0());
+        EXPECT_EQ(0u, miAtomic->getOperand1DataDword1());
+
+        EXPECT_EQ(getLowPart(tokenInitialValue), miAtomic->getOperand2DataDword0());
+        EXPECT_EQ(getHighPart(tokenInitialValue), miAtomic->getOperand2DataDword1());
+
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_CMP_WR, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
+
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        void *jumpToEndSectionFromPrimaryTile = ++miAtomic;
+
+        auto semaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(
+            ptrOffset(jumpToEndSectionFromPrimaryTile, NEO::EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(false)));
+
+        EXPECT_EQ(0u, semaphore->getSemaphoreDataDword());
+        uint64_t syncAllocGpuVa = device->getSyncDispatchTokenAllocation()->getGpuAddress();
+        EXPECT_EQ(syncAllocGpuVa + sizeof(uint32_t), semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphore->getCompareOperation());
+
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(++semaphore);
+        EXPECT_EQ(castToUint64(loopBackToAcquireVa), bbStart->getBatchBufferStartAddress());
+
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        uint64_t workPartitionGpuVa = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocation()->getGpuAddress();
+
+        // Secondary Tile section
+        miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++bbStart);
+        if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::disable)) {
+            return false;
+        }
+
+        // Primary Tile section skip - patching
+        if (!RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(primaryTileSectionSkipVa, castToUint64(miPredicate), workPartitionGpuVa, 0, NEO::CompareOperation::notEqual, false, false)) {
+            return false;
+        }
+
+        semaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(++miPredicate);
+        EXPECT_EQ(queueId, semaphore->getSemaphoreDataDword());
+        EXPECT_EQ(syncAllocGpuVa + sizeof(uint32_t), semaphore->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphore->getCompareOperation());
+
+        // End section
+        miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++semaphore);
+        if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::disable)) {
+            return false;
+        }
+
+        // Jump to end from Primary Tile section - patching
+        if (!RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(jumpToEndSectionFromPrimaryTile, castToUint64(miPredicate), syncAllocGpuVa + sizeof(uint32_t), queueId, NEO::CompareOperation::equal, false, false)) {
+            return false;
         }
 
         return true;
@@ -6166,11 +6248,11 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppending
 
     // first run without dependency
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_TRUE(verifyTokenCheck(false));
+    EXPECT_TRUE(verifyTokenAcquisition(false));
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_TRUE(verifyTokenCheck(true));
+    EXPECT_TRUE(verifyTokenAcquisition(true));
 }
 
 } // namespace ult

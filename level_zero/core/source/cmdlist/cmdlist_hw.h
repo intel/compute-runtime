@@ -358,6 +358,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool isQwordInOrderCounter() const { return GfxFamily::isQwordInOrderCounter; }
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
     bool hasInOrderDependencies() const;
+    void appendFullSynchronizedDispatchInit();
 
     size_t addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
     uint64_t getInOrderIncrementValue() const;
