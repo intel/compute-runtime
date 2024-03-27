@@ -1254,7 +1254,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             return ret;
         }
 
-        constexpr auto oneSecTimeout = 1000000;
+        constexpr auto oneSecTimeout = 1000000000;
         return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
                                sync[0].addr,
                                sync[0].timeline_value, oneSecTimeout);

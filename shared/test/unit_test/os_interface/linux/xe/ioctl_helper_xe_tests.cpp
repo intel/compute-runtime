@@ -1428,7 +1428,7 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
     EXPECT_EQ(1u, drm.syncInputs.size());
     EXPECT_EQ(1u, drm.waitUserFenceInputs.size());
     auto expectedMask = std::numeric_limits<uint64_t>::max();
-    auto expectedTimeout = 1000000ll;
+    auto expectedTimeout = 1000000000ll;
     {
         auto &sync = drm.syncInputs[0];
 
