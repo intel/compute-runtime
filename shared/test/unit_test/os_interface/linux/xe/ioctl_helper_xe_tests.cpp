@@ -394,8 +394,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
 
-    EXPECT_EQ(0ull, xeIoctlHelper->getFlagsForVmBind(true, true, true, true));
-
     uint32_t fabricId = 0, latency = 0, bandwidth = 0;
     EXPECT_FALSE(xeIoctlHelper->getFabricLatency(fabricId, latency, bandwidth));
 }
@@ -413,6 +411,15 @@ TEST(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned) {
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), xeIoctlHelper->getFlagsForVmCreate(true, false, false));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, false, true));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, false, false));
+}
+
+TEST(IoctlHelperXeTest, whenGettingFlagsForVmBindThenPropertValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_DUMPABLE), xeIoctlHelper->getFlagsForVmBind(true, true, true, true));
+    EXPECT_EQ(static_cast<uint64_t>(0), xeIoctlHelper->getFlagsForVmBind(false, true, true, true));
 }
 
 TEST(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) {

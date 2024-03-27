@@ -733,6 +733,9 @@ bool IoctlHelperXe::completionFenceExtensionSupported(const bool isVmBindAvailab
 uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool readOnlyResource) {
     uint64_t ret = 0;
     xeLog(" -> IoctlHelperXe::%s %d %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident, readOnlyResource);
+    if (bindCapture) {
+        ret |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
+    }
     return ret;
 }
 
