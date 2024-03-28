@@ -730,12 +730,13 @@ bool IoctlHelperXe::completionFenceExtensionSupported(const bool isVmBindAvailab
     return isVmBindAvailable;
 }
 
-uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool readOnlyResource) {
+uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource) {
     uint64_t ret = 0;
-    xeLog(" -> IoctlHelperXe::%s %d %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident, readOnlyResource);
+    xeLog(" -> IoctlHelperXe::%s %d %d %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource);
     if (bindCapture) {
         ret |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
     }
+    ret |= getExtraFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource);
     return ret;
 }
 

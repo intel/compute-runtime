@@ -124,6 +124,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool peekEvictable() const { return allocationInfo.flags.evictable; }
     bool isFlushL3Required() const { return allocationInfo.flags.flushL3Required; }
     void setFlushL3Required(bool flushL3Required) { allocationInfo.flags.flushL3Required = flushL3Required; }
+    bool isLockedMemory() const { return allocationInfo.flags.lockedMemory; }
+    void setLockedMemory(bool locked) { allocationInfo.flags.lockedMemory = locked; }
 
     bool isUncacheable() const { return allocationInfo.flags.uncacheable; }
     void setUncacheable(bool uncacheable) { allocationInfo.flags.uncacheable = uncacheable; }
@@ -349,7 +351,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                 uint32_t flushL3Required : 1;
                 uint32_t uncacheable : 1;
                 uint32_t is32BitAllocation : 1;
-                uint32_t reserved : 27;
+                uint32_t lockedMemory : 1;
+                uint32_t reserved : 26;
             } flags;
             uint32_t allFlags = 0u;
         };
@@ -359,6 +362,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
             flags.evictable = true;
             flags.flushL3Required = true;
             flags.is32BitAllocation = false;
+            flags.lockedMemory = false;
         }
     };
 

@@ -58,7 +58,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool getGemTiling(void *setTiling) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
-    uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool readOnlyResource) override;
+    uint64_t getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource) override;
     int queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) override;
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) override;
@@ -134,6 +134,7 @@ class IoctlHelperXe : public IoctlHelper {
     const char *xeGetBindOperationName(int bindOperation);
     const char *xeGetBindFlagsName(int bindFlags);
 
+    uint64_t getExtraFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource);
     const char *xeGetengineClassName(uint32_t engineClass);
     template <typename DataType>
     std::vector<DataType> queryData(uint32_t queryId);

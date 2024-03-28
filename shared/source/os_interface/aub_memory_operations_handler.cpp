@@ -69,6 +69,10 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
     return MemoryOperationsStatus::success;
 }
 
+MemoryOperationsStatus AubMemoryOperationsHandler::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
+    return makeResident(device, gfxAllocations);
+}
+
 MemoryOperationsStatus AubMemoryOperationsHandler::evict(Device *device, GraphicsAllocation &gfxAllocation) {
     auto lock = acquireLock(resourcesLock);
     auto itor = std::find(residentAllocations.begin(), residentAllocations.end(), &gfxAllocation);

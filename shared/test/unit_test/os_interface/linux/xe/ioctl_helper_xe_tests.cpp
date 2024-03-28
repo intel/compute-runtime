@@ -261,7 +261,8 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(0u, xeIoctlHelper->getDirectSubmissionFlag());
 
-    EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false, false));
+    EXPECT_EQ(0u, xeIoctlHelper->getFlagsForVmBind(false, false, false, false, false));
+
     std::vector<QueryItem> queryItems;
     std::vector<DistanceInfo> distanceInfos;
     EXPECT_EQ(0, xeIoctlHelper->queryDistances(queryItems, distanceInfos));
@@ -418,8 +419,8 @@ TEST(IoctlHelperXeTest, whenGettingFlagsForVmBindThenPropertValueIsReturned) {
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
 
-    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_DUMPABLE), xeIoctlHelper->getFlagsForVmBind(true, true, true, true));
-    EXPECT_EQ(static_cast<uint64_t>(0), xeIoctlHelper->getFlagsForVmBind(false, true, true, true));
+    EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_DUMPABLE), xeIoctlHelper->getFlagsForVmBind(true, false, false, false, false));
+    EXPECT_EQ(static_cast<uint64_t>(0), xeIoctlHelper->getFlagsForVmBind(false, false, false, false, false));
 }
 
 TEST(IoctlHelperXeTest, whenGettingIoctlRequestValueThenPropertValueIsReturned) {

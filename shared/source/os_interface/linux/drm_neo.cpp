@@ -1315,7 +1315,8 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             bindMakeResident = bo->isExplicitResidencyRequired();
             bindImmediate = true;
         }
-        flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, readOnlyResource);
+        bool bindLock = bo->isExplicitLockedMemoryRequired();
+        flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource);
     }
 
     auto &bindAddresses = bo->getColourAddresses();

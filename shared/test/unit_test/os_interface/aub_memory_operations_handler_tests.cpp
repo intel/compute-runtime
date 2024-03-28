@@ -44,6 +44,29 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThe
     EXPECT_EQ(2u, memoryOperationsInterface->residentAllocations.size());
 }
 
+TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenCallingLockThenTrueReturnedAndWriteCalled) {
+    MockAubManager aubManager;
+    getMemoryOperationsHandler()->setAubManager(&aubManager);
+    auto memoryOperationsInterface = getMemoryOperationsHandler();
+    auto result = memoryOperationsInterface->lock(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
+    EXPECT_TRUE(aubManager.writeMemory2Called);
+
+    auto itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
+    EXPECT_NE(memoryOperationsInterface->residentAllocations.end(), itor);
+    EXPECT_EQ(1u, memoryOperationsInterface->residentAllocations.size());
+
+    aubManager.writeMemory2Called = false;
+
+    result = memoryOperationsInterface->lock(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
+    EXPECT_TRUE(aubManager.writeMemory2Called);
+
+    itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
+    EXPECT_NE(memoryOperationsInterface->residentAllocations.end(), itor);
+    EXPECT_EQ(2u, memoryOperationsInterface->residentAllocations.size());
+}
+
 TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerAndAllocationOfOneTimeAubWritableAllocationTypeWhenMakeResidentCalledTwoTimesThenWriteMemoryOnce) {
     ASSERT_TRUE(AubHelper::isOneTimeAubWritableAllocationType(AllocationType::buffer));
     allocPtr->setAllocationType(AllocationType::buffer);

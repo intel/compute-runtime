@@ -9,6 +9,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX_XE
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_vm_export_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_perf_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_TYPE}/ioctl_helper_xe_vm_bind_flag_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_tests.h
 )
 if(NEO_ENABLE_XE_EU_DEBUG_SUPPORT)
