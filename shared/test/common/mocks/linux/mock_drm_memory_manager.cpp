@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,7 +69,7 @@ void TestedDrmMemoryManager::injectPinBB(BufferObject *newPinBB, uint32_t rootDe
 DrmGemCloseWorker *TestedDrmMemoryManager::getgemCloseWorker() { return this->gemCloseWorker.get(); }
 void TestedDrmMemoryManager::forceLimitedRangeAllocator(uint64_t range) {
     for (auto &gfxPartition : gfxPartitions) {
-        gfxPartition->init(range, getSizeToReserve(), 0, 1, false, 0u);
+        gfxPartition->init(range, getSizeToReserve(), 0, 1, false, 0u, range + 1);
     }
 }
 void TestedDrmMemoryManager::overrideGfxPartition(GfxPartition *newGfxPartition) { gfxPartitions[0].reset(newGfxPartition); }

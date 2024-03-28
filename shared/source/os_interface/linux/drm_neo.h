@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,7 +92,7 @@ class Drm : public DriverModel {
     int getTimestampFrequency(int &frequency);
     int getOaTimestampFrequency(int &frequency);
 
-    MOCKABLE_VIRTUAL int queryGttSize(uint64_t &gttSizeOutput);
+    MOCKABLE_VIRTUAL int queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange);
     bool isPreemptionSupported() const { return preemptionSupported; }
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
@@ -272,6 +272,7 @@ class Drm : public DriverModel {
     void queryAndSetVmBindPatIndexProgrammingSupport();
     bool queryDeviceIdAndRevision();
     bool queryI915DeviceIdAndRevision();
+    static uint64_t alignUpGttSize(uint64_t inputGttSize);
 
 #pragma pack(1)
     struct PCIConfig {

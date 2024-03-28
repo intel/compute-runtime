@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,7 +122,7 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     uint64_t gttSizeQuery = 0;
     featureTable->flags.ftrSVM = true;
 
-    ret = drm->queryGttSize(gttSizeQuery);
+    ret = drm->queryGttSize(gttSizeQuery, true);
 
     if (ret == 0) {
         featureTable->flags.ftrSVM = (gttSizeQuery > MemoryConstants::max64BitAppAddress);

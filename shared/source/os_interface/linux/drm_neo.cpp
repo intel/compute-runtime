@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -225,13 +225,17 @@ bool Drm::readSysFsAsString(const std::string &relativeFilePath, std::string &re
     return true;
 }
 
-int Drm::queryGttSize(uint64_t &gttSizeOutput) {
+int Drm::queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange) {
     GemContextParam contextParam = {0};
     contextParam.param = ioctlHelper->getDrmParamValue(DrmParam::ContextParamGttSize);
 
     int ret = ioctlHelper->ioctl(DrmIoctl::GemContextGetparam, &contextParam);
     if (ret == 0) {
-        gttSizeOutput = contextParam.value;
+        if (alignUpToFullRange) {
+            gttSizeOutput = Drm::alignUpGttSize(contextParam.value);
+        } else {
+            gttSizeOutput = contextParam.value;
+        }
     }
 
     return ret;
@@ -1540,6 +1544,17 @@ void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, ui
     }
 }
 const HardwareInfo *Drm::getHardwareInfo() const { return rootDeviceEnvironment.getHardwareInfo(); }
+
+uint64_t Drm::alignUpGttSize(uint64_t inputGttSize) {
+
+    constexpr uint64_t gttSize47bit = (1ull << 47);
+    constexpr uint64_t gttSize48bit = (1ull << 48);
+
+    if (inputGttSize > gttSize47bit && inputGttSize < gttSize48bit) {
+        return gttSize48bit;
+    }
+    return inputGttSize;
+}
 
 template std::vector<uint16_t> Drm::query<uint16_t>(uint32_t queryId, uint32_t queryItemFlags);
 template std::vector<uint32_t> Drm::query<uint32_t>(uint32_t queryId, uint32_t queryItemFlags);

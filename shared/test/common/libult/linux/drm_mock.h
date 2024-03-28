@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -175,7 +175,7 @@ class DrmMock : public Drm {
         else
             return Drm::useVMBindImmediate();
     }
-    int queryGttSize(uint64_t &gttSizeOutput) override {
+    int queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange) override {
         gttSizeOutput = storedGTTSize;
         return storedRetValForGetGttSize;
     }
@@ -277,7 +277,7 @@ class DrmMock : public Drm {
     GemVmControl receivedGemVmControl{};
     uint32_t latestCreatedVmId = 0u;
 
-    uint64_t storedGTTSize = 1ull << 47;
+    uint64_t storedGTTSize = defaultHwInfo->capabilityTable.gpuAddressSpace + 1;
     uint64_t storedParamSseu = ULONG_MAX;
 
     Ioctls ioctlCount{};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,11 +172,11 @@ class DrmMockCustom : public Drm {
 
     virtual void execBufferExtensions(void *execbuf) {
     }
-    int queryGttSize(uint64_t &gttSizeOutput) override {
+    int queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange) override {
         if (callBaseQueryGttSize) {
-            return Drm::queryGttSize(gttSizeOutput);
+            return Drm::queryGttSize(gttSizeOutput, alignUpToFullRange);
         }
-        gttSizeOutput = 1;
+        gttSizeOutput = NEO::defaultHwInfo->capabilityTable.gpuAddressSpace + 1;
         return 0u;
     }
 
