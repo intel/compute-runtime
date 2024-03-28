@@ -54,18 +54,21 @@ namespace NEO {
 using AllocationStatus = MemoryManager::AllocationStatus;
 
 int debugMunmap(void *ptr, size_t size) noexcept {
+    errno = 0;
+
     int returnVal = munmap(ptr, size);
 
-    printf("\nmunmap(%p, %zu) = %d", ptr, size, returnVal);
+    printf("\nmunmap(%p, %zu) = %d, errno: %d \n", ptr, size, returnVal, errno);
 
     return returnVal;
 }
 
 void *debugMmap(void *ptr, size_t size, int prot, int flags, int fd, off_t offset) noexcept {
+    errno = 0;
+
     void *returnVal = mmap(ptr, size, prot, flags, fd, offset);
 
-    printf("\nmmap(%p, %zu, %d, %d, %d, %ld) = %p", ptr, size, prot, flags, fd, offset, returnVal);
-
+    printf("\nmmap(%p, %zu, %d, %d, %d, %ld) = %p, errno: %d \n", ptr, size, prot, flags, fd, offset, returnVal, errno);
     return returnVal;
 }
 
