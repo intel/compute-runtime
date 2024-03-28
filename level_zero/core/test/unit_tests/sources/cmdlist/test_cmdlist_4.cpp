@@ -1564,9 +1564,29 @@ HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
     testScratchInline<FamilyType>(false);
 }
 
+HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchTwiceThenCorrectAddressPatchedOnce, IsAtLeastXeHpcCore) {
+    testScratchSameNotPatching<FamilyType>();
+}
+
+HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithBiggerScratchSlot1ThenNewCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchGrowingPatching<FamilyType>();
+}
+
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
     testScratchInline<FamilyType>(false);
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchTwiceThenCorrectAddressPatchedOnce, IsAtLeastXeHpcCore) {
+    testScratchSameNotPatching<FamilyType>();
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithBiggerScratchSlot1ThenNewCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchGrowingPatching<FamilyType>();
 }
 
 HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
@@ -1574,9 +1594,29 @@ HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
     testScratchInline<FamilyType>(false);
 }
 
+HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchTwiceThenCorrectAddressPatchedOnce, IsAtLeastXeHpcCore) {
+    testScratchSameNotPatching<FamilyType>();
+}
+
+HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithBiggerScratchSlot1ThenNewCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchGrowingPatching<FamilyType>();
+}
+
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
     testScratchInline<FamilyType>(false);
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchTwiceThenCorrectAddressPatchedOnce, IsAtLeastXeHpcCore) {
+    testScratchSameNotPatching<FamilyType>();
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithBiggerScratchSlot1ThenNewCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchGrowingPatching<FamilyType>();
 }
 
 } // namespace ult

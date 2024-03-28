@@ -371,8 +371,15 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
     template <typename FamilyType>
     void testScratchInline(bool useImmediate);
 
+    template <typename FamilyType>
+    void testScratchGrowingPatching();
+
+    template <typename FamilyType>
+    void testScratchSameNotPatching();
+
     int32_t fixtureGlobalStatelessMode = 0;
     uint32_t scratchInlineOffset = 8;
+    uint32_t scratchInlinePointerSize = sizeof(uint64_t);
 };
 
 template <int32_t globalStatelessMode, int32_t heaplessStateInitEnabled>

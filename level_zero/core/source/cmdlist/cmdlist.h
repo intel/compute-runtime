@@ -199,6 +199,15 @@ struct CommandList : _ze_command_list_handle_t {
         commandListPerThreadScratchSize[slotId] = size;
     }
 
+    uint32_t getCommandListPatchedPerThreadScratchSize(uint32_t slotId) const {
+        return commandListPatchedPerThreadScratchSize[slotId];
+    }
+
+    void setCommandListPatchedPerThreadScratchSize(uint32_t slotId, uint32_t size) {
+        UNRECOVERABLE_IF(slotId > 1);
+        commandListPatchedPerThreadScratchSize[slotId] = size;
+    }
+
     uint32_t getCommandListSLMEnable() const {
         return commandListSLMEnabled;
     }
@@ -404,6 +413,9 @@ struct CommandList : _ze_command_list_handle_t {
     size_t cmdListCurrentStartOffset = 0;
     size_t maxFillPaternSizeForCopyEngine = 0;
 
+    uint32_t commandListPerThreadScratchSize[2]{};
+    uint32_t commandListPatchedPerThreadScratchSize[2]{};
+
     ze_command_list_flags_t flags = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
     NEO::EngineGroupType engineGroupType = NEO::EngineGroupType::maxEngineGroups;
@@ -411,7 +423,6 @@ struct CommandList : _ze_command_list_handle_t {
     std::optional<uint32_t> ordinal = std::nullopt;
 
     CommandListType cmdListType = CommandListType::typeRegular;
-    uint32_t commandListPerThreadScratchSize[2]{};
     uint32_t partitionCount = 1;
     uint32_t defaultMocsIndex = 0;
 

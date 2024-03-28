@@ -163,10 +163,19 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress) {
+void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint64_t scratchAddress,
+                                                  uint32_t perThreadScratchSpaceSlot0Size,
+                                                  uint32_t perThreadScratchSpaceSlot1Size) {
     using CFE_STATE = typename GfxFamily::CFE_STATE;
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    bool patchNewInlineScratchAddress = false;
+    if (this->heaplessModeEnabled &&
+        (commandList.getCommandListPatchedPerThreadScratchSize(0) < perThreadScratchSpaceSlot0Size ||
+         commandList.getCommandListPatchedPerThreadScratchSize(1) < perThreadScratchSpaceSlot1Size)) {
+        patchNewInlineScratchAddress = true;
+    }
 
     auto &commandsToPatch = commandList.getCommandsToPatch();
     for (auto &commandToPatch : commandsToPatch) {
@@ -229,6 +238,9 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             break;
         }
         case CommandToPatch::ComputeWalkerInlineDataScratch: {
+            if (!patchNewInlineScratchAddress) {
+                continue;
+            }
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
             void *scratchAddressPatch = ptrOffset(commandToPatch.pDestination, commandToPatch.offset);
             std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
@@ -237,6 +249,11 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
         default:
             UNRECOVERABLE_IF(true);
         }
+    }
+
+    if (patchNewInlineScratchAddress) {
+        commandList.setCommandListPatchedPerThreadScratchSize(0, perThreadScratchSpaceSlot0Size);
+        commandList.setCommandListPatchedPerThreadScratchSize(1, perThreadScratchSpaceSlot1Size);
     }
 }
 

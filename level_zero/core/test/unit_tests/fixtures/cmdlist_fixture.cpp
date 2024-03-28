@@ -598,7 +598,7 @@ void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode
     commandQueue->heaplessStateInitEnabled = !!heaplessStateInitEnabled;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
-    mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 0x8;
+    mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = scratchInlinePointerSize;
     mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.offset = scratchInlineOffset;
 }
 

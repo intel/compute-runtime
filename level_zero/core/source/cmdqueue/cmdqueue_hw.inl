@@ -1705,7 +1705,9 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, Comm
     if (this->heaplessModeEnabled && this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
         scratchAddress += ctx.globalStatelessAllocation->getGpuAddress();
     }
-    patchCommands(commandList, scratchAddress);
+    patchCommands(commandList, scratchAddress,
+                  ctx.scratchSpaceController->getPerThreadScratchSpaceSizeSlot0(),
+                  ctx.scratchSpaceController->getPerThreadScratchSizeSlot1());
 }
 
 } // namespace L0
