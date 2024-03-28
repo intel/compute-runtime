@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -516,6 +516,7 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
                                   "Card Bus remove after resizing VF bar failed\n");
             return result;
         }
+        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly.
 
         result = pFsAccess->write(rootPortPath + '/' + "rescan", "1");
         if (ZE_RESULT_SUCCESS != result) {
@@ -523,6 +524,7 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
                                   "Rescanning root port failed after resizing VF bar failed\n");
             return result;
         }
+        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
     }
     return result;
 }
