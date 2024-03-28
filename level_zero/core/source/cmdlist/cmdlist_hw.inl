@@ -2267,9 +2267,9 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
         return bufferRowPitch;
     case NEO::ImageType::image2D:
     case NEO::ImageType::image2DArray:
-        return bufferRowPitch * region->height;
+        return static_cast<uint64_t>(bufferRowPitch) * region->height;
     case NEO::ImageType::image3D:
-        return bufferSlicePitch * region->depth;
+        return static_cast<uint64_t>(bufferSlicePitch) * region->depth;
     }
 }
 
