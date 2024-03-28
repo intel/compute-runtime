@@ -121,8 +121,8 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     struct ClientConnectionXe : public ClientConnection {
         drm_xe_eudebug_event_client client = {};
-        size_t getElfSize(uint64_t elfHandle) override { return 0; };
-        char *getElfData(uint64_t elfHandle) override { return nullptr; };
+        size_t getElfSize(uint64_t elfHandle) override { return metaDataMap[elfHandle].metadata.len; };
+        char *getElfData(uint64_t elfHandle) override { return metaDataMap[elfHandle].data.get(); };
 
         std::unordered_map<ExecQueueHandle, ExecQueueParams> execQueues;
         std::unordered_map<uint64_t, uint64_t> lrcHandleToVmHandle;

@@ -2013,14 +2013,35 @@ TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenAttentionEventReceivedThe
 TEST_F(DebugApiLinuxTestXe, GivenNoElfDataImplementationThenGetElfDataReturnsNullptr) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
-    uint64_t elfHandle = 0;
     auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    auto clientConnection = sessionMock->getClientConnection(MockDebugSessionLinuxXe::mockClientHandle);
+    auto clientConnection = sessionMock->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle];
+    drm_xe_eudebug_event_metadata metadata{};
+    metadata.base.type = DRM_XE_EUDEBUG_EVENT_METADATA;
+    metadata.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    metadata.base.len = sizeof(drm_xe_eudebug_event_metadata);
+    metadata.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    metadata.metadata_handle = 10;
+    metadata.type = DRM_XE_DEBUG_METADATA_PROGRAM_MODULE;
+    metadata.len = 1000;
+    clientConnection->metaDataMap[10].metadata = metadata;
+    clientConnection->metaDataMap[10].metadata.len = 1000;
+    auto ptr = std::make_unique<char[]>(metadata.len);
+    clientConnection->metaDataMap[10].data = std::move(ptr);
+
+    metadata.metadata_handle = 11;
+    metadata.type = DRM_XE_DEBUG_METADATA_ELF_BINARY;
+    metadata.len = 2000;
+    clientConnection->metaDataMap[11].metadata = metadata;
+    clientConnection->metaDataMap[11].metadata.len = 2000;
+
     ASSERT_NE(nullptr, clientConnection);
-    ASSERT_EQ(nullptr, clientConnection->getElfData(elfHandle));
-    ASSERT_EQ(0u, clientConnection->getElfSize(elfHandle));
+    ASSERT_EQ(reinterpret_cast<char *>(clientConnection->metaDataMap[10].data.get()), sessionMock->getClientConnection(MockDebugSessionLinuxXe::mockClientHandle)->getElfData(10));
+    ASSERT_EQ(clientConnection->metaDataMap[10].metadata.len, sessionMock->getClientConnection(MockDebugSessionLinuxXe::mockClientHandle)->getElfSize(10));
+
+    ASSERT_EQ(reinterpret_cast<char *>(clientConnection->metaDataMap[11].data.get()), sessionMock->getClientConnection(MockDebugSessionLinuxXe::mockClientHandle)->getElfData(11));
+    ASSERT_EQ(clientConnection->metaDataMap[11].metadata.len, sessionMock->getClientConnection(MockDebugSessionLinuxXe::mockClientHandle)->getElfSize(11));
 }
 
 } // namespace ult
