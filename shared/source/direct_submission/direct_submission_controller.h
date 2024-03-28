@@ -56,6 +56,14 @@ class DirectSubmissionController {
             isStopped = other.isStopped.load();
             taskCount = other.taskCount.load();
         }
+        DirectSubmissionState &operator=(const DirectSubmissionState &other) {
+            if (this == &other) {
+                return *this;
+            }
+            this->isStopped = other.isStopped.load();
+            this->taskCount = other.taskCount.load();
+            return *this;
+        }
         DirectSubmissionState() = default;
     };
 
