@@ -190,7 +190,7 @@ uint64_t GfxPartition::getHeapMinimalAddress(HeapIndex heapIndex) {
     }
 }
 
-bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool, uint64_t systemMemorySize) {
+bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useExternalFrontWindowPool, uint64_t systemMemorySize, uint64_t gfxTop) {
 
     /*
      * I. 64-bit builds:
@@ -238,7 +238,6 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
      *  0x0  0x100000000                                       gpuAddressSpace
      */
 
-    uint64_t gfxTop = gpuAddressSpace + 1;
     uint64_t gfxBase = 0x0ull;
     const uint64_t gfxHeap32Size = 4 * MemoryConstants::gigaByte;
 
