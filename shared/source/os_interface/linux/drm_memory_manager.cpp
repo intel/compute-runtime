@@ -99,7 +99,9 @@ void DrmMemoryManager::initialize(GemCloseWorkerMode mode) {
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
-        if (!getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh, DrmMemoryManager::getSystemSharedMemory(rootDeviceIndex))) {
+        uint64_t gfxTop{};
+        getDrm(rootDeviceIndex).queryGttSize(gfxTop, false);
+        if (!getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigners[rootDeviceIndex]->apiAllowExternalHeapForSshAndDsh, DrmMemoryManager::getSystemSharedMemory(rootDeviceIndex), gfxTop)) {
             initialized = false;
             return;
         }
@@ -1248,7 +1250,7 @@ uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
 
     uint64_t gpuMemorySize = 0u;
 
-    [[maybe_unused]] auto ret = getDrm(rootDeviceIndex).queryGttSize(gpuMemorySize);
+    [[maybe_unused]] auto ret = getDrm(rootDeviceIndex).queryGttSize(gpuMemorySize, false);
     DEBUG_BREAK_IF(ret != 0);
 
     return std::min(hostMemorySize, gpuMemorySize);
