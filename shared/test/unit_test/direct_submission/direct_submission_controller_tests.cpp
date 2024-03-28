@@ -97,8 +97,10 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeout
     controller.registerDirectSubmission(&csr);
 
     while (controller.directSubmissions[&csr].taskCount != 9u) {
+        std::this_thread::yield();
     }
     while (!controller.directSubmissions[&csr].isStopped) {
+        std::this_thread::yield();
     }
     {
         std::lock_guard<std::mutex> lock(controller.directSubmissionsMutex);
@@ -118,6 +120,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithStarted
     controller.startControlling();
 
     while (!controller.sleepCalled) {
+        std::this_thread::yield();
     }
     controller.keepControlling.store(false);
     controller.directSubmissionControllingThread->join();
@@ -341,6 +344,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithNotStar
     EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
 
     while (!controller.sleepCalled) {
+        std::this_thread::yield();
     }
     controller.keepControlling.store(false);
     controller.directSubmissionControllingThread->join();
