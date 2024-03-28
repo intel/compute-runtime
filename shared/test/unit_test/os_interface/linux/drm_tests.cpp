@@ -308,12 +308,45 @@ TEST(DrmTest, GivenDrmWhenAskedForGttSizeThenReturnCorrectValue) {
 
     drm->storedRetValForGetGttSize = 0;
     drm->storedGTTSize = 1ull << 31;
-    EXPECT_EQ(0, drm->Drm::queryGttSize(queryGttSize));
+    EXPECT_EQ(0, drm->Drm::queryGttSize(queryGttSize, true));
+    EXPECT_EQ(drm->storedGTTSize, queryGttSize);
+
+    queryGttSize = 0;
+    drm->storedRetValForGetGttSize = 0;
+    drm->storedGTTSize = 1ull << 47;
+    EXPECT_EQ(0, drm->Drm::queryGttSize(queryGttSize, true));
+    EXPECT_EQ(drm->storedGTTSize, queryGttSize);
+    queryGttSize = 0;
+    drm->storedRetValForGetGttSize = 0;
+    drm->storedGTTSize = 1ull << 47;
+    EXPECT_EQ(0, drm->Drm::queryGttSize(queryGttSize, false));
+    EXPECT_EQ(drm->storedGTTSize, queryGttSize);
+
+    queryGttSize = 0;
+    drm->storedRetValForGetGttSize = 0;
+    drm->storedGTTSize = (1ull << 48) - 1;
+    EXPECT_EQ(0, drm->Drm::queryGttSize(queryGttSize, true));
+    EXPECT_EQ(1ull << 48, queryGttSize);
+    queryGttSize = 0;
+    drm->storedRetValForGetGttSize = 0;
+    drm->storedGTTSize = (1ull << 48) - 1;
+    EXPECT_EQ(0, drm->Drm::queryGttSize(queryGttSize, false));
+    EXPECT_EQ(drm->storedGTTSize, queryGttSize);
+
+    queryGttSize = 0;
+    drm->storedRetValForGetGttSize = 0;
+    drm->storedGTTSize = (1ull << 47) + 1;
+    EXPECT_EQ(0, drm->Drm::queryGttSize(queryGttSize, true));
+    EXPECT_EQ(1ull << 48, queryGttSize);
+    queryGttSize = 0;
+    drm->storedRetValForGetGttSize = 0;
+    drm->storedGTTSize = (1ull << 47) + 1;
+    EXPECT_EQ(0, drm->Drm::queryGttSize(queryGttSize, false));
     EXPECT_EQ(drm->storedGTTSize, queryGttSize);
 
     queryGttSize = 0;
     drm->storedRetValForGetGttSize = -1;
-    EXPECT_NE(0, drm->Drm::queryGttSize(queryGttSize));
+    EXPECT_NE(0, drm->Drm::queryGttSize(queryGttSize, true));
     EXPECT_EQ(0u, queryGttSize);
 }
 
