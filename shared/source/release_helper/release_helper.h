@@ -56,6 +56,8 @@ class ReleaseHelper {
     virtual bool isRayTracingSupported() const = 0;
     virtual uint32_t getL3BankCount() const = 0;
     virtual uint64_t getL3CacheBankSizeInKb() const = 0;
+    virtual uint32_t getAdditionalFp16Caps() const = 0;
+    virtual uint32_t getAdditionalExtraCaps() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -94,6 +96,8 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isRayTracingSupported() const override;
     uint32_t getL3BankCount() const override;
     uint64_t getL3CacheBankSizeInKb() const override;
+    uint32_t getAdditionalFp16Caps() const override;
+    uint32_t getAdditionalExtraCaps() const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

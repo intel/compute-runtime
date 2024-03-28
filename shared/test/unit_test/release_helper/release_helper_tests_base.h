@@ -29,6 +29,8 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenGettingSupportedNumGrfsThenValues128And256Returned();
     void whenGettingThreadsPerEuConfigsThen4And8AreReturned();
     void whenGettingTotalMemBankSizeThenReturn32GB();
+    void whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
+    void whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
 
     virtual std::vector<uint32_t> getRevisions() = 0;
 

@@ -26,7 +26,6 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
     std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
-    void getKernelCapabilitiesExtra(uint32_t &extraCaps) const override;
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;

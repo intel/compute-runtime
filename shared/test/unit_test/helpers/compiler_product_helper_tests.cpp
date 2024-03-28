@@ -5,7 +5,9 @@
  *
  */
 
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -405,4 +407,59 @@ HWTEST_F(CompilerProductHelperFixture, GivenRequestForLimitedListOfSupportedOpen
 
     EXPECT_EQ(1, versions[2].major);
     EXPECT_EQ(2, versions[2].minor);
+}
+
+HWTEST_F(CompilerProductHelperFixture, GivenRequestForKernelFp16CapabilitiesThenReturnMinMaxAndLoadStoreCapabilitiesWithCapsFromReleaseHelperIfPresent) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto *releaseHelper = getReleaseHelper();
+
+    uint32_t fp16Caps = 0u;
+    compilerProductHelper.getKernelFp16AtomicCapabilities(releaseHelper, fp16Caps);
+    EXPECT_TRUE(isValueSet(fp16Caps, FpAtomicExtFlags::minMaxAtomicCaps));
+    EXPECT_TRUE(isValueSet(fp16Caps, FpAtomicExtFlags::loadStoreAtomicCaps));
+
+    if (releaseHelper) {
+        uint32_t extraFp16Caps = releaseHelper->getAdditionalFp16Caps();
+        if (0u != extraFp16Caps) {
+            EXPECT_TRUE(isValueSet(fp16Caps, extraFp16Caps));
+        }
+    }
+}
+
+HWTEST_F(CompilerProductHelperFixture, GivenRequestForKernelFp32CapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    uint32_t fp32Caps = 0u;
+    compilerProductHelper.getKernelFp32AtomicCapabilities(fp32Caps);
+    EXPECT_TRUE(isValueSet(fp32Caps, FpAtomicExtFlags::addAtomicCaps));
+    EXPECT_TRUE(isValueSet(fp32Caps, FpAtomicExtFlags::minMaxAtomicCaps));
+    EXPECT_TRUE(isValueSet(fp32Caps, FpAtomicExtFlags::loadStoreAtomicCaps));
+}
+
+HWTEST_F(CompilerProductHelperFixture, GivenRequestForKernelFp64CapabilitiesThenReturnAddMinMaxAndLoadStoreCapabilities) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    uint32_t fp64Caps = 0u;
+    compilerProductHelper.getKernelFp64AtomicCapabilities(fp64Caps);
+    EXPECT_TRUE(isValueSet(fp64Caps, FpAtomicExtFlags::addAtomicCaps));
+    EXPECT_TRUE(isValueSet(fp64Caps, FpAtomicExtFlags::minMaxAtomicCaps));
+    EXPECT_TRUE(isValueSet(fp64Caps, FpAtomicExtFlags::loadStoreAtomicCaps));
+}
+
+HWTEST_F(CompilerProductHelperFixture, GivenRequestForExtraKernelCapabilitiesThenReturnCapabilitiesFromReleaseHelperOrNoneIfReleaseHelperIsNotPresent) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto *releaseHelper = getReleaseHelper();
+
+    uint32_t extraCaps = 0u;
+    compilerProductHelper.getKernelCapabilitiesExtra(releaseHelper, extraCaps);
+    if (releaseHelper) {
+        uint32_t extraCapsFromRH = releaseHelper->getAdditionalExtraCaps();
+        if (0u != extraCapsFromRH) {
+            EXPECT_TRUE(isValueSet(extraCaps, extraCapsFromRH));
+        } else {
+            EXPECT_EQ(0u, extraCaps);
+        }
+    } else {
+        EXPECT_EQ(0u, extraCaps);
+    }
 }

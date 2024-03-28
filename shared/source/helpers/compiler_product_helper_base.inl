@@ -12,6 +12,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/hw_info_helper.h"
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
@@ -278,5 +279,30 @@ bool CompilerProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const Re
 
 template <PRODUCT_FAMILY gfxProduct>
 void CompilerProductHelperHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo) const {
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void CompilerProductHelperHw<gfxProduct>::getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const {
+    fp16Caps = (0u | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps);
+    if (releaseHelper) {
+        fp16Caps |= releaseHelper->getAdditionalFp16Caps();
+    }
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void CompilerProductHelperHw<gfxProduct>::getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const {
+    fp32Caps = (0u | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void CompilerProductHelperHw<gfxProduct>::getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const {
+    fp64Caps = (0u | FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void CompilerProductHelperHw<gfxProduct>::getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const {
+    if (releaseHelper) {
+        extraCaps |= releaseHelper->getAdditionalExtraCaps();
+    }
 }
 } // namespace NEO

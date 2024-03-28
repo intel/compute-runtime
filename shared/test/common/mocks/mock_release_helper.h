@@ -39,5 +39,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isRayTracingSupported, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getL3BankCount, uint32_t, 0u, ());
     ADDMETHOD_CONST_NOBASE(getL3CacheBankSizeInKb, uint64_t, {}, ());
+    ADDMETHOD_CONST_NOBASE(getAdditionalFp16Caps, uint32_t, {}, ());
+    ADDMETHOD_CONST_NOBASE(getAdditionalExtraCaps, uint32_t, {}, ());
 };
 } // namespace NEO

@@ -65,3 +65,11 @@ TEST_F(ReleaseHelper1255Tests, whenGettingThreadsPerEuConfigsThen4And8AreReturne
 TEST_F(ReleaseHelper1255Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
+
+TEST_F(ReleaseHelper1255Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
+    whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
+}
+
+TEST_F(ReleaseHelper1255Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
+    whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
+}

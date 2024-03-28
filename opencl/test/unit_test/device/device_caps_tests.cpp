@@ -27,6 +27,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
+#include "opencl/test/unit_test/device/device_caps_test_utils.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -75,6 +76,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         }
 
         auto &hwInfo = clDevice.getHardwareInfo();
+        auto releaseHelper = clDevice.getDevice().getReleaseHelper();
         auto openclCFeatureIterator = clDevice.getDeviceInfo().openclCFeatures.begin();
 
         EXPECT_STREQ("__opencl_c_int64", openclCFeatureIterator->name);
@@ -123,7 +125,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
             EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit_packed", (++openclCFeatureIterator)->name);
         }
-
+        verifyAnyRemainingOpenclCFeatures(releaseHelper, openclCFeatureIterator);
         EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
     }
 

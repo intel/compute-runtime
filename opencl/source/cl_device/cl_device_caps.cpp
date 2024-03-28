@@ -162,8 +162,8 @@ void ClDevice::initializeCaps() {
         if (ocl21FeaturesEnabled && hwInfo.capabilityTable.supportsFloatAtomics) {
             uint32_t fp16Caps = 0u;
             uint32_t fp32Caps = 0u;
-            productHelper.getKernelFp16AtomicCapabilities(hwInfo, fp16Caps);
-            productHelper.getKernelFp32AtomicCapabilities(hwInfo, fp32Caps);
+            compilerProductHelper.getKernelFp16AtomicCapabilities(releaseHelper, fp16Caps);
+            compilerProductHelper.getKernelFp32AtomicCapabilities(fp32Caps);
             deviceInfo.halfFpAtomicCapabilities = fp16Caps;
             deviceInfo.singleFpAtomicCapabilities = fp32Caps;
         }
@@ -429,7 +429,7 @@ void ClDevice::initializeCaps() {
     }
 
     initializeOsSpecificCaps();
-    getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures, getDevice().getCompilerProductHelper());
+    getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures, getDevice().getCompilerProductHelper(), releaseHelper);
 }
 
 void ClDevice::initializeExtensionsWithVersion() {

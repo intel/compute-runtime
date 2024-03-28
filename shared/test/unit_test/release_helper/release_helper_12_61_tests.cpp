@@ -42,3 +42,11 @@ TEST_F(ReleaseHelper1261Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
 TEST_F(ReleaseHelper1261Tests, whenGettingTotalMemBankSizeThenReturn32GB) {
     whenGettingTotalMemBankSizeThenReturn32GB();
 }
+
+TEST_F(ReleaseHelper1261Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities) {
+    whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities();
+}
+
+TEST_F(ReleaseHelper1261Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
+    whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
+}

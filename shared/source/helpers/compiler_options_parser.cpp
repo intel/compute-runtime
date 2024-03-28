@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::st
     }
     OpenClCFeaturesContainer openclCFeatures;
     if (requiresOpenClCFeatures(options)) {
-        getOpenclCFeaturesList(hwInfo, openclCFeatures, *compilerProductHelper.get());
+        getOpenclCFeaturesList(hwInfo, openclCFeatures, *compilerProductHelper.get(), releaseHelper.get());
     }
 
     auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);

@@ -78,6 +78,10 @@ class CompilerProductHelper {
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
     virtual bool isHeaplessModeEnabled() const = 0;
     virtual bool isHeaplessStateInitEnabled() const = 0;
+    virtual void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const = 0;
+    virtual void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const = 0;
+    virtual void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const = 0;
+    virtual void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const = 0;
 
     virtual ~CompilerProductHelper() = default;
     uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const;
@@ -121,6 +125,10 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
     bool isHeaplessModeEnabled() const override;
     bool isHeaplessStateInitEnabled() const override;
+    void getKernelFp16AtomicCapabilities(const ReleaseHelper *releaseHelper, uint32_t &fp16Caps) const override;
+    void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const override;
+    void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const override;
+    void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const override;
 
     ~CompilerProductHelperHw() override = default;
 

@@ -23,6 +23,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/compiler_interface/create_main.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions.h
+    ${NEO_SHARED_DIRECTORY}/compiler_interface${BRANCH_DIR_SUFFIX}oclc_extensions_extra.cpp
+    ${NEO_SHARED_DIRECTORY}/compiler_interface/oclc_extensions_extra.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/igc_platform_helper.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/igc_platform_helper.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar.h

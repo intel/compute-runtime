@@ -142,4 +142,14 @@ uint64_t ReleaseHelperHw<releaseType>::getL3CacheBankSizeInKb() const {
     return 0;
 }
 
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::getAdditionalFp16Caps() const {
+    return 0u;
+}
+
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::getAdditionalExtraCaps() const {
+    return 0u;
+}
+
 } // namespace NEO

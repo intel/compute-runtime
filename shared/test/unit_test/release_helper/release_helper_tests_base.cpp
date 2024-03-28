@@ -106,3 +106,23 @@ void ReleaseHelperTestsBase::whenGettingTotalMemBankSizeThenReturn32GB() {
         EXPECT_EQ(32u * MemoryConstants::gigaByte, releaseHelper->getTotalMemBankSize());
     }
 }
+
+void ReleaseHelperTestsBase::whenGettingAdditionalFp16AtomicCapabilitiesThenReturnNoCapabilities() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        EXPECT_EQ(0u, releaseHelper->getAdditionalFp16Caps());
+    }
+}
+
+void ReleaseHelperTestsBase::whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        EXPECT_EQ(0u, releaseHelper->getAdditionalExtraCaps());
+    }
+}

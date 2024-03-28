@@ -27,11 +27,6 @@ class ProductHelperHw : public ProductHelper {
     uint64_t getSingleDeviceSharedMemCapabilities() const override;
     uint64_t getCrossDeviceSharedMemCapabilities() const override;
     uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override;
-    void getKernelFp16AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp16) const override;
-    void getKernelFp32AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp32) const override;
-    void getKernelFp64AtomicCapabilities(const HardwareInfo &hwInfo, uint32_t &fp64) const override;
-    void getKernelCapabilitiesExtra(uint32_t &extraCaps) const override;
-    void getKernelExtendedProperties(const HardwareInfo &hwInfo, uint32_t &fp16, uint32_t &fp32, uint32_t &fp64) const override;
     std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() const override;
     uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const override;
     uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const override;

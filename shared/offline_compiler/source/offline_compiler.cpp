@@ -177,7 +177,7 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCFeatures(ConstStringRef 
     }
 
     OpenClCFeaturesContainer availableFeatures;
-    NEO::getOpenclCFeaturesList(compiler->getHardwareInfo(), availableFeatures, *compiler->compilerProductHelper);
+    NEO::getOpenclCFeaturesList(compiler->getHardwareInfo(), availableFeatures, *compiler->compilerProductHelper, compiler->releaseHelper.get());
 
     std::vector<NameVersionPair> allSupportedFeatures;
     for (auto &feature : availableFeatures) {
