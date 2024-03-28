@@ -15,6 +15,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -36,7 +37,6 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
 #include <array>

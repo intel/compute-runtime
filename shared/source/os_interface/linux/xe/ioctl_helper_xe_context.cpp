@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
-#include "drm/xe_drm.h"
+#include "xe_drm.h"
 
 namespace NEO {
 void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut) {

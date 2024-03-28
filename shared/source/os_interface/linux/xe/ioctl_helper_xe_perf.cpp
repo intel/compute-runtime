@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
-#include "drm/xe_drm.h"
+#include "xe_drm.h"
 
 namespace NEO {
 bool IoctlHelperXe::perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) {

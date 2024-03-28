@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,10 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
-
-#include "drm/i915_drm.h"
 
 #include <optional>
 

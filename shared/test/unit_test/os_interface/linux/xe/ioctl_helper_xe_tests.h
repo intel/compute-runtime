@@ -22,7 +22,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "drm/xe_drm.h"
+#include "xe_drm.h"
 
 using namespace NEO;
 

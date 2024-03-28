@@ -12,7 +12,7 @@
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
-#include "drm/xe_drm.h"
+#include "xe_drm.h"
 
 namespace L0 {
 namespace Sysman {

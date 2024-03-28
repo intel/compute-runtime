@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/os_interface/linux/i915_upstream.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 #include <memory>
 #include <vector>

@@ -30,7 +30,7 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_time.h"
 
-#include "drm/xe_drm.h"
+#include "xe_drm.h"
 
 #include <algorithm>
 #include <iostream>

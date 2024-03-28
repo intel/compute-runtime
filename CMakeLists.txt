@@ -545,10 +545,8 @@ if(UNIX)
   include_directories(BEFORE ${THIRD_PARTY_DIR})
 
 endif()
-if(NOT DEFINED I915_HEADERS_DIR OR I915_HEADERS_DIR STREQUAL "")
-  get_filename_component(I915_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}uapi" ABSOLUTE)
-endif()
-message(STATUS "i915 includes dir: ${I915_HEADERS_DIR}")
+
+include(cmake/find_drm.cmake)
 
 # Enable/Disable BuiltIns compilation during build
 set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
@@ -861,7 +859,7 @@ include_directories(${NEO_SHARED_DIRECTORY}/gen_common${BRANCH_DIR_SUFFIX})
 if(WIN32)
   include_directories(${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory${BRANCH_DIR_SUFFIX})
 else()
-  include_directories(${I915_HEADERS_DIR}
+  include_directories(${NEO_LINUX_KMD_HEADERS_DIR}
                       ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory
   )
   if("${BRANCH_TYPE}" STREQUAL "")

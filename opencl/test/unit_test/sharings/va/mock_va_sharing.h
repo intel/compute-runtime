@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,8 @@
 
 #include "opencl/source/sharings/va/va_sharing.h"
 
-#include <drm/drm_fourcc.h>
+#include "drm_fourcc.h"
+
 #include <va/va_drmcommon.h>
 
 namespace NEO {

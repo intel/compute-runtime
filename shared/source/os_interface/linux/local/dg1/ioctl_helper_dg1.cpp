@@ -11,7 +11,7 @@
 
 namespace NEO {
 namespace Dg1I915 {
-#include "third_party/uapi/dg1/drm/i915_drm.h"
+#include "third_party/uapi/dg1/i915_drm.h"
 }
 
 using namespace Dg1I915;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -35,7 +36,6 @@
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

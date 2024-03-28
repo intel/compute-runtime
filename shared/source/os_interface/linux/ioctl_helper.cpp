@@ -15,7 +15,7 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
-#include "drm/drm.h"
+#include "drm.h"
 
 #include <fcntl.h>
 #include <sstream>

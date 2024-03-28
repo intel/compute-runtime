@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
@@ -14,8 +15,6 @@
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp_prelim.h"
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
-
-#include "drm/i915_drm.h"
 
 using namespace NEO;
 

@@ -19,7 +19,7 @@ namespace PROD_DG1 {
 #undef __I915_EXEC_UNKNOWN_FLAGS
 #undef __I915_PMU_OTHER
 #undef _I915_DRM_H_
-#include "third_party/uapi/dg1/drm/i915_drm.h"
+#include "third_party/uapi/dg1/i915_drm.h"
 } // namespace PROD_DG1
 
 using namespace NEO;

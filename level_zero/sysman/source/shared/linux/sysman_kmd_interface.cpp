@@ -12,11 +12,10 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
-
-#include "drm/i915_drm.h"
 namespace L0 {
 namespace Sysman {
 

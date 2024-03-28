@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
-#include "drm/xe_drm.h"
+#include "xe_drm.h"
 
 #define STRINGIFY_ME(X) return #X
 #define RETURN_ME(X) return X
