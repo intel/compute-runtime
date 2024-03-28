@@ -269,7 +269,6 @@ class Drm : public DriverModel {
     void queryAndSetVmBindPatIndexProgrammingSupport();
     bool queryDeviceIdAndRevision();
     bool queryI915DeviceIdAndRevision();
-    static uint64_t alignUpGttSize(uint64_t inputGttSize);
 
 #pragma pack(1)
     struct PCIConfig {
