@@ -635,6 +635,12 @@ struct MockGlobalOpsLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
     void setMockInitDeviceError(ze_result_t result) {
         mockInitDeviceError = result;
     }
+    ze_result_t reInitSysmanDeviceResources() override {
+        if (mockInitDeviceError != ZE_RESULT_SUCCESS) {
+            return mockInitDeviceError;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
 };
 
 constexpr int mockFdGlobalOperations = 33;
