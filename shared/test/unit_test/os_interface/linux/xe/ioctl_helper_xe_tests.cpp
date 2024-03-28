@@ -405,12 +405,12 @@ TEST(IoctlHelperXeTest, whenGettingFlagsForVmCreateThenPropertValueIsReturned) {
 
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE), xeIoctlHelper->getFlagsForVmCreate(true, true, true));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE), xeIoctlHelper->getFlagsForVmCreate(true, true, false));
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, true, true));
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, true, false));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE), xeIoctlHelper->getFlagsForVmCreate(false, true, true));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE), xeIoctlHelper->getFlagsForVmCreate(false, true, false));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), xeIoctlHelper->getFlagsForVmCreate(true, false, true));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), xeIoctlHelper->getFlagsForVmCreate(true, false, false));
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, false, true));
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE), xeIoctlHelper->getFlagsForVmCreate(false, false, false));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), xeIoctlHelper->getFlagsForVmCreate(false, false, true));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_LR_MODE), xeIoctlHelper->getFlagsForVmCreate(false, false, false));
 }
 
 TEST(IoctlHelperXeTest, whenGettingFlagsForVmBindThenPropertValueIsReturned) {
