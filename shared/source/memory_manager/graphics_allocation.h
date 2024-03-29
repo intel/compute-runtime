@@ -37,6 +37,8 @@ class MemoryManager;
 class CommandStreamReceiver;
 class GraphicsAllocation;
 
+struct AllocationProperties;
+
 struct AubInfo {
     uint32_t aubWritable = std::numeric_limits<uint32_t>::max();
     uint32_t tbxWritable = std::numeric_limits<uint32_t>::max();
@@ -316,10 +318,17 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     SurfaceStateInHeapInfo getBindlessInfo() {
         return bindlessInfo;
     }
+    bool canBeReadOnly() {
+        return !cantBeReadOnly;
+    }
+    void setAsCantBeReadOnly(bool cantBeReadOnly) {
+        this->cantBeReadOnly = cantBeReadOnly;
+    }
     MOCKABLE_VIRTUAL void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId);
     void setShareableHostMemory(bool shareableHostMemory) { this->shareableHostMemory = shareableHostMemory; }
     bool isShareableHostMemory() const { return shareableHostMemory; }
     MOCKABLE_VIRTUAL bool hasAllocationReadOnlyType();
+    MOCKABLE_VIRTUAL void checkAllocationTypeReadOnlyRestrictions(const AllocationProperties &properties);
 
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
@@ -396,5 +405,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     ResidencyData residency;
     std::atomic<uint32_t> registeredContextsNum{0};
     bool shareableHostMemory = false;
+    bool cantBeReadOnly = false;
 };
 } // namespace NEO

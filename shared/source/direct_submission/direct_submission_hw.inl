@@ -365,11 +365,11 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
 
         allocations.push_back(deferredTasksListAllocation);
 
-        const AllocationProperties relaxedOrderingSchedulerAllocationProperties(rootDeviceIndex,
-                                                                                true, MemoryConstants::pageSize64k,
-                                                                                AllocationType::commandBuffer,
-                                                                                isMultiOsContextCapable, false, osContext.getDeviceBitfield());
-
+        AllocationProperties relaxedOrderingSchedulerAllocationProperties(rootDeviceIndex,
+                                                                          true, MemoryConstants::pageSize64k,
+                                                                          AllocationType::commandBuffer,
+                                                                          isMultiOsContextCapable, false, osContext.getDeviceBitfield());
+        relaxedOrderingSchedulerAllocationProperties.flags.cantBeReadOnly = true;
         relaxedOrderingSchedulerAllocation = memoryManager->allocateGraphicsMemoryWithProperties(relaxedOrderingSchedulerAllocationProperties);
         UNRECOVERABLE_IF(relaxedOrderingSchedulerAllocation == nullptr);
 

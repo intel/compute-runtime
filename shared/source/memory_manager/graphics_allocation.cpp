@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/logger.h"
@@ -140,9 +141,11 @@ void GraphicsAllocation::updateCompletionDataForAllocationAndFragments(uint64_t 
 
 bool GraphicsAllocation::hasAllocationReadOnlyType() {
     if (allocationType == AllocationType::kernelIsa ||
-        allocationType == AllocationType::kernelIsaInternal) {
+        allocationType == AllocationType::kernelIsaInternal ||
+        allocationType == AllocationType::commandBuffer) {
         return true;
     }
+
     if (debugManager.flags.ReadOnlyAllocationsTypeMask.get() != 0) {
         UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
         auto maskVal = debugManager.flags.ReadOnlyAllocationsTypeMask.get();
@@ -151,6 +154,15 @@ bool GraphicsAllocation::hasAllocationReadOnlyType() {
         }
     }
     return false;
+}
+
+void GraphicsAllocation::checkAllocationTypeReadOnlyRestrictions(const AllocationProperties &properties) {
+    if (getAllocationType() == AllocationType::commandBuffer &&
+        (properties.flags.cantBeReadOnly | properties.flags.multiOsContextCapable)) {
+        setAsCantBeReadOnly(true);
+        return;
+    }
+    setAsCantBeReadOnly(!hasAllocationReadOnlyType());
 }
 
 constexpr TaskCountType GraphicsAllocation::objectNotUsed;

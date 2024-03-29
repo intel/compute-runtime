@@ -43,6 +43,7 @@
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include <algorithm>
+#include <iostream>
 
 namespace NEO {
 uint32_t MemoryManager::maxOsContextCount = 0u;
@@ -641,12 +642,13 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     if (!allocation) {
         return nullptr;
     }
+    allocation->checkAllocationTypeReadOnlyRestrictions(properties);
 
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     if (productHelper.supportReadOnlyAllocations() &&
-        allocation->hasAllocationReadOnlyType() &&
-        !productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *allocation)) {
+        !productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *allocation) &&
+        allocation->canBeReadOnly()) {
         allocation->setAsReadOnly();
     }
 
