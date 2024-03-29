@@ -1757,6 +1757,37 @@ kernels:
     EXPECT_EQ(1u, kernelDescriptor->kernelAttributes.numArgsStateful);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessSamplerWhenDecodingZeInfoThenNumberOfStatefulArgsDoesNotCountSampler) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            8
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       sampler
+          access_type:     readwrite
+          sampler_index:   0
+          sampler_type:    texture
+        - arg_type:        arg_bypointer
+          offset:          8
+          size:            4
+          arg_index:       1
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_EQ(1u, kernelDescriptor->kernelAttributes.numArgsStateful);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessImageAddressingWhenDecodingZeInfoThenImageAddressingModeIsBindless) {
     ConstStringRef zeinfo = R"===(
 kernels:
@@ -5643,10 +5674,14 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
 
     auto &sampler0 = args[0].as<ArgDescSampler>();
     EXPECT_EQ(64U, sampler0.bindful);
+    EXPECT_EQ(0U, sampler0.index);
+    EXPECT_EQ(undefined<uint8_t>, sampler0.size);
 
     auto &sampler1 = args[1].as<ArgDescSampler>();
     EXPECT_TRUE(args[1].getExtendedTypeInfo().isAccelerator);
     EXPECT_EQ(80U, sampler1.bindful);
+    EXPECT_EQ(1U, sampler1.index);
+    EXPECT_EQ(undefined<uint8_t>, sampler1.size);
 
     auto &sampler2 = args[2].as<ArgDescSampler>();
     EXPECT_TRUE(args[2].getExtendedTypeInfo().isAccelerator);
@@ -5654,6 +5689,8 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
     EXPECT_EQ(0U, sampler2.metadataPayload.samplerSnapWa);
     EXPECT_EQ(4U, sampler2.metadataPayload.samplerNormalizedCoords);
     EXPECT_EQ(8U, sampler2.metadataPayload.samplerAddressingMode);
+    EXPECT_EQ(2U, sampler2.index);
+    EXPECT_EQ(undefined<uint8_t>, sampler2.size);
 
     auto &sampler3 = args[3].as<ArgDescSampler>();
     EXPECT_TRUE(args[3].getExtendedTypeInfo().isAccelerator);
@@ -5667,6 +5704,46 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenValidSamplerArgumentWithMetadataThenPop
 
     EXPECT_TRUE(kd.kernelAttributes.flags.usesSamplers);
     EXPECT_TRUE(kd.kernelAttributes.flags.usesVme);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessSamplerArgumentWithMetadataThenKernelDescriptorIsPopulated) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          88
+          size:            8
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       sampler
+          access_type:     readwrite
+          sampler_index:   3
+          sampler_type:    texture
+        - arg_type:        arg_bypointer
+          offset:          8
+          size:            4
+          arg_index:       1
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_EQ(1u, kernelDescriptor->kernelAttributes.numArgsStateful);
+
+    const auto &kd = *this->kernelDescriptor;
+    auto &args = kd.payloadMappings.explicitArgs;
+
+    auto &sampler0 = args[0].as<ArgDescSampler>();
+    EXPECT_EQ(undefined<DynamicStateHeapOffset>, sampler0.bindful);
+    EXPECT_EQ(88u, sampler0.bindless);
+    EXPECT_EQ(3U, sampler0.index);
+    EXPECT_EQ(8U, sampler0.size);
 }
 
 class IntelGTNotesFixture : public ::testing::Test {

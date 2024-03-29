@@ -3894,5 +3894,70 @@ TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshT
     }
 }
 
+TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingSamplerOffsetsInCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<KernelImp> mockKernel;
+    mockKernel.module = &mockModule;
+
+    mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
+    mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+
+    auto argDescriptorSampler = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    argDescriptorSampler.as<NEO::ArgDescSampler>() = NEO::ArgDescSampler();
+    argDescriptorSampler.as<NEO::ArgDescSampler>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorSampler.as<NEO::ArgDescSampler>().bindless = sizeof(uint64_t);
+    argDescriptorSampler.as<NEO::ArgDescSampler>().size = sizeof(uint64_t);
+    argDescriptorSampler.as<NEO::ArgDescSampler>().index = 1;
+    mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptorSampler);
+
+    auto argDescriptorSampler2 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    argDescriptorSampler2.as<NEO::ArgDescSampler>() = NEO::ArgDescSampler();
+    argDescriptorSampler2.as<NEO::ArgDescSampler>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorSampler2.as<NEO::ArgDescSampler>().bindless = 2 * sizeof(uint64_t);
+    argDescriptorSampler2.as<NEO::ArgDescSampler>().size = sizeof(uint64_t);
+    argDescriptorSampler2.as<NEO::ArgDescSampler>().index = undefined<uint8_t>;
+    mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptorSampler2);
+
+    auto argDescriptor2 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    argDescriptor2.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptor2.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor2.as<NEO::ArgDescPointer>().stateless = 2 * sizeof(uint64_t);
+    mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor2);
+
+    mockKernel.descriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = 3 * sizeof(uint64_t);
+    mockKernel.descriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 4 * sizeof(uint64_t);
+
+    mockKernel.isBindlessOffsetSet.resize(2, 0);
+    mockKernel.usingSurfaceStateHeap.resize(2, 0);
+
+    mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+
+    mockKernel.crossThreadData = std::make_unique<uint8_t[]>(5 * sizeof(uint64_t));
+    mockKernel.crossThreadDataSize = 5 * sizeof(uint64_t);
+    memset(mockKernel.crossThreadData.get(), 0, mockKernel.crossThreadDataSize);
+
+    const uint64_t baseAddress = 0x1000;
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+    auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
+
+    auto patchValue1 = (static_cast<uint32_t>(baseAddress + 1 * samplerStateSize));
+    auto patchValue2 = 0u;
+
+    mockKernel.patchSamplerBindlessOffsetsInCrossThreadData(baseAddress);
+
+    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
+    memcpy(crossThreadData.get(), mockKernel.crossThreadData.get(), mockKernel.crossThreadDataSize);
+
+    EXPECT_EQ(patchValue1, crossThreadData[1]);
+    EXPECT_EQ(0u, patchValue2);
+    EXPECT_EQ(0u, crossThreadData[2]);
+}
+
 } // namespace ult
 } // namespace L0

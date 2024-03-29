@@ -175,6 +175,7 @@ struct KernelImp : Kernel {
     void patchCrossthreadDataWithPrivateAllocation(NEO::GraphicsAllocation *privateAllocation) override;
     void patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const override;
     void patchBindlessOffsetsForImplicitArgs(uint64_t bindlessSurfaceStateBaseOffset) const;
+    void patchSamplerBindlessOffsetsInCrossThreadData(uint64_t samplerStateOffset) const override;
 
     NEO::GraphicsAllocation *getPrivateMemoryGraphicsAllocation() override {
         return privateMemoryGraphicsAllocation;

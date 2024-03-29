@@ -1023,10 +1023,6 @@ int main(int argc, char *argv[]) {
             i = testCase;
         }
 
-        if (testCase == -1 && i == 2) {
-            continue;
-        }
-
         switch (i) {
         default:
         case 0:

@@ -217,6 +217,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             }
 
             idd.setSamplerStatePointer(samplerStateOffset);
+            args.dispatchInterface->patchSamplerBindlessOffsetsInCrossThreadData(samplerStateOffset);
         }
     }
 

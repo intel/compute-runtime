@@ -55,9 +55,17 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
             const auto surfaceStateCount = args.ssh->getMaxAvailableSpace() / sizeof(RENDER_SURFACE_STATE);
             args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(surfaceStateCount - 1));
         }
-    }
 
-    args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
+        if (args.dsh) {
+            args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddress(args.dsh->getHeapGpuBase());
+            args.stateBaseAddressCmd->setBindlessSamplerStateBufferSize(args.dsh->getHeapSizeInPages());
+            args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
+        }
+    } else {
+        args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddress(args.globalHeapsBaseAddress);
+        args.stateBaseAddressCmd->setBindlessSamplerStateBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+    }
 
     auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
 

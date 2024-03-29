@@ -1195,6 +1195,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
                 static constexpr auto maxIndirectSamplerStateSize = 64U;
                 auto &sampler = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>();
                 sampler.bindful = maxIndirectSamplerStateSize + maxSamplerStateSize * src.samplerIndex;
+                sampler.index = src.samplerIndex;
                 dst.payloadMappings.samplerTable.numSamplers = std::max<uint8_t>(dst.payloadMappings.samplerTable.numSamplers, static_cast<uint8_t>(src.samplerIndex + 1));
             } else {
                 dst.kernelAttributes.numArgsStateful++;
@@ -1212,12 +1213,16 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         case Types::Kernel::PayloadArgument::memoryAddressingModeBindless:
             if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::argTPointer>()) {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).bindless = src.offset;
+                dst.kernelAttributes.numArgsStateful++;
             } else if (dst.payloadMappings.explicitArgs[src.argIndex].is<NEO::ArgDescriptor::argTImage>()) {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescImage>(false).bindless = src.offset;
+                dst.kernelAttributes.numArgsStateful++;
             } else {
                 dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(false).bindless = src.offset;
+                dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(false).index = src.samplerIndex;
+                dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescSampler>(false).size = src.size;
+                dst.payloadMappings.samplerTable.numSamplers = std::max<uint8_t>(dst.payloadMappings.samplerTable.numSamplers, static_cast<uint8_t>(src.samplerIndex + 1));
             }
-            dst.kernelAttributes.numArgsStateful++;
             break;
         case Types::Kernel::PayloadArgument::memoryAddressingModeSharedLocalMemory:
             dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(false).slmOffset = src.offset;

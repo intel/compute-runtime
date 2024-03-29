@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -106,6 +106,8 @@ struct ArgDescSampler final {
         CrossThreadDataOffset samplerAddressingMode = undefined<CrossThreadDataOffset>;
         CrossThreadDataOffset samplerNormalizedCoords = undefined<CrossThreadDataOffset>;
     } metadataPayload;
+    uint8_t index = undefined<uint8_t>;
+    uint8_t size = undefined<uint8_t>;
 };
 
 struct ArgDescValue final {

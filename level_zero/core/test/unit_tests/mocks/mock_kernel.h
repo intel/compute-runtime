@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,7 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::numThreadsPerThreadGroup;
     using ::L0::KernelImp::patchBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::patchBindlessSurfaceState;
+    using ::L0::KernelImp::patchSamplerBindlessOffsetsInCrossThreadData;
     using ::L0::KernelImp::perThreadDataForWholeThreadGroup;
     using ::L0::KernelImp::perThreadDataSize;
     using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;

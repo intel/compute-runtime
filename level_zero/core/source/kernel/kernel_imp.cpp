@@ -859,8 +859,16 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
 ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const void *argVal) {
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescSampler>();
     const auto sampler = Sampler::fromHandle(*static_cast<const ze_sampler_handle_t *>(argVal));
-    sampler->copySamplerStateToDSH(dynamicStateHeapData.get(), dynamicStateHeapDataSize, arg.bindful);
+    if (NEO::isValidOffset(arg.bindful)) {
+        sampler->copySamplerStateToDSH(dynamicStateHeapData.get(), dynamicStateHeapDataSize, arg.bindful);
+    } else if (NEO::isValidOffset(arg.bindless)) {
+        const auto offset = kernelImmData->getDescriptor().payloadMappings.samplerTable.tableOffset;
+        auto &gfxCoreHelper = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getHelper<NEO::GfxCoreHelper>();
+        const auto stateSize = gfxCoreHelper.getSamplerStateSize();
+        auto heapOffset = offset + static_cast<uint32_t>(stateSize) * arg.index;
 
+        sampler->copySamplerStateToDSH(dynamicStateHeapData.get(), dynamicStateHeapDataSize, heapOffset);
+    }
     auto samplerDesc = sampler->getSamplerDesc();
 
     NEO::patchNonPointer<uint32_t, uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerSnapWa, (samplerDesc.addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER && samplerDesc.filterMode == ZE_SAMPLER_FILTER_MODE_NEAREST) ? std::numeric_limits<uint32_t>::max() : 0u);
@@ -1350,6 +1358,36 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
     }
 
     patchBindlessOffsetsForImplicitArgs(bindlessSurfaceStateBaseOffset);
+}
+
+void KernelImp::patchSamplerBindlessOffsetsInCrossThreadData(uint64_t samplerStateOffset) const {
+    if (this->module == nullptr) {
+        return;
+    }
+    const auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
+    const auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
+    auto crossThreadData = getCrossThreadData();
+    for (size_t index = 0; index < kernelImmData->getDescriptor().payloadMappings.explicitArgs.size(); index++) {
+        const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[index];
+
+        auto crossThreadOffset = NEO::undefined<NEO::CrossThreadDataOffset>;
+        if (arg.type == NEO::ArgDescriptor::argTSampler) {
+            crossThreadOffset = arg.as<NEO::ArgDescSampler>().bindless;
+        } else {
+            continue;
+        }
+
+        auto samplerIndex = arg.as<NEO::ArgDescSampler>().index;
+        if (NEO::isValidOffset(crossThreadOffset)) {
+            auto patchLocation = ptrOffset(crossThreadData, crossThreadOffset);
+
+            if (samplerIndex < std::numeric_limits<uint8_t>::max()) {
+                auto surfaceStateOffset = static_cast<uint64_t>(samplerStateOffset + samplerIndex * samplerStateSize);
+                auto patchValue = surfaceStateOffset;
+                patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), arg.as<NEO::ArgDescSampler>().size, patchValue);
+            }
+        }
+    }
 }
 
 uint32_t KernelImp::getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const {
