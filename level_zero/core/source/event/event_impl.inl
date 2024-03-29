@@ -453,10 +453,11 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
 
     uint32_t packets = 0;
 
-    std::array<uint64_t, 16 * 4 * 3> tempCopyData = {}; // 16 packets, 4 timestamps, 3 kernels
+    std::array<uint64_t, 16 * 4 * 3 * 4> tempCopyData = {}; // 16 packets, 4 timestamps, 3 kernels, 4 32-byte packet size
     UNRECOVERABLE_IF(tempCopyData.size() * sizeof(uint64_t) < totalEventSize);
 
-    const auto numElements = getMaxPacketsCount() * kernelCount;
+    // in case of 32-byte packets the fill has to be appropriately wider
+    const auto numElements = getMaxPacketsCount() * kernelCount * (this->singlePacketSize / sizeof(uint64_t));
     std::fill_n(tempCopyData.begin(), numElements, static_cast<uint64_t>(eventVal));
 
     auto packetHostAddr = basePacketHostAddr;
