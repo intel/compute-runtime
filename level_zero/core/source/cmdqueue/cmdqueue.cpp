@@ -101,6 +101,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal, bool imm
         this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, !immediateCmdListQueue);
         auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
         this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled();
     }
     return returnValue;
 }

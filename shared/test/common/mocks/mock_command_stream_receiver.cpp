@@ -58,3 +58,13 @@ CompletionStamp MockCommandStreamReceiver::flushImmediateTask(
     CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
     return stamp;
 }
+
+CompletionStamp MockCommandStreamReceiver::flushImmediateTaskStateless(
+    LinearStream &immediateCommandStream,
+    size_t immediateCommandStreamStart,
+    ImmediateDispatchFlags &dispatchFlags,
+    Device &device) {
+    ++taskCount;
+    CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
+    return stamp;
+}

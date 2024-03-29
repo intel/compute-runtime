@@ -580,6 +580,15 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return cs;
     }
 
+    CompletionStamp flushImmediateTaskStateless(
+        LinearStream &immediateCommandStream,
+        size_t immediateCommandStreamStart,
+        ImmediateDispatchFlags &dispatchFlags,
+        Device &device) override {
+        CompletionStamp cs = {};
+        return cs;
+    }
+
     CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                  const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override {
         CompletionStamp cs = {};

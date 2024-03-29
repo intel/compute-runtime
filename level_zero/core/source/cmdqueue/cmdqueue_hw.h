@@ -23,7 +23,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandQueueHw : public CommandQueueImp {
     using CommandQueueImp::CommandQueueImp;
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-
     ze_result_t createFence(const ze_fence_desc_t *desc, ze_fence_handle_t *phFence) override;
     ze_result_t executeCommandLists(uint32_t numCommandLists,
                                     ze_command_list_handle_t *phCommandLists,
@@ -117,6 +116,13 @@ struct CommandQueueHw : public CommandQueueImp {
         bool lockScratchController = false;
     };
 
+    ze_result_t executeCommandListsRegularHeapless(CommandListExecutionContext &ctx,
+                                                   uint32_t numCommandLists,
+                                                   ze_command_list_handle_t *commandListHandles,
+                                                   ze_fence_handle_t hFence,
+                                                   ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                                   ze_event_handle_t *phWaitEvents);
+
     MOCKABLE_VIRTUAL ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
                                                             uint32_t numCommandLists,
                                                             ze_command_list_handle_t *commandListHandles,
@@ -139,6 +145,11 @@ struct CommandQueueHw : public CommandQueueImp {
                                               ze_fence_handle_t hFence);
     MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const;
     inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx);
+    size_t estimateStreamSizeForExecuteCommandListsRegularHeapless(CommandListExecutionContext &ctx,
+                                                                   uint32_t numCommandLists,
+                                                                   ze_command_list_handle_t *commandListHandles,
+                                                                   bool instructionCacheFlushRequired,
+                                                                   bool stateCacheFlushRequired);
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
     inline size_t estimateCommandListPrimaryStart(bool required);
     inline size_t estimateCommandListResidencySize(CommandList *commandList);

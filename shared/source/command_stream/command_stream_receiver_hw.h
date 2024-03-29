@@ -70,6 +70,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
                                        ImmediateDispatchFlags &dispatchFlags, Device &device) override;
 
+    CompletionStamp flushImmediateTaskStateless(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
+                                                ImmediateDispatchFlags &dispatchFlags, Device &device) override;
+
     void forcePipeControl(NEO::LinearStream &commandStreamCSR);
 
     bool flushBatchedSubmissions() override;
@@ -304,6 +307,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     inline void dispatchImmediateFlushClientBufferCommands(ImmediateDispatchFlags &dispatchFlags,
                                                            LinearStream &immediateCommandStream,
                                                            ImmediateFlushData &flushData);
+
+    void handleImmediateFlushStatelessAllocationsResidency(size_t csrEstimatedSize,
+                                                           LinearStream &csrStream);
 
     inline void handleImmediateFlushAllocationsResidency(Device &device,
                                                          LinearStream &immediateCommandStream,

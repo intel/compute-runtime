@@ -5092,4 +5092,6 @@ HWTEST_F(CommandStreamReceiverHwHeaplessTest, whenHeaplessCommandStreamReceiverF
     EXPECT_ANY_THROW(csr->handleAllocationsResidencyForflushTaskStateless(nullptr, nullptr, nullptr));
     EXPECT_ANY_THROW(csr->getRequiredCmdStreamHeaplessSize(csr->recordedDispatchFlags, *pDevice));
     EXPECT_ANY_THROW(csr->getRequiredCmdStreamHeaplessSizeAligned(csr->recordedDispatchFlags, *pDevice));
+    EXPECT_ANY_THROW(csr->flushImmediateTaskStateless(commandStream, 0, csr->recordedImmediateDispatchFlags, *pDevice));
+    EXPECT_ANY_THROW(csr->handleImmediateFlushStatelessAllocationsResidency(0, commandStream));
 }

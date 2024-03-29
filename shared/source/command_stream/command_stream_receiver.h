@@ -105,6 +105,9 @@ class CommandStreamReceiver {
     virtual CompletionStamp flushBcsTask(LinearStream &commandStream, size_t commandStreamStart, const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) = 0;
     virtual CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
                                                ImmediateDispatchFlags &dispatchFlags, Device &device) = 0;
+
+    virtual CompletionStamp flushImmediateTaskStateless(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
+                                                        ImmediateDispatchFlags &dispatchFlags, Device &device) = 0;
     virtual SubmissionStatus sendRenderStateCacheFlush() = 0;
 
     virtual bool flushBatchedSubmissions() = 0;

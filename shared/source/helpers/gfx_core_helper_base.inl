@@ -358,9 +358,9 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(bool tl
 template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidationRequired) {
 
-    size_t size = getSizeForSingleBarrier(tlbInvalidationRequired) +
-                  getSizeForBarrierWa(rootDeviceEnvironment) +
-                  getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
+    size_t size = getSizeForSingleBarrier(tlbInvalidationRequired);
+    size += getSizeForBarrierWa(rootDeviceEnvironment);
+    size += getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     return size;
 }
 

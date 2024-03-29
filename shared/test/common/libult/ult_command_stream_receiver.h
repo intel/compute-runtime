@@ -61,6 +61,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::getScratchSpaceController;
     using BaseClass::handleAllocationsResidencyForHeaplessProlog;
     using BaseClass::handleFrontEndStateTransition;
+    using BaseClass::handleImmediateFlushStatelessAllocationsResidency;
     using BaseClass::handlePipelineSelectStateTransition;
     using BaseClass::handleStateBaseAddressStateTransition;
     using BaseClass::heapStorageRequiresRecyclingTag;

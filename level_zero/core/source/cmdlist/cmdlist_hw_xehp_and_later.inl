@@ -276,7 +276,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 
-    updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
+    if (this->heaplessStateInitEnabled == false) {
+        updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
+    }
 
     auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
     auto slmTotalSize = kernelImp->getSlmTotalSize();

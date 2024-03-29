@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,6 +16,7 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdlist.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdqueue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdqueue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdqueue_handle_indirect_allocs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device_for_spirv.h

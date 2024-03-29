@@ -25,6 +25,19 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskStateless(
 }
 
 template <typename GfxFamily>
+CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskStateless(LinearStream &immediateCommandStream, size_t immediateCommandStreamStart,
+                                                                                ImmediateDispatchFlags &dispatchFlags, Device &device) {
+    UNRECOVERABLE_IF(true);
+    return {};
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushStatelessAllocationsResidency(size_t csrEstimatedSize,
+                                                                                           LinearStream &csrStream) {
+    UNRECOVERABLE_IF(true);
+}
+
+template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::programHeaplessProlog(Device &device) {
     UNRECOVERABLE_IF(true);
     return SubmissionStatus::unsupported;

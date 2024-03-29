@@ -245,16 +245,16 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
     desc.pNext = 0;
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = false;
+    cmdList.setCsr(&csr);
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    cmdList.setCsr(&csr);
     cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
     auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
@@ -271,18 +271,17 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
 
 HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSynchronousImmCommandListThenAssertIsChecked, IsAtLeastSkl) {
     ze_result_t result;
-
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     Mock<KernelImp> kernel;
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = true;
+    cmdList.setCsr(&csr);
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    cmdList.setCsr(&csr);
     cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
 
     ze_command_queue_desc_t desc = {};
@@ -317,10 +316,10 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynch
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = true;
+    cmdList.setCsr(&csr);
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    cmdList.setCsr(&csr);
     cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
     ze_command_queue_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;

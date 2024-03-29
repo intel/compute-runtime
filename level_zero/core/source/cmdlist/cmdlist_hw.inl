@@ -86,11 +86,13 @@ CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
-    if (!this->stateBaseAddressTracking) {
+
+    if (!this->stateBaseAddressTracking && !this->heaplessStateInitEnabled) {
         if (!this->isFlushTaskSubmissionEnabled) {
             programStateBaseAddress(commandContainer, false);
         }
     }
+
     commandContainer.setDirtyStateForAllHeaps(false);
 
     setStreamPropertiesDefaultSettings(requiredStreamState);
@@ -235,6 +237,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->useOnlyGlobalTimestamps = gfxCoreHelper.useOnlyGlobalTimestamps();
     this->maxFillPaternSizeForCopyEngine = gfxCoreHelper.getMaxFillPaternSizeForCopyEngine();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled();
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
     this->duplicatedInOrderCounterStorageEnabled = gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(rootDeviceEnvironment);

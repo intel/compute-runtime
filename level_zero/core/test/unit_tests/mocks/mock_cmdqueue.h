@@ -70,6 +70,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass = ::L0::CommandQueueHw<gfxCoreFamily>;
     using BaseClass::commandStream;
+    using BaseClass::estimateStreamSizeForExecuteCommandListsRegularHeapless;
+    using BaseClass::executeCommandListsRegularHeapless;
     using BaseClass::prepareAndSubmitBatchBuffer;
     using BaseClass::printfKernelContainer;
     using BaseClass::startingCmdBuffer;
@@ -79,6 +81,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::doubleSbaWa;
     using L0::CommandQueue::frontEndStateTracking;
     using L0::CommandQueue::heaplessModeEnabled;
+    using L0::CommandQueue::heaplessStateInitEnabled;
     using L0::CommandQueue::internalQueueForImmediateCommandList;
     using L0::CommandQueue::internalUsage;
     using L0::CommandQueue::partitionCount;

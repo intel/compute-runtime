@@ -13,6 +13,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 
 #include <atomic>
+#include <functional>
 
 namespace NEO {
 struct SvmAllocationData;
@@ -219,6 +220,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;
+    std::function<NEO::CompletionStamp(NEO::LinearStream &, size_t, NEO::ImmediateDispatchFlags &, NEO::Device &)> flushImmediateTaskMethod;
     std::atomic<bool> dependenciesPresent{false};
     bool latestFlushIsHostVisible = false;
 };

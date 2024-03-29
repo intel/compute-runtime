@@ -705,11 +705,13 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
     commandList->isFlushTaskSubmissionEnabled = true;
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     commandList->device = device;
     commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     MockCommandQueueHw<gfxCoreFamily> mockCommandQueue(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);

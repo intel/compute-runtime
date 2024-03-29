@@ -24,6 +24,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue_handle_indirect_allocs.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -786,23 +787,6 @@ HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWithFabri
 
     commandQueue->destroy();
 }
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-class MockCommandQueueHandleIndirectAllocs : public MockCommandQueueHw<gfxCoreFamily> {
-  public:
-    using typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext;
-    using MockCommandQueueHw<gfxCoreFamily>::executeCommandListsRegular;
-    MockCommandQueueHandleIndirectAllocs(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : MockCommandQueueHw<gfxCoreFamily>(device, csr, desc) {}
-    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override {
-        handleIndirectAllocationResidencyCalledTimes++;
-        MockCommandQueueHw<gfxCoreFamily>::handleIndirectAllocationResidency(unifiedMemoryControls, lockForIndirect, performMigration);
-    }
-    void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override {
-        makeResidentAndMigrateCalledTimes++;
-    }
-    uint32_t handleIndirectAllocationResidencyCalledTimes = 0;
-    uint32_t makeResidentAndMigrateCalledTimes = 0;
-};
 
 HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessCalled, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};

@@ -18,6 +18,7 @@
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_walk_order.h"
@@ -284,33 +285,37 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
     }
 
-    if (container.isAnyHeapDirty() ||
-        args.requiresUncachedMocs) {
+    bool heaplessStateInitEnabled = rootDeviceEnvironment.getHelper<CompilerProductHelper>().isHeaplessStateInitEnabled();
 
-        PipeControlArgs syncArgs;
-        syncArgs.dcFlushEnable = args.dcFlushEnable;
-        MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
-        STATE_BASE_ADDRESS sbaCmd;
-        auto gmmHelper = container.getDevice()->getGmmHelper();
-        uint32_t statelessMocsIndex =
-            args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-        auto l1CachePolicy = container.l1CachePolicyDataRef()->getL1CacheValue(false);
-        auto l1CachePolicyDebuggerActive = container.l1CachePolicyDataRef()->getL1CacheValue(true);
+    if (heaplessStateInitEnabled == false) {
+        if (container.isAnyHeapDirty() ||
+            args.requiresUncachedMocs) {
 
-        EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
-            &container,                  // container
-            sbaCmd,                      // sbaCmd
-            nullptr,                     // sbaProperties
-            statelessMocsIndex,          // statelessMocsIndex
-            l1CachePolicy,               // l1CachePolicy
-            l1CachePolicyDebuggerActive, // l1CachePolicyDebuggerActive
-            args.partitionCount > 1,     // multiOsContextCapable
-            args.isRcs,                  // isRcs
-            container.doubleSbaWaRef(),  // doubleSbaWa
-            heaplessModeEnabled,         // heaplessModeEnabled
-        };
-        EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
-        container.setDirtyStateForAllHeaps(false);
+            PipeControlArgs syncArgs;
+            syncArgs.dcFlushEnable = args.dcFlushEnable;
+            MemorySynchronizationCommands<Family>::addSingleBarrier(*container.getCommandStream(), syncArgs);
+            STATE_BASE_ADDRESS sbaCmd;
+            auto gmmHelper = container.getDevice()->getGmmHelper();
+            uint32_t statelessMocsIndex =
+                args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+            auto l1CachePolicy = container.l1CachePolicyDataRef()->getL1CacheValue(false);
+            auto l1CachePolicyDebuggerActive = container.l1CachePolicyDataRef()->getL1CacheValue(true);
+
+            EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
+                &container,                  // container
+                sbaCmd,                      // sbaCmd
+                nullptr,                     // sbaProperties
+                statelessMocsIndex,          // statelessMocsIndex
+                l1CachePolicy,               // l1CachePolicy
+                l1CachePolicyDebuggerActive, // l1CachePolicyDebuggerActive
+                args.partitionCount > 1,     // multiOsContextCapable
+                args.isRcs,                  // isRcs
+                container.doubleSbaWaRef(),  // doubleSbaWa
+                heaplessModeEnabled,         // heaplessModeEnabled
+            };
+            EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
+            container.setDirtyStateForAllHeaps(false);
+        }
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {

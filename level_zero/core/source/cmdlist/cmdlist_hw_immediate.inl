@@ -40,6 +40,7 @@
 #include "encode_surface_state_args.h"
 
 #include <cmath>
+#include <functional>
 
 namespace L0 {
 
@@ -209,11 +210,10 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
     };
     CommandListImp::storeReferenceTsToMappedEvents(true);
 
-    return this->csr->flushImmediateTask(
-        cmdStreamTask,
-        taskStartOffset,
-        dispatchFlags,
-        *(this->device->getNEODevice()));
+    return this->flushImmediateTaskMethod(cmdStreamTask,
+                                          taskStartOffset,
+                                          dispatchFlags,
+                                          *(this->device->getNEODevice()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1363,6 +1363,12 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
     if (L0GfxCoreHelper::useImmediateComputeFlushTask(rootDeviceEnvironment)) {
         this->computeFlushMethod = &CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediateRegularTask;
+
+        if (this->isHeaplessStateInitEnabled()) {
+            this->flushImmediateTaskMethod = std::bind(&NEO::CommandStreamReceiver::flushImmediateTaskStateless, this->csr, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+        } else {
+            this->flushImmediateTaskMethod = std::bind(&NEO::CommandStreamReceiver::flushImmediateTask, this->csr, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+        }
     }
 }
 
