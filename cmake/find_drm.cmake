@@ -30,16 +30,27 @@ if(NOT DEFINED I915_HEADERS_DIR OR I915_HEADERS_DIR STREQUAL "")
 
   message(STATUS "xe includes dir: ${NEO_XE_HEADERS_DIR}")
 
+  if(NOT DEFINED NEO_IAF_HEADERS_DIR OR NEO_IAF_HEADERS_DIR STREQUAL "")
+    get_filename_component(NEO_IAF_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party/uapi/iaf" ABSOLUTE)
+  endif()
+
+  message(STATUS "iaf includes dir: ${NEO_IAF_HEADERS_DIR}")
+
   set(NEO_LINUX_KMD_HEADERS_DIR
       ${NEO_DRM_HEADERS_DIR}
       ${NEO_I915_HEADERS_DIR}
       ${NEO_I915_PRELIM_HEADERS_DIR}
       ${NEO_XE_HEADERS_DIR}
+      ${NEO_IAF_HEADERS_DIR}
   )
 
 else()
   message(STATUS "i915 headers set with legacy way: ${I915_HEADERS_DIR}")
+  get_filename_component(NEO_IAF_HEADERS_DIR "${I915_HEADERS_DIR}/iaf" ABSOLUTE)
   get_filename_component(I915_HEADERS_DIR "${I915_HEADERS_DIR}/drm" ABSOLUTE)
-  set(NEO_LINUX_KMD_HEADERS_DIR ${I915_HEADERS_DIR})
+  set(NEO_LINUX_KMD_HEADERS_DIR
+      ${I915_HEADERS_DIR}
+      ${NEO_IAF_HEADERS_DIR}
+  )
 endif()
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "mock_nl_dll.h"
 
 #include "gtest/gtest.h"
-#include "iaf/iaf_netlink.h"
+#include "iaf_netlink.h"
 
 namespace L0 {
 namespace ult {

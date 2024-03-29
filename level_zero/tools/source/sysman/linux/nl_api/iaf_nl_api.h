@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 #include "level_zero/tools/source/sysman/linux/nl_api/nl_api.h"
 
-#include "iaf/iaf_netlink.h"
+#include "iaf_netlink.h"
 
 #include <linux/types.h>
 #include <list>
