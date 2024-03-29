@@ -173,10 +173,6 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_create_buffer_with_properties ";
     }
 
-    if (isDotAccumulateSupported()) {
-        extensions += "cl_intel_dot_accumulate ";
-    }
-
     if (isSubgroupLocalBlockIoSupported()) {
         extensions += "cl_intel_subgroup_local_block_io ";
     }

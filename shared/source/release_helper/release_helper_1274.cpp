@@ -35,11 +35,6 @@ bool ReleaseHelperHw<release>::isPipeControlPriorToPipelineSelectWaRequired() co
 }
 
 template <>
-bool ReleaseHelperHw<release>::isSplitMatrixMultiplyAccumulateSupported() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isDirectSubmissionSupported() const {
     return true;
 }
