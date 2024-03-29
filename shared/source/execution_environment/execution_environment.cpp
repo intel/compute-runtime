@@ -43,6 +43,9 @@ void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvir
 }
 
 ExecutionEnvironment::~ExecutionEnvironment() {
+    if (directSubmissionController) {
+        directSubmissionController->stopThread();
+    }
     if (memoryManager) {
         memoryManager->commonCleanup();
         for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {

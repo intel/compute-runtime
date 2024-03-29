@@ -45,6 +45,7 @@ class DirectSubmissionController {
 
     void startThread();
     void startControlling();
+    void stopThread();
 
     static bool isSupported();
 

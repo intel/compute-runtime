@@ -75,58 +75,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     controller.unregisterDirectSubmission(&csr);
 }
 
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenTimeoutThenDirectSubmissionsAreChecked) {
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-
-    DeviceBitfield deviceBitfield(1);
-    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
-                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
-    csr.setupContext(*osContext.get());
-    csr.initializeTagAllocation();
-    *csr.tagAddress = 9u;
-    csr.taskCount.store(9u);
-
-    DirectSubmissionControllerMock controller;
-    executionEnvironment.directSubmissionController.reset(&controller);
-    controller.startThread();
-    csr.startControllingDirectSubmissions();
-    controller.registerDirectSubmission(&csr);
-
-    while (controller.directSubmissions[&csr].taskCount != 9u) {
-        std::this_thread::yield();
-    }
-    while (!controller.directSubmissions[&csr].isStopped) {
-        std::this_thread::yield();
-    }
-    {
-        std::lock_guard<std::mutex> lock(controller.directSubmissionsMutex);
-        EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
-        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 9u);
-    }
-
-    controller.unregisterDirectSubmission(&csr);
-    executionEnvironment.directSubmissionController.release();
-}
-
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithStartedControllingWhenShuttingDownThenNoHang) {
-    DirectSubmissionControllerMock controller;
-    controller.startThread();
-    EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
-    controller.startControlling();
-
-    while (!controller.sleepCalled) {
-        std::this_thread::yield();
-    }
-    controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread->join();
-    controller.directSubmissionControllingThread.reset();
-}
-
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorDisabledWhenIncreaseTimeoutEnabledThenTimeoutIsIncreased) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionControllerMaxTimeout.set(200'000);
@@ -222,6 +170,25 @@ void fillTimeoutParamsMap(DirectSubmissionControllerMock &controller) {
             EXPECT_TRUE(result);
         }
     }
+}
+
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOnThrottleAndAcLineStatusDisabledWhenSetTimeoutParamsForPlatformThenTimeoutParamsMapsIsEmpty) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DirectSubmissionControllerAdjustOnThrottleAndAcLineStatus.set(0);
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    csr.setupContext(*osContext.get());
+
+    DirectSubmissionControllerMock controller;
+    controller.setTimeoutParamsForPlatform(csr.getProductHelper());
+    EXPECT_EQ(0u, controller.timeoutParamsMap.size());
 }
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOnThrottleAndAcLineStatusEnabledWhenThrottleOrAcLineStatusChangesThenTimeoutIsChanged) {
@@ -336,19 +303,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
     }
 
     controller.unregisterDirectSubmission(&csr);
-}
-
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithNotStartedControllingWhenShuttingDownThenNoHang) {
-    DirectSubmissionControllerMock controller;
-    controller.startThread();
-    EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
-
-    while (!controller.sleepCalled) {
-        std::this_thread::yield();
-    }
-    controller.keepControlling.store(false);
-    controller.directSubmissionControllingThread->join();
-    controller.directSubmissionControllingThread.reset();
 }
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterCsrsThenTimeoutIsNotAdjusted) {

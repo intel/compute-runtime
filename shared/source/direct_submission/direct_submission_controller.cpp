@@ -31,11 +31,7 @@ DirectSubmissionController::DirectSubmissionController() {
 };
 
 DirectSubmissionController::~DirectSubmissionController() {
-    keepControlling.store(false);
-    if (directSubmissionControllingThread) {
-        directSubmissionControllingThread->join();
-        directSubmissionControllingThread.reset();
-    }
+    UNRECOVERABLE_IF(directSubmissionControllingThread);
 }
 
 void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver *csr) {
@@ -86,6 +82,15 @@ void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceive
 
 void DirectSubmissionController::startThread() {
     directSubmissionControllingThread = Thread::create(controlDirectSubmissionsState, reinterpret_cast<void *>(this));
+}
+
+void DirectSubmissionController::stopThread() {
+    runControlling.store(false);
+    keepControlling.store(false);
+    if (directSubmissionControllingThread) {
+        directSubmissionControllingThread->join();
+        directSubmissionControllingThread.reset();
+    }
 }
 
 void DirectSubmissionController::startControlling() {
