@@ -646,6 +646,28 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
                                         hEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
 }
 
+static ze_image_region_t getRegionFromImageDesc(ze_image_desc_t imgDesc) {
+    ze_image_region_t region{0,
+                             0,
+                             0,
+                             static_cast<uint32_t>(imgDesc.width),
+                             static_cast<uint32_t>(imgDesc.height),
+                             static_cast<uint32_t>(imgDesc.depth)};
+    // If this is a 1D or 2D image, then the height or depth is ignored and must be set to 1.
+    // Internally, all dimensions must be >= 1.
+    if (imgDesc.type == ZE_IMAGE_TYPE_1D) {
+        region.height = 1;
+    } else if (imgDesc.type == ZE_IMAGE_TYPE_1DARRAY) {
+        region.height = imgDesc.arraylevels;
+    }
+    if (imgDesc.type == ZE_IMAGE_TYPE_2DARRAY) {
+        region.depth = imgDesc.arraylevels;
+    } else if (imgDesc.type != ZE_IMAGE_TYPE_3D) {
+        region.depth = 1;
+    }
+    return region;
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage,
                                                                                const void *srcPtr,
@@ -662,6 +684,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     Vec3<size_t> imgSize = {image->getImageDesc().width,
                             image->getImageDesc().height,
                             image->getImageDesc().depth};
+    if (image->getImageDesc().type == ZE_IMAGE_TYPE_1DARRAY) {
+        imgSize.y = image->getImageDesc().arraylevels;
+    }
+    if (image->getImageDesc().type == ZE_IMAGE_TYPE_2DARRAY) {
+        imgSize.z = image->getImageDesc().arraylevels;
+    }
 
     Event *event = nullptr;
     if (hEvent) {
@@ -670,20 +698,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
 
     ze_image_region_t tmpRegion;
     if (pDstRegion == nullptr) {
-        // If this is a 1D or 2D image, then the height or depth is ignored and must be set to 1.
-        // Internally, all dimensions must be >= 1.
-        if (image->getImageDesc().type == ZE_IMAGE_TYPE_1D || image->getImageDesc().type == ZE_IMAGE_TYPE_1DARRAY) {
-            imgSize.y = 1;
-        }
-        if (image->getImageDesc().type != ZE_IMAGE_TYPE_3D) {
-            imgSize.z = 1;
-        }
-        tmpRegion = {0,
-                     0,
-                     0,
-                     static_cast<uint32_t>(imgSize.x),
-                     static_cast<uint32_t>(imgSize.y),
-                     static_cast<uint32_t>(imgSize.z)};
+        tmpRegion = getRegionFromImageDesc(image->getImageDesc());
         pDstRegion = &tmpRegion;
     }
 
@@ -691,7 +706,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         srcRowPitch = pDstRegion->width * bytesPerPixel;
     }
     if (srcSlicePitch == 0) {
-        srcSlicePitch = image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height * srcRowPitch;
+        srcSlicePitch = (image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
     }
 
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, srcRowPitch, srcSlicePitch, pDstRegion);
@@ -713,9 +728,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
 
     if (isCopyOnly()) {
+        size_t imgRowPitch = image->getImageInfo().rowPitch;
+        size_t imgSlicePitch = image->getImageInfo().slicePitch;
         auto status = appendCopyImageBlit(allocationStruct.alloc, image->getAllocation(),
                                           {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, srcRowPitch, srcSlicePitch,
-                                          srcRowPitch, srcSlicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize, event);
+                                          imgRowPitch, imgSlicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize, event);
         addToMappedEventList(Event::fromHandle(hEvent));
         return status;
     }
@@ -830,6 +847,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     Vec3<size_t> imgSize = {image->getImageDesc().width,
                             image->getImageDesc().height,
                             image->getImageDesc().depth};
+    if (image->getImageDesc().type == ZE_IMAGE_TYPE_1DARRAY) {
+        imgSize.y = image->getImageDesc().arraylevels;
+    }
+    if (image->getImageDesc().type == ZE_IMAGE_TYPE_2DARRAY) {
+        imgSize.z = image->getImageDesc().arraylevels;
+    }
 
     Event *event = nullptr;
     if (hEvent) {
@@ -838,20 +861,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
 
     ze_image_region_t tmpRegion;
     if (pSrcRegion == nullptr) {
-        // If this is a 1D or 2D image, then the height or depth is ignored and must be set to 1.
-        // Internally, all dimensions must be >= 1.
-        if (image->getImageDesc().type == ZE_IMAGE_TYPE_1D || image->getImageDesc().type == ZE_IMAGE_TYPE_1DARRAY) {
-            imgSize.y = 1;
-        }
-        if (image->getImageDesc().type != ZE_IMAGE_TYPE_3D) {
-            imgSize.z = 1;
-        }
-        tmpRegion = {0,
-                     0,
-                     0,
-                     static_cast<uint32_t>(imgSize.x),
-                     static_cast<uint32_t>(imgSize.y),
-                     static_cast<uint32_t>(imgSize.z)};
+        tmpRegion = getRegionFromImageDesc(image->getImageDesc());
         pSrcRegion = &tmpRegion;
     }
 
@@ -859,8 +869,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         destRowPitch = pSrcRegion->width * bytesPerPixel;
     }
     if (destSlicePitch == 0) {
-        destSlicePitch =
-            (image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * destRowPitch;
+        destSlicePitch = (image->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : pSrcRegion->height) * destRowPitch;
     }
 
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, destRowPitch, destSlicePitch, pSrcRegion);
@@ -882,8 +891,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     }
 
     if (isCopyOnly()) {
+        size_t imgRowPitch = image->getImageInfo().rowPitch;
+        size_t imgSlicePitch = image->getImageInfo().slicePitch;
         auto status = appendCopyImageBlit(image->getAllocation(), allocationStruct.alloc,
-                                          {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, destRowPitch, destSlicePitch,
+                                          {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, imgRowPitch, imgSlicePitch,
                                           destRowPitch, destSlicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth},
                                           imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, event);
         addToMappedEventList(event);
@@ -2263,11 +2274,11 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
         UNRECOVERABLE_IF(true);
         break;
     case NEO::ImageType::image1D:
-    case NEO::ImageType::image1DArray:
         return bufferRowPitch;
+    case NEO::ImageType::image1DArray:
     case NEO::ImageType::image2D:
-    case NEO::ImageType::image2DArray:
         return static_cast<uint64_t>(bufferRowPitch) * region->height;
+    case NEO::ImageType::image2DArray:
     case NEO::ImageType::image3D:
         return static_cast<uint64_t>(bufferSlicePitch) * region->depth;
     }

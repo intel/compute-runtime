@@ -14,7 +14,7 @@
 #include <iostream>
 #include <memory>
 
-void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
+bool testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &device) {
     const size_t width = 32;
     const size_t height = 24;
     const size_t depth = 1;
@@ -96,7 +96,7 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
-    validRet = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, size);
+    bool validRet = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, size);
 
     delete[] srcBuffer;
     delete[] dstBuffer;
@@ -104,9 +104,11 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
     SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+
+    return validRet;
 }
 
-void testAppendImageCopyExt(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
+bool testAppendImageCopyExt(ze_context_handle_t &context, ze_device_handle_t &device) {
     constexpr size_t width = 32;
     constexpr size_t height = 24;
     constexpr size_t depth = 1;
@@ -199,7 +201,7 @@ void testAppendImageCopyExt(ze_context_handle_t &context, ze_device_handle_t &de
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
-    validRet = true;
+    bool validRet = true;
     for (size_t d = 0; (d < depth) && validRet; ++d) {
         uint8_t *srcSlice = srcBuffer + srcSlicePitch * d;
         uint8_t *dstSlice = dstBuffer + dstSlicePitch * d;
@@ -219,6 +221,95 @@ void testAppendImageCopyExt(ze_context_handle_t &context, ze_device_handle_t &de
     SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+
+    return validRet;
+}
+
+bool testAppendImageCopyExtArray(ze_context_handle_t &context, ze_device_handle_t &device, bool useCopyEngine, const ze_image_type_t type, const uint32_t width, const uint32_t height, const uint32_t arraylevels) {
+    constexpr uint32_t depth = 1;
+    constexpr size_t bytesPerPixel = 4;
+
+    uint32_t groupOrdinal = 0;
+    if (useCopyEngine) {
+        groupOrdinal = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
+        if (groupOrdinal == std::numeric_limits<uint32_t>::max()) {
+            std::cout << "No Copy queue group found. Skipping testAppendImageCopyExtArray run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+            return true;
+        }
+    }
+
+    ze_command_queue_handle_t cmdQueue = nullptr;
+    ze_command_list_handle_t cmdList = nullptr;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.pNext = nullptr;
+    cmdQueueDesc.flags = 0;
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    cmdQueueDesc.ordinal = groupOrdinal;
+    cmdQueueDesc.index = 0;
+    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
+
+    ze_command_list_desc_t cmdListDesc = {};
+    cmdListDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
+    cmdListDesc.pNext = nullptr;
+    cmdListDesc.commandQueueGroupOrdinal = groupOrdinal;
+    cmdListDesc.flags = 0;
+    SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
+
+    ze_image_desc_t imgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                               nullptr,
+                               0,
+                               type,
+                               {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                               width,
+                               height,
+                               depth,
+                               arraylevels,
+                               0};
+    ze_image_handle_t img;
+    SUCCESS_OR_TERMINATE(
+        zeImageCreate(context, device, &imgDesc, &img));
+
+    ze_image_region_t region = {0, 0, 0, width, height, depth};
+    if (type == ZE_IMAGE_TYPE_1DARRAY) {
+        region.height = arraylevels;
+    } else if (type == ZE_IMAGE_TYPE_2DARRAY) {
+        region.depth = arraylevels;
+    }
+
+    const uint32_t rowPitch = bytesPerPixel * width;
+    const size_t imgSize = rowPitch * height * arraylevels;
+    uint8_t *srcBuffer = new uint8_t[imgSize];
+    uint8_t *dstBuffer = new uint8_t[imgSize];
+    for (size_t i = 0; i < imgSize; ++i) {
+        auto v = static_cast<uint8_t>(i % 256);
+        srcBuffer[i] = v;
+        dstBuffer[i] = 0xff;
+    }
+
+    // Copy from srcBuffer->img->dstBuffer, so at the end dstBuffer = srcBuffer
+    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyFromMemoryExt(cmdList, img, srcBuffer,
+                                                                   &region, 0u, 0u, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyToMemoryExt(cmdList, dstBuffer, img,
+                                                                 &region, 0u, 0u, nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+
+    bool validRet = LevelZeroBlackBoxTests::validate(srcBuffer, dstBuffer, imgSize);
+
+    delete[] srcBuffer;
+    delete[] dstBuffer;
+    SUCCESS_OR_TERMINATE(zeImageDestroy(img));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+
+    return validRet;
 }
 
 int main(int argc, char *argv[]) {
@@ -230,8 +321,6 @@ int main(int argc, char *argv[]) {
     ze_context_handle_t context = nullptr;
     auto devices = LevelZeroBlackBoxTests::zelloInitContextAndGetDevices(context);
     auto device = devices[0];
-    bool outputValidationSuccessful;
-    bool outputValidationSuccessfulExt;
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
@@ -241,13 +330,37 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    testAppendImageCopy(context, device, outputValidationSuccessful);
+    bool outputValidationSuccessful = testAppendImageCopy(context, device);
+    bool result = outputValidationSuccessful;
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
-    testAppendImageCopyExt(context, device, outputValidationSuccessfulExt);
-    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessfulExt, blackBoxNameExt);
+    outputValidationSuccessful = testAppendImageCopyExt(context, device);
+    result &= outputValidationSuccessful;
+    LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxNameExt);
+
+    bool result1DArray = true;
+    for (uint32_t width = 1; width <= 128; width <<= 1) {
+        for (uint32_t arraylevels = 1; arraylevels <= 5; ++arraylevels) {
+            outputValidationSuccessful = testAppendImageCopyExtArray(context, device, true, ZE_IMAGE_TYPE_1DARRAY, width, 1u, arraylevels);
+            result1DArray &= outputValidationSuccessful;
+        }
+    }
+    result &= result1DArray;
+    LevelZeroBlackBoxTests::printResult(aubMode, result1DArray, blackBoxNameExt + " 1DARRAY");
+
+    bool result2DArray = true;
+    for (uint32_t width = 1; width <= 128; width <<= 1) {
+        for (uint32_t height = 1; height < 9; ++height) {
+            for (uint32_t arraylevels = 1; arraylevels <= 5; ++arraylevels) {
+                outputValidationSuccessful = testAppendImageCopyExtArray(context, device, true, ZE_IMAGE_TYPE_2DARRAY, width, height, arraylevels);
+                result2DArray &= outputValidationSuccessful;
+            }
+        }
+    }
+    result &= result2DArray;
+    LevelZeroBlackBoxTests::printResult(aubMode, result1DArray, blackBoxNameExt + " 2DARRAY");
+
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
-    outputValidationSuccessfulExt = aubMode ? true : outputValidationSuccessfulExt;
-    return ((outputValidationSuccessful && outputValidationSuccessfulExt) ? 0 : 1);
+    result = aubMode ? true : result;
+    return (result ? 0 : 1);
 }
