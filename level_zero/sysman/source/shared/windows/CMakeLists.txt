@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -17,4 +17,5 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/zes_os_sysman_driver_imp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/zes_os_sysman_driver_imp.h
   )
+  add_subdirectories()
 endif()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ class Wddm;
 }
 namespace L0 {
 namespace Sysman {
+class SysmanProductHelper;
 
 class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
@@ -36,11 +37,14 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     uint32_t getSubDeviceCount() override;
     SysmanDeviceImp *getSysmanDeviceImp();
     const NEO::HardwareInfo &getHardwareInfo() const override { return pParentSysmanDeviceImp->getHardwareInfo(); }
+    PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
+    SysmanProductHelper *getSysmanProductHelper();
 
   protected:
     FirmwareUtil *pFwUtilInterface = nullptr;
     KmdSysManager *pKmdSysManager = nullptr;
     SysmanDevice *pDevice = nullptr;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
 
   private:
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;

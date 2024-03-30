@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
 namespace L0 {
@@ -35,6 +36,9 @@ ze_result_t WddmSysmanImp::init() {
         subDeviceCount = 0;
     }
 
+    pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
+    DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -44,6 +48,11 @@ uint32_t WddmSysmanImp::getSubDeviceCount() {
 
 SysmanDeviceImp *WddmSysmanImp::getSysmanDeviceImp() {
     return pParentSysmanDeviceImp;
+}
+
+SysmanProductHelper *WddmSysmanImp::getSysmanProductHelper() {
+    UNRECOVERABLE_IF(nullptr == pSysmanProductHelper);
+    return pSysmanProductHelper.get();
 }
 
 void WddmSysmanImp::createFwUtilInterface() {

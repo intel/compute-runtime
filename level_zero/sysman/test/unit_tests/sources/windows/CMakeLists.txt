@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,4 +15,5 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_driver.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_manager.cpp
   )
+  add_subdirectories()
 endif()
