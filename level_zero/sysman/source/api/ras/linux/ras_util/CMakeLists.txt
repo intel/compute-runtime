@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,4 +13,5 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_ras_util_pmu.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_ras_util_gsc.cpp
   )
+  add_subdirectories()
 endif()

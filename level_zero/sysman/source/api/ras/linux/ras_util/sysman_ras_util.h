@@ -30,6 +30,7 @@ enum class RasInterfaceType {
     pmu = 0,
     pmt,
     gsc,
+    netlink,
     none,
 };
 
