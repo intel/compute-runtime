@@ -382,6 +382,11 @@ void DebugSessionLinuxXe::handleVmBindWithoutUfence(VmBindData &vmBindData, VmBi
 void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
     bool shouldAckEvent = vmBindData.vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
     auto connection = clientHandleToConnection[clientHandle].get();
+    auto elfHandleInVmBind = invalidHandle;
+
+    uint64_t moduleHandle = invalidHandle;
+    bool triggerModuleLoadEvent = false;
+
     for (auto &vmBindOpData : vmBindData.vmBindOpMap) {
         UNRECOVERABLE_IF(vmBindOpData.second.pendingNumExtensions);
         for (const auto &vmBindOpMetadata : vmBindOpData.second.vmBindOpMetadataVec) {
@@ -417,62 +422,51 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         elfMap[isa->moduleBegin] = isa->elfHandle;
                         isaMap[vmBindOp.addr] = std::move(isa);
                         isaMap[vmBindOp.addr]->moduleLoadEventAck = true;
+                        elfHandleInVmBind = vmBindOpMetadata.metadata_handle;
                     }
                 }
                 if (metaDataEntry.metadata.type == DRM_XE_DEBUG_METADATA_PROGRAM_MODULE) {
                     auto &module = connection->metaDataToModule[vmBindOpMetadata.metadata_handle];
-                    uint64_t loadAddress = 0;
                     module.segmentVmBindCounter[0]++;
                     DEBUG_BREAK_IF(module.loadAddresses[0].size() > module.segmentCount);
 
                     bool canTriggerEvent = module.loadAddresses[0].size() == (module.segmentCount - 1);
                     module.loadAddresses[0].insert(vmBindOp.addr);
                     if (canTriggerEvent && module.loadAddresses[0].size() == module.segmentCount) {
-                        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                        loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[0].begin(), module.loadAddresses[0].end()));
-                        PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
-
-                        zet_debug_event_t debugEvent = {};
-                        debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
-                        debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-                        debugEvent.info.module.load = loadAddress;
-                        debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(metaDataEntry.data.get());
-                        debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(metaDataEntry.data.get()) + metaDataEntry.metadata.len;
-                        debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
-
-                        pushApiEvent(debugEvent, metaDataEntry.metadata.metadata_handle);
-                        {
-                            std::lock_guard<std::mutex> lock(asyncThreadMutex);
-                            if (vmBindData.vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE) {
-                                if (vmBindData.vmBindUfence.base.flags & DRM_XE_EUDEBUG_EVENT_NEED_ACK) {
-                                    EventToAck ackEvent(vmBindData.vmBindUfence.base.seqno, vmBindData.vmBindUfence.base.type);
-                                    module.ackEvents[0].push_back(ackEvent);
-                                    shouldAckEvent = false;
-                                }
-                            }
-                        }
+                        triggerModuleLoadEvent = true;
+                        moduleHandle = vmBindOpMetadata.metadata_handle;
                     }
                 }
             }
+        }
+    }
 
-            bool destroy = vmBindOp.base.flags & DRM_XE_EUDEBUG_EVENT_DESTROY;
-            if (destroy && metaDataEntry.metadata.type == DRM_XE_DEBUG_METADATA_PROGRAM_MODULE) {
-                auto &module = connection->metaDataToModule[vmBindOpMetadata.metadata_handle];
-                module.segmentVmBindCounter[0]--;
-                if (module.segmentVmBindCounter[0] == 0) {
-                    zet_debug_event_t debugEvent = {};
+    if (triggerModuleLoadEvent) {
+        DEBUG_BREAK_IF(moduleHandle == invalidHandle);
+        DEBUG_BREAK_IF(elfHandleInVmBind == invalidHandle);
+        auto &metaDataEntry = connection->metaDataMap[moduleHandle];
+        auto &module = connection->metaDataToModule[moduleHandle];
+        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+        auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[0].begin(), module.loadAddresses[0].end()));
+        PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
 
-                    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                    auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[0].begin(), module.loadAddresses[0].end()));
-                    debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
-                    debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-                    debugEvent.info.module.load = loadAddress;
-                    debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(metaDataEntry.data.get());
-                    debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(metaDataEntry.data.get()) + metaDataEntry.metadata.len;
-                    pushApiEvent(debugEvent, metaDataEntry.metadata.metadata_handle);
+        auto &elfMetadata = connection->metaDataMap[elfHandleInVmBind];
+        zet_debug_event_t debugEvent = {};
+        debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+        debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+        debugEvent.info.module.load = loadAddress;
+        debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(elfMetadata.data.get());
+        debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(elfMetadata.data.get()) + elfMetadata.metadata.len;
+        debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+
+        pushApiEvent(debugEvent, metaDataEntry.metadata.metadata_handle);
+        {
+            std::lock_guard<std::mutex> lock(asyncThreadMutex);
+            if (vmBindData.vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE) {
+                if (vmBindData.vmBindUfence.base.flags & DRM_XE_EUDEBUG_EVENT_NEED_ACK) {
+                    EventToAck ackEvent(vmBindData.vmBindUfence.base.seqno, vmBindData.vmBindUfence.base.type);
+                    module.ackEvents[0].push_back(ackEvent);
                     shouldAckEvent = false;
-                    module.loadAddresses[0].clear();
-                    module.moduleLoadEventAcked[0] = false;
                 }
             }
         }
