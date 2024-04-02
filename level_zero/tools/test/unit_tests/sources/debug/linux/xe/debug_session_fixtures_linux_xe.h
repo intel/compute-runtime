@@ -264,6 +264,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     static constexpr uint64_t mockClientHandle = 1;
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
     uint32_t countToAddThreadToNewlyStoppedFromRaisedAttentionForTileSession = 0;
+    int64_t returnTimeDiff = -1;
 };
 
 struct MockAsyncThreadDebugSessionLinuxXe : public MockDebugSessionLinuxXe {

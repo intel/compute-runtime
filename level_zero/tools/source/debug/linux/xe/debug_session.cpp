@@ -102,6 +102,8 @@ void *DebugSessionLinuxXe::asyncThreadFunction(void *arg) {
 
     while (self->asyncThread.threadActive) {
         self->handleEventsAsync();
+        self->generateEventsAndResumeStoppedThreads();
+        self->sendInterrupts();
     }
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");

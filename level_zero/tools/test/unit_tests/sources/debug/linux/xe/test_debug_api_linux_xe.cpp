@@ -1982,5 +1982,41 @@ TEST_F(DebugApiLinuxTestXe, GivenNoElfDataImplementationThenGetElfDataReturnsNul
     ASSERT_EQ(clientConnection->metaDataMap[11].metadata.len, sessionMock->getClientConnection(MockDebugSessionLinuxXe::mockClientHandle)->getElfSize(11));
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenNoAttentionEventIsReadThenThreadUnavailableEventIsGenerated) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->returnTimeDiff = DebugSessionLinuxXe::interruptTimeout * 10;
+    session->synchronousInternalEventRead = true;
+
+    ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
+
+    auto result = session->interrupt(thread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    session->startAsyncThread();
+
+    while (session->getInternalEventCounter < 2)
+        ;
+
+    session->closeAsyncThread();
+
+    EXPECT_EQ(session->apiEvents.size(), 1u);
+    if (session->apiEvents.size() > 0) {
+        auto event = session->apiEvents.front();
+        EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, event.type);
+        EXPECT_EQ(0u, event.info.thread.thread.slice);
+        EXPECT_EQ(0u, event.info.thread.thread.subslice);
+        EXPECT_EQ(0u, event.info.thread.thread.eu);
+        EXPECT_EQ(UINT32_MAX, event.info.thread.thread.thread);
+    }
+}
+
 } // namespace ult
 } // namespace L0
