@@ -400,6 +400,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event));
     }
 
+    appendSynchronizedDispatchCleanupSection();
+
     addToMappedEventList(event);
     if (NEO::debugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
@@ -445,6 +447,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
 
     handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event));
 
+    appendSynchronizedDispatchCleanupSection();
+
     return ret;
 }
 
@@ -487,6 +491,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     appendSignalEventPostWalker(event, nullptr, nullptr, false, false);
 
     handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event));
+
+    appendSynchronizedDispatchCleanupSection();
 
     return ret;
 }
@@ -539,6 +545,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     addToMappedEventList(event);
     appendSignalEventPostWalker(event, nullptr, nullptr, false, false);
 
+    appendSynchronizedDispatchCleanupSection();
+
     return ret;
 }
 
@@ -590,6 +598,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     }
     handleInOrderDependencyCounter(event, false);
 
+    appendSynchronizedDispatchCleanupSection();
+
     if (NEO::debugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
             *commandContainer.getCommandStream(),
@@ -634,6 +644,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
         appendSignalInOrderDependencyCounter(signalEvent);
     }
     handleInOrderDependencyCounter(signalEvent, false);
+
+    appendSynchronizedDispatchCleanupSection();
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1624,6 +1636,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         handleInOrderDependencyCounter(signalEvent, false);
     }
 
+    appendSynchronizedDispatchCleanupSection();
+
     if (NEO::debugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
             *commandContainer.getCommandStream(),
@@ -2158,6 +2172,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
     }
     handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdChaining);
+
+    appendSynchronizedDispatchCleanupSection();
 
     if (NEO::debugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
@@ -2877,6 +2893,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     }
     handleInOrderDependencyCounter(signalEvent, false);
 
+    appendSynchronizedDispatchCleanupSection();
+
     addToMappedEventList(signalEvent);
 
     return ZE_RESULT_SUCCESS;
@@ -3419,6 +3437,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         appendSignalInOrderDependencyCounter(signalEvent);
     }
     handleInOrderDependencyCounter(signalEvent, false);
+
+    appendSynchronizedDispatchCleanupSection();
 
     return ZE_RESULT_SUCCESS;
 }
@@ -4028,4 +4048,25 @@ void CommandListCoreFamily<gfxCoreFamily>::appendFullSynchronizedDispatchInit() 
     // End section
     NEO::EncodeMiPredicate<GfxFamily>::encode(*cmdStream, NEO::MiPredicateType::disable);
 }
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchCleanupSection() {
+    if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::full) {
+        return;
+    }
+
+    using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
+    using ATOMIC_OPCODES = typename MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename MI_ATOMIC::DATA_SIZE;
+
+    auto cmdStream = commandContainer.getCommandStream();
+    auto syncAllocationGpuVa = device->getSyncDispatchTokenAllocation()->getGpuAddress();
+
+    const uint64_t queueIdToken = static_cast<uint64_t>(this->syncDispatchQueueId + 1) << 32;
+
+    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_DECREMENT, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, 0, 0);
+
+    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_CMP_WR, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, queueIdToken, 0);
+}
+
 } // namespace L0
