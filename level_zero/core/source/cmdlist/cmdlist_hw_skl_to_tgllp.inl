@@ -219,6 +219,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->dcFlushSupport,                                   // dcFlushEnable
         this->heaplessModeEnabled,                              // isHeaplessModeEnabled
         false,                                                  // interruptEvent
+        !this->scratchAddressPatchingEnabled,                   // immediateScratchAddressPatching
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);

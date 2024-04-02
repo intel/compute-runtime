@@ -87,7 +87,7 @@ if(SUPPORT_DG2_AND_LATER)
   )
 endif()
 
-if(NOT SUPPORT_HEAPLESS)
+if(NOT SUPPORTED_HEAPLESS)
   list(APPEND NEO_CORE_COMMAND_STREAM
        ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_heap_addressing.inl
   )

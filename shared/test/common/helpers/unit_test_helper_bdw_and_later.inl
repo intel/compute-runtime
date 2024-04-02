@@ -154,4 +154,9 @@ template <typename GfxFamily>
 void UnitTestHelper<GfxFamily>::verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator) {
 }
 
+template <typename GfxFamily>
+GenCmdList::iterator UnitTestHelper<GfxFamily>::findWalkerCmd(GenCmdList::iterator begin, GenCmdList::iterator end, bool heapless) {
+    return find<typename GfxFamily::GPGPU_WALKER *>(begin, end);
+}
+
 } // namespace NEO

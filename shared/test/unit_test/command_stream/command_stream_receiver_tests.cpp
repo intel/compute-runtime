@@ -5095,3 +5095,30 @@ HWTEST_F(CommandStreamReceiverHwHeaplessTest, whenHeaplessCommandStreamReceiverF
     EXPECT_ANY_THROW(csr->flushImmediateTaskStateless(commandStream, 0, csr->recordedImmediateDispatchFlags, *pDevice));
     EXPECT_ANY_THROW(csr->handleImmediateFlushStatelessAllocationsResidency(0, commandStream));
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskInHeaplessModeWhenNextDispatchRequiresScratchSpaceThenNoScratchIsAllocated,
+          IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.heaplessModeEnabled = true;
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    commandStreamReceiver.setRequiredScratchSizes(0x100, 0);
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    auto frontEndCmd = hwParserCsr.getCommand<CFE_STATE>();
+    ASSERT_EQ(nullptr, frontEndCmd);
+
+    EXPECT_EQ(nullptr, commandStreamReceiver.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+}

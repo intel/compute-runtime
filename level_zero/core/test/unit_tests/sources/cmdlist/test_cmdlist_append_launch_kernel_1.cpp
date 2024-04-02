@@ -214,6 +214,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         commandList->getDcFlushRequired(true),      // dcFlushEnable
         false,                                      // isHeaplessModeEnabled
         false,                                      // interruptEvent
+        false,                                      // immediateScratchAddressPatching
     };
     NEO::EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(commandContainer, dispatchKernelArgs);
 

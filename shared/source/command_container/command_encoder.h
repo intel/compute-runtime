@@ -73,6 +73,7 @@ struct EncodeDispatchKernelArgs {
     bool dcFlushEnable = false;
     bool isHeaplessModeEnabled = false;
     bool interruptEvent = false;
+    bool immediateScratchAddressPatching = false;
 
     bool requiresSystemMemoryFence() const {
         return (isHostScopeSignalEvent && isKernelUsingSystemAllocation);

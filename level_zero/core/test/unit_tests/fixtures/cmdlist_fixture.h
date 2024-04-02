@@ -362,5 +362,25 @@ struct CommandQueueThreadArbitrationPolicyFixture {
     L0::Device *device = nullptr;
 };
 
+struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixture {
+    void setUpParams(int32_t globalStatelessMode, int32_t heaplessStateInitEnabled);
+    void tearDown();
+
+    uint64_t getSurfStateGpuBase(bool useImmediate);
+
+    template <typename FamilyType>
+    void testScratchInline(bool useImmediate);
+
+    int32_t fixtureGlobalStatelessMode = 0;
+    uint32_t scratchInlineOffset = 8;
+};
+
+template <int32_t globalStatelessMode, int32_t heaplessStateInitEnabled>
+struct CommandListScratchPatchFixture : public CommandListScratchPatchFixtureInit {
+    void setUp() {
+        CommandListScratchPatchFixtureInit::setUpParams(globalStatelessMode, heaplessStateInitEnabled);
+    }
+};
+
 } // namespace ult
 } // namespace L0

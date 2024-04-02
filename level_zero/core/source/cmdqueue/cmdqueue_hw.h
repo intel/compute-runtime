@@ -114,6 +114,7 @@ struct CommandQueueHw : public CommandQueueImp {
         bool rtDispatchRequired = false;
         bool globalInit = false;
         bool lockScratchController = false;
+        bool cmdListScratchAddressPatchingEnabled = false;
     };
 
     ze_result_t executeCommandListsRegularHeapless(CommandListExecutionContext &ctx,
@@ -251,6 +252,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                               CommandListRequiredStateChange &cmdListRequired);
     inline void updateBaseAddressState(CommandList *lastCommandList);
     inline void updateDebugSurfaceState(CommandListExecutionContext &ctx);
+    inline void patchCommands(CommandList &commandList, CommandListExecutionContext &ctx);
 
     size_t alignedChildStreamPadding{};
 };

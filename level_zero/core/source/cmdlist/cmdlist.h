@@ -360,6 +360,10 @@ struct CommandList : _ze_command_list_handle_t {
         return stateBaseAddressTracking;
     }
 
+    bool getCmdListScratchAddressPatchingEnabled() const {
+        return scratchAddressPatchingEnabled;
+    }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
@@ -441,6 +445,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool useOnlyGlobalTimestamps = false;
     bool heaplessModeEnabled = false;
     bool heaplessStateInitEnabled = false;
+    bool scratchAddressPatchingEnabled = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

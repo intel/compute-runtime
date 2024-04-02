@@ -8,9 +8,11 @@
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -577,6 +579,43 @@ void CommandQueueThreadArbitrationPolicyFixture::tearDown() {
     commandList->destroy();
     commandQueue->destroy();
     L0::globalDriver = nullptr;
+}
+
+void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode, int32_t heaplessStateInitEnabled) {
+    fixtureGlobalStatelessMode = globalStatelessMode;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(globalStatelessMode);
+
+    ModuleMutableCommandListFixture::setUp();
+
+    commandList->scratchAddressPatchingEnabled = true;
+    commandList->heaplessModeEnabled = true;
+    commandList->heaplessStateInitEnabled = !!heaplessStateInitEnabled;
+
+    commandListImmediate->heaplessModeEnabled = true;
+    commandListImmediate->heaplessStateInitEnabled = !!heaplessStateInitEnabled;
+
+    commandQueue->heaplessModeEnabled = true;
+    commandQueue->heaplessStateInitEnabled = !!heaplessStateInitEnabled;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
+    mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 0x8;
+    mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress.offset = scratchInlineOffset;
+}
+
+void CommandListScratchPatchFixtureInit::tearDown() {
+    ModuleMutableCommandListFixture::tearDown();
+}
+
+uint64_t CommandListScratchPatchFixtureInit::getSurfStateGpuBase(bool useImmediate) {
+    if (fixtureGlobalStatelessMode == 1) {
+        return device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getGlobalStatelessHeapAllocation()->getGpuAddress();
+    } else {
+        if (useImmediate) {
+            return device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getIndirectHeap(NEO::surfaceState, 0).getGpuBase();
+        } else {
+            return commandList->commandContainer.getIndirectHeap(NEO::surfaceState)->getGpuBase();
+        }
+    }
 }
 
 } // namespace ult

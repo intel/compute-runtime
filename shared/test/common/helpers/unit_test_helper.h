@@ -100,6 +100,7 @@ struct UnitTestHelper {
 
     static bool findStateCacheFlushPipeControl(LinearStream &csrStream);
     static void verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator);
+    static GenCmdList::iterator findWalkerCmd(GenCmdList::iterator begin, GenCmdList::iterator end, bool heapless);
 };
 
 } // namespace NEO

@@ -303,7 +303,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     flushData.stateComputeModeFullConfigurationNeeded = getStateComputeModeDirty();
     flushData.stateBaseAddressFullConfigurationNeeded = getGSBAStateDirty();
 
-    if (dispatchFlags.sshCpuBase != nullptr && (this->requiredScratchSlot0Size > 0 || this->requiredScratchSlot1Size > 0)) {
+    if (!this->heaplessModeEnabled && dispatchFlags.sshCpuBase != nullptr && (this->requiredScratchSlot0Size > 0 || this->requiredScratchSlot1Size > 0)) {
         bool checkFeStateDirty = false;
         bool checkSbaStateDirty = false;
         scratchSpaceController->setRequiredScratchSpace(dispatchFlags.sshCpuBase,

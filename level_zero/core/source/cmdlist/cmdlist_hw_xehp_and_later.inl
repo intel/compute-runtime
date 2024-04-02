@@ -127,10 +127,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             ", SIMD: ", kernelInfo->getMaxSimdSize());
 
     bool needScratchSpace = false;
+    bool kernelNeedsScratchSpace = false;
     for (uint32_t slotId = 0u; slotId < 2; slotId++) {
         commandListPerThreadScratchSize[slotId] = std::max<uint32_t>(commandListPerThreadScratchSize[slotId], kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId]);
         if (commandListPerThreadScratchSize[slotId] > 0) {
             needScratchSpace = true;
+        }
+        if (kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId] > 0) {
+            kernelNeedsScratchSpace = true;
         }
     }
 
@@ -342,10 +346,26 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->dcFlushSupport,                                   // dcFlushEnable
         this->heaplessModeEnabled,                              // isHeaplessModeEnabled
         interruptEvent,                                         // interruptEvent
+        !this->scratchAddressPatchingEnabled,                   // immediateScratchAddressPatching
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
     launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;
+
+    if (this->heaplessModeEnabled && this->scratchAddressPatchingEnabled && kernelNeedsScratchSpace) {
+        CommandToPatch scratchInlineData;
+        scratchInlineData.pDestination = dispatchKernelArgs.outWalkerPtr;
+        scratchInlineData.pCommand = nullptr;
+        scratchInlineData.type = CommandToPatch::CommandType::ComputeWalkerInlineDataScratch;
+        scratchInlineData.offset = NEO::EncodeDispatchKernel<GfxFamily>::getInlineDataOffset(dispatchKernelArgs) +
+                                   kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset;
+        scratchInlineData.patchSize = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize;
+        auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
+        if (ssh != nullptr) {
+            scratchInlineData.baseAddress = ssh->getGpuBase();
+        }
+        commandsToPatch.push_back(scratchInlineData);
+    }
 
     if (!this->isFlushTaskSubmissionEnabled) {
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;

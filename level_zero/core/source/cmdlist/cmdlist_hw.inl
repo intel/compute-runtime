@@ -3265,6 +3265,8 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
         case CommandToPatch::PauseOnEnqueuePipeControlEnd:
             UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
             break;
+        case CommandToPatch::ComputeWalkerInlineDataScratch:
+            break;
         default:
             UNRECOVERABLE_IF(true);
         }

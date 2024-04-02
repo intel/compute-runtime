@@ -332,15 +332,22 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         auto address = heap->getHeapGpuBase() + offsetThreadData;
         std::memcpy(inlineDataPointer + indirectDataPointerAddress.offset, &address, indirectDataPointerAddress.pointerSize);
 
-        auto requiredScratchSlot0Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
-        auto requiredScratchSlot1Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
-        auto csr = args.device->getDefaultEngine().commandStreamReceiver;
-        auto ssh = container.getIndirectHeap(HeapType::surfaceState);
+        if (args.immediateScratchAddressPatching) {
+            auto requiredScratchSlot0Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
+            auto requiredScratchSlot1Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
+            auto csr = args.device->getDefaultEngine().commandStreamReceiver;
+            NEO::IndirectHeap *ssh = nullptr;
+            if (csr->getGlobalStatelessHeapAllocation() != nullptr) {
+                ssh = csr->getGlobalStatelessHeap();
+            } else {
+                ssh = args.surfaceStateHeap ? args.surfaceStateHeap : container.getIndirectHeap(HeapType::surfaceState);
+            }
 
-        uint64_t scratchAddress = 0u;
-        EncodeDispatchKernel<Family>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr);
-        auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
-        std::memcpy(inlineDataPointer + scratchPointerAddress.offset, &scratchAddress, scratchPointerAddress.pointerSize);
+            uint64_t scratchAddress = 0u;
+            EncodeDispatchKernel<Family>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr);
+            auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
+            std::memcpy(inlineDataPointer + scratchPointerAddress.offset, &scratchAddress, scratchPointerAddress.pointerSize);
+        }
     } else {
         walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
         walkerCmd.setIndirectDataLength(sizeThreadData);

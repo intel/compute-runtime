@@ -88,7 +88,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::sshState;
     using BaseClass::staticWorkPartitioningEnabled;
     using BaseClass::streamProperties;
-
     using BaseClass::wasSubmittedToSingleSubdevice;
     using BaseClass::CommandStreamReceiver::activePartitions;
     using BaseClass::CommandStreamReceiver::activePartitionsConfig;
@@ -115,6 +114,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
     using BaseClass::CommandStreamReceiver::gsbaFor32BitProgrammed;
+    using BaseClass::CommandStreamReceiver::heaplessModeEnabled;
     using BaseClass::CommandStreamReceiver::immWritePostSyncWriteOffset;
     using BaseClass::CommandStreamReceiver::initDirectSubmission;
     using BaseClass::CommandStreamReceiver::internalAllocationStorage;

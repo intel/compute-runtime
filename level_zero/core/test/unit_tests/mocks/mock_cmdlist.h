@@ -80,6 +80,8 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::getInOrderIncrementValue;
+    using BaseClass::heaplessModeEnabled;
+    using BaseClass::heaplessStateInitEnabled;
     using BaseClass::hostPtrMap;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
@@ -102,6 +104,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
+    using BaseClass::scratchAddressPatchingEnabled;
     using BaseClass::setupTimestampEventForMultiTile;
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateBaseAddressTracking;
@@ -273,6 +276,8 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
     using BaseClass::getDcFlushRequired;
+    using BaseClass::heaplessModeEnabled;
+    using BaseClass::heaplessStateInitEnabled;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::initialize;
     using BaseClass::isFlushTaskSubmissionEnabled;
@@ -283,6 +288,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
+    using BaseClass::scratchAddressPatchingEnabled;
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;

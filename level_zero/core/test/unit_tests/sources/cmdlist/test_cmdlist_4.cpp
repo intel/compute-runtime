@@ -1552,5 +1552,32 @@ HWTEST_F(CommandListCreate, givenDeviceWhenCreatingCommandListForNotInternalUsag
     EXPECT_FALSE(whiteboxCommandList->internalUsage);
     whiteboxCommandList->destroy();
 }
+
+using CommandListScratchPatchPrivateHeapsTest = Test<CommandListScratchPatchFixture<0, 0>>;
+using CommandListScratchPatchGlobalStatelessHeapsTest = Test<CommandListScratchPatchFixture<1, 0>>;
+
+using CommandListScratchPatchPrivateHeapsStateInitTest = Test<CommandListScratchPatchFixture<0, 1>>;
+using CommandListScratchPatchGlobalStatelessHeapsStateInitTest = Test<CommandListScratchPatchFixture<1, 1>>;
+
+HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false);
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false);
+}
+
+HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false);
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchInline<FamilyType>(false);
+}
+
 } // namespace ult
 } // namespace L0

@@ -6,6 +6,9 @@
  */
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -1403,6 +1406,91 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::testBody(NonKernelOperatio
 
     appendNonKernelOperation(commandListImmediateCoexisting.get(), operation);
     validateDispatchFlags(true, ultCsr.recordedImmediateDispatchFlags, ultCsr.recordedSsh);
+}
+
+template <typename FamilyType>
+void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    auto scratchController = csr->getScratchSpaceController();
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs = {};
+    dispatchKernelArgs.isHeaplessModeEnabled = true;
+
+    size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(useImmediate);
+
+    auto scratchCmdList = static_cast<L0::CommandList *>(commandList.get());
+    auto cmdListStream = commandList->commandContainer.getCommandStream();
+    if (useImmediate) {
+        scratchCmdList = static_cast<L0::CommandList *>(commandListImmediate.get());
+        cmdListStream = commandListImmediate->commandContainer.getCommandStream();
+    }
+
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto result = ZE_RESULT_SUCCESS;
+    size_t usedBefore = cmdListStream->getUsed();
+    result = scratchCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t usedAfter = cmdListStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdListStream->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+
+    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerCmd(cmdList.begin(), cmdList.end(), true);
+    ASSERT_NE(cmdList.end(), walkerIterator);
+    void *walkerPtrWithScratch = *walkerIterator;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x0;
+
+    usedBefore = cmdListStream->getUsed();
+    result = scratchCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    usedAfter = cmdListStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdListStream->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+
+    walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerCmd(cmdList.begin(), cmdList.end(), true);
+    ASSERT_NE(cmdList.end(), walkerIterator);
+    void *walkerPtrWithoutScratch = *walkerIterator;
+
+    if (!useImmediate) {
+        result = commandList->close();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        auto commandListHandle = commandList->toHandle();
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+
+    auto scratchAddress = scratchController->getScratchPatchAddress();
+    auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
+
+    uint64_t scratchInlineValue = 0;
+
+    void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
+    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+    EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+
+    scratchInlinePtr = ptrOffset(walkerPtrWithoutScratch, (inlineOffset + scratchInlineOffset));
+    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+    EXPECT_EQ(0u, scratchInlineValue);
+
+    auto scratch0Allocation = scratchController->getScratchSpaceSlot0Allocation();
+    bool scratchInResidency = ultCsr->isMadeResident(scratch0Allocation);
+    EXPECT_TRUE(scratchInResidency);
 }
 
 } // namespace ult

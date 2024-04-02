@@ -39,6 +39,8 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using CommandQueue::dispatchCmdListBatchBufferAsPrimary;
     using CommandQueue::doubleSbaWa;
     using CommandQueue::frontEndStateTracking;
+    using CommandQueue::heaplessModeEnabled;
+    using CommandQueue::heaplessStateInitEnabled;
     using CommandQueue::internalQueueForImmediateCommandList;
     using CommandQueue::internalUsage;
     using CommandQueue::partitionCount;

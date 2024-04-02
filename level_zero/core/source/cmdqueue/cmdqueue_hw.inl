@@ -146,6 +146,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
 
     this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
 
+    if (ctx.cmdListScratchAddressPatchingEnabled == true) {
+        this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
+    }
+
     NEO::LinearStream child(nullptr);
     if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
         return ret;
@@ -168,7 +172,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
 
         ctx.childGpuAddressPositionBeforeDynamicPreamble = child.getCurrentGpuAddressPosition();
 
-        this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
+        this->patchCommands(*commandList, ctx);
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
 
         this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
@@ -254,9 +258,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx);
 
-    if (this->heaplessModeEnabled == false) {
+    if (this->heaplessModeEnabled == false || ctx.cmdListScratchAddressPatchingEnabled == true) {
         this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
     }
+
     this->setFrontEndStateProperties(ctx);
 
     auto neoDevice = this->device->getNEODevice();
@@ -360,7 +365,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
             }
         }
 
-        this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
+        this->patchCommands(*commandList, ctx);
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
 
         this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
@@ -487,9 +492,8 @@ void CommandQueueHw<gfxCoreFamily>::programFrontEndAndClearDirtyFlag(
     if (!shouldFrontEndBeProgrammed) {
         return;
     }
-    auto scratchSpaceController = this->csr->getScratchSpaceController();
-    programFrontEnd(scratchSpaceController->getScratchPatchAddress(),
-                    scratchSpaceController->getPerThreadScratchSpaceSizeSlot0(),
+    programFrontEnd(ctx.scratchSpaceController->getScratchPatchAddress(),
+                    ctx.scratchSpaceController->getPerThreadScratchSpaceSizeSlot0(),
                     cmdStream,
                     csrState);
     ctx.frontEndStateDirty = false;
@@ -740,6 +744,8 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
             }
 
             this->partitionCount = std::max(this->partitionCount, commandList->getPartitionCount());
+
+            ctx.cmdListScratchAddressPatchingEnabled |= commandList->getCmdListScratchAddressPatchingEnabled();
         }
 
         makeResidentAndMigrate(ctx.isMigrationRequested, commandContainer.getResidencyContainer());
@@ -828,15 +834,23 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFla
     if (ctx.lockScratchController) {
         defaultCsrLock = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->obtainUniqueOwnership();
     }
+
+    bool localGsbaDirty = false;
+    bool localFrontEndDirty = false;
     handleScratchSpace(this->heapContainer,
                        ctx.scratchSpaceController,
                        ctx.globalStatelessAllocation,
-                       ctx.gsbaStateDirty, ctx.frontEndStateDirty,
+                       localGsbaDirty, localFrontEndDirty,
                        ctx.perThreadScratchSpaceSlot0Size, ctx.perThreadScratchSpaceSlot1Size);
-    ctx.gsbaStateDirty |= this->csr->getGSBAStateDirty();
-    ctx.scratchGsba = ctx.scratchSpaceController->calculateNewGSH();
 
-    ctx.globalInit |= ctx.gsbaStateDirty;
+    if (this->heaplessModeEnabled == false) {
+        ctx.gsbaStateDirty |= localGsbaDirty;
+        ctx.frontEndStateDirty |= localFrontEndDirty;
+
+        ctx.gsbaStateDirty |= this->csr->getGSBAStateDirty();
+        ctx.globalInit |= ctx.gsbaStateDirty;
+    }
+    ctx.scratchGsba = ctx.scratchSpaceController->calculateNewGSH();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1172,10 +1186,9 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStartSecondaryBa
                                             }) != returnPoints.end();
             if (cmdBufferHasRestarts) {
                 while (returnPointIdx < returnPointsSize && allocation == returnPoints[returnPointIdx].currentCmdBuffer) {
-                    auto scratchSpaceController = this->csr->getScratchSpaceController();
                     ctx.cmdListBeginState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(returnPoints[returnPointIdx].configSnapshot.frontEndState);
-                    programFrontEnd(scratchSpaceController->getScratchPatchAddress(),
-                                    scratchSpaceController->getPerThreadScratchSpaceSizeSlot0(),
+                    programFrontEnd(ctx.scratchSpaceController->getScratchPatchAddress(),
+                                    ctx.scratchSpaceController->getPerThreadScratchSpaceSizeSlot0(),
                                     commandStream,
                                     ctx.cmdListBeginState);
                     NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&commandStream,
@@ -1684,6 +1697,15 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressDebugTracking() {
         size = this->device->getL0Debugger()->getSbaTrackingCommandsSize(trackedAddressesCount);
     }
     return size;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, CommandListExecutionContext &ctx) {
+    uint64_t scratchAddress = ctx.scratchSpaceController->getScratchPatchAddress();
+    if (this->heaplessModeEnabled && this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
+        scratchAddress += ctx.globalStatelessAllocation->getGpuAddress();
+    }
+    patchCommands(commandList, scratchAddress);
 }
 
 } // namespace L0

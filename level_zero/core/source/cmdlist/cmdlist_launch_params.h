@@ -30,6 +30,7 @@ struct CommandToPatch {
         CbEventTimestampClearStoreDataImm,
         CbWaitEventSemaphoreWait,
         CbWaitEventLoadRegisterImm,
+        ComputeWalkerInlineDataScratch,
         Invalid
     };
     void *pDestination = nullptr;
@@ -37,6 +38,8 @@ struct CommandToPatch {
     size_t offset = 0;
     CommandType type = Invalid;
     size_t inOrderPatchListIndex = 0;
+    size_t patchSize = 0;
+    uint64_t baseAddress = 0;
 };
 
 using CommandToPatchContainer = std::vector<CommandToPatch>;

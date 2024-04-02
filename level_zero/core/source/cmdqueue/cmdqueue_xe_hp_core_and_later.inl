@@ -228,6 +228,12 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 args);
             break;
         }
+        case CommandToPatch::ComputeWalkerInlineDataScratch: {
+            uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
+            void *scratchAddressPatch = ptrOffset(commandToPatch.pDestination, commandToPatch.offset);
+            std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
+            break;
+        }
         default:
             UNRECOVERABLE_IF(true);
         }
