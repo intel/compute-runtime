@@ -81,8 +81,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     bool inlineDataProgrammingRequired = EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelInfo().kernelDescriptor);
     auto &queueCsr = commandQueue.getGpgpuCommandStreamReceiver();
-
-    auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
+    auto &device = commandQueue.getDevice();
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
 
     TagNodeBase *timestampPacketNode = nullptr;
     if (walkerArgs.currentTimestampPacketNodes && (walkerArgs.currentTimestampPacketNodes->peekNodes().size() > walkerArgs.currentDispatchIndex)) {
@@ -94,7 +94,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
-    const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
+    const auto &hwInfo = device.getHardwareInfo();
     constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
     if constexpr (heaplessModeEnabled == false) {
@@ -109,8 +109,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     auto requiredScratchSlot0Size = queueCsr.getRequiredScratchSlot0Size();
     auto requiredScratchSlot1Size = queueCsr.getRequiredScratchSlot1Size();
+    auto *defaultCsr = device.getDefaultEngine().commandStreamReceiver;
+
     uint64_t scratchAddress = 0u;
-    EncodeDispatchKernel<GfxFamily>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, queueCsr);
+    EncodeDispatchKernel<GfxFamily>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, *defaultCsr);
 
     auto interfaceDescriptor = &walkerCmd.getInterfaceDescriptor();
 
@@ -131,7 +133,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         interfaceDescriptor,
         localIdsGenerationByRuntime,
         scratchAddress,
-        commandQueue.getDevice());
+        device);
 
     bool kernelSystemAllocation = false;
     if (kernel.isBuiltIn) {
@@ -140,7 +142,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
     }
     bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
-    auto maxFrontEndThreads = commandQueue.getDevice().getDeviceInfo().maxFrontEndThreads;
+    auto maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads;
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0, maxFrontEndThreads};
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
 
@@ -153,7 +155,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
 
     if (partitionWalker) {
-        const uint64_t workPartitionAllocationGpuVa = commandQueue.getDevice().getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
+        const uint64_t workPartitionAllocationGpuVa = defaultCsr->getWorkPartitionAllocationGpuAddress();
         uint32_t partitionCount = 0u;
         ImplicitScalingDispatch<GfxFamily>::template dispatchCommands<WalkerType>(commandStream,
                                                                                   walkerCmd,
