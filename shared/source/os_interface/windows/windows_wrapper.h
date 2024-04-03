@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,9 @@
 #include <Windows.h>
 
 #include <ShlObj.h>
+#include <cfgmgr32.h>
 #include <winternl.h>
+#pragma comment(lib, "cfgmgr32.lib")
 
 #if __clang__
 #pragma clang diagnostic pop
