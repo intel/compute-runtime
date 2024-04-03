@@ -181,29 +181,33 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenGetti
     EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(ptrInPoolButNotAllocated));
 
     SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
-    const auto allocationSize = 1 * MemoryConstants::kiloByte;
-    EXPECT_GT(usmMemAllocPool.allocationThreshold, allocationSize + usmMemAllocPool.chunkAlignment);
+    const auto requestedAllocSize = 1 * MemoryConstants::kiloByte;
+    EXPECT_GT(usmMemAllocPool.allocationThreshold, requestedAllocSize + usmMemAllocPool.chunkAlignment);
 
     // we want an allocation from the middle of the pool for testing
-    auto unusedAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    auto unusedAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(requestedAllocSize, memoryProperties);
     EXPECT_NE(nullptr, unusedAlloc);
     EXPECT_TRUE(usmMemAllocPool.isInPool(unusedAlloc));
-    auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    auto allocFromPool = usmMemAllocPool.createUnifiedMemoryAllocation(requestedAllocSize, memoryProperties);
     EXPECT_NE(nullptr, allocFromPool);
     EXPECT_TRUE(usmMemAllocPool.isInPool(allocFromPool));
+    auto allocInfo = usmMemAllocPool.allocations.get(allocFromPool);
+    EXPECT_NE(nullptr, allocInfo);
+    auto actualAllocSize = allocInfo->size;
+    EXPECT_GE(actualAllocSize, requestedAllocSize);
 
     EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(unusedAlloc, true));
 
-    auto offsetPointer = ptrOffset(allocFromPool, allocationSize - 1);
-    auto pastEndPointer = ptrOffset(allocFromPool, allocationSize);
+    auto offsetPointer = ptrOffset(allocFromPool, actualAllocSize - 1);
+    auto pastEndPointer = ptrOffset(allocFromPool, actualAllocSize);
 
     EXPECT_TRUE(usmMemAllocPool.isInPool(offsetPointer));
     EXPECT_TRUE(usmMemAllocPool.isInPool(pastEndPointer));
 
     EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(bogusPtr));
     EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(usmMemAllocPool.pool));
-    EXPECT_EQ(allocationSize, usmMemAllocPool.getPooledAllocationSize(allocFromPool));
-    EXPECT_EQ(allocationSize, usmMemAllocPool.getPooledAllocationSize(offsetPointer));
+    EXPECT_EQ(requestedAllocSize, usmMemAllocPool.getPooledAllocationSize(allocFromPool));
+    EXPECT_EQ(requestedAllocSize, usmMemAllocPool.getPooledAllocationSize(offsetPointer));
     EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(pastEndPointer));
 
     EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(bogusPtr));
