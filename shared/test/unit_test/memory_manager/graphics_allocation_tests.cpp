@@ -641,3 +641,9 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsLinearS
     graphicsAllocation.allocationType = AllocationType::linearStream;
     EXPECT_FALSE(graphicsAllocation.hasAllocationReadOnlyType());
 }
+TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsRingBufferThenAllocationHasReadonlyType) {
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
+    graphicsAllocation.allocationType = AllocationType::ringBuffer;
+    EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
+}
