@@ -362,7 +362,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyDrmParamString("ParamChipsetId", DrmParam::paramChipsetId);
     verifyDrmParamString("ParamRevision", DrmParam::paramRevision);
     verifyDrmParamString("ParamHasPooledEu", DrmParam::paramHasPooledEu);
-    verifyDrmParamString("ParamHasScheduler", DrmParam::paramHasScheduler);
     verifyDrmParamString("ParamEuTotal", DrmParam::paramEuTotal);
     verifyDrmParamString("ParamSubsliceTotal", DrmParam::paramSubsliceTotal);
     verifyDrmParamString("ParamMinEuInPool", DrmParam::paramMinEuInPool);
@@ -374,7 +373,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyDrmParamString("QueryComputeSlices", DrmParam::queryComputeSlices);
     verifyDrmParamString("QueryMemoryRegions", DrmParam::queryMemoryRegions);
     verifyDrmParamString("QueryTopologyInfo", DrmParam::queryTopologyInfo);
-    verifyDrmParamString("SchedulerCapPreemption", DrmParam::schedulerCapPreemption);
     verifyDrmParamString("TilingNone", DrmParam::tilingNone);
     verifyDrmParamString("TilingY", DrmParam::tilingY);
 
@@ -674,9 +672,6 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         EXPECT_EQ(0, ret);
         EXPECT_EQ(dstvalue, 0);
         test.param = static_cast<int>(DrmParam::paramHasPageFault);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
-        EXPECT_EQ(-1, ret);
-        test.param = static_cast<int>(DrmParam::paramHasScheduler);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::paramCsTimestampFrequency);
@@ -1689,6 +1684,14 @@ TEST(IoctlHelperXeTest, givenNoEnginesWhenSetDefaultEngineIsCalledThenAbortIsThr
 
     auto defaultEngineType = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.defaultEngineType;
     EXPECT_THROW(xeIoctlHelper->setDefaultEngine(defaultEngineType), std::exception);
+}
+
+TEST(IoctlHelperXeTest, whenGettingPreemptionSupportThenTrueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    EXPECT_TRUE(xeIoctlHelper->isPreemptionSupported());
 }
 
 TEST(IoctlHelperXeTest, givenIoctlHelperXeAndDebugOverrideEnabledWhenGetCpuCachingModeCalledThenOverriddenValueIsReturned) {

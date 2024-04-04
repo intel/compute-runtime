@@ -1324,8 +1324,6 @@ std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
         return "ParamRevision";
     case DrmParam::paramHasPooledEu:
         return "ParamHasPooledEu";
-    case DrmParam::paramHasScheduler:
-        return "ParamHasScheduler";
     case DrmParam::paramEuTotal:
         return "ParamEuTotal";
     case DrmParam::paramSubsliceTotal:
@@ -1348,8 +1346,6 @@ std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
         return "QueryMemoryRegions";
     case DrmParam::queryTopologyInfo:
         return "QueryTopologyInfo";
-    case DrmParam::schedulerCapPreemption:
-        return "SchedulerCapPreemption";
     case DrmParam::tilingNone:
         return "TilingNone";
     case DrmParam::tilingY:

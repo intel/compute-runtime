@@ -138,8 +138,6 @@ int IoctlHelperI915::getDrmParamValueBase(DrmParam drmParam) const {
         return I915_PARAM_REVISION;
     case DrmParam::paramHasPooledEu:
         return I915_PARAM_HAS_POOLED_EU;
-    case DrmParam::paramHasScheduler:
-        return I915_PARAM_HAS_SCHEDULER;
     case DrmParam::paramEuTotal:
         return I915_PARAM_EU_TOTAL;
     case DrmParam::paramSubsliceTotal:
@@ -154,8 +152,6 @@ int IoctlHelperI915::getDrmParamValueBase(DrmParam drmParam) const {
         return DRM_I915_QUERY_MEMORY_REGIONS;
     case DrmParam::queryTopologyInfo:
         return DRM_I915_QUERY_TOPOLOGY_INFO;
-    case DrmParam::schedulerCapPreemption:
-        return I915_SCHEDULER_CAP_PREEMPTION;
     case DrmParam::tilingNone:
         return I915_TILING_NONE;
     case DrmParam::tilingY:
@@ -339,8 +335,6 @@ std::string IoctlHelperI915::getDrmParamString(DrmParam drmParam) const {
         return "I915_PARAM_REVISION";
     case DrmParam::paramHasPooledEu:
         return "I915_PARAM_HAS_POOLED_EU";
-    case DrmParam::paramHasScheduler:
-        return "I915_PARAM_HAS_SCHEDULER";
     case DrmParam::paramEuTotal:
         return "I915_PARAM_EU_TOTAL";
     case DrmParam::paramSubsliceTotal:
@@ -648,5 +642,19 @@ void IoctlHelperI915::insertEngineToContextParams(ContextParamEngines<> &context
         }
         engines[index] = *engineClassInstance;
     }
+}
+bool IoctlHelperI915::isPreemptionSupported() {
+    int schedulerCap{};
+    GetParam getParam{};
+    getParam.param = I915_PARAM_HAS_SCHEDULER;
+    getParam.value = &schedulerCap;
+
+    int retVal = ioctl(DrmIoctl::getparam, &getParam);
+    if (debugManager.flags.PrintIoctlEntries.get()) {
+        printf("DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: %d, retCode:% d\n",
+               *getParam.value,
+               retVal);
+    }
+    return retVal == 0 && (schedulerCap & I915_SCHEDULER_CAP_PREEMPTION);
 }
 } // namespace NEO

@@ -301,7 +301,6 @@ enum class DrmParam {
     paramChipsetId,
     paramRevision,
     paramHasPooledEu,
-    paramHasScheduler,
     paramEuTotal,
     paramSubsliceTotal,
     paramMinEuInPool,
@@ -314,7 +313,6 @@ enum class DrmParam {
     queryComputeSlices,
     queryMemoryRegions,
     queryTopologyInfo,
-    schedulerCapPreemption,
     tilingNone,
     tilingY,
 };

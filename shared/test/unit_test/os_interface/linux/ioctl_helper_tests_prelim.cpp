@@ -97,7 +97,6 @@ TEST_F(IoctlPrelimHelperTests, whenGettingDrmParamStringThenProperStringIsReturn
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramChipsetId).c_str(), "I915_PARAM_CHIPSET_ID");
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramRevision).c_str(), "I915_PARAM_REVISION");
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramHasPooledEu).c_str(), "I915_PARAM_HAS_POOLED_EU");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramHasScheduler).c_str(), "I915_PARAM_HAS_SCHEDULER");
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramEuTotal).c_str(), "I915_PARAM_EU_TOTAL");
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramSubsliceTotal).c_str(), "I915_PARAM_SUBSLICE_TOTAL");
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramMinEuInPool).c_str(), "I915_PARAM_MIN_EU_IN_POOL");
@@ -177,7 +176,6 @@ TEST_F(IoctlPrelimHelperTests, whenGettingDrmParamValueThenPropertValueIsReturne
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramChipsetId), static_cast<int>(I915_PARAM_CHIPSET_ID));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramRevision), static_cast<int>(I915_PARAM_REVISION));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramHasPooledEu), static_cast<int>(I915_PARAM_HAS_POOLED_EU));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramHasScheduler), static_cast<int>(I915_PARAM_HAS_SCHEDULER));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramEuTotal), static_cast<int>(I915_PARAM_EU_TOTAL));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramSubsliceTotal), static_cast<int>(I915_PARAM_SUBSLICE_TOTAL));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::paramMinEuInPool), static_cast<int>(I915_PARAM_MIN_EU_IN_POOL));
@@ -189,7 +187,6 @@ TEST_F(IoctlPrelimHelperTests, whenGettingDrmParamValueThenPropertValueIsReturne
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::queryMemoryRegions), static_cast<int>(DRM_I915_QUERY_MEMORY_REGIONS));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::queryComputeSlices), static_cast<int>(PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::queryTopologyInfo), static_cast<int>(DRM_I915_QUERY_TOPOLOGY_INFO));
-    EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::schedulerCapPreemption), static_cast<int>(I915_SCHEDULER_CAP_PREEMPTION));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::tilingNone), static_cast<int>(I915_TILING_NONE));
     EXPECT_EQ(ioctlHelper.getDrmParamValue(DrmParam::tilingY), static_cast<int>(I915_TILING_Y));
 }

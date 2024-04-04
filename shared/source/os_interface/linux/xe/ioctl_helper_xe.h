@@ -126,6 +126,7 @@ class IoctlHelperXe : public IoctlHelper {
     void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) override;
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
     bool resourceRegistrationEnabled() override { return true; }
+    bool isPreemptionSupported() override { return true; }
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

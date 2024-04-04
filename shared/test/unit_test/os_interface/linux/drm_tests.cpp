@@ -1685,7 +1685,6 @@ TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
     MockIoctlHelper ioctlHelper{drm};
     std::map<DrmParam, const char *> ioctlCodeStringMap = {
         {DrmParam::paramHasPooledEu, "I915_PARAM_HAS_POOLED_EU"},
-        {DrmParam::paramHasScheduler, "I915_PARAM_HAS_SCHEDULER"},
         {DrmParam::paramEuTotal, "I915_PARAM_EU_TOTAL"},
         {DrmParam::paramSubsliceTotal, "I915_PARAM_SUBSLICE_TOTAL"},
         {DrmParam::paramMinEuInPool, "I915_PARAM_MIN_EU_IN_POOL"},

@@ -196,6 +196,7 @@ class IoctlHelper {
     virtual void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) { return; }
 
     virtual void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) = 0;
+    virtual bool isPreemptionSupported() = 0;
 
   protected:
     Drm &drm;
@@ -234,6 +235,7 @@ class IoctlHelperI915 : public IoctlHelper {
     bool translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, DrmQueryTopologyData &topologyData, TopologyMapping &mapping);
     MOCKABLE_VIRTUAL void initializeGetGpuTimeFunction();
     bool (*getGpuTime)(::NEO::Drm &, uint64_t *) = nullptr;
+    bool isPreemptionSupported() override;
 };
 
 class IoctlHelperUpstream : public IoctlHelperI915 {

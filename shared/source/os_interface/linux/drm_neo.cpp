@@ -291,10 +291,7 @@ bool Drm::checkResetStatus(OsContext &osContext) {
 }
 
 void Drm::checkPreemptionSupport() {
-    int value = 0;
-    auto ret = getParamIoctl(DrmParam::paramHasScheduler, &value);
-    auto schedulerCapPreemption = ioctlHelper->getDrmParamValue(DrmParam::schedulerCapPreemption);
-    preemptionSupported = ((0 == ret) && (value & schedulerCapPreemption));
+    preemptionSupported = ioctlHelper->isPreemptionSupported();
 }
 
 void Drm::checkQueueSliceSupport() {
