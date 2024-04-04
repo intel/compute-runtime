@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
+#include "shared/test/common/fixtures/aub_fixtures/multicontext_aub_fixture.h"
 
 namespace NEO {
 

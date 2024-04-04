@@ -14,7 +14,7 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
@@ -480,14 +480,14 @@ INSTANTIATE_TEST_CASE_P(,
                         ::testing::Values(aub_stream::ENGINE_RCS,
                                           aub_stream::ENGINE_CCS));
 
-struct XeHpgCoreStatelessCompressionInSBAWithBCS : public MulticontextAubFixture,
+struct XeHpgCoreStatelessCompressionInSBAWithBCS : public MulticontextOclAubFixture,
                                                    public StatelessCopyKernelFixture,
                                                    public ::testing::Test {
     void SetUp() override {
         debugManager.flags.EnableStatelessCompression.set(1);
         debugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::blit));
         debugManager.flags.EnableBlitterOperationsSupport.set(true);
-        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::single, true);
+        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, true);
         StatelessCopyKernelFixture::setUp(tileDevices[0], context.get());
         if (!tileDevices[0]->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
@@ -495,7 +495,7 @@ struct XeHpgCoreStatelessCompressionInSBAWithBCS : public MulticontextAubFixture
     }
 
     void TearDown() override {
-        MulticontextAubFixture::tearDown();
+        MulticontextOclAubFixture::tearDown();
         StatelessCopyKernelFixture::tearDown();
     }
 

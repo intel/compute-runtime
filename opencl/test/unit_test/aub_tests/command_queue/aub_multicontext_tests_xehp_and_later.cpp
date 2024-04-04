@@ -21,7 +21,7 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -29,14 +29,14 @@
 
 using namespace NEO;
 
-template <uint32_t numberOfTiles, MulticontextAubFixture::EnabledCommandStreamers enabledCommandStreamers>
-struct MultitileMulticontextTests : public MulticontextAubFixture, public ::testing::Test {
+template <uint32_t numberOfTiles, MulticontextOclAubFixture::EnabledCommandStreamers enabledCommandStreamers>
+struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::testing::Test {
     void SetUp() override {
         debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
-        MulticontextAubFixture::setUp(numberOfTiles, enabledCommandStreamers, false);
+        MulticontextOclAubFixture::setUp(numberOfTiles, enabledCommandStreamers, false);
     }
     void TearDown() override {
-        MulticontextAubFixture::tearDown();
+        MulticontextOclAubFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -210,17 +210,17 @@ struct MultitileMulticontextTests : public MulticontextAubFixture, public ::test
 };
 
 // 4 Tiles
-using FourTilesAllContextsTest = MultitileMulticontextTests<4, MulticontextAubFixture::EnabledCommandStreamers::all>;
+using FourTilesAllContextsTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenSubmittingThenDataIsValid) {
     runAubTest<FamilyType>();
 }
 
-using FourTilesDualContextTest = MultitileMulticontextTests<4, MulticontextAubFixture::EnabledCommandStreamers::dual>;
+using FourTilesDualContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesDualContextTest, HEAVY_givenFourTilesAndDualContextWhenSubmittingThenDataIsValid) {
     runAubTest<FamilyType>();
 }
 
-using FourTilesSingleContextTest = MultitileMulticontextTests<4, MulticontextAubFixture::EnabledCommandStreamers::single>;
+using FourTilesSingleContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::single>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesSingleContextTest, givenFourTilesAndSingleContextWhenSubmittingThenDataIsValid) {
     runAubTest<FamilyType>();
 }
@@ -523,28 +523,28 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, whenNoPreWalke
 }
 
 // 2 Tiles
-using TwoTilesAllContextsTest = MultitileMulticontextTests<2, MulticontextAubFixture::EnabledCommandStreamers::all>;
+using TwoTilesAllContextsTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesAllContextsTest, HEAVY_givenTwoTilesAndAllContextsWhenSubmittingThenDataIsValid) {
     runAubTest<FamilyType>();
 }
 
-using TwoTilesDualContextTest = MultitileMulticontextTests<2, MulticontextAubFixture::EnabledCommandStreamers::dual>;
+using TwoTilesDualContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenSubmittingThenDataIsValid) {
     runAubTest<FamilyType>();
 }
 
-using TwoTilesSingleContextTest = MultitileMulticontextTests<2, MulticontextAubFixture::EnabledCommandStreamers::single>;
+using TwoTilesSingleContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::single>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesSingleContextTest, givenTwoTilesAndSingleContextWhenSubmittingThenDataIsValid) {
     runAubTest<FamilyType>();
 }
 
 // 1 Tile
-using SingleTileAllContextsTest = MultitileMulticontextTests<1, MulticontextAubFixture::EnabledCommandStreamers::all>;
+using SingleTileAllContextsTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileAllContextsTest, GENERATEONLY_givenSingleTileAndAllContextsWhenSubmittingThenDataIsValid) {
     runAubTest<FamilyType>();
 }
 
-using SingleTileDualContextTest = MultitileMulticontextTests<1, MulticontextAubFixture::EnabledCommandStreamers::dual>;
+using SingleTileDualContextTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleTileAndDualContextWhenSubmittingThenDataIsValid) {
     runAubTest<FamilyType>();
 }
@@ -580,44 +580,44 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleAllocationWhe
 }
 
 // 1 Tile
-using SingleTileDualContextTest = MultitileMulticontextTests<1, MulticontextAubFixture::EnabledCommandStreamers::dual>;
+using SingleTileDualContextTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleTileAndDualContextWhenWritingImageThenDataIsValid) {
     runAubWriteImageTest<FamilyType>();
 }
 
-using SingleTileAllContextsTest = MultitileMulticontextTests<1, MulticontextAubFixture::EnabledCommandStreamers::all>;
+using SingleTileAllContextsTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileAllContextsTest, HEAVY_givenSingleTileAndAllContextsWhenWritingImageThenDataIsValid) {
     runAubWriteImageTest<FamilyType>();
 }
 
 // 2 Tiles
-using TwoTilesSingleContextTest = MultitileMulticontextTests<2, MulticontextAubFixture::EnabledCommandStreamers::single>;
+using TwoTilesSingleContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::single>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesSingleContextTest, givenTwoTilesAndSingleContextWhenWritingImageThenDataIsValid) {
     runAubWriteImageTest<FamilyType>();
 }
 
-using TwoTilesDualContextTest = MultitileMulticontextTests<2, MulticontextAubFixture::EnabledCommandStreamers::dual>;
+using TwoTilesDualContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenWritingImageThenDataIsValid) {
     runAubWriteImageTest<FamilyType>();
 }
 
-using TwoTilesAllContextsTest = MultitileMulticontextTests<2, MulticontextAubFixture::EnabledCommandStreamers::all>;
+using TwoTilesAllContextsTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesAllContextsTest, GENERATEONLY_givenTwoTilesAndAllContextsWhenWritingImageThenDataIsValid) {
     runAubWriteImageTest<FamilyType>();
 }
 
 // 4 Tiles
-using FourTilesSingleContextTest = MultitileMulticontextTests<4, MulticontextAubFixture::EnabledCommandStreamers::single>;
+using FourTilesSingleContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::single>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesSingleContextTest, givenFourTilesAndSingleContextWhenWritingImageThenDataIsValid) {
     runAubWriteImageTest<FamilyType>();
 }
 
-using FourTilesDualContextTest = MultitileMulticontextTests<4, MulticontextAubFixture::EnabledCommandStreamers::dual>;
+using FourTilesDualContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesDualContextTest, GENERATEONLY_givenFourTilesAndDualContextWhenWritingImageThenDataIsValid) {
     runAubWriteImageTest<FamilyType>();
 }
 
-using FourTilesAllContextsTest = MultitileMulticontextTests<4, MulticontextAubFixture::EnabledCommandStreamers::all>;
+using FourTilesAllContextsTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenWritingImageThenDataIsValid) {
     runAubWriteImageTest<FamilyType>();
 }

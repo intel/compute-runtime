@@ -23,41 +23,16 @@ namespace L0 {
 namespace ult {
 
 struct L0BindlessAub : Test<AUBFixtureL0> {
-
     void SetUp() override {
         debugManager.flags.UseBindlessMode.set(1);
         debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
         AUBFixtureL0::setUp();
     }
     void TearDown() override {
-
         module->destroy();
         AUBFixtureL0::tearDown();
     }
 
-    void createModuleFromFile(const std::string &fileName, ze_context_handle_t context, L0::Device *device) {
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, fileName + "_", ".bin");
-
-        size_t size = 0;
-        auto src = loadDataFromFile(
-            testFile.c_str(),
-            size);
-
-        ASSERT_NE(0u, size);
-        ASSERT_NE(nullptr, src);
-
-        ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-        moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-        moduleDesc.inputSize = size;
-        moduleDesc.pBuildFlags = "";
-
-        module = new ModuleImp(device, nullptr, ModuleType::user);
-        ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-        result = module->initialize(&moduleDesc, device->getNEODevice());
-        ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-    }
     DebugManagerStateRestore restorer;
     ModuleImp *module = nullptr;
 };
@@ -91,7 +66,7 @@ HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorr
     dispatchTraits.groupCountY = groupCount[1];
     dispatchTraits.groupCountZ = groupCount[2];
 
-    createModuleFromFile("bindless_stateful_copy_buffer", context, device);
+    createModuleFromFile("bindless_stateful_copy_buffer", context, device, "");
 
     ze_kernel_handle_t kernel;
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};

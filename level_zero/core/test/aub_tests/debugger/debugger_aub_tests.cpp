@@ -35,37 +35,8 @@ struct DebuggerAubFixture : AUBFixtureL0 {
         AUBFixtureL0::setUp(NEO::defaultHwInfo.get(), true);
     }
     void tearDown() {
-
         module->destroy();
         AUBFixtureL0::tearDown();
-    }
-
-    void createModuleFromFile(const std::string &fileName, ze_context_handle_t context, L0::Device *device) {
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, fileName + "_", ".bin");
-
-        size_t size = 0;
-        auto src = loadDataFromFile(
-            testFile.c_str(),
-            size);
-
-        ASSERT_NE(0u, size);
-        ASSERT_NE(nullptr, src);
-
-        ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-        moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-        moduleDesc.inputSize = size;
-        moduleDesc.pBuildFlags = "";
-
-        module = new ModuleImp(device, nullptr, ModuleType::user);
-        ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-        result = module->initialize(&moduleDesc, device->getNEODevice());
-        ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-
-        memoryManager = neoDevice->getMemoryManager();
-        gmmHelper = neoDevice->getGmmHelper();
-        rootDeviceIndex = neoDevice->getRootDeviceIndex();
     }
 
     DebugManagerStateRestore restorer;
@@ -96,6 +67,10 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
     const uint32_t expectedSizes[] = {bufferSize, 1, 1};
 
+    memoryManager = neoDevice->getMemoryManager();
+    gmmHelper = neoDevice->getGmmHelper();
+    rootDeviceIndex = neoDevice->getRootDeviceIndex();
+
     NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
@@ -116,7 +91,7 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     dispatchTraits.groupCountY = groupCount[1];
     dispatchTraits.groupCountZ = groupCount[2];
 
-    createModuleFromFile("test_kernel", context, device);
+    module = static_cast<L0::ModuleImp *>(Module::fromHandle(createModuleFromFile("test_kernel", context, device, "")));
 
     ze_kernel_handle_t kernel;
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};

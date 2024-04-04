@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,16 +11,14 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/tests_configuration.h"
 
-#include "opencl/source/command_queue/command_queue.h"
-
 #include "gtest/gtest.h"
 
 #include <memory>
 #include <vector>
 
 namespace NEO {
-class MockClDevice;
-class MockContext;
+class Device;
+class MockDevice;
 
 struct MulticontextAubFixture {
     enum class EnabledCommandStreamers {
@@ -29,11 +27,16 @@ struct MulticontextAubFixture {
         all,    // RCS + CCS0-3
     };
 
-    MulticontextAubFixture();
-    ~MulticontextAubFixture();
+    MulticontextAubFixture() = default;
+    virtual ~MulticontextAubFixture() = default;
 
     void setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression);
+
+    virtual void createDevices(const HardwareInfo &hwInfo, uint32_t numTiles) = 0;
+
     void tearDown() {}
+
+    virtual CommandStreamReceiver *getGpgpuCsr(uint32_t tile, uint32_t engine) = 0;
 
     template <typename FamilyType>
     CommandStreamReceiverSimulatedCommonHw<FamilyType> *getSimulatedCsr(uint32_t tile, uint32_t engine) {
@@ -41,11 +44,13 @@ struct MulticontextAubFixture {
         using SimulatedCsr = CommandStreamReceiverSimulatedCommonHw<FamilyType>;
         SimulatedCsr *simulatedCsr = nullptr;
 
+        auto csr = getGpgpuCsr(tile, engine);
+
         if (testMode == TestMode::aubTestsWithTbx) {
-            auto csrWithAubDump = static_cast<CsrWithAubDump *>(&commandQueues[tile][engine]->getGpgpuCommandStreamReceiver());
+            auto csrWithAubDump = static_cast<CsrWithAubDump *>(csr);
             simulatedCsr = static_cast<SimulatedCsr *>(csrWithAubDump);
         } else {
-            simulatedCsr = static_cast<SimulatedCsr *>(&commandQueues[tile][engine]->getGpgpuCommandStreamReceiver());
+            simulatedCsr = static_cast<SimulatedCsr *>(csr);
         }
 
         return simulatedCsr;
@@ -105,10 +110,7 @@ struct MulticontextAubFixture {
 
     const uint32_t rootDeviceIndex = 0u;
     uint32_t numberOfEnabledTiles = 0;
-    std::vector<ClDevice *> tileDevices;
-    std::unique_ptr<MockClDevice> rootDevice;
-    std::unique_ptr<MockContext> context;
-    std::unique_ptr<MockContext> multiTileDefaultContext;
-    std::vector<std::vector<std::unique_ptr<CommandQueue>>> commandQueues;
+    bool isCcs1Supported = false;
+    bool isRenderEngineSupported = true;
 };
 } // namespace NEO

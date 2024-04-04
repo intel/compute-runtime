@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
@@ -111,7 +111,7 @@ XE_HPC_CORETEST_F(SystemMemFenceViaComputeWalker, givenSystemMemFenceWhenPostSyn
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-class SystemMemFenceWithBlitter : public MulticontextAubFixture,
+class SystemMemFenceWithBlitter : public MulticontextOclAubFixture,
                                   public ::testing::Test {
   public:
     void SetUp() override {
@@ -122,10 +122,10 @@ class SystemMemFenceWithBlitter : public MulticontextAubFixture,
         debugManager.flags.EnableBlitterOperationsSupport.set(1);
         debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::single, true);
+        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, true);
     }
     void TearDown() override {
-        MulticontextAubFixture::tearDown();
+        MulticontextOclAubFixture::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -162,7 +162,7 @@ XE_HPC_CORETEST_F(SystemMemFenceWithBlitter, givenSystemMemFenceWhenGeneratedAsM
 }
 
 class SystemMemFenceViaKernel : public ProgramFixture,
-                                public MulticontextAubFixture,
+                                public MulticontextOclAubFixture,
                                 public ::testing::Test {
   public:
     void SetUp() override {
@@ -171,10 +171,10 @@ class SystemMemFenceViaKernel : public ProgramFixture,
         debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.set(1);
 
         ProgramFixture::setUp();
-        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::single, true);
+        MulticontextOclAubFixture::setUp(1, EnabledCommandStreamers::single, true);
     }
     void TearDown() override {
-        MulticontextAubFixture::tearDown();
+        MulticontextOclAubFixture::tearDown();
         ProgramFixture::tearDown();
     }
 

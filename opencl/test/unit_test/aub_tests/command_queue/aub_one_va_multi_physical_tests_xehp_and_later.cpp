@@ -10,18 +10,19 @@
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
 
-struct OneVAFourPhysicalStoragesTest : public MulticontextAubFixture, public ::testing::Test {
+struct OneVAFourPhysicalStoragesTest : public MulticontextOclAubFixture, public ::testing::Test {
     static const uint32_t numTiles = 4;
     void SetUp() override {
-        MulticontextAubFixture::setUp(numTiles, MulticontextAubFixture::EnabledCommandStreamers::single, false);
+        MulticontextOclAubFixture::setUp(numTiles, MulticontextOclAubFixture::EnabledCommandStreamers::single, false);
     }
     void TearDown() override {
-        MulticontextAubFixture::tearDown();
+        MulticontextOclAubFixture::tearDown();
     }
 };
 

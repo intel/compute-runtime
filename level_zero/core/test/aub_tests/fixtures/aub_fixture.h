@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "level_zero/core/test/unit_tests/mock.h"
+#include <level_zero/zes_api.h>
 
 #include "test_mode.h"
 
@@ -99,6 +100,8 @@ class AUBFixtureL0 {
             aubCsr->expectMMIO(mmioRegister, expectedValue);
         }
     }
+
+    ze_module_handle_t createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags);
 
     std::string aubFileName;
     std::unique_ptr<VariableBackup<NEO::UltHwConfig>> backupUltConfig;

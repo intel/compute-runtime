@@ -21,7 +21,7 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -30,8 +30,8 @@
 using namespace NEO;
 
 template <uint32_t numTiles, bool useLocalMemory = true>
-struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing::Test {
-    using MulticontextAubFixture::expectMemory;
+struct CopyEngineXeHPAndLater : public MulticontextOclAubFixture, public ::testing::Test {
+    using MulticontextOclAubFixture::expectMemory;
 
     void SetUp() override {
         if (is32bit) {
@@ -56,7 +56,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
         debugManager.flags.RenderCompressedImagesEnabled.set(true);
         debugManager.flags.EnableFreeMemory.set(false);
 
-        MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::single, true);
+        MulticontextOclAubFixture::setUp(numTiles, EnabledCommandStreamers::single, true);
 
         defaultCommandQueue = commandQueues[0][0].get();
         bcsCsr = tileDevices[0]->getNearestGenericSubDevice(0)->getEngine(bcsEngineType, EngineUsage::regular).commandStreamReceiver;
@@ -75,7 +75,7 @@ struct CopyEngineXeHPAndLater : public MulticontextAubFixture, public ::testing:
     }
 
     void TearDown() override {
-        MulticontextAubFixture::tearDown();
+        MulticontextOclAubFixture::tearDown();
     }
 
     virtual bool compressionSupported() const {

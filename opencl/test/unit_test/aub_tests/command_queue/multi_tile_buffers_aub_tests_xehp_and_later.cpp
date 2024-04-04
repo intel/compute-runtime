@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,18 +11,18 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
-#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
+#include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 
 #include <array>
 
-struct MultiTileBuffersXeHPAndLater : public MulticontextAubFixture, public ::testing::Test {
+struct MultiTileBuffersXeHPAndLater : public MulticontextOclAubFixture, public ::testing::Test {
     static constexpr uint32_t numTiles = 2;
 
     void SetUp() override {
-        MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::single, false);
+        MulticontextOclAubFixture::setUp(numTiles, EnabledCommandStreamers::single, false);
     }
     void TearDown() override {
-        MulticontextAubFixture::tearDown();
+        MulticontextOclAubFixture::tearDown();
     }
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,13 +10,17 @@
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/tests_configuration.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
@@ -89,4 +93,28 @@ void AUBFixtureL0::tearDown() {
     pCmdq->destroy();
 }
 
+ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags) {
+    ze_module_handle_t moduleHandle;
+    std::string testFile;
+    retrieveBinaryKernelFilenameApiSpecific(testFile, fileName + "_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    EXPECT_NE(0u, size);
+    EXPECT_NE(nullptr, src);
+
+    if (!src || size == 0) {
+        return nullptr;
+    }
+
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+    moduleDesc.pBuildFlags = buildFlags.data();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleCreate(context, device, &moduleDesc, &moduleHandle, nullptr));
+    return moduleHandle;
+}
 } // namespace L0

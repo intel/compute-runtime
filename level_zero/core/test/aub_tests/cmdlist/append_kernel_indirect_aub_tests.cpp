@@ -19,35 +19,8 @@
 namespace L0 {
 namespace ult {
 
-struct AUBAppendKernelIndirectL0 : Test<AUBFixtureL0> {
+using AUBAppendKernelIndirectL0 = Test<AUBFixtureL0>;
 
-    static ze_module_handle_t createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device) {
-        ze_module_handle_t moduleHandle;
-        std::string testFile;
-        retrieveBinaryKernelFilenameApiSpecific(testFile, fileName + "_", ".bin");
-
-        size_t size = 0;
-        auto src = loadDataFromFile(
-            testFile.c_str(),
-            size);
-
-        EXPECT_NE(0u, size);
-        EXPECT_NE(nullptr, src);
-
-        if (!src || size == 0) {
-            return nullptr;
-        }
-
-        ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-        moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
-        moduleDesc.inputSize = size;
-        moduleDesc.pBuildFlags = "";
-
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleCreate(context, device, &moduleDesc, &moduleHandle, nullptr));
-        return moduleHandle;
-    }
-};
 TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGlobalWorkSizeIsProperlyProgrammed) {
     const uint32_t groupSize[] = {1, 2, 3};
     const uint32_t groupCount[] = {4, 3, 1};
@@ -72,7 +45,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGlobalWorkSizeIsPr
     dispatchTraits.groupCountY = groupCount[1];
     dispatchTraits.groupCountZ = groupCount[2];
 
-    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device);
+    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
     ASSERT_NE(nullptr, moduleHandle);
     ze_kernel_handle_t kernel;
 
@@ -117,7 +90,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGroupCountIsProper
     dispatchTraits.groupCountY = groupCount[1];
     dispatchTraits.groupCountZ = groupCount[2];
 
-    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device);
+    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
     ASSERT_NE(nullptr, moduleHandle);
     ze_kernel_handle_t kernel;
 
@@ -172,7 +145,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCoun
     dispatchTraits[1].groupCountY = groupCount2[1];
     dispatchTraits[1].groupCountZ = groupCount2[2];
 
-    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device);
+    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
     ASSERT_NE(nullptr, moduleHandle);
     ze_kernel_handle_t kernels[2];
 
@@ -230,7 +203,7 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
         {{1, 1, 2}, {1, 1, 2}, 3}};
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device);
+    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
     ASSERT_NE(nullptr, moduleHandle);
     ze_kernel_handle_t kernel;
 
