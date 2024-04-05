@@ -172,6 +172,7 @@ class ProductHelperHw : public ProductHelper {
     bool isNewCoherencyModelSupported() const override;
     bool supportReadOnlyAllocations() const override;
     const std::vector<uint32_t> getSupportedLocalDispatchSizes() const override;
+    size_t getMaxFillPaternSizeForCopyEngine() const override;
 
     ~ProductHelperHw() override = default;
 

@@ -914,7 +914,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    int pattern = 1;
+    char pattern = 'a';
     ret = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&pattern), sizeof(pattern), 64u, nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
@@ -1091,7 +1091,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
 
     auto ret = hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    int one = 1;
+    char pattern = 'a';
     size_t size = 16;
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1109,7 +1109,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenCommandListWhenMemoryFillWithS
     auto event1 = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     events.push_back(event1.get());
 
-    result = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&one), sizeof(one), size,
+    result = commandList->appendMemoryFill(heapPointer, reinterpret_cast<void *>(&pattern), sizeof(pattern), size,
                                            events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

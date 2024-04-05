@@ -850,4 +850,9 @@ template <PRODUCT_FAMILY gfxProduct>
 const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes() const {
     return {};
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+size_t ProductHelperHw<gfxProduct>::getMaxFillPaternSizeForCopyEngine() const {
+    return 4 * sizeof(uint32_t);
+}
 } // namespace NEO
