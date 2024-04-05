@@ -112,5 +112,6 @@ struct MulticontextAubFixture {
     uint32_t numberOfEnabledTiles = 0;
     bool isCcs1Supported = false;
     bool isRenderEngineSupported = true;
+    bool skipped = false;
 };
 } // namespace NEO

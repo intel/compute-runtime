@@ -26,6 +26,12 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     debugManager.flags.CreateMultipleSubDevices.set(numberOfTiles);
 
     HardwareInfo localHwInfo = *defaultHwInfo;
+
+    if (numberOfEnabledTiles > 1 && localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid == 0) {
+        skipped = true;
+        GTEST_SKIP();
+    }
+
     if (EnabledCommandStreamers::single != enabledCommandStreamers) {
         overridePlatformConfigForAllEnginesSupport(localHwInfo);
     }
