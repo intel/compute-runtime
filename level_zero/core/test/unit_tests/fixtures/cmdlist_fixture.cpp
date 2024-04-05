@@ -581,13 +581,13 @@ void CommandQueueThreadArbitrationPolicyFixture::tearDown() {
     L0::globalDriver = nullptr;
 }
 
-void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode, int32_t heaplessStateInitEnabled) {
+void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode, int32_t heaplessStateInitEnabled, bool scratchAddressPatchingEnabled) {
     fixtureGlobalStatelessMode = globalStatelessMode;
     debugManager.flags.SelectCmdListHeapAddressModel.set(globalStatelessMode);
 
     ModuleMutableCommandListFixture::setUp();
 
-    commandList->scratchAddressPatchingEnabled = true;
+    commandList->scratchAddressPatchingEnabled = scratchAddressPatchingEnabled;
     commandList->heaplessModeEnabled = true;
     commandList->heaplessStateInitEnabled = !!heaplessStateInitEnabled;
 

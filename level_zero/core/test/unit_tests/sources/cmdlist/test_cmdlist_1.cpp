@@ -3001,7 +3001,7 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
     auto expectedDispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(rootDeviceEnvironment, true);
     EXPECT_EQ(expectedDispatchCmdListBatchBufferAsPrimary, commandList->getCmdListBatchBufferFlag());
 
-    EXPECT_FALSE(commandList->scratchAddressPatchingEnabled);
+    EXPECT_EQ(commandList->heaplessModeEnabled, commandList->scratchAddressPatchingEnabled);
 }
 
 TEST(BuiltinTypeHelperTest, givenNonStatelessAndNonHeaplessWhenAdjustBuiltinTypeIsCalledThenCorrectBuiltinTypeIsReturned) {

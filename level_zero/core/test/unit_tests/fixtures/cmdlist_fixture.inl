@@ -1640,5 +1640,60 @@ void CommandListScratchPatchFixtureInit::testScratchSameNotPatching() {
     EXPECT_EQ(0u, scratchInlineValue);
 }
 
+template <typename FamilyType>
+void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    auto scratchController = csr->getScratchSpaceController();
+
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs = {};
+    dispatchKernelArgs.isHeaplessModeEnabled = true;
+
+    size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
+
+    auto cmdListStream = commandList->commandContainer.getCommandStream();
+
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto result = ZE_RESULT_SUCCESS;
+    size_t usedBefore = cmdListStream->getUsed();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t usedAfter = cmdListStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdListStream->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+
+    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerCmd(cmdList.begin(), cmdList.end(), true);
+    ASSERT_NE(cmdList.end(), walkerIterator);
+    void *walkerPtrWithScratch = *walkerIterator;
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto scratchAddress = scratchController->getScratchPatchAddress();
+    auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
+
+    uint64_t scratchInlineValue = 0;
+
+    void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
+    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+    EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+
+    memset(scratchInlinePtr, 0, scratchInlinePointerSize);
+
+    auto commandListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+    EXPECT_EQ(0u, scratchInlineValue);
+}
+
 } // namespace ult
 } // namespace L0

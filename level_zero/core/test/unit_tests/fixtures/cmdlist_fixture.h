@@ -363,7 +363,7 @@ struct CommandQueueThreadArbitrationPolicyFixture {
 };
 
 struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixture {
-    void setUpParams(int32_t globalStatelessMode, int32_t heaplessStateInitEnabled);
+    void setUpParams(int32_t globalStatelessMode, int32_t heaplessStateInitEnabled, bool scratchAddressPatchingEnabled);
     void tearDown();
 
     uint64_t getSurfStateGpuBase(bool useImmediate);
@@ -377,15 +377,18 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
     template <typename FamilyType>
     void testScratchSameNotPatching();
 
+    template <typename FamilyType>
+    void testScratchImmediatePatching();
+
     int32_t fixtureGlobalStatelessMode = 0;
     uint32_t scratchInlineOffset = 8;
     uint32_t scratchInlinePointerSize = sizeof(uint64_t);
 };
 
-template <int32_t globalStatelessMode, int32_t heaplessStateInitEnabled>
+template <int32_t globalStatelessMode, int32_t heaplessStateInitEnabled, bool scratchAddressPatchingEnabled>
 struct CommandListScratchPatchFixture : public CommandListScratchPatchFixtureInit {
     void setUp() {
-        CommandListScratchPatchFixtureInit::setUpParams(globalStatelessMode, heaplessStateInitEnabled);
+        CommandListScratchPatchFixtureInit::setUpParams(globalStatelessMode, heaplessStateInitEnabled, scratchAddressPatchingEnabled);
     }
 };
 

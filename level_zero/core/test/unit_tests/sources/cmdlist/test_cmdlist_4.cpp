@@ -1553,11 +1553,11 @@ HWTEST_F(CommandListCreate, givenDeviceWhenCreatingCommandListForNotInternalUsag
     whiteboxCommandList->destroy();
 }
 
-using CommandListScratchPatchPrivateHeapsTest = Test<CommandListScratchPatchFixture<0, 0>>;
-using CommandListScratchPatchGlobalStatelessHeapsTest = Test<CommandListScratchPatchFixture<1, 0>>;
+using CommandListScratchPatchPrivateHeapsTest = Test<CommandListScratchPatchFixture<0, 0, true>>;
+using CommandListScratchPatchGlobalStatelessHeapsTest = Test<CommandListScratchPatchFixture<1, 0, true>>;
 
-using CommandListScratchPatchPrivateHeapsStateInitTest = Test<CommandListScratchPatchFixture<0, 1>>;
-using CommandListScratchPatchGlobalStatelessHeapsStateInitTest = Test<CommandListScratchPatchFixture<1, 1>>;
+using CommandListScratchPatchPrivateHeapsStateInitTest = Test<CommandListScratchPatchFixture<0, 1, true>>;
+using CommandListScratchPatchGlobalStatelessHeapsStateInitTest = Test<CommandListScratchPatchFixture<1, 1, true>>;
 
 HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
