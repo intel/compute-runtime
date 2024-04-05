@@ -69,6 +69,8 @@ Device::~Device() {
     subdevices.clear();
 
     syncBufferHandler.reset();
+
+    executionEnvironment->memoryManager->releaseSecondaryOsContexts(this->getRootDeviceIndex());
     commandStreamReceivers.clear();
     executionEnvironment->memoryManager->waitForDeletions();
 

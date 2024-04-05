@@ -216,6 +216,7 @@ class MemoryManager {
                                                            const EngineDescriptor &engineDescriptor);
     MOCKABLE_VIRTUAL OsContext *createAndRegisterSecondaryOsContext(const OsContext *primaryContext, CommandStreamReceiver *commandStreamReceiver,
                                                                     const EngineDescriptor &engineDescriptor);
+    MOCKABLE_VIRTUAL void releaseSecondaryOsContexts(uint32_t rootDeviceIndex);
 
     const EngineControlContainer &getRegisteredEngines(uint32_t rootDeviceIndex) const { return allRegisteredEngines[rootDeviceIndex]; }
     const MultiDeviceEngineControlContainer &getRegisteredEngines() const { return allRegisteredEngines; }

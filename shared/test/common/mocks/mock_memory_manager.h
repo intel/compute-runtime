@@ -57,6 +57,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::isCopyRequired;
     using MemoryManager::localMemorySupported;
     using MemoryManager::reservedMemory;
+    using MemoryManager::secondaryEngines;
 
     MockMemoryManager(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, executionEnvironment) {}
 

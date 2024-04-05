@@ -91,6 +91,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 MemoryManager::~MemoryManager() {
     for (auto &engineContainer : secondaryEngines) {
         for (auto &engine : engineContainer) {
+            DEBUG_BREAK_IF(true);
             engine.osContext->decRefInternal();
         }
         engineContainer.clear();
@@ -378,6 +379,16 @@ OsContext *MemoryManager::createAndRegisterSecondaryOsContext(const OsContext *p
     secondaryEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
 
     return osContext;
+}
+
+void MemoryManager::releaseSecondaryOsContexts(uint32_t rootDeviceIndex) {
+
+    auto &engineContainer = secondaryEngines[rootDeviceIndex];
+
+    for (auto &engine : engineContainer) {
+        engine.osContext->decRefInternal();
+    }
+    engineContainer.clear();
 }
 
 bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo) {
