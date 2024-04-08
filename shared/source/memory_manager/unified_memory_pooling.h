@@ -35,7 +35,7 @@ class UsmMemAllocPool {
     void *getPooledAllocationBasePtr(const void *ptr);
 
     static constexpr auto allocationThreshold = 1 * MemoryConstants::megaByte;
-    static constexpr auto chunkAlignment = 1 * MemoryConstants::pageSize;
+    static constexpr auto chunkAlignment = 512u;
     static constexpr auto startingOffset = 2 * allocationThreshold;
 
   protected:
