@@ -417,6 +417,7 @@ TEST(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhe
 
     std::unique_ptr<CompilerCacheMock> cache(new CompilerCacheMock());
     cache->loadResult = true;
+    cache->config.enabled = true;
     auto compilerInterface = std::unique_ptr<CompilerInterface>(CompilerInterface::createInstance(std::move(cache), true));
     TranslationOutput translationOutput;
     inputArgs.allowCaching = true;

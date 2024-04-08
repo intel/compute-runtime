@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -505,26 +505,6 @@ TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsNonZeroInBothDwords
     DebugVarPrefix type = DebugVarPrefix::none;
     bool value = registryReader.getSetting(keyName.c_str(), defaultValue, type);
     EXPECT_TRUE(value);
-    EXPECT_EQ(DebugVarPrefix::none, type);
-}
-
-TEST_F(DebugReaderWithRegistryAndEnvTest, givenSetProcessNameWhenReadFromEnvironmentVariableThenReturnClCacheDir) {
-    SysCalls::regOpenKeySuccessCount = 0u;
-    SysCalls::regQueryValueSuccessCount = 0u;
-    registryReader.processName = "processName";
-    std::string defaultCacheDir = "";
-    std::string cacheDir = registryReader.getSetting("processName", defaultCacheDir);
-    EXPECT_STREQ("./tested_cl_cache_dir", cacheDir.c_str());
-}
-
-TEST_F(DebugReaderWithRegistryAndEnvTest, givenSetProcessNameWhenReadFromEnvironmentVariableThenReturnClCacheDirPrefix) {
-    SysCalls::regOpenKeySuccessCount = 0u;
-    SysCalls::regQueryValueSuccessCount = 0u;
-    registryReader.processName = "processName";
-    std::string defaultCacheDir = "";
-    DebugVarPrefix type = DebugVarPrefix::none;
-    std::string cacheDir2 = registryReader.getSetting("processName", defaultCacheDir, type);
-    EXPECT_STREQ("./tested_cl_cache_dir", cacheDir2.c_str());
     EXPECT_EQ(DebugVarPrefix::none, type);
 }
 } // namespace NEO

@@ -42,7 +42,6 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
                      COMMAND ${CMAKE_COMMAND} -E remove_directory ${TargetDir}/${product}_aub/${revision_id}
                      COMMAND ${CMAKE_COMMAND} -E make_directory ${TargetDir}/${product}_aub/${revision_id}
                      COMMAND ${CMAKE_COMMAND} -E make_directory ${TargetDir}/${product}_aub/${revision_id}/aub_out
-                     COMMAND ${CMAKE_COMMAND} -E make_directory ${TargetDir}/${product}_aub/${revision_id}/cl_cache
   )
 
 endif()

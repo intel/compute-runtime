@@ -56,18 +56,6 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
         return ret;
     }
 
-    ret.cacheDir = envReader.getSetting(ApiSpecificConfig::compilerCacheDir().c_str(), ApiSpecificConfig::compilerCacheLocation());
-
-    if (NEO::SysCalls::pathExists(ret.cacheDir)) {
-        ret.enabled = true;
-        ret.cacheSize = static_cast<size_t>(neoCacheMaxSizeDefault);
-        ret.cacheFileExtension = ApiSpecificConfig::compilerCacheFileExtension();
-    } else {
-        ret.enabled = false;
-        ret.cacheSize = 0u;
-        ret.cacheFileExtension = ApiSpecificConfig::compilerCacheFileExtension();
-    }
-
     return ret;
 }
 

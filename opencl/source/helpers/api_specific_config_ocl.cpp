@@ -69,14 +69,6 @@ const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
     return validClPrefixTypes;
 }
 
-std::string ApiSpecificConfig::compilerCacheDir() {
-    return "cl_cache_dir";
-}
-
-std::string ApiSpecificConfig::compilerCacheLocation() {
-    return "cl_cache";
-}
-
 std::string ApiSpecificConfig::compilerCacheFileExtension() {
     return ".cl_cache";
 }

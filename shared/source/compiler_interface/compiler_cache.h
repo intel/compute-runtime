@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ namespace NEO {
 struct HardwareInfo;
 
 struct CompilerCacheConfig {
-    bool enabled = true;
+    bool enabled = false;
     std::string cacheFileExtension;
     std::string cacheDir;
     size_t cacheSize = 0;

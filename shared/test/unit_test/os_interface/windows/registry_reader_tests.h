@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,6 @@ class TestedRegistryReader : public RegistryReader {
         IoFunctions::mockableEnvValues->insert({"settingSourceString", "environment"});
         IoFunctions::mockableEnvValues->insert({"settingSourceInt", "2"});
         IoFunctions::mockableEnvValues->insert({"processName", "processName"});
-        IoFunctions::mockableEnvValues->insert({"cl_cache_dir", "./tested_cl_cache_dir"});
     }
     const char *getRegKey() const {
         return registryReadRootKey.c_str();

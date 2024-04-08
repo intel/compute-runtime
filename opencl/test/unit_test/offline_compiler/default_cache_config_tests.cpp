@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,5 +12,5 @@ TEST(CompilerCache, GivenDefaultCacheConfigThenValuesAreProperlyPopulated) {
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
     EXPECT_STREQ("ocloc_cache", cacheConfig.cacheDir.c_str());
     EXPECT_STREQ(".ocloc_cache", cacheConfig.cacheFileExtension.c_str());
-    EXPECT_TRUE(cacheConfig.enabled);
+    EXPECT_FALSE(cacheConfig.enabled);
 }
