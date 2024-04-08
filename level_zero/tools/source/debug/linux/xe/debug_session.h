@@ -115,6 +115,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     struct VmBindData {
         uint64_t pendingNumBinds = 0;
         drm_xe_eudebug_event_vm_bind vmBind;
+        bool uFenceReceived = false;
         drm_xe_eudebug_event_vm_bind_ufence vmBindUfence;
         std::unordered_map<VmBindOpSeqNo, VmBindOpData> vmBindOpMap;
     };
@@ -132,6 +133,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
         std::unordered_map<VmBindOpSeqNo, VmBindSeqNo> vmBindIdentifierMap;
     };
     std::unordered_map<uint64_t, std::shared_ptr<ClientConnectionXe>> clientHandleToConnection;
+    bool canHandleVmBind(VmBindData &vmBindData) const;
     void handleVmBind(VmBindData &vmBindData);
     void handleVmBindWithoutUfence(VmBindData &vmBindData, VmBindOpData &vmBindOpData);
 

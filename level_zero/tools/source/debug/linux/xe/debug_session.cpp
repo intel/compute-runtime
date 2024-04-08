@@ -318,7 +318,7 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
         vmBindOpData.vmBindOp = *vmBindOp;
         vmBindData.pendingNumBinds--;
         clientHandleToConnection[clientHandle]->vmBindIdentifierMap[vmBindOp->base.seqno] = vmBindOp->vm_bind_ref_seqno;
-        handleVmBindWithoutUfence(vmBindData, vmBindOpData);
+        handleVmBind(vmBindData);
     } break;
 
     case DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE: {
@@ -331,7 +331,8 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
         UNRECOVERABLE_IF(vmBindMap.find(vmBindUfence->vm_bind_ref_seqno) == vmBindMap.end());
         uint32_t uFenceRequired = vmBindMap[vmBindUfence->vm_bind_ref_seqno].vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
         UNRECOVERABLE_IF(!uFenceRequired);
-        UNRECOVERABLE_IF(vmBindMap[vmBindUfence->vm_bind_ref_seqno].pendingNumBinds);
+        UNRECOVERABLE_IF(vmBindMap[vmBindUfence->vm_bind_ref_seqno].uFenceReceived); // Dont expect multiple UFENCE for same vm_bind
+        vmBindMap[vmBindUfence->vm_bind_ref_seqno].uFenceReceived = true;
         vmBindMap[vmBindUfence->vm_bind_ref_seqno].vmBindUfence = *vmBindUfence;
         handleVmBind(vmBindMap[vmBindUfence->vm_bind_ref_seqno]);
     } break;
@@ -361,7 +362,7 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
         UNRECOVERABLE_IF(!vmBindOpData.pendingNumExtensions);
         vmBindOpData.vmBindOpMetadataVec.push_back(*vmBindOpMetadata);
         vmBindOpData.pendingNumExtensions--;
-        handleVmBindWithoutUfence(vmBindMap[vmBindSeqNo], vmBindOpData);
+        handleVmBind(vmBindMap[vmBindSeqNo]);
     } break;
 
     default:
@@ -370,18 +371,29 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
     }
 }
 
-void DebugSessionLinuxXe::handleVmBindWithoutUfence(VmBindData &vmBindData, VmBindOpData &vmBindOpData) {
+bool DebugSessionLinuxXe::canHandleVmBind(VmBindData &vmBindData) const {
+    if (vmBindData.pendingNumBinds) {
+        return false;
+    }
+    for (const auto &vmBindOpData : vmBindData.vmBindOpMap) {
+        if (vmBindOpData.second.pendingNumExtensions) {
+            return false;
+        }
+    }
     uint32_t uFenceRequired = vmBindData.vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
     if (uFenceRequired) {
-        return;
+        if (!vmBindData.uFenceReceived) {
+            return false;
+        }
     }
-    if (vmBindData.pendingNumBinds || vmBindOpData.pendingNumExtensions) {
-        return;
-    }
-    handleVmBind(vmBindData);
+
+    return true;
 }
 
 void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
+    if (!canHandleVmBind(vmBindData)) {
+        return;
+    }
     bool shouldAckEvent = vmBindData.vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
     auto connection = clientHandleToConnection[clientHandle].get();
     auto elfHandleInVmBind = invalidHandle;
@@ -390,7 +402,6 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
     bool triggerModuleLoadEvent = false;
 
     for (auto &vmBindOpData : vmBindData.vmBindOpMap) {
-        UNRECOVERABLE_IF(vmBindOpData.second.pendingNumExtensions);
         for (const auto &vmBindOpMetadata : vmBindOpData.second.vmBindOpMetadataVec) {
             auto &vmBindOp = vmBindOpData.second.vmBindOp;
             auto &metaDataEntry = connection->metaDataMap[vmBindOpMetadata.metadata_handle];

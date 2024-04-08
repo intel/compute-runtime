@@ -1359,30 +1359,31 @@ TEST_F(DebugApiLinuxTestXe, GivenVmBindOpMetadataCreateEventAndUfenceForProgramM
     vmBindOp.vm_bind_ref_seqno = vmBind.base.seqno;
     session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vmBindOp.base));
 
+    drm_xe_eudebug_event_vm_bind_ufence vmBindUfence{};
+    vmBindUfence.base.type = DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE;
+    vmBindUfence.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE | DRM_XE_EUDEBUG_EVENT_NEED_ACK;
+    vmBindUfence.base.len = sizeof(drm_xe_eudebug_event_vm_bind_ufence);
+    vmBindUfence.base.seqno = 3;
+    vmBindUfence.vm_bind_ref_seqno = vmBind.base.seqno;
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vmBindUfence.base));
+
     auto &vmBindOpData = vmBindMap[vmBindOp.vm_bind_ref_seqno].vmBindOpMap[vmBindOp.base.seqno];
     drm_xe_eudebug_event_vm_bind_op_metadata vmBindOpMetadata{};
     vmBindOpMetadata.base.type = DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA;
     vmBindOpMetadata.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
     vmBindOpMetadata.base.len = sizeof(drm_xe_eudebug_event_vm_bind_op_metadata);
-    vmBindOpMetadata.base.seqno = 3;
+    vmBindOpMetadata.base.seqno = 4;
     vmBindOpMetadata.vm_bind_op_ref_seqno = vmBindOp.base.seqno;
     vmBindOpMetadata.metadata_handle = 10;
     session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vmBindOpMetadata.base));
 
-    vmBindOpMetadata.base.seqno = 4;
+    vmBindOpMetadata.base.seqno = 5;
     vmBindOpMetadata.metadata_handle = 11;
     session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vmBindOpMetadata.base));
 
     EXPECT_EQ(vmBindOpData.pendingNumExtensions, 0ull);
     EXPECT_EQ(vmBindOpData.vmBindOpMetadataVec.size(), 2ull);
 
-    drm_xe_eudebug_event_vm_bind_ufence vmBindUfence{};
-    vmBindUfence.base.type = DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE;
-    vmBindUfence.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE | DRM_XE_EUDEBUG_EVENT_NEED_ACK;
-    vmBindUfence.base.len = sizeof(drm_xe_eudebug_event_vm_bind_ufence);
-    vmBindUfence.base.seqno = 5;
-    vmBindUfence.vm_bind_ref_seqno = vmBind.base.seqno;
-    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vmBindUfence.base));
     EXPECT_EQ(connection->metaDataToModule[10].ackEvents->size(), 1ull);
     EXPECT_EQ(connection->metaDataToModule[10].ackEvents[0][0].seqno, vmBindUfence.base.seqno);
     EXPECT_EQ(connection->metaDataToModule[10].ackEvents[0][0].type, vmBindUfence.base.type);
