@@ -21,6 +21,47 @@ namespace SysCalls {
 extern bool pathExistsMock;
 }
 
+namespace LegacyPathWorksIfNewEnvIsSetToDisabled {
+bool pathExistsMock(const std::string &path) {
+    if (path.find(ApiSpecificConfig::compilerCacheLocation().c_str()) != path.npos)
+        return true;
+
+    return false;
+}
+} // namespace LegacyPathWorksIfNewEnvIsSetToDisabled
+
+TEST(ClCacheDefaultConfigLinuxTest, GivenDefaultClCacheConfigWithPathExistsAndNewEnvSetToDisabledThenValuesAreProperlyPopulated) {
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
+
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, LegacyPathWorksIfNewEnvIsSetToDisabled::pathExistsMock);
+
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheLocation().c_str(), cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheFileExtension().c_str(), cacheConfig.cacheFileExtension.c_str());
+    EXPECT_TRUE(cacheConfig.enabled);
+}
+
+namespace NewEnvIsDisabledAndLegacyPathDoesNotExist {
+bool pathExistsMock(const std::string &path) {
+    return false;
+}
+} // namespace NewEnvIsDisabledAndLegacyPathDoesNotExist
+
+TEST(ClCacheDefaultConfigLinuxTest, GivenDefaultClCacheConfigWithNotExistingPathAndNewEnvSetToDisabledThenValuesAreProperlyPopulated) {
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
+
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, NewEnvIsDisabledAndLegacyPathDoesNotExist::pathExistsMock);
+
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheLocation().c_str(), cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheFileExtension().c_str(), cacheConfig.cacheFileExtension.c_str());
+    EXPECT_FALSE(cacheConfig.enabled);
+}
+
 namespace AllVariablesCorrectlySet {
 bool pathExistsMock(const std::string &path) {
     if (path.find("ult/directory/") != path.npos)
@@ -323,14 +364,5 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWhenOtherProcessCreatesNeoCompile
     EXPECT_EQ(cacheConfig.cacheSize, 22u);
     EXPECT_EQ(cacheConfig.cacheDir, "xdg/directory/neo_compiler_cache");
     EXPECT_TRUE(XdgPathIsSetAndOtherProcessCreatesPath::mkdirCalled);
-}
-
-TEST(ClCacheDefaultConfigLinuxTest, GivenNeoCachePersistentSetToZeroWhenGetDefaultCompilerCacheConfigThenCacheIsDisabled) {
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
-
-    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-
-    EXPECT_FALSE(cacheConfig.enabled);
 }
 } // namespace NEO

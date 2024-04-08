@@ -62,6 +62,30 @@ struct ClCacheDefaultConfigWindowsTest : public ::testing::Test {
     VariableBackup<BOOL> createDirectoryAResultBackup;
 };
 
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenDefaultClCacheConfigWithPathExistsThenValuesAreProperlyPopulated) {
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
+
+    bool pathExistsMock = true;
+    VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
+
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheLocation().c_str(), cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheFileExtension().c_str(), cacheConfig.cacheFileExtension.c_str());
+    EXPECT_TRUE(cacheConfig.enabled);
+}
+
+TEST_F(ClCacheDefaultConfigWindowsTest, GivenDefaultClCacheConfigWithNonExistingPathThenValuesAreProperlyPopulated) {
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
+
+    bool pathExistsMock = false;
+    VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
+
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheLocation().c_str(), cacheConfig.cacheDir.c_str());
+    EXPECT_STREQ(ApiSpecificConfig::compilerCacheFileExtension().c_str(), cacheConfig.cacheFileExtension.c_str());
+    EXPECT_FALSE(cacheConfig.enabled);
+}
+
 TEST_F(ClCacheDefaultConfigWindowsTest, GivenAllEnvVarWhenProperlySetThenCorrectConfigIsReturned) {
     mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
     mockableEnvs["NEO_CACHE_MAX_SIZE"] = "22";
@@ -263,14 +287,6 @@ TEST_F(ClCacheDefaultConfigWindowsTest, GivenCachePathExistsAndNoEnvVarsSetWhenG
     EXPECT_EQ(cacheConfig.cacheFileExtension, ApiSpecificConfig::compilerCacheFileExtension().c_str());
     EXPECT_EQ(cacheConfig.cacheSize, static_cast<size_t>(MemoryConstants::gigaByte));
     EXPECT_EQ(cacheConfig.cacheDir, expectedCacheDirPath);
-}
-
-TEST_F(ClCacheDefaultConfigWindowsTest, GivenNeoCachePersistentSetToZeroWhenGetDefaultCompilerCacheConfigThenCacheIsDisabled) {
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "0";
-
-    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-
-    EXPECT_FALSE(cacheConfig.enabled);
 }
 
 } // namespace NEO

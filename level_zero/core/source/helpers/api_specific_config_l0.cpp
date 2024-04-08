@@ -78,6 +78,14 @@ bool ApiSpecificConfig::isSharedAllocPrefetchEnabled() {
             (NEO::debugManager.flags.EnableBOChunkingPrefetch.get() && ((NEO::debugManager.flags.EnableBOChunking.get()) != -1) && ((NEO::debugManager.flags.EnableBOChunking.get()) & 0x1)));
 }
 
+std::string ApiSpecificConfig::compilerCacheDir() {
+    return "l0_cache_dir";
+}
+
+std::string ApiSpecificConfig::compilerCacheLocation() {
+    return "l0_cache";
+}
+
 std::string ApiSpecificConfig::compilerCacheFileExtension() {
     return ".l0_cache";
 }

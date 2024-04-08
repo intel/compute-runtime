@@ -12,5 +12,5 @@ TEST(CompilerCache, GivenDefaultCacheConfigThenValuesAreProperlyPopulated) {
     auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
     EXPECT_STREQ("ocloc_cache", cacheConfig.cacheDir.c_str());
     EXPECT_STREQ(".ocloc_cache", cacheConfig.cacheFileExtension.c_str());
-    EXPECT_FALSE(cacheConfig.enabled);
+    EXPECT_TRUE(cacheConfig.enabled);
 }

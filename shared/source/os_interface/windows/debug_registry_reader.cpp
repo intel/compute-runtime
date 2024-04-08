@@ -197,7 +197,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
         for (const auto &prefix : prefixString) {
             std::string neoKey = prefix;
             neoKey += settingName;
-            envValue = IoFunctions::getenvPtr(neoKey.c_str());
+            envValue = strcmp(processName.c_str(), neoKey.c_str()) ? IoFunctions::getenvPtr(neoKey.c_str()) : IoFunctions::getenvPtr("cl_cache_dir");
             if (envValue) {
                 keyValue.assign(envValue);
                 type = prefixType[i];
@@ -214,7 +214,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     std::string keyValue = value;
 
     if (!(getSettingStringCommon(settingName, keyValue))) {
-        const char *envValue = IoFunctions::getenvPtr(settingName);
+        const char *envValue = strcmp(processName.c_str(), settingName) ? IoFunctions::getenvPtr(settingName) : IoFunctions::getenvPtr("cl_cache_dir");
         if (envValue) {
             keyValue.assign(envValue);
         }

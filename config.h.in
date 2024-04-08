@@ -8,6 +8,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#cmakedefine CL_CACHE_LOCATION "${CL_CACHE_LOCATION}"
 #cmakedefine NEO_ARCH "${NEO_ARCH}"
 
 #endif /* CONFIG_H */
