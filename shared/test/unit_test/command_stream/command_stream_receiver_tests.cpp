@@ -2915,6 +2915,142 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThen
     EXPECT_EQ(CompletionStamp::failed, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
 }
 
+HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredThenProgramMiMemFence, IsAtLeastXeHpcCore) {
+    auto &bcsCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    auto hostAllocationPtr = allocateAlignedMemory(1, 1);
+    void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
+
+    MockGraphicsAllocation mockAllocation;
+
+    MockTimestampPacketContainer timestamp(*bcsCsr.getTimestampPacketAllocator(), 1u);
+
+    size_t offset = 0;
+
+    auto verify = [&](bool fenceExpected) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(bcsCsr.commandStream, offset);
+        auto &cmdList = hwParser.cmdList;
+
+        auto cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), cmdIterator);
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        cmdIterator = find<typename FamilyType::MI_ARB_CHECK *>(++cmdIterator, cmdList.end());
+        EXPECT_NE(cmdList.end(), cmdIterator);
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        auto miMemFence = genCmdCast<typename FamilyType::MI_MEM_FENCE *>(*++cmdIterator);
+
+        fenceExpected &= getHelper<ProductHelper>().isDeviceToHostCopySignalingFenceRequired();
+        size_t expectedFenceCount = fenceExpected ? 3 : 2;
+
+        auto fences = findAll<typename FamilyType::MI_MEM_FENCE *>(cmdIterator, cmdList.end());
+        EXPECT_EQ(expectedFenceCount, fences.size());
+
+        if (fenceExpected) {
+            EXPECT_NE(miMemFence, nullptr);
+        }
+
+        return !::testing::Test::HasFailure();
+    };
+
+    // device to host
+    {
+        mockAllocation.memoryPool = MemoryPool::localMemory;
+
+        auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
+                                                                              bcsCsr, &mockAllocation, nullptr, hostPtr,
+                                                                              mockAllocation.getGpuAddress(), 0,
+                                                                              0, 0, {1, 1, 1}, 0, 0, 0, 0);
+        blitProperties.outputTimestampPacket = timestamp.getNode(0);
+
+        BlitPropertiesContainer blitPropertiesContainer;
+        blitPropertiesContainer.push_back(blitProperties);
+
+        offset = bcsCsr.commandStream.getUsed();
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+
+        EXPECT_TRUE(verify(true));
+    }
+
+    // device to host without output timestamp packet
+    {
+        mockAllocation.memoryPool = MemoryPool::localMemory;
+
+        auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
+                                                                              bcsCsr, &mockAllocation, nullptr, hostPtr,
+                                                                              mockAllocation.getGpuAddress(), 0,
+                                                                              0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+        BlitPropertiesContainer blitPropertiesContainer;
+        blitPropertiesContainer.push_back(blitProperties);
+
+        offset = bcsCsr.commandStream.getUsed();
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+
+        EXPECT_TRUE(verify(false));
+    }
+
+    // host to device
+    {
+        mockAllocation.memoryPool = MemoryPool::localMemory;
+
+        auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
+                                                                              bcsCsr, &mockAllocation, nullptr, hostPtr,
+                                                                              mockAllocation.getGpuAddress(), 0,
+                                                                              0, 0, {1, 1, 1}, 0, 0, 0, 0);
+        blitProperties.outputTimestampPacket = timestamp.getNode(0);
+
+        BlitPropertiesContainer blitPropertiesContainer;
+        blitPropertiesContainer.push_back(blitProperties);
+
+        offset = bcsCsr.commandStream.getUsed();
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+
+        EXPECT_TRUE(verify(false));
+    }
+
+    // host to host
+    {
+        mockAllocation.memoryPool = MemoryPool::system64KBPages;
+
+        auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
+                                                                              bcsCsr, &mockAllocation, nullptr, hostPtr,
+                                                                              mockAllocation.getGpuAddress(), 0,
+                                                                              0, 0, {1, 1, 1}, 0, 0, 0, 0);
+        blitProperties.outputTimestampPacket = timestamp.getNode(0);
+
+        BlitPropertiesContainer blitPropertiesContainer;
+        blitPropertiesContainer.push_back(blitProperties);
+
+        offset = bcsCsr.commandStream.getUsed();
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+
+        EXPECT_TRUE(verify(false));
+    }
+
+    // device to device
+    {
+        mockAllocation.memoryPool = MemoryPool::localMemory;
+
+        auto blitProperties = BlitProperties::constructPropertiesForCopy(&mockAllocation, &mockAllocation, {0, 0, 0}, {0, 0, 0}, {1, 1, 1}, 0, 0, 0, 0, nullptr);
+        blitProperties.outputTimestampPacket = timestamp.getNode(0);
+
+        BlitPropertiesContainer blitPropertiesContainer;
+        blitPropertiesContainer.push_back(blitProperties);
+
+        offset = bcsCsr.commandStream.getUsed();
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+
+        EXPECT_TRUE(verify(false));
+    }
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfHostMemoryFailureOnFlushWhenFlushingTaskThenErrorIsPropagated) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

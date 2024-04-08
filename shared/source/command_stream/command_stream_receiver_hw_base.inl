@@ -1065,6 +1065,14 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(blitProperties, commandStream, *waArgs.rootDeviceEnvironment);
 
         if (blitProperties.outputTimestampPacket) {
+            bool deviceToHostPostSyncFenceRequired = getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
+                                                     !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
+                                                     blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
+
+            if (deviceToHostPostSyncFenceRequired) {
+                MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
+            }
+
             if (profilingEnabled) {
                 EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, 0llu, newTaskCount, args);
                 BlitCommandsHelper<GfxFamily>::encodeProfilingEndMmios(commandStream, *blitProperties.outputTimestampPacket);
