@@ -26,6 +26,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 namespace L0 {
@@ -322,7 +323,9 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenFlushTaskSubmissionDisa
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendLaunchKernelThenSuccessIsReturned) {
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
 
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(0);
 
@@ -344,7 +347,9 @@ HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOpera
     NEO::debugManager.flags.CompactL3FlushEventPacket.set(0);
     NEO::debugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount{1, 1, 1};
@@ -1319,6 +1324,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPoin
 
 HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCreatedThenPlatformSurfaceHeapSizeUsed, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     ze_result_t returnValue;
     {

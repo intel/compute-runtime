@@ -280,6 +280,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::heaplessStateInitEnabled;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::initialize;
+    using BaseClass::inOrderExecInfo;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;

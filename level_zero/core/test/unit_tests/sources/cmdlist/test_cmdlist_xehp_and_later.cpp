@@ -38,6 +38,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.EnableStateBaseAddressTracking.set(0);
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -102,6 +103,7 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
     debugManager.flags.EnableStateBaseAddressTracking.set(0);
     debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
@@ -1606,6 +1608,14 @@ template <typename FamilyType>
 void find3dBtdCommand(LinearStream &cmdStream, size_t offset, size_t size, uint64_t gpuVa, bool expectToFind) {
     using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
     using _3DSTATE_BTD_BODY = typename FamilyType::_3DSTATE_BTD_BODY;
+
+    if (expectToFind) {
+        ASSERT_NE(0u, size);
+    } else {
+        if (size == 0) {
+            return;
+        }
+    }
 
     bool btdCommandFound = false;
     size_t btdStateCmdCount = 0;

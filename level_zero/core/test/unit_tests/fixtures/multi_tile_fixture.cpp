@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ MultiTileImmediateCommandListAppendLaunchKernelFixture::MultiTileImmediateComman
 
 void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
     debugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     MultiDeviceFixture::numRootDevices = 1u;
     MultiDeviceFixture::numSubDevices = 4u;
@@ -52,6 +53,7 @@ void MultiTileCommandListAppendLaunchKernelFixture::tearDown() {
 
 void MultiTileImmediateCommandListAppendLaunchKernelFixture::setUp() {
     debugManager.flags.EnableImplicitScaling.set(1);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     MultiDeviceFixture::numRootDevices = 1u;
     MultiDeviceFixture::numSubDevices = 2u;

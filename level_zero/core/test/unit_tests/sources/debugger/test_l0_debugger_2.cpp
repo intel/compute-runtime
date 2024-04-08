@@ -17,6 +17,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
 namespace L0 {
@@ -115,7 +116,9 @@ using singleAddressSpaceModeTest = Test<L0DebuggerSingleAddressSpaceFixture>;
 
 HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, Gen12Plus) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -158,7 +161,9 @@ HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWith
 
 HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSharedHeapsDisbledForImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, Gen12Plus) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
     NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.set(0);
@@ -205,7 +210,9 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
     NEO::debugManager.flags.UseImmediateFlushTask.set(0);
@@ -250,7 +257,9 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
     NEO::debugManager.flags.UseImmediateFlushTask.set(1);
@@ -294,7 +303,9 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
 HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenExecutingThenDebuggerAllocationsAreNotResident) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -333,7 +344,9 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenEx
 }
 
 HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned, Gen12Plus) {
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -350,7 +363,9 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForImm
 }
 
 HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionDisabledForImmediateCommandListForAppendLaunchKernelIndirectThenSuccessIsReturned, Gen12Plus) {
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
 

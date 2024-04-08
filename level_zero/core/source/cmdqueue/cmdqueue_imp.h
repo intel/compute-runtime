@@ -76,7 +76,7 @@ struct CommandQueueImp : public CommandQueue {
 
     ze_result_t synchronize(uint64_t timeout) override;
 
-    ze_result_t initialize(bool copyOnly, bool isInternal, bool immediateCmdListQueue);
+    MOCKABLE_VIRTUAL ze_result_t initialize(bool copyOnly, bool isInternal, bool immediateCmdListQueue);
 
     ze_result_t getOrdinal(uint32_t *pOrdinal) override;
     ze_result_t getIndex(uint32_t *pIndex) override;

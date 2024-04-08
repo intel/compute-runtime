@@ -25,6 +25,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "test_traits_common.h"
 
@@ -745,11 +746,14 @@ struct DeviceWithDualStorage : Test<DeviceFixture> {
         debugManager.flags.EnableLocalMemory.set(1);
         debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
         DeviceFixture::setUp();
+
+        mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     }
     void TearDown() override {
         DeviceFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
+    std::unique_ptr<L0::ult::Module> mockModule;
 };
 
 HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsAtLeastXeHpCore) {
@@ -774,6 +778,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     ASSERT_NE(nullptr, commandList);
     Mock<KernelImp> kernel;
     kernel.immutableData.device = device;
+    kernel.module = mockModule.get();
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;

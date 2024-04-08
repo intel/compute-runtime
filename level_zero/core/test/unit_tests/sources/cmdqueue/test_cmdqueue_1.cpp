@@ -25,6 +25,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 namespace L0 {
@@ -327,7 +328,9 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
                                                           returnValue));
     ASSERT_NE(nullptr, commandQueue);
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
     kernel.immutableData.device = device;
 
     auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
@@ -368,7 +371,9 @@ HWTEST2_F(CommandQueueCreate, givenOutOfHostMemoryErrorFromSubmitBatchBufferWhen
     commandQueue->initialize(false, false, false);
     commandQueue->submitBatchBufferReturnValue = NEO::SubmissionStatus::outOfHostMemory;
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
     kernel.immutableData.device = device;
 
     ze_result_t returnValue;
@@ -387,16 +392,19 @@ HWTEST2_F(CommandQueueCreate, givenOutOfHostMemoryErrorFromSubmitBatchBufferWhen
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCommandListsThenDeviceLostIsReturned, IsSKL) {
+HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCommandListsThenDeviceLostIsReturned, IsAtLeastSkl) {
     const ze_command_queue_desc_t desc = {};
-    MockCommandQueueHw<gfxCoreFamily> commandQueue(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
-    commandQueue.reserveLinearStreamSizeReturnValue = NEO::WaitStatus::gpuHang;
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    commandQueue->initialize(false, false, false);
+    commandQueue->reserveLinearStreamSizeReturnValue = NEO::WaitStatus::gpuHang;
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
     kernel.immutableData.device = device;
 
     ze_result_t returnValue;
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
+    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(device->getHwInfo().platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     ASSERT_NE(nullptr, commandList);
 
     ze_group_count_t dispatchKernelArguments{1, 1, 1};
@@ -406,8 +414,10 @@ HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCo
 
     ze_command_list_handle_t cmdListHandles[1] = {commandList->toHandle()};
 
-    const auto result = commandQueue.executeCommandLists(1, cmdListHandles, nullptr, false, nullptr, 0, nullptr);
+    const auto result = commandQueue->executeCommandLists(1, cmdListHandles, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+
+    commandQueue->destroy();
 }
 
 HWTEST2_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferThenLeftoverIsZeroed, IsAtLeastSkl) {
@@ -1120,6 +1130,15 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
     void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties) override {
         return;
     }
+
+    ze_result_t initialize(bool copyOnly, bool isInternal, bool immediateCmdListQueue) override {
+        auto returnCode = BaseClass::initialize(copyOnly, isInternal, immediateCmdListQueue);
+
+        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
+            this->csr->createGlobalStatelessHeap();
+        }
+        return returnCode;
+    }
 };
 
 using ExecuteCommandListTests = Test<DeviceFixture>;
@@ -1223,6 +1242,9 @@ HWTEST2_F(ExecuteCommandListTests, givenOutOfMemorySubmitBatchBufferThenExecuteC
 
 using CommandQueueDestroy = Test<DeviceFixture>;
 HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchWhenExecuteThenSshWasUsed, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -1250,6 +1272,9 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
 }
 
 HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateScratchWhenExecuteThenSshWasUsed, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
@@ -1279,6 +1304,8 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
 HWTEST2_F(ExecuteCommandListTests, givenBindlessHelperWhenCommandListIsExecutedOnCommandQueueThenHeapContainerIsEmpty, IsAtLeastSkl) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     ze_command_queue_desc_t desc = {};

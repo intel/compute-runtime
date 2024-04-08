@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
@@ -130,6 +131,15 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         recordedScratchController = ctx.scratchSpaceController;
         recordedLockScratchController = ctx.lockScratchController;
         return BaseClass::executeCommandListsRegular(ctx, numCommandLists, commandListHandles, hFence, hSignalEvent, numWaitEvents, phWaitEvents);
+    }
+
+    ze_result_t initialize(bool copyOnly, bool isInternal, bool immediateCmdListQueue) override {
+        auto returnCode = BaseClass::initialize(copyOnly, isInternal, immediateCmdListQueue);
+
+        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
+            this->csr->createGlobalStatelessHeap();
+        }
+        return returnCode;
     }
 
     NEO::GraphicsAllocation *recordedGlobalStatelessAllocation = nullptr;

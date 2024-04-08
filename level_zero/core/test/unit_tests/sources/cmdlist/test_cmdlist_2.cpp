@@ -310,6 +310,9 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyRegionCalledThenAppen
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledThenappendPageFaultCopyWithappendMemoryCopyKernelWithGACalled, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = (sizeof(uint32_t) * 4);
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -338,6 +341,9 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenPageFaultCopyCalledThenappendPa
 }
 
 HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngineThenappendPageFaultCopyWithappendMemoryCopyKernelWithGACalled, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = (sizeof(uint32_t) * 4);
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -365,6 +371,9 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledWithCopyEngi
 }
 
 HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledThenappendPageFaultCopyWithappendMemoryCopyKernelWithGACalledForMiddleAndRightSizesAreCalled, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     MockCommandListHw<gfxCoreFamily> cmdList;
     size_t size = ((sizeof(uint32_t) * 4) + 1);
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -393,6 +402,9 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledThenappendPa
 }
 
 HWTEST2_F(CommandListAppend, givenCommandListWhenPageFaultCopyCalledAndErrorOnMidCopyThenappendPageFaultCopyWithappendMemoryCopyKernelWithGACalledForMiddleIsCalled, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     MockCommandListHw<gfxCoreFamily> cmdList(true);
     size_t size = ((sizeof(uint32_t) * 4) + 1);
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);

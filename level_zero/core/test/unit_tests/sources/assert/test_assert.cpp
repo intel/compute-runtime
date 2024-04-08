@@ -50,6 +50,22 @@ TEST(KernelAssert, GivenKernelWithAssertWhenDestroyedThenAssertIsChecked) {
     EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
 }
 
+TEST(KernelAssert, GivenKernelWithAssertWhenNoModuleAssignedAndKernelDestroyedThenAssertIsNotChecked) {
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto assertHandler = new MockAssertHandler(neoDevice);
+    neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    {
+        Mock<KernelImp> kernel;
+
+        kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+    }
+
+    EXPECT_EQ(0u, assertHandler->printAssertAndAbortCalled);
+}
+
 TEST(KernelAssert, GivenKernelWithAssertWhenNoAssertHandlerOnDestroyThenDestructorDoesNotCrash) {
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
     MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
@@ -147,7 +163,9 @@ TEST(CommandListAssertTest, GivenCmdListWhenKernelWithAssertAppendedThenHasKerne
     MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
     ze_result_t returnValue;
 
+    Mock<Module> module(&l0Device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, &l0Device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
@@ -182,7 +200,9 @@ TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenKernelWithAssert
     device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
     ze_result_t result;
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
     ze_command_queue_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.pNext = 0;
@@ -239,7 +259,9 @@ HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndNoAssertHandle
 HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsynchronousImmCommandListThenAssertIsNotChecked, IsAtLeastSkl) {
     ze_result_t result;
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
     ze_command_queue_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.pNext = 0;
@@ -272,7 +294,9 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
 HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSynchronousImmCommandListThenAssertIsChecked, IsAtLeastSkl) {
     ze_result_t result;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.callBaseExecute = true;
@@ -304,7 +328,9 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSyn
 HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynchronousImmCommandListHangsThenAssertIsChecked, IsAtLeastSkl) {
     ze_result_t result;
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
     TaskCountType currentTaskCount = 33u;
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
@@ -357,7 +383,9 @@ TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertWhenExecutingThenCommandQue
                                                           returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
+    Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<KernelImp> kernel;
+    kernel.module = &module;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
 

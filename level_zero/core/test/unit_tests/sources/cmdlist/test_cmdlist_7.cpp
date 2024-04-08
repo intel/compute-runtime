@@ -664,8 +664,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    MockCommandQueueHw<gfxCoreFamily> mockCommandQueue(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
-    commandList->cmdQImmediate = &mockCommandQueue;
+    commandList->cmdQImmediate = CommandQueue::create(productFamily, device, commandList->csr, &desc, false, false, false, ret);
 
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -676,7 +675,6 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 
     auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     EXPECT_EQ(scratchPerThreadSize, ultCsr->requiredScratchSlot0Size);
-    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests,
@@ -714,8 +712,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    MockCommandQueueHw<gfxCoreFamily> mockCommandQueue(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
-    commandList->cmdQImmediate = &mockCommandQueue;
+    commandList->cmdQImmediate = CommandQueue::create(productFamily, device, commandList->csr, &desc, false, false, false, ret);
     commandList->getCmdContainer().setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount = {3, 2, 1};
@@ -729,7 +726,6 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     EXPECT_EQ(scratch0PerThreadSize, ultCsr->requiredScratchSlot0Size);
     EXPECT_EQ(scratch1PerThreadSize, ultCsr->requiredScratchSlot1Size);
-    commandList->cmdQImmediate = nullptr;
 }
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests,
@@ -1742,15 +1738,17 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
         EXPECT_EQ(-1, csrProperties.frontEndState.disableEUFusion.value);
     }
 
-    cmdList.clear();
-    feStateCmds.clear();
+    if (csrUsedAfter > csrUsedBefore) {
+        cmdList.clear();
+        feStateCmds.clear();
 
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList,
-        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
-        (csrUsedAfter - csrUsedBefore)));
-    feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
-    EXPECT_EQ(0u, feStateCmds.size());
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList,
+            ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+            (csrUsedAfter - csrUsedBefore)));
+        feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(0u, feStateCmds.size());
+    }
 }
 
 HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothImmediateFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {

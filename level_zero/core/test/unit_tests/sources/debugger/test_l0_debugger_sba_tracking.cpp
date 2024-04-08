@@ -284,6 +284,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.EnableStateBaseAddressTracking.set(0);
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     size_t usedSpaceBefore = 0;
     ze_result_t returnValue;

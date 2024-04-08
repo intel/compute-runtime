@@ -17,6 +17,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
 #include "test_traits_common.h"
@@ -35,6 +36,8 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaPro
 
     bool internalQueueMode[] = {false, true};
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
+
     for (auto internalQueue : internalQueueMode) {
         ze_command_queue_desc_t queueDesc = {};
         ze_result_t returnValue;
@@ -44,6 +47,8 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaPro
         auto commandQueue = whiteboxCast(cmdQ);
 
         Mock<KernelImp> kernel;
+        kernel.module = mockModule.get();
+
         std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
         ze_group_count_t groupCount{1, 1, 1};
         NEO::LinearStream &cmdStream = commandQueue->commandStream;

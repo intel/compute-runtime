@@ -32,6 +32,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 namespace L0 {
@@ -111,6 +112,9 @@ TEST_F(CommandListCreate, whenCommandListImmediateIsCreatedWithInvalidProductFam
 }
 
 TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
@@ -1119,7 +1123,9 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1230,7 +1236,9 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDi
     ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1340,7 +1348,9 @@ HWTEST2_F(CommandListCreate, whenDispatchingThenPassNumCsrClients, IsAtLeastXeHp
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1365,7 +1375,9 @@ HWTEST_F(CommandListCreate, givenSignalEventWhenCallingSynchronizeThenUnregister
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1434,7 +1446,9 @@ HWTEST_F(CommandListCreate, givenDebugFlagSetWhenCallingSynchronizeThenDontUnreg
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1492,7 +1506,9 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1628,7 +1644,9 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1792,21 +1810,20 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
+    ze_result_t returnValue;
     ze_command_queue_desc_t desc = {};
 
-    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, ultCsr, &desc);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(neoDevice->getDefaultEngine().getEngineType(), neoDevice->getDefaultEngine().getEngineUsage(), device->getHwInfo());
 
-    auto cmdList = makeZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-
-    cmdList->cmdQImmediate = mockCmdQ.get();
+    std::unique_ptr<WhiteBox<L0::CommandListImp>> cmdList;
+    cmdList.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, engineGroupType, returnValue)));
     cmdList->isFlushTaskSubmissionEnabled = true;
-    cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
-    cmdList->csr = ultCsr;
-    cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList->commandContainer.setImmediateCmdListCsr(ultCsr);
     cmdList->enableInOrderExecution();
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
@@ -1840,7 +1857,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     lrrCmd++;
 
     EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(lrrCmd, 0, cmdList->inOrderExecInfo->getBaseDeviceAddress(), 2,
-                                                                                           NEO::CompareOperation::less, true, cmdList->isQwordInOrderCounter()));
+                                                                                           NEO::CompareOperation::less, true, FamilyType::isQwordInOrderCounter));
 }
 
 TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {

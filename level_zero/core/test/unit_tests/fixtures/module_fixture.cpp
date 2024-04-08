@@ -127,6 +127,7 @@ void ModuleImmutableDataFixture::tearDown() {
 
 void ModuleFixture::setUp(bool skipCreatingModules) {
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     DeviceFixture::setUp();
     if (skipCreatingModules == false) {
@@ -187,6 +188,7 @@ void MultiDeviceModuleFixture::setUp() {
 void MultiDeviceModuleFixture::createModuleFromMockBinary(uint32_t rootDeviceIndex) {
     DebugManagerStateRestore restore;
     debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     auto device = driverHandle->devices[rootDeviceIndex];
     zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());

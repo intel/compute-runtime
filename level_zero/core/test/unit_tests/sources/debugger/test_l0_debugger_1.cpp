@@ -212,6 +212,9 @@ using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
 HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero, Gen12Plus) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
@@ -241,6 +244,9 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
 
 HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToCommandListThenDebugSurfaceIsProgrammedWithL3DisabledMOCS, Gen12Plus) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
@@ -602,6 +608,9 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandLis
 HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThenDebugSurfaceHasCachePolicyWBP, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
+    DebugManagerStateRestore restore;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     raii.mockProductHelper->returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
     raii.mockProductHelper->returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
@@ -650,6 +659,7 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
     NEO::debugManager.flags.EnableImmediateCmdListHeapSharing.set(1);
     NEO::debugManager.flags.UseImmediateFlushTask.set(0);
+    NEO::debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -795,6 +805,9 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenDeviceIsCrea
 HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingKernelToCmdListThenCmdContainerSshIsNotUsedForDebugSurface) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
+    DebugManagerStateRestore restore;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     Mock<::L0::KernelImp> kernel;
     kernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     kernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
@@ -813,6 +826,9 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingKer
 }
 
 HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenExecutingCmdListThenSpecialSshIsResident) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
@@ -847,6 +863,9 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenExecutingCmd
 HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingToImmCmdListThenSpecialSshIsResident) {
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     ze_command_list_handle_t commandListHandle = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue);
     auto commandList = CommandList::fromHandle(commandListHandle);
