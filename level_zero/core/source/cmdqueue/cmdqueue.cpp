@@ -72,7 +72,6 @@ ze_result_t CommandQueueImp::destroy() {
 ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal, bool immediateCmdListQueue) {
     ze_result_t returnValue;
     internalUsage = isInternal;
-    internalQueueForImmediateCommandList = immediateCmdListQueue;
     returnValue = buffers.initialize(device, totalCmdBufferSize);
     if (returnValue == ZE_RESULT_SUCCESS) {
         NEO::GraphicsAllocation *bufferAllocation = buffers.getCurrentBufferAllocation();

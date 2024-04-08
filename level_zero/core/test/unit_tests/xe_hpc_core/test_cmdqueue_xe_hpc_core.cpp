@@ -351,8 +351,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyWhenCreateImmediateThenSpl
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
     ASSERT_NE(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 0u);
-    auto bcsInternalQueue = static_cast<L0::ult::CommandQueue *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0]);
-    EXPECT_TRUE(bcsInternalQueue->internalQueueForImmediateCommandList);
 
     std::unique_ptr<L0::CommandList> commandList2(CommandList::createImmediate(productFamily, testL0Device.get(), &cmdQueueDesc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList2);

@@ -91,7 +91,6 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool stateBaseAddressTracking = false;
     bool doubleSbaWa = false;
     bool dispatchCmdListBatchBufferAsPrimary = false;
-    bool internalQueueForImmediateCommandList = false;
     bool heaplessModeEnabled = false;
     bool heaplessStateInitEnabled = false;
 };
