@@ -1533,6 +1533,9 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    EXPECT_EQ(0x40u, commandList->getCommandListPatchedPerThreadScratchSize(0));
+    EXPECT_EQ(0u, commandList->getCommandListPatchedPerThreadScratchSize(1));
+
     auto scratchAddress = scratchController->getScratchPatchAddress();
     auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
 
@@ -1543,6 +1546,10 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     EXPECT_EQ(fullScratchAddress, scratchInlineValue);
 
     commandList->reset();
+
+    EXPECT_EQ(0u, commandList->getCommandListPatchedPerThreadScratchSize(0));
+    EXPECT_EQ(0u, commandList->getCommandListPatchedPerThreadScratchSize(1));
+
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = 0x40;
 
     usedBefore = cmdListStream->getUsed();
@@ -1563,8 +1570,14 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     result = commandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    // simulate slot 0 is already patched - to check slot 1 change is detected
+    commandList->setCommandListPatchedPerThreadScratchSize(0, 0x40);
+
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0x40u, commandList->getCommandListPatchedPerThreadScratchSize(0));
+    EXPECT_EQ(0x40u, commandList->getCommandListPatchedPerThreadScratchSize(1));
 
     scratchAddress = scratchController->getScratchPatchAddress();
     auto fullScratchSlot1Address = surfaceHeapGpuBase + scratchAddress;

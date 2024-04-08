@@ -122,6 +122,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         commandListPreemptionMode = device->getDevicePreemptionMode();
         commandListPerThreadScratchSize[0] = 0u;
         commandListPerThreadScratchSize[1] = 0u;
+        commandListPatchedPerThreadScratchSize[0] = 0u;
+        commandListPatchedPerThreadScratchSize[1] = 0u;
         requiredStreamState.resetState();
         finalStreamState.resetState();
         containsAnyKernel = false;
