@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -306,18 +307,18 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesWhenCreateDrmVirtualMemo
     EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
 }
 
-TEST(DrmBufferObjectTestPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsSet) {
+TEST(DrmBufferObjectPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsNotSet) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
 
-    EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
+    EXPECT_FALSE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
 }
 
 TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesAndDebuggingEnabledWhenCreateDrmVirtualMemoryThenEnvVariableIsPriority) {
@@ -326,8 +327,8 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesAndDebuggingEnabledWhenC
     debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);

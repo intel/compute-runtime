@@ -81,6 +81,10 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSuppor
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
+PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
+}
+
 PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
     auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     for (const auto &config : AOT_PVC::productConfigs) {

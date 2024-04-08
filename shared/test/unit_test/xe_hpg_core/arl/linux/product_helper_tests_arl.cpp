@@ -51,6 +51,10 @@ ARLTEST_F(ArlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSuppor
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
+ARLTEST_F(ArlProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
+}
+
 ARLTEST_F(ArlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }

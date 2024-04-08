@@ -71,6 +71,7 @@ class ProductHelperHw : public ProductHelper {
     bool isPageFaultSupported() const override;
     bool blitEnqueueAllowed() const override;
     bool isKmdMigrationSupported() const override;
+    bool isDisableScratchPagesSupported() const override;
     bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
     bool isDcFlushAllowed() const override;
     bool isDcFlushMitigated() const override;

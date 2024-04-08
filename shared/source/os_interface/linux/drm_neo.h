@@ -166,6 +166,8 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL void queryPageFaultSupport();
     bool hasPageFaultSupport() const;
     bool hasKmdMigrationSupport() const;
+    bool checkToDisableScratchPage();
+    unsigned int getGpuFaultCheckThreshold() const;
 
     MOCKABLE_VIRTUAL bool resourceRegistrationEnabled();
     MOCKABLE_VIRTUAL uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size);
@@ -327,6 +329,7 @@ class Drm : public DriverModel {
     std::once_flag checkSetPairOnce;
     std::once_flag checkChunkingOnce;
     std::once_flag checkCompletionFenceOnce;
+    std::once_flag checkToDisableScratchPageOnce;
 
     RootDeviceEnvironment &rootDeviceEnvironment;
 
@@ -344,9 +347,8 @@ class Drm : public DriverModel {
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;
     bool vmBindPatIndexProgrammingSupported = false;
-    bool disableScratch = true;
+    bool disableScratch = false;
 
-    uint32_t gpuFaultCheckThreshold = 10u;
     std::atomic<uint32_t> gpuFaultCheckCounter{0u};
 
   private:

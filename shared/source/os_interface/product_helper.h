@@ -126,6 +126,7 @@ class ProductHelper {
     virtual bool isFlatRingBufferSupported() const = 0;
     virtual bool isPageFaultSupported() const = 0;
     virtual bool isKmdMigrationSupported() const = 0;
+    virtual bool isDisableScratchPagesSupported() const = 0;
     virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDcFlushAllowed() const = 0;
     virtual bool isDcFlushMitigated() const = 0;
