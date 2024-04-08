@@ -216,7 +216,7 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
     EXPECT_NE(commands.end(), itor);
     auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
     EXPECT_EQ(cmdMem, storeRegMem);
-    EXPECT_EQ(cmdMem->getRegisterAddress(), RegisterOffsets::csGprR15);
+    EXPECT_EQ(cmdMem->getRegisterAddress(), RegisterOffsets::csGprR12);
     EXPECT_EQ(cmdMem->getMemoryAddress(), dstAddress);
 }
 

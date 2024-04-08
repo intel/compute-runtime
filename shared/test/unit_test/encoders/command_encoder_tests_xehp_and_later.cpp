@@ -185,7 +185,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
     ASSERT_NE(commands.end(), itor);
     auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
     EXPECT_EQ(cmdMem, storeRegMem);
-    EXPECT_EQ(RegisterOffsets::csGprR15, cmdMem->getRegisterAddress());
+    EXPECT_EQ(RegisterOffsets::csGprR12, cmdMem->getRegisterAddress());
     EXPECT_EQ(dstAddress, cmdMem->getMemoryAddress());
     EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
 }
