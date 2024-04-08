@@ -469,6 +469,11 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupported
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsSupportedThenReturnFalse, IsNotPVC) {
+
+    EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckBlitEnqueueAllowedThenReturnTrue) {
     EXPECT_TRUE(productHelper->blitEnqueueAllowed());
 }

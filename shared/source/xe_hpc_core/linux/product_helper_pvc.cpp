@@ -81,6 +81,11 @@ bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
+    return true;
+}
+
 } // namespace NEO
 
 #include "shared/source/xe_hpc_core/linux/product_helper_xe_hpc_core.inl"

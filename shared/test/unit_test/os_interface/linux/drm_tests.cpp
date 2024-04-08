@@ -28,6 +28,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/mocks/linux/mock_os_context_linux.h"
 
 #include "gtest/gtest.h"
@@ -1449,9 +1450,27 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
 
 struct DrmMockCheckPageFault : public DrmMock {
   public:
+    using DrmMock::checkToDisableScratchPage;
     using DrmMock::DrmMock;
-    using DrmMock::gpuFaultCheckThreshold;
+    using DrmMock::getGpuFaultCheckThreshold;
 };
+
+using DrmDisableScratchPagesDefaultTest = ::testing::Test;
+HWTEST2_F(DrmDisableScratchPagesDefaultTest,
+          givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultValueAndScratchPageIsDisabled, IsPVC) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockCheckPageFault drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    EXPECT_TRUE(drm.checkToDisableScratchPage());
+    EXPECT_EQ(10u, drm.getGpuFaultCheckThreshold());
+}
+
+HWTEST2_F(DrmDisableScratchPagesDefaultTest,
+          givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultAndScratchPageIsEnabled, IsNotPVC) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockCheckPageFault drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    EXPECT_FALSE(drm.checkToDisableScratchPage());
+    EXPECT_EQ(10u, drm.getGpuFaultCheckThreshold());
+}
 
 TEST(DrmTest, givenDisableScratchPagesWhenSettingGpuFaultCheckThresholdThenThesholdValueIsSet) {
     constexpr unsigned int iteration = 3u;
@@ -1465,22 +1484,26 @@ TEST(DrmTest, givenDisableScratchPagesWhenSettingGpuFaultCheckThresholdThenThesh
     debugManager.flags.DisableScratchPages.set(false);
     debugManager.flags.GpuFaultCheckThreshold.set(-1);
     DrmMockCheckPageFault drm1{*executionEnvironment->rootDeviceEnvironments[0]};
-    EXPECT_EQ(0u, drm1.gpuFaultCheckThreshold);
+    EXPECT_FALSE(drm1.checkToDisableScratchPage());
+    EXPECT_EQ(10u, drm1.getGpuFaultCheckThreshold());
 
     debugManager.flags.DisableScratchPages.set(true);
     debugManager.flags.GpuFaultCheckThreshold.set(-1);
     DrmMockCheckPageFault drm2{*executionEnvironment->rootDeviceEnvironments[0]};
-    EXPECT_EQ(10u, drm2.gpuFaultCheckThreshold);
+    EXPECT_TRUE(drm2.checkToDisableScratchPage());
+    EXPECT_EQ(10u, drm2.getGpuFaultCheckThreshold());
 
     debugManager.flags.DisableScratchPages.set(true);
     debugManager.flags.GpuFaultCheckThreshold.set(threshold);
     DrmMockCheckPageFault drm3{*executionEnvironment->rootDeviceEnvironments[0]};
-    EXPECT_EQ(threshold, drm3.gpuFaultCheckThreshold);
+    EXPECT_TRUE(drm3.checkToDisableScratchPage());
+    EXPECT_EQ(threshold, drm3.getGpuFaultCheckThreshold());
 
     debugManager.flags.DisableScratchPages.set(false);
     debugManager.flags.GpuFaultCheckThreshold.set(threshold);
     DrmMockCheckPageFault drm4{*executionEnvironment->rootDeviceEnvironments[0]};
-    EXPECT_EQ(threshold, drm4.gpuFaultCheckThreshold);
+    EXPECT_FALSE(drm4.checkToDisableScratchPage());
+    EXPECT_EQ(threshold, drm4.getGpuFaultCheckThreshold());
 }
 
 struct MockDrmMemoryManagerCheckPageFault : public MockDrmMemoryManager {

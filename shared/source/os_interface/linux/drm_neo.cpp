@@ -59,19 +59,6 @@ Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &r
       hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     pagingFence.fill(0u);
     fenceVal.fill(0u);
-
-    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
-        disableScratch = false;
-    }
-    if (debugManager.flags.DisableScratchPages.get() != -1) {
-        disableScratch = debugManager.flags.DisableScratchPages.get();
-    }
-    auto threshold = debugManager.flags.GpuFaultCheckThreshold.get();
-    if (threshold != -1) {
-        gpuFaultCheckThreshold = threshold;
-    } else if (!disableScratch) {
-        gpuFaultCheckThreshold = 0;
-    }
 }
 
 SubmissionStatus Drm::getSubmissionStatusFromReturnCode(int32_t retCode) {
@@ -252,8 +239,10 @@ int Drm::queryGttSize(uint64_t &gttSizeOutput, bool alignUpToFullRange) {
 
 bool Drm::isGpuHangDetected(OsContext &osContext) {
     bool ret = checkResetStatus(osContext);
-    if (gpuFaultCheckThreshold != 0) {
-        if (gpuFaultCheckCounter >= gpuFaultCheckThreshold) {
+    auto threshold = getGpuFaultCheckThreshold();
+
+    if (checkToDisableScratchPage() && getGpuFaultCheckThreshold() != 0) {
+        if (gpuFaultCheckCounter >= threshold) {
             auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
             memoryManager->checkUnexpectedGpuPageFault();
             gpuFaultCheckCounter = 0;
@@ -275,7 +264,7 @@ bool Drm::checkResetStatus(OsContext &osContext) {
         uint32_t status = 0;
         const auto retVal{ioctlHelper->getResetStats(resetStats, &status, &fault)};
         UNRECOVERABLE_IF(retVal != 0);
-        if (disableScratch && ioctlHelper->validPageFault(fault.flags)) {
+        if (checkToDisableScratchPage() && ioctlHelper->validPageFault(fault.flags)) {
             bool banned = ((status & ioctlHelper->getStatusForResetStats(true)) == 0);
             PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ERROR: Unexpected page fault from GPU at 0x%llx, type: %d, level: %d, access: %d, banned: %d, aborting.\n",
                                fault.addr, fault.type, fault.level, fault.access, banned);
@@ -1054,6 +1043,26 @@ bool Drm::hasKmdMigrationSupport() const {
     return kmdMigrationSupported;
 }
 
+bool Drm::checkToDisableScratchPage() {
+    std::call_once(checkToDisableScratchPageOnce, [this]() {
+        if (debugManager.flags.DisableScratchPages.get() != -1) {
+            disableScratch = !!debugManager.flags.DisableScratchPages.get();
+            return;
+        }
+        const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
+        disableScratch = (productHelper.isDisableScratchPagesSupported() &&
+                          !rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled());
+    });
+    return disableScratch;
+}
+
+unsigned int Drm::getGpuFaultCheckThreshold() const {
+    if (debugManager.flags.GpuFaultCheckThreshold.get() != -1) {
+        return debugManager.flags.GpuFaultCheckThreshold.get();
+    }
+    return 10u;
+}
+
 unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {
     auto engineInfo = this->engineInfo.get();
 
@@ -1452,7 +1461,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     bool useVmBind = isVmBindAvailable();
     bool enablePageFault = hasPageFaultSupport() && useVmBind;
 
-    ctl.flags = ioctlHelper->getFlagsForVmCreate(disableScratch, enablePageFault, useVmBind);
+    ctl.flags = ioctlHelper->getFlagsForVmCreate(checkToDisableScratchPage(), enablePageFault, useVmBind);
 
     auto ret = ioctlHelper->ioctl(DrmIoctl::gemVmCreate, &ctl);
 

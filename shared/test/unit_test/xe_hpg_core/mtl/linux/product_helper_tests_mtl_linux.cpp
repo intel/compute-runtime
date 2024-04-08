@@ -55,6 +55,10 @@ MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationsSuppo
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
+MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagessSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
+}
+
 MTLTEST_F(MtlProductHelperLinux, whenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
     EXPECT_TRUE(productHelper->isTimestampWaitSupportedForEvents());
 }
