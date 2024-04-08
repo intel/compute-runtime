@@ -227,6 +227,7 @@ class ProductHelper {
     virtual bool isNewCoherencyModelSupported() const = 0;
     virtual const std::vector<uint32_t> getSupportedLocalDispatchSizes() const = 0;
     virtual bool supportReadOnlyAllocations() const = 0;
+    virtual bool isDeviceToHostCopySignalingFenceRequired() const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
 
     virtual ~ProductHelper() = default;

@@ -911,3 +911,7 @@ HWTEST_F(ProductHelperTest, whenAskingForLocalDispatchSizeThenReturnEmpty) {
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSupportThenFalseReturned) {
     EXPECT_FALSE(productHelper->supportReadOnlyAllocations());
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceFalseReturned) {
+    EXPECT_FALSE(productHelper->isDeviceToHostCopySignalingFenceRequired());
+}

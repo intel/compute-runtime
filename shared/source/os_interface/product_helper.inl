@@ -852,6 +852,11 @@ const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispat
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDeviceToHostCopySignalingFenceRequired() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 size_t ProductHelperHw<gfxProduct>::getMaxFillPaternSizeForCopyEngine() const {
     return 4 * sizeof(uint32_t);
 }
