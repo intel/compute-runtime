@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,7 @@ class SysmanHwDeviceIdDrm : public NEO::HwDeviceIdDrm {
     using NEO::HwDeviceIdDrm::HwDeviceIdDrm;
     class SingleInstance {
       public:
-        SingleInstance(SysmanHwDeviceIdDrm &input) : instance(input), fileDescriptor(input.openFileDescriptor()) {
-            UNRECOVERABLE_IF(fileDescriptor < 0);
-        }
+        SingleInstance(SysmanHwDeviceIdDrm &input) : instance(input), fileDescriptor(input.openFileDescriptor()) {}
         ~SingleInstance() { instance.closeFileDescriptor(); }
         int getFileDescriptor() const { return fileDescriptor; }
 

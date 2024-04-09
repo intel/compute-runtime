@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,12 @@ void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t e
 
 void EngineHandleContext::init(uint32_t subDeviceCount) {
     std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> engineGroupInstance = {}; // set contains pair of engine group and struct containing engine instance and subdeviceId
-    OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman);
+    deviceEngineInitStatus = OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman);
+
+    if (deviceEngineInitStatus != ZE_RESULT_SUCCESS) {
+        return;
+    }
+
     for (auto itr = engineGroupInstance.begin(); itr != engineGroupInstance.end(); ++itr) {
         for (uint32_t subDeviceId = 0; subDeviceId <= subDeviceCount; subDeviceId++) {
             if (subDeviceId == itr->second.second) {
@@ -53,6 +58,11 @@ ze_result_t EngineHandleContext::engineGet(uint32_t *pCount, zes_engine_handle_t
         this->init(pOsSysman->getSubDeviceCount());
         this->engineInitDone = true;
     });
+
+    if (deviceEngineInitStatus != ZE_RESULT_SUCCESS) {
+        return deviceEngineInitStatus;
+    }
+
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

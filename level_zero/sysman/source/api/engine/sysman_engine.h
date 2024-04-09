@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,6 +50,7 @@ struct EngineHandleContext {
     void createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
     std::once_flag initEngineOnce;
     bool engineInitDone = false;
+    ze_result_t deviceEngineInitStatus = ZE_RESULT_SUCCESS;
 };
 
 } // namespace Sysman

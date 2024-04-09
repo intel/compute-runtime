@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,27 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+class MockEngineSysmanHwDeviceIdDrm : public MockSysmanHwDeviceIdDrm {
+  public:
+    using L0::Sysman::ult::MockSysmanHwDeviceIdDrm::MockSysmanHwDeviceIdDrm;
+    int returnOpenFileDescriptor = -1;
+    int returnCloseFileDescriptor = 0;
+
+    int openFileDescriptor() override {
+        return returnOpenFileDescriptor;
+    }
+
+    int closeFileDescriptor() override {
+        return returnCloseFileDescriptor;
+    }
+};
+
 struct MockEngineNeoDrm : public Drm {
     using Drm::getEngineInfo;
     using Drm::setupIoctlHelper;
     const int mockFd = 0;
     MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment, int mockFileDescriptor) : Drm(std::make_unique<MockEngineSysmanHwDeviceIdDrm>(mockFileDescriptor, ""), rootDeviceEnvironment) {}
 
     bool mockSysmanQueryEngineInfoReturnFalse = true;
     bool sysmanQueryEngineInfo() override {

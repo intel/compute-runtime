@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,23 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
         return handles;
     }
 };
+
+TEST_F(SysmanDeviceFixture, GivenComponentCountZeroAndOpenCallFailsWhenCallingZesDeviceEnumEngineGroupsThenErrorIsReturned) {
+
+    MockEngineNeoDrm *pDrm = nullptr;
+    int mockFd = -1;
+    pDrm = new MockEngineNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()), mockFd);
+    pDrm->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
+    auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
+    osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrm>(pDrm));
+
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    L0::Sysman::SysmanDevice *device = pSysmanDevice;
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
+}
 
 TEST_F(ZesEngineFixtureI915, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
 

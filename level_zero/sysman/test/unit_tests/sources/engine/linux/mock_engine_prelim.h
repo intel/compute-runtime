@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,11 +33,27 @@ constexpr uint32_t numberOfMockedEnginesForSingleTileDevice = 7u;
 constexpr uint32_t numberOfTiles = 2u;
 constexpr uint32_t numberOfMockedEnginesForMultiTileDevice = 2u;
 
+class MockEngineSysmanHwDeviceIdDrm : public MockSysmanHwDeviceIdDrm {
+  public:
+    using L0::Sysman::ult::MockSysmanHwDeviceIdDrm::MockSysmanHwDeviceIdDrm;
+    int returnOpenFileDescriptor = -1;
+    int returnCloseFileDescriptor = 0;
+
+    int openFileDescriptor() override {
+        return returnOpenFileDescriptor;
+    }
+
+    int closeFileDescriptor() override {
+        return returnCloseFileDescriptor;
+    }
+};
+
 struct MockEngineNeoDrm : public Drm {
     using Drm::engineInfo;
     using Drm::setupIoctlHelper;
     const int mockFd = 0;
     MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment, int mockFileDescriptor) : Drm(std::make_unique<MockEngineSysmanHwDeviceIdDrm>(mockFileDescriptor, ""), rootDeviceEnvironment) {}
 
     bool mockReadSysmanQueryEngineInfo = false;
     bool mockReadSysmanQueryEngineInfoMultiDevice = false;

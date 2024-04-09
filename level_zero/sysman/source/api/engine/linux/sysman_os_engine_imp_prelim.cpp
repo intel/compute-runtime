@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,9 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
     bool status = false;
     {
         auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+        if (hwDeviceId.getFileDescriptor() < 0) {
+            return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        }
         status = pDrm->sysmanQueryEngineInfo();
     }
 

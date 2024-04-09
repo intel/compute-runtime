@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,11 +68,11 @@ TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenEnumeratingEngineGr
     }
 }
 
-TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenEnumeratingEngineGroupsAndRequestMultipleFailsThenZeroHandlesAreReturned) {
+TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenEnumeratingEngineGroupsAndRequestMultipleFailsThenErrorAndZeroHandlesAreReturned) {
     pKmdSysManager->mockRequestMultiple = true;
     pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumEngineGroups(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zesDeviceEnumEngineGroups(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     EXPECT_EQ(count, 0u);
 }
 
