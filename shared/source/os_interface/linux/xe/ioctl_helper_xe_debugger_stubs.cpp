@@ -51,7 +51,6 @@ int IoctlHelperXe::getRunaloneExtProperty() {
 }
 
 int IoctlHelperXe::getEuDebugSysFsEnable() {
-    UNRECOVERABLE_IF(true);
     return 0;
 }
 
