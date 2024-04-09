@@ -53,7 +53,7 @@ components:
     dest_dir: level_zero
     type: git
     branch: master
-    revision: v1.16.11
+    revision: v1.16.14
     repository: https://github.com/oneapi-src/level-zero
   libva:
     asset_name: libva
