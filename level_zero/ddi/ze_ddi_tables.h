@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,3 +31,10 @@ typedef struct _ze_gpu_driver_dditable_t {
 extern ze_gpu_driver_dditable_t driverDdiTable;
 
 } // extern "C"
+
+template <typename FuncType>
+inline void fillDdiEntry(FuncType &entry, FuncType function, ze_api_version_t loaderVersion, ze_api_version_t requiredVersion) {
+    if (loaderVersion >= requiredVersion) {
+        entry = function;
+    }
+}

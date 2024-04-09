@@ -206,7 +206,7 @@ if(BUILD_WITH_L0)
   endif()
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdqueue/cmdqueue_extended${BRANCH_DIR_SUFFIX})
-  include_directories(ddi${BRANCH_DIR_SUFFIX})
+  include_directories(ddi)
 
   # Create our shared library/DLL
   configure_file(ze_intel_gpu_version.h.in ${NEO_BUILD_DIR}/ze_intel_gpu_version.h)
