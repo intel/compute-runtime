@@ -198,9 +198,6 @@ void CommandContainer::reset() {
     this->handleCmdBufferAllocations(1u);
     cmdBufferAllocations.erase(cmdBufferAllocations.begin() + 1, cmdBufferAllocations.end());
 
-    if (this->useSecondaryCommandStream && NEO::MemoryPoolHelper::isSystemMemoryPool(this->getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
-        this->commandStream.swap(this->secondaryCommandStreamForImmediateCmdList);
-    }
     setCmdBuffer(cmdBufferAllocations[0]);
 
     for (uint32_t i = 0; i < IndirectHeap::Type::numTypes; i++) {
