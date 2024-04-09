@@ -87,24 +87,22 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     bool localIdsGenerationByRuntime = args.dispatchInterface->requiresGenerationOfLocalIdsByRuntime();
     auto requiredWorkgroupOrder = args.dispatchInterface->getRequiredWorkgroupOrder();
-    bool inlineDataProgramming = EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(kernelDescriptor);
-    {
-        auto alloc = args.dispatchInterface->getIsaAllocation();
-        UNRECOVERABLE_IF(nullptr == alloc);
 
+    {
+        auto isaAllocation = args.dispatchInterface->getIsaAllocation();
+        UNRECOVERABLE_IF(nullptr == isaAllocation);
+
+        uint64_t kernelStartPointer = args.dispatchInterface->getIsaOffsetInParentAllocation();
         if constexpr (heaplessModeEnabled) {
-            auto address = alloc->getGpuAddress() + args.dispatchInterface->getIsaOffsetInParentAllocation();
-            if (!localIdsGenerationByRuntime) {
-                address += kernelDescriptor.entryPoints.skipPerThreadDataLoad;
-            }
-            idd.setKernelStartPointer(address);
+            kernelStartPointer += isaAllocation->getGpuAddress();
         } else {
-            auto offset = alloc->getGpuAddressToPatch() + args.dispatchInterface->getIsaOffsetInParentAllocation();
-            if (!localIdsGenerationByRuntime) {
-                offset += kernelDescriptor.entryPoints.skipPerThreadDataLoad;
-            }
-            idd.setKernelStartPointer(offset);
+            kernelStartPointer += isaAllocation->getGpuAddressToPatch();
         }
+
+        if (!localIdsGenerationByRuntime) {
+            kernelStartPointer += kernelDescriptor.entryPoints.skipPerThreadDataLoad;
+        }
+        idd.setKernelStartPointer(kernelStartPointer);
     }
     if (args.dispatchInterface->getKernelDescriptor().kernelAttributes.flags.usesAssert && args.device->getL0Debugger() != nullptr) {
         idd.setSoftwareExceptionEnable(1);
@@ -231,11 +229,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto crossThreadData = args.dispatchInterface->getCrossThreadData();
 
     uint32_t inlineDataProgrammingOffset = 0u;
-
+    bool inlineDataProgramming = EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(kernelDescriptor);
     if (inlineDataProgramming) {
         inlineDataProgrammingOffset = std::min(inlineDataSize, sizeCrossThreadData);
         auto dest = reinterpret_cast<char *>(walkerCmd.getInlineDataPointer());
-        memcpy_s(dest, inlineDataProgrammingOffset, crossThreadData, inlineDataProgrammingOffset);
+        memcpy_s(dest, inlineDataSize, crossThreadData, inlineDataProgrammingOffset);
         sizeCrossThreadData -= inlineDataProgrammingOffset;
         crossThreadData = ptrOffset(crossThreadData, inlineDataProgrammingOffset);
         inlineDataProgramming = inlineDataProgrammingOffset != 0;
@@ -325,30 +323,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
     }
 
-    if constexpr (heaplessModeEnabled) {
-        auto inlineDataPointer = reinterpret_cast<char *>(walkerCmd.getInlineDataPointer());
-        auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;
-        auto heap = container.getIndirectHeap(HeapType::indirectObject);
-        auto address = heap->getHeapGpuBase() + offsetThreadData;
-        std::memcpy(inlineDataPointer + indirectDataPointerAddress.offset, &address, indirectDataPointerAddress.pointerSize);
+    uint8_t *inlineData = reinterpret_cast<uint8_t *>(walkerCmd.getInlineDataPointer());
+    EncodeDispatchKernel<Family>::programInlineDataHeapless<heaplessModeEnabled>(inlineData, args, container, offsetThreadData);
 
-        if (args.immediateScratchAddressPatching) {
-            auto requiredScratchSlot0Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
-            auto requiredScratchSlot1Size = kernelDescriptor.kernelAttributes.perThreadScratchSize[1];
-            auto csr = args.device->getDefaultEngine().commandStreamReceiver;
-            NEO::IndirectHeap *ssh = nullptr;
-            if (csr->getGlobalStatelessHeapAllocation() != nullptr) {
-                ssh = csr->getGlobalStatelessHeap();
-            } else {
-                ssh = args.surfaceStateHeap ? args.surfaceStateHeap : container.getIndirectHeap(HeapType::surfaceState);
-            }
-
-            uint64_t scratchAddress = 0u;
-            EncodeDispatchKernel<Family>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr);
-            auto scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
-            std::memcpy(inlineDataPointer + scratchPointerAddress.offset, &scratchAddress, scratchPointerAddress.pointerSize);
-        }
-    } else {
+    if constexpr (heaplessModeEnabled == false) {
         walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
         walkerCmd.setIndirectDataLength(sizeThreadData);
 
