@@ -99,18 +99,6 @@ ProcessPowerThrottlingState setProcessPowerThrottlingStateLastValue{};
 size_t setThreadPriorityCalled = 0u;
 ThreadPriority setThreadPriorityLastValue{};
 
-HANDLE(*sysCallsCreateFile)
-(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) = nullptr;
-
-BOOL(*sysCallsDeviceIoControl)
-(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) = nullptr;
-
-CONFIGRET(*sysCallsCmGetDeviceInterfaceListSize)
-(PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) = nullptr;
-
-CONFIGRET(*sysCallsCmGetDeviceInterfaceList)
-(LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) = nullptr;
-
 bool pathExists(const std::string &path) {
     std::string tempP1 = path;
     if (!path.empty() && path.back() == PATH_SEPARATOR) {
@@ -299,34 +287,6 @@ void setProcessPowerThrottlingState(ProcessPowerThrottlingState state) {
 void setThreadPriority(ThreadPriority priority) {
     setThreadPriorityCalled++;
     setThreadPriorityLastValue = priority;
-}
-
-HANDLE createFile(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
-    if (sysCallsCreateFile != nullptr) {
-        return sysCallsCreateFile(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-    }
-    return nullptr;
-}
-
-BOOL deviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) {
-    if (sysCallsDeviceIoControl != nullptr) {
-        return sysCallsDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
-    }
-    return false;
-}
-
-CONFIGRET cmGetDeviceInterfaceListSize(PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) {
-    if (sysCallsCmGetDeviceInterfaceListSize != nullptr) {
-        return sysCallsCmGetDeviceInterfaceListSize(pulLen, interfaceClassGuid, pDeviceID, ulFlags);
-    }
-    return -1;
-}
-
-CONFIGRET cmGetDeviceInterfaceList(LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) {
-    if (sysCallsCmGetDeviceInterfaceList != nullptr) {
-        return sysCallsCmGetDeviceInterfaceList(interfaceClassGuid, pDeviceID, buffer, bufferLen, ulFlags);
-    }
-    return -1;
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
