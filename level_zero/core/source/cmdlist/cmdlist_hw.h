@@ -370,6 +370,8 @@ struct CommandListCoreFamily : public CommandListImp {
     void disablePatching(size_t inOrderPatchIndex);
     void enablePatching(size_t inOrderPatchIndex);
 
+    bool copyFenceRequired(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation) const;
+
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
     uint64_t latestHostWaitedInOrderSyncValue = 0;
@@ -377,6 +379,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;
     bool allowCbWaitEventsNoopDispatch = false;
+    bool copyOperationFenceSupported = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

@@ -245,6 +245,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->duplicatedInOrderCounterStorageEnabled = gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(rootDeviceEnvironment);
     this->inOrderAtomicSignalingEnabled = gfxCoreHelper.inOrderAtomicSignallingEnabled(rootDeviceEnvironment);
     this->scratchAddressPatchingEnabled = (this->heaplessModeEnabled && !isImmediateType());
+    this->copyOperationFenceSupported = isCopyOnly() && productHelper.isDeviceToHostCopySignalingFenceRequired();
 
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
@@ -1616,6 +1617,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
     }
 
+    if (copyFenceRequired(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc)) {
+        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), 0, false, neoDevice->getRootDeviceEnvironment());
+    }
+
     appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
     addToMappedEventList(signalEvent);
@@ -1723,6 +1728,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     if (result) {
         return result;
+    }
+
+    if (copyFenceRequired(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc)) {
+        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), 0, false, neoDevice->getRootDeviceEnvironment());
     }
 
     addToMappedEventList(signalEvent);
@@ -4072,6 +4081,15 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchCleanupSect
     NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_DECREMENT, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, 0, 0);
 
     NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_CMP_WR, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, queueIdToken, 0);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::copyFenceRequired(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation) const {
+    if (!this->copyOperationFenceSupported || !signalEvent || !signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)) {
+        return false;
+    }
+
+    return (srcAllocation->isAllocatedInLocalMemoryPool() && !dstAllocation->isAllocatedInLocalMemoryPool());
 }
 
 } // namespace L0
