@@ -756,7 +756,7 @@ bool Device::isFullRangeSvm() const {
 }
 
 EngineControl &Device::getInternalEngine() {
-    if (this->allEngines[0].commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
+    if (this->allEngines[0].commandStreamReceiver->getType() != CommandStreamReceiverType::hardware) {
         return this->getDefaultEngine();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     uint32_t getGUCWorkQueueItemHeader();
 
     CommandStreamReceiverType getType() const override {
-        return CommandStreamReceiverType::CSR_AUB;
+        return CommandStreamReceiverType::aub;
     }
 
     int getAddressSpaceFromPTEBits(uint64_t entryBits) const;

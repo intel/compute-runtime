@@ -254,7 +254,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     std::optional<bool> isGpuHangDetectedReturnValue{};
     std::optional<bool> testTaskCountReadyReturnValue{};
     WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::ready};
-    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     BatchBuffer latestFlushedBatchBuffer = {};
     QueueThrottle getLastDirectSubmissionThrottleReturnValue = QueueThrottle::MEDIUM;
     bool getAcLineConnectedReturnValue = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,11 +32,11 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;
-    debugManager.flags.SetCommandStreamReceiver.set(csrType);
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
     {
         auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, 0, 1));
 
-        if (csrType < CommandStreamReceiverType::CSR_TYPES_NUM) {
+        if (csrType < CommandStreamReceiverType::typesNum) {
             EXPECT_NE(nullptr, csr.get());
         } else {
             EXPECT_EQ(nullptr, csr.get());
@@ -47,12 +47,13 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
 }
 
 static CommandStreamReceiverType commandStreamReceiverTypes[] = {
-    CSR_HW,
-    CSR_AUB,
-    CSR_TBX,
-    CSR_HW_WITH_AUB,
-    CSR_TBX_WITH_AUB,
-    CSR_TYPES_NUM};
+    CommandStreamReceiverType::hardware,
+    CommandStreamReceiverType::aub,
+    CommandStreamReceiverType::tbx,
+    CommandStreamReceiverType::hardwareWithAub,
+    CommandStreamReceiverType::tbxWithAub,
+    CommandStreamReceiverType::nullAub,
+    CommandStreamReceiverType::typesNum};
 
 INSTANTIATE_TEST_CASE_P(
     CreateCommandStreamReceiverTest_Create,

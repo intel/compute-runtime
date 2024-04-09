@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,10 +36,10 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     void setupContext(OsContext &osContext) override;
 
     CommandStreamReceiverType getType() const override {
-        if (BaseCSR::getType() == CommandStreamReceiverType::CSR_TBX) {
-            return CommandStreamReceiverType::CSR_TBX_WITH_AUB;
+        if (BaseCSR::getType() == CommandStreamReceiverType::tbx) {
+            return CommandStreamReceiverType::tbxWithAub;
         }
-        return CommandStreamReceiverType::CSR_HW_WITH_AUB;
+        return CommandStreamReceiverType::hardwareWithAub;
     }
 
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait,

@@ -87,7 +87,7 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreat
 TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenTypeIsCheckedThenAubCsrIsReturned) {
     std::unique_ptr<CommandStreamReceiver> aubCsr(AUBCommandStreamReceiver::create("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
     EXPECT_NE(nullptr, aubCsr);
-    EXPECT_EQ(CommandStreamReceiverType::CSR_AUB, aubCsr->getType());
+    EXPECT_EQ(CommandStreamReceiverType::aub, aubCsr->getType());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedThenAubManagerAndHardwareContextAreNull) {
@@ -173,7 +173,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithAubManagerWhenItIsCreatedThenFileIsCreated) {
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::aub);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
@@ -189,7 +189,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenOsContextIsSetThenCreateH
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, DeviceBitfield(8)));
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::aub);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
@@ -206,7 +206,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndHighPriorityContextWhenOsC
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::highPriority}, DeviceBitfield(1)));
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::aub);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 
@@ -221,7 +221,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSet
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
     std::string fileName = "file_name.aub";
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, fileName, CommandStreamReceiverType::aub);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ XE_HPC_CORETEST_F(AubCommandStreamReceiverXeHpcCoreTests, givenLinkBcsEngineWhen
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
 
     MockAubManager *mockManager = new MockAubManager();
-    MockAubCenter *mockAubCenter = new MockAubCenter(device->getRootDeviceEnvironment(), false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(device->getRootDeviceEnvironment(), false, "", CommandStreamReceiverType::aub);
     mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(mockManager);
     device->executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
 

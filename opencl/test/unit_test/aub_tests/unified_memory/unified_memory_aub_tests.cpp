@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,9 @@ class UnifiedMemoryAubTest : public UnifiedMemoryAubFixture,
 
     void SetUp() override {
         if (testMode == TestMode::aubTestsWithTbx) {
-            debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_TBX_WITH_AUB));
+            debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbxWithAub));
         } else {
-            debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_AUB));
+            debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::aub));
         }
         UnifiedMemoryAubFixture::setUp();
         values = std::vector<char>(dataSize, 11);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,7 +95,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     std::set<GraphicsAllocation *> allocationsForDownload = {};
 
     CommandStreamReceiverType getType() const override {
-        return CommandStreamReceiverType::CSR_TBX;
+        return CommandStreamReceiverType::tbx;
     }
 
     bool dumpTbxNonWritable = false;

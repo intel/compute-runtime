@@ -92,9 +92,9 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     debugManager.flags.AUBDumpCaptureFileName.set(filename);
 
     if (testMode == TestMode::aubTestsWithTbx) {
-        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_TBX_WITH_AUB));
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbxWithAub));
     } else {
-        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::CSR_AUB));
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::aub));
     }
 
     localHwInfo.capabilityTable.blitterOperationsSupported = true;

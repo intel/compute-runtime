@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ std::unique_ptr<BuiltinFunctionsLib> BuiltinFunctionsLib::create(Device *device,
 bool BuiltinFunctionsLibImpl::initBuiltinsAsyncEnabled(Device *device) {
     return device->getNEODevice()->getRootDeviceEnvironment().osInterface.get() &&
            device->getNEODevice()->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::drm &&
-           device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::CSR_HW &&
+           device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::hardware &&
            device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().isInitBuiltinAsyncSupported(device->getHwInfo());
 }
 

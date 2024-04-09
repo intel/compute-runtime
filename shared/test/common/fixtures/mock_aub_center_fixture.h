@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,6 @@ struct MockAubCenterFixture {
     static void setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment, CommandStreamReceiverType commandStreamReceiverType);
 
   protected:
-    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_AUB;
+    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::aub;
 };
 } // namespace NEO

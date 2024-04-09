@@ -1077,7 +1077,7 @@ void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait
 }
 
 bool CommandStreamReceiver::isTbxMode() const {
-    return (getType() == NEO::CommandStreamReceiverType::CSR_TBX || getType() == NEO::CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+    return (getType() == NEO::CommandStreamReceiverType::tbx || getType() == NEO::CommandStreamReceiverType::tbxWithAub);
 }
 
 TaskCountType CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus status) {

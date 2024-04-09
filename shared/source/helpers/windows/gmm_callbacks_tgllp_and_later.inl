@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ template <typename GfxFamily>
 long __stdcall DeviceCallbacks<GfxFamily>::notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) {
     auto csr = reinterpret_cast<CommandStreamReceiverHw<GfxFamily> *>(csrHandle);
 
-    if (debugManager.flags.SetCommandStreamReceiver.get() == CSR_HW_WITH_AUB) {
+    if (obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), CommandStreamReceiverType::hardware) == CommandStreamReceiverType::hardwareWithAub) {
         auto csrWithAub = static_cast<CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>> *>(csr);
         auto aubCsr = static_cast<AUBCommandStreamReceiverHw<GfxFamily> *>(csrWithAub->aubCSR.get());
         if (allocate) {

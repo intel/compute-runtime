@@ -27,7 +27,7 @@ class DrmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
             auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
             auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(*hardwareInfo);
             rootDeviceEnvironment.initGmm();
-            rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(CommandStreamReceiverType::CSR_HW_WITH_AUB));
+            rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(CommandStreamReceiverType::hardwareWithAub));
         }
 
         const auto aubCenter = rootDeviceEnvironment.aubCenter.get();

@@ -1333,7 +1333,7 @@ void TbxImmediateCommandListFixture::setUpT() {
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::tbx;
     ModuleMutableCommandListFixture::setUpImpl();
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};

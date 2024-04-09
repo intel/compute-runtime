@@ -670,7 +670,7 @@ TEST(DeviceGetEngineTest, givenDeferredContextInitializationDisabledWhenCreating
 
 TEST(DeviceGetEngineTest, givenNonHwCsrModeWhenGetEngineThenDefaultEngineIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::aub));
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useHwCsr = true;

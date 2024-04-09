@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -143,7 +143,7 @@ inline void PageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultData
 }
 
 void PageFaultManager::selectGpuDomainHandler() {
-    if (debugManager.flags.SetCommandStreamReceiver.get() > CommandStreamReceiverType::CSR_HW || debugManager.flags.NEO_CAL_ENABLED.get()) {
+    if (debugManager.flags.SetCommandStreamReceiver.get() > static_cast<int32_t>(CommandStreamReceiverType::hardware) || debugManager.flags.NEO_CAL_ENABLED.get()) {
         this->gpuDomainHandler = &PageFaultManager::unprotectAndTransferMemory;
     }
 }

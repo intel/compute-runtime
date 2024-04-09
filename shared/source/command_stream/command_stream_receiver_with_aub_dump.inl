@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(cons
                                                                             const DeviceBitfield deviceBitfield)
     : BaseCSR(executionEnvironment, rootDeviceIndex, deviceBitfield) {
     bool isAubManager = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter && executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter->getAubManager();
-    bool isTbxMode = CommandStreamReceiverType::CSR_TBX == BaseCSR::getType();
+    bool isTbxMode = CommandStreamReceiverType::tbx == BaseCSR::getType();
     bool createAubCsr = (isAubManager && isTbxMode) ? false : true;
     if (createAubCsr) {
         aubCSR.reset(AUBCommandStreamReceiver::create(baseName, false, executionEnvironment, rootDeviceIndex, deviceBitfield));

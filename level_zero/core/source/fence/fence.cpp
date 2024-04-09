@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
     ze_result_t ret = ZE_RESULT_NOT_READY;
     const auto csr = cmdQueue->getCsr();
 
-    if (csr->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
+    if (csr->getType() == NEO::CommandStreamReceiverType::aub) {
         return ZE_RESULT_SUCCESS;
     }
 

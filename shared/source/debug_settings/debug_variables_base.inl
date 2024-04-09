@@ -26,7 +26,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpToggleCaptureOnOff, 0, "Toggle AUB captur
 DECLARE_DEBUG_VARIABLE(int32_t, AubDumpOverrideMmioRegister, 0, "Override mmio offset from list with new value from AubDumpOverrideMmioRegisterValue")
 DECLARE_DEBUG_VARIABLE(int32_t, AubDumpOverrideMmioRegisterValue, 0, "Value to override mmio offset from AubDumpOverrideMmioRegister")
 DECLARE_DEBUG_VARIABLE(int32_t, ClDeviceGlobalMemSizeAvailablePercent, -1, "Percent of total GPU memory available; CL_DEVICE_GLOBAL_MEM_SIZE")
-DECLARE_DEBUG_VARIABLE(int32_t, SetCommandStreamReceiver, -1, "Set command stream receiver to: 0 - HW, 1 - AUB, 2 - TBX, 3 - HW & AUB, 4 - TBX & AUB")
+DECLARE_DEBUG_VARIABLE(int32_t, SetCommandStreamReceiver, -1, "Set command stream receiver to: 0 - HW, 1 - AUB, 2 - TBX, 3 - HW & AUB, 4 - TBX & AUB, 5 - NULL AUB")
 DECLARE_DEBUG_VARIABLE(int32_t, TbxPort, 4321, "TCP-IP port of TBX server")
 DECLARE_DEBUG_VARIABLE(int32_t, HBMSizePerTileInGigabytes, 0, "Size of HBM memory in GigaBytes per tile.")
 DECLARE_DEBUG_VARIABLE(bool, TbxFrontdoorMode, false, "Set TBX frontdoor mode for read and write memory accesses (the default mode is via backdoor)")

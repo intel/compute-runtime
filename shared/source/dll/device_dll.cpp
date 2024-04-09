@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ bool Device::isBlitSplitEnabled() {
 }
 
 bool Device::isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType csrType) {
-    return csrType == CommandStreamReceiverType::CSR_HW;
+    return csrType == CommandStreamReceiverType::hardware;
 }
 
 } // namespace NEO

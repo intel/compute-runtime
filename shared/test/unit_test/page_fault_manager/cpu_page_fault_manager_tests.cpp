@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -753,9 +753,9 @@ TEST_F(PageFaultManagerTest, givenCalWhenSelectingHandlerThenAubTbxAndCalGpuDoma
 TEST_F(PageFaultManagerTest, givenAubOrTbxCsrWhenSelectingHandlerThenAubAndTbxGpuDomainHandlerIsSet) {
     DebugManagerStateRestore restorer;
 
-    for (auto csrType : {CommandStreamReceiverType::CSR_AUB, CommandStreamReceiverType::CSR_TBX,
-                         CommandStreamReceiverType::CSR_HW_WITH_AUB, CommandStreamReceiverType::CSR_TBX_WITH_AUB}) {
-        debugManager.flags.SetCommandStreamReceiver.set(csrType);
+    for (auto csrType : {CommandStreamReceiverType::aub, CommandStreamReceiverType::tbx,
+                         CommandStreamReceiverType::hardwareWithAub, CommandStreamReceiverType::tbxWithAub}) {
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
 
         auto pageFaultManager2 = std::make_unique<MockPageFaultManager>();
         pageFaultManager2->selectGpuDomainHandler();
@@ -769,7 +769,7 @@ TEST_F(PageFaultManagerTest, givenHwCsrWhenSelectingHandlerThenHwGpuDomainHandle
 
     EXPECT_EQ(pageFaultManager->getHwHandlerAddress(), reinterpret_cast<void *>(pageFaultManager->gpuDomainHandler));
 
-    debugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_HW);
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::hardware));
 
     auto pageFaultManager2 = std::make_unique<MockPageFaultManager>();
     pageFaultManager2->selectGpuDomainHandler();

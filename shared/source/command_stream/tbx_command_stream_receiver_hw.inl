@@ -179,7 +179,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         if (debugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
             fullName.assign(debugManager.flags.AUBDumpCaptureFileName.get());
         }
-        rootDeviceEnvironment.initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+        rootDeviceEnvironment.initAubCenter(localMemoryEnabled, fullName, CommandStreamReceiverType::tbxWithAub);
 
         csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(baseName, executionEnvironment, rootDeviceIndex, deviceBitfield);
 

@@ -1354,7 +1354,7 @@ TEST_F(GmmLocalMemoryTests, givenLocalMemoryAndStorageInfoWithLocalOnlyRequiredW
     gmmRequirements.preferCompressed = false;
     DebugManagerStateRestore restorer;
 
-    for (auto csrMode = static_cast<int32_t>(CommandStreamReceiverType::CSR_HW); csrMode < static_cast<int32_t>(CommandStreamReceiverType::CSR_TYPES_NUM); csrMode++) {
+    for (auto csrMode = static_cast<int32_t>(CommandStreamReceiverType::hardware); csrMode < static_cast<int32_t>(CommandStreamReceiverType::typesNum); csrMode++) {
         debugManager.flags.SetCommandStreamReceiver.set(csrMode);
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
         EXPECT_EQ(1u, gmm->resourceParams.Flags.Info.LocalOnly);
@@ -1421,7 +1421,7 @@ TEST_F(GmmLocalMemoryTests, givenFtrLocalMemoryWhenUseSystemMemoryIsFalseAndAllo
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    for (auto csrMode = static_cast<int32_t>(CommandStreamReceiverType::CSR_HW); csrMode < static_cast<int32_t>(CommandStreamReceiverType::CSR_TYPES_NUM); csrMode++) {
+    for (auto csrMode = static_cast<int32_t>(CommandStreamReceiverType::hardware); csrMode < static_cast<int32_t>(CommandStreamReceiverType::typesNum); csrMode++) {
         debugManager.flags.SetCommandStreamReceiver.set(csrMode);
         StorageInfo storageInfo{};
         storageInfo.memoryBanks.set(1);

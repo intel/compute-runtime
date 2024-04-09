@@ -468,7 +468,7 @@ typedef Test<ClDeviceFixture> CommandStreamReceiverHwTest;
 HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsReturned) {
     auto csr = std::unique_ptr<CommandStreamReceiver>(CommandStreamReceiverHw<FamilyType>::create(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
 
-    EXPECT_EQ(CommandStreamReceiverType::CSR_HW, csr->getType());
+    EXPECT_EQ(CommandStreamReceiverType::hardware, csr->getType());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverHwTest, WhenCommandStreamReceiverHwIsCreatedThenDefaultSshSizeIs64KB) {

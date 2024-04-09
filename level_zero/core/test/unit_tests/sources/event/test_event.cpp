@@ -3225,7 +3225,7 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
     VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_CLEARED);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
-    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::tbx;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
@@ -3288,7 +3288,7 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
 HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenAllocationIsDownloaded) {
     std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
 
-    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::tbx;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
@@ -3342,7 +3342,7 @@ HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenA
 HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {
     std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
 
-    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::tbx;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
     MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, neoDevice->getMemoryManager());
@@ -3394,7 +3394,7 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
 
 HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandleCorrectly) {
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
 
@@ -3421,7 +3421,7 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
 
     std::map<GraphicsAllocation *, uint32_t> downloadAllocationTrack;
 
-    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::tbx;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
@@ -3479,7 +3479,7 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
 }
 
 HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAlocationsWhenDownloadAllocationNotRequiredThenDontDownloadAllocations) {
-    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::hardware;
 
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
 
@@ -3502,7 +3502,7 @@ HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequire
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperations>();
 
-    CommandStreamReceiverType tbxCsrTypes[] = {CommandStreamReceiverType::CSR_TBX, CommandStreamReceiverType::CSR_TBX_WITH_AUB};
+    CommandStreamReceiverType tbxCsrTypes[] = {CommandStreamReceiverType::tbx, CommandStreamReceiverType::tbxWithAub};
 
     auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(neoDevice->getUltCommandStreamReceiver<FamilyType>());
     for (auto csrType : tbxCsrTypes) {
@@ -3543,7 +3543,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     mockMemIface->captureGfxAllocationsForMakeResident = true;
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));

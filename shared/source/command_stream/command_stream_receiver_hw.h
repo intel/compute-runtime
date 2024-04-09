@@ -127,7 +127,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void resetKmdNotifyHelper(KmdNotifyHelper *newHelper);
 
     CommandStreamReceiverType getType() const override {
-        return CommandStreamReceiverType::CSR_HW;
+        return CommandStreamReceiverType::hardware;
     }
 
     TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;

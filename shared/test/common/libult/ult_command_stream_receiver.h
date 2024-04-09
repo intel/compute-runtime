@@ -505,7 +505,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::ready;
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
     std::optional<SubmissionStatus> flushReturnValue{};
-    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+    CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
 
     bool cpuCopyForHostPtrSurfaceAllowed = false;

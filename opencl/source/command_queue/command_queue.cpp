@@ -1240,7 +1240,7 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
         }
     }
 
-    if (getGpgpuCommandStreamReceiver().getType() > CommandStreamReceiverType::CSR_HW) {
+    if (getGpgpuCommandStreamReceiver().getType() > CommandStreamReceiverType::hardware) {
         for (auto &dispatchInfo : multiDispatchInfo) {
             auto &kernelName = dispatchInfo.getKernel()->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName;
             getGpgpuCommandStreamReceiver().addAubComment(kernelName.c_str());

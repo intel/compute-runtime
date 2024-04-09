@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ bool initWddmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, RootDeviceEnv
         return false;
     }
 
-    const bool isCsrHwWithAub = debugManager.flags.SetCommandStreamReceiver.get() == CommandStreamReceiverType::CSR_HW_WITH_AUB;
+    const bool isCsrHwWithAub = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), CommandStreamReceiverType::hardware) == CommandStreamReceiverType::hardwareWithAub;
     rootDeviceEnv->memoryOperationsInterface = WddmMemoryOperationsHandler::create(wddm, rootDeviceEnv, isCsrHwWithAub);
 
     return true;

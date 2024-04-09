@@ -27,10 +27,7 @@ AubCenter::AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool lo
         auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
         auto memoryBankSize = AubHelper::getPerTileLocalMemorySize(hwInfo, releaseHelper);
-        CommandStreamReceiverType type = csrType;
-        if (debugManager.flags.SetCommandStreamReceiver.get() >= CommandStreamReceiverType::CSR_HW) {
-            type = static_cast<CommandStreamReceiverType>(debugManager.flags.SetCommandStreamReceiver.get());
-        }
+        CommandStreamReceiverType type = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), csrType);
 
         aubStreamMode = getAubStreamMode(aubFileName, type);
 
@@ -85,19 +82,22 @@ AubCenter::AubCenter() {
     subCaptureCommon = std::make_unique<AubSubCaptureCommon>();
 }
 
-uint32_t AubCenter::getAubStreamMode(const std::string &aubFileName, uint32_t csrType) {
+uint32_t AubCenter::getAubStreamMode(const std::string &aubFileName, CommandStreamReceiverType csrType) {
     uint32_t mode = aub_stream::mode::aubFile;
 
     switch (csrType) {
-    case CommandStreamReceiverType::CSR_HW_WITH_AUB:
-    case CommandStreamReceiverType::CSR_AUB:
+    case CommandStreamReceiverType::hardwareWithAub:
+    case CommandStreamReceiverType::aub:
         mode = aub_stream::mode::aubFile;
         break;
-    case CommandStreamReceiverType::CSR_TBX:
+    case CommandStreamReceiverType::tbx:
         mode = aub_stream::mode::tbx;
         break;
-    case CommandStreamReceiverType::CSR_TBX_WITH_AUB:
+    case CommandStreamReceiverType::tbxWithAub:
         mode = aub_stream::mode::aubFileAndTbx;
+        break;
+    case CommandStreamReceiverType::nullAub:
+        mode = aub_stream::mode::null;
         break;
     default:
         break;

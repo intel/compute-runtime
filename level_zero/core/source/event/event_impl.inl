@@ -530,7 +530,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
     ze_result_t ret = ZE_RESULT_NOT_READY;
 
-    if (this->csrs[0]->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
+    if (this->csrs[0]->getType() == NEO::CommandStreamReceiverType::aub) {
         return ZE_RESULT_SUCCESS;
     }
 

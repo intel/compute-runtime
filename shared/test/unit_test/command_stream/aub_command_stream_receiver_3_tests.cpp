@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -327,7 +327,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenCompressedGraphicsAllocationWritabl
     debugManager.flags.AUBDumpBufferFormat.set("TRE");
 
     auto gmmHelper = pDevice->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
-    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, "aubfile", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, "aubfile", CommandStreamReceiverType::aub);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);

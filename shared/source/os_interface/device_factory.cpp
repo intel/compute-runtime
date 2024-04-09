@@ -128,11 +128,13 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 }
 
 bool DeviceFactory::isHwModeSelected() {
-    int32_t csr = debugManager.flags.SetCommandStreamReceiver.get();
-    switch (csr) {
-    case CSR_AUB:
-    case CSR_TBX:
-    case CSR_TBX_WITH_AUB:
+
+    CommandStreamReceiverType csrType = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), CommandStreamReceiverType::hardware);
+    switch (csrType) {
+    case CommandStreamReceiverType::aub:
+    case CommandStreamReceiverType::tbx:
+    case CommandStreamReceiverType::tbxWithAub:
+    case CommandStreamReceiverType::nullAub:
         return false;
     default:
         return true;

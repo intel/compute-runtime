@@ -857,11 +857,11 @@ TEST(DeviceTest, whenCheckBlitSplitEnabledThenReturnsTrue) {
 }
 
 TEST(DeviceTest, givenCsrHwWhenCheckIsInitDeviceWithFirstSubmissionEnabledThenReturnsTrue) {
-    EXPECT_TRUE(Device::isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType::CSR_HW));
+    EXPECT_TRUE(Device::isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType::hardware));
 }
 
 TEST(DeviceTest, givenCsrNonHwWhenCheckIsInitDeviceWithFirstSubmissionEnabledThenReturnsTrue) {
-    EXPECT_FALSE(Device::isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType::CSR_TBX));
+    EXPECT_FALSE(Device::isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType::tbx));
 }
 
 TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatformsAreDestroyed) {

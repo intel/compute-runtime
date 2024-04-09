@@ -366,18 +366,18 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
 
 TEST(DeviceFactory, givenHwModeSelectedWhenIsHwModeSelectedIsCalledThenTrueIsReturned) {
     DebugManagerStateRestore stateRestore;
-    constexpr int32_t hwModes[] = {-1, CommandStreamReceiverType::CSR_HW, CommandStreamReceiverType::CSR_HW_WITH_AUB};
+    constexpr int32_t hwModes[] = {-1, static_cast<int32_t>(CommandStreamReceiverType::hardware), static_cast<int32_t>(CommandStreamReceiverType::hardwareWithAub)};
     for (const auto &hwMode : hwModes) {
-        debugManager.flags.SetCommandStreamReceiver.set(hwMode);
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(hwMode));
         EXPECT_TRUE(DeviceFactory::isHwModeSelected());
     }
 }
 
 TEST(DeviceFactory, givenNonHwModeSelectedWhenIsHwModeSelectedIsCalledThenFalseIsReturned) {
     DebugManagerStateRestore stateRestore;
-    constexpr int32_t nonHwModes[] = {CommandStreamReceiverType::CSR_AUB, CommandStreamReceiverType::CSR_TBX, CommandStreamReceiverType::CSR_TBX_WITH_AUB};
+    constexpr CommandStreamReceiverType nonHwModes[] = {CommandStreamReceiverType::aub, CommandStreamReceiverType::tbx, CommandStreamReceiverType::tbxWithAub, CommandStreamReceiverType::nullAub};
     for (const auto &nonHwMode : nonHwModes) {
-        debugManager.flags.SetCommandStreamReceiver.set(nonHwMode);
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(nonHwMode));
         EXPECT_FALSE(DeviceFactory::isHwModeSelected());
     }
 }

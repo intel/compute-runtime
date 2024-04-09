@@ -602,7 +602,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     bool flushBatchedSubmissions() override { return true; }
 
     CommandStreamReceiverType getType() const override {
-        return CommandStreamReceiverType::CSR_HW;
+        return CommandStreamReceiverType::hardware;
     }
 
     void programHardwareContext(LinearStream &cmdStream) override {}

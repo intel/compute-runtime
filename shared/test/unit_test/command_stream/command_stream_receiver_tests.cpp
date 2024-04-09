@@ -3218,19 +3218,19 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTaskCalledThenSetPassNumClients) 
 HWTEST_F(CommandStreamReceiverHwTest, givenVariousCsrModeWhenGettingTbxModeThenExpectOnlyWhenModeIsTbxOrTbxWithAub) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
     EXPECT_FALSE(ultCsr.isTbxMode());
 
-    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_HW_WITH_AUB;
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::hardwareWithAub;
     EXPECT_FALSE(ultCsr.isTbxMode());
 
-    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_AUB;
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::aub;
     EXPECT_FALSE(ultCsr.isTbxMode());
 
-    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
     EXPECT_TRUE(ultCsr.isTbxMode());
 
-    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX_WITH_AUB;
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbxWithAub;
     EXPECT_TRUE(ultCsr.isTbxMode());
 }
 

@@ -1421,7 +1421,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         device->pciMaxSpeed.width = pciSpeedInfo.width;
     }
 
-    if (device->getNEODevice()->getAllEngines()[0].commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::CSR_HW) {
+    if (device->getNEODevice()->getAllEngines()[0].commandStreamReceiver->getType() == NEO::CommandStreamReceiverType::hardware) {
         device->createSysmanHandle(isSubDevice);
     }
     device->resourcesReleased = false;

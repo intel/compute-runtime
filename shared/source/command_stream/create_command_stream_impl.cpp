@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,25 +27,23 @@ CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEn
         return nullptr;
     }
     CommandStreamReceiver *commandStreamReceiver = nullptr;
-    int32_t csr = debugManager.flags.SetCommandStreamReceiver.get();
-    if (csr < 0) {
-        csr = CommandStreamReceiverType::CSR_HW;
-    }
+    CommandStreamReceiverType csrType = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), CommandStreamReceiverType::hardware);
 
-    switch (csr) {
-    case CSR_HW:
+    switch (csrType) {
+    case CommandStreamReceiverType::hardware:
         commandStreamReceiver = funcCreate(false, executionEnvironment, rootDeviceIndex, deviceBitfield);
         break;
-    case CSR_AUB:
+    case CommandStreamReceiverType::aub:
+    case CommandStreamReceiverType::nullAub:
         commandStreamReceiver = AUBCommandStreamReceiver::create(ApiSpecificConfig::getName(), true, executionEnvironment, rootDeviceIndex, deviceBitfield);
         break;
-    case CSR_TBX:
+    case CommandStreamReceiverType::tbx:
         commandStreamReceiver = TbxCommandStreamReceiver::create("", false, executionEnvironment, rootDeviceIndex, deviceBitfield);
         break;
-    case CSR_HW_WITH_AUB:
+    case CommandStreamReceiverType::hardwareWithAub:
         commandStreamReceiver = funcCreate(true, executionEnvironment, rootDeviceIndex, deviceBitfield);
         break;
-    case CSR_TBX_WITH_AUB:
+    case CommandStreamReceiverType::tbxWithAub:
         commandStreamReceiver = TbxCommandStreamReceiver::create(ApiSpecificConfig::getName(), true, executionEnvironment, rootDeviceIndex, deviceBitfield);
         break;
     default:

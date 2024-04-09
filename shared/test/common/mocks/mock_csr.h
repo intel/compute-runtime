@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,7 +88,7 @@ class MockCsrAub : public MockCsrBase<GfxFamily> {
                const DeviceBitfield deviceBitfield)
         : MockCsrBase<GfxFamily>(execStamp, executionEnvironment, rootDeviceIndex, deviceBitfield) {}
     CommandStreamReceiverType getType() const override {
-        return CommandStreamReceiverType::CSR_AUB;
+        return CommandStreamReceiverType::aub;
     }
 };
 

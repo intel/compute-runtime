@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ class AubCenter {
         return aubManager.get();
     }
 
-    static uint32_t getAubStreamMode(const std::string &aubFileName, uint32_t csrType);
+    static uint32_t getAubStreamMode(const std::string &aubFileName, CommandStreamReceiverType csrType);
 
   protected:
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;

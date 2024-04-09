@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,13 +68,13 @@ TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathW
         GTEST_SKIP();
     }
 
-    for (int csrTypes = -1; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
+    for (int csrTypes = -1; csrTypes <= static_cast<int>(CommandStreamReceiverType::typesNum); csrTypes++) {
         CommandStreamReceiverType csrType;
         if (csrTypes != -1) {
             csrType = static_cast<CommandStreamReceiverType>(csrTypes);
-            debugManager.flags.SetCommandStreamReceiver.set(csrType);
+            debugManager.flags.SetCommandStreamReceiver.set(csrTypes);
         } else {
-            csrType = CSR_HW;
+            csrType = CommandStreamReceiverType::hardware;
             debugManager.flags.SetCommandStreamReceiver.set(-1);
         }
 
@@ -90,9 +90,9 @@ TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathW
             hwInfo = exeEnv.rootDeviceEnvironments[i]->getHardwareInfo();
 
             switch (csrType) {
-            case CSR_HW:
-            case CSR_HW_WITH_AUB:
-            case CSR_TYPES_NUM:
+            case CommandStreamReceiverType::hardware:
+            case CommandStreamReceiverType::hardwareWithAub:
+            case CommandStreamReceiverType::typesNum:
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
                 break;
@@ -112,13 +112,13 @@ TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathF
         GTEST_SKIP();
     }
 
-    for (int csrTypes = -1; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
+    for (int csrTypes = -1; csrTypes <= static_cast<int>(CommandStreamReceiverType::typesNum); csrTypes++) {
         CommandStreamReceiverType csrType;
         if (csrTypes != -1) {
             csrType = static_cast<CommandStreamReceiverType>(csrTypes);
-            debugManager.flags.SetCommandStreamReceiver.set(csrType);
+            debugManager.flags.SetCommandStreamReceiver.set(csrTypes);
         } else {
-            csrType = CSR_HW;
+            csrType = CommandStreamReceiverType::hardware;
             debugManager.flags.SetCommandStreamReceiver.set(-1);
         }
 
@@ -134,9 +134,9 @@ TEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWithPciPathF
             hwInfo = exeEnv.rootDeviceEnvironments[i]->getHardwareInfo();
 
             switch (csrType) {
-            case CSR_HW:
-            case CSR_HW_WITH_AUB:
-            case CSR_TYPES_NUM:
+            case CommandStreamReceiverType::hardware:
+            case CommandStreamReceiverType::hardwareWithAub:
+            case CommandStreamReceiverType::typesNum:
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
                 break;
@@ -156,13 +156,13 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
         GTEST_SKIP();
     }
 
-    for (int csrTypes = -1; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
+    for (int csrTypes = -1; csrTypes <= static_cast<int>(CommandStreamReceiverType::typesNum); csrTypes++) {
         CommandStreamReceiverType csrType;
         if (csrTypes != -1) {
             csrType = static_cast<CommandStreamReceiverType>(csrTypes);
-            debugManager.flags.SetCommandStreamReceiver.set(csrType);
+            debugManager.flags.SetCommandStreamReceiver.set(csrTypes);
         } else {
-            csrType = CSR_HW;
+            csrType = CommandStreamReceiverType::hardware;
             debugManager.flags.SetCommandStreamReceiver.set(-1);
         }
 
@@ -177,14 +177,15 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
             auto &productHelper = exeEnv.rootDeviceEnvironments[i]->getProductHelper();
             auto releaseHelper = exeEnv.rootDeviceEnvironments[i]->getReleaseHelper();
             switch (csrType) {
-            case CSR_HW:
-            case CSR_HW_WITH_AUB:
+            case CommandStreamReceiverType::hardware:
+            case CommandStreamReceiverType::hardwareWithAub:
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
                 break;
-            case CSR_AUB:
-            case CSR_TBX:
-            case CSR_TBX_WITH_AUB: {
+            case CommandStreamReceiverType::aub:
+            case CommandStreamReceiverType::tbx:
+            case CommandStreamReceiverType::nullAub:
+            case CommandStreamReceiverType::tbxWithAub: {
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
 
@@ -232,13 +233,13 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
         GTEST_SKIP();
     }
 
-    for (int csrTypes = -1; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
+    for (int csrTypes = -1; csrTypes <= static_cast<int>(CommandStreamReceiverType::typesNum); csrTypes++) {
         CommandStreamReceiverType csrType;
         if (csrTypes != -1) {
             csrType = static_cast<CommandStreamReceiverType>(csrTypes);
-            debugManager.flags.SetCommandStreamReceiver.set(csrType);
+            debugManager.flags.SetCommandStreamReceiver.set(csrTypes);
         } else {
-            csrType = CSR_HW;
+            csrType = CommandStreamReceiverType::hardware;
             debugManager.flags.SetCommandStreamReceiver.set(-1);
         }
 
@@ -255,14 +256,15 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
             auto releaseHelper = exeEnv.rootDeviceEnvironments[i]->getReleaseHelper();
 
             switch (csrType) {
-            case CSR_HW:
-            case CSR_HW_WITH_AUB:
+            case CommandStreamReceiverType::hardware:
+            case CommandStreamReceiverType::hardwareWithAub:
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
                 break;
-            case CSR_AUB:
-            case CSR_TBX:
-            case CSR_TBX_WITH_AUB: {
+            case CommandStreamReceiverType::aub:
+            case CommandStreamReceiverType::nullAub:
+            case CommandStreamReceiverType::tbx:
+            case CommandStreamReceiverType::tbxWithAub: {
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
 
@@ -293,7 +295,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseDeprecatedAcronymsToProduc
 
     std::transform(deprecatedAcronym.begin(), deprecatedAcronym.end(), deprecatedAcronym.begin(), ::toupper);
     debugManager.flags.ProductFamilyOverride.set(deprecatedAcronym);
-    debugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::aub));
     MockExecutionEnvironment exeEnv;
     bool ret = prepareDeviceEnvironments(exeEnv);
 
@@ -314,7 +316,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseProductFamilyOverrideFlagS
     std::transform(product.begin(), product.end(), product.begin(), ::toupper);
 
     debugManager.flags.ProductFamilyOverride.set(product);
-    debugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::aub));
 
     MockExecutionEnvironment exeEnv;
     bool ret = prepareDeviceEnvironments(exeEnv);
@@ -326,11 +328,11 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseProductFamilyOverrideFlagS
 HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
     uint32_t expectedDevices = 1;
     debugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
-    for (int csrTypes = 0; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
+    for (int csrTypes = 0; csrTypes <= static_cast<int>(CommandStreamReceiverType::typesNum); csrTypes++) {
         CommandStreamReceiverType csrType = static_cast<CommandStreamReceiverType>(csrTypes);
         std::string productFamily("unk");
 
-        debugManager.flags.SetCommandStreamReceiver.set(csrType);
+        debugManager.flags.SetCommandStreamReceiver.set(csrTypes);
         debugManager.flags.ProductFamilyOverride.set(productFamily);
         MockExecutionEnvironment exeEnv;
         exeEnv.prepareRootDeviceEnvironments(expectedDevices);
@@ -343,13 +345,14 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
             auto releaseHelper = exeEnv.rootDeviceEnvironments[i]->getReleaseHelper();
 
             switch (csrType) {
-            case CSR_HW:
-            case CSR_HW_WITH_AUB:
+            case CommandStreamReceiverType::hardware:
+            case CommandStreamReceiverType::hardwareWithAub:
                 EXPECT_TRUE(ret);
                 break;
-            case CSR_AUB:
-            case CSR_TBX:
-            case CSR_TBX_WITH_AUB: {
+            case CommandStreamReceiverType::aub:
+            case CommandStreamReceiverType::nullAub:
+            case CommandStreamReceiverType::tbx:
+            case CommandStreamReceiverType::tbxWithAub: {
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
                 for (i = 0; i < IGFX_MAX_PRODUCT; i++) {

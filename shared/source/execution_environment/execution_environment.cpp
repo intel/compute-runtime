@@ -62,19 +62,17 @@ bool ExecutionEnvironment::initializeMemoryManager() {
         return memoryManager->isInitialized();
     }
 
-    int32_t setCommandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
-    if (debugManager.flags.SetCommandStreamReceiver.get() >= 0) {
-        setCommandStreamReceiverType = debugManager.flags.SetCommandStreamReceiver.get();
-    }
+    auto csrType = obtainCsrTypeFromIntegerValue(debugManager.flags.SetCommandStreamReceiver.get(), CommandStreamReceiverType::hardware);
 
-    switch (setCommandStreamReceiverType) {
-    case CommandStreamReceiverType::CSR_TBX:
-    case CommandStreamReceiverType::CSR_TBX_WITH_AUB:
-    case CommandStreamReceiverType::CSR_AUB:
+    switch (csrType) {
+    case CommandStreamReceiverType::tbx:
+    case CommandStreamReceiverType::tbxWithAub:
+    case CommandStreamReceiverType::aub:
+    case CommandStreamReceiverType::nullAub:
         memoryManager = std::make_unique<OsAgnosticMemoryManager>(*this);
         break;
-    case CommandStreamReceiverType::CSR_HW:
-    case CommandStreamReceiverType::CSR_HW_WITH_AUB:
+    case CommandStreamReceiverType::hardware:
+    case CommandStreamReceiverType::hardwareWithAub:
     default: {
         auto driverModelType = DriverModelType::unknown;
         if (this->rootDeviceEnvironments[0]->osInterface && this->rootDeviceEnvironments[0]->osInterface->getDriverModel()) {

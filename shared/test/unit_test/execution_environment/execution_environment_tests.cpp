@@ -79,7 +79,7 @@ TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCa
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
-    rootDeviceEnvironment->initAubCenter(true, "test.aub", CommandStreamReceiverType::CSR_AUB);
+    rootDeviceEnvironment->initAubCenter(true, "test.aub", CommandStreamReceiverType::aub);
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
     EXPECT_TRUE(rootDeviceEnvironment->localMemoryEnabledReceived);
     EXPECT_STREQ(rootDeviceEnvironment->aubFileNameReceived.c_str(), "test.aub");
@@ -117,7 +117,7 @@ TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenR
 
     MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 1u};
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
+    rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::aub);
     auto aubManager = rootDeviceEnvironment->aubCenter->getAubManager();
     EXPECT_EQ(nullptr, aubManager);
 }
@@ -125,14 +125,14 @@ TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenR
 TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
     MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 1u};
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
+    rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::aub);
     auto currentAubCenter = rootDeviceEnvironment->aubCenter.get();
     EXPECT_NE(nullptr, currentAubCenter);
     auto currentAubStreamProvider = currentAubCenter->getStreamProvider();
     EXPECT_NE(nullptr, currentAubStreamProvider);
     auto currentAubFileStream = currentAubStreamProvider->getStream();
     EXPECT_NE(nullptr, currentAubFileStream);
-    rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
+    rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::aub);
     EXPECT_EQ(currentAubCenter, rootDeviceEnvironment->aubCenter.get());
     EXPECT_EQ(currentAubStreamProvider, rootDeviceEnvironment->aubCenter->getStreamProvider());
     EXPECT_EQ(currentAubFileStream, rootDeviceEnvironment->aubCenter->getStreamProvider()->getStream());
@@ -340,7 +340,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         MemoryOperationsHandlerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 2> {
-        AubCenterMock(uint32_t &destructorId, const RootDeviceEnvironment &rootDeviceEnvironment) : DestructorCounted(destructorId, rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_AUB) {}
+        AubCenterMock(uint32_t &destructorId, const RootDeviceEnvironment &rootDeviceEnvironment) : DestructorCounted(destructorId, rootDeviceEnvironment, false, "", CommandStreamReceiverType::aub) {}
     };
     struct CompilerInterfaceMock : public DestructorCounted<CompilerInterface, 1> {
         CompilerInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}

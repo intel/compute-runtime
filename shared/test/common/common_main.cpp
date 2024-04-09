@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
         } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { // disable tests which raise page fault signal during execution
             NEO::PagaFaultManagerTestConfig::disabled = true;
         } else if (!strcmp("--tbx", argv[i])) {
-            if (testMode == TestMode::aubTests) {
+            if (isAubTestMode(testMode)) {
                 testMode = TestMode::aubTestsWithTbx;
             }
             initialHardwareTag = 0;
@@ -265,21 +265,26 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp("--generate_random_inputs", argv[i])) {
             generateRandomInput = true;
-        } else if (!strcmp("--read-config", argv[i]) && (testMode == TestMode::aubTests || testMode == TestMode::aubTestsWithTbx)) {
+        } else if (!strcmp("--read-config", argv[i]) && isAubTestMode(testMode)) {
             if (debugManager.registryReadAvailable()) {
                 debugManager.setReaderImpl(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
                 debugManager.injectSettingsFromReader();
             }
-        } else if (!strcmp("--dump_buffer_format", argv[i]) && testMode == TestMode::aubTests) {
+        } else if (!strcmp("--dump_buffer_format", argv[i]) && isAubTestMode(testMode)) {
             ++i;
             std::string dumpBufferFormat(argv[i]);
             std::transform(dumpBufferFormat.begin(), dumpBufferFormat.end(), dumpBufferFormat.begin(), ::toupper);
             debugManager.flags.AUBDumpBufferFormat.set(dumpBufferFormat);
-        } else if (!strcmp("--dump_image_format", argv[i]) && testMode == TestMode::aubTests) {
+        } else if (!strcmp("--dump_image_format", argv[i]) && isAubTestMode(testMode)) {
             ++i;
             std::string dumpImageFormat(argv[i]);
             std::transform(dumpImageFormat.begin(), dumpImageFormat.end(), dumpImageFormat.begin(), ::toupper);
             debugManager.flags.AUBDumpImageFormat.set(dumpImageFormat);
+        } else if (!strcmp("--null_aubstream", argv[i])) {
+            if (isAubTestMode(testMode)) {
+                testMode = TestMode::aubTestsWithoutOutputFiles;
+            }
+            initialHardwareTag = 0;
         }
     }
 
