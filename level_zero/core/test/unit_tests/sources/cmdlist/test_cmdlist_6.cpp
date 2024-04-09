@@ -583,6 +583,56 @@ HWTEST2_F(CommandListTest,
 }
 
 HWTEST2_F(CommandListTest,
+          givenComputeCommandListAndRegionMemoryCopyFrom2dSourceImageto3dDestImageThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(),
+                                          &deviceDesc,
+                                          size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    ze_copy_region_t dstRegion = {4, 4, 1, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest,
+          givenComputeCommandListAndRegionMemoryCopyFrom3dSourceImageto2dDestImageThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastSkl) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    constexpr size_t size = 4096u;
+    constexpr size_t alignment = 4096u;
+    void *dstBuffer = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(),
+                                          &deviceDesc,
+                                          size, alignment, &dstBuffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 1, 2, 2, 1};
+    commandList->appendMemoryCopyRegion(dstBuffer, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false, false);
+    EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+    EXPECT_FALSE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
+
+    context->freeMem(dstBuffer);
+}
+
+HWTEST2_F(CommandListTest,
           givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInExternalHostAllocationCalledThenBuiltinAndDestinationAllocSystemFlagIsSet, IsAtLeastSkl) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);

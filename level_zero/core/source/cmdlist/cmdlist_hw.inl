@@ -1714,7 +1714,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                             {srcRegion->width, srcRegion->height, srcRegion->depth},
                                             srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3,
                                             signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
-    } else if (srcRegion->depth > 1) {
+    } else if ((srcRegion->depth > 1) || (srcRegion->originZ != 0) || (dstRegion->originZ != 0)) {
         result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, Builtin::copyBufferRectBytes3d,
                                                 dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
                                                 srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset,
