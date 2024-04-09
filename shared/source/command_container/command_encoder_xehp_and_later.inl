@@ -283,7 +283,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
     }
 
-    bool heaplessStateInitEnabled = rootDeviceEnvironment.getHelper<CompilerProductHelper>().isHeaplessStateInitEnabled();
+    bool heaplessStateInitEnabled = rootDeviceEnvironment.getHelper<CompilerProductHelper>().isHeaplessStateInitEnabled(heaplessModeEnabled);
 
     if (heaplessStateInitEnabled == false) {
         if (container.isAnyHeapDirty() ||

@@ -234,7 +234,7 @@ bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isHeaplessStateInitEnabled() const {
+bool CompilerProductHelperHw<gfxProduct>::isHeaplessStateInitEnabled([[maybe_unused]] bool heaplessModeEnabled) const {
     return false;
 }
 

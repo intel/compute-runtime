@@ -239,7 +239,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->useOnlyGlobalTimestamps = gfxCoreHelper.useOnlyGlobalTimestamps();
     this->maxFillPaternSizeForCopyEngine = productHelper.getMaxFillPaternSizeForCopyEngine();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
-    this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled();
+    this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(this->heaplessModeEnabled);
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
     this->duplicatedInOrderCounterStorageEnabled = gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(rootDeviceEnvironment);

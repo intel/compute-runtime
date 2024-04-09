@@ -131,7 +131,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
 
         this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
-        this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled();
+        this->heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(this->heaplessModeEnabled);
     }
 }
 

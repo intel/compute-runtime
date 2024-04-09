@@ -461,7 +461,9 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     }
 
     auto &compilerProductHelper = this->getCompilerProductHelper();
-    bool isHeaplessStateInit = isPrimaryEngine && compilerProductHelper.isHeaplessStateInitEnabled();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+
+    bool isHeaplessStateInit = isPrimaryEngine && compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
     bool initializeDevice = (useContextGroup || isHeaplessStateInit) && !firstSubmissionDone;
 
     if (initializeDevice) {
