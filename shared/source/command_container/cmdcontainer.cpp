@@ -195,8 +195,18 @@ void CommandContainer::reset() {
     getDeallocationContainer().clear();
     sshAllocations.clear();
 
-    this->handleCmdBufferAllocations(1u);
-    cmdBufferAllocations.erase(cmdBufferAllocations.begin() + 1, cmdBufferAllocations.end());
+    auto defaultCmdBuffersCnt = 1u + this->useSecondaryCommandStream;
+
+    this->handleCmdBufferAllocations(defaultCmdBuffersCnt);
+    cmdBufferAllocations.erase(cmdBufferAllocations.begin() + defaultCmdBuffersCnt, cmdBufferAllocations.end());
+
+    if (this->useSecondaryCommandStream) {
+        if (!NEO::MemoryPoolHelper::isSystemMemoryPool(this->getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+            this->swapStreams();
+        }
+        setCmdBuffer(cmdBufferAllocations[1]);
+        this->swapStreams();
+    }
 
     setCmdBuffer(cmdBufferAllocations[0]);
 
