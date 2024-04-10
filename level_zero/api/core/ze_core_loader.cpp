@@ -522,31 +522,30 @@ zeGetModuleProcAddrTable(
     ze_module_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driverDdiTable.enableTracing = getEnvToBool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnCreate = L0::zeModuleCreate;
-    pDdiTable->pfnDestroy = L0::zeModuleDestroy;
-    pDdiTable->pfnDynamicLink = L0::zeModuleDynamicLink;
-    pDdiTable->pfnGetNativeBinary = L0::zeModuleGetNativeBinary;
-    pDdiTable->pfnGetGlobalPointer = L0::zeModuleGetGlobalPointer;
-    pDdiTable->pfnGetKernelNames = L0::zeModuleGetKernelNames;
-    pDdiTable->pfnGetFunctionPointer = L0::zeModuleGetFunctionPointer;
-    pDdiTable->pfnGetProperties = L0::zeModuleGetProperties;
-    pDdiTable->pfnInspectLinkageExt = L0::zeModuleInspectLinkageExt;
+    fillDdiEntry(pDdiTable->pfnCreate, L0::zeModuleCreate, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnDestroy, L0::zeModuleDestroy, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnDynamicLink, L0::zeModuleDynamicLink, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetNativeBinary, L0::zeModuleGetNativeBinary, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetGlobalPointer, L0::zeModuleGetGlobalPointer, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetKernelNames, L0::zeModuleGetKernelNames, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetFunctionPointer, L0::zeModuleGetFunctionPointer, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetProperties, L0::zeModuleGetProperties, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnInspectLinkageExt, L0::zeModuleInspectLinkageExt, version, ZE_API_VERSION_1_3);
     driverDdiTable.coreDdiTable.Module = *pDdiTable;
     if (driverDdiTable.enableTracing) {
-        pDdiTable->pfnCreate = zeModuleCreateTracing;
-        pDdiTable->pfnDestroy = zeModuleDestroyTracing;
-        pDdiTable->pfnGetNativeBinary = zeModuleGetNativeBinaryTracing;
-        pDdiTable->pfnDynamicLink = zeModuleDynamicLinkTracing;
-        pDdiTable->pfnGetGlobalPointer = zeModuleGetGlobalPointerTracing;
-        pDdiTable->pfnGetFunctionPointer = zeModuleGetFunctionPointerTracing;
-        pDdiTable->pfnGetKernelNames = zeModuleGetKernelNamesTracing;
-        pDdiTable->pfnGetProperties = zeModuleGetPropertiesTracing;
+        fillDdiEntry(pDdiTable->pfnCreate, zeModuleCreateTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnDestroy, zeModuleDestroyTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetNativeBinary, zeModuleGetNativeBinaryTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnDynamicLink, zeModuleDynamicLinkTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetGlobalPointer, zeModuleGetGlobalPointerTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetFunctionPointer, zeModuleGetFunctionPointerTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetKernelNames, zeModuleGetKernelNamesTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetProperties, zeModuleGetPropertiesTracing, version, ZE_API_VERSION_1_0);
     }
     return result;
 }
@@ -557,18 +556,17 @@ zeGetModuleBuildLogProcAddrTable(
     ze_module_build_log_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driverDdiTable.enableTracing = getEnvToBool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnDestroy = L0::zeModuleBuildLogDestroy;
-    pDdiTable->pfnGetString = L0::zeModuleBuildLogGetString;
+    fillDdiEntry(pDdiTable->pfnDestroy, L0::zeModuleBuildLogDestroy, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetString, L0::zeModuleBuildLogGetString, version, ZE_API_VERSION_1_0);
     driverDdiTable.coreDdiTable.ModuleBuildLog = *pDdiTable;
     if (driverDdiTable.enableTracing) {
-        pDdiTable->pfnDestroy = zeModuleBuildLogDestroyTracing;
-        pDdiTable->pfnGetString = zeModuleBuildLogGetStringTracing;
+        fillDdiEntry(pDdiTable->pfnDestroy, zeModuleBuildLogDestroyTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetString, zeModuleBuildLogGetStringTracing, version, ZE_API_VERSION_1_0);
     }
     return result;
 }
@@ -579,38 +577,37 @@ zeGetKernelProcAddrTable(
     ze_kernel_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driverDdiTable.enableTracing = getEnvToBool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnCreate = L0::zeKernelCreate;
-    pDdiTable->pfnDestroy = L0::zeKernelDestroy;
-    pDdiTable->pfnSetGroupSize = L0::zeKernelSetGroupSize;
-    pDdiTable->pfnSuggestGroupSize = L0::zeKernelSuggestGroupSize;
-    pDdiTable->pfnSuggestMaxCooperativeGroupCount = L0::zeKernelSuggestMaxCooperativeGroupCount;
-    pDdiTable->pfnSetArgumentValue = L0::zeKernelSetArgumentValue;
-    pDdiTable->pfnSetIndirectAccess = L0::zeKernelSetIndirectAccess;
-    pDdiTable->pfnGetIndirectAccess = L0::zeKernelGetIndirectAccess;
-    pDdiTable->pfnGetSourceAttributes = L0::zeKernelGetSourceAttributes;
-    pDdiTable->pfnGetProperties = L0::zeKernelGetProperties;
-    pDdiTable->pfnSetCacheConfig = L0::zeKernelSetCacheConfig;
-    pDdiTable->pfnGetName = L0::zeKernelGetName;
+    fillDdiEntry(pDdiTable->pfnCreate, L0::zeKernelCreate, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnDestroy, L0::zeKernelDestroy, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnSetGroupSize, L0::zeKernelSetGroupSize, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnSuggestGroupSize, L0::zeKernelSuggestGroupSize, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnSuggestMaxCooperativeGroupCount, L0::zeKernelSuggestMaxCooperativeGroupCount, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnSetArgumentValue, L0::zeKernelSetArgumentValue, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnSetIndirectAccess, L0::zeKernelSetIndirectAccess, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetIndirectAccess, L0::zeKernelGetIndirectAccess, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetSourceAttributes, L0::zeKernelGetSourceAttributes, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetProperties, L0::zeKernelGetProperties, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnSetCacheConfig, L0::zeKernelSetCacheConfig, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnGetName, L0::zeKernelGetName, version, ZE_API_VERSION_1_0);
     driverDdiTable.coreDdiTable.Kernel = *pDdiTable;
     if (driverDdiTable.enableTracing) {
-        pDdiTable->pfnCreate = zeKernelCreateTracing;
-        pDdiTable->pfnDestroy = zeKernelDestroyTracing;
-        pDdiTable->pfnSetGroupSize = zeKernelSetGroupSizeTracing;
-        pDdiTable->pfnSuggestGroupSize = zeKernelSuggestGroupSizeTracing;
-        pDdiTable->pfnSuggestMaxCooperativeGroupCount = zeKernelSuggestMaxCooperativeGroupCountTracing;
-        pDdiTable->pfnSetArgumentValue = zeKernelSetArgumentValueTracing;
-        pDdiTable->pfnSetIndirectAccess = zeKernelSetIndirectAccessTracing;
-        pDdiTable->pfnGetIndirectAccess = zeKernelGetIndirectAccessTracing;
-        pDdiTable->pfnGetSourceAttributes = zeKernelGetSourceAttributesTracing;
-        pDdiTable->pfnGetProperties = zeKernelGetPropertiesTracing;
-        pDdiTable->pfnSetCacheConfig = zeKernelSetCacheConfigTracing;
-        pDdiTable->pfnGetName = zeKernelGetNameTracing;
+        fillDdiEntry(pDdiTable->pfnCreate, zeKernelCreateTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnDestroy, zeKernelDestroyTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnSetGroupSize, zeKernelSetGroupSizeTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnSuggestGroupSize, zeKernelSuggestGroupSizeTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnSuggestMaxCooperativeGroupCount, zeKernelSuggestMaxCooperativeGroupCountTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnSetArgumentValue, zeKernelSetArgumentValueTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnSetIndirectAccess, zeKernelSetIndirectAccessTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetIndirectAccess, zeKernelGetIndirectAccessTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetSourceAttributes, zeKernelGetSourceAttributesTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetProperties, zeKernelGetPropertiesTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnSetCacheConfig, zeKernelSetCacheConfigTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnGetName, zeKernelGetNameTracing, version, ZE_API_VERSION_1_0);
     }
     return result;
 }
@@ -621,18 +618,17 @@ zeGetSamplerProcAddrTable(
     ze_sampler_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
     driverDdiTable.enableTracing = getEnvToBool("ZET_ENABLE_API_TRACING_EXP");
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnCreate = L0::zeSamplerCreate;
-    pDdiTable->pfnDestroy = L0::zeSamplerDestroy;
+    fillDdiEntry(pDdiTable->pfnCreate, L0::zeSamplerCreate, version, ZE_API_VERSION_1_0);
+    fillDdiEntry(pDdiTable->pfnDestroy, L0::zeSamplerDestroy, version, ZE_API_VERSION_1_0);
     driverDdiTable.coreDdiTable.Sampler = *pDdiTable;
     if (driverDdiTable.enableTracing) {
-        pDdiTable->pfnCreate = zeSamplerCreateTracing;
-        pDdiTable->pfnDestroy = zeSamplerDestroyTracing;
+        fillDdiEntry(pDdiTable->pfnCreate, zeSamplerCreateTracing, version, ZE_API_VERSION_1_0);
+        fillDdiEntry(pDdiTable->pfnDestroy, zeSamplerDestroyTracing, version, ZE_API_VERSION_1_0);
     }
     return result;
 }
@@ -643,13 +639,12 @@ zeGetKernelExpProcAddrTable(
     ze_kernel_exp_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnSetGlobalOffsetExp = L0::zeKernelSetGlobalOffsetExp;
-    pDdiTable->pfnSchedulingHintExp = L0::zeKernelSchedulingHintExp;
+    fillDdiEntry(pDdiTable->pfnSetGlobalOffsetExp, L0::zeKernelSetGlobalOffsetExp, version, ZE_API_VERSION_1_1);
+    fillDdiEntry(pDdiTable->pfnSchedulingHintExp, L0::zeKernelSchedulingHintExp, version, ZE_API_VERSION_1_2);
     driverDdiTable.coreDdiTable.KernelExp = *pDdiTable;
     return result;
 }
@@ -660,15 +655,14 @@ zeGetMemExpProcAddrTable(
     ze_mem_exp_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetIpcHandleFromFileDescriptorExp = L0::zeMemGetIpcHandleFromFileDescriptorExp;
-    pDdiTable->pfnGetFileDescriptorFromIpcHandleExp = L0::zeMemGetFileDescriptorFromIpcHandleExp;
-    pDdiTable->pfnSetAtomicAccessAttributeExp = L0::zeMemSetAtomicAccessAttributeExp;
-    pDdiTable->pfnGetAtomicAccessAttributeExp = L0::zeMemGetAtomicAccessAttributeExp;
+    fillDdiEntry(pDdiTable->pfnGetIpcHandleFromFileDescriptorExp, L0::zeMemGetIpcHandleFromFileDescriptorExp, version, ZE_API_VERSION_1_6);
+    fillDdiEntry(pDdiTable->pfnGetFileDescriptorFromIpcHandleExp, L0::zeMemGetFileDescriptorFromIpcHandleExp, version, ZE_API_VERSION_1_6);
+    fillDdiEntry(pDdiTable->pfnSetAtomicAccessAttributeExp, L0::zeMemSetAtomicAccessAttributeExp, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnGetAtomicAccessAttributeExp, L0::zeMemGetAtomicAccessAttributeExp, version, ZE_API_VERSION_1_7);
     driverDdiTable.coreDdiTable.MemExp = *pDdiTable;
     return result;
 }
@@ -679,13 +673,12 @@ zeGetImageExpProcAddrTable(
     ze_image_exp_dditable_t *pDdiTable) {
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetMemoryPropertiesExp = L0::zeImageGetMemoryPropertiesExp;
-    pDdiTable->pfnViewCreateExp = L0::zeImageViewCreateExp;
+    fillDdiEntry(pDdiTable->pfnGetMemoryPropertiesExp, L0::zeImageGetMemoryPropertiesExp, version, ZE_API_VERSION_1_2);
+    fillDdiEntry(pDdiTable->pfnViewCreateExp, L0::zeImageViewCreateExp, version, ZE_API_VERSION_1_2);
     driverDdiTable.coreDdiTable.ImageExp = *pDdiTable;
     return result;
 }
@@ -697,15 +690,14 @@ zeGetFabricVertexExpProcAddrTable(
 
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetExp = L0::zeFabricVertexGetExp;
-    pDdiTable->pfnGetSubVerticesExp = L0::zeFabricVertexGetSubVerticesExp;
-    pDdiTable->pfnGetPropertiesExp = L0::zeFabricVertexGetPropertiesExp;
-    pDdiTable->pfnGetDeviceExp = L0::zeFabricVertexGetDeviceExp;
+    fillDdiEntry(pDdiTable->pfnGetExp, L0::zeFabricVertexGetExp, version, ZE_API_VERSION_1_4);
+    fillDdiEntry(pDdiTable->pfnGetSubVerticesExp, L0::zeFabricVertexGetSubVerticesExp, version, ZE_API_VERSION_1_4);
+    fillDdiEntry(pDdiTable->pfnGetPropertiesExp, L0::zeFabricVertexGetPropertiesExp, version, ZE_API_VERSION_1_4);
+    fillDdiEntry(pDdiTable->pfnGetDeviceExp, L0::zeFabricVertexGetDeviceExp, version, ZE_API_VERSION_1_4);
     driverDdiTable.coreDdiTable.FabricVertexExp = *pDdiTable;
     return result;
 }
@@ -717,14 +709,13 @@ zeGetFabricEdgeExpProcAddrTable(
 
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnGetExp = L0::zeFabricEdgeGetExp;
-    pDdiTable->pfnGetVerticesExp = L0::zeFabricEdgeGetVerticesExp;
-    pDdiTable->pfnGetPropertiesExp = L0::zeFabricEdgeGetPropertiesExp;
+    fillDdiEntry(pDdiTable->pfnGetExp, L0::zeFabricEdgeGetExp, version, ZE_API_VERSION_1_4);
+    fillDdiEntry(pDdiTable->pfnGetVerticesExp, L0::zeFabricEdgeGetVerticesExp, version, ZE_API_VERSION_1_4);
+    fillDdiEntry(pDdiTable->pfnGetPropertiesExp, L0::zeFabricEdgeGetPropertiesExp, version, ZE_API_VERSION_1_4);
     driverDdiTable.coreDdiTable.FabricEdgeExp = *pDdiTable;
     return result;
 }
@@ -736,12 +727,11 @@ zeGetDriverExpProcAddrTable(
 
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnRTASFormatCompatibilityCheckExp = L0::zeDriverRTASFormatCompatibilityCheckExp;
+    fillDdiEntry(pDdiTable->pfnRTASFormatCompatibilityCheckExp, L0::zeDriverRTASFormatCompatibilityCheckExp, version, ZE_API_VERSION_1_7);
     driverDdiTable.coreDdiTable.DriverExp = *pDdiTable;
     return result;
 }
@@ -753,15 +743,14 @@ zeGetRTASParallelOperationExpProcAddrTable(
 
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnCreateExp = L0::zeRTASParallelOperationCreateExp;
-    pDdiTable->pfnGetPropertiesExp = L0::zeRTASParallelOperationGetPropertiesExp;
-    pDdiTable->pfnJoinExp = L0::zeRTASParallelOperationJoinExp;
-    pDdiTable->pfnDestroyExp = L0::zeRTASParallelOperationDestroyExp;
+    fillDdiEntry(pDdiTable->pfnCreateExp, L0::zeRTASParallelOperationCreateExp, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnGetPropertiesExp, L0::zeRTASParallelOperationGetPropertiesExp, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnJoinExp, L0::zeRTASParallelOperationJoinExp, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnDestroyExp, L0::zeRTASParallelOperationDestroyExp, version, ZE_API_VERSION_1_7);
     driverDdiTable.coreDdiTable.RTASParallelOperationExp = *pDdiTable;
     return result;
 }
@@ -773,15 +762,14 @@ zeGetRTASBuilderExpProcAddrTable(
 
     if (nullptr == pDdiTable)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
-        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version))
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    pDdiTable->pfnCreateExp = L0::zeRTASBuilderCreateExp;
-    pDdiTable->pfnGetBuildPropertiesExp = L0::zeRTASBuilderGetBuildPropertiesExp;
-    pDdiTable->pfnBuildExp = L0::zeRTASBuilderBuildExp;
-    pDdiTable->pfnDestroyExp = L0::zeRTASBuilderDestroyExp;
+    fillDdiEntry(pDdiTable->pfnCreateExp, L0::zeRTASBuilderCreateExp, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnGetBuildPropertiesExp, L0::zeRTASBuilderGetBuildPropertiesExp, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnBuildExp, L0::zeRTASBuilderBuildExp, version, ZE_API_VERSION_1_7);
+    fillDdiEntry(pDdiTable->pfnDestroyExp, L0::zeRTASBuilderDestroyExp, version, ZE_API_VERSION_1_7);
     driverDdiTable.coreDdiTable.RTASBuilderExp = *pDdiTable;
     return result;
 }
