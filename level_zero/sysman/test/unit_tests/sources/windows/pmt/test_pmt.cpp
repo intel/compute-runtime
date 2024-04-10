@@ -172,6 +172,11 @@ TEST_F(SysmanDevicePmtFixture, GivenInvalidPmtInterfaceWhenCallingCreateThenCall
     EXPECT_EQ(nullptr, pPmt);
 }
 
+TEST_F(SysmanDevicePmtFixture, GivenInvalidPmtInterfaceWhenCallingGetSysmanPmtThenCallReturnsNullPtr) {
+    PlatformMonitoringTech *pPmt = pWddmSysmanImp->getSysmanPmt();
+    EXPECT_EQ(nullptr, pPmt);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

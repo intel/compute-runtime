@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ class PublicWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
   public:
     using WddmSysmanImp::pFwUtilInterface;
     using WddmSysmanImp::pKmdSysManager;
+    using WddmSysmanImp::pPmt;
 };
 
 class SysmanDeviceFixture : public ::testing::Test {

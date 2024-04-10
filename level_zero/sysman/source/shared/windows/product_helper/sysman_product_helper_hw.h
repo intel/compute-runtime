@@ -24,6 +24,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     ~SysmanProductHelperHw() override = default;
 
+    // Temperature
+    ze_result_t getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) override;
+
   protected:
     SysmanProductHelperHw() = default;
 };

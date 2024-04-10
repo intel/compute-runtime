@@ -40,6 +40,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     const NEO::HardwareInfo &getHardwareInfo() const override { return pParentSysmanDeviceImp->getHardwareInfo(); }
     PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
     SysmanProductHelper *getSysmanProductHelper();
+    PlatformMonitoringTech *getSysmanPmt();
 
   protected:
     FirmwareUtil *pFwUtilInterface = nullptr;

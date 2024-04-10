@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,6 +86,12 @@ struct TemperatureKmdSysManager : public MockKmdSysManager {
         } break;
         }
     }
+};
+
+class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
+  public:
+    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList) : PlatformMonitoringTech(deviceInterfaceList) {}
+    using PlatformMonitoringTech::keyOffsetMap;
 };
 
 } // namespace ult

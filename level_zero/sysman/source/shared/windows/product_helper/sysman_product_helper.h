@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
@@ -39,6 +40,8 @@ class SysmanProductHelper {
     }
 
     virtual ~SysmanProductHelper() = default;
+    // Temperature
+    virtual ze_result_t getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) = 0;
 
   protected:
     SysmanProductHelper() = default;

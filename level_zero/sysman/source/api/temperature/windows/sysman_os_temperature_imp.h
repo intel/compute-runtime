@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class WddmTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass 
     ~WddmTemperatureImp() override = default;
 
   protected:
+    WddmSysmanImp *pWddmSysmanImp = nullptr;
     KmdSysManager *pKmdSysManager = nullptr;
     zes_temp_sensors_t type = ZES_TEMP_SENSORS_GLOBAL;
 };

@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/api/temperature/windows/sysman_os_temperature_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/temperature/windows/mock_temperature.h"
@@ -104,21 +106,21 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleWhenGettingTemperatu
     }
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingMemoryTemperatureThenValidTemperatureReadingsRetrieved) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingMemoryTemperatureThenValidTemperatureReadingsRetrieved, IsAtMostDg2) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     double temperature;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_MEMORY], &temperature));
     EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempMemory));
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUTemperatureThenValidTemperatureReadingsRetrieved) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUTemperatureThenValidTemperatureReadingsRetrieved, IsAtMostDg2) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     double temperature;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GPU], &temperature));
     EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempGPU));
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGlobalTemperatureThenValidTemperatureReadingsRetrieved) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGlobalTemperatureThenValidTemperatureReadingsRetrieved, IsAtMostDg2) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     double temperature;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GLOBAL], &temperature));

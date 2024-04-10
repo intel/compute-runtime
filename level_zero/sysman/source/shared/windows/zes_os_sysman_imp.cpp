@@ -58,6 +58,10 @@ SysmanProductHelper *WddmSysmanImp::getSysmanProductHelper() {
     return pSysmanProductHelper.get();
 }
 
+PlatformMonitoringTech *WddmSysmanImp::getSysmanPmt() {
+    return pPmt.get();
+}
+
 void WddmSysmanImp::createFwUtilInterface() {
     const auto pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
     const uint16_t domain = static_cast<uint16_t>(pciBusInfo.pciDomain);
