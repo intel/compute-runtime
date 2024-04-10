@@ -19,7 +19,9 @@
 #include <Windows.h>
 
 #include <ShlObj.h>
+#include <cfgmgr32.h>
 #include <winternl.h>
+#pragma comment(lib, "cfgmgr32.lib")
 
 #if __clang__
 #pragma clang diagnostic pop

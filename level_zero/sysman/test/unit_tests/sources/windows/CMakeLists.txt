@@ -15,5 +15,5 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_driver.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_manager.cpp
   )
-  add_subdirectories()
 endif()
+add_subdirectories()

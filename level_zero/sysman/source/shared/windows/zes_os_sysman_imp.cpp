@@ -19,6 +19,7 @@ namespace L0 {
 namespace Sysman {
 
 ze_result_t WddmSysmanImp::init() {
+
     NEO::OSInterface &osInterface = *(pParentSysmanDeviceImp->getRootDeviceEnvironment()).osInterface;
     auto driverModel = osInterface.getDriverModel();
 
@@ -30,6 +31,8 @@ ze_result_t WddmSysmanImp::init() {
 
     pKmdSysManager = KmdSysManager::create(pWddm);
     UNRECOVERABLE_IF(nullptr == pKmdSysManager);
+
+    pPmt = PlatformMonitoringTech::create();
 
     subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(&pParentSysmanDeviceImp->getHardwareInfo());
     if (subDeviceCount == 1) {
