@@ -118,7 +118,7 @@ class IoctlHelperXe : public IoctlHelper {
     void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId) override;
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger) override;
     bool setDomainCpu(uint32_t handle, bool writeEnable) override;
-    uint16_t getCpuCachingMode();
+    uint16_t getCpuCachingMode(bool allocationInSystemMemory) const;
     void addDebugMetadata(DrmResourceClass type, uint64_t *offset, uint64_t size);
     void addDebugMetadataCookie(uint64_t cookie);
     uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;

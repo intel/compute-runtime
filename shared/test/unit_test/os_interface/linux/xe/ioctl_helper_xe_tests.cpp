@@ -1694,7 +1694,7 @@ TEST(IoctlHelperXeTest, whenGettingPreemptionSupportThenTrueIsReturned) {
     EXPECT_TRUE(xeIoctlHelper->isPreemptionSupported());
 }
 
-TEST(IoctlHelperXeTest, givenIoctlHelperXeAndDebugOverrideEnabledWhenGetCpuCachingModeCalledThenOverriddenValueIsReturned) {
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenGetCpuCachingModeCalledThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1703,11 +1703,11 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeAndDebugOverrideEnabledWhenGetCpuCachi
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
-    debugManager.flags.OverrideCpuCaching.set(DRM_XE_GEM_CPU_CACHING_WB);
-    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(), DRM_XE_GEM_CPU_CACHING_WB);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false), DRM_XE_GEM_CPU_CACHING_WC);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(true), DRM_XE_GEM_CPU_CACHING_WB);
 
-    debugManager.flags.OverrideCpuCaching.set(DRM_XE_GEM_CPU_CACHING_WC);
-    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(), DRM_XE_GEM_CPU_CACHING_WC);
+    debugManager.flags.OverrideCpuCaching.set(DRM_XE_GEM_CPU_CACHING_WB);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false), DRM_XE_GEM_CPU_CACHING_WB);
 }
 
 TEST(IoctlHelperXeTest, whenCallingVmBindThenPatIndexIsSet) {

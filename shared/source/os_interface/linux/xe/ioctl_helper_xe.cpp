@@ -496,8 +496,20 @@ void IoctlHelperXe::setDefaultEngine(const aub_stream::EngineType &defaultEngine
     }
 }
 
-uint16_t IoctlHelperXe::getCpuCachingMode() {
+/**
+ * @brief returns caching policy for new allocation.
+ * For system memory caching policy is write-back, otherwise it's write-combined.
+ *
+ * @param[in] allocationInSystemMemory flag that indicates if allocation will be allocated in system memory
+ *
+ * @return returns caching policy defined as DRM_XE_GEM_CPU_CACHING_WC or DRM_XE_GEM_CPU_CACHING_WB
+ */
+uint16_t IoctlHelperXe::getCpuCachingMode(bool allocationInSystemMemory) const {
     uint16_t cpuCachingMode = DRM_XE_GEM_CPU_CACHING_WC;
+    if (allocationInSystemMemory) {
+        cpuCachingMode = DRM_XE_GEM_CPU_CACHING_WB;
+    }
+
     if (debugManager.flags.OverrideCpuCaching.get() != -1) {
         cpuCachingMode = debugManager.flags.OverrideCpuCaching.get();
     }
@@ -525,7 +537,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
         memoryInstances.set(memoryClassInstance.memoryInstance);
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
-    create.cpu_caching = this->getCpuCachingMode();
+    create.cpu_caching = this->getCpuCachingMode(mem.memoryClass == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
     auto ret = IoctlHelper::ioctl(DrmIoctl::gemCreate, &create);
     handle = create.handle;
 
@@ -558,7 +570,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
         memoryInstances.set(regionClassAndInstance.memoryInstance);
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
-    create.cpu_caching = this->getCpuCachingMode();
+    create.cpu_caching = this->getCpuCachingMode(create.placement == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &create);
 
     xeLog(" -> IoctlHelperXe::%s vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
