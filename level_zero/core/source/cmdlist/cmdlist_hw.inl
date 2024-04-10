@@ -4085,7 +4085,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchCleanupSect
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::copyFenceRequired(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation) const {
-    if (!this->copyOperationFenceSupported || !signalEvent || !signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)) {
+    bool hostVisible = (signalEvent && signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)) || (isImmediateType() && isInOrderExecutionEnabled());
+
+    if (!this->copyOperationFenceSupported || !hostVisible) {
         return false;
     }
 

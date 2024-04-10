@@ -1021,10 +1021,29 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
     auto hostVisibleEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDescHostVisible, device));
     auto regularEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
-    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
-    cmdList.isFlushTaskSubmissionEnabled = true;
-    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    MockCommandListCoreFamily<gfxCoreFamily> cmdListRegular;
+    cmdListRegular.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdListRegular.isFlushTaskSubmissionEnabled = true;
+    cmdListRegular.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    MockCommandListCoreFamily<gfxCoreFamily> cmdListRegularInOrder;
+    cmdListRegularInOrder.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdListRegularInOrder.isFlushTaskSubmissionEnabled = true;
+    cmdListRegularInOrder.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdListRegularInOrder.enableInOrderExecution();
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdListImmediate;
+    cmdListImmediate.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdListImmediate.isFlushTaskSubmissionEnabled = true;
+    cmdListImmediate.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdListImmediate.cmdListType = CommandList::CommandListType::typeImmediate;
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdListImmediateInOrder;
+    cmdListImmediateInOrder.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdListImmediateInOrder.isFlushTaskSubmissionEnabled = true;
+    cmdListImmediateInOrder.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdListImmediateInOrder.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdListImmediateInOrder.enableInOrderExecution();
 
     constexpr size_t allocSize = 1;
     void *hostBuffer = nullptr;
@@ -1040,7 +1059,7 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
     ze_copy_region_t dstRegion = {0, 0, 0, 1, 1, 1};
     ze_copy_region_t srcRegion = {0, 0, 0, 1, 1, 1};
 
-    auto cmdStream = cmdList.getCmdContainer().getCommandStream();
+    LinearStream *cmdStream = nullptr;
     size_t offset = 0;
 
     auto verify = [&](bool expected) {
@@ -1060,52 +1079,67 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
         return !::testing::Test::HasFailure();
     };
 
-    // device to host - host visible event
-    {
-        offset = cmdStream->getUsed();
-        cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+    for (bool inOrderCmdList : {true, false}) {
+        for (bool immediateCmdList : {true, false}) {
+            L0::CommandListCoreFamily<gfxCoreFamily> *cmdList = nullptr;
 
-        EXPECT_TRUE(verify(true));
-    }
+            if (immediateCmdList) {
+                cmdList = inOrderCmdList ? &cmdListImmediateInOrder : &cmdListImmediate;
+            } else {
+                cmdList = inOrderCmdList ? &cmdListRegularInOrder : &cmdListRegular;
+            }
+            cmdStream = cmdList->getCmdContainer().getCommandStream();
 
-    // device to host - regular event
-    {
-        offset = cmdStream->getUsed();
-        cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, regularEvent->toHandle(), 0, nullptr, false, false);
+            bool isImmediateInOrder = immediateCmdList && inOrderCmdList;
 
-        EXPECT_TRUE(verify(false));
-    }
+            // device to host - host visible event
+            {
+                offset = cmdStream->getUsed();
+                cmdList->appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
 
-    // device to host - no event
-    {
-        offset = cmdStream->getUsed();
-        cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, nullptr, 0, nullptr, false, false);
+                EXPECT_TRUE(verify(true));
+            }
 
-        EXPECT_TRUE(verify(false));
-    }
+            // device to host - regular event
+            {
+                offset = cmdStream->getUsed();
+                cmdList->appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, regularEvent->toHandle(), 0, nullptr, false, false);
 
-    // device to device - host visible event
-    {
-        offset = cmdStream->getUsed();
-        cmdList.appendMemoryCopyRegion(deviceBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+                EXPECT_TRUE(verify(isImmediateInOrder));
+            }
 
-        EXPECT_TRUE(verify(false));
-    }
+            // device to host - no event
+            {
+                offset = cmdStream->getUsed();
+                cmdList->appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, nullptr, 0, nullptr, false, false);
 
-    // host to device - host visible event
-    {
-        offset = cmdStream->getUsed();
-        cmdList.appendMemoryCopyRegion(deviceBuffer, &dstRegion, 1, 1, hostBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+                EXPECT_TRUE(verify(isImmediateInOrder));
+            }
 
-        EXPECT_TRUE(verify(false));
-    }
+            // device to device - host visible event
+            {
+                offset = cmdStream->getUsed();
+                cmdList->appendMemoryCopyRegion(deviceBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
 
-    // host to host - host visible event
-    {
-        offset = cmdStream->getUsed();
-        cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, hostBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+                EXPECT_TRUE(verify(false));
+            }
 
-        EXPECT_TRUE(verify(false));
+            // host to device - host visible event
+            {
+                offset = cmdStream->getUsed();
+                cmdList->appendMemoryCopyRegion(deviceBuffer, &dstRegion, 1, 1, hostBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+
+                EXPECT_TRUE(verify(false));
+            }
+
+            // host to host - host visible event
+            {
+                offset = cmdStream->getUsed();
+                cmdList->appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, hostBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+
+                EXPECT_TRUE(verify(false));
+            }
+        }
     }
 
     context->freeMem(hostBuffer);

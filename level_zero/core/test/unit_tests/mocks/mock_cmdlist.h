@@ -580,6 +580,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
     using BaseClass::dummyBlitWa;
+    using BaseClass::enableInOrderExecution;
     using BaseClass::encodeMiFlush;
     using BaseClass::ownedPrivateAllocations;
 
