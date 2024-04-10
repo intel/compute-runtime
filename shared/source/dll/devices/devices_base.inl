@@ -121,6 +121,7 @@ NAMEDDEVICE(0xA782, AdlsHwConfig, "Intel(R) UHD Graphics 730")
 DEVICE(0xA783, AdlsHwConfig)
 NAMEDDEVICE(0xA788, AdlsHwConfig, "Intel(R) UHD Graphics")
 DEVICE(0xA789, AdlsHwConfig)
+NAMEDDEVICE(0xA78A, AdlsHwConfig, "Intel(R) UHD Graphics")
 NAMEDDEVICE(0xA78B, AdlsHwConfig, "Intel(R) UHD Graphics")
 #endif
 
