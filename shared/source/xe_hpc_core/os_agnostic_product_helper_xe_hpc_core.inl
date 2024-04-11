@@ -41,4 +41,9 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxNumSamplers() const {
     return 0u;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceToHostCopySignalingFenceRequired() const {
+    return true;
+}
+
 } // namespace NEO

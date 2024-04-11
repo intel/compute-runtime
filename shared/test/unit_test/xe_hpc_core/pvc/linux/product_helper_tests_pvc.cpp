@@ -122,3 +122,7 @@ PVCTEST_F(PvcProductHelperLinux, WhenGetDeviceMemoryMaxBandWidthInBytesPerSecond
     drm->useBaseGetDeviceMemoryMaxClockRateInMhz = false;
     EXPECT_EQ(51200000000u, productHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(testHwInfo, osInterface, 0));
 }
+
+PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceTrueReturned) {
+    EXPECT_TRUE(productHelper->isDeviceToHostCopySignalingFenceRequired());
+}
