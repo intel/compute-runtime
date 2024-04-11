@@ -53,6 +53,10 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
             ret.cacheSize = std::numeric_limits<size_t>::max();
         }
 
+        if (ret.enabled) {
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "NEO_CACHE_PERSISTENT is enabled. Cache is located in: %s\n\n",
+                               ret.cacheDir.c_str());
+        }
         return ret;
     }
 

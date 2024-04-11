@@ -7,11 +7,13 @@
 
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -30,6 +32,11 @@
 #include <memory>
 
 using namespace NEO;
+namespace NEO {
+namespace SysCalls {
+extern bool pathExistsMock;
+} // namespace SysCalls
+} // namespace NEO
 
 TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPtrDataIsUsed) {
     Hash hash;
@@ -336,6 +343,27 @@ TEST(CompilerCacheTests, GivenNonExistantConfigWhenLoadingFromCacheThenNullIsRet
     auto ret = cache.loadCachedBinary("----do-not-exists----", size);
     EXPECT_EQ(nullptr, ret);
     EXPECT_EQ(0U, size);
+}
+
+TEST(CompilerCacheTests, GivenPrintDebugMessagesWhenCacheIsEnabledThenMessageWithPathIsPrintedToStdout) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    bool pathExistsMock = true;
+    VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
+
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
+
+    testing::internal::CaptureStdout();
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_TRUE(cacheConfig.enabled);
+    EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult\\directory\\\n\n");
 }
 
 TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsReturned) {
