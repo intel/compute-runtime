@@ -41,11 +41,6 @@ bool L0GfxCoreHelperHw<Family>::multiTileCapablePlatform() const {
 }
 
 template <typename Family>
-zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
-    return ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU;
-}
-
-template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getCmdListWaitOnMemoryDataSize() const {
     if constexpr (Family::isQwordInOrderCounter) {
         return sizeof(uint64_t);

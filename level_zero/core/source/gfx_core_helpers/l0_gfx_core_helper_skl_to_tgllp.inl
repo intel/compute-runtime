@@ -74,4 +74,9 @@ ze_mutable_command_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformCmdListUpda
     return 0;
 }
 
+template <typename Family>
+zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
+    return ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU;
+}
+
 } // namespace L0
