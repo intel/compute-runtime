@@ -1190,8 +1190,13 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
     args.commandWithPostSync = true;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
 
-    auto &commandStream = getCS(EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs));
+    const size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(peekRootDeviceEnvironment()) +
+                                EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+
+    auto &commandStream = getCS(requiredSize);
     auto commandStreamStart = commandStream.getUsed();
+
+    NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, 0, false, peekRootDeviceEnvironment());
 
     EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, tagAllocation->getGpuAddress(), taskCount + 1, args);
 

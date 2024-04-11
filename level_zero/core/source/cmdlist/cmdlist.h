@@ -372,6 +372,9 @@ struct CommandList : _ze_command_list_handle_t {
     bool getCmdListScratchAddressPatchingEnabled() const {
         return scratchAddressPatchingEnabled;
     }
+    bool isTaskCountUpdateFenceRequired() const {
+        return taskCountUpdateFenceRequired;
+    }
 
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
@@ -457,6 +460,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool heaplessModeEnabled = false;
     bool heaplessStateInitEnabled = false;
     bool scratchAddressPatchingEnabled = false;
+    bool taskCountUpdateFenceRequired = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

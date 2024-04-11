@@ -1003,7 +1003,6 @@ struct AppendMemoryCopyFenceTest : public AppendMemoryCopy {
 HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAddFence, IsAtLeastXeHpcCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
-    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     using MI_MEM_FENCE = typename GfxFamily::MI_MEM_FENCE;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -1140,6 +1139,133 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
                 EXPECT_TRUE(verify(false));
             }
         }
+    }
+
+    context->freeMem(hostBuffer);
+    context->freeMem(deviceBuffer);
+}
+
+HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProgrammedWithoutEventThenAddFenceDuringTagUpdate, IsAtLeastXeHpcCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
+    using MI_MEM_FENCE = typename GfxFamily::MI_MEM_FENCE;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 2;
+
+    ze_event_desc_t eventDesc = {};
+    ze_event_desc_t eventDescHostVisible = {};
+    eventDescHostVisible.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
+    auto hostVisibleEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDescHostVisible, device));
+    auto regularEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+
+    ze_command_queue_desc_t desc = {};
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(true, false, false);
+
+    MockCommandListCoreFamily<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+    constexpr size_t allocSize = 1;
+    void *hostBuffer = nullptr;
+    void *deviceBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    result = context->allocHostMem(&hostDesc, allocSize, allocSize, &hostBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, allocSize, allocSize, &deviceBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_copy_region_t dstRegion = {0, 0, 0, 1, 1, 1};
+    ze_copy_region_t srcRegion = {0, 0, 0, 1, 1, 1};
+
+    size_t offset = 0;
+
+    auto cmdStream = &mockCmdQHw->commandStream;
+    auto cmdListHandle = cmdList.toHandle();
+
+    const bool fenceSupported = device->getProductHelper().isDeviceToHostCopySignalingFenceRequired();
+
+    auto verify = [&](bool expected) {
+        expected &= fenceSupported;
+
+        EXPECT_EQ(expected, cmdList.taskCountUpdateFenceRequired);
+
+        GenCmdList genCmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+        if (::testing::Test::HasFailure()) {
+            return false;
+        }
+
+        auto itorBegin = genCmdList.begin();
+        auto miFence = find<MI_MEM_FENCE *>(itorBegin, genCmdList.end());
+        EXPECT_EQ(expected, genCmdList.end() != miFence);
+
+        if (expected) {
+            itorBegin = miFence;
+        }
+
+        auto miFlush = find<MI_FLUSH_DW *>(itorBegin, genCmdList.end());
+        EXPECT_NE(genCmdList.end(), miFlush);
+
+        return !::testing::Test::HasFailure();
+    };
+
+    // device to host - host visible event
+    {
+        offset = cmdStream->getUsed();
+        cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+        cmdList.close();
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+
+        EXPECT_TRUE(verify(false));
+    }
+
+    // device to host - regular event
+    {
+        cmdList.reset();
+        offset = cmdStream->getUsed();
+        cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, regularEvent->toHandle(), 0, nullptr, false, false);
+        cmdList.close();
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+
+        EXPECT_TRUE(verify(true));
+    }
+
+    // device to host - without event
+    {
+        cmdList.reset();
+        offset = cmdStream->getUsed();
+        cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, nullptr, 0, nullptr, false, false);
+        cmdList.close();
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+
+        EXPECT_TRUE(verify(true));
+    }
+
+    // reset requirement on cmdlist fence
+    {
+        cmdList.reset();
+        offset = cmdStream->getUsed();
+        cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, nullptr, 0, nullptr, false, false);
+        EXPECT_EQ(fenceSupported, cmdList.taskCountUpdateFenceRequired);
+
+        cmdList.appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+        EXPECT_FALSE(cmdList.taskCountUpdateFenceRequired);
+
+        cmdList.close();
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+
+        EXPECT_TRUE(verify(false));
     }
 
     context->freeMem(hostBuffer);

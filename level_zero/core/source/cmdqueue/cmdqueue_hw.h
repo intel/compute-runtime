@@ -200,7 +200,7 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void prefetchMemoryToDeviceAssociatedWithCmdList(CommandList *commandList);
     inline void assignCsrTaskCountToFenceIfAvailable(ze_fence_handle_t hFence);
     inline void dispatchTaskCountPostSyncRegular(bool isDispatchTaskCountPostSyncRequired, NEO::LinearStream &commandStream);
-    inline void dispatchTaskCountPostSyncByMiFlushDw(bool isDispatchTaskCountPostSyncRequired, NEO::LinearStream &commandStream);
+    inline void dispatchTaskCountPostSyncByMiFlushDw(bool isDispatchTaskCountPostSyncRequired, bool fenceRequired, NEO::LinearStream &commandStream);
     NEO::SubmissionStatus prepareAndSubmitBatchBuffer(CommandListExecutionContext &ctx, NEO::LinearStream &innerCommandStream);
 
     inline void cleanLeftoverMemory(NEO::LinearStream &outerCommandStream, NEO::LinearStream &innerCommandStream);

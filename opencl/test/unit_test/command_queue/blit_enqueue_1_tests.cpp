@@ -218,14 +218,21 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     verifySemaphore<FamilyType>(semaphore, barrierGpuAddress);
 }
 
-HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenMiFlushDwIsFlushed) {
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenFenceAndMiFlushDwIsFlushed) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     EXPECT_EQ(SubmissionStatus::success, bcsCsr->flushTagUpdate());
 
     auto cmdListBcs = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
 
-    auto cmdFound = expectCommand<MI_FLUSH_DW>(cmdListBcs.begin(), cmdListBcs.end());
+    auto beginItor = cmdListBcs.begin();
+
+    if constexpr (FamilyType::isUsingMiMemFence) {
+        beginItor = expectCommand<typename FamilyType::MI_MEM_FENCE>(cmdListBcs.begin(), cmdListBcs.end());
+        EXPECT_NE(beginItor, cmdListBcs.end());
+    }
+
+    auto cmdFound = expectCommand<MI_FLUSH_DW>(beginItor, cmdListBcs.end());
     EXPECT_NE(cmdFound, cmdListBcs.end());
 }
 

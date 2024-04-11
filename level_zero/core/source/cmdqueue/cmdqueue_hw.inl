@@ -412,13 +412,20 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     ctx.isDirectSubmissionEnabled = this->csr->isBlitterDirectSubmissionEnabled();
 
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx);
+    bool fenceRequired = false;
+
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        fenceRequired |= commandList->isTaskCountUpdateFenceRequired();
+
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(commandList);
         ctx.spaceForResidency += estimateCommandListResidencySize(commandList);
     }
 
     linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit);
+    if (fenceRequired) {
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(device->getNEODevice()->getRootDeviceEnvironment());
+    }
 
     this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
 
@@ -447,7 +454,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
 
     this->programLastCommandListReturnBbStart(child, ctx);
 
-    this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, child);
+    this->dispatchTaskCountPostSyncByMiFlushDw(ctx.isDispatchTaskCountPostSyncRequired, fenceRequired, child);
 
     this->makeCsrTagAllocationResident();
     auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, child);
@@ -1253,12 +1260,14 @@ void CommandQueueHw<gfxCoreFamily>::assignCsrTaskCountToFenceIfAvailable(ze_fenc
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncByMiFlushDw(
-    bool isDispatchTaskCountPostSyncRequired,
-    NEO::LinearStream &cmdStream) {
+void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncByMiFlushDw(bool isDispatchTaskCountPostSyncRequired, bool fenceRequired, NEO::LinearStream &cmdStream) {
 
     if (!isDispatchTaskCountPostSyncRequired) {
         return;
+    }
+
+    if (fenceRequired) {
+        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(cmdStream, 0, false, device->getNEODevice()->getRootDeviceEnvironment());
     }
 
     uint64_t postSyncAddress = this->csr->getTagAllocation()->getGpuAddress();

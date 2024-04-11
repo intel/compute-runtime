@@ -149,6 +149,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     }
 
     latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
+    taskCountUpdateFenceRequired = false;
 
     this->inOrderPatchCmds.clear();
 
@@ -1617,9 +1618,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
     }
 
-    if (copyFenceRequired(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc)) {
-        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), 0, false, neoDevice->getRootDeviceEnvironment());
-    }
+    appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc);
 
     appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
@@ -1730,9 +1729,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         return result;
     }
 
-    if (copyFenceRequired(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc)) {
-        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), 0, false, neoDevice->getRootDeviceEnvironment());
-    }
+    appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc);
 
     addToMappedEventList(signalEvent);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
@@ -4084,14 +4081,25 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchCleanupSect
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::copyFenceRequired(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation) const {
-    bool hostVisible = (signalEvent && signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)) || (isImmediateType() && isInOrderExecutionEnabled());
+bool CommandListCoreFamily<gfxCoreFamily>::isDeviceToHostCopyEventFenceRequired(Event *signalEvent) const {
+    return (signalEvent && signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)) || (isImmediateType() && isInOrderExecutionEnabled());
+}
 
-    if (!this->copyOperationFenceSupported || !hostVisible) {
-        return false;
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isDeviceToHostBcsCopy(NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation) const {
+    return (isCopyOnly() && (srcAllocation->isAllocatedInLocalMemoryPool() && !dstAllocation->isAllocatedInLocalMemoryPool()));
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendCopyOperationFence(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation) {
+    if (this->copyOperationFenceSupported && isDeviceToHostBcsCopy(srcAllocation, dstAllocation)) {
+        if (isDeviceToHostCopyEventFenceRequired(signalEvent)) {
+            NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), 0, false, device->getNEODevice()->getRootDeviceEnvironment());
+            taskCountUpdateFenceRequired = false;
+        } else {
+            taskCountUpdateFenceRequired = true;
+        }
     }
-
-    return (srcAllocation->isAllocatedInLocalMemoryPool() && !dstAllocation->isAllocatedInLocalMemoryPool());
 }
 
 } // namespace L0

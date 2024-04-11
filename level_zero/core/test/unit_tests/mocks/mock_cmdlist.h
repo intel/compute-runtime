@@ -583,6 +583,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     using BaseClass::enableInOrderExecution;
     using BaseClass::encodeMiFlush;
     using BaseClass::ownedPrivateAllocations;
+    using BaseClass::taskCountUpdateFenceRequired;
 
     ADDMETHOD(appendMemoryCopyKernelWithGA, ze_result_t, false, ZE_RESULT_SUCCESS,
               (void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
