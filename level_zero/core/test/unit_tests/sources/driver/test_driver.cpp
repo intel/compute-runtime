@@ -39,6 +39,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
+#include "driver_version.h"
+
 #include <bitset>
 
 namespace L0 {
@@ -197,7 +199,8 @@ TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsRet
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto expectedDriverVersion = static_cast<uint32_t>(DriverHandleImp::initialDriverVersionValue + strtoul(NEO_VERSION_BUILD, NULL, 10));
+    auto expectedDriverVersion = static_cast<uint32_t>(DriverHandleImp::initialDriverVersionValue);
+    expectedDriverVersion += static_cast<uint32_t>(NEO_VERSION_BUILD);
     EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
 }
 
@@ -242,7 +245,8 @@ TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
     EXPECT_NE(0u, uniqueId);
 
     auto driverVersion = static_cast<uint32_t>(uuid & 0xFFFFFFFF);
-    auto expectedDriverVersion = static_cast<uint32_t>(DriverHandleImp::initialDriverVersionValue + strtoul(NEO_VERSION_BUILD, NULL, 10));
+    auto expectedDriverVersion = static_cast<uint32_t>(DriverHandleImp::initialDriverVersionValue);
+    expectedDriverVersion += static_cast<uint32_t>(NEO_VERSION_BUILD);
     EXPECT_EQ(expectedDriverVersion, driverVersion);
 }
 

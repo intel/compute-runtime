@@ -33,7 +33,7 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image.h"
 
-#include "driver_version_l0.h"
+#include "driver_version.h"
 
 #include <cstdarg>
 #include <cstdlib>
@@ -112,7 +112,8 @@ ze_result_t DriverHandleImp::getApiVersion(ze_api_version_t *version) {
 }
 
 ze_result_t DriverHandleImp::getProperties(ze_driver_properties_t *properties) {
-    uint32_t versionBuild = static_cast<uint32_t>(strtoul(NEO_VERSION_BUILD, NULL, 10));
+    uint32_t versionBuild = static_cast<uint32_t>(NEO_VERSION_BUILD);
+
     properties->driverVersion = DriverHandleImp::initialDriverVersionValue + versionBuild;
     if (NEO::debugManager.flags.OverrideDriverVersion.get() > -1) {
         properties->driverVersion = static_cast<uint32_t>(NEO::debugManager.flags.OverrideDriverVersion.get());

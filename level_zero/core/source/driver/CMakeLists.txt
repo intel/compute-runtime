@@ -19,11 +19,4 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/extension_function_address.h
                ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/host_pointer_manager.h
-
 )
-
-if(NOT DEFINED L0_DRIVER_VERSION)
-  set(L0_DRIVER_VERSION 1)
-endif()
-
-configure_file(driver_version.h.in ${CMAKE_BINARY_DIR}/driver_version_l0.h) # Put Driver version into define

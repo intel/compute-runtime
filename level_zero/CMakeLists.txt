@@ -45,11 +45,6 @@ if(BUILD_WITH_L0)
     return()
   endif()
 
-  add_definitions(-DL0_PROJECT_VERSION_MAJOR="${PROJECT_VERSION_MAJOR}")
-  add_definitions(-DL0_PROJECT_VERSION_MINOR="${PROJECT_VERSION_MINOR}")
-  add_definitions(-DL0_PROJECT_VERSION_PATCH="${PROJECT_VERSION_PATCH}")
-  add_definitions(-DNEO_VERSION_BUILD="${NEO_VERSION_BUILD}")
-
   add_definitions(-DZE_ENABLE_OCL_INTEROP=1)
 
   file(WRITE "${CMAKE_BINARY_DIR}/VERSION" "${PROJECT_VERSION}")
@@ -209,7 +204,6 @@ if(BUILD_WITH_L0)
   include_directories(ddi)
 
   # Create our shared library/DLL
-  configure_file(ze_intel_gpu_version.h.in ${NEO_BUILD_DIR}/ze_intel_gpu_version.h)
   add_library(${TARGET_NAME_L0}
               SHARED
               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
