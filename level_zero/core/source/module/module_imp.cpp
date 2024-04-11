@@ -657,7 +657,7 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
         if (desc->format != ZE_MODULE_FORMAT_IL_SPIRV) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        this->builtFromSPIRv = true;
+        this->builtFromSpirv = true;
         const ze_module_program_exp_desc_t *programExpDesc =
             reinterpret_cast<const ze_module_program_exp_desc_t *>(expDesc);
         std::vector<const char *> inputSpirVs;
@@ -729,7 +729,7 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
             this->precompiled = true;
             return this->translationUnit->createFromNativeBinary(reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize);
         } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
-            this->builtFromSPIRv = true;
+            this->builtFromSpirv = true;
             this->precompiled = false;
             return this->translationUnit->buildFromSpirV(reinterpret_cast<const char *>(desc->pInputModule),
                                                          static_cast<uint32_t>(desc->inputSize),

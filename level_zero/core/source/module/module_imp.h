@@ -142,7 +142,7 @@ struct ModuleImp : public Module {
 
     ze_result_t initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice);
 
-    bool isSPIRv() { return builtFromSPIRv; }
+    bool isSPIRv() { return builtFromSpirv; }
 
     bool isPrecompiled() { return precompiled; }
 
@@ -201,7 +201,7 @@ struct ModuleImp : public Module {
 
     std::unordered_map<std::string, HostGlobalSymbol> hostGlobalSymbolsMap;
 
-    bool builtFromSPIRv = false;
+    bool builtFromSpirv = false;
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
     bool isZebinBinary = false;

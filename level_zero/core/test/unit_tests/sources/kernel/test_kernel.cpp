@@ -612,7 +612,7 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelFromSPIRvWhenSetArgImageCalledThenUns
     auto handle = imageHW->toHandle();
 
     WhiteBox<::L0::Module> *moduleImp = whiteboxCast(module.get());
-    moduleImp->builtFromSPIRv = true;
+    moduleImp->builtFromSpirv = true;
     EXPECT_TRUE(moduleImp->isSPIRv());
     kernel->module = moduleImp;
 
