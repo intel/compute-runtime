@@ -2514,6 +2514,16 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
     }
 }
 
+TEST(MemoryManagerTest, givenSystemMemoryBitfieldInAllocationPropertiesWhenGetAllocationDataThenUseSystemMemoryIsSet) {
+    AllocationData allocData{};
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::buffer, systemMemoryBitfield);
+
+    MockMemoryManager mockMemoryManager;
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
+
 TEST(MemoryManagerTest, givenNullHostPtrWhenIsCopyRequiredIsCalledThenFalseIsReturned) {
     ImageInfo imgInfo{};
     EXPECT_FALSE(MockMemoryManager::isCopyRequired(imgInfo, nullptr));
@@ -3098,7 +3108,8 @@ TEST(MemoryManagerTest, givenMemoryManagerWithLocalMemoryWhenCreatingMultiGraphi
     executionEnvironment.initGmm();
     MockMemoryManager memoryManager(true, true, executionEnvironment);
 
-    AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmGpu, systemMemoryBitfield};
+    DeviceBitfield localMemoryBitfield{1};
+    AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmGpu, localMemoryBitfield};
 
     auto localMemoryAllocation = memoryManager.allocateGraphicsMemoryWithProperties(allocationProperties);
 

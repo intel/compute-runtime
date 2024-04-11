@@ -400,6 +400,10 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
 
+    if (storageInfo.getMemoryBanks() == 0) {
+        allocationData.flags.useSystemMemory = true;
+    }
+
     bool allow64KbPages = false;
     bool allow32Bit = false;
     bool forcePin = properties.flags.forcePin;
@@ -1054,7 +1058,7 @@ bool MemoryManager::isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex) {
     std::call_once(checkIsaPlacementOnceFlags[rootDeviceIndex], [&] {
         AllocationProperties properties = {rootDeviceIndex, 0x1000, AllocationType::kernelIsa, 1};
         AllocationData data;
-        getAllocationData(data, properties, nullptr, StorageInfo());
+        getAllocationData(data, properties, nullptr, createStorageInfoFromProperties(properties));
         isaInLocalMemory[rootDeviceIndex] = !data.flags.useSystemMemory;
     });
 

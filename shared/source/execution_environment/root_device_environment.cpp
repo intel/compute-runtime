@@ -239,15 +239,8 @@ void RootDeviceEnvironment::initDummyAllocation() {
 }
 
 void RootDeviceEnvironment::setDummyBlitProperties(uint32_t rootDeviceIndex) {
-    size_t size = 4 * 4096u;
-    this->dummyBlitProperties = std::make_unique<AllocationProperties>(
-        rootDeviceIndex,
-        true,
-        size,
-        NEO::AllocationType::buffer,
-        false,
-        false,
-        systemMemoryBitfield);
+    size_t size = 32 * MemoryConstants::kiloByte;
+    this->dummyBlitProperties = std::make_unique<AllocationProperties>(rootDeviceIndex, size, NEO::AllocationType::buffer, systemMemoryBitfield);
 }
 
 GraphicsAllocation *RootDeviceEnvironment::getDummyAllocation() const {
