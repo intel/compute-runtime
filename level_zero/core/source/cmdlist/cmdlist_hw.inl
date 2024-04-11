@@ -2521,7 +2521,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 
             bool indirectMode = false;
 
-            size_t inOrderPatchListIndex = 0;
+            size_t inOrderPatchListIndex = std::numeric_limits<size_t>::max();
             if (isQwordInOrderCounter()) {
                 indirectMode = true;
 

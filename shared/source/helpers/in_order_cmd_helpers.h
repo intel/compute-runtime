@@ -79,6 +79,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     uint32_t getAllocationOffset() const { return allocationOffset; }
 
     void reset();
+    bool isExternalMemoryExecInfo() const { return deviceCounterNode == nullptr; }
 
   protected:
     NEO::MemoryManager &memoryManager;

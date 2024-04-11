@@ -66,6 +66,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingStandaloneInO
     EXPECT_EQ(gpuAddress, inOrderExecInfo->getBaseDeviceAddress());
     EXPECT_EQ(nullptr, inOrderExecInfo->getDeviceCounterAllocation());
     EXPECT_EQ(nullptr, inOrderExecInfo->getHostCounterAllocation());
+    EXPECT_TRUE(inOrderExecInfo->isExternalMemoryExecInfo());
 
     inOrderExecInfo->reset();
 
@@ -100,6 +101,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         EXPECT_EQ(2u, inOrderExecInfo->getNumDevicePartitionsToWait());
         EXPECT_EQ(2u, inOrderExecInfo->getNumHostPartitionsToWait());
         EXPECT_EQ(0u, InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo));
+        EXPECT_FALSE(inOrderExecInfo->isExternalMemoryExecInfo());
     }
 
     {
