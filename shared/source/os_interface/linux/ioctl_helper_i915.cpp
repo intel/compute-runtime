@@ -432,12 +432,12 @@ std::string IoctlHelperI915::getFileForMaxGpuFrequency() const {
     return "/gt_max_freq_mhz";
 }
 
-std::string IoctlHelperI915::getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const {
-    return "/gt/gt" + std::to_string(subDeviceId) + "/rps_max_freq_mhz";
+std::string IoctlHelperI915::getFileForMaxGpuFrequencyOfSubDevice(int tileId) const {
+    return "/gt/gt" + std::to_string(tileId) + "/rps_max_freq_mhz";
 }
 
-std::string IoctlHelperI915::getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const {
-    return "/gt/gt" + std::to_string(subDeviceId) + "/mem_RP0_freq_mhz";
+std::string IoctlHelperI915::getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const {
+    return "/gt/gt" + std::to_string(tileId) + "/mem_RP0_freq_mhz";
 }
 bool IoctlHelperI915::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
 

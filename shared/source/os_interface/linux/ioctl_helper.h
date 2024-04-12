@@ -164,8 +164,8 @@ class IoctlHelper {
 
     std::string getIoctlStringBase(DrmIoctl ioctlRequest) const;
     virtual std::string getFileForMaxGpuFrequency() const = 0;
-    virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const = 0;
-    virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const = 0;
+    virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const = 0;
+    virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const = 0;
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
     virtual bool isWaitBeforeBindRequired(bool bind) const = 0;
     virtual void *pciBarrierMmap() { return nullptr; };
@@ -219,8 +219,8 @@ class IoctlHelperI915 : public IoctlHelper {
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override;
     std::string getFileForMaxGpuFrequency() const override;
-    std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const override;
-    std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const override;
+    std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const override;
+    std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const override;
     bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;

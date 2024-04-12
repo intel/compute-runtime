@@ -122,8 +122,8 @@ class DrmMockXe : public DrmMockCustom {
         };
         xeQueryGtList->gt_list[2] = {
             DRM_XE_QUERY_GT_TYPE_MAIN, // type
-            0,                         // tile_id
-            0,                         // gt_id
+            1,                         // tile_id
+            2,                         // gt_id
             {0},                       // padding
             mockTimestampFrequency,    // reference_clock
             0b010,                     // native mem regions

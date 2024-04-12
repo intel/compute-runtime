@@ -519,11 +519,12 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
 
 TEST(IoctlHelperXeTest, whenGettingFileNamesForFrequencyThenProperStringIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto ioctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    ioctlHelper->initialize();
     EXPECT_STREQ("/device/tile0/gt0/freq0/max_freq", ioctlHelper->getFileForMaxGpuFrequency().c_str());
-    EXPECT_STREQ("/device/tile2/gt2/freq0/max_freq", ioctlHelper->getFileForMaxGpuFrequencyOfSubDevice(2).c_str());
-    EXPECT_STREQ("/device/tile1/gt1/freq0/rp0_freq", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
+    EXPECT_STREQ("/device/tile0/gt0/freq0/max_freq", ioctlHelper->getFileForMaxGpuFrequencyOfSubDevice(0).c_str());
+    EXPECT_STREQ("/device/tile1/gt2/freq0/rp0_freq", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
 }
 
 TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
@@ -853,7 +854,7 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
     xeQueryGtList->gt_list[1] = {
         DRM_XE_QUERY_GT_TYPE_MEDIA, // type
         0,                          // tile_id
-        0,                          // gt_id
+        1,                          // gt_id
         {0},                        // padding
         12500000,                   // reference_clock
         0b100,                      // native mem regions
@@ -861,8 +862,8 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
     };
     xeQueryGtList->gt_list[2] = {
         DRM_XE_QUERY_GT_TYPE_MAIN, // type
-        0,                         // tile_id
-        0,                         // gt_id
+        1,                         // tile_id
+        2,                         // gt_id
         {0},                       // padding
         12500000,                  // reference_clock
         0b010,                     // native mem regions
@@ -870,8 +871,8 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
     };
     xeQueryGtList->gt_list[3] = {
         DRM_XE_QUERY_GT_TYPE_MEDIA, // type
-        0,                          // tile_id
-        0,                          // gt_id
+        1,                          // tile_id
+        3,                          // gt_id
         {0},                        // padding
         12500000,                   // reference_clock
         0b001,                      // native mem regions
@@ -949,8 +950,8 @@ struct DrmMockXe2T : public DrmMockXe {
         };
         xeQueryGtList->gt_list[1] = {
             DRM_XE_QUERY_GT_TYPE_MAIN, // type
-            0,                         // tile_id
-            0,                         // gt_id
+            1,                         // tile_id
+            1,                         // gt_id
             {0},                       // padding
             12500000,                  // reference_clock
             0b010,                     // native mem regions

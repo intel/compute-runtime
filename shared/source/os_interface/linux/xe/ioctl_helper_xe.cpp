@@ -159,6 +159,18 @@ bool IoctlHelperXe::initialize() {
     }
     xeGtListData = reinterpret_cast<drm_xe_query_gt_list *>(queryGtListData.data());
 
+    gtIdToTileId.resize(xeGtListData->num_gt, invalidIndex);
+    for (auto i = 0u; i < xeGtListData->num_gt; i++) {
+        const auto &gt = xeGtListData->gt_list[i];
+        if (gt.type == DRM_XE_QUERY_GT_TYPE_MAIN) {
+            gtIdToTileId[gt.gt_id] = gt.tile_id;
+            if (tileIdToGtId.size() < gt.tile_id + 1u) {
+                tileIdToGtId.resize(gt.tile_id + 1, invalidIndex);
+            }
+
+            tileIdToGtId[gt.tile_id] = gt.gt_id;
+        }
+    }
     return true;
 }
 
@@ -408,39 +420,31 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     StackVec<std::vector<std::bitset<8>>, 2> geomDss;
     StackVec<std::vector<std::bitset<8>>, 2> computeDss;
     StackVec<std::vector<std::bitset<8>>, 2> euDss;
-    StackVec<int, 2> gtIdToTile{-1};
 
     auto topologySize = queryGtTopology.size();
     auto dataPtr = queryGtTopology.data();
 
-    gtIdToTile.resize(xeGtListData->num_gt, -1);
-
-    auto tileIndex = 0u;
-    for (auto gt = 0u; gt < gtIdToTile.size(); gt++) {
-        if (xeGtListData->gt_list[gt].type != DRM_XE_QUERY_GT_TYPE_MEDIA) {
-            gtIdToTile[gt] = tileIndex++;
-        }
-    }
-
-    geomDss.resize(tileIndex);
-    computeDss.resize(tileIndex);
-    euDss.resize(tileIndex);
+    auto numTiles = tileIdToGtId.size();
+    geomDss.resize(numTiles);
+    computeDss.resize(numTiles);
+    euDss.resize(numTiles);
     while (topologySize >= sizeof(drm_xe_query_topology_mask)) {
         drm_xe_query_topology_mask *topo = reinterpret_cast<drm_xe_query_topology_mask *>(dataPtr);
         UNRECOVERABLE_IF(topo == nullptr);
 
         uint32_t gtId = topo->gt_id;
+        auto tileId = gtIdToTileId[gtId];
 
-        if (xeGtListData->gt_list[gtId].type != DRM_XE_QUERY_GT_TYPE_MEDIA) {
+        if (tileId != invalidIndex) {
             switch (topo->type) {
             case DRM_XE_TOPO_DSS_GEOMETRY:
-                fillMask(geomDss[gtIdToTile[gtId]], topo);
+                fillMask(geomDss[tileId], topo);
                 break;
             case DRM_XE_TOPO_DSS_COMPUTE:
-                fillMask(computeDss[gtIdToTile[gtId]], topo);
+                fillMask(computeDss[tileId], topo);
                 break;
             case DRM_XE_TOPO_EU_PER_DSS:
-                fillMask(euDss[gtIdToTile[gtId]], topo);
+                fillMask(euDss[tileId], topo);
                 break;
             default:
                 xeLog("Unhandle GT Topo type: %d\n", topo->type);
@@ -454,10 +458,10 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     }
 
     bool isComputeDssEmpty = false;
-    getTopologyData(tileIndex, geomDss.begin(), computeDss.begin(), euDss.begin(), topologyData, isComputeDssEmpty);
+    getTopologyData(numTiles, geomDss.begin(), computeDss.begin(), euDss.begin(), topologyData, isComputeDssEmpty);
 
     auto &dssInfo = isComputeDssEmpty ? geomDss : computeDss;
-    getTopologyMap(tileIndex, dssInfo.begin(), topologyMap);
+    getTopologyMap(numTiles, dssInfo.begin(), topologyMap);
 
     return true;
 }
@@ -1343,15 +1347,15 @@ inline std::string getDirectoryWithFrequencyFiles(int tileId, int gtId) {
 }
 
 std::string IoctlHelperXe::getFileForMaxGpuFrequency() const {
-    return getDirectoryWithFrequencyFiles(0 /*tileId */, 0 /*gtId*/) + "/max_freq";
+    return getFileForMaxGpuFrequencyOfSubDevice(0 /* tileId */);
 }
 
-std::string IoctlHelperXe::getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const {
-    return getDirectoryWithFrequencyFiles(subDeviceId /*tileId */, subDeviceId /*gtId*/) + "/max_freq";
+std::string IoctlHelperXe::getFileForMaxGpuFrequencyOfSubDevice(int tileId) const {
+    return getDirectoryWithFrequencyFiles(tileId, tileIdToGtId[tileId]) + "/max_freq";
 }
 
-std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const {
-    return getDirectoryWithFrequencyFiles(subDeviceId /*tileId */, subDeviceId /*gtId*/) + "/rp0_freq";
+std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const {
+    return getDirectoryWithFrequencyFiles(tileId, tileIdToGtId[tileId]) + "/rp0_freq";
 }
 
 bool IoctlHelperXe::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) {
