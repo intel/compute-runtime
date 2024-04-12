@@ -40,6 +40,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
 
     RETURN_FUNC_PTR_IF_EXIST(zeMemGetPitchFor2dImage);
     RETURN_FUNC_PTR_IF_EXIST(zeImageGetDeviceOffsetExp);
+    RETURN_FUNC_PTR_IF_EXIST(zexDeviceGetConcurrentMetricGroups);
 #undef RETURN_FUNC_PTR_IF_EXIST
 
     return ExtensionFunctionAddressHelper::getAdditionalExtensionFunctionAddress(functionName);

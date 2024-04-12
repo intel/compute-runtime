@@ -45,6 +45,8 @@ class OaMetricSourceImp : public MetricSource {
     ze_result_t activateMetricGroupsPreferDeferred(const uint32_t count,
                                                    zet_metric_group_handle_t *phMetricGroups) override;
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) override;
+    ze_result_t getConcurrentMetricGroups(std::vector<zet_metric_group_handle_t> &hMetricGroups,
+                                          uint32_t *pConcurrentGroupCount, uint32_t *pCountPerConcurrentGroup) override;
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
     bool isMetricGroupActivatedInHw() const;
     void setUseCompute(const bool useCompute);

@@ -64,6 +64,9 @@ class MetricSource {
                                   zet_metric_group_handle_t *pMetricGroupHandle) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     };
+    virtual ze_result_t getConcurrentMetricGroups(std::vector<zet_metric_group_handle_t> &hMetricGroups,
+                                                  uint32_t *pConcurrentGroupCount,
+                                                  uint32_t *pCountPerConcurrentGroup) = 0;
     virtual ~MetricSource() = default;
     uint32_t getType() const {
         return type;
@@ -113,6 +116,8 @@ class MetricDeviceContext {
 
     static std::unique_ptr<MetricDeviceContext> create(Device &device);
     static ze_result_t enableMetricApi();
+    ze_result_t getConcurrentMetricGroups(uint32_t metricGroupCount, zet_metric_group_handle_t *phMetricGroups,
+                                          uint32_t *pConcurrentGroupCount, uint32_t *pCountPerConcurrentGroup);
 
     bool isProgrammableMetricsEnabled = false;
 

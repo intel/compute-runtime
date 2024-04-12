@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,6 +181,24 @@ ze_result_t OaMetricSourceImp::activateMetricGroupsPreferDeferred(uint32_t count
 
 ze_result_t OaMetricSourceImp::activateMetricGroupsAlreadyDeferred() {
     return activationTracker->activateMetricGroupsAlreadyDeferred();
+}
+
+ze_result_t OaMetricSourceImp::getConcurrentMetricGroups(std::vector<zet_metric_group_handle_t> &hMetricGroups,
+                                                         uint32_t *pConcurrentGroupCount,
+                                                         uint32_t *pCountPerConcurrentGroup) {
+
+    if (*pConcurrentGroupCount == 0) {
+        *pConcurrentGroupCount = static_cast<uint32_t>(hMetricGroups.size());
+        return ZE_RESULT_SUCCESS;
+    }
+
+    *pConcurrentGroupCount = std::min(*pConcurrentGroupCount, static_cast<uint32_t>(hMetricGroups.size()));
+    // Each metric group is in unique container
+    for (uint32_t index = 0; index < *pConcurrentGroupCount; index++) {
+        pCountPerConcurrentGroup[index] = 1;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>

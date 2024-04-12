@@ -189,6 +189,23 @@ ze_result_t IpSamplingMetricGroupBase::getExportData(const uint8_t *pRawData, si
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t IpSamplingMetricSourceImp::getConcurrentMetricGroups(std::vector<zet_metric_group_handle_t> &hMetricGroups,
+                                                                 uint32_t *pConcurrentGroupCount,
+                                                                 uint32_t *pCountPerConcurrentGroup) {
+
+    if (*pConcurrentGroupCount == 0) {
+        *pConcurrentGroupCount = static_cast<uint32_t>(hMetricGroups.size());
+        return ZE_RESULT_SUCCESS;
+    }
+
+    *pConcurrentGroupCount = std::min(*pConcurrentGroupCount, static_cast<uint32_t>(hMetricGroups.size()));
+    // Each metric group is in unique container
+    for (uint32_t index = 0; index < *pConcurrentGroupCount; index++) {
+        pCountPerConcurrentGroup[index] = 1;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,
                                                    std::vector<IpSamplingMetricImp> &metrics) : IpSamplingMetricGroupBase(metricSource) {
     this->metrics.reserve(metrics.size());

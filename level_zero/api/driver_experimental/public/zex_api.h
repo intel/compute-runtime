@@ -22,6 +22,7 @@
 #include "zex_driver.h"
 #include "zex_event.h"
 #include "zex_memory.h"
+#include "zex_metric.h"
 #include "zex_module.h"
 
 #endif // _ZEX_API_H

@@ -1174,5 +1174,62 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
     EXPECT_EQ(metricCounts[1], 0u);
 }
 
+TEST_F(MetricEnumerationMultiDeviceTest, givenOaMetricSourceWhenGetConcurrentMetricGroupsIsCalledThenCorrectConcurrentGroupsAreRetrieved) {
+    auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+
+    Mock<IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    metricsSetParams.RawReportSize = 256;
+    metricsSetParams.MetricsCount = 11;
+
+    Mock<IMetric_1_0> metric;
+    MetricsDiscovery::TMetricParams_1_0 metricParams = {};
+
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    uint32_t returnedMetricCount = 2;
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
+    metricsSet.calculateMetricsOutReportCount = &returnedMetricCount;
+
+    metric.GetParamsResult = &metricParams;
+
+    // Metric group handles.
+    uint32_t metricGroupCount = 1;
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    std::vector<zet_metric_group_handle_t> metricGroupList{};
+    metricGroupList.push_back(metricGroupHandle);
+
+    uint32_t concurrentGroupCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, metricSource.getConcurrentMetricGroups(metricGroupList, &concurrentGroupCount, nullptr));
+    EXPECT_EQ(concurrentGroupCount, 1u);
+
+    std::vector<uint32_t> countPerConcurrentGroup(concurrentGroupCount);
+    concurrentGroupCount += 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, metricSource.getConcurrentMetricGroups(metricGroupList, &concurrentGroupCount, countPerConcurrentGroup.data()));
+    EXPECT_EQ(concurrentGroupCount, 1u);
+}
+
 } // namespace ult
 } // namespace L0

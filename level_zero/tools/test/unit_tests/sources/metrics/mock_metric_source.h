@@ -25,6 +25,11 @@ class MockMetricSource : public L0::MetricSource {
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+    ze_result_t getConcurrentMetricGroups(std::vector<zet_metric_group_handle_t> &hMetricGroups,
+                                          uint32_t *pConcurrentGroupCount,
+                                          uint32_t *pCountPerConcurrentGroup) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     void setType(uint32_t type) {
         this->type = type;
     }

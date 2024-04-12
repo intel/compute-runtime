@@ -31,6 +31,9 @@ class IpSamplingMetricSourceImp : public MetricSource {
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+    ze_result_t getConcurrentMetricGroups(std::vector<zet_metric_group_handle_t> &hMetricGroups,
+                                          uint32_t *pConcurrentGroupCount,
+                                          uint32_t *pCountPerConcurrentGroup) override;
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
     void setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingpOsInterface);
     static std::unique_ptr<IpSamplingMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
