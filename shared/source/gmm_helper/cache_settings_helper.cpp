@@ -47,6 +47,17 @@ bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmReso
 }
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper) {
+    if (productHelper.isDcFlushMitigated() &&
+        (allocationType == AllocationType::externalHostPtr ||
+         allocationType == AllocationType::bufferHostMemory ||
+         allocationType == AllocationType::mapAllocation ||
+         allocationType == AllocationType::svmCpu ||
+         allocationType == AllocationType::svmZeroCopy ||
+         allocationType == AllocationType::internalHostMemory ||
+         allocationType == AllocationType::timestampPacketTagBuffer ||
+         allocationType == AllocationType::tagBuffer)) {
+        return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
+    }
 
     switch (allocationType) {
     case AllocationType::image:

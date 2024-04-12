@@ -726,6 +726,79 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
     }
 }
 
+TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowDcFlush.set(0);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocationType = static_cast<AllocationType>(i);
+        auto uncachedGmmUsageType = productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+        auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper);
+        auto expectedUsage = GMM_RESOURCE_USAGE_UNKNOWN;
+
+        if (productHelper.isDcFlushMitigated()) {
+            switch (allocationType) {
+            case AllocationType::externalHostPtr:
+            case AllocationType::mapAllocation:
+            case AllocationType::svmCpu:
+            case AllocationType::svmZeroCopy:
+            case AllocationType::internalHostMemory:
+            case AllocationType::timestampPacketTagBuffer:
+            case AllocationType::bufferHostMemory:
+            case AllocationType::tagBuffer:
+                expectedUsage = uncachedGmmUsageType;
+                break;
+            case AllocationType::constantSurface:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
+                break;
+            case AllocationType::image:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_IMAGE;
+                break;
+            case AllocationType::internalHeap:
+            case AllocationType::linearStream:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+                break;
+            case AllocationType::fillPattern:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                break;
+            default:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+                break;
+            }
+        } else {
+            switch (allocationType) {
+            case AllocationType::constantSurface:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
+                break;
+            case AllocationType::image:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_IMAGE;
+                break;
+            case AllocationType::internalHeap:
+            case AllocationType::linearStream:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+                break;
+            case AllocationType::bufferHostMemory:
+            case AllocationType::internalHostMemory:
+            case AllocationType::mapAllocation:
+            case AllocationType::fillPattern:
+            case AllocationType::svmCpu:
+            case AllocationType::svmZeroCopy:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                break;
+            default:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+                break;
+            }
+        }
+
+        EXPECT_EQ(expectedUsage, usage);
+        if (expectedUsage != usage) {
+            std::cout << "fail";
+        }
+    }
+}
+
 TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenReturnUncached) {
     DebugManagerStateRestore restore;
     debugManager.flags.ForceAllResourcesUncached.set(true);

@@ -547,10 +547,10 @@ bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData) {
     return mapGpuVirtualAddress(osHandle->gmm,
                                 osHandle->handle,
                                 0u, MemoryConstants::maxSvmAddress, castToUint64(allocationStorageData->cpuPtr),
-                                osHandle->gpuPtr);
+                                osHandle->gpuPtr, AllocationType::externalHostPtr);
 }
 
-bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) {
+bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type) {
     D3DDDI_MAPGPUVIRTUALADDRESS mapGPUVA = {};
     D3DDDIGPUVIRTUALADDRESS_PROTECTION_TYPE protectionType = {};
     protectionType.Write = TRUE;
@@ -568,7 +568,7 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     mapGPUVA.MinimumAddress = minimumAddress;
     mapGPUVA.MaximumAddress = maximumAddress;
 
-    applyAdditionalMapGPUVAFields(mapGPUVA, gmm);
+    applyAdditionalMapGPUVAFields(mapGPUVA, gmm, type);
 
     MapGpuVirtualAddressGmm gmmMapGpuVa = {&mapGPUVA, gmm->gmmResourceInfo.get(), &gpuPtr, getGdi()};
     auto status = gmm->getGmmHelper()->getClientContext()->mapGpuVirtualAddress(&gmmMapGpuVa);

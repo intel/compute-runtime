@@ -394,6 +394,13 @@ bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDcFlushMitigated() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    bool dcFlushAllowed = GfxProduct::isDcFlushAllowed;
+    return this->isDcFlushAllowed() != dcFlushAllowed;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }

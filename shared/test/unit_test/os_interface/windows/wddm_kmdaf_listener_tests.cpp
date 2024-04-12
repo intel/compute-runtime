@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,7 +119,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmDaf
     auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
 
     wddmWithKmDafMock->mapGpuVirtualAddress(gmm.get(), ALLOCATION_HANDLE, wddmWithKmDafMock->getGfxPartition().Standard.Base,
-                                            wddmWithKmDafMock->getGfxPartition().Standard.Limit, 0u, gpuPtr);
+                                            wddmWithKmDafMock->getGfxPartition().Standard.Limit, 0u, gpuPtr, AllocationType::unknown);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->flags.ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAdapter);

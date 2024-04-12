@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -488,7 +488,7 @@ TEST_F(PlatformWithFourDevicesTest, whenCreateColoredAllocationAndWddmReturnsCan
     struct CanonizeAddressMockWddm : public WddmMock {
         using WddmMock::WddmMock;
 
-        bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) override {
+        bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, AllocationType type) override {
             auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
             gpuPtr = gmmHelper->canonize(preferredAddress);
             return mapGpuVaStatus;

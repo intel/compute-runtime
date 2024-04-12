@@ -272,6 +272,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDcFlushAllowed() const {
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isDcFlushMitigated() const {
+    return false;
+}
+
+template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }

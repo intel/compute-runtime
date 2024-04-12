@@ -128,6 +128,7 @@ class ProductHelper {
     virtual bool isKmdMigrationSupported() const = 0;
     virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDcFlushAllowed() const = 0;
+    virtual bool isDcFlushMitigated() const = 0;
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;
     virtual bool getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const = 0;
     virtual bool isFlushTaskAllowed() const = 0;
