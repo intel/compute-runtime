@@ -291,7 +291,6 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
             auto regionIndex = Math::log2(nearMemRegions);
             UNRECOVERABLE_IF(!memoryRegionInstances[regionIndex]);
             regionsContainer.push_back(createMemoryRegionFromXeMemRegion(*memoryRegionInstances[regionIndex]));
-            xeTimestampFrequency = xeGtListData->gt_list[i].reference_clock;
         }
     }
     return std::make_unique<MemoryInfo>(regionsContainer, drm);
@@ -333,11 +332,6 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     pGpuCpuTime->cpuTimeinNS = queryEngineCycles->cpu_timestamp;
 
     return ret == 0;
-}
-
-bool IoctlHelperXe::getTimestampFrequency(uint64_t &frequency) {
-    frequency = xeTimestampFrequency;
-    return frequency != 0;
 }
 
 void IoctlHelperXe::getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss,
@@ -899,10 +893,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         ret = 0;
         switch (getParam->param) {
         case static_cast<int>(DrmParam::paramCsTimestampFrequency): {
-            uint64_t frequency = 0;
-            if (getTimestampFrequency(frequency)) {
-                *getParam->value = static_cast<int>(frequency);
-            }
+            *getParam->value = xeGtListData->gt_list[defaultEngine->gt_id].reference_clock;
         } break;
         default:
             ret = -1;

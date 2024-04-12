@@ -109,8 +109,6 @@ class IoctlHelperXe : public IoctlHelper {
     void getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap);
 
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
-    bool getTimestampFrequency(uint64_t &frequency);
-
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
     bool isImmediateVmBindRequired() const override;
@@ -164,7 +162,6 @@ class IoctlHelperXe : public IoctlHelper {
     int maxExecQueuePriority = 0;
     std::mutex xeLock;
     std::vector<BindInfo> bindInfo;
-    uint32_t xeTimestampFrequency = 0;
     std::vector<uint32_t> hwconfig;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;
 

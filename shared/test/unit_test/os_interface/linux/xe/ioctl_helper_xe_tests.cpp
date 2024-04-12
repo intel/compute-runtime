@@ -532,6 +532,7 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto mockXeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    mockXeIoctlHelper->initialize();
 
     drm.reset();
     {
@@ -674,10 +675,9 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::paramCsTimestampFrequency);
-        mockXeIoctlHelper->xeTimestampFrequency = 1;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(0, ret);
-        EXPECT_EQ(dstvalue, 1);
+        EXPECT_EQ(static_cast<uint32_t>(dstvalue), DrmMockXe::mockTimestampFrequency);
     }
     EXPECT_THROW(mockXeIoctlHelper->ioctl(DrmIoctl::gemContextCreateExt, NULL), std::runtime_error);
     drm.reset();
@@ -1597,37 +1597,6 @@ TEST(IoctlHelperXeTest, whenFillBindInfoForIpcHandleIsCalledThenBindInfoIsCorrec
     auto bindInfo = xeIoctlHelper->bindInfo[0];
     EXPECT_EQ(bindInfo.handle, handle);
     EXPECT_EQ(bindInfo.size, size);
-}
-
-TEST(IoctlHelperXeTest, givenIoctlFailureWhenGetTimestampFrequencyIsCalledThenFalseIsReturned) {
-    DebugManagerStateRestore restorer;
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
-    auto engineInfo = xeIoctlHelper->createEngineInfo(false);
-    ASSERT_NE(nullptr, engineInfo);
-
-    drm.testMode(1, -1);
-    uint64_t frequency;
-    auto ret = xeIoctlHelper->getTimestampFrequency(frequency);
-    EXPECT_EQ(false, ret);
-}
-
-TEST(IoctlHelperXeTest, whenGetTimestampFrequencyIsCalledThenProperFrequencyIsSet) {
-    DebugManagerStateRestore restorer;
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
-    auto engineInfo = xeIoctlHelper->createEngineInfo(false);
-    ASSERT_NE(nullptr, engineInfo);
-
-    uint32_t expectedFrequency = 100;
-    xeIoctlHelper->xeTimestampFrequency = expectedFrequency;
-
-    uint64_t frequency = 0;
-    auto ret = xeIoctlHelper->getTimestampFrequency(frequency);
-    EXPECT_EQ(true, ret);
-    EXPECT_EQ(expectedFrequency, frequency);
 }
 
 TEST(IoctlHelperXeTest, givenIoctlFailureWhenSetGpuCpuTimesIsCalledThenFalseIsReturned) {

@@ -45,7 +45,6 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::xeGetengineClassName;
     using IoctlHelperXe::xeGtListData;
     using IoctlHelperXe::xeShowBindTable;
-    using IoctlHelperXe::xeTimestampFrequency;
 };
 
 inline constexpr int testValueVmId = 0x5764;
@@ -108,7 +107,7 @@ class DrmMockXe : public DrmMockCustom {
             0,                         // tile_id
             0,                         // gt_id
             {0},                       // padding
-            12500000,                  // reference_clock
+            mockTimestampFrequency,    // reference_clock
             0b100,                     // native mem regions
             0x011,                     // slow mem regions
         };
@@ -117,7 +116,7 @@ class DrmMockXe : public DrmMockCustom {
             1,                          // tile_id
             1,                          // gt_id
             {0},                        // padding
-            12500000,                   // reference_clock
+            mockTimestampFrequency,     // reference_clock
             0b001,                      // native mem regions
             0x110,                      // slow mem regions
         };
@@ -126,7 +125,7 @@ class DrmMockXe : public DrmMockCustom {
             0,                         // tile_id
             0,                         // gt_id
             {0},                       // padding
-            12500000,                  // reference_clock
+            mockTimestampFrequency,    // reference_clock
             0b010,                     // native mem regions
             0x101,                     // slow mem regions
         };
@@ -320,7 +319,7 @@ class DrmMockXe : public DrmMockCustom {
     uint64_t queryConfig[6]{}; // 1 qword for num params and 1 qwords per param
     static constexpr uint32_t mockExecQueueId = 1234;
     static constexpr int32_t mockMaxExecQueuePriority = 3;
-
+    static constexpr uint32_t mockTimestampFrequency = 12500000;
     static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
     uint64_t queryEngines[45]{}; // 1 qword for num engines and 4 qwords per engine
     static_assert(sizeof(drm_xe_mem_region) == 11 * sizeof(uint64_t), "");
