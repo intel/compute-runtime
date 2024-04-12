@@ -157,25 +157,17 @@ class IoctlHelperXe : public IoctlHelper {
         uint64_t value;
     };
 
-    void setDefaultEngine(const aub_stream::EngineType &defaultEngineType);
+    uint16_t getDefaultEngineClass(const aub_stream::EngineType &defaultEngineType);
     void setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut);
 
-    int chipsetId = 0;
-    int revId = 0;
-    int defaultAlignment = 0;
-    int hasVram = 0;
     int maxExecQueuePriority = 0;
-    uint32_t xeVmId = 0;
-    int xeFileHandle = 0;
     std::mutex xeLock;
     std::vector<BindInfo> bindInfo;
-    int instance = 0;
     uint32_t xeTimestampFrequency = 0;
     std::vector<uint32_t> hwconfig;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;
-    std::vector<drm_xe_engine_class_instance> allEngines;
 
-    drm_xe_engine_class_instance *defaultEngine = nullptr;
+    std::unique_ptr<drm_xe_engine_class_instance> defaultEngine;
 
     struct DebugMetadata {
         DrmResourceClass type;

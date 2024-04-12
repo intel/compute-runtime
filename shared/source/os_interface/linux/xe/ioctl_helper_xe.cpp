@@ -137,9 +137,6 @@ bool IoctlHelperXe::initialize() {
     xeLog("DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY\t\t%#llx\n",
           config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY]);
 
-    chipsetId = config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
-    revId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
-    hasVram = config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_VRAM ? 1 : 0;
     maxExecQueuePriority = config->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] & 0xffff;
 
     memset(&queryConfig, 0, sizeof(queryConfig));
@@ -151,8 +148,8 @@ bool IoctlHelperXe::initialize() {
     IoctlHelper::ioctl(DrmIoctl::query, &queryConfig);
 
     auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usDeviceID = chipsetId;
-    hwInfo->platform.usRevId = revId;
+    hwInfo->platform.usDeviceID = config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
+    hwInfo->platform.usRevId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
     hwInfo->capabilityTable.gpuAddressSpace = (1ull << config->info[DRM_XE_QUERY_CONFIG_VA_BITS]) - 1;
 
     return true;
@@ -209,6 +206,9 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
     StackVec<std::vector<EngineClassInstance>, 2> enginesPerTile{};
     std::bitset<8> multiTileMask{};
 
+    auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto defaultEngineClass = getDefaultEngineClass(hwInfo->capabilityTable.defaultEngineType);
+
     for (auto i = 0u; i < numberHwEngines; i++) {
         const auto &engine = queryEngines->engines[i].instance;
         auto tile = engine.gt_id;
@@ -228,19 +228,19 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
                 enginesPerTile.resize(tile + 1);
             }
             enginesPerTile[tile].push_back(engineClassInstance);
-            allEngines.push_back(engine);
+            if (!defaultEngine && engineClassInstance.engineClass == defaultEngineClass) {
+                defaultEngine = std::make_unique<drm_xe_engine_class_instance>();
+                *defaultEngine = engine;
+            }
         }
     }
-
-    auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    UNRECOVERABLE_IF(!defaultEngine);
     if (hwInfo->featureTable.flags.ftrMultiTileArch) {
         auto &multiTileArchInfo = hwInfo->gtSystemInfo.MultiTileArchInfo;
         multiTileArchInfo.IsValid = true;
         multiTileArchInfo.TileCount = multiTileMask.count();
         multiTileArchInfo.TileMask = static_cast<uint8_t>(multiTileMask.to_ulong());
     }
-
-    setDefaultEngine(drm.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.defaultEngineType);
 
     return std::make_unique<EngineInfo>(&drm, enginesPerTile);
 }
@@ -471,28 +471,15 @@ void IoctlHelperXe::updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t s
     bindInfo.push_back(b);
 }
 
-void IoctlHelperXe::setDefaultEngine(const aub_stream::EngineType &defaultEngineType) {
-    uint32_t defaultEngineClass;
-
+uint16_t IoctlHelperXe::getDefaultEngineClass(const aub_stream::EngineType &defaultEngineType) {
     if (defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
-        defaultEngineClass = DRM_XE_ENGINE_CLASS_COMPUTE;
+        return DRM_XE_ENGINE_CLASS_COMPUTE;
     } else if (defaultEngineType == aub_stream::EngineType::ENGINE_RCS) {
-        defaultEngineClass = DRM_XE_ENGINE_CLASS_RENDER;
+        return DRM_XE_ENGINE_CLASS_RENDER;
     } else {
         /* So far defaultEngineType is either ENGINE_RCS or ENGINE_CCS */
         UNRECOVERABLE_IF(true);
-    }
-
-    for (auto i = 0u; i < allEngines.size(); i++) {
-        if (allEngines[i].engine_class == defaultEngineClass) {
-            defaultEngine = &allEngines[i];
-            xeLog("Found default engine of class %s\n", xeGetClassName(defaultEngineClass));
-            break;
-        }
-    }
-
-    if (defaultEngine == nullptr) {
-        UNRECOVERABLE_IF(true);
+        return 0;
     }
 }
 
@@ -905,25 +892,19 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     xeLog(" => IoctlHelperXe::%s 0x%x\n", __FUNCTION__, request);
     switch (request) {
     case DrmIoctl::getparam: {
-        struct GetParam *d = (struct GetParam *)arg;
+        auto getParam = reinterpret_cast<GetParam *>(arg);
         ret = 0;
-        switch (d->param) {
-        case static_cast<int>(DrmParam::paramChipsetId):
-            *d->value = chipsetId;
-            break;
-        case static_cast<int>(DrmParam::paramRevision):
-            *d->value = revId;
-            break;
+        switch (getParam->param) {
         case static_cast<int>(DrmParam::paramCsTimestampFrequency): {
             uint64_t frequency = 0;
             if (getTimestampFrequency(frequency)) {
-                *d->value = static_cast<int>(frequency);
+                *getParam->value = static_cast<int>(frequency);
             }
         } break;
         default:
             ret = -1;
         }
-        xeLog(" -> IoctlHelperXe::ioctl Getparam 0x%x/0x%x r=%d\n", d->param, *d->value, ret);
+        xeLog(" -> IoctlHelperXe::ioctl Getparam 0x%x/0x%x r=%d\n", getParam->param, *getParam->value, ret);
     } break;
 
     case DrmIoctl::query: {
@@ -1330,10 +1311,6 @@ std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
         return "MmapOffsetWb";
     case DrmParam::mmapOffsetWc:
         return "MmapOffsetWc";
-    case DrmParam::paramChipsetId:
-        return "ParamChipsetId";
-    case DrmParam::paramRevision:
-        return "ParamRevision";
     case DrmParam::paramHasPooledEu:
         return "ParamHasPooledEu";
     case DrmParam::paramEuTotal:

@@ -31,12 +31,12 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::contextParamEngine;
     using IoctlHelperXe::debugMetadata;
     using IoctlHelperXe::defaultEngine;
+    using IoctlHelperXe::getDefaultEngineClass;
     using IoctlHelperXe::getFdFromVmExport;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;
     using IoctlHelperXe::setContextProperties;
-    using IoctlHelperXe::setDefaultEngine;
     using IoctlHelperXe::UserFenceExtension;
     using IoctlHelperXe::xeGetBindFlagsName;
     using IoctlHelperXe::xeGetBindOperationName;

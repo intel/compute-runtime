@@ -359,8 +359,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyDrmParamString("MemoryClassSystem", DrmParam::memoryClassSystem);
     verifyDrmParamString("MmapOffsetWb", DrmParam::mmapOffsetWb);
     verifyDrmParamString("MmapOffsetWc", DrmParam::mmapOffsetWc);
-    verifyDrmParamString("ParamChipsetId", DrmParam::paramChipsetId);
-    verifyDrmParamString("ParamRevision", DrmParam::paramRevision);
     verifyDrmParamString("ParamHasPooledEu", DrmParam::paramHasPooledEu);
     verifyDrmParamString("ParamEuTotal", DrmParam::paramEuTotal);
     verifyDrmParamString("ParamSubsliceTotal", DrmParam::paramSubsliceTotal);
@@ -665,12 +663,10 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::paramChipsetId);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
-        EXPECT_EQ(0, ret);
-        EXPECT_EQ(dstvalue, 0);
+        EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::paramRevision);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
-        EXPECT_EQ(0, ret);
-        EXPECT_EQ(dstvalue, 0);
+        EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::paramHasPageFault);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(-1, ret);
@@ -1667,23 +1663,12 @@ TEST(IoctlHelperXeTest, whenSetDefaultEngineIsCalledThenProperEngineIsSet) {
     auto engineInfo = xeIoctlHelper->createEngineInfo(true);
     ASSERT_NE(nullptr, engineInfo);
 
-    xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_CCS);
-    EXPECT_EQ(DRM_XE_ENGINE_CLASS_COMPUTE, xeIoctlHelper->defaultEngine->engine_class);
-    xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_RCS);
-    EXPECT_EQ(DRM_XE_ENGINE_CLASS_RENDER, xeIoctlHelper->defaultEngine->engine_class);
+    EXPECT_EQ(DRM_XE_ENGINE_CLASS_COMPUTE, xeIoctlHelper->getDefaultEngineClass(aub_stream::EngineType::ENGINE_CCS));
+    EXPECT_EQ(DRM_XE_ENGINE_CLASS_RENDER, xeIoctlHelper->getDefaultEngineClass(aub_stream::EngineType::ENGINE_RCS));
 
-    EXPECT_THROW(xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_BCS), std::exception);
-    EXPECT_THROW(xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_VCS), std::exception);
-    EXPECT_THROW(xeIoctlHelper->setDefaultEngine(aub_stream::EngineType::ENGINE_VECS), std::exception);
-}
-
-TEST(IoctlHelperXeTest, givenNoEnginesWhenSetDefaultEngineIsCalledThenAbortIsThrown) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
-
-    auto defaultEngineType = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.defaultEngineType;
-    EXPECT_THROW(xeIoctlHelper->setDefaultEngine(defaultEngineType), std::exception);
+    EXPECT_THROW(xeIoctlHelper->getDefaultEngineClass(aub_stream::EngineType::ENGINE_BCS), std::exception);
+    EXPECT_THROW(xeIoctlHelper->getDefaultEngineClass(aub_stream::EngineType::ENGINE_VCS), std::exception);
+    EXPECT_THROW(xeIoctlHelper->getDefaultEngineClass(aub_stream::EngineType::ENGINE_VECS), std::exception);
 }
 
 TEST(IoctlHelperXeTest, whenGettingPreemptionSupportThenTrueIsReturned) {
