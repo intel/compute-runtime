@@ -36,12 +36,14 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;
+    using IoctlHelperXe::queryGtListData;
     using IoctlHelperXe::setContextProperties;
     using IoctlHelperXe::UserFenceExtension;
     using IoctlHelperXe::xeGetBindFlagsName;
     using IoctlHelperXe::xeGetBindOperationName;
     using IoctlHelperXe::xeGetClassName;
     using IoctlHelperXe::xeGetengineClassName;
+    using IoctlHelperXe::xeGtListData;
     using IoctlHelperXe::xeShowBindTable;
     using IoctlHelperXe::xeTimestampFrequency;
 };
@@ -98,6 +100,7 @@ class DrmMockXe : public DrmMockCustom {
             MemoryConstants::gigaByte      // used size
         };
 
+        queryGtList.resize(37); // 1 qword for num gts and 12 qwords per gt
         auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(queryGtList.begin());
         xeQueryGtList->num_gt = 3;
         xeQueryGtList->gt_list[0] = {
@@ -220,9 +223,9 @@ class DrmMockXe : public DrmMockCustom {
                 break;
             case DRM_XE_DEVICE_QUERY_GT_LIST:
                 if (deviceQuery->data) {
-                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryGtList.begin(), sizeof(queryGtList));
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryGtList.begin(), sizeof(queryGtList[0]) * queryGtList.size());
                 }
-                deviceQuery->size = sizeof(queryGtList);
+                deviceQuery->size = static_cast<uint32_t>(sizeof(queryGtList[0]) * queryGtList.size());
                 break;
             case DRM_XE_DEVICE_QUERY_GT_TOPOLOGY:
                 if (deviceQuery->data) {

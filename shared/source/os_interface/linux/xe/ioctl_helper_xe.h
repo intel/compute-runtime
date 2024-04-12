@@ -16,6 +16,7 @@
 #include <optional>
 
 struct drm_xe_engine_class_instance;
+struct drm_xe_query_gt_list;
 
 namespace NEO {
 
@@ -167,8 +168,10 @@ class IoctlHelperXe : public IoctlHelper {
     std::vector<uint32_t> hwconfig;
     std::vector<drm_xe_engine_class_instance> contextParamEngine;
 
-    std::unique_ptr<drm_xe_engine_class_instance> defaultEngine;
+    std::vector<uint64_t> queryGtListData;
+    drm_xe_query_gt_list *xeGtListData = nullptr;
 
+    std::unique_ptr<drm_xe_engine_class_instance> defaultEngine;
     struct DebugMetadata {
         DrmResourceClass type;
         uint64_t offset;

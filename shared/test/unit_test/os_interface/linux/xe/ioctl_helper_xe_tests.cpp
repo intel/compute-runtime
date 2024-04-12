@@ -98,6 +98,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenP
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
@@ -127,6 +128,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroTh
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
@@ -156,6 +158,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenPro
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
@@ -687,6 +690,8 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
+    xeIoctlHelper->initialize();
+
     uint16_t tileId = 0;
     for (auto gtId = 0u; gtId < 3u; gtId++) {
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
@@ -733,6 +738,7 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     uint16_t tileId = 0;
     for (auto gtId = 0u; gtId < 3u; gtId++) {
@@ -784,6 +790,7 @@ TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceI
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.queryGtList.resize(13); // 1 qword for num gts, 12 per gt
     auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(drm.queryGtList.begin());
     xeQueryGtList->num_gt = 1;
     xeQueryGtList->gt_list[0] = {
@@ -798,6 +805,7 @@ TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceI
 
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     uint16_t tileId = 0;
     drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
@@ -872,6 +880,7 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
 
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
     for (auto tileId = 0; tileId < 4; tileId++) {
         drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
         drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
@@ -956,6 +965,7 @@ TEST(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenResu
     DrmMockXe2T drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     // symetric tiles
     for (uint16_t tileId = 0; tileId < 2u; tileId++) {
@@ -1011,6 +1021,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledDssOn1TileAndComputeDssWhenGetTopo
     DrmMockXe2T drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     // half dss disabled on tile 0
     uint16_t tileId = 0;
@@ -1077,6 +1088,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopolog
     DrmMockXe2T drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     for (uint16_t tileId = 0; tileId < 2u; tileId++) {
         // even dss disabled
@@ -1137,6 +1149,7 @@ TEST(IoctlHelperXeTest, givenInvalidTypeFlagGetTopologyDataAndMapThenReturnFalse
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     uint16_t tileId = 0;
 
@@ -1157,6 +1170,7 @@ TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     auto baseCopyEngine = aub_stream::EngineType::ENGINE_BCS;
     auto nextCopyEngine = aub_stream::EngineType::ENGINE_BCS1;
@@ -1279,6 +1293,7 @@ TEST(IoctlHelperXeTest, whenCreatingMemoryInfoThenProperMemoryBanksAreDiscovered
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
     auto memoryInfo = xeIoctlHelper->createMemoryInfo();
     EXPECT_NE(nullptr, memoryInfo);
 
@@ -1318,6 +1333,7 @@ TEST(IoctlHelperXeTest, givenIoctlFailureWhenCreatingMemoryInfoThenNoMemoryBanks
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     drm.testMode(1, -1);
     auto memoryInfo = xeIoctlHelper->createMemoryInfo();
@@ -1329,6 +1345,7 @@ TEST(IoctlHelperXeTest, givenNoMemoryRegionsWhenCreatingMemoryInfoThenMemoryInfo
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(drm.queryMemUsage);
     xeQueryMemUsage->num_mem_regions = 0u;
@@ -1341,6 +1358,7 @@ TEST(IoctlHelperXeTest, givenIoctlFailureWhenCreatingEngineInfoThenNoEnginesAreD
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     drm.testMode(1, -1);
     auto engineInfo = xeIoctlHelper->createEngineInfo(true);
@@ -1353,6 +1371,7 @@ TEST(IoctlHelperXeTest, givenEnabledFtrMultiTileArchWhenCreatingEngineInfoThenMu
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
     DrmMockXe drm{rootDeviceEnvironment};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     for (const auto &isSysmanEnabled : ::testing::Bool()) {
@@ -1373,6 +1392,7 @@ TEST(IoctlHelperXeTest, givenDisabledFtrMultiTileArchWhenCreatingEngineInfoThenM
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
     DrmMockXe drm{rootDeviceEnvironment};
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
 
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     for (const auto &isSysmanEnabled : ::testing::Bool()) {
@@ -1685,6 +1705,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenGetCpuCachingModeCalledThenCorrect
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
@@ -1733,6 +1754,7 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithoutVirtualEnginesThenProperEngi
 
     drm.ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
     auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm.ioctlHelper.get());
+    ioctlHelper->initialize();
     drm.queryEngineInfo();
 
     unsigned int expectedValue = DRM_XE_ENGINE_CLASS_COMPUTE;
@@ -1753,6 +1775,7 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithVirtualEnginesThenProperEngines
 
     drm.ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
     auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm.ioctlHelper.get());
+    ioctlHelper->initialize();
     drm.queryEngineInfo();
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
 
@@ -1783,6 +1806,7 @@ TEST(IoctlHelperXeTest, whenCallingGetResetStatsThenSuccessIsReturned) {
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
@@ -1973,4 +1997,36 @@ TEST(IoctlHelperXeTest, givenLowPriorityContextWhenCreatingDrmContextThenExtProp
     ASSERT_LE(1u, drm.execQueueProperties.size());
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY), drm.execQueueProperties[0].property);
     EXPECT_EQ(0u, drm.execQueueProperties[0].value);
+}
+
+TEST(IoctlHelperXeTest, whenInitializeThenGtListDataIsQueried) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm.ioctlHelper.get());
+
+    EXPECT_EQ(nullptr, ioctlHelper->xeGtListData);
+    EXPECT_TRUE(ioctlHelper->queryGtListData.empty());
+
+    EXPECT_TRUE(ioctlHelper->initialize());
+
+    EXPECT_NE(nullptr, ioctlHelper->xeGtListData);
+    EXPECT_FALSE(ioctlHelper->queryGtListData.empty());
+    EXPECT_EQ(castToUint64(ioctlHelper->queryGtListData.data()), castToUint64(ioctlHelper->xeGtListData));
+    EXPECT_EQ(drm.queryGtList.size(), ioctlHelper->queryGtListData.size());
+}
+
+TEST(IoctlHelperXeTest, givenNoGtListDataWhenInitializeThenInitializationFails) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm.ioctlHelper.get());
+
+    drm.queryGtList.resize(0);
+
+    EXPECT_FALSE(ioctlHelper->initialize());
 }

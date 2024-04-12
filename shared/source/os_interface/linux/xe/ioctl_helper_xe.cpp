@@ -152,6 +152,13 @@ bool IoctlHelperXe::initialize() {
     hwInfo->platform.usRevId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
     hwInfo->capabilityTable.gpuAddressSpace = (1ull << config->info[DRM_XE_QUERY_CONFIG_VA_BITS]) - 1;
 
+    queryGtListData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_GT_LIST);
+
+    if (queryGtListData.empty()) {
+        return false;
+    }
+    xeGtListData = reinterpret_cast<drm_xe_query_gt_list *>(queryGtListData.data());
+
     return true;
 }
 
@@ -256,15 +263,13 @@ inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_mem_region &x
 
 std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     auto memUsageData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_MEM_REGIONS);
-    auto gtListData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_GT_LIST);
 
-    if (memUsageData.empty() || gtListData.empty()) {
+    if (memUsageData.empty()) {
         return {};
     }
 
     MemoryInfo::RegionContainer regionsContainer{};
     auto xeMemRegionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
-    auto xeGtListData = reinterpret_cast<drm_xe_query_gt_list *>(gtListData.data());
 
     std::array<drm_xe_mem_region *, 64> memoryRegionInstances{};
 
@@ -414,8 +419,6 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     auto topologySize = queryGtTopology.size();
     auto dataPtr = queryGtTopology.data();
 
-    auto gtsData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_GT_LIST);
-    auto xeGtListData = reinterpret_cast<drm_xe_query_gt_list *>(gtsData.data());
     gtIdToTile.resize(xeGtListData->num_gt, -1);
 
     auto tileIndex = 0u;
