@@ -518,9 +518,9 @@ TEST(IoctlHelperXeTest, whenGettingFileNamesForFrequencyThenProperStringIsReturn
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto ioctlHelper = std::make_unique<IoctlHelperXe>(drm);
-    EXPECT_STREQ("/device/gt0/freq_max", ioctlHelper->getFileForMaxGpuFrequency().c_str());
-    EXPECT_STREQ("/device/gt2/freq_max", ioctlHelper->getFileForMaxGpuFrequencyOfSubDevice(2).c_str());
-    EXPECT_STREQ("/device/gt1/freq_rp0", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
+    EXPECT_STREQ("/device/tile0/gt0/freq0/max_freq", ioctlHelper->getFileForMaxGpuFrequency().c_str());
+    EXPECT_STREQ("/device/tile2/gt2/freq0/max_freq", ioctlHelper->getFileForMaxGpuFrequencyOfSubDevice(2).c_str());
+    EXPECT_STREQ("/device/tile1/gt1/freq0/rp0_freq", ioctlHelper->getFileForMaxMemoryFrequencyOfSubDevice(1).c_str());
 }
 
 TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {

@@ -1344,16 +1344,20 @@ std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
     }
 }
 
+inline std::string getDirectoryWithFrequencyFiles(int tileId, int gtId) {
+    return "/device/tile" + std::to_string(tileId) + "/gt" + std::to_string(gtId) + "/freq0";
+}
+
 std::string IoctlHelperXe::getFileForMaxGpuFrequency() const {
-    return "/device/gt0/freq_max";
+    return getDirectoryWithFrequencyFiles(0 /*tileId */, 0 /*gtId*/) + "/max_freq";
 }
 
 std::string IoctlHelperXe::getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const {
-    return "/device/gt" + std::to_string(subDeviceId) + "/freq_max";
+    return getDirectoryWithFrequencyFiles(subDeviceId /*tileId */, subDeviceId /*gtId*/) + "/max_freq";
 }
 
 std::string IoctlHelperXe::getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const {
-    return "/device/gt" + std::to_string(subDeviceId) + "/freq_rp0";
+    return getDirectoryWithFrequencyFiles(subDeviceId /*tileId */, subDeviceId /*gtId*/) + "/rp0_freq";
 }
 
 bool IoctlHelperXe::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) {
