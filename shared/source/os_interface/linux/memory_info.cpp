@@ -78,7 +78,7 @@ int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allo
     }
 }
 
-uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank) {
+uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank) const {
     auto &hwInfo = *this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto &gfxCoreHelper = this->drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
@@ -101,7 +101,7 @@ MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryB
     return getMemoryRegion(memoryBank).region;
 }
 
-const MemoryRegion &MemoryInfo::getMemoryRegion(uint32_t memoryBank) {
+const MemoryRegion &MemoryInfo::getMemoryRegion(uint32_t memoryBank) const {
     if (memoryBank == 0) {
         return systemMemoryRegion;
     }
@@ -112,14 +112,14 @@ const MemoryRegion &MemoryInfo::getMemoryRegion(uint32_t memoryBank) {
     return localMemoryRegions[index];
 }
 
-size_t MemoryInfo::getMemoryRegionSize(uint32_t memoryBank) {
+size_t MemoryInfo::getMemoryRegionSize(uint32_t memoryBank) const {
     if (debugManager.flags.PrintMemoryRegionSizes.get()) {
         printRegionSizes();
     }
     return getMemoryRegion(memoryBank).probedSize;
 }
 
-void MemoryInfo::printRegionSizes() {
+void MemoryInfo::printRegionSizes() const {
     for (auto &region : drmQueryRegions) {
         std::cout << "Memory type: " << region.region.memoryClass
                   << ", memory instance: " << region.region.memoryInstance

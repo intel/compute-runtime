@@ -43,6 +43,7 @@ struct MemoryRegion {
     MemoryClassInstance region;
     uint64_t probedSize;
     uint64_t unallocatedSize;
+    std::bitset<4> tilesMask;
 };
 
 struct EngineCapabilities {
@@ -174,6 +175,7 @@ class IoctlHelper {
 
     uint32_t getFlagsForPrimeHandleToFd() const;
     virtual std::unique_ptr<MemoryInfo> createMemoryInfo() = 0;
+    virtual size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const = 0;
     virtual std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) = 0;
     virtual bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) = 0;
     virtual void fillBindInfoForIpcHandle(uint32_t handle, size_t size) = 0;
@@ -213,6 +215,7 @@ class IoctlHelperI915 : public IoctlHelper {
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint64_t> &data);
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override;
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
+    size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const override;
     bool setDomainCpu(uint32_t handle, bool writeEnable) override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     std::string getDrmParamString(DrmParam param) const override;

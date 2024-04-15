@@ -30,18 +30,19 @@ class MemoryInfo {
 
     MemoryClassInstance getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo);
 
-    MOCKABLE_VIRTUAL size_t getMemoryRegionSize(uint32_t memoryBank);
+    MOCKABLE_VIRTUAL size_t getMemoryRegionSize(uint32_t memoryBank) const;
 
-    const MemoryRegion &getMemoryRegion(uint32_t memoryBank);
+    const MemoryRegion &getMemoryRegion(uint32_t memoryBank) const;
 
-    void printRegionSizes();
+    void printRegionSizes() const;
 
-    uint32_t getTileIndex(uint32_t memoryBank);
+    uint32_t getTileIndex(uint32_t memoryBank) const;
 
     MOCKABLE_VIRTUAL int createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation);
     MOCKABLE_VIRTUAL int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation);
     MOCKABLE_VIRTUAL int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation);
 
+    const RegionContainer &getLocalMemoryRegions() const { return localMemoryRegions; }
     const RegionContainer &getDrmRegionInfos() const { return drmQueryRegions; }
     bool isMemPolicySupported() const { return memPolicySupported; }
 

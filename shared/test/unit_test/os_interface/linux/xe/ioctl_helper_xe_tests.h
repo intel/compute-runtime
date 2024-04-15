@@ -99,9 +99,9 @@ class DrmMockXe : public DrmMockCustom {
             MemoryConstants::gigaByte      // used size
         };
 
-        queryGtList.resize(37); // 1 qword for num gts and 12 qwords per gt
+        queryGtList.resize(49); // 1 qword for num gts and 12 qwords per gt
         auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(queryGtList.begin());
-        xeQueryGtList->num_gt = 3;
+        xeQueryGtList->num_gt = 4;
         xeQueryGtList->gt_list[0] = {
             DRM_XE_QUERY_GT_TYPE_MAIN, // type
             0,                         // tile_id
@@ -128,6 +128,15 @@ class DrmMockXe : public DrmMockCustom {
             mockTimestampFrequency,    // reference_clock
             0b010,                     // native mem regions
             0x101,                     // slow mem regions
+        };
+        xeQueryGtList->gt_list[3] = {
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            2,                         // tile_id
+            3,                         // gt_id
+            {0},                       // padding
+            mockTimestampFrequency,    // reference_clock
+            0b100,                     // native mem regions
+            0x011,                     // slow mem regions
         };
     }
 

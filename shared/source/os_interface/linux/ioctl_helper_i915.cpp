@@ -327,6 +327,19 @@ std::unique_ptr<MemoryInfo> IoctlHelperI915::createMemoryInfo() {
     return {};
 }
 
+size_t IoctlHelperI915::getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const {
+    size_t size = 0;
+
+    for (uint32_t i = 0; i < subDevicesCount; i++) {
+        auto memoryBank = (1 << i);
+
+        if (deviceBitfield & memoryBank) {
+            size += memoryInfo->getMemoryRegionSize(memoryBank);
+        }
+    }
+    return size;
+}
+
 std::string IoctlHelperI915::getDrmParamString(DrmParam drmParam) const {
     switch (drmParam) {
     case DrmParam::paramChipsetId:

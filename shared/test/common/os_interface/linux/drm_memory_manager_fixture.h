@@ -66,7 +66,7 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
     using NEO::MemoryInfo::MemoryInfo;
     ~MockedMemoryInfo() override = default;
 
-    size_t getMemoryRegionSize(uint32_t memoryBank) override {
+    size_t getMemoryRegionSize(uint32_t memoryBank) const override {
         return 1024u;
     }
     int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) override {

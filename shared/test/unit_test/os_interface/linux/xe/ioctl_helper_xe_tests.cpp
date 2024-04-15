@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 
 using namespace NEO;
 
@@ -694,7 +695,7 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
     xeIoctlHelper->initialize();
 
     uint16_t tileId = 0;
-    for (auto gtId = 0u; gtId < 3u; gtId++) {
+    for (auto gtId = 0u; gtId < 4u; gtId++) {
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0, 0, 0, 0, 0, 0, 0, 0});
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
@@ -744,7 +745,7 @@ TEST(IoctlHelperXeTest, givenUnknownTopologyTypeWhenGetTopologyDataAndMapThenNot
     constexpr int16_t unknownTopology = -1;
 
     uint16_t tileId = 0;
-    for (auto gtId = 0u; gtId < 3u; gtId++) {
+    for (auto gtId = 0u; gtId < 4u; gtId++) {
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0, 0, 0, 0, 0, 0, 0, 0});
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
@@ -793,7 +794,7 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
     xeIoctlHelper->initialize();
 
     uint16_t tileId = 0;
-    for (auto gtId = 0u; gtId < 3u; gtId++) {
+    for (auto gtId = 0u; gtId < 4u; gtId++) {
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff});
         drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
@@ -965,7 +966,7 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
 struct DrmMockXe2T : public DrmMockXe {
     DrmMockXe2T(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {
         auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(queryMemUsage);
-        xeQueryMemUsage->num_mem_regions = 3;
+        xeQueryMemUsage->num_mem_regions = 2;
         xeQueryMemUsage->mem_regions[0] = {
             DRM_XE_MEM_REGION_CLASS_VRAM,  // class
             1,                             // instance
@@ -980,16 +981,9 @@ struct DrmMockXe2T : public DrmMockXe {
             MemoryConstants::gigaByte,      // total size
             MemoryConstants::kiloByte       // used size
         };
-        xeQueryMemUsage->mem_regions[2] = {
-            DRM_XE_MEM_REGION_CLASS_VRAM,  // class
-            2,                             // instance
-            MemoryConstants::pageSize,     // min page size
-            4 * MemoryConstants::gigaByte, // total size
-            MemoryConstants::gigaByte      // used size
-        };
-        queryGtList.resize(25);
+        queryGtList.resize(37);
         auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(queryGtList.begin());
-        xeQueryGtList->num_gt = 2;
+        xeQueryGtList->num_gt = 3;
         xeQueryGtList->gt_list[0] = {
             DRM_XE_QUERY_GT_TYPE_MAIN, // type
             0,                         // tile_id
@@ -1007,6 +1001,15 @@ struct DrmMockXe2T : public DrmMockXe {
             12500000,                  // reference_clock
             0b010,                     // native mem regions
             0x101,                     // slow mem regions
+        };
+        xeQueryGtList->gt_list[2] = {
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            1,                         // tile_id
+            2,                         // gt_id
+            {0},                       // padding
+            12500000,                  // reference_clock
+            0b100,                     // native mem regions
+            0x011,                     // slow mem regions
         };
     }
 };
@@ -1391,6 +1394,45 @@ TEST(IoctlHelperXeTest, whenCreatingMemoryInfoThenProperMemoryBanksAreDiscovered
     EXPECT_EQ(1u, memoryRegions[2].region.memoryInstance);
     EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryRegions[2].probedSize);
     EXPECT_EQ(2 * MemoryConstants::gigaByte - MemoryConstants::megaByte, memoryRegions[2].unallocatedSize);
+}
+
+TEST(IoctlHelperXeTest, givenXeDrmMemoryManagerWhenGetLocalMemorySizeIsCalledThenReturnMemoryRegionSizeCorrectly) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+
+    constexpr auto tileCount{3u};
+
+    auto executionEnvironment{std::make_unique<MockExecutionEnvironment>()};
+    auto &rootDeviceEnv{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto *hwInfo = rootDeviceEnv.getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = true;
+    hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
+    rootDeviceEnv.osInterface.reset(new OSInterface{});
+    rootDeviceEnv.osInterface->setDriverModel(std::make_unique<DrmMockXe>(rootDeviceEnv));
+
+    auto *drm{rootDeviceEnv.osInterface->getDriverModel()->as<DrmMockXe>()};
+
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+    xeIoctlHelper->initialize();
+    auto memoryInfo = xeIoctlHelper->createMemoryInfo();
+    ASSERT_NE(nullptr, memoryInfo);
+    std::vector<size_t> lmemSizes{};
+    for (const auto &region : memoryInfo->getLocalMemoryRegions()) {
+        lmemSizes.push_back(region.probedSize);
+    }
+
+    drm->memoryInfo.reset(memoryInfo.release());
+    drm->ioctlHelper.reset(xeIoctlHelper.release());
+
+    TestedDrmMemoryManager memoryManager(*executionEnvironment);
+    uint32_t tileMask = static_cast<uint32_t>(maxNBitValue(tileCount));
+    EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[0] + lmemSizes[1]);
+    tileMask = static_cast<uint32_t>(0b01);
+    EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[0]);
+    tileMask = static_cast<uint32_t>(0b10);
+    EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[1]);
+    tileMask = static_cast<uint32_t>(0b100);
+    EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[0]);
 }
 
 TEST(IoctlHelperXeTest, givenIoctlFailureWhenCreatingMemoryInfoThenNoMemoryBanksAreDiscovered) {

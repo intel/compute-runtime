@@ -1554,20 +1554,11 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
     if (!memoryInfo) {
         return 0;
     }
-
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     uint32_t subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
-    size_t size = 0;
 
-    for (uint32_t i = 0; i < subDevicesCount; i++) {
-        auto memoryBank = (1 << i);
-
-        if (deviceBitfield & memoryBank) {
-            size += memoryInfo->getMemoryRegionSize(memoryBank);
-        }
-    }
-
-    return size;
+    auto ioctlHelper = getDrm(rootDeviceIndex).getIoctlHelper();
+    return ioctlHelper->getLocalMemoryRegionsSize(memoryInfo, subDevicesCount, deviceBitfield);
 }
 
 bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {

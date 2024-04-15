@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 #define STRINGIFY_ME(X) return #X
@@ -264,12 +265,13 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
     return std::make_unique<EngineInfo>(&drm, enginesPerTile);
 }
 
-inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_mem_region &xeMemRegion) {
+inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_mem_region &xeMemRegion, std::bitset<4> tilesMask) {
     MemoryRegion memoryRegion{};
     memoryRegion.region.memoryInstance = xeMemRegion.instance;
     memoryRegion.region.memoryClass = xeMemRegion.mem_class;
     memoryRegion.probedSize = xeMemRegion.total_size;
     memoryRegion.unallocatedSize = xeMemRegion.total_size - xeMemRegion.used;
+    memoryRegion.tilesMask = tilesMask;
     return memoryRegion;
 }
 
@@ -280,16 +282,36 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
         return {};
     }
 
+    std::array<std::bitset<4>, 64> regionTilesMask{};
+
+    for (auto i{0u}; i < xeGtListData->num_gt; i++) {
+        const auto &gtEntry = xeGtListData->gt_list[i];
+        if (gtEntry.type != DRM_XE_QUERY_GT_TYPE_MAIN) {
+            continue;
+        }
+
+        uint64_t nearMemRegions{gtEntry.near_mem_regions};
+        auto regionIndex{Math::log2(nearMemRegions)};
+        regionTilesMask[regionIndex].set(gtEntry.tile_id);
+    }
+
     MemoryInfo::RegionContainer regionsContainer{};
+    size_t sysmemRegionsAdded{0u};
+
     auto xeMemRegionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
-
-    std::array<drm_xe_mem_region *, 64> memoryRegionInstances{};
-
     for (auto i = 0u; i < xeMemRegionsData->num_mem_regions; i++) {
-        auto &region = xeMemRegionsData->mem_regions[i];
-        memoryRegionInstances[region.instance] = &region;
-        if (region.mem_class == DRM_XE_MEM_REGION_CLASS_SYSMEM) {
-            regionsContainer.push_back(createMemoryRegionFromXeMemRegion(region));
+        auto &xeMemRegion{xeMemRegionsData->mem_regions[i]};
+
+        if (xeMemRegion.mem_class == DRM_XE_MEM_REGION_CLASS_SYSMEM) {
+            // Make sure sysmem is always put at the first position
+            regionsContainer.insert(regionsContainer.begin(), createMemoryRegionFromXeMemRegion(xeMemRegion, 0u));
+            ++sysmemRegionsAdded;
+        } else {
+            auto regionIndex = xeMemRegion.instance;
+            UNRECOVERABLE_IF(regionIndex >= regionTilesMask.size());
+            if (auto tilesMask = regionTilesMask[regionIndex]; tilesMask.any()) {
+                regionsContainer.insert(regionsContainer.begin() + sysmemRegionsAdded, createMemoryRegionFromXeMemRegion(xeMemRegion, tilesMask));
+            }
         }
     }
 
@@ -297,15 +319,17 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
         return {};
     }
 
-    for (auto i = 0u; i < xeGtListData->num_gt; i++) {
-        if (xeGtListData->gt_list[i].type != DRM_XE_QUERY_GT_TYPE_MEDIA) {
-            uint64_t nearMemRegions = xeGtListData->gt_list[i].near_mem_regions;
-            auto regionIndex = Math::log2(nearMemRegions);
-            UNRECOVERABLE_IF(!memoryRegionInstances[regionIndex]);
-            regionsContainer.push_back(createMemoryRegionFromXeMemRegion(*memoryRegionInstances[regionIndex]));
+    return std::make_unique<MemoryInfo>(regionsContainer, drm);
+}
+
+size_t IoctlHelperXe::getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t tileMask) const {
+    size_t size = 0;
+    for (const auto &memoryRegion : memoryInfo->getLocalMemoryRegions()) {
+        if ((memoryRegion.tilesMask & std::bitset<4>{tileMask}).any()) {
+            size += memoryRegion.probedSize;
         }
     }
-    return std::make_unique<MemoryInfo>(regionsContainer, drm);
+    return size;
 }
 
 bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
