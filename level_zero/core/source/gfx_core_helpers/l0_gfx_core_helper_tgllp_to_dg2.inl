@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,6 +109,11 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
     return true;
+}
+
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::synchronizedDispatchSupported() const {
+    return false;
 }
 
 } // namespace L0

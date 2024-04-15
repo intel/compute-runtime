@@ -917,6 +917,22 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultUseImmediateFl
     EXPECT_EQ(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask(), L0GfxCoreHelper::useImmediateComputeFlushTask(rootDeviceEnvironment));
 }
 
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingSyncDispatchSupportThenReturnFalse, IsBeforeXeHpcCore) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_FALSE(l0GfxCoreHelper.synchronizedDispatchSupported());
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingSyncDispatchSupportThenReturnTrue, IsAtLeastXeHpcCore) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_TRUE(l0GfxCoreHelper.synchronizedDispatchSupported());
+}
+
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingUseImmediateFlushTaskThenUseDbgKeyValue) {
     DebugManagerStateRestore restorer;
     MockExecutionEnvironment executionEnvironment;

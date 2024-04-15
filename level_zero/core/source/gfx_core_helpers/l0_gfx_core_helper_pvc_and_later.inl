@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,6 +100,11 @@ void L0GfxCoreHelperHw<Family>::setAdditionalGroupProperty(ze_command_queue_grou
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
     return false;
+}
+
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::synchronizedDispatchSupported() const {
+    return true;
 }
 
 } // namespace L0

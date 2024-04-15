@@ -40,6 +40,7 @@ using IsBeforeXeHpgCore = IsBeforeGfxCore<IGFX_XE_HPG_CORE>;
 
 using IsAtLeastXeHpcCore = IsAtLeastGfxCore<IGFX_XE_HPC_CORE>;
 using IsAtMostXeHpcCore = IsAtMostGfxCore<IGFX_XE_HPC_CORE>;
+using IsBeforeXeHpcCore = IsBeforeGfxCore<IGFX_XE_HPC_CORE>;
 
 using IsXeHpOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
 using IsXeHpOrXeHpcCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;

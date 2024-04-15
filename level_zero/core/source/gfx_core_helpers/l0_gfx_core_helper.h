@@ -97,6 +97,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) = 0;
     virtual bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) = 0;
     virtual void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) = 0;
+    virtual bool synchronizedDispatchSupported() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -143,6 +144,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) override;
     bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) override;
     void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) override;
+    bool synchronizedDispatchSupported() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

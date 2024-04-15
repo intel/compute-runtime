@@ -118,6 +118,10 @@ TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensio
     std::vector<std::pair<std::string, uint32_t>> additionalExtensions;
     device->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, device->getProductHelper());
 
+    if (device->getL0GfxCoreHelper().synchronizedDispatchSupported()) {
+        additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
+    }
+
     uint32_t count = 0;
     ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
     EXPECT_EQ(count, static_cast<uint32_t>(driverHandle->extensionsSupported.size() + additionalExtensions.size()));

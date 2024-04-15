@@ -23,6 +23,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
 
+#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -151,6 +152,10 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
         }
     }
     devices[0]->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, devices[0]->getProductHelper());
+
+    if (devices[0]->getL0GfxCoreHelper().synchronizedDispatchSupported()) {
+        additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
+    }
 
     auto extensionCount = static_cast<uint32_t>(this->extensionsSupported.size() + additionalExtensions.size());
 
