@@ -62,38 +62,15 @@ DebugSession *DebugSessionLinuxXe::createLinuxSession(const zet_debug_config_t &
     return nullptr;
 }
 
-ze_result_t DebugSessionLinuxXe::initialize() {
-
-    struct pollfd pollFd = {
-        .fd = this->fd,
-        .events = POLLIN,
-        .revents = 0,
-    };
-
-    auto numberOfFds = ioctlHandler->poll(&pollFd, 1, 1000);
-    PRINT_DEBUGGER_INFO_LOG("initialization poll() retCode: %d\n", numberOfFds);
-
-    if (numberOfFds <= 0) {
-        return ZE_RESULT_NOT_READY;
-    }
-
-    bool isRootDevice = !connectedDevice->getNEODevice()->isSubDevice();
-    UNRECOVERABLE_IF(!isRootDevice);
-
-    createEuThreads();
-    tileSessionsEnabled = false;
-
-    startInternalEventsThread();
-
-    return ZE_RESULT_SUCCESS;
-}
-
-void DebugSessionLinuxXe::handleEventsAsync() {
+bool DebugSessionLinuxXe::handleInternalEvent() {
     auto eventMemory = getInternalEvent();
-    if (eventMemory != nullptr) {
-        auto debugEvent = reinterpret_cast<drm_xe_eudebug_event *>(eventMemory.get());
-        handleEvent(debugEvent);
+    if (eventMemory == nullptr) {
+        return false;
     }
+
+    auto debugEvent = reinterpret_cast<drm_xe_eudebug_event *>(eventMemory.get());
+    handleEvent(debugEvent);
+    return true;
 }
 
 void *DebugSessionLinuxXe::asyncThreadFunction(void *arg) {

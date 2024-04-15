@@ -25,6 +25,7 @@ struct DebugSessionLinux : DebugSessionImp {
     bool closeFd();
     void closeAsyncThread();
     bool closeConnection() override;
+    ze_result_t initialize() override;
 
     int fd = 0;
     std::atomic<bool> internalThreadHasStarted{false};
@@ -240,6 +241,11 @@ struct DebugSessionLinux : DebugSessionImp {
     virtual Module &getModule(uint64_t moduleHandle) = 0;
 
     virtual std::vector<uint64_t> getAllMemoryHandles();
+    void handleEventsAsync();
+    virtual bool handleInternalEvent() = 0;
+    void createTileSessionsIfEnabled();
+    virtual DebugSessionImp *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) = 0;
+    bool checkAllEventsCollected();
 
     std::unique_ptr<IoctlHandler> ioctlHandler;
 };

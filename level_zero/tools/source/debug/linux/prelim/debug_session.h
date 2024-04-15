@@ -39,7 +39,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     DebugSessionLinuxi915(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
     static DebugSession *createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
-    ze_result_t initialize() override;
 
     struct IoctlHandleri915 : DebugSessionLinux::IoctlHandler {
         int ioctl(int fd, unsigned long request, void *arg) override {
@@ -102,18 +101,15 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
   protected:
     MOCKABLE_VIRTUAL void handleEvent(prelim_drm_i915_debug_event *event);
-    bool checkAllEventsCollected();
     std::unordered_map<uint64_t, std::shared_ptr<ClientConnectioni915>> clientHandleToConnection;
 
     ze_result_t readEventImp(prelim_drm_i915_debug_event *drmDebugEvent);
-
-    MOCKABLE_VIRTUAL void createTileSessionsIfEnabled();
-    MOCKABLE_VIRTUAL TileDebugSessionLinuxi915 *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession);
+    DebugSessionImp *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) override;
 
     static void *asyncThreadFunction(void *arg);
     void startAsyncThread() override;
 
-    void handleEventsAsync();
+    bool handleInternalEvent() override;
 
     void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) override {}
     uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) override;

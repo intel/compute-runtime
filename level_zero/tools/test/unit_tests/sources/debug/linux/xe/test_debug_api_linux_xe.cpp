@@ -303,7 +303,7 @@ TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenPollReturnsZeroThenNotReadyIsRe
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenDebugSessionInitializedThenInternalEventsThreadStarted) {
+TEST_F(DebugApiLinuxTestXe, GivenDebugSessionInitializationWhenNoValidEventsAreReadThenResultNotReadyIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -324,8 +324,7 @@ TEST_F(DebugApiLinuxTestXe, GivenDebugSessionInitializedThenInternalEventsThread
     handler->pollRetVal = 1;
 
     ze_result_t result = session->initialize();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(session->internalEventThread.threadActive);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenPollReturnsErrorAndEinvalWhenReadingInternalEventsAsyncThenDetachEventIsGenerated) {
@@ -2217,6 +2216,63 @@ TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenNoAttentionEventIsReadThe
         EXPECT_EQ(0u, event.info.thread.thread.eu);
         EXPECT_EQ(UINT32_MAX, event.info.thread.thread.thread);
     }
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaThenGpuMemoryIsRead) {
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    uint64_t vmHandle = 6;
+    session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmToModuleDebugAreaBindInfo[vmHandle] = {0x1234000, 0x1000};
+
+    DebugAreaHeader debugArea;
+    debugArea.reserved1 = 1;
+    debugArea.pgsize = uint8_t(4);
+    debugArea.version = 1;
+
+    handler->mmapRet = reinterpret_cast<char *>(&debugArea);
+    handler->setPreadMemory(reinterpret_cast<char *>(&debugArea), sizeof(session->debugArea), 0x1234000);
+    handler->preadRetVal = sizeof(session->debugArea);
+
+    auto retVal = session->readModuleDebugArea();
+
+    EXPECT_TRUE(retVal);
+
+    if (debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
+        EXPECT_EQ(1, handler->mmapCalled);
+        EXPECT_EQ(1, handler->munmapCalled);
+    } else {
+        EXPECT_EQ(1, handler->preadCalled);
+    }
+    EXPECT_EQ(MockDebugSessionLinuxXe::mockClientHandle, handler->vmOpen.client_handle);
+    EXPECT_EQ(vmHandle, handler->vmOpen.vm_handle);
+    EXPECT_EQ(static_cast<uint64_t>(0), handler->vmOpen.flags);
+
+    EXPECT_EQ(1u, session->debugArea.reserved1);
+    EXPECT_EQ(1u, session->debugArea.version);
+    EXPECT_EQ(4u, session->debugArea.pgsize);
+}
+
+TEST(DebugSessionLinuxXeTest, GivenRootDebugSessionWhenCreateTileSessionCalledThenSessionIsNotCreated) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    struct DebugSession : public DebugSessionLinuxXe {
+        using DebugSessionLinuxXe::createTileSession;
+        using DebugSessionLinuxXe::DebugSessionLinuxXe;
+    };
+    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr);
+    ASSERT_NE(nullptr, session);
+
+    std::unique_ptr<DebugSessionImp> tileSession = std::unique_ptr<DebugSessionImp>{session->createTileSession(zet_debug_config_t{0x1234}, &deviceImp, nullptr)};
+    EXPECT_EQ(nullptr, tileSession);
 }
 
 } // namespace ult

@@ -25,8 +25,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     DebugSessionLinuxXe(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
     static DebugSession *createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
 
-    ze_result_t initialize() override;
-
     struct IoctlHandlerXe : DebugSessionLinux::IoctlHandler {
         int ioctl(int fd, unsigned long request, void *arg) override {
             int ret = 0;
@@ -82,7 +80,10 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     void startAsyncThread() override;
     static void *asyncThreadFunction(void *arg);
-    void handleEventsAsync();
+    bool handleInternalEvent() override;
+    DebugSessionImp *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) override {
+        return nullptr;
+    }
 
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
     int flushVmCache(int vmfd) override;

@@ -92,6 +92,85 @@ bool DebugSessionLinux::closeFd() {
     return true;
 }
 
+void DebugSessionLinux::handleEventsAsync() {
+    handleInternalEvent();
+}
+
+ze_result_t DebugSessionLinux::initialize() {
+    struct pollfd pollFd = {
+        .fd = this->fd,
+        .events = POLLIN,
+        .revents = 0,
+    };
+
+    auto numberOfFds = ioctlHandler->poll(&pollFd, 1, 1000);
+    PRINT_DEBUGGER_INFO_LOG("initialization poll() retCode: %d\n", numberOfFds);
+
+    if (numberOfFds <= 0) {
+        return ZE_RESULT_NOT_READY;
+    }
+
+    bool isRootDevice = !connectedDevice->getNEODevice()->isSubDevice();
+    if (isRootDevice && !tileAttachEnabled) {
+        createEuThreads();
+    }
+    createTileSessionsIfEnabled();
+    startInternalEventsThread();
+
+    bool allEventsCollected = false;
+    bool eventAvailable = true;
+    float timeDelta = 0;
+    float timeStart = clock();
+    do {
+        if (internalThreadHasStarted) {
+            eventAvailable = handleInternalEvent();
+            allEventsCollected = checkAllEventsCollected();
+        } else {
+            timeDelta = float(clock() - timeStart) / CLOCKS_PER_SEC;
+        }
+    } while ((eventAvailable && !allEventsCollected) && timeDelta < getThreadStartLimitTime());
+
+    internalThreadHasStarted = false;
+
+    if (clientHandleClosed == clientHandle && clientHandle != invalidClientHandle) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+
+    if (allEventsCollected) {
+        if (!readModuleDebugArea()) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    return ZE_RESULT_NOT_READY;
+}
+
+void DebugSessionLinux::createTileSessionsIfEnabled() {
+    auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
+    if (numTiles > 0 && tileAttachEnabled) {
+        tileSessions.resize(numTiles);
+
+        for (uint32_t i = 0; i < numTiles; i++) {
+            auto subDevice = connectedDevice->getNEODevice()->getSubDevice(i)->getSpecializedDevice<Device>();
+            tileSessions[i] = std::pair<DebugSessionImp *, bool>{createTileSession(config, subDevice, this), false};
+        }
+        tileSessionsEnabled = true;
+    }
+}
+
+bool DebugSessionLinux::checkAllEventsCollected() {
+    bool allEventsCollected = false;
+    bool clientConnected = (this->clientHandle != invalidClientHandle);
+    if (clientConnected) {
+        if (getClientConnection(clientHandle)->vmToModuleDebugAreaBindInfo.size() > 0) {
+            allEventsCollected = true;
+        }
+    }
+    PRINT_DEBUGGER_INFO_LOG("checkAllEventsCollected() returned %d, clientHandle = %ull\n", static_cast<int>(allEventsCollected), this->clientHandle);
+    return allEventsCollected;
+}
+
 void *DebugSessionLinux::readInternalEventsThreadFunction(void *arg) {
     DebugSessionLinux *self = reinterpret_cast<DebugSessionLinux *>(arg);
     PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread started\n", "");

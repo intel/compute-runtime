@@ -100,80 +100,7 @@ int DebugSessionLinuxi915::openVmFd(uint64_t vmHandle, bool readOnly) {
     return ioctl(PRELIM_I915_DEBUG_IOCTL_VM_OPEN, &vmOpen);
 }
 
-ze_result_t DebugSessionLinuxi915::initialize() {
-    struct pollfd pollFd = {
-        .fd = this->fd,
-        .events = POLLIN,
-        .revents = 0,
-    };
-
-    auto numberOfFds = ioctlHandler->poll(&pollFd, 1, 1000);
-    PRINT_DEBUGGER_INFO_LOG("initialization poll() retCode: %d\n", numberOfFds);
-
-    if (numberOfFds <= 0) {
-        return ZE_RESULT_NOT_READY;
-    }
-
-    bool isRootDevice = !connectedDevice->getNEODevice()->isSubDevice();
-    if (isRootDevice && !tileAttachEnabled) {
-        createEuThreads();
-    }
-    createTileSessionsIfEnabled();
-    startInternalEventsThread();
-
-    bool allEventsCollected = false;
-    bool eventAvailable = true;
-    float timeDelta = 0;
-    float timeStart = clock();
-    do {
-        if (internalThreadHasStarted) {
-            auto eventMemory = getInternalEvent();
-            auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get());
-            if (eventMemory != nullptr) {
-                handleEvent(debugEvent);
-                if (debugEvent->type != PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND && pendingVmBindEvents.size() > 0) {
-                    processPendingVmBindEvents();
-                }
-                eventAvailable = true;
-            } else {
-                eventAvailable = false;
-            }
-            allEventsCollected = checkAllEventsCollected();
-        } else {
-            timeDelta = float(clock() - timeStart) / CLOCKS_PER_SEC;
-        }
-    } while ((eventAvailable && !allEventsCollected) && timeDelta < getThreadStartLimitTime());
-
-    internalThreadHasStarted = false;
-
-    if (clientHandleClosed == clientHandle && clientHandle != invalidClientHandle) {
-        return ZE_RESULT_ERROR_DEVICE_LOST;
-    }
-
-    if (allEventsCollected) {
-        if (!readModuleDebugArea()) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    return ZE_RESULT_NOT_READY;
-}
-
-void DebugSessionLinuxi915::createTileSessionsIfEnabled() {
-    auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
-    if (numTiles > 0 && tileAttachEnabled) {
-        tileSessions.resize(numTiles);
-
-        for (uint32_t i = 0; i < numTiles; i++) {
-            auto subDevice = connectedDevice->getNEODevice()->getSubDevice(i)->getSpecializedDevice<Device>();
-            tileSessions[i] = std::pair<DebugSessionImp *, bool>{createTileSession(config, subDevice, this), false};
-        }
-        tileSessionsEnabled = true;
-    }
-}
-
-TileDebugSessionLinuxi915 *DebugSessionLinuxi915::createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) {
+DebugSessionImp *DebugSessionLinuxi915::createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) {
     auto tileSession = new TileDebugSessionLinuxi915(config, device, rootDebugSession);
     tileSession->initialize();
     return tileSession;
@@ -206,16 +133,19 @@ void DebugSessionLinuxi915::startAsyncThread() {
     asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
 }
 
-void DebugSessionLinuxi915::handleEventsAsync() {
+bool DebugSessionLinuxi915::handleInternalEvent() {
     auto eventMemory = getInternalEvent();
-    if (eventMemory != nullptr) {
-        auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get());
-        handleEvent(debugEvent);
-
-        if (debugEvent->type != PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND && pendingVmBindEvents.size() > 0) {
-            processPendingVmBindEvents();
-        }
+    if (eventMemory == nullptr) {
+        return false;
     }
+
+    auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get());
+    handleEvent(debugEvent);
+
+    if (debugEvent->type != PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND && pendingVmBindEvents.size() > 0) {
+        processPendingVmBindEvents();
+    }
+    return true;
 }
 
 void DebugSessionLinuxi915::readInternalEventsAsync() {
@@ -539,18 +469,6 @@ void DebugSessionLinuxi915::processPendingVmBindEvents() {
     if (processedEvents > 0) {
         pendingVmBindEvents.erase(pendingVmBindEvents.begin(), pendingVmBindEvents.begin() + processedEvents);
     }
-}
-
-bool DebugSessionLinuxi915::checkAllEventsCollected() {
-    bool allEventsCollected = false;
-    bool clientConnected = (this->clientHandle != invalidClientHandle);
-    if (clientConnected) {
-        if (clientHandleToConnection[clientHandle]->vmToModuleDebugAreaBindInfo.size() > 0) {
-            allEventsCollected = true;
-        }
-    }
-    PRINT_DEBUGGER_INFO_LOG("checkAllEventsCollected() returned %d, clientHandle = %ull\n", static_cast<int>(allEventsCollected), this->clientHandle);
-    return allEventsCollected;
 }
 
 ze_result_t DebugSessionLinuxi915::readEventImp(prelim_drm_i915_debug_event *drmDebugEvent) {

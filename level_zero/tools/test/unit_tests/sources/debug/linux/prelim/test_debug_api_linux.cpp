@@ -360,7 +360,7 @@ TEST(DebugSessionLinuxi915Test, GivenRootDebugSessionWhenCreateTileSessionCalled
     auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr);
     ASSERT_NE(nullptr, session);
 
-    std::unique_ptr<TileDebugSessionLinuxi915> tileSession = std::unique_ptr<TileDebugSessionLinuxi915>{session->createTileSession(zet_debug_config_t{0x1234}, &deviceImp, nullptr)};
+    std::unique_ptr<DebugSessionImp> tileSession = std::unique_ptr<DebugSessionImp>{session->createTileSession(zet_debug_config_t{0x1234}, &deviceImp, nullptr)};
     EXPECT_NE(nullptr, tileSession);
 }
 
