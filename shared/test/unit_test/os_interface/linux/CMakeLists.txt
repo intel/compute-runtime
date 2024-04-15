@@ -22,8 +22,6 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_mapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_bindless_heap_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_with_aub_dump_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock_impl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_os_memory_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_pci_speed_info_tests.cpp
@@ -55,6 +53,8 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_debug_surface_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_localmem_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_bind_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default_tests.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_with_aub_dump_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_topology_prelim_tests.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_vm_bind_prelim_tests.cpp
