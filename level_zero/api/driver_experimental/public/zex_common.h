@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,49 @@ typedef struct _zex_wait_on_mem_desc_t {
 typedef struct _zex_write_to_mem_desc_t {
     zex_mem_action_scope_flags_t writeScope;
 } zex_write_to_mem_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZE_SYNCHRONIZED_DISPATCH_EXP_NAME
+/// @brief Synchronized Dispatch extension name
+#define ZE_SYNCHRONIZED_DISPATCH_EXP_NAME "ZE_experimental_synchronized_dispatch"
+#endif // ZE_SYNCHRONIZED_DISPATCH_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Synchronized Dispatch extension version(s)
+typedef enum _ze_synchronized_dispatch_exp_version_t {
+    ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+
+} ze_synchronized_dispatch_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported synchronized dispatch flags
+typedef uint32_t ze_synchronized_dispatch_exp_flags_t;
+typedef enum _ze_synchronized_dispatch_exp_flag_t {
+    ZE_SYNCHRONIZED_DISPATCH_DISABLED_EXP_FLAG = ZE_BIT(0), ///< Non-synchronized dispatch. Must synchronize only with other synchronized dispatches
+    ZE_SYNCHRONIZED_DISPATCH_ENABLED_EXP_FLAG = ZE_BIT(1),  ///< Synchronized dispatch. Must synchronize with all synchronized and non-synchronized dispatches
+    ZE_SYNCHRONIZED_DISPATCH_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
+
+} ze_synchronized_dispatch_exp_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Forward-declare ze_synchronized_dispatch_exp_desc_t
+typedef struct _ze_synchronized_dispatch_exp_desc_t ze_synchronized_dispatch_exp_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Command queue or command list descriptor for synchronized dispatch. This structure may be
+///        passed as pNext member of ::ze_command_queue_desc_t. or ::ze_command_list_desc_t.
+typedef struct _ze_synchronized_dispatch_exp_desc_t {
+    ze_structure_type_t stype;                  ///< [in] type of this structure
+    const void *pNext;                          ///< [in][optional] must be null or a pointer to an extension-specific
+                                                ///< structure (i.e. contains stype and pNext).
+    ze_synchronized_dispatch_exp_flags_t flags; ///< [in] mode flags.
+                                                ///< must be valid value of ::ze_synchronized_dispatch_exp_flag_t
+
+} ze_synchronized_dispatch_exp_desc_t;
+
+#define ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC (ze_structure_type_t)0x00020020
 
 #if defined(__cplusplus)
 } // extern "C"
