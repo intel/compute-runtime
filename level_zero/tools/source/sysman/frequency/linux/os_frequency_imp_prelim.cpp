@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -435,13 +435,11 @@ OsFrequency *OsFrequency::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uin
 std::vector<zes_freq_domain_t> OsFrequency::getNumberOfFreqDomainsSupported(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     auto pDevice = Device::fromHandle(pLinuxSysmanImp->getSysmanDeviceImp()->hCoreDevice);
-    auto &productHelper = pDevice->getNEODevice()->getProductHelper();
-    auto releaseHelper = pDevice->getNEODevice()->getReleaseHelper();
+    auto areImagesSupported = pDevice->getHwInfo().capabilityTable.supportsImages;
     std::vector<zes_freq_domain_t> freqDomains = {};
-    uint32_t mediaFreqTileIndex;
-    if (productHelper.getMediaFrequencyTileIndex(releaseHelper, mediaFreqTileIndex) == true) {
+    if (areImagesSupported) {
         auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-        const std::string baseDir = "gt/gt" + std::to_string(mediaFreqTileIndex) + "/";
+        const std::string baseDir = "gt/gt1/";
         if (pSysfsAccess->directoryExists(baseDir)) {
             freqDomains.push_back(ZES_FREQ_DOMAIN_MEDIA);
         }

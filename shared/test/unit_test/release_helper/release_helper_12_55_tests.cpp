@@ -46,10 +46,6 @@ TEST_F(ReleaseHelper1255Tests, whenGettingMaxPreferredSlmSizeThenSizeIsNotModifi
     whenGettingMaxPreferredSlmSizeThenSizeIsNotModified();
 }
 
-TEST_F(ReleaseHelper1255Tests, whenGettingMediaFrequencyTileIndexThenFalseIsReturned) {
-    whenGettingMediaFrequencyTileIndexThenFalseIsReturned();
-}
-
 TEST_F(ReleaseHelper1255Tests, whenShouldAdjustCalledThenFalseReturned) {
     whenShouldAdjustCalledThenFalseReturned();
 }

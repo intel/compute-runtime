@@ -31,31 +31,6 @@ void ReleaseHelperTestsBase::whenGettingMaxPreferredSlmSizeThenSizeIsNotModified
     }
 }
 
-void ReleaseHelperTestsBase::whenGettingMediaFrequencyTileIndexThenFalseIsReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        auto tileIndex = 0u;
-        auto expectedTileIndex = 0u;
-        EXPECT_FALSE(releaseHelper->getMediaFrequencyTileIndex(tileIndex));
-        EXPECT_EQ(expectedTileIndex, tileIndex);
-    }
-}
-
-void ReleaseHelperTestsBase::whenGettingMediaFrequencyTileIndexThenOneIsReturned() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-
-        auto tileIndex = 0u;
-        auto expectedTileIndex = 1u;
-        EXPECT_TRUE(releaseHelper->getMediaFrequencyTileIndex(tileIndex));
-        EXPECT_EQ(expectedTileIndex, tileIndex);
-    }
-}
-
 void ReleaseHelperTestsBase::whenShouldAdjustCalledThenTrueReturned() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

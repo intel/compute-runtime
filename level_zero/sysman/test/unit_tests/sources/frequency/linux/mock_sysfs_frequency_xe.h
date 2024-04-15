@@ -205,15 +205,6 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ~MockXeFrequencySysfsAccess() override = default;
 };
 
-struct MockProductHelperFreq : NEO::ProductHelperHw<IGFX_UNKNOWN> {
-    MockProductHelperFreq() = default;
-    bool isMediaFreqDomainPresent = false;
-    bool getMediaFrequencyTileIndex(const NEO::ReleaseHelper *releaseHelper, uint32_t &tileIndex) const override {
-        tileIndex = 1;
-        return isMediaFreqDomainPresent;
-    }
-};
-
 struct MockSysmanProductHelperFreq : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
     MockSysmanProductHelperFreq() = default;
     bool isFrequencySetRangeSupported() override {

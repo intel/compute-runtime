@@ -21,16 +21,14 @@ constexpr double actual = 300.0;
 constexpr double efficient = 300.0;
 constexpr double maxVal = 1100.0;
 constexpr double minVal = 300.0;
-constexpr uint32_t handleComponentCount = 1u;
 
 class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
     MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
-    std::unique_ptr<ProductHelper> pProductHelper;
-    std::unique_ptr<ProductHelper> pProductHelperOld;
     uint32_t numClocks = 0;
     double step = 0;
+    uint32_t handleComponentCount = 1u;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -41,9 +39,10 @@ class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->pSysfsAccess.get();
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
 
-        pProductHelper = std::make_unique<MockProductHelperFreq>();
         auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
-        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
+        if (rootDeviceEnvironment.getHardwareInfo()->capabilityTable.supportsImages) {
+            handleComponentCount = 2;
+        }
         pSysmanKmdInterface->pSysfsAccess->setVal(minFreqFile, minFreq);
         pSysmanKmdInterface->pSysfsAccess->setVal(maxFreqFile, maxFreq);
         pSysmanKmdInterface->pSysfsAccess->setVal(requestFreqFile, request);
@@ -60,8 +59,6 @@ class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
-        auto &rootDeviceEnvironment = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef();
-        std::swap(rootDeviceEnvironment.productHelper, pProductHelper);
         SysmanDeviceFixture::TearDown();
     }
 
@@ -125,16 +122,27 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenActualComponentCountTwoWhenTryingToG
 
 TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyGetPropertiesThenSuccessIsReturned) {
     auto handles = getFreqHandles(handleComponentCount);
-    for (auto handle : handles) {
+    for (auto &handle : handles) {
         EXPECT_NE(handle, nullptr);
         zes_freq_properties_t properties;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handle, &properties));
         EXPECT_EQ(nullptr, properties.pNext);
-        EXPECT_EQ(ZES_FREQ_DOMAIN_GPU, properties.type);
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_DOUBLE_EQ(maxFreq, properties.max);
         EXPECT_DOUBLE_EQ(minFreq, properties.min);
         EXPECT_TRUE(properties.canControl);
+    }
+
+    if (handleComponentCount == 1) {
+        zes_freq_properties_t properties{};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handles[0], &properties));
+        EXPECT_EQ(ZES_FREQ_DOMAIN_GPU, properties.type);
+    } else {
+        zes_freq_properties_t properties{};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handles[0], &properties));
+        EXPECT_EQ(ZES_FREQ_DOMAIN_MEDIA, properties.type);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handles[1], &properties));
+        EXPECT_EQ(ZES_FREQ_DOMAIN_GPU, properties.type);
     }
 }
 

@@ -778,14 +778,6 @@ bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const {
-    if (releaseHelper) {
-        return releaseHelper->getMediaFrequencyTileIndex(tileIndex);
-    }
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::is48bResourceNeededForRayTracing() const {
     return true;
 }

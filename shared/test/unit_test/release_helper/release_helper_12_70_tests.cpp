@@ -65,10 +65,6 @@ TEST_F(ReleaseHelper1270Tests, whenGettingMaxPreferredSlmSizeThenSizeSizeIsLimit
     }
 }
 
-TEST_F(ReleaseHelper1270Tests, whenGettingMediaFrequencyTileIndexThenOneIsReturned) {
-    whenGettingMediaFrequencyTileIndexThenOneIsReturned();
-}
-
 TEST_F(ReleaseHelper1270Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValues128And256Returned();
 }

@@ -65,11 +65,6 @@ int ReleaseHelperHw<releaseType>::getProductMaxPreferredSlmSize(int preferredEnu
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::getMediaFrequencyTileIndex(uint32_t &tileIndex) const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
     return true;
 }

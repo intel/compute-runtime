@@ -163,7 +163,6 @@ class ProductHelperHw : public ProductHelper {
     bool is48bResourceNeededForRayTracing() const override;
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo) const override;
     bool isSkippingStatefulInformationRequired(const KernelDescriptor &kernelDescriptor) const override;
-    bool getMediaFrequencyTileIndex(const ReleaseHelper *releaseHelper, uint32_t &tileIndex) const override;
     bool isResolvingSubDeviceIDNeeded(const ReleaseHelper *releaseHelper) const override;
     uint64_t overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const override;
     std::vector<uint32_t> getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const override;

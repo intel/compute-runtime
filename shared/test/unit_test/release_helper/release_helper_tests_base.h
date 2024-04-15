@@ -21,9 +21,7 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
 
     ReleaseHelperTestsBase();
     ~ReleaseHelperTestsBase() override;
-    void whenGettingMediaFrequencyTileIndexThenFalseIsReturned();
     void whenGettingMaxPreferredSlmSizeThenSizeIsNotModified();
-    void whenGettingMediaFrequencyTileIndexThenOneIsReturned();
     void whenShouldAdjustCalledThenTrueReturned();
     void whenShouldAdjustCalledThenFalseReturned();
     void whenGettingSupportedNumGrfsThenValues128And256Returned();

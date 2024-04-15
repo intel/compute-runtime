@@ -283,12 +283,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenHwIpVersionWhenIsPipeControlPriorToNonPi
     }
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenReleaseHelperNullptrWhenCallingGetMediaFrequencyTileIndexThenReturnFalse, IsXeLpg) {
-    uint32_t tileIndex = 0;
-    ReleaseHelper *releaseHelper = nullptr;
-    EXPECT_FALSE(productHelper->getMediaFrequencyTileIndex(releaseHelper, tileIndex));
-}
-
 HWTEST2_F(XeLpgProductHelperTests, whenCheckFp64SupportThenReturnTrue, IsXeLpg) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
 }
