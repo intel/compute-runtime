@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -691,7 +691,7 @@ ze_result_t DebugSessionWindows::readSbaBuffer(EuThread::ThreadId threadId, NEO:
 void DebugSessionWindows::getSbaBufferGpuVa(uint64_t &gpuVa) {
     KM_ESCAPE_INFO escapeInfo = {};
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_MMIO;
-    escapeInfo.KmEuDbgL0EscapeInfo.MmioReadParams.MmioOffset = RegisterOffsets::csGprR15;
+    escapeInfo.KmEuDbgL0EscapeInfo.MmioReadParams.MmioOffset = DebuggerRegisterOffsets::csGprR15;
     escapeInfo.KmEuDbgL0EscapeInfo.MmioReadParams.RegisterOutBufferPtr = reinterpret_cast<uint64_t>(&gpuVa);
 
     auto status = runEscape(escapeInfo);

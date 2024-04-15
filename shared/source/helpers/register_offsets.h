@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,6 @@ inline constexpr uint32_t csGprR11 = 0x2658;
 inline constexpr uint32_t csGprR12 = 0x2660;
 inline constexpr uint32_t csGprR13 = 0x2668;
 inline constexpr uint32_t csGprR14 = 0x2670;
-inline constexpr uint32_t csGprR15 = 0x2678;
 
 inline constexpr uint32_t csPredicateResult = 0x2418;
 inline constexpr uint32_t csPredicateResult2 = 0x23BC;
@@ -52,6 +51,10 @@ inline constexpr uint32_t gpThreadTimeRegAddressOffsetLow = 0x23A8;
 inline constexpr uint32_t globalTimestampLdw = 0x2358;
 inline constexpr uint32_t globalTimestampUn = 0x235c;
 } // namespace RegisterOffsets
+
+namespace DebuggerRegisterOffsets {
+inline constexpr uint32_t csGprR15 = 0x2678;
+} // namespace DebuggerRegisterOffsets
 
 // Alu opcodes
 enum class AluRegisters : uint32_t {
@@ -86,11 +89,14 @@ enum class AluRegisters : uint32_t {
     gpr12 = 0xC,
     gpr13 = 0xD,
     gpr14 = 0xE,
-    gpr15 = 0xF,
 
     srca = 0x20,
     srcb = 0x21,
     accu = 0x31,
     zf = 0x32,
     cf = 0x33
+};
+
+enum class DebuggerAluRegisters : uint32_t {
+    gpr15 = 0xF
 };

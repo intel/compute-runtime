@@ -150,7 +150,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWith
         MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
         ASSERT_NE(nullptr, miLoad);
 
-        if (miLoad->getRegisterOffset() == RegisterOffsets::csGprR15) {
+        if (miLoad->getRegisterOffset() == DebuggerRegisterOffsets::csGprR15) {
             gpr15Found = true;
             break;
         }
@@ -197,7 +197,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSh
         MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
         ASSERT_NE(nullptr, miLoad);
 
-        if (miLoad->getRegisterOffset() == RegisterOffsets::csGprR15) {
+        if (miLoad->getRegisterOffset() == DebuggerRegisterOffsets::csGprR15) {
             gpr15Found = true;
             break;
         }

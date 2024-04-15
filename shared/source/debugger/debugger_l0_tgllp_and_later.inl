@@ -77,7 +77,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
         // Store SBA field offset to R0
         NEO::EncodeSetMMIO<GfxFamily>::encodeIMM(cmdStream, RegisterOffsets::csGprR0, static_cast<uint32_t>(pair.first), true);
         // Add GPR0 to GPR15, store result in GPR1
-        NEO::EncodeMath<GfxFamily>::addition(cmdStream, AluRegisters::gpr0, AluRegisters::gpr15, AluRegisters::gpr1);
+        NEO::EncodeMath<GfxFamily>::addition(cmdStream, AluRegisters::gpr0, static_cast<AluRegisters>(DebuggerAluRegisters::gpr15), AluRegisters::gpr1);
 
         // Cmds to store dest address - from GPR
         auto miStoreRegMemLow = cmdStream.getSpaceForCmd<MI_STORE_REGISTER_MEM>();

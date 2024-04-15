@@ -129,12 +129,12 @@ void DebuggerL0Hw<GfxFamily>::programSbaAddressLoad(NEO::LinearStream &cmdStream
     uint32_t high = (sbaGpuVa >> 32) & 0xffffffff;
 
     NEO::LriHelper<GfxFamily>::program(&cmdStream,
-                                       RegisterOffsets::csGprR15,
+                                       DebuggerRegisterOffsets::csGprR15,
                                        low,
                                        true);
 
     NEO::LriHelper<GfxFamily>::program(&cmdStream,
-                                       RegisterOffsets::csGprR15 + 4,
+                                       DebuggerRegisterOffsets::csGprR15 + 4,
                                        high,
                                        true);
 }
