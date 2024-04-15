@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -298,6 +298,44 @@ TEST(DrmSystemInfoTest, givenNonZeroBankCountWhenCreatingSystemInfoThenUseDualSu
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
     EXPECT_NE(0u, gtSystemInfo.L3BankCount);
+
+    uint64_t expectedL3Size = gtSystemInfo.L3BankCount * drm.getSystemInfo()->getL3BankSizeInKb();
+    uint64_t calculatedL3Size = gtSystemInfo.L3CacheSizeInKb;
+
+    EXPECT_EQ(expectedL3Size, calculatedL3Size);
+}
+
+TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopoologyDataWhenCreatingSystemInfoThenRespectThatNumberOfL3Banks) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    class MyMockIoctlHelper : public IoctlHelperPrelim20 {
+      public:
+        using IoctlHelperPrelim20::IoctlHelperPrelim20;
+
+        bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
+            IoctlHelperPrelim20::getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+            topologyData.numL3Banks = 7;
+            return true;
+        }
+    };
+
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.ioctlHelper = std::make_unique<MyMockIoctlHelper>(drm);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.L3BankCount = 5;
+
+    uint32_t expectedNumOfL3Banks = 7;
+
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    int ret = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(ret, 0);
+    EXPECT_NE(nullptr, drm.getSystemInfo());
+    const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
+
+    EXPECT_EQ(expectedNumOfL3Banks, gtSystemInfo.L3BankCount);
 
     uint64_t expectedL3Size = gtSystemInfo.L3BankCount * drm.getSystemInfo()->getL3BankSizeInKb();
     uint64_t calculatedL3Size = gtSystemInfo.L3CacheSizeInKb;

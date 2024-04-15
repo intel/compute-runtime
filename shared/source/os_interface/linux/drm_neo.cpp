@@ -508,6 +508,9 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         hwInfo->gtSystemInfo.MaxSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSubSliceCount);
         hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSubSliceCount);
     }
+    if (topologyData.numL3Banks > 0) {
+        hwInfo->gtSystemInfo.L3BankCount = topologyData.numL3Banks;
+    }
 
     if (hwInfo->gtSystemInfo.MaxSlicesSupported == 0) {
         hwInfo->gtSystemInfo.MaxSlicesSupported = hwInfo->gtSystemInfo.SliceCount;

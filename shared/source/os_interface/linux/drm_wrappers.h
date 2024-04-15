@@ -89,6 +89,7 @@ struct DrmQueryTopologyData {
     int sliceCount = 0;
     int subSliceCount = 0;
     int euCount = 0;
+    int numL3Banks = 0;
 
     int maxSliceCount = 0;
     int maxSubSliceCount = 0;
