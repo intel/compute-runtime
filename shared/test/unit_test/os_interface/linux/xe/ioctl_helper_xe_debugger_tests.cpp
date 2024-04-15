@@ -219,6 +219,7 @@ HWTEST_F(IoctlHelperXeTestFixture, givenDeviceIndexWhenCreatingContextThenSetCor
     DrmMockXeDebug drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.ioctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm.getIoctlHelper());
+    xeIoctlHelper->initialize();
 
     auto engineInfo = xeIoctlHelper->createEngineInfo(false);
     ASSERT_NE(nullptr, engineInfo);
@@ -228,14 +229,15 @@ HWTEST_F(IoctlHelperXeTestFixture, givenDeviceIndexWhenCreatingContextThenSetCor
     engineDescriptor.isEngineInstanced = true;
     OsContextLinux osContext(drm, 0, 0u, engineDescriptor);
 
-    uint16_t deviceIndex = 1;
+    uint16_t tileId = 1u;
+    uint16_t expectedGtId = xeIoctlHelper->tileIdToGtId[tileId];
 
-    xeIoctlHelper->createDrmContext(drm, osContext, 0, deviceIndex);
+    xeIoctlHelper->createDrmContext(drm, osContext, 0, tileId);
 
     EXPECT_EQ(1u, drm.execQueueCreateParams.num_placements);
     ASSERT_EQ(1u, drm.execQueueEngineInstances.size());
 
-    EXPECT_EQ(deviceIndex, drm.execQueueEngineInstances[0].gt_id);
+    EXPECT_EQ(expectedGtId, drm.execQueueEngineInstances[0].gt_id);
 }
 
 HWTEST_F(IoctlHelperXeTestFixture, GivenRunaloneModeRequiredReturnTrueWhenCreateDrmContextThenRunAloneContextIsRequested) {

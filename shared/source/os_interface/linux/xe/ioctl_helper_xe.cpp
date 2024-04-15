@@ -1388,7 +1388,7 @@ void IoctlHelperXe::insertEngineToContextParams(ContextParamEngines<> &contextPa
     if (engineClassInstance) {
         engines[engineId].engine_class = engineClassInstance->engineClass;
         engines[engineId].engine_instance = engineClassInstance->engineInstance;
-        engines[engineId].gt_id = tileId;
+        engines[engineId].gt_id = tileIdToGtId[tileId];
         contextParamEngines.numEnginesInContext = std::max(contextParamEngines.numEnginesInContext, engineId + 1);
     }
 }

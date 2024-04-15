@@ -33,6 +33,7 @@ struct MockIoctlHelperXeDebug : IoctlHelperXe {
     using IoctlHelperXe::freeDebugMetadata;
     using IoctlHelperXe::getRunaloneExtProperty;
     using IoctlHelperXe::IoctlHelperXe;
+    using IoctlHelperXe::tileIdToGtId;
 };
 
 inline constexpr int testValueVmId = 0x5764;

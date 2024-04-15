@@ -1728,7 +1728,10 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithoutVirtualEnginesThenProperEngi
     drm.queryEngineInfo();
 
     unsigned int expectedValue = DRM_XE_ENGINE_CLASS_COMPUTE;
-    EXPECT_EQ(expectedValue, drm.bindDrmContext(0, 1, aub_stream::EngineType::ENGINE_CCS, true));
+    uint16_t tileId = 1u;
+    uint16_t expectedGtId = 2u;
+
+    EXPECT_EQ(expectedValue, drm.bindDrmContext(0, tileId, aub_stream::EngineType::ENGINE_CCS, true));
 
     EXPECT_EQ(1u, ioctlHelper->contextParamEngine.size());
     auto expectedEngine = drm.getEngineInfo()->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS);
@@ -1736,7 +1739,7 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithoutVirtualEnginesThenProperEngi
     EXPECT_NE(expectedEngine->engineInstance, notExpectedEngine->engineInstance);
     EXPECT_EQ(expectedEngine->engineInstance, ioctlHelper->contextParamEngine[0].engine_instance);
     EXPECT_EQ(expectedEngine->engineClass, ioctlHelper->contextParamEngine[0].engine_class);
-    EXPECT_EQ(1u, ioctlHelper->contextParamEngine[0].gt_id);
+    EXPECT_EQ(expectedGtId, ioctlHelper->contextParamEngine[0].gt_id);
 }
 
 TEST(IoctlHelperXeTest, whenBindingDrmContextWithVirtualEnginesThenProperEnginesAreSelected) {
@@ -1750,7 +1753,9 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithVirtualEnginesThenProperEngines
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
 
     unsigned int expectedValue = DRM_XE_ENGINE_CLASS_COMPUTE;
-    EXPECT_EQ(expectedValue, drm.bindDrmContext(0, 1, aub_stream::EngineType::ENGINE_CCS, false));
+    uint16_t tileId = 1u;
+    uint16_t expectedGtId = 2u;
+    EXPECT_EQ(expectedValue, drm.bindDrmContext(0, tileId, aub_stream::EngineType::ENGINE_CCS, false));
 
     EXPECT_EQ(2u, ioctlHelper->contextParamEngine.size());
     {
@@ -1759,7 +1764,7 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithVirtualEnginesThenProperEngines
         EXPECT_NE(expectedEngine->engineInstance, notExpectedEngine->engineInstance);
         EXPECT_EQ(expectedEngine->engineInstance, ioctlHelper->contextParamEngine[0].engine_instance);
         EXPECT_EQ(expectedEngine->engineClass, ioctlHelper->contextParamEngine[0].engine_class);
-        EXPECT_EQ(1u, ioctlHelper->contextParamEngine[0].gt_id);
+        EXPECT_EQ(expectedGtId, ioctlHelper->contextParamEngine[0].gt_id);
     }
     {
         auto expectedEngine = drm.getEngineInfo()->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS1);
@@ -1767,7 +1772,7 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithVirtualEnginesThenProperEngines
         EXPECT_NE(expectedEngine->engineInstance, notExpectedEngine->engineInstance);
         EXPECT_EQ(expectedEngine->engineInstance, ioctlHelper->contextParamEngine[1].engine_instance);
         EXPECT_EQ(expectedEngine->engineClass, ioctlHelper->contextParamEngine[1].engine_class);
-        EXPECT_EQ(1u, ioctlHelper->contextParamEngine[1].gt_id);
+        EXPECT_EQ(expectedGtId, ioctlHelper->contextParamEngine[1].gt_id);
     }
 }
 
