@@ -72,6 +72,7 @@ struct EncodeDispatchKernelArgs {
     bool isRcs = false;
     bool dcFlushEnable = false;
     bool isHeaplessModeEnabled = false;
+    bool isHeaplessStateInitEnabled = false;
     bool interruptEvent = false;
     bool immediateScratchAddressPatching = false;
 

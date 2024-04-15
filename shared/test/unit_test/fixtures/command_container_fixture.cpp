@@ -67,6 +67,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         false,                                      // isRcs
         false,                                      // dcFlushEnable
         false,                                      // isHeaplessModeEnabled
+        false,                                      // isHeaplessStateInitEnabled
         false,                                      // interruptEvent
         false,                                      // immediateScratchAddressPatching
     };

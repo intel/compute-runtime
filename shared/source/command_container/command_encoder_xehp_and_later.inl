@@ -283,9 +283,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
     }
 
-    bool heaplessStateInitEnabled = rootDeviceEnvironment.getHelper<CompilerProductHelper>().isHeaplessStateInitEnabled(heaplessModeEnabled);
-
-    if (heaplessStateInitEnabled == false) {
+    if (args.isHeaplessStateInitEnabled == false) {
         if (container.isAnyHeapDirty() ||
             args.requiresUncachedMocs) {
 

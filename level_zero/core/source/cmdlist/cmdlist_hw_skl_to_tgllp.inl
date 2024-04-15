@@ -218,6 +218,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         engineGroupType == NEO::EngineGroupType::renderCompute, // isRcs
         this->dcFlushSupport,                                   // dcFlushEnable
         this->heaplessModeEnabled,                              // isHeaplessModeEnabled
+        this->heaplessStateInitEnabled,                         // isHeaplessStateInitEnabled
         false,                                                  // interruptEvent
         !this->scratchAddressPatchingEnabled,                   // immediateScratchAddressPatching
     };

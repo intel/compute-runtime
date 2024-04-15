@@ -213,6 +213,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,                                      // isRcs
         commandList->getDcFlushRequired(true),      // dcFlushEnable
         false,                                      // isHeaplessModeEnabled
+        false,                                      // isHeaplessStateInitEnabled
         false,                                      // interruptEvent
         false,                                      // immediateScratchAddressPatching
     };
