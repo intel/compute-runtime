@@ -536,7 +536,7 @@ bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t 
                 if (walkOrder[0] == HwWalkOrderHelper::compatibleDimensionOrders[index][0] &&
                     walkOrder[1] == HwWalkOrderHelper::compatibleDimensionOrders[index][1]) {
                     break;
-                };
+                }
                 index++;
             }
             DEBUG_BREAK_IF(index >= HwWalkOrderHelper::walkOrderPossibilties);
