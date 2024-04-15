@@ -3981,15 +3981,15 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchInitializationSection() {
     auto syncAlloc = device->getSyncDispatchTokenAllocation();
 
-    if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
+    if (getSynchronizedDispatchMode() != NEO::SynchronizedDispatchMode::disabled) {
         commandContainer.addToResidencyContainer(syncAlloc);
     }
 
-    if (this->synchronizedDispatchMode == NEO::SynchronizedDispatchMode::limited) {
+    if (getSynchronizedDispatchMode() == NEO::SynchronizedDispatchMode::limited) {
         NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), syncAlloc->getGpuAddress() + sizeof(uint32_t), 0u,
                                                                    GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
                                                                    false, false, false, true, nullptr);
-    } else if (this->synchronizedDispatchMode == NEO::SynchronizedDispatchMode::full) {
+    } else if (getSynchronizedDispatchMode() == NEO::SynchronizedDispatchMode::full) {
         appendFullSynchronizedDispatchInit();
     }
 }
@@ -4062,7 +4062,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendFullSynchronizedDispatchInit() 
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchCleanupSection() {
-    if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::full) {
+    if (getSynchronizedDispatchMode() != NEO::SynchronizedDispatchMode::full) {
         return;
     }
 

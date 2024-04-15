@@ -25,6 +25,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "igfxfmid.h"
@@ -240,6 +241,17 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
         commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, device->getProductHelper());
 
+        auto pNext = reinterpret_cast<const ze_base_desc_t *>(cmdQdesc.pNext);
+
+        while (pNext) {
+            auto syncDispatchMode = getSyncDispatchMode(pNext);
+            if (syncDispatchMode.has_value()) {
+                commandList->enableSynchronizedDispatch(syncDispatchMode.value());
+            }
+
+            pNext = reinterpret_cast<const ze_base_desc_t *>(pNext->pNext);
+        }
+
         return commandList;
     }
 
@@ -307,7 +319,7 @@ void CommandListImp::enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mo
 
     if (mode == NEO::SynchronizedDispatchMode::full) {
         this->syncDispatchQueueId = device->getNextSyncDispatchQueueId();
-    } else {
+    } else if (mode == NEO::SynchronizedDispatchMode::limited) {
         // Limited mode doesnt acquire new token during execution. It only checks if token is already acquired by full sync dispatch.
         device->ensureSyncDispatchTokenAllocation();
     }

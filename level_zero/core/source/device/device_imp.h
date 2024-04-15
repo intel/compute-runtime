@@ -160,7 +160,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
 
     using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool);
-    CmdListCreateFunPtrT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
+    CmdListCreateFunPtrT getCmdListCreateFunc(const ze_base_desc_t *desc);
     void getAdditionalExtProperties(ze_base_properties_t *extendedProperties);
     ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) override;
 

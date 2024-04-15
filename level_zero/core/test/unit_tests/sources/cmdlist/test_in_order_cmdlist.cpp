@@ -5877,6 +5877,96 @@ struct MultiTileSynchronizedDispatchTests : public MultiTileInOrderCmdListTests 
     }
 };
 
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreatingRegularCmdListThenEnableSyncDispatchMode, IsAtLeastSkl) {
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(-1);
+
+    ze_base_desc_t unknownDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32};
+
+    ze_synchronized_dispatch_exp_desc_t syncDispatchDesc = {};
+    syncDispatchDesc.stype = ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC;
+
+    ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    zex_command_list_handle_t hCmdList;
+
+    // pNext == nullptr
+    auto result = zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    zeCommandListDestroy(hCmdList);
+
+    // pNext == unknown type
+    cmdListDesc.pNext = &unknownDesc;
+    result = zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    zeCommandListDestroy(hCmdList);
+
+    // limited dispatch mode
+    syncDispatchDesc.flags = ZE_SYNCHRONIZED_DISPATCH_DISABLED_EXP_FLAG;
+    cmdListDesc.pNext = &syncDispatchDesc;
+    result = zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::limited, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    zeCommandListDestroy(hCmdList);
+
+    // full dispatch mode
+    syncDispatchDesc.flags = ZE_SYNCHRONIZED_DISPATCH_ENABLED_EXP_FLAG;
+    cmdListDesc.pNext = &syncDispatchDesc;
+    result = zeCommandListCreate(context->toHandle(), device->toHandle(), &cmdListDesc, &hCmdList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    zeCommandListDestroy(hCmdList);
+}
+
+HWTEST2_F(MultiTileSynchronizedDispatchTests, givenSyncDispatchExtensionWhenCreatingImmediateCmdListThenEnableSyncDispatchMode, IsAtLeastSkl) {
+    NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(-1);
+
+    ze_base_desc_t unknownDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32};
+
+    ze_synchronized_dispatch_exp_desc_t syncDispatchDesc = {};
+    syncDispatchDesc.stype = ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC;
+
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    zex_command_list_handle_t hCmdList;
+
+    // pNext == nullptr
+    auto result = zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &hCmdList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    zeCommandListDestroy(hCmdList);
+
+    // pNext == unknown type
+    queueDesc.pNext = &unknownDesc;
+    result = zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &hCmdList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::disabled, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    zeCommandListDestroy(hCmdList);
+
+    // limited dispatch mode
+    syncDispatchDesc.flags = ZE_SYNCHRONIZED_DISPATCH_DISABLED_EXP_FLAG;
+    queueDesc.pNext = &syncDispatchDesc;
+    result = zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &hCmdList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::limited, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    zeCommandListDestroy(hCmdList);
+
+    // full dispatch mode
+    syncDispatchDesc.flags = ZE_SYNCHRONIZED_DISPATCH_ENABLED_EXP_FLAG;
+    queueDesc.pNext = &syncDispatchDesc;
+    result = zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &queueDesc, &hCmdList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::SynchronizedDispatchMode::full, static_cast<CommandListImp *>(CommandList::fromHandle(hCmdList))->getSynchronizedDispatchMode());
+    zeCommandListDestroy(hCmdList);
+}
+
 HWTEST2_F(SynchronizedDispatchTests, givenSingleTileSyncDispatchQueueWhenCreatingThenDontAssignQueueId, IsAtLeastSkl) {
     NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
 

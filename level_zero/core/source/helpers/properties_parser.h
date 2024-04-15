@@ -7,12 +7,15 @@
 
 #pragma once
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/surface_format_info.h"
 
 #include "level_zero/api/driver_experimental/public/ze_bindless_image_exp.h"
+#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include <level_zero/ze_api.h>
 
 #include <cstdint>
+#include <optional>
 
 namespace L0 {
 inline NEO::ImageType convertType(const ze_image_type_t type) {
@@ -163,5 +166,14 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+inline std::optional<NEO::SynchronizedDispatchMode> getSyncDispatchMode(const ze_base_desc_t *desc) {
+    if (desc->stype == ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC) {
+        auto syncDispatch = reinterpret_cast<const ze_synchronized_dispatch_exp_desc_t *>(desc);
+        return (syncDispatch->flags == ZE_SYNCHRONIZED_DISPATCH_ENABLED_EXP_FLAG ? NEO::SynchronizedDispatchMode::full : NEO::SynchronizedDispatchMode::limited);
+    }
+
+    return std::nullopt;
 }
 } // namespace L0

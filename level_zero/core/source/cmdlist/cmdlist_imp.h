@@ -45,6 +45,7 @@ struct CommandListImp : public CommandList {
     void addRegularCmdListSubmissionCounter();
     virtual void patchInOrderCmds() = 0;
     void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
+    NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
 
   protected:
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;

@@ -10,8 +10,8 @@
 
 namespace L0 {
 
-DeviceImp::CmdListCreateFunPtrT DeviceImp::getCmdListCreateFunc(const ze_command_list_desc_t *desc) {
-    return &CommandList::create;
+DeviceImp::CmdListCreateFunPtrT DeviceImp::getCmdListCreateFunc(const ze_base_desc_t *desc) {
+    return nullptr;
 }
 
 uint32_t DeviceImp::getAdditionalEngines(uint32_t numAdditionalEnginesRequested,

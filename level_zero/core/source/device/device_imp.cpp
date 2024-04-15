@@ -51,6 +51,7 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_build_log.h"
@@ -221,17 +222,43 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
 
     uint32_t index = 0;
     uint32_t commandQueueGroupOrdinal = desc->commandQueueGroupOrdinal;
+    NEO::SynchronizedDispatchMode syncDispatchMode = NEO::SynchronizedDispatchMode::disabled;
     adjustCommandQueueDesc(commandQueueGroupOrdinal, index);
 
     NEO::EngineGroupType engineGroupType = getEngineGroupTypeForOrdinal(commandQueueGroupOrdinal);
 
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto createCommandList = getCmdListCreateFunc(desc);
-    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, false);
-    if (returnValue == ZE_RESULT_SUCCESS) {
-        CommandList::fromHandle(*commandList)->setOrdinal(desc->commandQueueGroupOrdinal);
+
+    DeviceImp::CmdListCreateFunPtrT createCommandList = &CommandList::create;
+
+    auto pNext = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
+
+    while (pNext) {
+        auto syncDispatchModeVal = getSyncDispatchMode(pNext);
+        if (syncDispatchModeVal.has_value()) {
+            syncDispatchMode = syncDispatchModeVal.value();
+        }
+
+        auto newCreateFunc = getCmdListCreateFunc(pNext);
+        if (newCreateFunc) {
+            createCommandList = newCreateFunc;
+        }
+
+        pNext = reinterpret_cast<const ze_base_desc_t *>(pNext->pNext);
     }
+
+    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, false);
+
+    if (returnValue != ZE_RESULT_SUCCESS) {
+        return returnValue;
+    }
+
+    auto cmdList = static_cast<L0::CommandListImp *>(CommandList::fromHandle(*commandList));
+
+    cmdList->setOrdinal(desc->commandQueueGroupOrdinal);
+    cmdList->enableSynchronizedDispatch(syncDispatchMode);
+
     return returnValue;
 }
 
@@ -241,8 +268,8 @@ ze_result_t DeviceImp::createInternalCommandList(const ze_command_list_desc_t *d
 
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    auto createCommandList = getCmdListCreateFunc(desc);
-    *commandList = createCommandList(productFamily, this, engineGroupType, desc->flags, returnValue, true);
+
+    *commandList = CommandList::create(productFamily, this, engineGroupType, desc->flags, returnValue, true);
     return returnValue;
 }
 
