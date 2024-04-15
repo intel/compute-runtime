@@ -610,6 +610,17 @@ TEST_F(DeviceTests, givenMtPreemptionEnabledWhenCreatingRootCsrThenCreatePreempt
     EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getDefaultEngine().commandStreamReceiver->getPreemptionAllocation());
 }
 
+TEST_F(DeviceTests, givenPreemptionModeWhenOverridePreemptionModeThenProperlySet) {
+    auto newPreemptionMode = PreemptionMode::ThreadGroup;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->overridePreemptionMode(newPreemptionMode);
+    EXPECT_EQ(newPreemptionMode, device->getPreemptionMode());
+
+    newPreemptionMode = PreemptionMode::Disabled;
+    device->overridePreemptionMode(newPreemptionMode);
+    EXPECT_EQ(newPreemptionMode, device->getPreemptionMode());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZexNumberOfCssEnvVariableDefinedWhenDeviceIsCreatedThenCreateDevicesWithProperCcsCount) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;

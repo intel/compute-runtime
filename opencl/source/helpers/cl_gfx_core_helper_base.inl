@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,11 @@ std::vector<uint32_t> ClGfxCoreHelperHw<GfxFamily>::getSupportedThreadArbitratio
 template <typename GfxFamily>
 bool ClGfxCoreHelperHw<GfxFamily>::allowImageCompression(cl_image_format format) const {
     return true;
+}
+
+template <typename GfxFamily>
+bool ClGfxCoreHelperHw<GfxFamily>::isLimitationForPreemptionNeeded() const {
+    return false;
 }
 
 } // namespace NEO

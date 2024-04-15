@@ -59,3 +59,21 @@ TEST_F(MidThreadPreemptionTests, GivenMultiDispatchWithoutKernelWhenDevicePreemp
 
     EXPECT_EQ(PreemptionMode::MidThread, ClPreemptionHelper::taskPreemptionMode(device->getDevice(), multiDispatchInfo));
 }
+
+HWTEST_F(MidThreadPreemptionTests, GivenValueArgWhenOverrideMidThreadPreemptionSupportThenNothingChange) {
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    bool value = true;
+    ClPreemptionHelper::overrideMidThreadPreemptionSupport(*context.get(), value);
+    EXPECT_EQ(PreemptionMode::MidThread, device->getPreemptionMode());
+    value = false;
+    ClPreemptionHelper::overrideMidThreadPreemptionSupport(*context.get(), value);
+    EXPECT_EQ(PreemptionMode::MidThread, device->getPreemptionMode());
+
+    device->setPreemptionMode(PreemptionMode::ThreadGroup);
+    value = true;
+    ClPreemptionHelper::overrideMidThreadPreemptionSupport(*context.get(), value);
+    EXPECT_EQ(PreemptionMode::ThreadGroup, device->getPreemptionMode());
+    value = false;
+    ClPreemptionHelper::overrideMidThreadPreemptionSupport(*context.get(), value);
+    EXPECT_EQ(PreemptionMode::ThreadGroup, device->getPreemptionMode());
+}

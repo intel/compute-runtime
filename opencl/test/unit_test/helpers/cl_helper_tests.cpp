@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,6 +135,12 @@ TEST_F(ClGfxCoreHelperTest, givenGenHelperWhenKernelArgumentIsNotPureStatefulThe
 
         EXPECT_EQ(!argAsPtr.isPureStateful(), clGfxCoreHelper.requiresNonAuxMode(argAsPtr));
     }
+}
+
+HWTEST_F(ClGfxCoreHelperTest, WhenCheckingIsLimitationForPreemptionNeededThenReturnFalse) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+
+    EXPECT_FALSE(clGfxCoreHelper.isLimitationForPreemptionNeeded());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ClGfxCoreHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {

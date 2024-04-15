@@ -47,6 +47,7 @@ class ClGfxCoreHelper : public ApiGfxCoreHelper {
     virtual cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool allowImageCompression(cl_image_format format) const = 0;
     virtual bool isFormatRedescribable(cl_image_format format) const = 0;
+    virtual bool isLimitationForPreemptionNeeded() const = 0;
 
   protected:
     virtual bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const = 0;
@@ -76,6 +77,7 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
     cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool allowImageCompression(cl_image_format format) const override;
     bool isFormatRedescribable(cl_image_format format) const override;
+    bool isLimitationForPreemptionNeeded() const override;
 
   protected:
     bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const override;

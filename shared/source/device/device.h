@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,6 +119,7 @@ class Device : public ReferenceTrackedObject<Device> {
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
+    void overridePreemptionMode(PreemptionMode mode) { preemptionMode = mode; }
     Debugger *getDebugger() const;
     DebuggerL0 *getL0Debugger();
     const EnginesT &getAllEngines() const;
