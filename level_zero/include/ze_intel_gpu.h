@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,8 +110,9 @@ typedef enum _ze_intel_event_sync_mode_exp_version_t {
 /// @brief Supported event sync mode flags
 typedef uint32_t ze_intel_event_sync_mode_exp_flags_t;
 typedef enum _ze_intel_event_sync_mode_exp_flag_t {
-    ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT = ZE_BIT(0),   ///< Low power host synchronization mode, for better CPU utilization
-    ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT = ZE_BIT(1), ///< Generate interrupt when Event is signalled on Device
+    ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT = ZE_BIT(0),          ///< Low power host synchronization mode, for better CPU utilization
+    ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT = ZE_BIT(1),        ///< Generate interrupt when Event is signalled on Device
+    ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT = ZE_BIT(2), ///< Host synchronization APIs wait for external interrupt. Can be used only for Events created via zexCounterBasedEventCreate
     ZE_INTEL_EVENT_SYNC_MODE_EXP_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
 
 } ze_intel_event_sync_mode_exp_flag_t;
@@ -132,6 +133,7 @@ typedef struct _ze_intel_event_sync_mode_exp_desc_t {
     const void *pNext;                                  ///< [in][optional] must be null or a pointer to an extension-specific
                                                         ///< structure (i.e. contains stype and pNext).
     ze_intel_event_sync_mode_exp_flags_t syncModeFlags; /// <in> valid combination of ::ze_intel_event_sync_mode_exp_flag_t
+    uint32_t externalInterruptId;                       /// <in> External interrupt id. Used only when ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT flag is set
 } ze_intel_event_sync_mode_exp_desc_t;
 
 #if defined(__cplusplus)
