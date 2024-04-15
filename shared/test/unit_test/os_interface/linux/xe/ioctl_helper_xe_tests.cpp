@@ -733,6 +733,57 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
     }
 }
 
+TEST(IoctlHelperXeTest, givenUnknownTopologyTypeWhenGetTopologyDataAndMapThenNotRecognizedTopologyIsIgnored) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    xeIoctlHelper->initialize();
+
+    constexpr int16_t unknownTopology = -1;
+
+    uint16_t tileId = 0;
+    for (auto gtId = 0u; gtId < 3u; gtId++) {
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, unknownTopology, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
+    }
+    DrmQueryTopologyData topologyData{};
+    TopologyMap topologyMap{};
+
+    auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+    ASSERT_TRUE(result);
+
+    // verify topology data
+    EXPECT_EQ(1, topologyData.sliceCount);
+    EXPECT_EQ(1, topologyData.maxSliceCount);
+
+    EXPECT_EQ(6, topologyData.subSliceCount);
+    EXPECT_EQ(6, topologyData.maxSubSliceCount);
+
+    EXPECT_EQ(96, topologyData.euCount);
+    EXPECT_EQ(16, topologyData.maxEuPerSubSlice);
+
+    // verify topology map
+    std::vector<int> expectedSliceIndices{0};
+    ASSERT_EQ(expectedSliceIndices.size(), topologyMap[tileId].sliceIndices.size());
+    ASSERT_TRUE(topologyMap[tileId].sliceIndices.size() > 0);
+
+    for (auto i = 0u; i < expectedSliceIndices.size(); i++) {
+        EXPECT_EQ(expectedSliceIndices[i], topologyMap[tileId].sliceIndices[i]);
+    }
+
+    std::vector<int> expectedSubSliceIndices{0, 1, 2, 3, 4, 5};
+    ASSERT_EQ(expectedSubSliceIndices.size(), topologyMap[tileId].subsliceIndices.size());
+    ASSERT_TRUE(topologyMap[tileId].subsliceIndices.size() > 0);
+
+    for (auto i = 0u; i < expectedSubSliceIndices.size(); i++) {
+        EXPECT_EQ(expectedSubSliceIndices[i], topologyMap[tileId].subsliceIndices[i]);
+    }
+}
+
 TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCorrect) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -817,7 +868,7 @@ TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceI
     TopologyMap topologyMap{};
 
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
-    ASSERT_TRUE(result);
+    EXPECT_FALSE(result);
 
     // verify topology data
     EXPECT_EQ(1, topologyData.sliceCount);
@@ -1144,7 +1195,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopolog
     }
 }
 
-TEST(IoctlHelperXeTest, givenInvalidTypeFlagGetTopologyDataAndMapThenReturnFalse) {
+TEST(IoctlHelperXeTest, givenMissingSupportedTopologiesWhenGetTopologyDataAndMapThenReturnFalse) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1158,11 +1209,24 @@ TEST(IoctlHelperXeTest, givenInvalidTypeFlagGetTopologyDataAndMapThenReturnFalse
     drm.addMockedQueryTopologyData(tileId, incorrectFlagType, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
     drm.addMockedQueryTopologyData(tileId, incorrectFlagType, 8, {0, 0, 0, 0, 0, 0, 0, 0});
     drm.addMockedQueryTopologyData(tileId, incorrectFlagType, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
 
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
 
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+    EXPECT_FALSE(result);
+
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+    result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+    EXPECT_FALSE(result);
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
+    result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+    EXPECT_FALSE(result);
+
+    drm.queryTopology.clear();
+    drm.addMockedQueryTopologyData(tileId, DRM_XE_TOPO_EU_PER_DSS, 4, {0b1111'1111, 0, 0, 0});
+    result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     EXPECT_FALSE(result);
 }
 
