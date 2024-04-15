@@ -745,6 +745,7 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
             case AllocationType::svmZeroCopy:
             case AllocationType::internalHostMemory:
             case AllocationType::timestampPacketTagBuffer:
+            case AllocationType::gpuTimestampDeviceBuffer:
             case AllocationType::bufferHostMemory:
             case AllocationType::tagBuffer:
                 expectedUsage = uncachedGmmUsageType;
@@ -793,9 +794,6 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
         }
 
         EXPECT_EQ(expectedUsage, usage);
-        if (expectedUsage != usage) {
-            std::cout << "fail";
-        }
     }
 }
 
