@@ -508,6 +508,76 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputNameOptionWhenBuildi
     }
 }
 
+TEST_F(OclocFatBinaryProductAcronymsTests, givenBinaryOutputDirOptionWhenBuildingThenCorrectFileIsCreated) {
+    auto acronyms = prepareProductsWithoutDashes(oclocArgHelperWithoutInput.get());
+    if (acronyms.size() < 2) {
+        GTEST_SKIP();
+    }
+
+    std::string acronymsTarget = acronyms[0] + "," + acronyms[1];
+    std::vector<ConstStringRef> expected{ConstStringRef(acronyms[0]), ConstStringRef(acronyms[1])};
+    auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+    EXPECT_EQ(got, expected);
+
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+
+    {
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-out_dir",
+            "../expected_output_directory",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+        const std::string expectedFatbinaryFileName = "../expected_output_directory/copybuffer.ar";
+        EXPECT_EQ(1u, NEO::virtualFileList.size());
+        EXPECT_TRUE(NEO::virtualFileList.find(expectedFatbinaryFileName) != NEO::virtualFileList.end());
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+
+    {
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-out_dir",
+            "../expected_output_directory",
+            "-output",
+            "expected_filename",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+        const std::string expectedFatbinaryFileName = "../expected_output_directory/expected_filename";
+        EXPECT_EQ(2u, NEO::virtualFileList.size());
+        EXPECT_TRUE(NEO::virtualFileList.find(expectedFatbinaryFileName) != NEO::virtualFileList.end());
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
 TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoSameReleaseTargetsWhenGetProductsAcronymsThenDuplicatesAreNotFound) {
     if (enabledReleasesAcronyms.empty()) {
         GTEST_SKIP();

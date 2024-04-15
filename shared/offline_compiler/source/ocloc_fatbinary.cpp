@@ -401,13 +401,21 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
     }
 
     auto fatbinaryData = fatbinary.encode();
-    std::string fatbinaryFileName = outputFileName;
-    if (outputFileName.empty() && (false == inputFileName.empty())) {
-        fatbinaryFileName = OfflineCompiler::getFileNameTrunk(inputFileName) + ".ar";
-    }
+
+    std::string fatbinaryFileName = "";
+
     if (false == outputDirectory.empty()) {
-        fatbinaryFileName = outputDirectory + "/" + outputFileName;
+        fatbinaryFileName = outputDirectory + "/";
     }
+
+    if (false == outputFileName.empty()) {
+        fatbinaryFileName += outputFileName;
+    } else {
+        if (false == inputFileName.empty()) {
+            fatbinaryFileName += OfflineCompiler::getFileNameTrunk(inputFileName) + ".ar";
+        }
+    }
+
     argHelper->saveOutput(fatbinaryFileName, fatbinaryData.data(), fatbinaryData.size());
 
     return 0;
