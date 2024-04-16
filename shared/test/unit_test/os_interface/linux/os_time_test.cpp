@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
@@ -48,6 +49,8 @@ struct DrmTimeTest : public ::testing::Test {
         osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
         osTime->setResolutionFunc(resolutionFuncTrue);
         osTime->setGetTimeFunc(getTimeFuncTrue);
+        auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+        osTime->setDeviceTimerResolution(*hwInfo);
         deviceTime = osTime->getDeviceTime();
     }
 
@@ -202,7 +205,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultRes
 
     drm->getParamRetValue = 0;
     drm->ioctlRes = -1;
-
+    deviceTime->callGetDynamicDeviceTimerResolution = true;
     auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
     EXPECT_DOUBLE_EQ(result, defaultResolution);
 }
@@ -239,7 +242,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectR
     // 19200000 is frequency yelding 52.083ns resolution
     drm->getParamRetValue = 19200000;
     drm->ioctlRes = 0;
-
+    deviceTime->callGetDynamicDeviceTimerResolution = true;
     auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
     EXPECT_DOUBLE_EQ(result, 52.08333333333333);
 }
@@ -281,4 +284,47 @@ TEST_F(DrmTimeTest, whenGettingMaxGpuTimeStampValueThenHwInfoBasedValueIsReturne
     } else {
         EXPECT_EQ(0ull, osTime->getMaxGpuTimeStamp());
     }
+}
+
+TEST_F(DrmTimeTest, whenGettingMaxGpuTimeStampValueWithinIntervalThenReuseFromPreviousCall) {
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 0u);
+    TimeStampData gpuCpuTime;
+    osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
+
+    auto gpuTimestampBefore = gpuCpuTime.gpuTimeStamp;
+    auto cpuTimeBefore = actualTime;
+
+    osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
+
+    auto gpuTimestampAfter = gpuCpuTime.gpuTimeStamp;
+    auto cpuTimeAfter = actualTime;
+
+    auto cpuTimeDiff = cpuTimeAfter - cpuTimeBefore;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto deviceTimerResolution = deviceTime->getDynamicDeviceTimerResolution(*hwInfo);
+    auto gpuTimestampDiff = static_cast<uint64_t>(cpuTimeDiff / deviceTimerResolution);
+    EXPECT_EQ(gpuTimestampAfter, gpuTimestampBefore + gpuTimestampDiff);
+}
+
+TEST_F(DrmTimeTest, whenGettingMaxGpuTimeStampValueAfterIntervalThenCallToKmd) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.GpuTimestampRefreshTimeout.set(0);
+
+    // Recreate mock to apply debug flag
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
+    osTime->setResolutionFunc(resolutionFuncTrue);
+    osTime->setGetTimeFunc(getTimeFuncTrue);
+    auto deviceTime = osTime->getDeviceTime();
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 0u);
+
+    TimeStampData gpuCpuTime;
+    osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
+
+    osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
 }

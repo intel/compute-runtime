@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,9 @@ TEST(MockOSTime, WhenSleepingThenDeviceAndHostTimerAreIncreased) {
     cl_ulong hostTimestamp[2] = {0, 0};
 
     auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
-    mDev->setOSTime(new MockOSTime());
+    auto osTime = new MockOSTime();
+    osTime->setDeviceTimerResolution(mDev->getHardwareInfo());
+    mDev->setOSTime(osTime);
 
     mDev->getDeviceAndHostTimer(
         &deviceTimestamp[0],
