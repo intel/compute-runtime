@@ -805,5 +805,31 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
     }
 }
 
+TEST_F(KernelImpTest, GivenGroupSizeRequiresSwLocalIdsGenerationWhenNextGroupSizeDoesNotRequireSwLocalIdsGenerationThenResetPerThreadDataSizes) {
+    Mock<Module> module(device, nullptr);
+    Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
+
+    WhiteBox<::L0::KernelImmutableData> kernelInfo = {};
+    NEO::KernelDescriptor descriptor;
+    kernelInfo.kernelDescriptor = &descriptor;
+    kernelInfo.kernelDescriptor->kernelAttributes.numLocalIdChannels = 3;
+    kernel.kernelImmData = &kernelInfo;
+
+    kernel.enableForcingOfGenerateLocalIdByHw = true;
+    kernel.forceGenerateLocalIdByHw = false;
+
+    kernel.KernelImp::setGroupSize(11, 11, 1);
+
+    EXPECT_NE(0u, kernel.getPerThreadDataSizeForWholeThreadGroup());
+    EXPECT_NE(0u, kernel.getPerThreadDataSize());
+
+    kernel.forceGenerateLocalIdByHw = true;
+    kernel.KernelImp::setGroupSize(8, 1, 1);
+
+    EXPECT_EQ(0u, kernel.getPerThreadDataSizeForWholeThreadGroup());
+    EXPECT_EQ(0u, kernel.getPerThreadDataSize());
+}
+
 } // namespace ult
 } // namespace L0

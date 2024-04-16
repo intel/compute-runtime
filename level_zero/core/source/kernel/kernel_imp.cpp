@@ -409,6 +409,9 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         }
 
         this->perThreadDataSize = perThreadDataSizeForWholeThreadGroup / numThreadsPerThreadGroup;
+    } else {
+        this->perThreadDataSizeForWholeThreadGroup = 0;
+        this->perThreadDataSize = 0;
     }
     return ZE_RESULT_SUCCESS;
 }
