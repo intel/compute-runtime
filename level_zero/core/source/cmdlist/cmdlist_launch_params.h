@@ -46,6 +46,7 @@ using CommandToPatchContainer = std::vector<CommandToPatch>;
 
 struct CmdListKernelLaunchParams {
     void *outWalker = nullptr;
+    void *cmdWalkerBuffer = nullptr;
     CommandToPatch *outSyncCommand = nullptr;
     CommandToPatchContainer *outListCommands = nullptr;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;

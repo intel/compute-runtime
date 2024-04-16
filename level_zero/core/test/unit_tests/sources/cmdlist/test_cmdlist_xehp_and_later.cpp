@@ -2833,5 +2833,43 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     EXPECT_EQ(residencyContainer.end(), eventAllocIt);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel,
+          givenCmdListParamHasWalkerCpuBufferWhenAppendingKernelThenCopiedWalkerHasTheSameContentAsInGfxMemory,
+          IsAtLeastXeHpCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandContainer = commandList->getCmdContainer();
+    auto cmdStream = commandContainer.getCommandStream();
+
+    auto walkerBuffer = std::make_unique<DefaultWalkerType>();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.cmdWalkerBuffer = walkerBuffer.get();
+    auto commandStreamOffset = cmdStream->getUsed();
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), commandStreamOffset),
+        cmdStream->getUsed() - commandStreamOffset));
+
+    auto computeWalkerList = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, computeWalkerList.size());
+
+    auto walkerGfxMemory = reinterpret_cast<DefaultWalkerType *>(*computeWalkerList[0]);
+    EXPECT_EQ(0, memcmp(walkerGfxMemory, launchParams.cmdWalkerBuffer, sizeof(DefaultWalkerType)));
+}
+
 } // namespace ult
 } // namespace L0

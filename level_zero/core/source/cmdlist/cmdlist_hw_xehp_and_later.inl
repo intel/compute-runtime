@@ -327,7 +327,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         dsh,                                                    // dynamicStateHeap
         reinterpret_cast<const void *>(&threadGroupDimensions), // threadGroupDimensions
         nullptr,                                                // outWalkerPtr
-        nullptr,                                                // cpuWalkerBuffer
+        launchParams.cmdWalkerBuffer,                           // cpuWalkerBuffer
         &additionalCommands,                                    // additionalCommands
         kernelPreemptionMode,                                   // preemptionMode
         launchParams.requiredPartitionDim,                      // requiredPartitionDim
