@@ -49,6 +49,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         nullptr,                                    // dynamicStateHeap
         threadGroupDimensions,                      // threadGroupDimensions
         nullptr,                                    // outWalkerPtr
+        nullptr,                                    // cpuWalkerBuffer
         nullptr,                                    // additionalCommands
         PreemptionMode::Disabled,                   // preemptionMode
         NEO::RequiredPartitionDim::none,            // requiredPartitionDim

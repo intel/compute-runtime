@@ -460,8 +460,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
     walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
-    EXPECT_EQ(0u, walkerCommand->getPartitionSize());
-    EXPECT_FALSE(walkerCommand->getWorkloadPartitionEnable());
+    EXPECT_EQ(6u, walkerCommand->getPartitionSize());
+    EXPECT_TRUE(walkerCommand->getWorkloadPartitionEnable());
     EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walkerCommand->getPartitionType());
 }
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWhenComputePartitionCountIsCalledThenDefaultSizeAndTypeIsReturned) {

@@ -413,6 +413,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         *buffer = walkerCmd;
     }
 
+    if (args.cpuWalkerBuffer) {
+        *reinterpret_cast<WalkerType *>(args.cpuWalkerBuffer) = walkerCmd;
+    }
+
     PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {

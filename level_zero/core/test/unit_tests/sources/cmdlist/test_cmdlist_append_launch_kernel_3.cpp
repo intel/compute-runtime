@@ -692,6 +692,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         nullptr,                                    // dynamicStateHeap
         threadGroupDimensions,                      // threadGroupDimensions
         nullptr,                                    // outWalkerPtr
+        nullptr,                                    // cpuWalkerBuffer
         nullptr,                                    // additionalCommands
         PreemptionMode::MidBatch,                   // preemptionMode
         NEO::RequiredPartitionDim::none,            // requiredPartitionDim

@@ -498,7 +498,6 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
                                uint32_t tileCount,
                                bool forceExecutionOnSingleTile) {
     auto computeWalker = putCommand<WalkerType>(inputAddress, totalBytesProgrammed);
-    WalkerType cmd = *inputWalker;
 
     if (partitionCount > 1) {
         auto partitionType = inputWalker->getPartitionType();
@@ -508,7 +507,7 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
         assert(inputWalker->getThreadGroupIdStartingZ() == 0u);
         assert(partitionType != WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
 
-        cmd.setWorkloadPartitionEnable(true);
+        inputWalker->setWorkloadPartitionEnable(true);
 
         auto workgroupCount = 0u;
         if (partitionType == WalkerType::PARTITION_TYPE::PARTITION_TYPE_X) {
@@ -520,15 +519,15 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
         }
 
         if (forceExecutionOnSingleTile) {
-            cmd.setPartitionSize(workgroupCount);
+            inputWalker->setPartitionSize(workgroupCount);
         } else {
-            cmd.setPartitionSize(Math::divideAndRoundUp(workgroupCount, partitionCount));
+            inputWalker->setPartitionSize(Math::divideAndRoundUp(workgroupCount, partitionCount));
         }
     }
 
-    appendWalkerFields<GfxFamily, WalkerType>(cmd, tileCount);
+    appendWalkerFields<GfxFamily, WalkerType>(*inputWalker, tileCount);
 
-    *computeWalker = cmd;
+    *computeWalker = *inputWalker;
 
     return computeWalker;
 }

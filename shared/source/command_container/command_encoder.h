@@ -54,6 +54,7 @@ struct EncodeDispatchKernelArgs {
     IndirectHeap *dynamicStateHeap = nullptr;
     const void *threadGroupDimensions = nullptr;
     void *outWalkerPtr = nullptr;
+    void *cpuWalkerBuffer = nullptr;
     std::list<void *> *additionalCommands = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
