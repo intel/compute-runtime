@@ -645,7 +645,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhen
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomMockTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnBufferObjectThenReturnPtr) {
     BufferObject bo(0, mock, 3, 1, 1024, 0);
 
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
+    DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockBufferObject(&bo);
@@ -848,7 +848,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     mockExp->ioctlResExt = &ioctlResExt;
 
     BufferObject bo(0, mockExp, 3, 1, 0, 0);
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
+    DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -864,7 +864,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
     mockExp->failOnMmapOffset = true;
 
     BufferObject bo(0, mockExp, 3, 1, 0, 0);
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
+    DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -875,7 +875,7 @@ TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAl
 }
 
 TEST_F(DrmMemoryManagerTestImpl, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButBufferObjectIsNullThenReturnNullPtr) {
-    DrmAllocation drmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
+    DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
     EXPECT_EQ(nullptr, ptr);

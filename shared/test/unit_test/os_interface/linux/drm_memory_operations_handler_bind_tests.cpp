@@ -536,7 +536,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenEvictImplFailsThenEvictWithinOsC
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenMakeBOsResidentFailsThenMakeResidentWithinOsContextReturnsError) {
     struct MockDrmAllocationBOsResident : public DrmAllocation {
         MockDrmAllocationBOsResident(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool pool)
-            : DrmAllocation(rootDeviceIndex, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
+            : DrmAllocation(rootDeviceIndex, 1u /*num gmms*/, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
         }
 
         int makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) override {
@@ -560,7 +560,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest,
        givenDrmAllocationWithChunkingAndmakeResidentWithinOsContextCalledThenprefetchBOWithChunkingCalled) {
     struct MockDrmAllocationBOsResident : public DrmAllocation {
         MockDrmAllocationBOsResident(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool pool)
-            : DrmAllocation(rootDeviceIndex, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
+            : DrmAllocation(rootDeviceIndex, 1u /*num gmms*/, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
         }
     };
     DebugManagerStateRestore restore;
@@ -1242,7 +1242,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
     EXPECT_EQ(2u, patIndex);
 
     MockBufferObject bo(0, mock, patIndex, 0, 0, 1);
-    DrmAllocation allocation(0, AllocationType::buffer, &bo, nullptr, 0x1234000, 1, MemoryPool::localMemory);
+    DrmAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, &bo, nullptr, 0x1234000, 1, MemoryPool::localMemory);
 
     GraphicsAllocation *allocPtr = &allocation;
 
@@ -1273,7 +1273,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
     EXPECT_EQ(3u, patIndex);
 
     MockBufferObject bo(0, mock, patIndex, 0, 0, 1);
-    DrmAllocation allocation(0, AllocationType::buffer, &bo, nullptr, 0x1234000, 1, MemoryPool::system4KBPages);
+    DrmAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, &bo, nullptr, 0x1234000, 1, MemoryPool::system4KBPages);
 
     GraphicsAllocation *allocPtr = &allocation;
 

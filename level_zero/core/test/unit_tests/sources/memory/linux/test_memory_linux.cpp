@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,6 +40,7 @@ class IpcImplicitScalingObtainFdMockGraphicsAllocation : public NEO::DrmAllocati
                                                      NEO::osHandle sharedHandle,
                                                      MemoryPool pool,
                                                      uint64_t canonizedGpuAddress) : NEO::DrmAllocation(rootDeviceIndex,
+                                                                                                        1u /*num gmms*/,
                                                                                                         allocationType,
                                                                                                         bo,
                                                                                                         ptrIn,
@@ -456,6 +457,7 @@ class IpcObtainFdMockGraphicsAllocation : public NEO::DrmAllocation {
                                       NEO::osHandle sharedHandle,
                                       MemoryPool pool,
                                       uint64_t canonizedGpuAddress) : NEO::DrmAllocation(rootDeviceIndex,
+                                                                                         1u /*num gmms*/,
                                                                                          allocationType,
                                                                                          bo,
                                                                                          ptrIn,

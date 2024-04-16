@@ -64,7 +64,7 @@ class MockDrmAllocation : public DrmAllocation {
     using DrmAllocation::registeredBoBindHandles;
 
     MockDrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, MemoryPool pool)
-        : DrmAllocation(rootDeviceIndex, allocationType, nullptr, nullptr, 0, static_cast<size_t>(0), pool) {
+        : DrmAllocation(rootDeviceIndex, 1u /*num gmms*/, allocationType, nullptr, nullptr, 0, static_cast<size_t>(0), pool) {
     }
 
     MockDrmAllocation(AllocationType allocationType, MemoryPool pool, BufferObjects &bos)

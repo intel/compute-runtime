@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,7 +90,7 @@ class DrmGemCloseWorkerFixture {
     class DrmAllocationWrapper : public DrmAllocation {
       public:
         DrmAllocationWrapper(BufferObject *bo)
-            : DrmAllocation(0, AllocationType::unknown, bo, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::memoryNull) {
+            : DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, bo, nullptr, 0, static_cast<osHandle>(0u), MemoryPool::memoryNull) {
         }
     };
     MockExecutionEnvironment executionEnvironment;

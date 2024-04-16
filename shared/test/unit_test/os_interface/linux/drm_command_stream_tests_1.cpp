@@ -125,7 +125,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCall
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenMakingResidentThenSucceeds) {
-    DrmAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull);
+    DrmAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull);
     csr->makeResident(graphicsAllocation);
 
     EXPECT_EQ(0, mock->ioctlCount.gemUserptr);
@@ -137,7 +137,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenMakingResidentThenSucceeds) {
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenMakingResidentTwiceThenSucceeds) {
-    DrmAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull);
+    DrmAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull);
 
     csr->makeResident(graphicsAllocation);
     csr->makeResident(graphicsAllocation);
@@ -151,7 +151,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, WhenMakingResidentTwiceThenSucceeds) {
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenSizeZeroWhenMakingResidentTwiceThenSucceeds) {
-    DrmAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, nullptr, 0, static_cast<osHandle>(1u), MemoryPool::memoryNull);
+    DrmAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 0, static_cast<osHandle>(1u), MemoryPool::memoryNull);
 
     csr->makeResident(graphicsAllocation);
 
@@ -164,8 +164,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenSizeZeroWhenMakingResidentTwiceThe
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenResizedWhenMakingResidentTwiceThenSucceeds) {
-    DrmAllocation graphicsAllocation(0, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull);
-    DrmAllocation graphicsAllocation2(0, AllocationType::unknown, nullptr, nullptr, 8192, static_cast<osHandle>(1u), MemoryPool::memoryNull);
+    DrmAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull);
+    DrmAllocation graphicsAllocation2(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 8192, static_cast<osHandle>(1u), MemoryPool::memoryNull);
 
     csr->makeResident(graphicsAllocation);
     csr->makeResident(graphicsAllocation2);
@@ -302,7 +302,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenInvalidAddressWhenFlushingThenSucc
     ASSERT_NE(nullptr, commandBuffer); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(commandBuffer));
-    DrmAllocation commandBufferAllocation(0, AllocationType::commandBuffer, nullptr, commandBuffer, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull, canonizedGpuAddress);
+    DrmAllocation commandBufferAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, commandBuffer, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull, canonizedGpuAddress);
     LinearStream cs(&commandBufferAllocation);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -395,8 +395,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenNotAlignedWhenFlushingThenSucceeds
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckFlagsWhenFlushingThenSucceeds) {
     auto &cs = csr->getCS();
 
-    DrmAllocation allocation(0, AllocationType::unknown, nullptr, (void *)0x7FFFFFFF, 1024, static_cast<osHandle>(0u), MemoryPool::memoryNull);
-    DrmAllocation allocation2(0, AllocationType::unknown, nullptr, (void *)0x307FFFFFFF, 1024, static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    DrmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, (void *)0x7FFFFFFF, 1024, static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    DrmAllocation allocation2(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, (void *)0x307FFFFFFF, 1024, static_cast<osHandle>(0u), MemoryPool::memoryNull);
     csr->makeResident(allocation);
     csr->makeResident(allocation2);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -420,7 +420,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeWhenFlushingThenSuccee
     auto expectedBatchStartOffset = (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1);
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
 
-    DrmAllocation allocation(0, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    DrmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(0u), MemoryPool::memoryNull);
 
     csr->makeResident(allocation);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -463,7 +463,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenCheckDrmFreeCloseFailedWhenFlushin
 
     mock->storedRetValForGemClose = -1;
 
-    DrmAllocation allocation(0, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    DrmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(0u), MemoryPool::memoryNull);
 
     csr->makeResident(allocation);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -272,7 +272,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCsrCreatedWithInactiveG
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmAllocationWhenGetBufferObjectToModifyIsCalledForAGivenHandleIdThenTheCorrespondingBufferObjectGetsModified) {
     auto size = 1024u;
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, nullptr, nullptr, size, static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    auto allocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, size, static_cast<osHandle>(0u), MemoryPool::memoryNull);
 
     auto &bos = allocation->getBOs();
     for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
@@ -292,7 +292,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmAllocationWhenGetBuffer
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentThenSucceeds) {
     auto buffer = this->createBO(1024);
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    auto allocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
 
     csr->makeResident(*allocation);
@@ -310,8 +310,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentThenSucceeds)
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenMultipleAllocationsWhenMakingResidentThenEachSucceeds) {
     BufferObject *buffer1 = this->createBO(4096);
     BufferObject *buffer2 = this->createBO(4096);
-    auto allocation1 = new DrmAllocation(0, AllocationType::unknown, buffer1, nullptr, buffer1->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
-    auto allocation2 = new DrmAllocation(0, AllocationType::unknown, buffer2, nullptr, buffer2->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    auto allocation1 = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, buffer1, nullptr, buffer1->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    auto allocation2 = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, buffer2, nullptr, buffer2->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_EQ(nullptr, allocation1->getUnderlyingBuffer());
     EXPECT_EQ(nullptr, allocation2->getUnderlyingBuffer());
 
@@ -334,7 +334,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenMultipleAllocationsWhenMak
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, WhenMakingResidentTwiceThenRefCountIsOne) {
     auto buffer = this->createBO(1024);
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
+    auto allocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, buffer, nullptr, buffer->peekSize(), static_cast<osHandle>(0u), MemoryPool::memoryNull);
 
     csr->makeResident(*allocation);
     csr->processResidency(csr->getResidencyAllocations(), 0u);
@@ -831,7 +831,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCommandStreamReceiverWh
 
 struct MockDrmAllocationBindBO : public DrmAllocation {
     MockDrmAllocationBindBO(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool pool)
-        : DrmAllocation(rootDeviceIndex, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
+        : DrmAllocation(rootDeviceIndex, 1u /*num gmms*/, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
     }
 
     ADDMETHOD_NOBASE(bindBO, int, 0,
@@ -840,7 +840,7 @@ struct MockDrmAllocationBindBO : public DrmAllocation {
 
 struct MockDrmAllocationBindBOs : public DrmAllocation {
     MockDrmAllocationBindBOs(uint32_t rootDeviceIndex, AllocationType allocationType, BufferObjects &bos, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool pool)
-        : DrmAllocation(rootDeviceIndex, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
+        : DrmAllocation(rootDeviceIndex, 1u /*num gmms*/, allocationType, bos, ptrIn, gpuAddress, sizeIn, pool) {
     }
 
     ADDMETHOD_NOBASE(bindBOs, int, 0,
@@ -950,7 +950,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBuffer
     auto size = 1024u;
     auto bo = this->createBO(size);
     BufferObjects bos{bo};
-    auto allocation = new DrmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
+    auto allocation = new DrmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     EXPECT_EQ(bo, allocation->getBO());
 
     makeResidentBufferObjects<FamilyType>(&csr->getOsContext(), allocation);

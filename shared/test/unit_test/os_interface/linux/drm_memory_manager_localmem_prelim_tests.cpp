@@ -31,7 +31,7 @@
 TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenDrmMemoryManagerWithLocalMemoryWhenLockResourceIsCalledOnBufferObjectThenReturnPtr) {
     BufferObject bo(0, mock, 3, 1, 1024, 1);
 
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
+    DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_EQ(&bo, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockBufferObject(&bo);
@@ -2599,7 +2599,7 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOn
     mock->ioctlResExt = &ioctlResExt;
 
     BufferObject bo(0, mock, 3, 1, 0, 1);
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
+    DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2614,7 +2614,7 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOn
     mock->failOnMmapOffset = true;
 
     BufferObject bo(0, mock, 3, 1, 0, 1);
-    DrmAllocation drmAllocation(0, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
+    DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, &bo, nullptr, 0u, 0u, MemoryPool::localMemory);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
@@ -2838,7 +2838,7 @@ TEST_F(DrmMemoryManagerTestPrelim, MmapFailWhenUSMHostAllocationFromSharedHandle
 }
 
 TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationInLocalMemoryButBufferObjectIsNullThenReturnNullPtr) {
-    DrmAllocation drmAllocation(0, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
+    DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 0u, 0u, MemoryPool::localMemory);
 
     auto ptr = memoryManager->lockResource(&drmAllocation);
     EXPECT_EQ(nullptr, ptr);
@@ -2995,7 +2995,7 @@ TEST(AllocationInfoLogging, givenDrmGraphicsAllocationWithMultipleBOsWhenGetting
     BufferObject bo0(0, &drm, 3, 0, 0, 1), bo1(0, &drm, 3, 1, 0, 1),
         bo2(0, &drm, 3, 2, 0, 1), bo3(0, &drm, 3, 3, 0, 1);
     BufferObjects bos{&bo0, &bo1, &bo2, &bo3};
-    DrmAllocation drmAllocation(0, AllocationType::unknown, bos, nullptr, 0u, 0u, MemoryPool::localMemory);
+    DrmAllocation drmAllocation(0, 1u /*num gmms*/, AllocationType::unknown, bos, nullptr, 0u, 0u, MemoryPool::localMemory);
 
     EXPECT_STREQ(drmAllocation.getAllocationInfoString().c_str(), " Handle: 0 Handle: 1 Handle: 2 Handle: 3");
 }
