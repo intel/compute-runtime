@@ -43,6 +43,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
         if (retVal != CL_SUCCESS) {
             return retVal;
         }
+        if (mapAllocation) {
+            mapAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
+            mapAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
+        }
     }
 
     if (isCpuCopyAllowed) {
