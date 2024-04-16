@@ -566,6 +566,9 @@ struct MockCommandList : public CommandList {
     ADDMETHOD_NOBASE_VOIDRETURN(appendMultiPartitionEpilogue, (void));
     ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint64_t timeout));
+    ADDMETHOD_NOBASE(appendCommandLists, ze_result_t, ZE_RESULT_SUCCESS,
+                     (uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
+                      ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents));
 
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;

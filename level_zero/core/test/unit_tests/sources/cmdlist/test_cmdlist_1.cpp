@@ -2048,6 +2048,27 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForIm
     whiteBoxCmdList->csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
+TEST_F(CommandListCreate, whenCreatingImmediateCommandListAndAppendCommandListsThenReturnsUnsupported) {
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_TRUE(commandList->isImmediateType());
+    auto result = commandList->appendCommandLists(0u, nullptr, nullptr, 0u, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+TEST_F(CommandListCreate, givenCreatingRegularCommandlistAndppendCommandListsThenReturnInvalidArgument) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_FALSE(commandList->isImmediateType());
+    auto result = commandList->appendCommandLists(0u, nullptr, nullptr, 0u, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
 HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCommandListAndWaitingOnEventsThenDeviceLostIsReturned, IsSKL) {
     DebugManagerStateRestore restorer;
 

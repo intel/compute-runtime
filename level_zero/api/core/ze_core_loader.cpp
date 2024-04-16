@@ -386,6 +386,21 @@ zeGetCommandListProcAddrTable(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
+zeGetCommandListExpProcAddrTable(
+    ze_api_version_t version,
+    ze_command_list_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    fillDdiEntry(pDdiTable->pfnImmediateAppendCommandListsExp, L0::zeCommandListImmediateAppendCommandLists, version, ZE_API_VERSION_1_9);
+    return result;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetFenceProcAddrTable(
     ze_api_version_t version,
     ze_fence_dditable_t *pDdiTable) {

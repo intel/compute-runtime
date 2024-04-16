@@ -203,6 +203,8 @@ struct CommandListCoreFamily : public CommandListImp {
 
     MOCKABLE_VIRTUAL void appendSynchronizedDispatchInitializationSection();
     MOCKABLE_VIRTUAL void appendSynchronizedDispatchCleanupSection();
+    ze_result_t appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
+                                   ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
 
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;

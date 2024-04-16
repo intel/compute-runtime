@@ -94,6 +94,16 @@ ze_result_t zeCommandListIsImmediate(
     return L0::CommandList::fromHandle(hCommandList)->isImmediate(pIsImmediate);
 }
 
+ze_result_t zeCommandListImmediateAppendCommandLists(
+    ze_command_list_handle_t hCommandListImmediate,
+    uint32_t numCommandLists,
+    ze_command_list_handle_t *phCommandLists,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::CommandList::fromHandle(hCommandListImmediate)->appendCommandLists(numCommandLists, phCommandLists, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -191,5 +201,21 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsImmediate(
     return L0::zeCommandListIsImmediate(
         hCommandList,
         pIsImmediate);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListImmediateAppendCommandLists(
+    ze_command_list_handle_t hCommandListImmediate,
+    uint32_t numCommandLists,
+    ze_command_list_handle_t *phCommandLists,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListImmediateAppendCommandLists(
+        hCommandListImmediate,
+        numCommandLists,
+        phCommandLists,
+        hSignalEvent,
+        numWaitEvents,
+        phWaitEvents);
 }
 }
