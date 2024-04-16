@@ -733,6 +733,31 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
     }
 }
 
+TEST(IoctlHelperXeTest, givenL3BankMaskInQueryTopolgyWhenGetTopologyDataAndMapThenProperNumberOfL3BankIsSet) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    xeIoctlHelper->initialize();
+
+    for (auto gtId = 0u; gtId < 3u; gtId++) {
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0, 0, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
+        drm.addMockedQueryTopologyData(gtId, DRM_XE_TOPO_L3_BANK, 4, {0b1110'1011, 0b1111'1100, 0, 0});
+    }
+    DrmQueryTopologyData topologyData{};
+    TopologyMap topologyMap{};
+
+    auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+    ASSERT_TRUE(result);
+
+    // verify topology data
+    EXPECT_EQ(12, topologyData.numL3Banks);
+}
+
 TEST(IoctlHelperXeTest, givenUnknownTopologyTypeWhenGetTopologyDataAndMapThenNotRecognizedTopologyIsIgnored) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

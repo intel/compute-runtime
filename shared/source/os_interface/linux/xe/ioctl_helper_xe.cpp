@@ -347,9 +347,10 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
 }
 
 void IoctlHelperXe::getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss,
-                                    std::vector<std::bitset<8>> *euDss, DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty) {
+                                    std::vector<std::bitset<8>> *euDss, std::vector<std::bitset<8>> *l3BanksMask, DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty) {
     int subSliceCount = 0;
     int euPerDss = 0;
+    int l3Banks = 0;
 
     for (auto tileId = 0u; tileId < nTiles; tileId++) {
 
@@ -371,9 +372,15 @@ void IoctlHelperXe::getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *
             euPerDssPerTile += euDss[tileId][byte].count();
         }
 
+        int l3BanksPerTile = 0;
+        for (auto byte = 0u; byte < l3BanksMask[tileId].size(); byte++) {
+            l3BanksPerTile += l3BanksMask[tileId][byte].count();
+        }
+
         // pick smallest config
         subSliceCount = (subSliceCount == 0) ? subSliceCountPerTile : std::min(subSliceCount, subSliceCountPerTile);
         euPerDss = (euPerDss == 0) ? euPerDssPerTile : std::min(euPerDss, euPerDssPerTile);
+        l3Banks = (l3Banks == 0) ? l3BanksPerTile : std::min(l3Banks, l3BanksPerTile);
 
         // pick max config
         topologyData.maxSubSliceCount = std::max(topologyData.maxSubSliceCount, subSliceCountPerTile);
@@ -384,6 +391,7 @@ void IoctlHelperXe::getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *
     topologyData.subSliceCount = subSliceCount;
     topologyData.euCount = subSliceCount * euPerDss;
     topologyData.maxSliceCount = 1;
+    topologyData.numL3Banks = l3Banks;
 }
 
 void IoctlHelperXe::getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap) {
@@ -420,6 +428,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     StackVec<std::vector<std::bitset<8>>, 2> geomDss;
     StackVec<std::vector<std::bitset<8>>, 2> computeDss;
     StackVec<std::vector<std::bitset<8>>, 2> euDss;
+    StackVec<std::vector<std::bitset<8>>, 2> l3Banks;
 
     auto topologySize = queryGtTopology.size();
     auto dataPtr = queryGtTopology.data();
@@ -428,6 +437,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     geomDss.resize(numTiles);
     computeDss.resize(numTiles);
     euDss.resize(numTiles);
+    l3Banks.resize(numTiles);
     bool receivedDssInfo = false;
     bool receivedEuPerDssInfo = false;
     while (topologySize >= sizeof(drm_xe_query_topology_mask)) {
@@ -451,6 +461,9 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
                 fillMask(euDss[tileId], topo);
                 receivedEuPerDssInfo = true;
                 break;
+            case DRM_XE_TOPO_L3_BANK:
+                fillMask(l3Banks[tileId], topo);
+                break;
             default:
                 xeLog("Unhandle GT Topo type: %d\n", topo->type);
             }
@@ -462,7 +475,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     }
 
     bool isComputeDssEmpty = false;
-    getTopologyData(numTiles, geomDss.begin(), computeDss.begin(), euDss.begin(), topologyData, isComputeDssEmpty);
+    getTopologyData(numTiles, geomDss.begin(), computeDss.begin(), euDss.begin(), l3Banks.begin(), topologyData, isComputeDssEmpty);
 
     auto &dssInfo = isComputeDssEmpty ? geomDss : computeDss;
     getTopologyMap(numTiles, dssInfo.begin(), topologyMap);
