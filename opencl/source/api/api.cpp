@@ -5123,9 +5123,9 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
 
     case CL_KERNEL_EXEC_INFO_SVM_PTRS:
     case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL: {
-        if ((paramValueSize == 0) ||
+        if ((paramValueSize == 0 && paramValue) ||
             (paramValueSize % sizeof(void *)) ||
-            (paramValue == nullptr)) {
+            (paramValueSize && paramValue == nullptr)) {
             retVal = CL_INVALID_VALUE;
             TRACING_EXIT(ClSetKernelExecInfo, &retVal);
             return retVal;

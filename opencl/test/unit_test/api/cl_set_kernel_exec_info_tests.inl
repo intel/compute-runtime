@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -231,6 +231,16 @@ TEST_F(clSetKernelExecInfoTests, GivenMultipleSettingKernelInfoOperationsWhenSet
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_EQ(1u, pMockKernel->kernelSvmGfxAllocations.size());
+
+        retVal = clSetKernelExecInfo(
+            pMockMultiDeviceKernel,       // cl_kernel kernel
+            CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
+            0,                            // size_t param_value_size
+            nullptr                       // const void *param_value
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_EQ(0u, pMockKernel->kernelSvmGfxAllocations.size());
     }
 }
 
