@@ -3132,15 +3132,15 @@ typedef struct tagSAMPLER_STATE {
         INDIRECTSTATEPOINTER_ALIGN_SIZE = 0x40,
     } INDIRECTSTATEPOINTER;
     inline void setIndirectStatePointer(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffffff);
-        TheStructure.Common.IndirectStatePointer = static_cast<uint32_t>(value) >> INDIRECTSTATEPOINTER_BIT_SHIFT;
-    }
-    inline uint32_t getIndirectStatePointer() const {
-        return TheStructure.Common.IndirectStatePointer << INDIRECTSTATEPOINTER_BIT_SHIFT;
+        UNRECOVERABLE_IF(value & 0x3f);
+        TheStructure.Common.IndirectStatePointer = static_cast<uint32_t>(value & 0xffffc0) >> INDIRECTSTATEPOINTER_BIT_SHIFT;
+        setExtendedIndirectStatePointer(value);
     }
     inline void setExtendedIndirectStatePointer(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xff);
-        TheStructure.Common.ExtendedIndirectStatePointer = value;
+        TheStructure.Common.ExtendedIndirectStatePointer = static_cast<uint32_t>(value & 0xff000000) >> 24;
+    }
+    inline uint64_t getIndirectStatePointer() const {
+        return (TheStructure.Common.ExtendedIndirectStatePointer << 24) | (TheStructure.Common.IndirectStatePointer << INDIRECTSTATEPOINTER_BIT_SHIFT);
     }
     inline uint32_t getExtendedIndirectStatePointer() const {
         return TheStructure.Common.ExtendedIndirectStatePointer;

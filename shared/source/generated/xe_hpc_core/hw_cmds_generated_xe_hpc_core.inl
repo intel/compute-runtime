@@ -2782,12 +2782,16 @@ typedef struct tagSAMPLER_STATE {
         INDIRECTSTATEPOINTER_BIT_SHIFT = 0x6,
         INDIRECTSTATEPOINTER_ALIGN_SIZE = 0x40,
     } INDIRECTSTATEPOINTER;
-    inline void setIndirectStatePointer(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xffffc0L);
-        TheStructure.Common.IndirectStatePointer = static_cast<uint32_t>(value) >> INDIRECTSTATEPOINTER_BIT_SHIFT;
+    inline void setIndirectStatePointer(const uint32_t value) {
+        UNRECOVERABLE_IF(value & 0x3f);
+        TheStructure.Common.IndirectStatePointer = static_cast<uint32_t>(value & 0xffffc0) >> INDIRECTSTATEPOINTER_BIT_SHIFT;
+        setExtendedIndirectStatePointer(value);
+    }
+    inline void setExtendedIndirectStatePointer(const uint32_t value) {
+        TheStructure.Common.ExtendedIndirectStatePointer = static_cast<uint32_t>(value & 0xff000000) >> 24;
     }
     inline uint64_t getIndirectStatePointer() const {
-        return TheStructure.Common.IndirectStatePointer << INDIRECTSTATEPOINTER_BIT_SHIFT;
+        return (TheStructure.Common.ExtendedIndirectStatePointer << 24) | (TheStructure.Common.IndirectStatePointer << INDIRECTSTATEPOINTER_BIT_SHIFT);
     }
     inline void setTczAddressControlMode(const TEXTURE_COORDINATE_MODE value) {
         TheStructure.Common.TczAddressControlMode = value;
