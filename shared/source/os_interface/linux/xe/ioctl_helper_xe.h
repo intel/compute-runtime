@@ -32,7 +32,7 @@ struct BindInfo {
 class IoctlHelperXe : public IoctlHelper {
   public:
     using IoctlHelper::IoctlHelper;
-
+    static std::unique_ptr<IoctlHelperXe> create(Drm &drmArg);
     IoctlHelperXe(Drm &drmArg);
     ~IoctlHelperXe() override;
     int ioctl(DrmIoctl request, void *arg) override;
@@ -135,7 +135,7 @@ class IoctlHelperXe : public IoctlHelper {
     const char *xeGetBindOperationName(int bindOperation);
     const char *xeGetBindFlagsName(int bindFlags);
 
-    uint64_t getExtraFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource);
+    virtual uint64_t getExtraFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource);
     const char *xeGetengineClassName(uint32_t engineClass);
     template <typename DataType>
     std::vector<DataType> queryData(uint32_t queryId);
@@ -181,7 +181,6 @@ class IoctlHelperXe : public IoctlHelper {
     };
     std::vector<DebugMetadata> debugMetadata;
 
-  private:
     template <typename... XeLogArgs>
     void xeLog(XeLogArgs &&...args) const;
 

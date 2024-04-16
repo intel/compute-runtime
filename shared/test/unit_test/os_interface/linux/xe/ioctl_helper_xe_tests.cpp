@@ -2059,3 +2059,65 @@ TEST(IoctlHelperXeTest, givenNoGtListDataWhenInitializeThenInitializationFails) 
 
     EXPECT_FALSE(ioctlHelper->initialize());
 }
+
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetFlagsForVmBindThenExpectedValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    for (auto &bindCapture : ::testing::Bool()) {
+        for (auto &bindImmediate : ::testing::Bool()) {
+            for (auto &bindMakeResident : ::testing::Bool()) {
+                for (auto &bindLockedMemory : ::testing::Bool()) {
+                    for (auto &readOnlyResource : ::testing::Bool()) {
+                        auto flags = xeIoctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLockedMemory, readOnlyResource);
+                        if (bindCapture) {
+                            EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_FLAG_DUMPABLE), (flags & DRM_XE_VM_BIND_FLAG_DUMPABLE));
+                        }
+                        if (flags == 0) {
+                            EXPECT_FALSE(bindCapture);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST(IoctlHelperXeTest, whenCallingGetEuStallPropertiesThenFailueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    EXPECT_NE(nullptr, xeIoctlHelper);
+    std::array<uint64_t, 12u> properties = {};
+    EXPECT_FALSE(xeIoctlHelper.get()->getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 20u));
+}
+
+TEST(IoctlHelperXeTest, whenCallingPerfOpenEuStallStreamThenFailueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    EXPECT_NE(nullptr, xeIoctlHelper);
+    int32_t invalidFd = -1;
+    std::array<uint64_t, 12u> properties = {};
+    EXPECT_FALSE(xeIoctlHelper.get()->perfOpenEuStallStream(0u, properties, &invalidFd));
+}
+
+TEST(IoctlHelperXeTest, whenCallingPerfDisableEuStallStreamThenFailueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    EXPECT_NE(nullptr, xeIoctlHelper);
+    int32_t invalidFd = -1;
+    EXPECT_FALSE(xeIoctlHelper.get()->perfDisableEuStallStream(&invalidFd));
+}
+
+TEST(IoctlHelperXeTest, whenGetFdFromVmExportIsCalledThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    uint32_t vmId = 0, flags = 0;
+    int32_t fd = 0;
+    EXPECT_FALSE(xeIoctlHelper->getFdFromVmExport(vmId, flags, &fd));
+}

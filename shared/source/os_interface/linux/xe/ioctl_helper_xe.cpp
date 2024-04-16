@@ -1453,4 +1453,116 @@ void IoctlHelperXe::registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation)
     }
 }
 
+bool IoctlHelperXe::getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) {
+    return false;
+}
+
+void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut) {
+
+    auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
+
+    if (osContext.isLowPriority()) {
+        ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
+        ext[extIndexInOut].property = DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY;
+        ext[extIndexInOut].value = 0;
+        if (extIndexInOut > 0) {
+            ext[extIndexInOut - 1].base.next_extension = castToUint64(&ext[extIndexInOut]);
+        }
+        extIndexInOut++;
+    }
+}
+
+uint64_t IoctlHelperXe::getExtraFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource) {
+    return 0;
+}
+
+bool IoctlHelperXe::perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) {
+    return false;
+}
+
+bool IoctlHelperXe::perfDisableEuStallStream(int32_t *stream) {
+    return false;
+}
+bool IoctlHelperXe::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
+                                         uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) {
+    return false;
+}
+
+unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
+    xeLog(" -> IoctlHelperXe::%s 0x%x\n", __FUNCTION__, ioctlRequest);
+    switch (ioctlRequest) {
+    case DrmIoctl::gemClose:
+        RETURN_ME(DRM_IOCTL_GEM_CLOSE);
+    case DrmIoctl::gemVmCreate:
+        RETURN_ME(DRM_IOCTL_XE_VM_CREATE);
+    case DrmIoctl::gemVmDestroy:
+        RETURN_ME(DRM_IOCTL_XE_VM_DESTROY);
+    case DrmIoctl::gemMmapOffset:
+        RETURN_ME(DRM_IOCTL_XE_GEM_MMAP_OFFSET);
+    case DrmIoctl::gemCreate:
+        RETURN_ME(DRM_IOCTL_XE_GEM_CREATE);
+    case DrmIoctl::gemExecbuffer2:
+        RETURN_ME(DRM_IOCTL_XE_EXEC);
+    case DrmIoctl::gemVmBind:
+        RETURN_ME(DRM_IOCTL_XE_VM_BIND);
+    case DrmIoctl::query:
+        RETURN_ME(DRM_IOCTL_XE_DEVICE_QUERY);
+    case DrmIoctl::gemContextCreateExt:
+        RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_CREATE);
+    case DrmIoctl::gemContextDestroy:
+        RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY);
+    case DrmIoctl::gemWaitUserFence:
+        RETURN_ME(DRM_IOCTL_XE_WAIT_USER_FENCE);
+    case DrmIoctl::primeFdToHandle:
+        RETURN_ME(DRM_IOCTL_PRIME_FD_TO_HANDLE);
+    case DrmIoctl::primeHandleToFd:
+        RETURN_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
+    case DrmIoctl::debuggerOpen:
+    case DrmIoctl::metadataCreate:
+    case DrmIoctl::metadataDestroy:
+        return getIoctlRequestValueDebugger(ioctlRequest);
+    default:
+        UNRECOVERABLE_IF(true);
+        return 0;
+    }
+}
+
+std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
+    switch (ioctlRequest) {
+    case DrmIoctl::gemClose:
+        STRINGIFY_ME(DRM_IOCTL_GEM_CLOSE);
+    case DrmIoctl::gemVmCreate:
+        STRINGIFY_ME(DRM_IOCTL_XE_VM_CREATE);
+    case DrmIoctl::gemVmDestroy:
+        STRINGIFY_ME(DRM_IOCTL_XE_VM_DESTROY);
+    case DrmIoctl::gemMmapOffset:
+        STRINGIFY_ME(DRM_IOCTL_XE_GEM_MMAP_OFFSET);
+    case DrmIoctl::gemCreate:
+        STRINGIFY_ME(DRM_IOCTL_XE_GEM_CREATE);
+    case DrmIoctl::gemExecbuffer2:
+        STRINGIFY_ME(DRM_IOCTL_XE_EXEC);
+    case DrmIoctl::gemVmBind:
+        STRINGIFY_ME(DRM_IOCTL_XE_VM_BIND);
+    case DrmIoctl::query:
+        STRINGIFY_ME(DRM_IOCTL_XE_DEVICE_QUERY);
+    case DrmIoctl::gemContextCreateExt:
+        STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_CREATE);
+    case DrmIoctl::gemContextDestroy:
+        STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_DESTROY);
+    case DrmIoctl::gemWaitUserFence:
+        STRINGIFY_ME(DRM_IOCTL_XE_WAIT_USER_FENCE);
+    case DrmIoctl::primeFdToHandle:
+        STRINGIFY_ME(DRM_IOCTL_PRIME_FD_TO_HANDLE);
+    case DrmIoctl::primeHandleToFd:
+        STRINGIFY_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
+    case DrmIoctl::debuggerOpen:
+        STRINGIFY_ME(DRM_IOCTL_XE_EUDEBUG_CONNECT);
+    case DrmIoctl::metadataCreate:
+        STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_CREATE);
+    case DrmIoctl::metadataDestroy:
+        STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_DESTROY);
+    default:
+        return "???";
+    }
+}
 } // namespace NEO
