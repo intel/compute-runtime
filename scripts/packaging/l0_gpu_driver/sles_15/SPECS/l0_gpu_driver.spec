@@ -6,7 +6,7 @@
 %global build_id xxx
 %global NEO_RELEASE_WITH_REGKEYS FALSE
 %global NEO_ENABLE_XE_EU_DEBUG_SUPPORT FALSE
-%global I915_HEADERS_DIR %{nil}
+%global NEO_I915_PRELIM_HEADERS_DIR %{nil}
 
 %define gmmlib_sover 12
 %define igc_sover 1
@@ -28,7 +28,7 @@ License: MIT
 URL: https://github.com/intel/compute-runtime
 Source0: %{url}/archive/%{version}/compute-runtime.tar.xz
 Source1: copyright
-%if "%{I915_HEADERS_DIR}" != ""
+%if "%{NEO_I915_PRELIM_HEADERS_DIR}" != ""
 Source2: uapi.tar.xz
 %endif
 
@@ -62,7 +62,7 @@ Intel(R) Graphics Compute Runtime for oneAPI Level Zero - development headers
 %debug_package %{nil}
 
 %prep
-%if "%{I915_HEADERS_DIR}" == ""
+%if "%{NEO_I915_PRELIM_HEADERS_DIR}" == ""
 %autosetup -p1 -n compute-runtime
 %else
 %autosetup -p1 -n compute-runtime -b 2
@@ -81,7 +81,7 @@ Intel(R) Graphics Compute Runtime for oneAPI Level Zero - development headers
    -DL0_INSTALL_UDEV_RULES=1 \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/ \
    -DCMAKE_VERBOSE_MAKEFILE=FALSE \
-   -DI915_HEADERS_DIR=$(realpath %{I915_HEADERS_DIR})
+   -DNEO_I915_PRELIM_HEADERS_DIR=$(realpath %{NEO_I915_PRELIM_HEADERS_DIR})
 %ninja_build
 
 %install

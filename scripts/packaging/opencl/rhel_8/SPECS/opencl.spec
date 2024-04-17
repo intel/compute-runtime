@@ -6,7 +6,7 @@
 %global NEO_OCL_VERSION_BUILD xxx
 %global NEO_RELEASE_WITH_REGKEYS FALSE
 %global NEO_ENABLE_XE_EU_DEBUG_SUPPORT FALSE
-%global I915_HEADERS_DIR %{nil}
+%global NEO_I915_PRELIM_HEADERS_DIR %{nil}
 
 %define _source_payload w5T16.xzdio
 %define _binary_payload w5T16.xzdio
@@ -22,7 +22,7 @@ License: MIT
 URL: https://github.com/intel/compute-runtime
 Source0: %{url}/archive/%{version}/compute-runtime.tar.xz
 Source1: copyright
-%if "%{I915_HEADERS_DIR}" != ""
+%if "%{NEO_I915_PRELIM_HEADERS_DIR}" != ""
 Source2: uapi.tar.xz
 %endif
 
@@ -45,7 +45,7 @@ Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to con
 %define debug_package %{nil}
 
 %prep
-%if "%{I915_HEADERS_DIR}" == ""
+%if "%{NEO_I915_PRELIM_HEADERS_DIR}" == ""
 %autosetup -p1 -n compute-runtime
 %else
 %autosetup -p1 -n compute-runtime -b 2
@@ -66,7 +66,7 @@ cd build
    -DNEO_ENABLE_XE_EU_DEBUG_SUPPORT=%{NEO_ENABLE_XE_EU_DEBUG_SUPPORT} \
    -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
    -DCMAKE_VERBOSE_MAKEFILE=FALSE \
-   -DI915_HEADERS_DIR=$(realpath %{I915_HEADERS_DIR})
+   -DNEO_I915_PRELIM_HEADERS_DIR=$(realpath %{NEO_I915_PRELIM_HEADERS_DIR})
 %ninja_build
 
 %install
