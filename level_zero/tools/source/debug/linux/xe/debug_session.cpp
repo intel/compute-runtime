@@ -304,7 +304,7 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
     case DRM_XE_EUDEBUG_EVENT_VM_BIND_OP: {
         drm_xe_eudebug_event_vm_bind_op *vmBindOp = reinterpret_cast<drm_xe_eudebug_event_vm_bind_op *>(event);
 
-        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: drm_xe_eudebug_event_vm_bind_op vm_bind_ref_seqno = %llu num_extensions = %llu addr = %llu range = %llu\n",
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: drm_xe_eudebug_event_vm_bind_op vm_bind_ref_seqno = %llu num_extensions = %llu addr = 0x%llx range = %llu\n",
                                 static_cast<uint64_t>(vmBindOp->vm_bind_ref_seqno), static_cast<uint64_t>(vmBindOp->num_extensions),
                                 static_cast<uint64_t>(vmBindOp->addr), static_cast<uint64_t>(vmBindOp->range));
 
@@ -399,11 +399,12 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
     auto elfHandleInVmBind = invalidHandle;
 
     uint64_t moduleHandle = invalidHandle;
+    uint64_t isaAddr = 0;
     bool triggerModuleLoadEvent = false;
 
     for (auto &vmBindOpData : vmBindData.vmBindOpMap) {
+        auto &vmBindOp = vmBindOpData.second.vmBindOp;
         for (const auto &vmBindOpMetadata : vmBindOpData.second.vmBindOpMetadataVec) {
-            auto &vmBindOp = vmBindOpData.second.vmBindOp;
             auto &metaDataEntry = connection->metaDataMap[vmBindOpMetadata.metadata_handle];
             if (vmBindOp.base.flags & DRM_XE_EUDEBUG_EVENT_CREATE) {
                 {
@@ -420,10 +421,10 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                 }
 
                 if (metaDataEntry.metadata.type == DRM_XE_DEBUG_METADATA_ELF_BINARY) {
+                    isaAddr = vmBindOp.addr;
                     if (connection->isaMap[0].find(vmBindOp.addr) == connection->isaMap[0].end()) {
                         auto &isaMap = connection->isaMap[0];
                         auto &elfMap = connection->elfMap;
-
                         auto isa = std::make_unique<IsaAllocation>();
                         isa->bindInfo = {vmBindOp.addr, vmBindOp.range};
                         isa->vmHandle = vmBindData.vmBind.vm_handle;
@@ -431,11 +432,15 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         isa->moduleBegin = reinterpret_cast<uint64_t>(metaDataEntry.data.get());
                         isa->moduleEnd = isa->moduleBegin + metaDataEntry.metadata.len;
                         isa->tileInstanced = false;
+                        isa->validVMs.insert(vmBindData.vmBind.vm_handle);
                         isa->perKernelModule = false;
                         elfMap[isa->moduleBegin] = isa->elfHandle;
                         isaMap[vmBindOp.addr] = std::move(isa);
                         isaMap[vmBindOp.addr]->moduleLoadEventAck = true;
                         elfHandleInVmBind = vmBindOpMetadata.metadata_handle;
+                    } else {
+                        auto &isa = connection->isaMap[0][vmBindOp.addr];
+                        isa->validVMs.insert(vmBindData.vmBind.vm_handle);
                     }
                 }
                 if (metaDataEntry.metadata.type == DRM_XE_DEBUG_METADATA_PROGRAM_MODULE) {
@@ -445,13 +450,43 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
 
                     bool canTriggerEvent = module.loadAddresses[0].size() == (module.segmentCount - 1);
                     module.loadAddresses[0].insert(vmBindOp.addr);
+                    moduleHandle = vmBindOpMetadata.metadata_handle;
                     if (canTriggerEvent && module.loadAddresses[0].size() == module.segmentCount) {
                         triggerModuleLoadEvent = true;
-                        moduleHandle = vmBindOpMetadata.metadata_handle;
                     }
                 }
             }
         }
+
+        if (vmBindOp.base.flags & DRM_XE_EUDEBUG_EVENT_DESTROY) {
+            if (connection->isaMap[0].count(vmBindOp.addr)) {
+                auto &isa = connection->isaMap[0][vmBindOp.addr];
+                if (isa->validVMs.count(vmBindData.vmBind.vm_handle)) {
+                    auto &module = connection->metaDataToModule[isa->moduleHandle];
+                    module.segmentVmBindCounter[0]--;
+                    if (module.segmentVmBindCounter[0] == 0) {
+                        zet_debug_event_t debugEvent = {};
+                        auto &metaDataEntry = connection->metaDataMap[isa->moduleHandle];
+                        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                        auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[0].begin(), module.loadAddresses[0].end()));
+                        debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
+                        debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                        debugEvent.info.module.load = loadAddress;
+                        auto &elfMetadata = connection->metaDataMap[isa->elfHandle];
+                        debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(elfMetadata.data.get());
+                        debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(elfMetadata.data.get()) + elfMetadata.metadata.len;
+                        pushApiEvent(debugEvent, metaDataEntry.metadata.metadata_handle);
+                        module.loadAddresses[0].clear();
+                        module.moduleLoadEventAcked[0] = false;
+                    }
+                    isa->validVMs.erase(vmBindData.vmBind.vm_handle);
+                }
+            }
+        }
+    }
+
+    if (isaAddr && moduleHandle != invalidHandle) {
+        connection->isaMap[0][isaAddr]->moduleHandle = moduleHandle;
     }
 
     if (triggerModuleLoadEvent) {

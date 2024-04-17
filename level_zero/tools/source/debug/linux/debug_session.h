@@ -15,6 +15,8 @@
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
+#include <set>
+
 namespace L0 {
 struct DebugSessionLinux : DebugSessionImp {
 
@@ -116,11 +118,13 @@ struct DebugSessionLinux : DebugSessionImp {
 
         uint64_t moduleBegin;
         uint64_t moduleEnd;
+        uint64_t moduleHandle;
 
         std::unordered_set<uint64_t> cookies;
         int vmBindCounter = 0;
         bool moduleLoadEventAck = false;
         std::vector<EventToAck> ackEvents;
+        std::set<uint64_t> validVMs;
     };
 
     struct Module {
