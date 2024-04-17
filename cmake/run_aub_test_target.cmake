@@ -34,6 +34,24 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS OR NOT NEO_SKIP_L0_UNIT_TESTS)
     list(APPEND aub_tests_options ${AUB_DUMP_IMAGE_FORMAT})
   endif()
 
+  set(aubstream_mode_flag "")
+  if(DEFINED NEO_GENERATE_AUBS_FOR)
+    set(aubstream_mode_flag "--null_aubstream")
+    foreach(product_with_aubs ${NEO_GENERATE_AUBS_FOR})
+      string(TOLOWER ${product_with_aubs} product_with_aubs_lower)
+      if(${product_with_aubs_lower} STREQUAL ${product})
+        set(aubstream_mode_flag "")
+        string(TOUPPER ${product} product_upper)
+        set_property(GLOBAL APPEND PROPERTY NEO_PLATFORMS_FOR_AUB_GENERATION "${product_upper} ")
+        break()
+      endif()
+
+    endforeach()
+  endif()
+  if(NOT ${aubstream_mode_flag} STREQUAL "")
+    list(APPEND aub_tests_options ${aubstream_mode_flag})
+  endif()
+
   add_custom_command(
                      TARGET run_${product}_${revision_id}_aub_tests
                      POST_BUILD

@@ -256,6 +256,13 @@ if(NEO_SKIP_UNIT_TESTS)
   set(NEO_SKIP_L0_BLACK_BOX_TESTS TRUE)
 endif()
 
+if(DEFINED NEO_GENERATE_AUBS_FOR)
+  if(DEFINED NEO_SKIP_AUB_TESTS_RUN AND NEO_SKIP_AUB_TESTS_RUN)
+    message(FATAL_ERROR "Invalid cmake flags combination, NEO_GENERATE_AUBS_FOR assumes aub tests execution is not skipped")
+  endif()
+  set(NEO_SKIP_AUB_TESTS_RUN FALSE)
+endif()
+
 if(NOT DEFINED NEO_SKIP_AUB_TESTS_RUN)
   set(NEO_SKIP_AUB_TESTS_RUN TRUE)
 endif()
