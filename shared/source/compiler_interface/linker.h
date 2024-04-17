@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ enum class LinkingStatus : uint32_t {
 inline const char *asString(SegmentType segment) {
     switch (segment) {
     default:
-        return "UNKOWN";
+        return "UNKNOWN";
     case SegmentType::globalConstants:
         return "GLOBAL_CONSTANTS";
     case SegmentType::globalVariables:
