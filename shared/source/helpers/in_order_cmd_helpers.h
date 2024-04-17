@@ -86,6 +86,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     NEO::TagNodeBase *deviceCounterNode = nullptr;
     NEO::TagNodeBase *hostCounterNode = nullptr;
     uint64_t counterValue = 0;
+
     uint64_t regularCmdListSubmissionCounter = 0;
     uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;

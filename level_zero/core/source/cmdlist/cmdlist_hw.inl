@@ -145,7 +145,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     mappedTsEventList.clear();
 
     if (inOrderExecInfo) {
-        inOrderExecInfo->reset();
+        inOrderExecInfo.reset();
+        enableInOrderExecution();
     }
 
     latestOperationRequiredNonWalkerInOrderCmdsChaining = false;

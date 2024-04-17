@@ -5555,13 +5555,17 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
     }
 
     regularCmdList->inOrderExecInfo->setAllocationOffset(123);
-    auto hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+    auto hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getBaseHostAddress());
     *hostAddr = 0x1234;
     regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining = true;
 
+    auto originalInOrderExecInfo = regularCmdList->inOrderExecInfo;
+
     regularCmdList->reset();
+    EXPECT_NE(originalInOrderExecInfo.get(), regularCmdList->inOrderExecInfo.get());
     EXPECT_EQ(0u, regularCmdList->inOrderExecInfo->getCounterValue());
     EXPECT_EQ(0u, regularCmdList->inOrderExecInfo->getAllocationOffset());
+    hostAddr = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getBaseHostAddress());
     EXPECT_EQ(0u, *hostAddr);
     EXPECT_FALSE(regularCmdList->latestOperationRequiredNonWalkerInOrderCmdsChaining);
 }
