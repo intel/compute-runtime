@@ -135,7 +135,6 @@ class IoctlHelperXe : public IoctlHelper {
     const char *xeGetBindOperationName(int bindOperation);
     const char *xeGetBindFlagsName(int bindFlags);
 
-    virtual uint64_t getExtraFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource);
     const char *xeGetengineClassName(uint32_t engineClass);
     template <typename DataType>
     std::vector<DataType> queryData(uint32_t queryId);

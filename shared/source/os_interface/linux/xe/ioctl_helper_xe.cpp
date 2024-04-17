@@ -764,7 +764,6 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
     if (bindCapture) {
         ret |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
     }
-    ret |= getExtraFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource);
     return ret;
 }
 
@@ -1470,10 +1469,6 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, void *
         }
         extIndexInOut++;
     }
-}
-
-uint64_t IoctlHelperXe::getExtraFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource) {
-    return 0;
 }
 
 bool IoctlHelperXe::perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) {
