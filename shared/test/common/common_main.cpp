@@ -302,6 +302,7 @@ int main(int argc, char **argv) {
     bool gmmInitialized = false;
     bool sipInitialized = false;
 
+    adjustCsrType(testMode);
     for (auto &selectedProduct : selectedTestProducts) {
         hwInfoForTests = *hardwareInfoTable[selectedProduct];
 

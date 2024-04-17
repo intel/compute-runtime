@@ -28,4 +28,5 @@ inline bool isAubTestMode(TestMode testMode) {
 extern TestMode testMode;
 
 void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, uint32_t sliceCount, uint32_t subSlicePerSliceCount, int dieRecovery);
+void adjustCsrType(TestMode testMode);
 } // namespace NEO

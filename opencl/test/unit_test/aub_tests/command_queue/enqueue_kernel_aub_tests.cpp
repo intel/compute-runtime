@@ -191,7 +191,7 @@ struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture<AUBHelloWorldFix
     template <typename FamilyType>
     void writeMemory(GraphicsAllocation *allocation) {
         AUBCommandStreamReceiverHw<FamilyType> *aubCsr = nullptr;
-        if (testMode == TestMode::aubTests) {
+        if (testMode == TestMode::aubTests || testMode == TestMode::aubTestsWithoutOutputFiles) {
             aubCsr = static_cast<AUBCommandStreamReceiverHw<FamilyType> *>(pCommandStreamReceiver);
         } else if (testMode == TestMode::aubTestsWithTbx) {
             auto tbxWithAubCsr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver);
