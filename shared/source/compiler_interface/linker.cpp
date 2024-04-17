@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -567,7 +567,7 @@ std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &
         return "";
     }
     std::stringstream stream;
-    stream << "Relocations debug informations :\n";
+    stream << "Relocations debug information :\n";
     for (const auto &symbol : relocatedSymbols) {
         stream << " * \"" << symbol.first << "\" [" << symbol.second.symbol.size << " bytes]";
         stream << " " << asString(symbol.second.symbol.segment) << "_SEGMENT@" << symbol.second.symbol.offset;

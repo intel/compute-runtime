@@ -387,7 +387,7 @@ Usage: ocloc multi <file_name>
                 '-file <filename> -device <device_type> [compile_options]'.
                 See 'ocloc compile --help' for available compile_options.
                 Results of subsequent compilations will be dumped into 
-                a directory with name indentical file_name's base name.
+                a directory with name identical file_name's base name.
 
   -output_file_list             Name of optional file containing 
                                 paths to outputs .bin files

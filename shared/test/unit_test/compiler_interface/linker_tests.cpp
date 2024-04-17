@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@
 #include <string>
 
 TEST(SegmentTypeTests, givenSegmentTypeWhenAsStringIsCalledThenProperRepresentationIsReturned) {
-    EXPECT_STREQ("UNKOWN", NEO::asString(NEO::SegmentType::unknown));
+    EXPECT_STREQ("UNKNOWN", NEO::asString(NEO::SegmentType::unknown));
     EXPECT_STREQ("GLOBAL_CONSTANTS", NEO::asString(NEO::SegmentType::globalConstants));
     EXPECT_STREQ("GLOBAL_VARIABLES", NEO::asString(NEO::SegmentType::globalVariables));
     EXPECT_STREQ("INSTRUCTIONS", NEO::asString(NEO::SegmentType::instructions));
@@ -1763,7 +1763,7 @@ TEST(RelocationsDebugMessageTests, givenListOfRelocatedSymbolsThenReturnProperDe
     auto message = NEO::constructRelocationsDebugMessage(symbols);
 
     std::stringstream expected;
-    expected << "Relocations debug informations :\n";
+    expected << "Relocations debug information :\n";
     for (const auto &symbol : symbols) {
         if (symbol.first == "foo") {
             expected << " * \"foo\" [1024 bytes] INSTRUCTIONS_SEGMENT@64 -> 0x1000 GPUVA\n";
