@@ -75,6 +75,11 @@ Summary:        ocloc package for opencl
    -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
    -DCMAKE_VERBOSE_MAKEFILE=FALSE \
    -DNEO_I915_PRELIM_HEADERS_DIR=$(realpath %{NEO_I915_PRELIM_HEADERS_DIR})
+
+%if 0%{?neo_rpm__post_cmake:0}
+%{neo_rpm__post_cmake_command}
+%endif
+
 %ninja_build
 
 %install

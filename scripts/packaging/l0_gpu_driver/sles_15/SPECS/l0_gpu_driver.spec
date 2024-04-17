@@ -82,6 +82,11 @@ Intel(R) Graphics Compute Runtime for oneAPI Level Zero - development headers
    -DUDEV_RULES_DIR=/etc/udev/rules.d/ \
    -DCMAKE_VERBOSE_MAKEFILE=FALSE \
    -DNEO_I915_PRELIM_HEADERS_DIR=$(realpath %{NEO_I915_PRELIM_HEADERS_DIR})
+
+%if 0%{?neo_rpm__post_cmake:0}
+%{neo_rpm__post_cmake_command}
+%endif
+
 %ninja_build
 
 %install
