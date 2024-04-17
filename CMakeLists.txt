@@ -546,7 +546,7 @@ if(UNIX)
 
 endif()
 
-include(cmake/find_drm.cmake)
+include(cmake${BRANCH_DIR_SUFFIX}/find_drm.cmake)
 
 # Enable/Disable BuiltIns compilation during build
 set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
