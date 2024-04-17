@@ -30,8 +30,8 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto &hwInfo = neoDevice->getHardwareInfo();
 
-    auto event = new EventImp<TagSizeT>(desc->index, device, csr->isTbxMode());
-    UNRECOVERABLE_IF(event == nullptr);
+    auto event = std::make_unique<EventImp<TagSizeT>>(desc->index, device, csr->isTbxMode());
+    UNRECOVERABLE_IF(!event.get());
 
     event->eventPoolAllocation = eventDescriptor.eventPoolAllocation;
 
@@ -103,6 +103,11 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
 
         interruptMode = (eventSyncModeDesc->syncModeFlags & ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
         kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
+
+        if (kmdWaitMode) {
+            event->setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
+            UNRECOVERABLE_IF(eventSyncModeDesc->externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);
+        }
     }
 
     interruptMode |= (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1);
@@ -116,7 +121,7 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
         event->enableInterruptMode();
     }
 
-    return event;
+    return event.release();
 }
 
 template <typename TagSizeT>

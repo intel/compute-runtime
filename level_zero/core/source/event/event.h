@@ -288,6 +288,8 @@ struct Event : _ze_event_handle_t {
         return this->signalAllEventPackets ? getMaxPacketsCount() : getPacketsInUse();
     }
 
+    void setExternalInterruptId(uint32_t interruptId) { externalInterruptId = interruptId; }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
@@ -335,6 +337,8 @@ struct Event : _ze_event_handle_t {
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
     uint32_t counterBasedFlags = 0;
+    uint32_t externalInterruptId = 0;
+
     CounterBasedMode counterBasedMode = CounterBasedMode::initiallyDisabled;
 
     ze_event_scope_flags_t signalScope = 0u;

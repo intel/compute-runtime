@@ -85,7 +85,7 @@ HWTEST2_F(InOrderCmdListTests, givenInvalidPnextStructWhenCreatingEventThenIgnor
 HWTEST2_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThenEnableNewModes, IsAtLeastSkl) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = 4;
+    eventPoolDesc.count = 6;
 
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
 
@@ -116,6 +116,16 @@ HWTEST2_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThen
     auto event3 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
     EXPECT_TRUE(event3->isInterruptModeEnabled());
     EXPECT_TRUE(event3->isKmdWaitModeEnabled());
+
+    eventDesc.index = 4;
+    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
+    syncModeDesc.externalInterruptId = 123;
+    auto event4 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
+    EXPECT_EQ(0u, event4->externalInterruptId);
+
+    eventDesc.index = 5;
+    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
+    EXPECT_ANY_THROW(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 }
 
 HWTEST2_F(InOrderCmdListTests, givenQueueFlagWhenCreatingCmdListThenEnableRelaxedOrdering, IsAtLeastXeHpCore) {
@@ -3292,7 +3302,7 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenDispatchingThenProgramC
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    auto event = createStandaloneCbEvent();
+    auto event = createStandaloneCbEvent(nullptr);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
@@ -3838,6 +3848,22 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingSynchronizeThenRet
     EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->hostSynchronize(1));
 
     zeEventDestroy(handle);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterruptIdThenAssign, IsAtLeastSkl) {
+    ze_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZE_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
+    syncModeDesc.externalInterruptId = 123;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.pNext = &syncModeDesc;
+
+    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
+    auto event1 = createStandaloneCbEvent(reinterpret_cast<const ze_base_desc_t *>(&syncModeDesc));
+    EXPECT_EQ(0u, event1->externalInterruptId);
+
+    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
+    auto event2 = createStandaloneCbEvent(reinterpret_cast<const ze_base_desc_t *>(&syncModeDesc));
+    EXPECT_EQ(syncModeDesc.externalInterruptId, event2->externalInterruptId);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {

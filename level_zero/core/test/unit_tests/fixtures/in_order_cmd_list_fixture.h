@@ -32,6 +32,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         using EventImp<uint32_t>::csrs;
         using EventImp<uint32_t>::signalScope;
         using EventImp<uint32_t>::unsetCmdQueue;
+        using EventImp<uint32_t>::externalInterruptId;
 
         void makeCounterBasedInitiallyDisabled() {
             counterBasedMode = CounterBasedMode::initiallyDisabled;
@@ -59,7 +60,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         ::Test<ModuleFixture>::TearDown();
     }
 
-    DestroyableZeUniquePtr<FixtureMockEvent> createStandaloneCbEvent() {
+    DestroyableZeUniquePtr<FixtureMockEvent> createStandaloneCbEvent(const ze_base_desc_t *pNext) {
         constexpr uint32_t counterBasedFlags = (ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE);
 
         constexpr EventDescriptor eventDescriptor = {
@@ -82,6 +83,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), castToUint64(deviceAddress), hostAddress, 1);
 
         ze_event_desc_t eventDesc = {};
+        eventDesc.pNext = pNext;
         auto event = static_cast<FixtureMockEvent *>(Event::create<uint64_t>(eventDescriptor, &eventDesc, device));
         event->updateInOrderExecState(inOrderExecInfo, 1, 0);
 
