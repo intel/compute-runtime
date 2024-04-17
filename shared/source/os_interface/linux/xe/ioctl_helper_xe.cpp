@@ -1266,9 +1266,12 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         }
 
         constexpr auto oneSecTimeout = 1000000000;
+        constexpr auto infiniteTimeout = -1;
+        bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+        auto timeout = debuggingEnabled ? infiniteTimeout : oneSecTimeout;
         return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
                                sync[0].addr,
-                               sync[0].timeline_value, oneSecTimeout);
+                               sync[0].timeline_value, timeout);
     }
 
     xeLog("error:  -> IoctlHelperXe::%s %s index=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx pat=%hu r=%d\n",
