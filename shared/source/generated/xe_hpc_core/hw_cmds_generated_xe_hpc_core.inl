@@ -1293,11 +1293,11 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
-            uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
-            uint32_t RegisterOffset : BITFIELD_RANGE(2, 22);
-            uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);
+            uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);     // patched
+            uint32_t RegisterOffset : BITFIELD_RANGE(2, 22); // patched
+            uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);   // patched
             // DWORD 2
-            uint32_t DataDword;
+            uint32_t DataDword; // patched
         } Common;
         uint32_t RawData[3];
     } TheStructure;
