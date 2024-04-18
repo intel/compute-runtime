@@ -282,7 +282,8 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
         return {};
     }
 
-    std::array<std::bitset<4>, 64> regionTilesMask{};
+    constexpr auto maxSupportedTilesNumber{4u};
+    std::array<std::bitset<maxSupportedTilesNumber>, 64> regionTilesMask{};
 
     for (auto i{0u}; i < xeGtListData->num_gt; i++) {
         const auto &gtEntry = xeGtListData->gt_list[i];
@@ -296,7 +297,6 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     }
 
     MemoryInfo::RegionContainer regionsContainer{};
-    size_t sysmemRegionsAdded{0u};
 
     auto xeMemRegionsData = reinterpret_cast<drm_xe_query_mem_regions *>(memUsageData.data());
     for (auto i = 0u; i < xeMemRegionsData->num_mem_regions; i++) {
@@ -305,12 +305,11 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
         if (xeMemRegion.mem_class == DRM_XE_MEM_REGION_CLASS_SYSMEM) {
             // Make sure sysmem is always put at the first position
             regionsContainer.insert(regionsContainer.begin(), createMemoryRegionFromXeMemRegion(xeMemRegion, 0u));
-            ++sysmemRegionsAdded;
         } else {
             auto regionIndex = xeMemRegion.instance;
             UNRECOVERABLE_IF(regionIndex >= regionTilesMask.size());
             if (auto tilesMask = regionTilesMask[regionIndex]; tilesMask.any()) {
-                regionsContainer.insert(regionsContainer.begin() + sysmemRegionsAdded, createMemoryRegionFromXeMemRegion(xeMemRegion, tilesMask));
+                regionsContainer.push_back(createMemoryRegionFromXeMemRegion(xeMemRegion, tilesMask));
             }
         }
     }

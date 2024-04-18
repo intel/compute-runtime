@@ -1320,13 +1320,13 @@ TEST(IoctlHelperXeTest, whenCreatingMemoryInfoThenProperMemoryBanksAreDiscovered
 
     auto memoryClassInstance1 = memoryInfo->getMemoryRegionClassAndInstance(0b01, *defaultHwInfo);
     EXPECT_EQ(static_cast<uint16_t>(DRM_XE_MEM_REGION_CLASS_VRAM), memoryClassInstance1.memoryClass);
-    EXPECT_EQ(2u, memoryClassInstance1.memoryInstance);
-    EXPECT_EQ(4 * MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0b01));
+    EXPECT_EQ(1u, memoryClassInstance1.memoryInstance);
+    EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0b01));
 
     auto memoryClassInstance2 = memoryInfo->getMemoryRegionClassAndInstance(0b10, *defaultHwInfo);
     EXPECT_EQ(static_cast<uint16_t>(DRM_XE_MEM_REGION_CLASS_VRAM), memoryClassInstance2.memoryClass);
-    EXPECT_EQ(1u, memoryClassInstance2.memoryInstance);
-    EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0b10));
+    EXPECT_EQ(2u, memoryClassInstance2.memoryInstance);
+    EXPECT_EQ(4 * MemoryConstants::gigaByte, memoryInfo->getMemoryRegionSize(0b10));
 
     auto &memoryRegions = memoryInfo->getDrmRegionInfos();
     EXPECT_EQ(3u, memoryRegions.size());
@@ -1335,13 +1335,13 @@ TEST(IoctlHelperXeTest, whenCreatingMemoryInfoThenProperMemoryBanksAreDiscovered
     EXPECT_EQ(MemoryConstants::gigaByte, memoryRegions[0].probedSize);
     EXPECT_EQ(MemoryConstants::gigaByte - MemoryConstants::kiloByte, memoryRegions[0].unallocatedSize);
 
-    EXPECT_EQ(2u, memoryRegions[1].region.memoryInstance);
-    EXPECT_EQ(4 * MemoryConstants::gigaByte, memoryRegions[1].probedSize);
-    EXPECT_EQ(3 * MemoryConstants::gigaByte, memoryRegions[1].unallocatedSize);
+    EXPECT_EQ(2u, memoryRegions[2].region.memoryInstance);
+    EXPECT_EQ(4 * MemoryConstants::gigaByte, memoryRegions[2].probedSize);
+    EXPECT_EQ(3 * MemoryConstants::gigaByte, memoryRegions[2].unallocatedSize);
 
-    EXPECT_EQ(1u, memoryRegions[2].region.memoryInstance);
-    EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryRegions[2].probedSize);
-    EXPECT_EQ(2 * MemoryConstants::gigaByte - MemoryConstants::megaByte, memoryRegions[2].unallocatedSize);
+    EXPECT_EQ(1u, memoryRegions[1].region.memoryInstance);
+    EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryRegions[1].probedSize);
+    EXPECT_EQ(2 * MemoryConstants::gigaByte - MemoryConstants::megaByte, memoryRegions[1].unallocatedSize);
 }
 
 TEST(IoctlHelperXeTest, givenXeDrmMemoryManagerWhenGetLocalMemorySizeIsCalledThenReturnMemoryRegionSizeCorrectly) {
@@ -1376,11 +1376,11 @@ TEST(IoctlHelperXeTest, givenXeDrmMemoryManagerWhenGetLocalMemorySizeIsCalledThe
     uint32_t tileMask = static_cast<uint32_t>(maxNBitValue(tileCount));
     EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[0] + lmemSizes[1]);
     tileMask = static_cast<uint32_t>(0b01);
-    EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[0]);
-    tileMask = static_cast<uint32_t>(0b10);
     EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[1]);
-    tileMask = static_cast<uint32_t>(0b100);
+    tileMask = static_cast<uint32_t>(0b10);
     EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[0]);
+    tileMask = static_cast<uint32_t>(0b100);
+    EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[1]);
 }
 
 TEST(IoctlHelperXeTest, givenIoctlFailureWhenCreatingMemoryInfoThenNoMemoryBanksAreDiscovered) {
