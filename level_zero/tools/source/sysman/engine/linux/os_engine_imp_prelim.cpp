@@ -18,7 +18,7 @@ namespace L0 {
 constexpr std::string_view pathForNumberOfVfs = "device/sriov_numvfs";
 using NEO::PrelimI915::drm_i915_pmu_engine_sample::I915_SAMPLE_BUSY;
 
-static const std::multimap<__u16, zes_engine_group_t> i915ToEngineMap = {
+static const std::multimap<__u16, zes_engine_group_t> i915ToEngineMapPrelim = {
     {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), ZES_ENGINE_GROUP_RENDER_SINGLE},
     {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE},
     {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE},
@@ -26,7 +26,7 @@ static const std::multimap<__u16, zes_engine_group_t> i915ToEngineMap = {
     {static_cast<__u16>(prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE), ZES_ENGINE_GROUP_COMPUTE_SINGLE},
     {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE), ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE}};
 
-static const std::multimap<zes_engine_group_t, __u16> engineToI915Map = {
+static const std::multimap<zes_engine_group_t, __u16> engineToI915MapPrelim = {
     {ZES_ENGINE_GROUP_RENDER_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER)},
     {ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO)},
     {ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO)},
@@ -34,7 +34,7 @@ static const std::multimap<zes_engine_group_t, __u16> engineToI915Map = {
     {ZES_ENGINE_GROUP_COMPUTE_SINGLE, static_cast<__u16>(prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE)},
     {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE)}};
 
-zes_engine_group_t LinuxEngineImp::getGroupFromEngineType(zes_engine_group_t type) {
+zes_engine_group_t LinuxEngineImpPrelim::getGroupFromEngineType(zes_engine_group_t type) {
     if (type == ZES_ENGINE_GROUP_RENDER_SINGLE) {
         return ZES_ENGINE_GROUP_RENDER_ALL;
     }
@@ -48,28 +48,6 @@ zes_engine_group_t LinuxEngineImp::getGroupFromEngineType(zes_engine_group_t typ
         return ZES_ENGINE_GROUP_MEDIA_ALL;
     }
     return ZES_ENGINE_GROUP_ALL;
-}
-
-ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> &engineGroupInstance, OsSysman *pOsSysman) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    NEO::Drm *pDrm = &pLinuxSysmanImp->getDrm();
-
-    if (pDrm->sysmanQueryEngineInfo() == false) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error message:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    auto engineInfo = pDrm->getEngineInfo();
-    for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
-        uint32_t subDeviceId = engineInfo->getEngineTileIndex(itr->engine);
-        auto i915ToEngineMapRange = i915ToEngineMap.equal_range(static_cast<__u16>(itr->engine.engineClass));
-        for (auto l0EngineEntryInMap = i915ToEngineMapRange.first; l0EngineEntryInMap != i915ToEngineMapRange.second; l0EngineEntryInMap++) {
-            auto l0EngineType = l0EngineEntryInMap->second;
-            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->engine.engineInstance), subDeviceId}});
-            engineGroupInstance.insert({LinuxEngineImp::getGroupFromEngineType(l0EngineType), {0u, subDeviceId}});
-            engineGroupInstance.insert({ZES_ENGINE_GROUP_ALL, {0u, subDeviceId}});
-        }
-    }
-    return ZE_RESULT_SUCCESS;
 }
 
 static ze_result_t readBusynessFromGroupFd(PmuInterface *pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) {
@@ -120,7 +98,7 @@ static ze_result_t openPmuHandlesForVfs(uint32_t numberOfVfs,
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
+ze_result_t LinuxEngineImpPrelim::getActivity(zes_engine_stats_t *pStats) {
 
     if (initStatus != ZE_RESULT_SUCCESS) {
         // Handles are not expected to be created in case of init failure
@@ -131,7 +109,7 @@ ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
     return readBusynessFromGroupFd(pPmuInterface, fdList[0], pStats);
 }
 
-void LinuxEngineImp::cleanup() {
+void LinuxEngineImpPrelim::cleanup() {
     for (auto &fdPair : fdList) {
         if (fdPair.first >= 0) {
             close(static_cast<int>(fdPair.first));
@@ -145,11 +123,11 @@ void LinuxEngineImp::cleanup() {
     numberOfVfs = 0;
 }
 
-LinuxEngineImp::~LinuxEngineImp() {
+LinuxEngineImpPrelim::~LinuxEngineImpPrelim() {
     cleanup();
 }
 
-ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) {
+ze_result_t LinuxEngineImpPrelim::getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) {
 
     if (numberOfVfs == 0) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -203,23 +181,24 @@ ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
+ze_result_t LinuxEngineImpPrelim::getProperties(zes_engine_properties_t &properties) {
     properties.subdeviceId = subDeviceId;
     properties.onSubdevice = onSubDevice;
     properties.type = engineGroup;
     return ZE_RESULT_SUCCESS;
 }
 
-void LinuxEngineImp::checkErrorNumberAndUpdateStatus() {
+void LinuxEngineImpPrelim::checkErrorNumberAndUpdateStatus() {
     if (errno == EMFILE || errno == ENFILE) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Engine Handles could not be created because system has run out of file handles. Suggested action is to increase the file handle limit. \n");
         initStatus = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     } else {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():No valid Filedescriptors: Engine Module is not supported \n", __FUNCTION__);
         initStatus = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 }
 
-void LinuxEngineImp::init() {
+void LinuxEngineImpPrelim::init() {
     uint64_t config = UINT64_MAX;
     switch (engineGroup) {
     case ZES_ENGINE_GROUP_ALL:
@@ -236,7 +215,7 @@ void LinuxEngineImp::init() {
         config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY_TICKS(subDeviceId);
         break;
     default:
-        auto i915EngineClass = engineToI915Map.find(engineGroup);
+        auto i915EngineClass = engineToI915MapPrelim.find(engineGroup);
         config = PRELIM_I915_PMU_ENGINE_BUSY_TICKS(i915EngineClass->second, engineInstance);
         break;
     }
@@ -275,11 +254,24 @@ void LinuxEngineImp::init() {
     }
 }
 
-ze_result_t LinuxEngineImp::isEngineModuleSupported() {
+ze_result_t LinuxEngineImpPrelim::isEngineModuleSupported() {
     return initStatus;
 }
 
-LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) : engineGroup(type), engineInstance(engineInstance), subDeviceId(subDeviceId), onSubDevice(onSubDevice) {
+void LinuxEngineImpPrelim::getInstancesFromEngineInfo(NEO::EngineInfo *engineInfo, std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> &engineGroupInstance) {
+    for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
+        uint32_t subDeviceId = engineInfo->getEngineTileIndex(itr->engine);
+        auto i915ToEngineMapRange = i915ToEngineMapPrelim.equal_range(static_cast<__u16>(itr->engine.engineClass));
+        for (auto l0EngineEntryInMap = i915ToEngineMapRange.first; l0EngineEntryInMap != i915ToEngineMapRange.second; l0EngineEntryInMap++) {
+            auto l0EngineType = l0EngineEntryInMap->second;
+            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->engine.engineInstance), subDeviceId}});
+            engineGroupInstance.insert({LinuxEngineImpPrelim::getGroupFromEngineType(l0EngineType), {0u, subDeviceId}});
+            engineGroupInstance.insert({ZES_ENGINE_GROUP_ALL, {0u, subDeviceId}});
+        }
+    }
+}
+
+LinuxEngineImpPrelim::LinuxEngineImpPrelim(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) : engineGroup(type), engineInstance(engineInstance), subDeviceId(subDeviceId), onSubDevice(onSubDevice) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
@@ -290,11 +282,6 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
     if (initStatus != ZE_RESULT_SUCCESS) {
         cleanup();
     }
-}
-
-std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {
-    std::unique_ptr<OsEngine> pLinuxEngineImp = std::make_unique<LinuxEngineImp>(pOsSysman, type, engineInstance, subDeviceId, onSubDevice);
-    return pLinuxEngineImp;
 }
 
 } // namespace L0

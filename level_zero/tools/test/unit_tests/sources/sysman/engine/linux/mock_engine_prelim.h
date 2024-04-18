@@ -30,11 +30,11 @@ struct MockMemoryManagerInEngineSysman : public MemoryManagerMock {
     MockMemoryManagerInEngineSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
 
-struct MockEngineNeoDrm : public Drm {
+struct MockEngineNeoDrmPrelim : public Drm {
     using Drm::engineInfo;
     using Drm::setupIoctlHelper;
     const int mockFd = 0;
-    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+    MockEngineNeoDrmPrelim(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 
     bool mockReadSysmanQueryEngineInfo = false;
     bool mockReadSysmanQueryEngineInfoMultiDevice = false;
@@ -99,9 +99,9 @@ struct MockEngineNeoDrm : public Drm {
     }
 };
 
-struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
+struct MockEnginePmuInterfaceImpPrelim : public PmuInterfaceImp {
     using PmuInterfaceImp::perfEventOpen;
-    MockEnginePmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+    MockEnginePmuInterfaceImpPrelim(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 
     bool mockPmuRead = false;
     bool mockPerfEventOpenRead = false;
@@ -146,7 +146,7 @@ struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
     }
 };
 
-struct MockEngineFsAccess : public FsAccess {
+struct MockEngineFsAccessPrelim : public FsAccess {
 
     bool mockReadVal = false;
 
@@ -166,7 +166,7 @@ struct MockEngineFsAccess : public FsAccess {
     }
 };
 
-struct MockEngineSysfsAccess : public SysfsAccess {
+struct MockEngineSysfsAccessPrelim : public SysfsAccess {
 
     bool mockReadSymLinkFailure = false;
     bool mockReadSymLinkSuccess = false;
@@ -205,7 +205,7 @@ struct MockEngineSysfsAccess : public SysfsAccess {
         return mockReadStatus;
     }
 
-    MockEngineSysfsAccess() = default;
+    MockEngineSysfsAccessPrelim() = default;
 };
 } // namespace ult
 } // namespace L0

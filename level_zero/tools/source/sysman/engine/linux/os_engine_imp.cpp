@@ -31,25 +31,6 @@ static const std::multimap<zes_engine_group_t, __u16> engineToI915Map = {
     {ZES_ENGINE_GROUP_COPY_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY)},
     {ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE)}};
 
-ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> &engineGroupInstance, OsSysman *pOsSysman) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    NEO::Drm *pDrm = &pLinuxSysmanImp->getDrm();
-
-    if (pDrm->sysmanQueryEngineInfo() == false) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    auto engineInfo = pDrm->getEngineInfo();
-    for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
-        auto i915ToEngineMapRange = i915ToEngineMap.equal_range(static_cast<__u16>(itr->engine.engineClass));
-        for (auto l0EngineEntryInMap = i915ToEngineMapRange.first; l0EngineEntryInMap != i915ToEngineMapRange.second; l0EngineEntryInMap++) {
-            auto l0EngineType = l0EngineEntryInMap->second;
-            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->engine.engineInstance), 0}});
-        }
-    }
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
     if (initStatus != ZE_RESULT_SUCCESS) {
         return initStatus;
@@ -57,7 +38,6 @@ ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
     uint64_t data[2] = {};
     auto ret = pPmuInterface->pmuRead(static_cast<int>(fdList[0].first), data, sizeof(data));
     if (ret < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     // In data[], First u64 is "active time", And second u64 is "timestamp". Both in nanoseconds
@@ -101,15 +81,24 @@ ze_result_t LinuxEngineImp::getActivityExt(uint32_t *pCount, zes_engine_stats_t 
 
 void LinuxEngineImp::cleanup() {
     for (auto &fdPair : fdList) {
-        if (fdPair.first >= 0) {
-            close(static_cast<int>(fdPair.first));
-        }
+        DEBUG_BREAK_IF(fdPair.first < 0);
+        close(static_cast<int>(fdPair.first));
     }
     fdList.clear();
 }
 
 LinuxEngineImp::~LinuxEngineImp() {
     cleanup();
+}
+
+void LinuxEngineImp::getInstancesFromEngineInfo(NEO::EngineInfo *engineInfo, std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> &engineGroupInstance) {
+    for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
+        auto i915ToEngineMapRange = i915ToEngineMap.equal_range(static_cast<__u16>(itr->engine.engineClass));
+        for (auto l0EngineEntryInMap = i915ToEngineMapRange.first; l0EngineEntryInMap != i915ToEngineMapRange.second; l0EngineEntryInMap++) {
+            auto l0EngineType = l0EngineEntryInMap->second;
+            engineGroupInstance.insert({l0EngineType, {static_cast<uint32_t>(itr->engine.engineInstance), 0}});
+        }
+    }
 }
 
 ze_result_t LinuxEngineImp::isEngineModuleSupported() {
@@ -125,11 +114,6 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
     if (initStatus != ZE_RESULT_SUCCESS) {
         cleanup();
     }
-}
-
-std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {
-    std::unique_ptr<LinuxEngineImp> pLinuxEngineImp = std::make_unique<LinuxEngineImp>(pOsSysman, type, engineInstance, subDeviceId, onSubDevice);
-    return pLinuxEngineImp;
 }
 
 } // namespace L0

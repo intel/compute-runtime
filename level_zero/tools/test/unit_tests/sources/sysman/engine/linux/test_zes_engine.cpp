@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,6 +56,7 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pDrm = pDrm.get();
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+        pLinuxSysmanImp->isUsingPrelimEnabledKmd = false;
         pFsAccess->mockReadVal = 23;
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
@@ -196,6 +197,27 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
 
     for (auto handle : handles) {
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivity(handle, &stats));
+    }
+}
+
+TEST_F(ZesEngineFixture, GivenPerfEventOpenFailsWhenEnumeratingHandlesThenFailureIsObserved) {
+    pPmuInterface->mockPerfEventFailureReturnValue = -1;
+    std::unique_ptr<LinuxEngineImp> engineImp = std::make_unique<LinuxEngineImp>(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 1, 0, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, engineImp->isEngineModuleSupported());
+}
+
+TEST_F(ZesEngineFixture, GivenPerfEventOpenFailsBecauseOfHandlesUnavailableThenFailureIsObserved) {
+    pPmuInterface->mockPerfEventFailureReturnValue = -1;
+    {
+        pPmuInterface->mockErrorNumber = EMFILE;
+        std::unique_ptr<LinuxEngineImp> engineImp = std::make_unique<LinuxEngineImp>(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 1, 0, false);
+        EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, engineImp->isEngineModuleSupported());
+    }
+
+    {
+        pPmuInterface->mockErrorNumber = ENFILE;
+        std::unique_ptr<LinuxEngineImp> engineImp = std::make_unique<LinuxEngineImp>(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 1, 0, false);
+        EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, engineImp->isEngineModuleSupported());
     }
 }
 

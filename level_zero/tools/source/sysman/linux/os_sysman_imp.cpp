@@ -46,6 +46,12 @@ ze_result_t LinuxSysmanImp::init() {
         return result;
     }
 
+    std::string prelimVersion{};
+    pDrm->getPrelimVersion(prelimVersion);
+    if (prelimVersion != "") {
+        isUsingPrelimEnabledKmd = true;
+    }
+
     if (pSysfsAccess == nullptr) {
         pSysfsAccess = SysfsAccess::create(myDeviceName);
     }

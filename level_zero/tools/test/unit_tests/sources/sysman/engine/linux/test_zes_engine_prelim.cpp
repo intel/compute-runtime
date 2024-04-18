@@ -18,18 +18,18 @@ namespace L0 {
 namespace ult {
 constexpr uint32_t handleComponentCount = 13u;
 constexpr uint32_t handleCountForMultiDeviceFixture = 7u;
-class ZesEngineFixture : public SysmanDeviceFixture {
+class ZesEngineFixturePrelim : public SysmanDeviceFixture {
   protected:
     std::vector<ze_device_handle_t> deviceHandles;
-    std::unique_ptr<MockEngineNeoDrm> pDrm;
-    std::unique_ptr<MockEnginePmuInterfaceImp> pPmuInterface;
+    std::unique_ptr<MockEngineNeoDrmPrelim> pDrm;
+    std::unique_ptr<MockEnginePmuInterfaceImpPrelim> pPmuInterface;
     Drm *pOriginalDrm = nullptr;
     PmuInterface *pOriginalPmuInterface = nullptr;
     MemoryManager *pMemoryManagerOriginal = nullptr;
     std::unique_ptr<MockMemoryManagerInEngineSysman> pMemoryManager;
-    std::unique_ptr<MockEngineSysfsAccess> pSysfsAccess;
+    std::unique_ptr<MockEngineSysfsAccessPrelim> pSysfsAccess;
     SysfsAccess *pSysfsAccessOriginal = nullptr;
-    std::unique_ptr<MockEngineFsAccess> pFsAccess;
+    std::unique_ptr<MockEngineFsAccessPrelim> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
@@ -43,20 +43,21 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         device->getDriverHandle()->setMemoryManager(pMemoryManager.get());
 
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<MockEngineSysfsAccess>();
+        pSysfsAccess = std::make_unique<MockEngineSysfsAccessPrelim>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
 
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pFsAccess = std::make_unique<MockEngineFsAccess>();
+        pFsAccess = std::make_unique<MockEngineFsAccessPrelim>();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
 
-        pDrm = std::make_unique<MockEngineNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
+        pDrm = std::make_unique<MockEngineNeoDrmPrelim>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
         pDrm->setupIoctlHelper(neoDevice->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
-        pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);
+        pPmuInterface = std::make_unique<MockEnginePmuInterfaceImpPrelim>(pLinuxSysmanImp);
         pOriginalDrm = pLinuxSysmanImp->pDrm;
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pDrm = pDrm.get();
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+        pLinuxSysmanImp->isUsingPrelimEnabledKmd = true;
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
@@ -91,7 +92,7 @@ class ZesEngineFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesEngineFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
+TEST_F(ZesEngineFixturePrelim, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, handleComponentCount);
@@ -106,7 +107,7 @@ TEST_F(ZesEngineFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGr
     EXPECT_EQ(count, handleComponentCount);
 }
 
-TEST_F(ZesEngineFixture, GivenPmuOpenFailsWhenCallingzesDeviceEnumEngineGroupsThenNoHandlesAreEnumerated) {
+TEST_F(ZesEngineFixturePrelim, GivenPmuOpenFailsWhenCallingzesDeviceEnumEngineGroupsThenNoHandlesAreEnumerated) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -122,7 +123,7 @@ TEST_F(ZesEngineFixture, GivenPmuOpenFailsWhenCallingzesDeviceEnumEngineGroupsTh
     EXPECT_EQ(handleCount, 0u);
 }
 
-TEST_F(ZesEngineFixture, GivenPmuOpenFailsDueToTooManyOpenFilesWhenCallingzesDeviceEnumEngineGroupsThenErrorIsObserved) {
+TEST_F(ZesEngineFixturePrelim, GivenPmuOpenFailsDueToTooManyOpenFilesWhenCallingzesDeviceEnumEngineGroupsThenErrorIsObserved) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -139,7 +140,7 @@ TEST_F(ZesEngineFixture, GivenPmuOpenFailsDueToTooManyOpenFilesWhenCallingzesDev
     EXPECT_EQ(handleCount, 0u);
 }
 
-TEST_F(ZesEngineFixture, GivenPmuOpenFailsDueToTooManyOpenFilesInSystemWhenEnumeratingEngineGroupsThenErrorIsObserved) {
+TEST_F(ZesEngineFixturePrelim, GivenPmuOpenFailsDueToTooManyOpenFilesInSystemWhenEnumeratingEngineGroupsThenErrorIsObserved) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -156,7 +157,7 @@ TEST_F(ZesEngineFixture, GivenPmuOpenFailsDueToTooManyOpenFilesInSystemWhenEnume
     EXPECT_EQ(handleCount, 0u);
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
     zes_engine_properties_t properties;
     auto handles = getEngineHandles(handleComponentCount);
     for (auto handle : handles) {
@@ -216,7 +217,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertie
     EXPECT_FALSE(properties.onSubdevice);
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZesEngineGetActivityExtThenUnsupportedFeatureErrorIsReturned) {
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZesEngineGetActivityExtThenUnsupportedFeatureErrorIsReturned) {
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
@@ -227,7 +228,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZes
     }
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
@@ -240,7 +241,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZes
     }
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -256,7 +257,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEn
     }
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityExtThenVerifyCallReturnsSuccess) {
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityExtThenVerifyCallReturnsSuccess) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -281,7 +282,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEn
     }
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityExtMultipleTimesThenVerifyCallReturnsSuccess) {
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityExtMultipleTimesThenVerifyCallReturnsSuccess) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -308,7 +309,7 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEn
     }
 }
 
-TEST_F(ZesEngineFixture, GivenReadingNumberOfVfsFailWhenInitializingEnginesThenGetActivityExtReturnsError) {
+TEST_F(ZesEngineFixturePrelim, GivenReadingNumberOfVfsFailWhenInitializingEnginesThenGetActivityExtReturnsError) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -326,7 +327,7 @@ TEST_F(ZesEngineFixture, GivenReadingNumberOfVfsFailWhenInitializingEnginesThenG
     }
 }
 
-TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithNoVfsWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+TEST_F(ZesEngineFixturePrelim, GivenDiscreteDeviceWithNoVfsWhenCallingZesEngineGetActivityExtThenReturnFailure) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -344,7 +345,7 @@ TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithNoVfsWhenCallingZesEngineGetActi
     }
 }
 
-TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithValidVfsWhenPmuReadingFailsWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+TEST_F(ZesEngineFixturePrelim, GivenDiscreteDeviceWithValidVfsWhenPmuReadingFailsWhenCallingZesEngineGetActivityExtThenReturnFailure) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -366,7 +367,7 @@ TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithValidVfsWhenPmuReadingFailsWhenC
     }
 }
 
-TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithTotalTicksInvalidVfWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+TEST_F(ZesEngineFixturePrelim, GivenDiscreteDeviceWithTotalTicksInvalidVfWhenCallingZesEngineGetActivityExtThenReturnFailure) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -387,7 +388,7 @@ TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithTotalTicksInvalidVfWhenCallingZe
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
 }
 
-TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithBusyTicksInvalidVfWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+TEST_F(ZesEngineFixturePrelim, GivenDiscreteDeviceWithBusyTicksInvalidVfWhenCallingZesEngineGetActivityExtThenReturnFailure) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -408,7 +409,7 @@ TEST_F(ZesEngineFixture, GivenDiscreteDeviceWithBusyTicksInvalidVfWhenCallingZes
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
 }
 
-TEST_F(ZesEngineFixture, GivenTooManyFilesErrorWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+TEST_F(ZesEngineFixturePrelim, GivenTooManyFilesErrorWhenCallingZesEngineGetActivityExtThenReturnFailure) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -430,7 +431,7 @@ TEST_F(ZesEngineFixture, GivenTooManyFilesErrorWhenCallingZesEngineGetActivityEx
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
 }
 
-TEST_F(ZesEngineFixture, GivenTooManyFilesInSystemErrorWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+TEST_F(ZesEngineFixturePrelim, GivenTooManyFilesInSystemErrorWhenCallingZesEngineGetActivityExtThenReturnFailure) {
     auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
     pMemoryManagerTest->localMemorySupported[0] = true;
     device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
@@ -452,12 +453,34 @@ TEST_F(ZesEngineFixture, GivenTooManyFilesInSystemErrorWhenCallingZesEngineGetAc
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
 }
 
-TEST_F(ZesEngineFixture, GivenUnknownEngineTypeThengetEngineGroupFromTypeReturnsGroupAllEngineGroup) {
-    auto group = LinuxEngineImp::getGroupFromEngineType(ZES_ENGINE_GROUP_3D_SINGLE);
+TEST_F(ZesEngineFixturePrelim, GivenFewPmuInterfaceOpenFailsWhenCallingZesEngineGetActivityExtThenReturnFailure) {
+    auto pMemoryManagerTest = std::make_unique<MockMemoryManagerInEngineSysman>(*neoDevice->getExecutionEnvironment());
+    pMemoryManagerTest->localMemorySupported[0] = true;
+    device->getDriverHandle()->setMemoryManager(pMemoryManagerTest.get());
+    pSysfsAccess->mockReadVal = 6;
+    pSysfsAccess->mockReadSymLinkSuccess = true;
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+    auto handle = handles[0];
+    ASSERT_NE(nullptr, handle);
+    uint32_t count = 0;
+    pPmuInterface->mockPerfEventOpenRead = true;
+    pPmuInterface->mockPerfEventOpenFailAtCount = 6;
+    pPmuInterface->mockErrorNumber = ENFILE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, nullptr));
+    EXPECT_EQ(count, pSysfsAccess->mockReadVal + 1);
+    std::vector<zes_engine_stats_t> engineStats(count);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesEngineGetActivityExt(handle, &count, engineStats.data()));
+}
+
+TEST_F(ZesEngineFixturePrelim, GivenUnknownEngineTypeThengetEngineGroupFromTypeReturnsGroupAllEngineGroup) {
+    auto group = LinuxEngineImpPrelim::getGroupFromEngineType(ZES_ENGINE_GROUP_3D_SINGLE);
     EXPECT_EQ(group, ZES_ENGINE_GROUP_ALL);
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndPmuReadFailsThenVerifyEngineGetActivityReturnsFailure) {
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndPmuReadFailsThenVerifyEngineGetActivityReturnsFailure) {
 
     pPmuInterface->mockPmuRead = true;
 
@@ -471,15 +494,15 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
     }
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
 
     pPmuInterface->mockPerfEventOpenRead = true;
 
-    MockEnginePmuInterfaceImp pPmuInterfaceImp(pLinuxSysmanImp);
+    MockEnginePmuInterfaceImpPrelim pPmuInterfaceImp(pLinuxSysmanImp);
     EXPECT_EQ(-1, pPmuInterface->pmuInterfaceOpen(0, -1, 0));
 }
 
-TEST_F(ZesEngineFixture, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
+TEST_F(ZesEngineFixturePrelim, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
     std::set<std::pair<zes_engine_group_t, std::pair<uint32_t, uint32_t>>> engineGroupInstance;
 
     pDrm->mockReadSysmanQueryEngineInfo = true;
@@ -487,7 +510,7 @@ TEST_F(ZesEngineFixture, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndIns
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman));
 }
 
-TEST_F(ZesEngineFixture, GivenHandleQueryItemCalledWithInvalidEngineTypeThenzesDeviceEnumEngineGroupsSucceeds) {
+TEST_F(ZesEngineFixturePrelim, GivenHandleQueryItemCalledWithInvalidEngineTypeThenzesDeviceEnumEngineGroupsSucceeds) {
     auto drm = std::make_unique<DrmMockEngine>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
     pLinuxSysmanImp->pDrm = drm.get();
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
@@ -498,7 +521,7 @@ TEST_F(ZesEngineFixture, GivenHandleQueryItemCalledWithInvalidEngineTypeThenzesD
     EXPECT_EQ(count, mockHandleCount);
 }
 
-TEST_F(ZesEngineFixture, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThenzesDeviceEnumEngineGroupsSucceedsAndHandleCountIsZero) {
+TEST_F(ZesEngineFixturePrelim, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThenzesDeviceEnumEngineGroupsSucceedsAndHandleCountIsZero) {
 
     pFsAccess->mockReadVal = true;
 
@@ -510,7 +533,7 @@ TEST_F(ZesEngineFixture, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThen
     EXPECT_EQ(count, mockHandleCount);
 }
 
-TEST_F(ZesEngineFixture, GivenValidDrmObjectWhenCallingsysmanQueryEngineInfoMethodThenSuccessIsReturned) {
+TEST_F(ZesEngineFixturePrelim, GivenValidDrmObjectWhenCallingsysmanQueryEngineInfoMethodThenSuccessIsReturned) {
     auto drm = std::make_unique<DrmMockEngine>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
     pLinuxSysmanImp->pDrm = drm.get();
     ASSERT_NE(nullptr, drm);
@@ -519,7 +542,7 @@ TEST_F(ZesEngineFixture, GivenValidDrmObjectWhenCallingsysmanQueryEngineInfoMeth
     ASSERT_NE(nullptr, engineInfo);
 }
 
-TEST_F(ZesEngineFixture, GivenValidEngineHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumEngineGroupsSucceeds) {
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumEngineGroupsSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, handleComponentCount);
@@ -533,16 +556,16 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndHandleCountZeroWhenCallingReIn
     EXPECT_EQ(count, handleComponentCount);
 }
 
-class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
+class ZesEngineMultiFixturePrelim : public SysmanMultiDeviceFixture {
   protected:
     std::vector<ze_device_handle_t> deviceHandles;
-    std::unique_ptr<MockEnginePmuInterfaceImp> pPmuInterface;
+    std::unique_ptr<MockEnginePmuInterfaceImpPrelim> pPmuInterface;
     PmuInterface *pOriginalPmuInterface = nullptr;
-    std::unique_ptr<MockEngineNeoDrm> pDrm;
+    std::unique_ptr<MockEngineNeoDrmPrelim> pDrm;
     Drm *pOriginalDrm = nullptr;
-    std::unique_ptr<MockEngineSysfsAccess> pSysfsAccess;
+    std::unique_ptr<MockEngineSysfsAccessPrelim> pSysfsAccess;
     SysfsAccess *pSysfsAccessOriginal = nullptr;
-    std::unique_ptr<MockEngineFsAccess> pFsAccess;
+    std::unique_ptr<MockEngineFsAccessPrelim> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
@@ -551,20 +574,21 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
         }
         SysmanMultiDeviceFixture::SetUp();
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<MockEngineSysfsAccess>();
+        pSysfsAccess = std::make_unique<MockEngineSysfsAccessPrelim>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
 
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pFsAccess = std::make_unique<MockEngineFsAccess>();
+        pFsAccess = std::make_unique<MockEngineFsAccessPrelim>();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
 
-        pDrm = std::make_unique<MockEngineNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
+        pDrm = std::make_unique<MockEngineNeoDrmPrelim>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
         pDrm->setupIoctlHelper(neoDevice->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
-        pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);
+        pPmuInterface = std::make_unique<MockEnginePmuInterfaceImpPrelim>(pLinuxSysmanImp);
         pOriginalDrm = pLinuxSysmanImp->pDrm;
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pDrm = pDrm.get();
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+        pLinuxSysmanImp->isUsingPrelimEnabledKmd = true;
 
         pDrm->mockReadSysmanQueryEngineInfoMultiDevice = true;
         pSysfsAccess->mockReadSymLinkSuccess = true;
@@ -600,7 +624,7 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
     }
 };
 
-TEST_F(ZesEngineMultiFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
+TEST_F(ZesEngineMultiFixturePrelim, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, handleCountForMultiDeviceFixture);
@@ -615,7 +639,7 @@ TEST_F(ZesEngineMultiFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEng
     EXPECT_EQ(count, handleCountForMultiDeviceFixture);
 }
 
-TEST_F(ZesEngineMultiFixture, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
+TEST_F(ZesEngineMultiFixturePrelim, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
     zes_engine_properties_t properties;
     auto handles = getEngineHandles(handleCountForMultiDeviceFixture);
     for (auto handle : handles) {
@@ -657,7 +681,7 @@ TEST_F(ZesEngineMultiFixture, GivenValidEngineHandlesWhenCallingZesEngineGetProp
     EXPECT_EQ(properties.subdeviceId, 0u);
 }
 
-TEST_F(ZesEngineMultiFixture, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThenzesDeviceEnumEngineGroupsSucceedsAndHandleCountIsZero) {
+TEST_F(ZesEngineMultiFixturePrelim, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThenzesDeviceEnumEngineGroupsSucceedsAndHandleCountIsZero) {
 
     pFsAccess->mockReadVal = true;
 
@@ -669,20 +693,20 @@ TEST_F(ZesEngineMultiFixture, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFail
     EXPECT_EQ(count, mockHandleCount);
 }
 
-class ZesEngineAffinityMaskFixture : public ZesEngineMultiFixture {
+class ZesEngineAffinityMaskFixture : public ZesEngineMultiFixturePrelim {
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
         NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0.1");
-        ZesEngineMultiFixture::SetUp();
+        ZesEngineMultiFixturePrelim::SetUp();
     }
 
     void TearDown() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        ZesEngineMultiFixture::TearDown();
+        ZesEngineMultiFixturePrelim::TearDown();
     }
     DebugManagerStateRestore restorer;
 };

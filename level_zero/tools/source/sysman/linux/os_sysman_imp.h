@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,6 +85,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     bool isMemoryDiagnostics = false;
     Device *pDevice = nullptr;
     std::string gtDevicePath;
+    bool isUsingPrelimEnabledKmd = false;
 
   protected:
     FsAccess *pFsAccess = nullptr;
