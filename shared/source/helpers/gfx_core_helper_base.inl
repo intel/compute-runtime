@@ -767,6 +767,21 @@ bool GfxCoreHelperHw<GfxFamily>::inOrderAtomicSignallingEnabled(const RootDevice
 }
 
 template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
+                                                                     const size_t *lws,
+                                                                     std::array<uint8_t, 3> &walkOrder,
+                                                                     bool requireInputWalkOrder,
+                                                                     uint32_t &requiredWalkOrder,
+                                                                     uint32_t simd) const {
+    return EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(activeChannels,
+                                                                                lws,
+                                                                                walkOrder,
+                                                                                requireInputWalkOrder,
+                                                                                requiredWalkOrder,
+                                                                                simd);
+}
+
+template <typename GfxFamily>
 void *LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap) {
     auto lri = cmdStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
     return LriHelper<GfxFamily>::program(lri, address, value, remap);

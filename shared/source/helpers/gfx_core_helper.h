@@ -188,6 +188,12 @@ class GfxCoreHelper {
     virtual bool singleTileExecImplicitScalingRequired(bool cooperativeKernel) const = 0;
     virtual bool duplicatedInOrderCounterStorageEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool inOrderAtomicSignallingEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
+                                                     const size_t *lws,
+                                                     std::array<uint8_t, 3> &walkOrder,
+                                                     bool requireInputWalkOrder,
+                                                     uint32_t &requiredWalkOrder,
+                                                     uint32_t simd) const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -415,6 +421,13 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool singleTileExecImplicitScalingRequired(bool cooperativeKernel) const override;
     bool duplicatedInOrderCounterStorageEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool inOrderAtomicSignallingEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
+
+    bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
+                                             const size_t *lws,
+                                             std::array<uint8_t, 3> &walkOrder,
+                                             bool requireInputWalkOrder,
+                                             uint32_t &requiredWalkOrder,
+                                             uint32_t simd) const override;
 
     ~GfxCoreHelperHw() override = default;
 

@@ -8,6 +8,7 @@
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -1734,4 +1735,25 @@ HWTEST2_F(GfxCoreHelperTest, whenPrivateScratchSizeIsDefinedThenItIsReturnedAsKe
     kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = 0x100u;
     kernelDescriptor.kernelAttributes.privateScratchMemorySize = 0x200u;
     EXPECT_EQ(0x200u, getHelper<GfxCoreHelper>().getKernelPrivateMemSize(kernelDescriptor));
+}
+
+HWTEST_F(GfxCoreHelperTest, givenEncodeDispatchKernelWhenUsingGfxHelperThenSameDataPrpvided) {
+    auto &helper = getHelper<GfxCoreHelper>();
+
+    uint32_t workDim = 1;
+    uint32_t simd = 8;
+    size_t lws[3] = {16, 1, 1};
+    std::array<uint8_t, 3> walkOrder = {};
+    uint32_t requiredWalkOrder = 0u;
+
+    bool encoderReturn = EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, requiredWalkOrder, simd);
+
+    uint32_t helperRequiredWalkOrder = 0u;
+
+    bool helperReturn = helper.isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, helperRequiredWalkOrder, simd);
+
+    EXPECT_EQ(encoderReturn, helperReturn);
+    EXPECT_EQ(requiredWalkOrder, helperRequiredWalkOrder);
 }
