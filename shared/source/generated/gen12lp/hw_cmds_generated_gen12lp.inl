@@ -1238,11 +1238,11 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
-            uint64_t Reserved_32 : BITFIELD_RANGE(0, 1);
-            uint64_t RegisterOffset : BITFIELD_RANGE(2, 22);
-            uint64_t Reserved_55 : BITFIELD_RANGE(23, 31);
+            uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
+            uint32_t RegisterOffset : BITFIELD_RANGE(2, 22);
+            uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);
             // DWORD 2
-            uint64_t DataDword : BITFIELD_RANGE(32, 63);
+            uint32_t DataDword;
         } Common;
         uint32_t RawData[3];
     } TheStructure;
@@ -1294,17 +1294,17 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
         REGISTEROFFSET_BIT_SHIFT = 0x2,
         REGISTEROFFSET_ALIGN_SIZE = 0x4,
     } REGISTEROFFSET;
-    inline void setRegisterOffset(const uint64_t value) {
+    inline void setRegisterOffset(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0x7fffffL);
         TheStructure.Common.RegisterOffset = value >> REGISTEROFFSET_BIT_SHIFT;
     }
-    inline uint64_t getRegisterOffset() const {
+    inline uint32_t getRegisterOffset() const {
         return TheStructure.Common.RegisterOffset << REGISTEROFFSET_BIT_SHIFT;
     }
-    inline void setDataDword(const uint64_t value) {
+    inline void setDataDword(const uint32_t value) {
         TheStructure.Common.DataDword = value;
     }
-    inline uint64_t getDataDword() const {
+    inline uint32_t getDataDword() const {
         return TheStructure.Common.DataDword;
     }
 } MI_LOAD_REGISTER_IMM;
