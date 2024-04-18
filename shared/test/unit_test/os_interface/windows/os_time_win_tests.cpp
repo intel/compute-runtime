@@ -29,19 +29,10 @@ BOOL WINAPI queryPerformanceCounterMock(
 class MockDeviceTimeWin : public MockDeviceTime {
   public:
     bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
-        getGpuCpuTimeImplCalled++;
         *pGpuCpuTime = gpuCpuTimeValue;
-        return getGpuCpuTimeImplResult;
+        return true;
     }
-
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
-        return deviceTimerResolution;
-    }
-
-    bool getGpuCpuTimeImplResult = true;
     TimeStampData gpuCpuTimeValue{};
-    uint32_t getGpuCpuTimeImplCalled = 0;
-    double deviceTimerResolution = 1;
 };
 
 struct OSTimeWinTest : public ::testing::Test {
@@ -204,47 +195,4 @@ TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueThenHwInfoBasedValueIsRetur
     } else {
         EXPECT_EQ(0ull, osTime->getMaxGpuTimeStamp());
     }
-}
-
-TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueWithinIntervalThenReuseFromPreviousCall) {
-    osTime->overrideQueryPerformanceCounterFunction(queryPerformanceCounterMock);
-    LARGE_INTEGER frequency = {};
-    frequency.QuadPart = NSEC_PER_SEC;
-    osTime->setFrequency(frequency);
-
-    auto deviceTime = new MockDeviceTimeWin();
-    osTime->deviceTime.reset(deviceTime);
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    osTime->setDeviceTimerResolution(*hwInfo);
-
-    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 0u);
-    TimeStampData gpuCpuTime;
-    deviceTime->gpuCpuTimeValue = {1u, 1u};
-    valueToSet.QuadPart = 1;
-    osTime->getGpuCpuTime(&gpuCpuTime);
-    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
-
-    auto gpuTimestampBefore = gpuCpuTime.gpuTimeStamp;
-    auto cpuTimeBefore = gpuCpuTime.cpuTimeinNS;
-    valueToSet.QuadPart = 5;
-    osTime->getGpuCpuTime(&gpuCpuTime);
-    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
-
-    auto gpuTimestampAfter = gpuCpuTime.gpuTimeStamp;
-    auto cpuTimeAfter = gpuCpuTime.cpuTimeinNS;
-
-    auto cpuTimeDiff = cpuTimeAfter - cpuTimeBefore;
-
-    auto deviceTimerResolution = deviceTime->getDynamicDeviceTimerResolution(*hwInfo);
-    auto gpuTimestampDiff = static_cast<uint64_t>(cpuTimeDiff / deviceTimerResolution);
-    EXPECT_EQ(gpuTimestampAfter, gpuTimestampBefore + gpuTimestampDiff);
-}
-
-TEST_F(OSTimeWinTest, whenGetGpuCpuTimeFailedThenReturnFalse) {
-    TimeStampData gpuCpuTime;
-    auto deviceTime = new MockDeviceTimeWin();
-    osTime->deviceTime.reset(deviceTime);
-    deviceTime->getGpuCpuTimeImplResult = false;
-    EXPECT_FALSE(osTime->getGpuCpuTime(&gpuCpuTime));
 }

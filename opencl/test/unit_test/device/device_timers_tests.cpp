@@ -25,9 +25,7 @@ TEST(MockOSTime, WhenSleepingThenDeviceAndHostTimerAreIncreased) {
     cl_ulong hostTimestamp[2] = {0, 0};
 
     auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
-    auto osTime = new MockOSTime();
-    osTime->setDeviceTimerResolution(mDev->getHardwareInfo());
-    mDev->setOSTime(osTime);
+    mDev->setOSTime(new MockOSTime());
 
     mDev->getDeviceAndHostTimer(
         &deviceTimestamp[0],

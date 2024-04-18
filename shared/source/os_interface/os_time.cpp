@@ -7,8 +7,6 @@
 
 #include "shared/source/os_interface/os_time.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include <mutex>
@@ -18,12 +16,6 @@ namespace NEO {
 double OSTime::getDeviceTimerResolution(HardwareInfo const &hwInfo) {
     return hwInfo.capabilityTable.defaultProfilingTimerResolution;
 };
-
-DeviceTime::DeviceTime() {
-    if (debugManager.flags.GpuTimestampRefreshTimeout.get() != -1) {
-        timestampRefreshTimeoutMS = debugManager.flags.GpuTimestampRefreshTimeout.get();
-    }
-}
 
 bool DeviceTime::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     pGpuCpuTime->cpuTimeinNS = 0;
@@ -39,50 +31,8 @@ uint64_t DeviceTime::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) cons
     return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
 }
 
-void DeviceTime::setDeviceTimerResolution(HardwareInfo const &hwInfo) {
-    deviceTimerResolution = getDynamicDeviceTimerResolution(hwInfo);
-    if (debugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
-        deviceTimerResolution = static_cast<double>(debugManager.flags.OverrideProfilingTimerResolution.get());
-    }
-}
-
-/**
- * @brief If this method is called within 100ms interval, GPU timestamp
- * will be calculated based on CPU timestamp and previous GPU ticks
- * to reduce amount of internal KMD calls.
- *
- * @return returns false if internal call to KMD failed. True otherwise.
- */
-bool DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime) {
-    bool refreshTimestamps = false;
-
-    uint64_t cpuTimeinNS;
-    osTime->getCpuTime(&cpuTimeinNS);
-    auto cpuTimeDiffInNS = cpuTimeinNS - fetchedTimestamps.cpuTimeinNS;
-    if (cpuTimeDiffInNS >= (NSEC_PER_MSEC * timestampRefreshTimeoutMS)) {
-        refreshTimestamps = true;
-    }
-
-    // Refresh on first call
-    if (!initialGpuTimeStamp) {
-        refreshTimestamps = true;
-    }
-
-    if (refreshTimestamps) {
-        if (!getGpuCpuTimeImpl(timeStamp, osTime)) {
-            return false;
-        }
-        fetchedTimestamps = *timeStamp;
-    } else {
-        timeStamp->cpuTimeinNS = cpuTimeinNS;
-        UNRECOVERABLE_IF(deviceTimerResolution == 0);
-        timeStamp->gpuTimeStamp = fetchedTimestamps.gpuTimeStamp + static_cast<uint64_t>(cpuTimeDiffInNS / deviceTimerResolution);
-    }
-    return true;
-}
-
 bool DeviceTime::getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
-    if (!getGpuCpuTimestamps(pGpuCpuTime, osTime)) {
+    if (!getGpuCpuTimeImpl(pGpuCpuTime, osTime)) {
         return false;
     }
 

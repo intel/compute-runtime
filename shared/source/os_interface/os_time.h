@@ -10,7 +10,7 @@
 #include <optional>
 
 #define NSEC_PER_SEC (1000000000ULL)
-#define NSEC_PER_MSEC (NSEC_PER_SEC / 1000)
+
 namespace NEO {
 
 class OSInterface;
@@ -25,21 +25,15 @@ class OSTime;
 
 class DeviceTime {
   public:
-    DeviceTime();
     virtual ~DeviceTime() = default;
     bool getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime);
     virtual bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime);
     virtual double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const;
     virtual uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const;
-    bool getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime);
-    void setDeviceTimerResolution(HardwareInfo const &hwInfo);
 
     std::optional<uint64_t> initialGpuTimeStamp{};
     bool waitingForGpuTimeStampOverflow = false;
     uint64_t gpuTimeStampOverflowCounter = 0;
-    double deviceTimerResolution = 0;
-    uint32_t timestampRefreshTimeoutMS = 100u;
-    TimeStampData fetchedTimestamps{};
 };
 
 class OSTime {
@@ -66,10 +60,6 @@ class OSTime {
     }
 
     uint64_t getMaxGpuTimeStamp() const { return maxGpuTimeStamp; }
-
-    void setDeviceTimerResolution(HardwareInfo const &hwInfo) const {
-        deviceTime->setDeviceTimerResolution(hwInfo);
-    }
 
   protected:
     OSTime() = default;
