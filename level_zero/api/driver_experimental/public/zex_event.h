@@ -27,8 +27,8 @@ zexCounterBasedEventCreate(
     const ze_event_desc_t *desc,
     ze_event_handle_t *phEvent);
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexAllocateMsix(ze_context_handle_t hContext, uint32_t &msixId);
+ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId);
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexReleaseMsix(ze_context_handle_t hContext, uint32_t msixId);
+ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId);
 
 } // namespace L0

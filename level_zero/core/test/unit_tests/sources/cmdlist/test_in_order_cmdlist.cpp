@@ -55,9 +55,9 @@ HWTEST2_F(InOrderCmdListTests, givenDriverHandleWhenAskingForExtensionsThenRetur
     EXPECT_NE(it, extensionProperties.end());
     EXPECT_EQ((*it).version, ZE_INTEL_COMMAND_LIST_MEMORY_SYNC_EXP_VERSION_CURRENT);
 
-    it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) { return (strcmp(extension.name, ZE_INTEL_EVENT_SYNC_MODE_EXP_NAME) == 0); });
+    it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) { return (strcmp(extension.name, ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME) == 0); });
     EXPECT_NE(it, extensionProperties.end());
-    EXPECT_EQ((*it).version, ZE_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT);
+    EXPECT_EQ((*it).version, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenCmdListWhenAskingForQwordDataSizeThenReturnFalse, IsAtLeastSkl) {
@@ -89,7 +89,7 @@ HWTEST2_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThen
 
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
 
-    ze_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZE_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
+    zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
     ze_event_desc_t eventDesc = {};
     eventDesc.pNext = &syncModeDesc;
 
@@ -100,31 +100,31 @@ HWTEST2_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThen
     EXPECT_FALSE(event0->isKmdWaitModeEnabled());
 
     eventDesc.index = 1;
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
     auto event1 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
     EXPECT_TRUE(event1->isInterruptModeEnabled());
     EXPECT_FALSE(event1->isKmdWaitModeEnabled());
 
     eventDesc.index = 2;
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
     auto event2 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
     EXPECT_FALSE(event2->isInterruptModeEnabled());
     EXPECT_TRUE(event2->isKmdWaitModeEnabled());
 
     eventDesc.index = 3;
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT | ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT | ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
     auto event3 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
     EXPECT_TRUE(event3->isInterruptModeEnabled());
     EXPECT_TRUE(event3->isKmdWaitModeEnabled());
 
     eventDesc.index = 4;
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
     syncModeDesc.externalInterruptId = 123;
     auto event4 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
     EXPECT_EQ(0u, event4->externalInterruptId);
 
     eventDesc.index = 5;
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
     EXPECT_ANY_THROW(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 }
 
@@ -3851,17 +3851,17 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingSynchronizeThenRet
 }
 
 HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterruptIdThenAssign, IsAtLeastSkl) {
-    ze_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZE_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
+    zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC};
     syncModeDesc.externalInterruptId = 123;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.pNext = &syncModeDesc;
 
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
     auto event1 = createStandaloneCbEvent(reinterpret_cast<const ze_base_desc_t *>(&syncModeDesc));
     EXPECT_EQ(0u, event1->externalInterruptId);
 
-    syncModeDesc.syncModeFlags = ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
     auto event2 = createStandaloneCbEvent(reinterpret_cast<const ze_base_desc_t *>(&syncModeDesc));
     EXPECT_EQ(syncModeDesc.externalInterruptId, event2->externalInterruptId);
 }

@@ -59,11 +59,11 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
     return ZE_RESULT_SUCCESS;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexAllocateMsix(ze_context_handle_t hContext, uint32_t &msixId) {
+ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zexReleaseMsix(ze_context_handle_t hContext, uint32_t msixId) {
+ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

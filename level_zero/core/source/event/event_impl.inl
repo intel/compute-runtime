@@ -98,11 +98,11 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
     bool interruptMode = false;
     bool kmdWaitMode = false;
 
-    if (extendedDesc && (extendedDesc->stype == ZE_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC)) {
-        auto eventSyncModeDesc = reinterpret_cast<const ze_intel_event_sync_mode_exp_desc_t *>(extendedDesc);
+    if (extendedDesc && (extendedDesc->stype == ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC)) {
+        auto eventSyncModeDesc = reinterpret_cast<const zex_intel_event_sync_mode_exp_desc_t *>(extendedDesc);
 
-        interruptMode = (eventSyncModeDesc->syncModeFlags & ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
-        kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZE_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
+        interruptMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
+        kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
 
         if (kmdWaitMode) {
             event->setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
