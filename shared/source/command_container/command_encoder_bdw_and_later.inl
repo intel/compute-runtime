@@ -554,7 +554,7 @@ bool EncodeSurfaceState<GfxFamily>::isBindingTablePrefetchPreferred() {
 }
 
 template <typename Family>
-inline void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
+void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
     surfaceState->setCoherencyType(coherencyType);
 }
 
