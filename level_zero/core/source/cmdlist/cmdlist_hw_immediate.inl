@@ -390,10 +390,12 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 
     ze_result_t status = ZE_RESULT_SUCCESS;
 
-    this->cmdQImmediate->setTaskCount(completionStamp.taskCount);
+    if (cmdQ == this->cmdQImmediate) {
+        cmdQ->setTaskCount(completionStamp.taskCount);
 
-    if (this->isSyncModeQueue) {
-        status = hostSynchronize(std::numeric_limits<uint64_t>::max(), completionStamp.taskCount, true);
+        if (this->isSyncModeQueue) {
+            status = hostSynchronize(std::numeric_limits<uint64_t>::max(), completionStamp.taskCount, true);
+        }
     }
 
     this->cmdListCurrentStartOffset = commandStream->getUsed();
