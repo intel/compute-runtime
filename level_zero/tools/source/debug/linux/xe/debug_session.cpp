@@ -180,11 +180,6 @@ ze_result_t DebugSessionLinuxXe::readEventImp(drm_xe_eudebug_event *drmDebugEven
     return ZE_RESULT_SUCCESS;
 }
 
-bool DebugSessionLinuxXe::closeConnection() {
-    closeInternalEventsThread();
-    return closeFd();
-}
-
 void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
     auto type = event->type;
 

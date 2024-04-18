@@ -214,6 +214,7 @@ TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenClosingConnectionThenSysCallClo
     EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
     EXPECT_EQ(10, NEO::SysCalls::closeFuncArgPassed);
     EXPECT_FALSE(session->internalEventThread.threadActive);
+    EXPECT_FALSE(session->asyncThread.threadActive);
 
     NEO::SysCalls::closeFuncCalled = 0;
     NEO::SysCalls::closeFuncArgPassed = 0;

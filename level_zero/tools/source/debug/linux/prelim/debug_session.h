@@ -41,8 +41,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     static DebugSession *createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
     ze_result_t initialize() override;
 
-    bool closeConnection() override;
-
     struct IoctlHandleri915 : DebugSessionLinux::IoctlHandler {
         int ioctl(int fd, unsigned long request, void *arg) override {
             int ret = 0;
@@ -146,7 +144,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     void detachTile() override {
         UNRECOVERABLE_IF(true);
     }
-    void cleanRootSessionAfterDetach(uint32_t deviceIndex) override;
 
     void extractUuidData(uint64_t client, const UuidData &uuidData);
     uint64_t extractVaFromUuidString(std::string &uuid);

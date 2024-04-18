@@ -277,24 +277,6 @@ void DebugSessionLinuxi915::readInternalEventsAsync() {
     }
 }
 
-bool DebugSessionLinuxi915::closeConnection() {
-    closeAsyncThread();
-    closeInternalEventsThread();
-
-    if (clientHandle != invalidClientHandle) {
-        auto numTiles = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
-        for (uint32_t i = 0; i < numTiles; i++) {
-            for (const auto &eventToAck : eventsToAck) {
-                auto moduleUUID = eventToAck.second;
-                ackModuleEvents(i, moduleUUID);
-            }
-            cleanRootSessionAfterDetach(i);
-        }
-    }
-
-    return closeFd();
-}
-
 void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
     auto type = event->type;
 
@@ -1329,29 +1311,6 @@ int DebugSessionLinuxi915::eventAckIoctl(EventToAck &event) {
     auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
     PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
     return ret;
-}
-
-void DebugSessionLinuxi915::cleanRootSessionAfterDetach(uint32_t deviceIndex) {
-    auto connection = clientHandleToConnection[clientHandle].get();
-
-    for (const auto &isa : connection->isaMap[deviceIndex]) {
-
-        // zebin modules do not store ackEvents per ISA
-        UNRECOVERABLE_IF(isa.second->ackEvents.size() > 0 && isa.second->perKernelModule == false);
-
-        for (auto &event : isa.second->ackEvents) {
-            prelim_drm_i915_debug_event_ack eventToAck = {};
-            eventToAck.type = event.type;
-            eventToAck.seqno = event.seqno;
-            eventToAck.flags = 0;
-
-            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
-            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
-        }
-
-        isa.second->ackEvents.clear();
-        isa.second->moduleLoadEventAck = true;
-    }
 }
 
 void TileDebugSessionLinuxi915::readStateSaveAreaHeader() {

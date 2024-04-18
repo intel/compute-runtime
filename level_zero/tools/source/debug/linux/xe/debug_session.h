@@ -27,8 +27,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     ze_result_t initialize() override;
 
-    bool closeConnection() override;
-
     struct IoctlHandlerXe : DebugSessionLinux::IoctlHandler {
         int ioctl(int fd, unsigned long request, void *arg) override {
             int ret = 0;
@@ -84,10 +82,6 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     void startAsyncThread() override;
     static void *asyncThreadFunction(void *arg);
     void handleEventsAsync();
-
-    void cleanRootSessionAfterDetach(uint32_t deviceIndex) override {
-        UNRECOVERABLE_IF(true);
-    }
 
     int openVmFd(uint64_t vmHandle, bool readOnly) override;
     int flushVmCache(int vmfd) override;

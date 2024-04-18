@@ -24,6 +24,7 @@ struct DebugSessionLinux : DebugSessionImp {
     static ze_result_t translateDebuggerOpenErrno(int error);
     bool closeFd();
     void closeAsyncThread();
+    bool closeConnection() override;
 
     int fd = 0;
     std::atomic<bool> internalThreadHasStarted{false};
@@ -162,6 +163,7 @@ struct DebugSessionLinux : DebugSessionImp {
     };
 
   protected:
+    void cleanRootSessionAfterDetach(uint32_t deviceIndex) override;
     virtual std::shared_ptr<ClientConnection> getClientConnection(uint64_t clientHandle) = 0;
 
     enum class ThreadControlCmd {

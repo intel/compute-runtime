@@ -126,7 +126,6 @@ std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
 
 void DebugSessionLinux::closeAsyncThread() {
     asyncThread.close();
-    internalEventThread.close();
 }
 
 bool DebugSessionLinux::checkForceExceptionBit(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *cr0, const SIP::regset_desc *regDesc) {
@@ -916,6 +915,41 @@ ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) 
     }
 
     return ZE_RESULT_ERROR_UNINITIALIZED;
+}
+
+bool DebugSessionLinux::closeConnection() {
+    closeAsyncThread();
+    closeInternalEventsThread();
+
+    if (clientHandle != invalidClientHandle) {
+        auto numTiles = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+        for (uint32_t tileIndex = 0; tileIndex < numTiles; tileIndex++) {
+            for (const auto &eventToAck : eventsToAck) {
+                auto moduleHandle = eventToAck.second;
+                ackModuleEvents(tileIndex, moduleHandle);
+            }
+            cleanRootSessionAfterDetach(tileIndex);
+        }
+    }
+
+    return closeFd();
+}
+
+void DebugSessionLinux::cleanRootSessionAfterDetach(uint32_t deviceIndex) {
+    auto connection = getClientConnection(clientHandle).get();
+
+    for (const auto &isa : connection->isaMap[deviceIndex]) {
+
+        // zebin modules do not store ackEvents per ISA
+        UNRECOVERABLE_IF(isa.second->ackEvents.size() > 0 && isa.second->perKernelModule == false);
+
+        for (auto &event : isa.second->ackEvents) {
+            eventAckIoctl(event);
+        }
+
+        isa.second->ackEvents.clear();
+        isa.second->moduleLoadEventAck = true;
+    }
 }
 
 } // namespace L0
