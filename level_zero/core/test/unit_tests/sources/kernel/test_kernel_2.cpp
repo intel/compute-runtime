@@ -8,6 +8,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
@@ -829,6 +830,50 @@ TEST_F(KernelImpTest, GivenGroupSizeRequiresSwLocalIdsGenerationWhenNextGroupSiz
 
     EXPECT_EQ(0u, kernel.getPerThreadDataSizeForWholeThreadGroup());
     EXPECT_EQ(0u, kernel.getPerThreadDataSize());
+}
+
+TEST_F(KernelImpTest, GivenGroupSizeRequiresSwLocalIdsGenerationWhenKernelSpecifiesRequiredWalkOrderThenUseCorrectOrderToGenerateLocalIds) {
+    Mock<Module> module(device, nullptr);
+    Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
+
+    auto grfSize = device->getHwInfo().capabilityTable.grfSize;
+
+    WhiteBox<::L0::KernelImmutableData> kernelInfo = {};
+    NEO::KernelDescriptor descriptor;
+    kernelInfo.kernelDescriptor = &descriptor;
+    kernelInfo.kernelDescriptor->kernelAttributes.numLocalIdChannels = 3;
+    kernelInfo.kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
+    kernelInfo.kernelDescriptor->kernelAttributes.flags.requiresWorkgroupWalkOrder = true;
+    kernelInfo.kernelDescriptor->kernelAttributes.workgroupWalkOrder[0] = 2;
+    kernelInfo.kernelDescriptor->kernelAttributes.workgroupWalkOrder[1] = 1;
+    kernelInfo.kernelDescriptor->kernelAttributes.workgroupWalkOrder[2] = 0;
+    kernelInfo.kernelDescriptor->kernelAttributes.simdSize = 32;
+
+    kernel.kernelImmData = &kernelInfo;
+
+    kernel.enableForcingOfGenerateLocalIdByHw = true;
+    kernel.forceGenerateLocalIdByHw = false;
+
+    kernel.KernelImp::setGroupSize(12, 12, 1);
+
+    uint32_t perThreadSizeNeeded = kernel.getPerThreadDataSizeForWholeThreadGroup();
+    auto testPerThreadDataBuffer = static_cast<uint8_t *>(alignedMalloc(perThreadSizeNeeded, 32));
+
+    std::array<uint8_t, 3> walkOrder{2, 1, 0};
+
+    NEO::generateLocalIDs(
+        testPerThreadDataBuffer,
+        static_cast<uint16_t>(32),
+        std::array<uint16_t, 3>{{static_cast<uint16_t>(12),
+                                 static_cast<uint16_t>(12),
+                                 static_cast<uint16_t>(1)}},
+        walkOrder,
+        false, grfSize, GrfConfig::defaultGrfNumber, device->getNEODevice()->getRootDeviceEnvironment());
+
+    EXPECT_EQ(0, memcmp(testPerThreadDataBuffer, kernel.KernelImp::getPerThreadData(), perThreadSizeNeeded));
+
+    alignedFree(testPerThreadDataBuffer);
 }
 
 } // namespace ult

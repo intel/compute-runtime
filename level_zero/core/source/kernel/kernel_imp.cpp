@@ -398,13 +398,22 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
 
         if (numChannels > 0) {
             UNRECOVERABLE_IF(3 != numChannels);
+
+            std::array<uint8_t, 3> walkOrder{0, 1, 2};
+            if (kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder) {
+                walkOrder = {
+                    kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
+                    kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
+                    kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]};
+            }
+
             NEO::generateLocalIDs(
                 perThreadDataForWholeThreadGroup,
                 static_cast<uint16_t>(simdSize),
                 std::array<uint16_t, 3>{{static_cast<uint16_t>(groupSizeX),
                                          static_cast<uint16_t>(groupSizeY),
                                          static_cast<uint16_t>(groupSizeZ)}},
-                std::array<uint8_t, 3>{{0, 1, 2}},
+                walkOrder,
                 false, grfSize, grfCount, rootDeviceEnvironment);
         }
 
