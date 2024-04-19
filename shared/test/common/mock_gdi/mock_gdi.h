@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,3 +107,5 @@ void setAdapterBDF(ADAPTER_BDF &adapterBDF);
 void setMockDeviceExecutionState(D3DKMT_DEVICEEXECUTION_STATE newState);
 void setMockGetDeviceStateReturnValue(NTSTATUS newReturnValue, bool execution);
 void initGfxPartition();
+void setCreateAllocation2ReadOnlyFailConfig(bool fail);
+void getCreateAllocation2ReadOnlyFailConfig(bool &readOnlyFlagWasPassed, uint32_t &numCalled);

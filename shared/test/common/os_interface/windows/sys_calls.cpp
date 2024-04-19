@@ -401,6 +401,12 @@ LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDW
     }
     return ERROR_FILE_NOT_FOUND;
 };
+
+MEMORY_BASIC_INFORMATION virtualQueryMemoryBasicInformation = {};
+SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
+    memcpy_s(lpBuffer, sizeof(MEMORY_BASIC_INFORMATION), &virtualQueryMemoryBasicInformation, sizeof(MEMORY_BASIC_INFORMATION));
+    return sizeof(MEMORY_BASIC_INFORMATION);
+}
 } // namespace SysCalls
 
 bool isShutdownInProgress() {

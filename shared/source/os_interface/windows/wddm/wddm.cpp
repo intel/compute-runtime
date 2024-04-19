@@ -659,6 +659,12 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
 
     status = getGdi()->createAllocation2(&createAllocation);
     if (status != STATUS_SUCCESS) {
+        if (isReadOnlyMemory(alignedCpuPtr)) {
+            createAllocation.Flags.ReadOnly = true;
+            status = getGdi()->createAllocation2(&createAllocation);
+        }
+    }
+    if (status != STATUS_SUCCESS) {
         DEBUG_BREAK_IF(true);
         return status;
     }
@@ -757,6 +763,13 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
 
     while (status == STATUS_UNSUCCESSFUL) {
         status = getGdi()->createAllocation2(&createAllocation);
+
+        if (status != STATUS_SUCCESS) {
+            if (isReadOnlyMemory(allocationInfo[0].pSystemMem)) {
+                createAllocation.Flags.ReadOnly = true;
+                status = getGdi()->createAllocation2(&createAllocation);
+            }
+        }
 
         if (status != STATUS_SUCCESS) {
             PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);
@@ -1370,5 +1383,4 @@ void Wddm::setNewResourceBoundToPageTable() {
     }
     this->forEachContextWithinWddm([](const EngineControl &engine) { engine.osContext->setNewResourceBound(); });
 }
-
 } // namespace NEO

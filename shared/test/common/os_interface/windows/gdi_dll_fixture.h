@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,8 @@ struct GdiDllFixture {
             reinterpret_cast<decltype(&setAdapterBDF)>(mockGdiDll->getProcAddress("setAdapterBDF"));
         setMockDeviceExecutionStateFcn = reinterpret_cast<decltype(&setMockDeviceExecutionState)>(mockGdiDll->getProcAddress("setMockDeviceExecutionState"));
         setMockGetDeviceStateReturnValueFcn = reinterpret_cast<decltype(&setMockGetDeviceStateReturnValue)>(mockGdiDll->getProcAddress("setMockGetDeviceStateReturnValue"));
+        getCreateAllocation2ReadOnlyFailConfigFcn = reinterpret_cast<decltype(&getCreateAllocation2ReadOnlyFailConfig)>(mockGdiDll->getProcAddress("getCreateAllocation2ReadOnlyFailConfig"));
+        setCreateAllocation2ReadOnlyFailConfigFcn = reinterpret_cast<decltype(&setCreateAllocation2ReadOnlyFailConfig)>(mockGdiDll->getProcAddress("setCreateAllocation2ReadOnlyFailConfig"));
         setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
         *getDestroySynchronizationObjectDataFcn() = {};
         *getCreateSynchronizationObject2FailCallFcn() = false;
@@ -109,4 +111,6 @@ struct GdiDllFixture {
     decltype(&setAdapterBDF) setAdapterBDFFcn = nullptr;
     decltype(&setMockDeviceExecutionState) setMockDeviceExecutionStateFcn = nullptr;
     decltype(&setMockGetDeviceStateReturnValue) setMockGetDeviceStateReturnValueFcn = nullptr;
+    decltype(&getCreateAllocation2ReadOnlyFailConfig) getCreateAllocation2ReadOnlyFailConfigFcn = nullptr;
+    decltype(&setCreateAllocation2ReadOnlyFailConfig) setCreateAllocation2ReadOnlyFailConfigFcn = nullptr;
 };

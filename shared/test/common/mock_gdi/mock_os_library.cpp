@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -247,7 +247,12 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     if (procName == "D3DKMTUnregisterTrimNotification") {
         return reinterpret_cast<void *>(mockD3DKMTUnregisterTrimNotification);
     }
-
+    if (procName == "getCreateAllocation2ReadOnlyFailConfig") {
+        return reinterpret_cast<void *>(getCreateAllocation2ReadOnlyFailConfig);
+    }
+    if (procName == "setCreateAllocation2ReadOnlyFailConfig") {
+        return reinterpret_cast<void *>(setCreateAllocation2ReadOnlyFailConfig);
+    }
     return nullptr;
 }
 

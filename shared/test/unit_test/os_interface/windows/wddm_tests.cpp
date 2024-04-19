@@ -959,5 +959,4 @@ TEST_F(WddmTests, whenInitializeFailureThenInitOsInterfaceWddmFails) {
 
     EXPECT_FALSE(rootDeviceEnvironment->initOsInterface(std::move(hwDeviceId), 0u));
 }
-
 } // namespace NEO

@@ -175,5 +175,8 @@ CONFIGRET cmGetDeviceInterfaceList(LPGUID interfaceClassGuid, DEVINSTID_W pDevic
     return CM_Get_Device_Interface_List(interfaceClassGuid, pDeviceID, buffer, bufferLen, ulFlags);
 }
 
+SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
+    return VirtualQuery(lpAddress, lpBuffer, dwLength);
+}
 } // namespace SysCalls
 } // namespace NEO

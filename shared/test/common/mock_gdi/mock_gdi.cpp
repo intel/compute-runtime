@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -156,6 +156,22 @@ inline void *getStaticStorage(uint32_t slot) {
     return ptrOffset(baseAddress, slot * singleStorageSize);
 }
 
+static bool createAllocation2FailOnReadOnlyAllocation = false;
+static bool createAllocation2ReadOnlyFlagWasPassed = false;
+static uint32_t createAllocation2NumCalled = 0;
+
+void setCreateAllocation2ReadOnlyFailConfig(bool fail) {
+    createAllocation2FailOnReadOnlyAllocation = fail;
+    createAllocation2ReadOnlyFlagWasPassed = false;
+    createAllocation2NumCalled = 0;
+}
+
+void getCreateAllocation2ReadOnlyFailConfig(bool &readOnlyFlagWasPassed, uint32_t &numCalled) {
+    readOnlyFlagWasPassed = createAllocation2ReadOnlyFlagWasPassed;
+    numCalled = createAllocation2NumCalled;
+    setCreateAllocation2ReadOnlyFailConfig(false);
+}
+
 NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
     D3DDDI_ALLOCATIONINFO2 *allocationInfo;
     int numOfAllocations;
@@ -164,11 +180,23 @@ NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *a
     if (allocation == nullptr || allocation->hDevice != DEVICE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
+
     pallocation = *allocation;
     allocationInfo = allocation->pAllocationInfo2;
     if (allocationInfo == NULL) {
         return STATUS_INVALID_PARAMETER;
     }
+
+    if (createAllocation2FailOnReadOnlyAllocation) {
+        createAllocation2NumCalled++;
+        if (pallocation.Flags.ReadOnly) {
+            createAllocation2ReadOnlyFlagWasPassed = true;
+            return STATUS_SUCCESS;
+        } else {
+            return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
+        }
+    }
+
     numOfAllocations = allocation->NumAllocations;
     createResource = allocation->Flags.CreateResource;
     globalShare = allocation->Flags.CreateShared;
