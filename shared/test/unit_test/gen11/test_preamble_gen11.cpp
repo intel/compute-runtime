@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ GEN11TEST_F(IclSlm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueAre
     typedef Gen11Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
-    PreambleHelper<FamilyType>::programL3(&cs, l3Config);
+    PreambleHelper<FamilyType>::programL3(&cs, l3Config, false);
 
     parseCommands<Gen11Family>(cs);
 
@@ -121,7 +121,7 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
-    PreambleHelper<FamilyType>::programPreamble(&linearStream, mockDevice, l3Config, nullptr);
+    PreambleHelper<FamilyType>::programPreamble(&linearStream, mockDevice, l3Config, nullptr, false);
 
     parseCommands<FamilyType>(cs);
 

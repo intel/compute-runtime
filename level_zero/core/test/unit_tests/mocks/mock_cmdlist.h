@@ -517,7 +517,8 @@ struct MockCommandList : public CommandList {
 
     ADDMETHOD_NOBASE(appendMILoadRegImm, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t reg,
-                      uint32_t value));
+                      uint32_t value,
+                      bool isBcs));
 
     ADDMETHOD_NOBASE(appendMILoadRegReg, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t reg1,

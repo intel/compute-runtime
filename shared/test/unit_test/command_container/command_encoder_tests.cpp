@@ -620,12 +620,12 @@ HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysRetur
 
     EXPECT_EQ(0u, ImplicitScalingDispatch<FamilyType>::getRegisterConfigurationSize());
 
-    ImplicitScalingDispatch<FamilyType>::dispatchRegisterConfiguration(linearStream, 0, 0);
+    ImplicitScalingDispatch<FamilyType>::dispatchRegisterConfiguration(linearStream, 0, 0, false);
     EXPECT_EQ(0u, linearStream.getUsed());
 
     EXPECT_EQ(0u, ImplicitScalingDispatch<FamilyType>::getOffsetRegisterSize());
 
-    ImplicitScalingDispatch<FamilyType>::dispatchOffsetRegister(linearStream, 0);
+    ImplicitScalingDispatch<FamilyType>::dispatchOffsetRegister(linearStream, 0, 0);
     EXPECT_EQ(0u, linearStream.getUsed());
 
     EXPECT_EQ(static_cast<uint32_t>(sizeof(uint64_t)), ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset());

@@ -152,7 +152,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
     constexpr uint32_t immVal = 0xbaau;
     constexpr uint64_t dstAddress = 0xDEADCAF0u;
     void *storeRegMem = nullptr;
-    EncodeMathMMIO<FamilyType>::encodeBitwiseAndVal(cmdContainer, regOffset, immVal, dstAddress, true, &storeRegMem);
+    EncodeMathMMIO<FamilyType>::encodeBitwiseAndVal(cmdContainer, regOffset, immVal, dstAddress, true, &storeRegMem, false);
 
     CmdParse<FamilyType>::parseCommandBuffer(commands,
                                              ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0),

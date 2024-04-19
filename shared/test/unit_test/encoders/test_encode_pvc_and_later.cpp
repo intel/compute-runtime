@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,7 +107,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataM
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
 
-            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareAddress, compareData, compareOperation, indirect, false);
+            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareAddress, compareData, compareOperation, indirect, false, false);
 
             EXPECT_EQ(expectedSize, cmdStream.getUsed());
 
@@ -152,7 +152,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDa
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
 
-            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareAddress, compareData, compareOperation, indirect, true);
+            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareAddress, compareData, compareOperation, indirect, true, false);
 
             EXPECT_EQ(expectedSize, cmdStream.getUsed());
 
@@ -197,7 +197,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalDataR
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
 
-            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataRegBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareReg, compareData, compareOperation, indirect, false);
+            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataRegBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareReg, compareData, compareOperation, indirect, false, false);
 
             EXPECT_EQ(expectedSize, cmdStream.getUsed());
 
@@ -242,7 +242,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgramming64bConditionalDa
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
 
-            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataRegBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareReg, compareData, compareOperation, indirect, true);
+            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataRegBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareReg, compareData, compareOperation, indirect, true, false);
 
             EXPECT_EQ(expectedSize, cmdStream.getUsed());
 

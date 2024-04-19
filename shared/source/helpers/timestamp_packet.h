@@ -109,23 +109,23 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static void programConditionalBbStartForRelaxedOrdering(LinearStream &cmdStream, TagNodeBase &timestampPacketNode) {
+    static void programConditionalBbStartForRelaxedOrdering(LinearStream &cmdStream, TagNodeBase &timestampPacketNode, bool isBcs) {
         auto compareAddress = getContextEndGpuAddress(timestampPacketNode);
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.getPacketsUsed(); packetId++) {
             uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
 
             EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(cmdStream, 0, compareAddress + compareOffset, TimestampPacketConstants::initValue,
-                                                                                              NEO::CompareOperation::equal, true, false);
+                                                                                              NEO::CompareOperation::equal, true, false, isBcs);
         }
     }
 
     template <typename GfxFamily>
-    static void programCsrDependenciesForTimestampPacketContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies, bool relaxedOrderingEnabled) {
+    static void programCsrDependenciesForTimestampPacketContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies, bool relaxedOrderingEnabled, bool isBcs) {
         for (auto timestampPacketContainer : csrDependencies.timestampPacketContainer) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
                 if (relaxedOrderingEnabled) {
-                    TimestampPacketHelper::programConditionalBbStartForRelaxedOrdering<GfxFamily>(cmdStream, *node);
+                    TimestampPacketHelper::programConditionalBbStartForRelaxedOrdering<GfxFamily>(cmdStream, *node, isBcs);
                 } else {
                     TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node);
                 }

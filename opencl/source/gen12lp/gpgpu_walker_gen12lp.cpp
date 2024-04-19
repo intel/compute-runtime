@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,8 @@ void HardwareInterface<Family>::dispatchWorkarounds(
         NEO::LriHelper<Family>::program(commandStream,
                                         0x7010,
                                         value,
-                                        false);
+                                        false,
+                                        commandQueue.isBcs());
     }
 }
 

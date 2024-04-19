@@ -266,16 +266,17 @@ struct EncodeMathMMIO {
 
     static const size_t size = sizeof(MI_STORE_REGISTER_MEM);
 
-    static void encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress);
+    static void encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress, bool isBcs);
 
-    static void encodeGreaterThanPredicate(CommandContainer &container, uint64_t lhsVal, uint32_t rhsVal);
+    static void encodeGreaterThanPredicate(CommandContainer &container, uint64_t lhsVal, uint32_t rhsVal, bool isBcs);
 
     static void encodeBitwiseAndVal(CommandContainer &container,
                                     uint32_t regOffset,
                                     uint32_t immVal,
                                     uint64_t dstAddress,
                                     bool workloadPartition,
-                                    void **outCmdBuffer);
+                                    void **outCmdBuffer,
+                                    bool isBcs);
 
     static void encodeAlu(MI_MATH_ALU_INST_INLINE *pAluParam, AluRegisters srcA, AluRegisters srcB, AluRegisters op, AluRegisters dest, AluRegisters result);
 
@@ -291,8 +292,8 @@ struct EncodeMathMMIO {
                              AluRegisters secondOperandRegister,
                              AluRegisters finalResultRegister);
 
-    static void encodeIncrement(LinearStream &cmdStream, AluRegisters operandRegister);
-    static void encodeDecrement(LinearStream &cmdStream, AluRegisters operandRegister);
+    static void encodeIncrement(LinearStream &cmdStream, AluRegisters operandRegister, bool isBcs);
+    static void encodeDecrement(LinearStream &cmdStream, AluRegisters operandRegister, bool isBcs);
     static constexpr size_t getCmdSizeForIncrementOrDecrement() {
         return (EncodeAluHelper<GfxFamily, 4>::getCmdsSize() + (2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM)));
     }
@@ -303,7 +304,7 @@ struct EncodeMathMMIO {
         decrement = 1,
     };
 
-    static void encodeIncrementOrDecrement(LinearStream &cmdStream, AluRegisters operandRegister, IncrementOrDecrementOperation operationType);
+    static void encodeIncrementOrDecrement(LinearStream &cmdStream, AluRegisters operandRegister, IncrementOrDecrementOperation operationType, bool isBcs);
 };
 
 template <typename GfxFamily>
@@ -333,11 +334,11 @@ struct EncodeSetMMIO {
     static const size_t sizeMEM = sizeof(MI_LOAD_REGISTER_MEM);
     static const size_t sizeREG = sizeof(MI_LOAD_REGISTER_REG);
 
-    static void encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap);
+    static void encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap, bool isBcs);
     static void encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address);
     static void encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset);
 
-    static void encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap);
+    static void encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap, bool isBcs);
     static void encodeMEM(LinearStream &cmdStream, uint32_t offset, uint64_t address);
     static void encodeREG(LinearStream &cmdStream, uint32_t dstOffset, uint32_t srcOffset);
 
@@ -492,10 +493,10 @@ struct EncodeBatchBufferStartOrEnd {
     static void programBatchBufferEnd(CommandContainer &container);
     static void programBatchBufferEnd(LinearStream &commandStream);
 
-    static void programConditionalDataMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData);
-    static void programConditionalDataRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint32_t compareReg, uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData);
+    static void programConditionalDataMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData, bool isBcs);
+    static void programConditionalDataRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint32_t compareReg, uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData, bool isBcs);
     static void programConditionalRegRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, AluRegisters compareReg0, AluRegisters compareReg1, CompareOperation compareOperation, bool indirect);
-    static void programConditionalRegMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint32_t compareReg, CompareOperation compareOperation, bool indirect);
+    static void programConditionalRegMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint32_t compareReg, CompareOperation compareOperation, bool indirect, bool isBcs);
 
     static size_t constexpr getCmdSizeConditionalDataMemBatchBufferStart(bool useQwordData) {
         size_t size = (getCmdSizeConditionalBufferStartBase() + sizeof(typename GfxFamily::MI_LOAD_REGISTER_MEM) + (2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM)));

@@ -39,12 +39,14 @@ int __stdcall TTCallbacks<GfxFamily>::writeL3Address(void *queueHandle, uint64_t
     LriHelper<GfxFamily>::program(&csr->getCS(0),
                                   static_cast<uint32_t>(regOffset & 0xFFFFFFFF),
                                   static_cast<uint32_t>(l3GfxAddress & 0xFFFFFFFF),
-                                  true);
+                                  true,
+                                  false);
 
     LriHelper<GfxFamily>::program(&csr->getCS(0),
                                   static_cast<uint32_t>(regOffset >> 32),
                                   static_cast<uint32_t>(l3GfxAddress >> 32),
-                                  true);
+                                  true,
+                                  false);
 
     return 1;
 }

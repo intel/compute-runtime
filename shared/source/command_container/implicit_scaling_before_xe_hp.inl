@@ -44,7 +44,7 @@ inline size_t ImplicitScalingDispatch<GfxFamily>::getRegisterConfigurationSize()
 }
 
 template <typename GfxFamily>
-inline void ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(LinearStream &commandStream, uint64_t workPartitionSurfaceAddress, uint32_t addressOffset) {
+inline void ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(LinearStream &commandStream, uint64_t workPartitionSurfaceAddress, uint32_t addressOffset, bool isBcs) {
 }
 
 template <typename GfxFamily>
@@ -53,7 +53,7 @@ inline size_t ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize() {
 }
 
 template <typename GfxFamily>
-inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStream &commandStream, uint32_t addressOffset) {
+inline void ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(LinearStream &commandStream, uint32_t addressOffset, bool isBcs) {
 }
 
 template <typename GfxFamily>

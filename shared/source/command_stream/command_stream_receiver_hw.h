@@ -202,7 +202,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
-    void programL3(LinearStream &csr, uint32_t &newL3Config);
+    void programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs);
     void programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs);
     void programEpilogue(LinearStream &csr, Device &device, void **batchBufferEndLocation, DispatchFlags &dispatchFlags);

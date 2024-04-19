@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenChangedL3ConfigWhenL3IsProgramm
 
     uint32_t l3Config = 0x12345678;
 
-    csr.programL3(stream, l3Config);
+    csr.programL3(stream, l3Config, false);
 
     this->parseCommands<FamilyType>(stream);
 

@@ -154,7 +154,7 @@ struct CommandList : _ze_command_list_handle_t {
                                                     const size_t *pOffsets, ze_event_handle_t hSignalEvent,
                                                     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
 
-    virtual ze_result_t appendMILoadRegImm(uint32_t reg, uint32_t value) = 0;
+    virtual ze_result_t appendMILoadRegImm(uint32_t reg, uint32_t value, bool isBcs) = 0;
     virtual ze_result_t appendMILoadRegReg(uint32_t reg1, uint32_t reg2) = 0;
     virtual ze_result_t appendMILoadRegMem(uint32_t reg1, uint64_t address) = 0;
     virtual ze_result_t appendMIStoreRegMem(uint32_t reg1, uint64_t address) = 0;

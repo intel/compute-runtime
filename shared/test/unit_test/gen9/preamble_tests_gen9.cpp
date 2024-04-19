@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ GEN9TEST_F(ThreadArbitrationGen9, givenPreambleWhenItIsProgrammedThenThreadArbit
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
-    PreambleHelper<Gen9Family>::programPreamble(&linearStream, mockDevice, l3Config, nullptr);
+    PreambleHelper<Gen9Family>::programPreamble(&linearStream, mockDevice, l3Config, nullptr, false);
 
     parseCommands<Gen9Family>(cs);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return true; }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &newL3Config) {
+inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs) {
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     if (csrSizeRequestFlags.l3ConfigChanged && this->isPreambleSent) {
         // Add a PIPE_CONTROL w/ CS_stall
@@ -24,7 +24,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uin
         setClearSlmWorkAroundParameter(args);
         MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(csr, args);
 
-        PreambleHelper<GfxFamily>::programL3(&csr, newL3Config);
+        PreambleHelper<GfxFamily>::programL3(&csr, newL3Config, isBcs);
         this->lastSentL3Config = newL3Config;
     }
 }

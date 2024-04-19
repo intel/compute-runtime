@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ GEN9TEST_F(Gen9Slm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueAre
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
 
-    PreambleHelper<FamilyType>::programL3(&cs, l3Config);
+    PreambleHelper<FamilyType>::programL3(&cs, l3Config, false);
 
     parseCommands<FamilyType>(cs);
 

@@ -481,7 +481,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto &commandStreamCSR = this->getCS(estimatedSize);
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, false);
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies, false, EngineHelpers::isBcs(this->osContext->getEngineType()));
     TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStreamCSR, dispatchFlags.csrDependencies);
 
     programActivePartitionConfigFlushTask(commandStreamCSR);
@@ -494,7 +494,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programHardwareContext(commandStreamCSR);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
     programComputeMode(commandStreamCSR, dispatchFlags, hwInfo);
-    programL3(commandStreamCSR, newL3Config);
+    programL3(commandStreamCSR, newL3Config, EngineHelpers::isBcs(this->osContext->getEngineType()));
     programPreamble(commandStreamCSR, device, newL3Config);
     programMediaSampler(commandStreamCSR, dispatchFlags);
     addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
@@ -882,7 +882,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->preemptionAllocation);
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->preemptionAllocation, EngineHelpers::isBcs(osContext->getEngineType()));
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
     }
@@ -1045,7 +1045,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     MiFlushArgs args{waArgs};
 
     for (auto &blitProperties : blitPropertiesContainer) {
-        TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, blitProperties.csrDependencies, isRelaxedOrderingDispatch);
+        TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, blitProperties.csrDependencies, isRelaxedOrderingDispatch, EngineHelpers::isBcs(this->osContext->getEngineType()));
         TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStream, blitProperties.csrDependencies);
 
         BlitCommandsHelper<GfxFamily>::encodeWa(commandStream, blitProperties, latestSentBcsWaValue);
@@ -1740,7 +1740,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
     bool sbaTrackingEnabled = debuggingEnabled;
     if (sbaTrackingEnabled) {
         device.getL0Debugger()->programSbaAddressLoad(csrCommandStream,
-                                                      device.getL0Debugger()->getSbaTrackingBuffer(this->getOsContext().getContextId())->getGpuAddress());
+                                                      device.getL0Debugger()->getSbaTrackingBuffer(this->getOsContext().getContextId())->getGpuAddress(),
+                                                      EngineHelpers::isBcs(this->osContext->getEngineType()));
     }
 
     NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,

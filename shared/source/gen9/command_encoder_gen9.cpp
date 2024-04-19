@@ -58,6 +58,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
         LriHelper<Gen9Family>::program(&csr,
                                        DebugControlReg2::address,
                                        DebugControlReg2::getRegData(properties.threadArbitrationPolicy.value),
+                                       false,
                                        false);
     }
 }

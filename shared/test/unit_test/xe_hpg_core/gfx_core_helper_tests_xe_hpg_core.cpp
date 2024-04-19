@@ -89,7 +89,7 @@ XE_HPG_CORETEST_F(LriHelperTestsXeHpgCore, whenProgrammingLriCommandThenExpectMm
     expectedLri.setDataDword(data);
     expectedLri.setMmioRemapEnable(true);
 
-    LriHelper<FamilyType>::program(&stream, address, data, true);
+    LriHelper<FamilyType>::program(&stream, address, data, true, false);
     MI_LOAD_REGISTER_IMM *lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(buffer.get());
     ASSERT_NE(nullptr, lri);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,7 +101,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     void initSbaTrackingMode();
 
     virtual size_t getSbaAddressLoadCommandsSize() = 0;
-    virtual void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) = 0;
+    virtual void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa, bool isBcs) = 0;
 
     MOCKABLE_VIRTUAL bool attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &kernelAlloc, uint32_t &moduleHandle, uint32_t elfHandle);
     MOCKABLE_VIRTUAL bool removeZebinModule(uint32_t moduleHandle);
@@ -145,7 +145,7 @@ class DebuggerL0Hw : public DebuggerL0 {
     void captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) override;
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override;
     size_t getSbaAddressLoadCommandsSize() override;
-    void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) override;
+    void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa, bool isBcs) override;
 
     void programSbaTrackingCommandsSingleAddressSpace(NEO::LinearStream &cmdStream, const SbaAddresses &sba, bool useFirstLevelBB);
 

@@ -13,11 +13,12 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
+void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config, bool isBcs) {
     LriHelper<GfxFamily>::program(pCommandStream,
                                   L3CNTLRegisterOffset<GfxFamily>::registerOffset,
                                   l3Config,
-                                  false);
+                                  false,
+                                  isBcs);
 }
 
 template <typename GfxFamily>

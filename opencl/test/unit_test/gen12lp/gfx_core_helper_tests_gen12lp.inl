@@ -321,7 +321,7 @@ GEN12LPTEST_F(LriHelperTestsGen12Lp, whenProgrammingLriCommandThenExpectMmioRema
     expectedLri.setDataDword(data);
     expectedLri.setMmioRemapEnable(false);
 
-    LriHelper<FamilyType>::program(&stream, address, data, false);
+    LriHelper<FamilyType>::program(&stream, address, data, false, false);
     MI_LOAD_REGISTER_IMM *lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(buffer.get());
     ASSERT_NE(nullptr, lri);
 

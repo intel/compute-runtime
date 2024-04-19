@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,8 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchPartitionRegisterConfiguration() {
     ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(ringCommandStream,
                                                                       this->workPartitionAllocation->getGpuAddress(),
-                                                                      this->immWritePostSyncOffset);
+                                                                      this->immWritePostSyncOffset,
+                                                                      EngineHelpers::isBcs(this->osContext.getEngineType()));
 }
 
 template <typename GfxFamily, typename Dispatcher>

@@ -66,6 +66,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
         LriHelper<Family>::program(&csr,
                                    RowChickenReg4::address,
                                    RowChickenReg4::regDataForArbitrationPolicy[properties.threadArbitrationPolicy.value],
+                                   false,
                                    false);
     }
     if (properties.isCoherencyRequired.isDirty) {
@@ -73,6 +74,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
         LriHelper<Family>::program(&csr,
                                    gen11HdcModeRegister::address,
                                    DwordBuilder::build(gen11HdcModeRegister::forceNonCoherentEnableBit, true, nonCoherentEnable),
+                                   false,
                                    false);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMILoadRegImm(uint32_t reg, uint32_t value) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMILoadRegImm(uint32_t reg, uint32_t value, bool isBcs) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 template <GFXCORE_FAMILY gfxCoreFamily>

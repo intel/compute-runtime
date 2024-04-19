@@ -162,7 +162,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                  uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
-    ze_result_t appendMILoadRegImm(uint32_t reg, uint32_t value) override;
+    ze_result_t appendMILoadRegImm(uint32_t reg, uint32_t value, bool isBcs) override;
     ze_result_t appendMILoadRegReg(uint32_t reg1, uint32_t reg2) override;
     ze_result_t appendMILoadRegMem(uint32_t reg1, uint64_t address) override;
     ze_result_t appendMIStoreRegMem(uint32_t reg1, uint64_t address) override;

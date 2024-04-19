@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -691,7 +691,7 @@ XE_HPC_CORETEST_F(LriHelperTestsXeHpcCore, whenProgrammingLriCommandThenExpectMm
     expectedLri.setDataDword(data);
     expectedLri.setMmioRemapEnable(true);
 
-    LriHelper<FamilyType>::program(&stream, address, data, true);
+    LriHelper<FamilyType>::program(&stream, address, data, true, false);
     MI_LOAD_REGISTER_IMM *lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(buffer.get());
     ASSERT_NE(nullptr, lri);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,7 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     LriHelper<GfxFamily>::program(pCommandStream,
                                   RegisterOffsets::csGprR1,
                                   mask,
+                                  false,
                                   false);
 
     // Add instruction MI_MATH with 4 MI_MATH_ALU_INST_INLINE operands

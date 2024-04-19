@@ -586,7 +586,7 @@ void ConditionalBbStartTests<T>::whenDispatchingEqualModeThenResultsAreValidImpl
     {
         uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(isQwordData) + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
 
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa, baseCompareValue, NEO::CompareOperation::equal, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa, baseCompareValue, NEO::CompareOperation::equal, false, isQwordData, false);
 
         NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
 
@@ -599,7 +599,7 @@ void ConditionalBbStartTests<T>::whenDispatchingEqualModeThenResultsAreValidImpl
     // Greater
     {
 
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + sizeof(TestCompareDataT), baseCompareValue, NEO::CompareOperation::equal, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + sizeof(TestCompareDataT), baseCompareValue, NEO::CompareOperation::equal, false, isQwordData, false);
 
         EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + sizeof(TestCompareDataT),
                                                   getAtomicOpcode<MI_ATOMIC>(),
@@ -609,7 +609,7 @@ void ConditionalBbStartTests<T>::whenDispatchingEqualModeThenResultsAreValidImpl
 
     // Less
     {
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + (sizeof(TestCompareDataT) * 2), baseCompareValue, NEO::CompareOperation::equal, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + (sizeof(TestCompareDataT) * 2), baseCompareValue, NEO::CompareOperation::equal, false, isQwordData, false);
 
         EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + (sizeof(TestCompareDataT) * 2),
                                                   getAtomicOpcode<MI_ATOMIC>(),
@@ -641,7 +641,7 @@ void ConditionalBbStartTests<T>::whenDispatchingNotEqualModeThenResultsAreValidI
     // Equal
     {
 
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa, baseCompareValue, NEO::CompareOperation::notEqual, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa, baseCompareValue, NEO::CompareOperation::notEqual, false, isQwordData, false);
 
         EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa,
                                                   getAtomicOpcode<MI_ATOMIC>(),
@@ -654,7 +654,7 @@ void ConditionalBbStartTests<T>::whenDispatchingNotEqualModeThenResultsAreValidI
 
         uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(isQwordData) + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
 
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + sizeof(TestCompareDataT), baseCompareValue, NEO::CompareOperation::notEqual, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + sizeof(TestCompareDataT), baseCompareValue, NEO::CompareOperation::notEqual, false, isQwordData, false);
 
         NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
 
@@ -668,7 +668,7 @@ void ConditionalBbStartTests<T>::whenDispatchingNotEqualModeThenResultsAreValidI
     {
         uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(isQwordData) + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
 
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + (sizeof(TestCompareDataT) * 2), baseCompareValue, NEO::CompareOperation::notEqual, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + (sizeof(TestCompareDataT) * 2), baseCompareValue, NEO::CompareOperation::notEqual, false, isQwordData, false);
 
         NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
 
@@ -703,7 +703,7 @@ void ConditionalBbStartTests<T>::whenDispatchingGreaterOrEqualModeThenResultsAre
     {
         uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(isQwordData) + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
 
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa, baseCompareValue, NEO::CompareOperation::greaterOrEqual, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa, baseCompareValue, NEO::CompareOperation::greaterOrEqual, false, isQwordData, false);
 
         NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
 
@@ -718,7 +718,7 @@ void ConditionalBbStartTests<T>::whenDispatchingGreaterOrEqualModeThenResultsAre
 
         uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(isQwordData) + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
 
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + sizeof(TestCompareDataT), baseCompareValue, NEO::CompareOperation::greaterOrEqual, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + sizeof(TestCompareDataT), baseCompareValue, NEO::CompareOperation::greaterOrEqual, false, isQwordData, false);
 
         NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
 
@@ -730,7 +730,7 @@ void ConditionalBbStartTests<T>::whenDispatchingGreaterOrEqualModeThenResultsAre
 
     // Less
     {
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + (sizeof(TestCompareDataT) * 2), baseCompareValue, NEO::CompareOperation::greaterOrEqual, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + (sizeof(TestCompareDataT) * 2), baseCompareValue, NEO::CompareOperation::greaterOrEqual, false, isQwordData, false);
 
         EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + (sizeof(TestCompareDataT) * 2),
                                                   getAtomicOpcode<MI_ATOMIC>(),
@@ -761,7 +761,7 @@ void ConditionalBbStartTests<T>::whenDispatchingLessModeThenResultsAreValidImpl(
 
     // Equal
     {
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa, baseCompareValue, NEO::CompareOperation::less, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa, baseCompareValue, NEO::CompareOperation::less, false, isQwordData, false);
 
         EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa,
                                                   getAtomicOpcode<MI_ATOMIC>(),
@@ -771,7 +771,7 @@ void ConditionalBbStartTests<T>::whenDispatchingLessModeThenResultsAreValidImpl(
 
     // Greater
     {
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + sizeof(TestCompareDataT), baseCompareValue, NEO::CompareOperation::less, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, invalidGpuVa, baseGpuVa + sizeof(TestCompareDataT), baseCompareValue, NEO::CompareOperation::less, false, isQwordData, false);
 
         EncodeAtomic<FamilyType>::programMiAtomic(*taskStream, baseWriteGpuVa + sizeof(TestCompareDataT),
                                                   getAtomicOpcode<MI_ATOMIC>(),
@@ -783,7 +783,7 @@ void ConditionalBbStartTests<T>::whenDispatchingLessModeThenResultsAreValidImpl(
     {
         uint64_t jumpAddress = taskStream->getCurrentGpuAddressPosition() + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart(isQwordData) + EncodeBatchBufferStartOrEnd<FamilyType>::getBatchBufferEndSize();
 
-        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + (sizeof(TestCompareDataT) * 2), baseCompareValue, NEO::CompareOperation::less, false, isQwordData);
+        EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalDataMemBatchBufferStart(*taskStream, jumpAddress, baseGpuVa + (sizeof(TestCompareDataT) * 2), baseCompareValue, NEO::CompareOperation::less, false, isQwordData, false);
 
         NEO::EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(*taskStream); // should be skipped
 

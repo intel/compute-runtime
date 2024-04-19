@@ -228,7 +228,7 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStre
     expectedLri.setRegisterOffset(address);
     expectedLri.setDataDword(data);
 
-    LriHelper<FamilyType>::program(&stream, address, data, false);
+    LriHelper<FamilyType>::program(&stream, address, data, false, false);
     auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(stream.getCpuBase());
     ASSERT_NE(nullptr, lri);
 

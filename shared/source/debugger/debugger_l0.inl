@@ -121,7 +121,7 @@ size_t DebuggerL0Hw<GfxFamily>::getSbaAddressLoadCommandsSize() {
 }
 
 template <typename GfxFamily>
-void DebuggerL0Hw<GfxFamily>::programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) {
+void DebuggerL0Hw<GfxFamily>::programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa, bool isBcs) {
     if (!singleAddressSpaceSbaTracking) {
         return;
     }
@@ -131,12 +131,14 @@ void DebuggerL0Hw<GfxFamily>::programSbaAddressLoad(NEO::LinearStream &cmdStream
     NEO::LriHelper<GfxFamily>::program(&cmdStream,
                                        DebuggerRegisterOffsets::csGprR15,
                                        low,
-                                       true);
+                                       true,
+                                       isBcs);
 
     NEO::LriHelper<GfxFamily>::program(&cmdStream,
                                        DebuggerRegisterOffsets::csGprR15 + 4,
                                        high,
-                                       true);
+                                       true,
+                                       isBcs);
 }
 
 } // namespace NEO

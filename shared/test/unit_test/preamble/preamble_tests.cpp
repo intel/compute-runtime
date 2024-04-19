@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIs
         uintptr_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
         MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(minCsrAlignment), 1024);
 
-        PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U, &csrSurface);
+        PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U, &csrSurface, false);
 
         PreemptionHelper::programStateSip<FamilyType>(preemptionStream, *mockDevice, nullptr);
 
@@ -220,7 +220,7 @@ HWTEST_F(PreambleTest, givenSetForceSemaphoreDelayBetweenWaitsWhenProgramSemapho
     auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
 
     LinearStream stream(buffer.get(), bufferSize);
-    PreambleHelper<FamilyType>::programSemaphoreDelay(&stream);
+    PreambleHelper<FamilyType>::programSemaphoreDelay(&stream, false);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(stream);
@@ -244,7 +244,7 @@ HWTEST_F(PreambleTest, givenNotSetForceSemaphoreDelayBetweenWaitsWhenProgramSema
     auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
 
     LinearStream stream(buffer.get(), bufferSize);
-    PreambleHelper<FamilyType>::programSemaphoreDelay(&stream);
+    PreambleHelper<FamilyType>::programSemaphoreDelay(&stream, false);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(stream);

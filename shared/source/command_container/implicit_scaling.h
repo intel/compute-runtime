@@ -79,11 +79,12 @@ struct ImplicitScalingDispatch {
     static size_t getRegisterConfigurationSize();
     static void dispatchRegisterConfiguration(LinearStream &commandStream,
                                               uint64_t workPartitionSurfaceAddress,
-                                              uint32_t addressOffset);
+                                              uint32_t addressOffset,
+                                              bool isBcs);
 
     static size_t getOffsetRegisterSize();
     static void dispatchOffsetRegister(LinearStream &commandStream,
-                                       uint32_t addressOffset);
+                                       uint32_t addressOffset, bool isBcs);
 
     static uint32_t getImmediateWritePostSyncOffset();
     static uint32_t getTimeStampPostSyncOffset();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class MockDebuggerL0 : public NEO::DebuggerL0 {
     }
 
     size_t getSbaAddressLoadCommandsSize() override { return 0; };
-    void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa) override{};
+    void programSbaAddressLoad(NEO::LinearStream &cmdStream, uint64_t sbaGpuVa, bool isBcs) override{};
 };
 
 template <typename GfxFamily>

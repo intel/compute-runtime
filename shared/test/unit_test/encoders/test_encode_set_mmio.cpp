@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ class CommandSetMMIOFixture : public DeviceFixture {
 using CommandSetMMIOTest = Test<CommandSetMMIOFixture>;
 
 HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
-    EncodeSetMMIO<FamilyType>::encodeIMM(*cmdContainer.get(), 0x2000, 0xbaa, false);
+    EncodeSetMMIO<FamilyType>::encodeIMM(*cmdContainer.get(), 0x2000, 0xbaa, false, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

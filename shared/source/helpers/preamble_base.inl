@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,13 +30,14 @@ void PreambleHelper<GfxFamily>::programGenSpecificPreambleWorkArounds(LinearStre
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programSemaphoreDelay(LinearStream *pCommandStream) {
+void PreambleHelper<GfxFamily>::programSemaphoreDelay(LinearStream *pCommandStream, bool isBcs) {
     if (debugManager.flags.ForceSemaphoreDelayBetweenWaits.get() > -1) {
         uint32_t valueOfNewSemaphoreDelay = debugManager.flags.ForceSemaphoreDelayBetweenWaits.get();
         LriHelper<GfxFamily>::program(pCommandStream,
                                       RegisterOffsets::semaWaitPoll,
                                       valueOfNewSemaphoreDelay,
-                                      true);
+                                      true,
+                                      isBcs);
     };
 }
 
@@ -55,11 +56,11 @@ size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                                GraphicsAllocation *preemptionCsr) {
-    programL3(pCommandStream, l3Config);
+                                                GraphicsAllocation *preemptionCsr, bool isBcs) {
+    programL3(pCommandStream, l3Config, isBcs);
     programPreemption(pCommandStream, device, preemptionCsr);
     programGenSpecificPreambleWorkArounds(pCommandStream, device.getHardwareInfo());
-    programSemaphoreDelay(pCommandStream);
+    programSemaphoreDelay(pCommandStream, isBcs);
 }
 
 template <typename GfxFamily>

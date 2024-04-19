@@ -23,6 +23,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
@@ -1005,7 +1006,8 @@ void CommandQueueHw<gfxCoreFamily>::programCommandQueueDebugCmdsForSourceLevelOr
     if (isDebugEnabled && !this->commandQueueDebugCmdsProgrammed) {
         if (this->device->getL0Debugger()) {
             this->device->getL0Debugger()->programSbaAddressLoad(cmdStream,
-                                                                 device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId())->getGpuAddress());
+                                                                 device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId())->getGpuAddress(),
+                                                                 NEO::EngineHelpers::isBcs(this->csr->getOsContext().getEngineType()));
             this->commandQueueDebugCmdsProgrammed = true;
         }
     }

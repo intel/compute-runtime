@@ -288,7 +288,7 @@ void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &co
     if (debugManager.flags.GlobalSequencerFlushOnCopyEngine.get() != 0) {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
         constexpr uint32_t globalInvalidationRegister = 0xB404u;
-        LriHelper<GfxFamily>::program(&commandStream, globalInvalidationRegister, 1u, false);
+        LriHelper<GfxFamily>::program(&commandStream, globalInvalidationRegister, 1u, false, true);
         EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream,
                                                               globalInvalidationRegister,
                                                               0u,

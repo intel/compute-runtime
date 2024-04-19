@@ -117,7 +117,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandStream);
     }
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies, walkerArgs.relaxedOrderingEnabled);
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies, walkerArgs.relaxedOrderingEnabled, commandQueue.isBcs());
 
     dsh->align(EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 
@@ -165,7 +165,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     if (PauseOnGpuProperties::gpuScratchRegWriteAllowed(debugManager.flags.GpuScratchRegWriteAfterWalker.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount())) {
         uint32_t registerOffset = debugManager.flags.GpuScratchRegWriteRegisterOffset.get();
         uint32_t registerData = debugManager.flags.GpuScratchRegWriteRegisterData.get();
-        LriHelper<GfxFamily>::program(commandStream, registerOffset, registerData, EncodeSetMMIO<GfxFamily>::isRemapApplicable(registerOffset));
+        LriHelper<GfxFamily>::program(commandStream, registerOffset, registerData, EncodeSetMMIO<GfxFamily>::isRemapApplicable(registerOffset), commandQueue.isBcs());
     }
 
     if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::AfterWorkload)) {

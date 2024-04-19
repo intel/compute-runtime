@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -138,6 +138,11 @@ TEST(CommandQueue, WhenGettingErrorCodeFromTaskCountThenProperValueIsReturned) {
     EXPECT_EQ(CL_OUT_OF_RESOURCES, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::outOfDeviceMemory));
     EXPECT_EQ(CL_OUT_OF_RESOURCES, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::gpuHang));
     EXPECT_EQ(CL_OUT_OF_RESOURCES, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::failed));
+}
+
+TEST(CommandQueue, GivenCommandQueueWhenIsBcsIsCalledThenIsCopyOnlyIsReturned) {
+    MockCommandQueue cmdQ(nullptr, nullptr, 0, false);
+    EXPECT_EQ(cmdQ.isBcs(), cmdQ.isCopyOnly);
 }
 
 TEST(CommandQueue, WhenConstructingCommandQueueThenTaskLevelAndTaskCountAreZero) {

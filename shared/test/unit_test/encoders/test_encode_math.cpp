@@ -183,7 +183,7 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
     constexpr uint32_t immVal = 0xbaau;
     constexpr uint64_t dstAddress = 0xDEADCAF0u;
     void *storeRegMem = nullptr;
-    EncodeMathMMIO<FamilyType>::encodeBitwiseAndVal(cmdContainer, regOffset, immVal, dstAddress, false, &storeRegMem);
+    EncodeMathMMIO<FamilyType>::encodeBitwiseAndVal(cmdContainer, regOffset, immVal, dstAddress, false, &storeRegMem, false);
 
     CmdParse<FamilyType>::parseCommandBuffer(commands,
                                              ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0),
@@ -296,7 +296,7 @@ HWTEST_F(CommandEncodeAluTests, whenProgrammingIncrementOperationThenUseCorrectA
     uint8_t buffer[bufferSize] = {};
     LinearStream cmdStream(buffer, bufferSize);
 
-    EncodeMathMMIO<FamilyType>::encodeIncrement(cmdStream, incRegister);
+    EncodeMathMMIO<FamilyType>::encodeIncrement(cmdStream, incRegister, false);
 
     EXPECT_EQ(bufferSize, cmdStream.getUsed());
 
@@ -343,7 +343,7 @@ HWTEST_F(CommandEncodeAluTests, whenProgrammingDecrementOperationThenUseCorrectA
     uint8_t buffer[bufferSize] = {};
     LinearStream cmdStream(buffer, bufferSize);
 
-    EncodeMathMMIO<FamilyType>::encodeDecrement(cmdStream, decRegister);
+    EncodeMathMMIO<FamilyType>::encodeDecrement(cmdStream, decRegister, false);
 
     EXPECT_EQ(bufferSize, cmdStream.getUsed());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ HWTEST2_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitration
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<Gen12LpFamily>::getL3Config(pDevice->getHardwareInfo(), true);
     MockDevice mockDevice;
-    PreambleHelper<Gen12LpFamily>::programPreamble(&linearStream, mockDevice, l3Config, nullptr);
+    PreambleHelper<Gen12LpFamily>::programPreamble(&linearStream, mockDevice, l3Config, nullptr, false);
 
     parseCommands<Gen12LpFamily>(cs);
 
@@ -36,7 +36,7 @@ HWTEST2_F(TglLpSlm, WhenPreambleIsCreatedThenSlmIsDisabled, IsTGLLP) {
     typedef Gen12LpFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(pDevice->getHardwareInfo(), true);
-    PreambleHelper<FamilyType>::programL3(&cs, l3Config);
+    PreambleHelper<FamilyType>::programL3(&cs, l3Config, false);
 
     parseCommands<Gen12LpFamily>(cs);
 

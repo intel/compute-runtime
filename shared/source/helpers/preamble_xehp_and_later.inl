@@ -22,7 +22,7 @@ void PreambleHelper<GfxFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
+void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config, bool isBcs) {
 }
 
 template <typename GfxFamily>

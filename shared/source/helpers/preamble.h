@@ -29,7 +29,7 @@ struct PreambleHelper {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using FrontEndStateCommand = typename GfxFamily::FrontEndStateCommand;
 
-    static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
+    static void programL3(LinearStream *pCommandStream, uint32_t l3Config, bool isBcs);
     static void programPipelineSelect(LinearStream *pCommandStream,
                                       const PipelineSelectArgs &pipelineSelectArgs,
                                       const RootDeviceEnvironment &rootDeviceEnvironment);
@@ -47,8 +47,8 @@ struct PreambleHelper {
                                 const StreamProperties &streamProperties);
     static uint64_t getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
-                                GraphicsAllocation *preemptionCsr);
-    static void programSemaphoreDelay(LinearStream *pCommandStream);
+                                GraphicsAllocation *preemptionCsr, bool isBcs);
+    static void programSemaphoreDelay(LinearStream *pCommandStream, bool isBcs);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static bool isSystolicModeConfigurable(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getAdditionalCommandsSize(const Device &device);

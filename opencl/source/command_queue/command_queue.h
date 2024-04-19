@@ -386,6 +386,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool getHeaplessStateInitEnabled() const { return this->heaplessStateInitEnabled; }
 
     bool isBcsSplitInitialized() const { return this->bcsSplitInitialized; }
+    bool isBcs() const { return isCopyOnly; };
 
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);

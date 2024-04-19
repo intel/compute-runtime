@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ BDWTEST_F(BdwSlm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueArePr
     typedef Gen8Family::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<Gen8Family>::getL3Config(*defaultHwInfo, true);
-    PreambleHelper<Gen8Family>::programL3(&cs, l3Config);
+    PreambleHelper<Gen8Family>::programL3(&cs, l3Config, false);
 
     parseCommands<Gen8Family>(cs);
 

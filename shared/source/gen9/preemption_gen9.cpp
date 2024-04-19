@@ -43,6 +43,7 @@ void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pComm
             LriHelper<GfxFamily>::program(pCommandStream,
                                           RegisterOffsets::csGprR0,
                                           RegisterConstants::gpgpuWalkerCookieValueBeforeWalker,
+                                          false,
                                           false);
         }
     }
@@ -58,6 +59,7 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pComman
             LriHelper<GfxFamily>::program(pCommandStream,
                                           RegisterOffsets::csGprR0,
                                           RegisterConstants::gpgpuWalkerCookieValueAfterWalker,
+                                          false,
                                           false);
         }
     }

@@ -54,6 +54,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 LriHelper<Family>::program(&stream,
                                            PWR_CLK_STATE_REGISTER::REG_ADDRESS,
                                            reg.TheStructure.RawData[0],
+                                           false,
                                            false);
 
                 args = {};
@@ -96,6 +97,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 LriHelper<Family>::program(&stream,
                                            PWR_CLK_STATE_REGISTER::REG_ADDRESS,
                                            reg.TheStructure.RawData[0],
+                                           false,
                                            false);
 
                 MemorySynchronizationCommands<Family>::addSingleBarrier(stream, args);

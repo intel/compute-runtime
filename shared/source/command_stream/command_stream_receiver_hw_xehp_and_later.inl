@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return is64bit; }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &newL3Config) {}
+void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs) {}
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
@@ -127,7 +127,8 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(LinearStream &csr) {
     if (this->staticWorkPartitioningEnabled) {
         uint64_t workPartitionAddress = getWorkPartitionAllocationGpuAddress();
-        ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(csr, workPartitionAddress, this->immWritePostSyncWriteOffset);
+        ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(csr, workPartitionAddress,
+                                                                          this->immWritePostSyncWriteOffset, EngineHelpers::isBcs(osContext->getEngineType()));
     }
     this->activePartitionsConfig = this->activePartitions;
 }

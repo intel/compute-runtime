@@ -41,7 +41,7 @@ void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream, Pree
         regVal = PreemptionConfig<GfxFamily>::cmdLevelVal;
     }
 
-    LriHelper<GfxFamily>::program(&cmdStream, PreemptionConfig<GfxFamily>::mmioAddress, regVal, false);
+    LriHelper<GfxFamily>::program(&cmdStream, PreemptionConfig<GfxFamily>::mmioAddress, regVal, false, false);
 }
 
 template <>
@@ -94,6 +94,7 @@ void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pComm
             LriHelper<GfxFamily>::program(pCommandStream,
                                           RegisterOffsets::csGprR0,
                                           RegisterConstants::gpgpuWalkerCookieValueBeforeWalker,
+                                          false,
                                           false);
         }
     }
@@ -109,6 +110,7 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pComman
             LriHelper<GfxFamily>::program(pCommandStream,
                                           RegisterOffsets::csGprR0,
                                           RegisterConstants::gpgpuWalkerCookieValueAfterWalker,
+                                          false,
                                           false);
         }
     }
