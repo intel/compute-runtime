@@ -432,6 +432,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(
         return ret;
     }
 
+    if (device->getL0GfxCoreHelper().implicitSynchronizedDispatchForCooperativeKernelsAllowed()) {
+        enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::full);
+    }
+
     appendSynchronizedDispatchInitializationSection();
 
     Event *event = nullptr;

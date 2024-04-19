@@ -98,6 +98,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) = 0;
     virtual void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) = 0;
     virtual bool synchronizedDispatchSupported() const = 0;
+    virtual bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -145,6 +146,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) override;
     void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) override;
     bool synchronizedDispatchSupported() const override;
+    bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

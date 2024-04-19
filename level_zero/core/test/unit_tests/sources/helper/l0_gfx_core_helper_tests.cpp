@@ -925,6 +925,14 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingSyncDispatchSuppor
     EXPECT_FALSE(l0GfxCoreHelper.synchronizedDispatchSupported());
 }
 
+HWTEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingImplicitSyncDispatchModeForCooperativeKernelsThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_FALSE(l0GfxCoreHelper.implicitSynchronizedDispatchForCooperativeKernelsAllowed());
+}
+
 HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingSyncDispatchSupportThenReturnTrue, IsAtLeastXeHpcCore) {
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();

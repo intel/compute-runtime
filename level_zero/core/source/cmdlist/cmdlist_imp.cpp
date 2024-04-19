@@ -311,7 +311,7 @@ void CommandListImp::addRegularCmdListSubmissionCounter() {
 }
 
 void CommandListImp::enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode) {
-    if (!device->isImplicitScalingCapable()) {
+    if (!device->isImplicitScalingCapable() || this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
         return;
     }
 
