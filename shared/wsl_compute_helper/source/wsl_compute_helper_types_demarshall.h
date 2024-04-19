@@ -4564,6 +4564,9 @@ struct Demarshaller<TOK_S_CREATECONTEXT_PVTDATA> {
                 case TOK_FBC_CREATECONTEXT_PVTDATA__GPU_VACONTEXT: {
                     dst.GpuVAContext = readTokValue<decltype(dst.GpuVAContext)>(*tok);
                 } break;
+                case TOK_FBD_CREATECONTEXT_PVTDATA__UMD_CONTEXT_TYPE: {
+                    dst.UmdContextType = readTokValue<decltype(dst.UmdContextType)>(*tok);
+                } break;
                 case TOK_FBC_CREATECONTEXT_PVTDATA__NO_RING_FLUSHES: {
                     dst.NoRingFlushes = readTokValue<decltype(dst.NoRingFlushes)>(*tok);
                 } break;

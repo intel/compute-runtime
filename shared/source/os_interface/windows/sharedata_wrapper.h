@@ -163,6 +163,7 @@ struct CREATECONTEXT_PVTDATA { // NOLINT(readability-identifier-naming)
     uint8_t IsMediaUsage;       // NOLINT(readability-identifier-naming)
     uint8_t GpuVAContext;       // NOLINT(readability-identifier-naming)
     BOOLEAN NoRingFlushes;      // NOLINT(readability-identifier-naming)
+    uint32_t UmdContextType;    // NOLINT(readability-identifier-naming)
 };
 
 struct PLATFORM_KMD : PLATFORM_GMM { // NOLINT(readability-identifier-naming)

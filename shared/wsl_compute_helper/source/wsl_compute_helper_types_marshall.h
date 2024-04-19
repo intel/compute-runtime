@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2343,6 +2343,7 @@ inline void marshall(TOKSTR__CREATECONTEXT_PVTDATA &dst, const _CREATECONTEXT_PV
     dst.IsMediaUsage.setValue(src.IsMediaUsage);
     dst.GpuVAContext.setValue(src.GpuVAContext);
     dst.NoRingFlushes.setValue(src.NoRingFlushes);
+    dst.UmdContextType.setValue(src.UmdContextType);
 }
 template <>
 struct Marshaller<TOK_S_CREATECONTEXT_PVTDATA> {

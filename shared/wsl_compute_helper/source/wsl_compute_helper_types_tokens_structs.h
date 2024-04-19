@@ -1037,6 +1037,7 @@ struct TOKSTR__CREATECONTEXT_PVTDATA {
     TokenDword IsMediaUsage = {TOK_FBC_CREATECONTEXT_PVTDATA__IS_MEDIA_USAGE};
     TokenDword GpuVAContext = {TOK_FBC_CREATECONTEXT_PVTDATA__GPU_VACONTEXT};
     TokenDword NoRingFlushes = {TOK_FBC_CREATECONTEXT_PVTDATA__NO_RING_FLUSHES};
+    TokenDword UmdContextType = {TOK_FBD_CREATECONTEXT_PVTDATA__UMD_CONTEXT_TYPE};
 };
 static_assert(std::is_standard_layout_v<TOKSTR__CREATECONTEXT_PVTDATA>, "");
 static_assert(sizeof(TOKSTR__CREATECONTEXT_PVTDATA) % sizeof(uint32_t) == 0, "");

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext) {
     privateData.IsDwm = FALSE;
     privateData.GpuVAContext = TRUE;
     privateData.IsMediaUsage = false;
+    privateData.UmdContextType = UMD_OCL;
 
     return privateData;
 }

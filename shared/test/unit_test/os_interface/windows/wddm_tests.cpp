@@ -89,6 +89,15 @@ TEST_F(WddmTests, whenCreatingContextWithPowerHintSuccessIsReturned) {
     EXPECT_TRUE(wddm->createContext(*newContext));
 }
 
+TEST_F(WddmTests, whenCreatingContextThenUmdTypeInPrivateDataIsSetToOpenCL) {
+    init();
+    auto newContext = osContext.get();
+    wddm->createContext(*newContext);
+    auto data = getCreateContextDataFcn();
+    auto umdType = reinterpret_cast<CREATECONTEXT_PVTDATA *>(data->pPrivateDriverData)->UmdContextType;
+    EXPECT_EQ(umdType, UMD_OCL);
+}
+
 TEST_F(WddmTests, whenftrEuDebugIsFalseThenDebuggingEnabledReturnsFalse) {
     init();
     EXPECT_FALSE(wddm->isDebugAttachAvailable());
