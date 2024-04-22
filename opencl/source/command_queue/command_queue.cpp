@@ -615,16 +615,23 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
         return CL_INVALID_VALUE;
     }
 
+    bool isImageReleased = false;
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
         if (memObject == nullptr || memObject->peekSharingHandler() == nullptr) {
             return CL_INVALID_MEM_OBJECT;
         }
+        isImageReleased |= memObject->getMultiGraphicsAllocation().getAllocationType() == AllocationType::sharedImage;
 
         memObject->peekSharingHandler()->release(memObject, getDevice().getRootDeviceIndex());
         DEBUG_BREAK_IF(memObject->acquireCount <= 0);
         memObject->acquireCount--;
     }
+
+    if (isImageReleased && this->getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled()) {
+        this->getGpgpuCommandStreamReceiver().sendRenderStateCacheFlush();
+    }
+
     auto status = enqueueMarkerWithWaitList(
         numEventsInWaitList,
         eventWaitList,

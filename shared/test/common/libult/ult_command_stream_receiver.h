@@ -448,6 +448,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
 
     SubmissionStatus sendRenderStateCacheFlush() override {
+        this->renderStateCacheFlushed = true;
         if (callBaseSendRenderStateCacheFlush) {
             return BaseClass::sendRenderStateCacheFlush();
         }
@@ -508,6 +509,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
 
+    bool renderStateCacheFlushed = false;
     bool cpuCopyForHostPtrSurfaceAllowed = false;
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;

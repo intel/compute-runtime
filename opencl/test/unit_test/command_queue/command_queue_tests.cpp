@@ -1329,13 +1329,15 @@ class MockSharingHandler : public SharingHandler {
     }
 };
 
-TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandlerThenReturnSuccess) {
+using CommandQueueTests = ::testing::Test;
+HWTEST_F(CommandQueueTests, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandlerThenReturnSuccess) {
     MockContext context;
     MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
     MockSharingHandler *mockSharingHandler = new MockSharingHandler;
 
     auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
     image->setSharingHandler(mockSharingHandler);
+    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage);
 
     cl_mem memObject = image.get();
     cl_uint numObjects = 1;
@@ -1344,8 +1346,39 @@ TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandler
     cl_int result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
     EXPECT_EQ(result, CL_SUCCESS);
 
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ.getGpgpuCommandStreamReceiver());
+    EXPECT_FALSE(ultCsr->renderStateCacheFlushed);
+
     result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
     EXPECT_EQ(result, CL_SUCCESS);
+    EXPECT_FALSE(ultCsr->renderStateCacheFlushed);
+}
+
+HWTEST_F(CommandQueueTests, givenDirectSubmissionAndSharedImageWhenReleasingSharedObjectThenFlushRenderStateCache) {
+    MockContext context;
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
+    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
+
+    auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
+    image->setSharingHandler(mockSharingHandler);
+    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage);
+
+    cl_mem memObject = image.get();
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = &memObject;
+
+    cl_int result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ.getGpgpuCommandStreamReceiver());
+    ultCsr->directSubmissionAvailable = true;
+    ultCsr->callBaseSendRenderStateCacheFlush = false;
+    ultCsr->flushReturnValue = SubmissionStatus::success;
+    EXPECT_FALSE(ultCsr->renderStateCacheFlushed);
+
+    result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+    EXPECT_TRUE(ultCsr->renderStateCacheFlushed);
 }
 
 TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandlerWithEventThenReturnSuccess) {
@@ -1378,7 +1411,7 @@ TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandler
 
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenIncorrectArgumentsThenReturnProperError) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0, false);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
 
     cl_uint numObjects = 1;
     cl_mem *memObjects = nullptr;
@@ -1418,7 +1451,7 @@ TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenIncorrectArgumentsThenRet
 
 TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenNoObjectsThenReturnSuccess) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0, false);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
 
     cl_uint numObjects = 0;
     cl_mem *memObjects = nullptr;
@@ -1429,7 +1462,7 @@ TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenNoObjectsThenReturnSucces
 
 TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenIncorrectArgumentsThenReturnProperError) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0, false);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
 
     cl_uint numObjects = 1;
     cl_mem *memObjects = nullptr;
@@ -1560,7 +1593,7 @@ TEST(CommandQueuePropertiesTests, whenGetEngineIsCalledThenQueueEngineIsReturned
 
 TEST(CommandQueue, GivenCommandQueueWhenEnqueueResourceBarrierCalledThenSuccessReturned) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0, false);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
 
     cl_int result = cmdQ.enqueueResourceBarrier(
         nullptr,
@@ -1572,7 +1605,7 @@ TEST(CommandQueue, GivenCommandQueueWhenEnqueueResourceBarrierCalledThenSuccessR
 
 TEST(CommandQueue, GivenCommandQueueWhenCheckingIfIsCacheFlushCommandCalledThenFalseReturned) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0, false);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
 
     bool isCommandCacheFlush = cmdQ.isCacheFlushCommand(0u);
     EXPECT_FALSE(isCommandCacheFlush);
