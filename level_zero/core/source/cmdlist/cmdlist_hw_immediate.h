@@ -189,7 +189,12 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     NEO::CompletionStamp flushRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation);
     NEO::CompletionStamp flushImmediateRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation);
+    NEO::CompletionStamp flushImmediateRegularTaskStateless(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation);
     NEO::CompletionStamp flushBcsTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::CommandStreamReceiver *csr);
+
+    template <bool streamStatesSupported>
+    void handleHeapsAndResidencyForImmediateRegularTask(void *&sshCpuBaseAddress);
+    void handleDebugSurfaceStateUpdate(NEO::IndirectHeap *ssh);
 
     void checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize);
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
@@ -222,7 +227,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;
-    std::function<NEO::CompletionStamp(NEO::LinearStream &, size_t, NEO::ImmediateDispatchFlags &, NEO::Device &)> flushImmediateTaskMethod;
     std::atomic<bool> dependenciesPresent{false};
     bool latestFlushIsHostVisible = false;
 };

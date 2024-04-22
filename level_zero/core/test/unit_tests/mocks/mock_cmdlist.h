@@ -236,12 +236,14 @@ struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreF
     using BaseClass = CommandListCoreFamilyImmediate<gfxCoreFamily>;
     using BaseClass::checkAssert;
     using BaseClass::cmdListCurrentStartOffset;
+    using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
     using BaseClass::csr;
     using BaseClass::device;
+    using BaseClass::dynamicHeapRequired;
     using BaseClass::finalStreamState;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
