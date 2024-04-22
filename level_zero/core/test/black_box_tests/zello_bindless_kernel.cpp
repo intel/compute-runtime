@@ -299,6 +299,9 @@ void run(const ze_kernel_handle_t &copyKernel, const ze_kernel_handle_t &fillKer
         uint8_t *dstCharBuffer = static_cast<uint8_t *>(dstBuffer);
         if (dstCharBuffer[0] == finalValue) {
             outputValidationSuccessful = true;
+        } else {
+            std::cout << "dstCharBuffer[0] != finalValue\n"
+                      << "dstCharBuffer[0]==" << static_cast<uint32_t>(dstCharBuffer[0]) << " finalValue==" << static_cast<uint32_t>(finalValue) << std::endl;
         }
     }
 
@@ -325,6 +328,8 @@ bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t devi
         run(copyKernel, fillKernel, context, device, 0, mode, outputValidated);
 
         if (!outputValidated) {
+            std::cout << "testBindlessBufferCopy with mode " << static_cast<uint32_t>(mode) << " failed.\n"
+                      << std::endl;
             break;
         }
     }
@@ -1123,6 +1128,9 @@ int main(int argc, char *argv[]) {
         }
 
         if (testCase != -1) {
+            break;
+        }
+        if (!outputValidated) {
             break;
         }
     }
