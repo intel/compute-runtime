@@ -194,6 +194,10 @@ if(BUILD_WITH_L0)
   endif()
 
   include_directories(${COMPUTE_RUNTIME_DIR}/third_party/opencl_headers)
+  if(UNIX)
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/experimental/source/log_utility/linux/linux_logging.cpp PROPERTIES INCLUDE_DIRECTORIES ${COMPUTE_RUNTIME_DIR}/third_party/spdlog_headers)
+  endif()
+
   if(CUSTOM_L0_INCLUDE_PATH)
     include_directories(${CUSTOM_L0_INCLUDE_PATH}/../)
   else()

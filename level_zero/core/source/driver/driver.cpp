@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
+#include "level_zero/experimental/source/log_utility/log_manager.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include <memory>
@@ -56,6 +57,11 @@ void DriverImp::initialize(ze_result_t *result) {
     if (!NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
         const auto dbgMode = NEO::getDebuggingMode(envVariables.programDebugging);
         executionEnvironment->setDebuggingMode(dbgMode);
+    }
+
+    // spdlog enablement
+    if ((NEO::debugManager.flags.EnableLogLevel.get() != (uint32_t)NEO::LogLevel::logLevelOff)) {
+        CREATE_LOGGER(NEO::LogManager::LogType::coreLogger, "coreLogger.log", NEO::debugManager.flags.EnableLogLevel.get());
     }
 
     if (envVariables.fp64Emulation) {

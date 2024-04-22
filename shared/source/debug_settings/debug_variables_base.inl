@@ -620,3 +620,6 @@ DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produc
 DECLARE_DEBUG_VARIABLE(int32_t, ForceDummyBlitWa, -1, "-1: default, 0: disabled, 1: enabled, Forces a workaround with dummy blits, driver adds an extra blit before command MI_ARB_CHECK on bcs")
 DECLARE_DEBUG_VARIABLE(bool, VfBarResourceAllocationWa, true, "Enables/disables WA for resizing VF BAR to 2GB on Warm Reset.")
 DECLARE_DEBUG_VARIABLE(bool, DoNotUseProductConfigForValidationWa, false, "Forces a workaround with legacy device binary validation usage (skip checking PRODUCT_CONFIG even if passed");
+
+/* SPD LOGGING RELATED FLAGS */
+DECLARE_DEBUG_VARIABLE(int32_t, EnableLogLevel, 6, "0: trace, 1: debug 2: info, 3: warning 4: error, 5: critical 6: off");
