@@ -136,7 +136,30 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateUSMHostGraphicsMemory(const AllocationData &allocationData) {
-    return allocateGraphicsMemoryWithHostPtr(allocationData);
+    AllocationData allocData = allocationData;
+    if (allocData.type == AllocationType::svmCpu) {
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocData.rootDeviceIndex];
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        allocData.alignment = alignUpNonZero<size_t>(allocationData.alignment, productHelper.getSvmCpuAlignment());
+        allocData.size = alignUp(allocationData.size, allocData.alignment);
+    }
+    auto memoryAllocation = allocateGraphicsMemoryWithHostPtr(allocData);
+    if (memoryAllocation && allocData.type == AllocationType::svmCpu) {
+        void *gpuPtr = reserveCpuAddressRange(allocData.size, allocData.rootDeviceIndex);
+        if (nullptr == gpuPtr) {
+            cleanGraphicsMemoryCreatedFromHostPtr(memoryAllocation);
+            delete memoryAllocation;
+            return nullptr;
+        }
+        memoryAllocation->setReservedAddressRange(gpuPtr, allocData.size);
+        gpuPtr = alignUp(gpuPtr, allocData.alignment);
+
+        auto cpuPtr = const_cast<void *>(allocData.hostPtr);
+        auto gmmHelper = getGmmHelper(allocData.rootDeviceIndex);
+        auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(gpuPtr));
+        memoryAllocation->setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
+    }
+    return memoryAllocation;
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
