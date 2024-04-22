@@ -65,6 +65,18 @@ ze_result_t LinuxFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
     return pFwInterface->flashFirmware(osFwType, pImage, size);
 }
 
+ze_result_t LinuxFirmwareImp::osGetSecurityVersion(char *pVersion) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxFirmwareImp::osSetSecurityVersion() {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxFirmwareImp::osGetConsoleLogs(size_t *pSize, char *pFirmwareLog) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t LinuxFirmwareImp::osGetFirmwareFlashProgress(uint32_t *pCompletionPercent) {
     return pFwInterface->getFlashFirmwareProgress(pCompletionPercent);
 }

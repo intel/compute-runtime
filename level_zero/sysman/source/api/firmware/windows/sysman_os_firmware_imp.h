@@ -18,6 +18,9 @@ class WddmFirmwareImp : public OsFirmware {
     void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
     ze_result_t osFirmwareFlash(void *pImage, uint32_t size) override;
     ze_result_t osGetFirmwareFlashProgress(uint32_t *pCompletionPercent) override;
+    ze_result_t osGetSecurityVersion(char *pVersion) override;
+    ze_result_t osSetSecurityVersion() override;
+    ze_result_t osGetConsoleLogs(size_t *pSize, char *pFirmwareLog) override;
     ze_result_t getFirmwareVersion(std::string fwType, zes_firmware_properties_t *pProperties);
     WddmFirmwareImp() = default;
     WddmFirmwareImp(OsSysman *pOsSysman, const std::string &fwType);

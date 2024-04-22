@@ -321,6 +321,43 @@ HWTEST2_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareF
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetFlashProgress(handles[1], &completionPercent));
 }
 
+HWTEST2_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareSecurityVersionThenUnSupportedIsReturned, IsXeHpcOrXeHpgCore) {
+    initFirmware();
+
+    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[1]);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+
+    auto handles = getFirmwareHandles(mockFwHandlesCount);
+    ASSERT_NE(nullptr, handles[1]);
+    char pVersion[100];
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFirmwareGetSecurityVersionExp(handles[1], pVersion));
+}
+
+HWTEST2_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenSettingFirmwareSecurityVersionThenUnSupportedIsReturned, IsXeHpcOrXeHpgCore) {
+    initFirmware();
+
+    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[1]);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+
+    auto handles = getFirmwareHandles(mockFwHandlesCount);
+    ASSERT_NE(nullptr, handles[1]);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFirmwareSetSecurityVersionExp(handles[1]));
+}
+
+HWTEST2_F(ZesSysmanFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareConsoleLogsThenUnSupportedIsReturned, IsXeHpcOrXeHpgCore) {
+    initFirmware();
+
+    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[1]);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+
+    auto handles = getFirmwareHandles(mockFwHandlesCount);
+    ASSERT_NE(nullptr, handles[1]);
+
+    size_t pSize;
+    char *pFirmwareLog = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFirmwareGetConsoleLogs(handles[1], &pSize, pFirmwareLog));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

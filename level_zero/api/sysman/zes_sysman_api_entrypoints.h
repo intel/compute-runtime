@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -752,6 +752,147 @@ ze_result_t zesFirmwareGetFlashProgress(
         return L0::Firmware::fromHandle(hFirmware)->firmwareGetFlashProgress(pCompletionPercent);
     } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetFlashProgress(pCompletionPercent);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesFirmwareGetSecurityVersionExp(
+    zes_firmware_handle_t hFirmware,
+    char *pVersion) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetSecurityVersion(pVersion);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesFirmwareSetSecurityVersionExp(
+    zes_firmware_handle_t hFirmware) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareSetSecurityVersion();
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesFirmwareGetConsoleLogs(
+    zes_firmware_handle_t hFirmware,
+    size_t *pSize,
+    char *pFirmwareLog) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetConsoleLogs(pSize, pFirmwareLog);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesDeviceGetSubDevicePropertiesExp(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_subdevice_exp_properties_t *pSubdeviceProps) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesDriverGetDeviceByUuidExp(
+    zes_driver_handle_t hDriver,
+    zes_uuid_t uuid,
+    zes_device_handle_t *phDevice,
+    ze_bool_t *onSubdevice,
+    uint32_t *subdeviceId) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesDeviceEnumActiveVFExp(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_vf_handle_t *phVFhandle) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesVFManagementGetVFPropertiesExp(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_exp_properties_t *pProperties) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesVFManagementGetVFMemoryUtilizationExp(
+    zes_vf_handle_t hVFhandle,
+    uint32_t *pCount,
+    zes_vf_util_mem_exp_t *pMemUtil) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesVFManagementGetVFEngineUtilizationExp(
+    zes_vf_handle_t hVFhandle,
+    uint32_t *pCount,
+    zes_vf_util_engine_exp_t *pEngineUtil) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesVFManagementSetVFTelemetryModeExp(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_info_util_exp_flags_t flags,
+    ze_bool_t enable) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesVFManagementSetVFTelemetrySamplingIntervalExp(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_info_util_exp_flags_t flag,
+    uint64_t samplingInterval) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -1887,6 +2028,81 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesFirmwareGetFlashProgress(
     return L0::zesFirmwareGetFlashProgress(
         hFirmware,
         pCompletionPercent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumActiveVFExp(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_vf_handle_t *phVFhandle) {
+    return L0::zesDeviceEnumActiveVFExp(hDevice, pCount, phVFhandle);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementGetVFPropertiesExp(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_exp_properties_t *pProperties) {
+    return L0::zesVFManagementGetVFPropertiesExp(hVFhandle, pProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementGetVFMemoryUtilizationExp(
+    zes_vf_handle_t hVFhandle,
+    uint32_t *pCount,
+    zes_vf_util_mem_exp_t *pMemUtil) {
+    return L0::zesVFManagementGetVFMemoryUtilizationExp(hVFhandle, pCount, pMemUtil);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementGetVFEngineUtilizationExp(
+    zes_vf_handle_t hVFhandle,
+    uint32_t *pCount,
+    zes_vf_util_engine_exp_t *pEngineUtil) {
+    return L0::zesVFManagementGetVFEngineUtilizationExp(hVFhandle, pCount, pEngineUtil);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementSetVFTelemetryModeExp(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_info_util_exp_flags_t flags,
+    ze_bool_t enable) {
+    return L0::zesVFManagementSetVFTelemetryModeExp(hVFhandle, flags, enable);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementSetVFTelemetrySamplingIntervalExp(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_info_util_exp_flags_t flag,
+    uint64_t samplingInterval) {
+    return L0::zesVFManagementSetVFTelemetrySamplingIntervalExp(hVFhandle, flag, samplingInterval);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesFirmwareGetSecurityVersionExp(
+    zes_firmware_handle_t hFirmware,
+    char *pVersion) {
+    return L0::zesFirmwareGetSecurityVersionExp(hFirmware, pVersion);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesFirmwareSetSecurityVersionExp(
+    zes_firmware_handle_t hFirmware) {
+    return L0::zesFirmwareSetSecurityVersionExp(hFirmware);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceGetSubDevicePropertiesExp(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_subdevice_exp_properties_t *pSubdeviceProps) {
+    return L0::zesDeviceGetSubDevicePropertiesExp(hDevice, pCount, pSubdeviceProps);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverGetDeviceByUuidExp(
+    zes_driver_handle_t hDriver,
+    zes_uuid_t uuid,
+    zes_device_handle_t *phDevice,
+    ze_bool_t *onSubdevice,
+    uint32_t *subdeviceId) {
+    return L0::zesDriverGetDeviceByUuidExp(hDriver, uuid, phDevice, onSubdevice, subdeviceId);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesFirmwareGetConsoleLogs(
+    zes_firmware_handle_t hFirmware,
+    size_t *pSize,
+    char *pFirmwareLog) {
+    return L0::zesFirmwareGetConsoleLogs(hFirmware, pSize, pFirmwareLog);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumFrequencyDomains(

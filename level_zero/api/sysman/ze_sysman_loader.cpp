@@ -191,6 +191,7 @@ zesGetFirmwareProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetProperties, L0::zesFirmwareGetProperties, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnFlash, L0::zesFirmwareFlash, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnGetFlashProgress, L0::zesFirmwareGetFlashProgress, version, ZE_API_VERSION_1_8);
+    fillDdiEntry(pDdiTable->pfnGetConsoleLogs, L0::zesFirmwareGetConsoleLogs, version, ZE_API_VERSION_1_9);
 
     return result;
 }
@@ -347,6 +348,72 @@ zesGetRasExpProcAddrTable(
 
     fillDdiEntry(pDdiTable->pfnGetStateExp, L0::zesRasGetStateExp, version, ZE_API_VERSION_1_7);
     fillDdiEntry(pDdiTable->pfnClearStateExp, L0::zesRasClearStateExp, version, ZE_API_VERSION_1_7);
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL zesGetDriverExpProcAddrTable(
+    ze_api_version_t version, zes_driver_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnGetDeviceByUuidExp, L0::zesDriverGetDeviceByUuidExp, version, ZE_API_VERSION_1_9);
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL zesGetDeviceExpProcAddrTable(
+    ze_api_version_t version,
+    zes_device_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnGetSubDevicePropertiesExp, L0::zesDeviceGetSubDevicePropertiesExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnEnumActiveVFExp, L0::zesDeviceEnumActiveVFExp, version, ZE_API_VERSION_1_9);
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zesGetVFManagementExpProcAddrTable(
+    ze_api_version_t version,
+    zes_vf_management_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnGetVFPropertiesExp, L0::zesVFManagementGetVFPropertiesExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnGetVFMemoryUtilizationExp, L0::zesVFManagementGetVFMemoryUtilizationExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnGetVFEngineUtilizationExp, L0::zesVFManagementGetVFEngineUtilizationExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnSetVFTelemetryModeExp, L0::zesVFManagementSetVFTelemetryModeExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnSetVFTelemetrySamplingIntervalExp, L0::zesVFManagementSetVFTelemetrySamplingIntervalExp, version, ZE_API_VERSION_1_9);
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL zesGetFirmwareExpProcAddrTable(
+    ze_api_version_t version,
+    zes_firmware_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (ZE_MAJOR_VERSION(driverDdiTable.version) != ZE_MAJOR_VERSION(version) ||
+        ZE_MINOR_VERSION(driverDdiTable.version) > ZE_MINOR_VERSION(version))
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnGetSecurityVersionExp, L0::zesFirmwareGetSecurityVersionExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnSetSecurityVersionExp, L0::zesFirmwareSetSecurityVersionExp, version, ZE_API_VERSION_1_9);
 
     return result;
 }

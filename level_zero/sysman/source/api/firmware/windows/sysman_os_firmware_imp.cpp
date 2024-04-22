@@ -36,6 +36,18 @@ ze_result_t WddmFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {
     return pFwInterface->flashFirmware(osFwType, pImage, size);
 }
 
+ze_result_t WddmFirmwareImp::osGetSecurityVersion(char *pVersion) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmFirmwareImp::osSetSecurityVersion() {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmFirmwareImp::osGetConsoleLogs(size_t *pSize, char *pFirmwareLog) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t WddmFirmwareImp::osGetFirmwareFlashProgress(uint32_t *pCompletionPercent) {
     return pFwInterface->getFlashFirmwareProgress(pCompletionPercent);
 }

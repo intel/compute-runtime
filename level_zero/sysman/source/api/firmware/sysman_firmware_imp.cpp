@@ -32,6 +32,18 @@ ze_result_t FirmwareImp::firmwareGetFlashProgress(uint32_t *pCompletionPercent) 
     return pOsFirmware->osGetFirmwareFlashProgress(pCompletionPercent);
 }
 
+ze_result_t FirmwareImp::firmwareGetSecurityVersion(char *pVersion) {
+    return pOsFirmware->osGetSecurityVersion(pVersion);
+}
+
+ze_result_t FirmwareImp::firmwareSetSecurityVersion() {
+    return pOsFirmware->osSetSecurityVersion();
+}
+
+ze_result_t FirmwareImp::firmwareGetConsoleLogs(size_t *pSize, char *pFirmwareLog) {
+    return pOsFirmware->osGetConsoleLogs(pSize, pFirmwareLog);
+}
+
 FirmwareImp::FirmwareImp(OsSysman *pOsSysman, const std::string &initalizedFwType) {
     pOsFirmware = OsFirmware::create(pOsSysman, initalizedFwType);
     fwType = initalizedFwType;
