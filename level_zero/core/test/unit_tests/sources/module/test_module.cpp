@@ -4731,5 +4731,26 @@ TEST_F(ModuleKernelImmDatasTest, givenDeviceOOMWhenMemoryManagerFailsToAllocateM
     auto result = module->initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 };
+
+using MultiTileModuleTest = Test<MultiTileModuleFixture>;
+HWTEST2_F(MultiTileModuleTest, givenTwoKernelPrivateAllocsWhichExceedGlobalMemSizeOfSingleTileButNotEntireGlobalMemSizeThenPrivateMemoryShouldBeAllocatedPerDispatch, IsAtLeastSkl) {
+    auto devInfo = device->getNEODevice()->getDeviceInfo();
+    auto kernelsNb = 2u;
+    uint32_t margin128KB = 131072u;
+    auto underAllocSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) - margin128KB;
+    auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
+
+    auto &kernelImmDatas = this->modules[0]->kernelImmDatas;
+    for (size_t i = 0; i < kernelsNb; i++) {
+        auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
+        kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = underAllocSize;
+        kernelDesc.kernelAttributes.flags.usesPrintf = false;
+        kernelDesc.kernelMetadata.kernelName = kernelNames[i];
+    }
+
+    EXPECT_FALSE(this->modules[0]->shouldAllocatePrivateMemoryPerDispatch());
+    this->modules[0]->checkIfPrivateMemoryPerDispatchIsNeeded();
+    EXPECT_TRUE(this->modules[0]->shouldAllocatePrivateMemoryPerDispatch());
+}
 } // namespace ult
 } // namespace L0

@@ -156,7 +156,7 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
 
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
-    std::vector<std::unique_ptr<L0::Module>> modules;
+    std::vector<std::unique_ptr<WhiteBox<::L0::Module>>> modules;
     std::unique_ptr<WhiteBox<::L0::KernelImp>> kernel;
     std::unique_ptr<ZebinTestData::ZebinWithL0TestCommonModule> zebinData;
 };

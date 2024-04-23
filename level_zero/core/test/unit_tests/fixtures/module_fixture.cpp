@@ -200,11 +200,9 @@ void MultiDeviceModuleFixture::createModuleFromMockBinary(uint32_t rootDeviceInd
     moduleDesc.inputSize = src.size();
 
     ModuleBuildLog *moduleBuildLog = nullptr;
-    ze_result_t result = ZE_RESULT_SUCCESS;
 
-    modules[rootDeviceIndex].reset(Module::create(device,
-                                                  &moduleDesc,
-                                                  moduleBuildLog, ModuleType::user, &result));
+    modules[rootDeviceIndex].reset(new WhiteBox<::L0::Module>{device, moduleBuildLog, ModuleType::user});
+    modules[rootDeviceIndex]->initialize(&moduleDesc, device->getNEODevice());
 }
 
 void MultiDeviceModuleFixture::createKernel(uint32_t rootDeviceIndex) {

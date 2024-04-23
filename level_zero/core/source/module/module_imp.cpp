@@ -1286,19 +1286,22 @@ void ModuleImp::verifyDebugCapabilities() {
 
 void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
     size_t modulePrivateMemorySize = 0;
+    auto neoDevice = this->device->getNEODevice();
     for (auto &kernelImmData : this->kernelImmDatas) {
         if (0 == kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) {
             continue;
         }
         auto kernelPrivateMemorySize = NEO::KernelHelper::getPrivateSurfaceSize(kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize,
-                                                                                this->device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch);
+                                                                                neoDevice->getDeviceInfo().computeUnitsUsedForScratch);
         modulePrivateMemorySize += kernelPrivateMemorySize;
     }
 
     this->allocatePrivateMemoryPerDispatch = false;
     if (modulePrivateMemorySize > 0U) {
-        auto globalMemorySize = device->getNEODevice()->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().to_ulong()));
-        this->allocatePrivateMemoryPerDispatch = modulePrivateMemorySize > globalMemorySize;
+        auto deviceBitfield = neoDevice->getDeviceBitfield();
+        auto globalMemorySize = neoDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+        auto numSubDevices = deviceBitfield.count();
+        this->allocatePrivateMemoryPerDispatch = modulePrivateMemorySize * numSubDevices > globalMemorySize;
     }
 }
 
