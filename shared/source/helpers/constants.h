@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ inline constexpr uint64_t kiloByteShiftSize = 10;
 inline constexpr uint64_t megaByte = 1024 * kiloByte;
 inline constexpr uint64_t gigaByte = 1024 * megaByte;
 inline constexpr uint64_t teraByte = 1024 * gigaByte;
+inline constexpr uint64_t fullStatefulRegion = 4 * gigaByte;
 inline constexpr size_t minBufferAlignment = 4;
 inline constexpr size_t cacheLineSize = 64;
 inline constexpr size_t pageSize = 4 * kiloByte;
