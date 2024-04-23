@@ -16,7 +16,7 @@ inline bool GfxCoreHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareI
 }
 
 template <typename GfxFamily>
-void *LriHelper<GfxFamily>::program(MI_LOAD_REGISTER_IMM *lriCmd, uint32_t address, uint32_t value, bool remap) {
+void *LriHelper<GfxFamily>::program(MI_LOAD_REGISTER_IMM *lriCmd, uint32_t address, uint32_t value, bool remap, bool isBcs) {
     MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
     cmd.setRegisterOffset(address);
     cmd.setDataDword(value);

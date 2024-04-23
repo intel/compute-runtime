@@ -2537,8 +2537,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                 auto lri2 = commandContainer.getCommandStream()->template getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
 
                 if (!noopDispatch) {
-                    NEO::LriHelper<GfxFamily>::program(lri1, firstRegister, getLowPart(waitValue), true);
-                    NEO::LriHelper<GfxFamily>::program(lri2, secondRegister, getHighPart(waitValue), true);
+                    NEO::LriHelper<GfxFamily>::program(lri1, firstRegister, getLowPart(waitValue), true, isCopyOnly());
+                    NEO::LriHelper<GfxFamily>::program(lri2, secondRegister, getHighPart(waitValue), true, isCopyOnly());
                 } else {
                     memset(lri1, 0, sizeof(MI_LOAD_REGISTER_IMM));
                     memset(lri2, 0, sizeof(MI_LOAD_REGISTER_IMM));

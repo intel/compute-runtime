@@ -784,7 +784,7 @@ bool GfxCoreHelperHw<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t ac
 template <typename GfxFamily>
 void *LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap, bool isBcs) {
     auto lri = cmdStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    return LriHelper<GfxFamily>::program(lri, address, value, remap);
+    return LriHelper<GfxFamily>::program(lri, address, value, remap, isBcs);
 }
 
 } // namespace NEO
