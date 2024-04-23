@@ -15,7 +15,6 @@ template <typename TagType>
 TagAllocator<TagType>::TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment,
                                     size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
     : TagAllocatorBase(rootDeviceIndices, memMngr, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield) {
-    std::unique_lock<std::mutex> lock(allocatorMutex);
 
     populateFreeTags();
 }
