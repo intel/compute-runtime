@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,11 @@ inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck, std::opti
     if (preParserDisable.has_value()) {
         miArbCheck.setPreParserDisable(preParserDisable.value());
     }
+}
+
+template <>
+inline void EncodeStoreMemory<Family>::encodeForceCompletionCheck(MI_STORE_DATA_IMM &storeDataImmCmd) {
+    storeDataImmCmd.setForceWriteCompletionCheck(true);
 }
 
 } // namespace NEO

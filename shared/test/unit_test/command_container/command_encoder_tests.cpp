@@ -588,6 +588,20 @@ HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerSta
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }
 
+HWTEST2_F(CommandEncoderTests, givenSdiCommandWhenProgrammingThenForceWriteCompletionCheck, IsAtLeastGen12lp) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    constexpr size_t bufferSize = sizeof(MI_STORE_DATA_IMM);
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+
+    EncodeStoreMemory<FamilyType>::programStoreDataImm(cmdStream, 0, 0, 0, false, false, nullptr);
+
+    auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(buffer);
+    ASSERT_NE(nullptr, storeDataImm);
+    EXPECT_TRUE(storeDataImm->getForceWriteCompletionCheck());
+}
+
 HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysReturnStubs, IsAtMostGen12lp) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 

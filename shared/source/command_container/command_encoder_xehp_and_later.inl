@@ -897,6 +897,7 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cm
         storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_DWORD);
     }
     storeDataImmediate.setWorkloadPartitionIdOffsetEnable(workloadPartitionOffset);
+    EncodeStoreMemory<Family>::encodeForceCompletionCheck(storeDataImmediate);
     *cmdBuffer = storeDataImmediate;
 }
 

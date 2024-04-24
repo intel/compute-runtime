@@ -602,7 +602,13 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cm
     } else {
         storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_DWORD);
     }
+    EncodeStoreMemory<Family>::encodeForceCompletionCheck(storeDataImmediate);
+
     *cmdBuffer = storeDataImmediate;
+}
+
+template <typename Family>
+inline void EncodeStoreMemory<Family>::encodeForceCompletionCheck(MI_STORE_DATA_IMM &storeDataImmCmd) {
 }
 
 template <typename Family>

@@ -4998,7 +4998,8 @@ typedef struct tagMI_STORE_DATA_IMM {
         struct tagCommon {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 9);
-            uint32_t Reserved_10 : BITFIELD_RANGE(10, 20);
+            uint32_t ForceWriteCompletionCheck : BITFIELD_RANGE(10, 10);
+            uint32_t Reserved_11 : BITFIELD_RANGE(11, 20);
             uint32_t StoreQword : BITFIELD_RANGE(21, 21);
             uint32_t UseGlobalGtt : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
@@ -5050,6 +5051,12 @@ typedef struct tagMI_STORE_DATA_IMM {
     }
     inline bool getStoreQword() const {
         return TheStructure.Common.StoreQword;
+    }
+    inline void setForceWriteCompletionCheck(const bool value) {
+        TheStructure.Common.ForceWriteCompletionCheck = value;
+    }
+    inline bool getForceWriteCompletionCheck() const {
+        return TheStructure.Common.ForceWriteCompletionCheck;
     }
     inline void setUseGlobalGtt(const bool value) {
         TheStructure.Common.UseGlobalGtt = value;

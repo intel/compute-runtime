@@ -6300,11 +6300,10 @@ typedef struct tagMI_STORE_DATA_IMM {
     union tagTheStructure {
         struct tagCommon {
             uint32_t DwordLength : BITFIELD_RANGE(0, 9);
-            uint32_t Reserved_10 : BITFIELD_RANGE(10, 10);
+            uint32_t ForceWriteCompletionCheck : BITFIELD_RANGE(10, 10);
             uint32_t WorkloadPartitionIdOffsetEnable : BITFIELD_RANGE(11, 11);
             uint32_t Reserved_12 : BITFIELD_RANGE(12, 13);
-            uint32_t MemoryObjectControlStateIndexToMocsTables
-                : BITFIELD_RANGE(14, 19);
+            uint32_t MemoryObjectControlStateIndexToMocsTables : BITFIELD_RANGE(14, 19);
             uint32_t MemoryObjectControlStateEnable : BITFIELD_RANGE(20, 20);
             uint32_t StoreQword : BITFIELD_RANGE(21, 21);
             uint32_t UseGlobalGtt : BITFIELD_RANGE(22, 22);
@@ -6349,6 +6348,12 @@ typedef struct tagMI_STORE_DATA_IMM {
     }
     inline DWORD_LENGTH getDwordLength() const {
         return static_cast<DWORD_LENGTH>(TheStructure.Common.DwordLength);
+    }
+    inline void setForceWriteCompletionCheck(const bool value) {
+        TheStructure.Common.ForceWriteCompletionCheck = value;
+    }
+    inline bool getForceWriteCompletionCheck() const {
+        return TheStructure.Common.ForceWriteCompletionCheck;
     }
     inline void setWorkloadPartitionIdOffsetEnable(const bool value) {
         TheStructure.Common.WorkloadPartitionIdOffsetEnable = value;

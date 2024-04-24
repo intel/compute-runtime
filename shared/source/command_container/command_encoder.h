@@ -609,6 +609,9 @@ struct EncodeStoreMemory {
     static size_t getStoreDataImmSize() {
         return sizeof(MI_STORE_DATA_IMM);
     }
+
+  protected:
+    static void encodeForceCompletionCheck(MI_STORE_DATA_IMM &storeDataImmCmd);
 };
 
 template <typename GfxFamily>
