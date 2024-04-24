@@ -107,6 +107,7 @@ int (*sysCallsClosedir)(DIR *dir) = nullptr;
 int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize) = nullptr;
 off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
+long sysconfReturn = 1ull << 30;
 
 int mkdir(const std::string &path) {
     if (sysCallsMkdir != nullptr) {
@@ -473,6 +474,9 @@ int closedir(DIR *dir) {
 off_t lseek(int fd, off_t offset, int whence) noexcept {
     lseekCalledCount++;
     return lseekReturn;
+}
+long sysconf(int name) {
+    return sysconfReturn;
 }
 
 } // namespace SysCalls

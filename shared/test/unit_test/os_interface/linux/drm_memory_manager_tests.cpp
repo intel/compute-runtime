@@ -1476,8 +1476,8 @@ TEST(DrmMemoryManagerTest2, WhenGetMinimumSystemSharedMemoryThenCorrectValueIsRe
         auto mock = executionEnvironment->rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<DrmMockCustom>();
         mock->callBaseQueryGttSize = true;
 
-        auto hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
-        // gpuMemSize < hostMemSize
+        auto hostMemorySize = MemoryConstants::pageSize * SysCalls::sysconfReturn;
+        // gpuMemSize < hostMemSize, no memory info
         auto gpuMemorySize = hostMemorySize - 1u;
 
         mock->ioctlExpected.contextGetParam = 1;
@@ -1490,12 +1490,38 @@ TEST(DrmMemoryManagerTest2, WhenGetMinimumSystemSharedMemoryThenCorrectValueIsRe
         mock->ioctlExpected.contextCreate = 0;
         mock->testIoctls();
 
-        // gpuMemSize > hostMemSize
+        // gpuMemSize > hostMemSize, no memory info
         gpuMemorySize = hostMemorySize + 1u;
         mock->getContextParamRetValue = gpuMemorySize;
         systemSharedMemorySize = memoryManager->getSystemSharedMemory(i);
         mock->ioctlExpected.contextGetParam = 2;
         EXPECT_EQ(hostMemorySize, systemSharedMemorySize);
+        mock->testIoctls();
+
+        // gpuMemSize > hostMemSize > systemMemoryRegionSize
+
+        MemoryRegion memoryRegion{};
+        memoryRegion.probedSize = hostMemorySize - 2;
+
+        MemoryInfo::RegionContainer regionInfo{};
+        regionInfo.push_back(memoryRegion);
+
+        mock->memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *mock);
+
+        gpuMemorySize = hostMemorySize + 1u;
+        mock->getContextParamRetValue = gpuMemorySize;
+        systemSharedMemorySize = memoryManager->getSystemSharedMemory(i);
+        mock->ioctlExpected.contextGetParam = 3;
+        EXPECT_EQ(memoryRegion.probedSize, systemSharedMemorySize);
+        mock->testIoctls();
+
+        // hostMemSize > systemMemoryRegionSize > gpuMemSize
+
+        gpuMemorySize = hostMemorySize - 3;
+        mock->getContextParamRetValue = gpuMemorySize;
+        systemSharedMemorySize = memoryManager->getSystemSharedMemory(i);
+        mock->ioctlExpected.contextGetParam = 4;
+        EXPECT_EQ(gpuMemorySize, systemSharedMemorySize);
         mock->testIoctls();
 
         executionEnvironment->rootDeviceEnvironments[i]->osInterface.reset();

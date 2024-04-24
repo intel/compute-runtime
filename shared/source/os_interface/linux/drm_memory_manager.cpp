@@ -1250,12 +1250,18 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
 }
 
 uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {
-    uint64_t hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
+    uint64_t hostMemorySize = MemoryConstants::pageSize * static_cast<uint64_t>(SysCalls::sysconf(_SC_PHYS_PAGES));
 
     uint64_t gpuMemorySize = 0u;
 
     [[maybe_unused]] auto ret = getDrm(rootDeviceIndex).queryGttSize(gpuMemorySize, false);
     DEBUG_BREAK_IF(ret != 0);
+
+    auto memoryInfo = getDrm(rootDeviceIndex).getMemoryInfo();
+    if (memoryInfo) {
+        auto systemMemoryRegionSize = memoryInfo->getMemoryRegion(static_cast<uint32_t>(systemMemoryBitfield.to_ulong())).probedSize;
+        gpuMemorySize = std::min(gpuMemorySize, systemMemoryRegionSize);
+    }
 
     return std::min(hostMemorySize, gpuMemorySize);
 }

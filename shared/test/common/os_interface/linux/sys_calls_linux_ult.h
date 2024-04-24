@@ -83,5 +83,7 @@ extern uint32_t munmapFuncCalled;
 
 extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
+
+extern long sysconfReturn;
 } // namespace SysCalls
 } // namespace NEO
