@@ -720,6 +720,16 @@ bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
 }
 
 template <typename Family>
+void EncodeSurfaceState<Family>::setPitchForScratch(R_SURFACE_STATE *surfaceState, uint32_t pitch) {
+    surfaceState->setSurfacePitch(pitch);
+}
+
+template <typename Family>
+uint32_t EncodeSurfaceState<Family>::getPitchForScratchInBytes(R_SURFACE_STATE *surfaceState) {
+    return surfaceState->getSurfacePitch();
+}
+
+template <typename Family>
 void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
     auto enablePrefetch = EncodeSurfaceState<Family>::doBindingTablePrefetch();
 

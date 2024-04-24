@@ -467,7 +467,7 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
     EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
     EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
-    EXPECT_EQ(pitch, state->getSurfacePitch());
+    EXPECT_EQ(pitch, EncodeSurfaceState<FamilyType>::getPitchForScratchInBytes(state));
     addr += offset;
     EXPECT_EQ(addr, state->getSurfaceBaseAddress());
     EXPECT_EQ(type, state->getSurfaceType());
@@ -1293,7 +1293,7 @@ HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValu
 
     RENDER_SURFACE_STATE renderSurfaceState;
     uint32_t expectedPitch = 0x400;
-    renderSurfaceState.setSurfacePitch(expectedPitch);
+    EncodeSurfaceState<FamilyType>::setPitchForScratch(&renderSurfaceState, expectedPitch);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(expectedPitch, gfxCoreHelper.getRenderSurfaceStatePitch(&renderSurfaceState));
 }

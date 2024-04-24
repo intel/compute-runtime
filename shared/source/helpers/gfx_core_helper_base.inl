@@ -113,7 +113,7 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
     state.setHeight(length.surfaceState.height + 1);
     state.setDepth(length.surfaceState.depth + 1);
     if (pitch) {
-        state.setSurfacePitch(pitch);
+        EncodeSurfaceState<Family>::setPitchForScratch(&state, pitch);
     }
 
     // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
@@ -764,6 +764,13 @@ bool GfxCoreHelperHw<GfxFamily>::duplicatedInOrderCounterStorageEnabled(const Ro
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::inOrderAtomicSignallingEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return (debugManager.flags.InOrderAtomicSignallingEnabled.get() == 1);
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getRenderSurfaceStatePitch(void *renderSurfaceState) const {
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(renderSurfaceState);
+    return EncodeSurfaceState<GfxFamily>::getPitchForScratchInBytes(surfaceState);
 }
 
 template <typename GfxFamily>

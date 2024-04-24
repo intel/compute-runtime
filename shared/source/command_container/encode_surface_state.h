@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,8 @@ struct EncodeSurfaceState {
     static void setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static void disableCompressionFlags(R_SURFACE_STATE *surfaceState);
     static void appendParamsForImageFromBuffer(R_SURFACE_STATE *surfaceState);
+    static void setPitchForScratch(R_SURFACE_STATE *surfaceState, uint32_t pitch);
+    static uint32_t getPitchForScratchInBytes(R_SURFACE_STATE *surfaceState);
 };
 
 } // namespace NEO

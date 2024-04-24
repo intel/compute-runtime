@@ -201,7 +201,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     EXPECT_EQ(length.surfaceState.depth + 1u, scratchState->getDepth());
     EXPECT_EQ(length.surfaceState.width + 1u, scratchState->getWidth());
     EXPECT_EQ(length.surfaceState.height + 1u, scratchState->getHeight());
-    EXPECT_EQ(kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0], scratchState->getSurfacePitch());
+    EXPECT_EQ(kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0], EncodeSurfaceState<FamilyType>::getPitchForScratchInBytes(scratchState));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceSurfaceStateEnabledWhenNewSshProvidedAndNoScratchAllocationExistThenNoDirtyBitSet) {

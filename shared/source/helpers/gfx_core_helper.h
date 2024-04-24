@@ -230,9 +230,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
         return reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfaceBaseAddress();
     }
 
-    uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState) const override {
-        return reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfacePitch();
-    }
+    uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState) const override;
 
     const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const override;
 
