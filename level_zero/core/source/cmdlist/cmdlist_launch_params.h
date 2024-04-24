@@ -54,6 +54,7 @@ struct CmdListKernelLaunchParams {
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
     uint32_t numKernelsInSplitLaunch = 0;
     uint32_t numKernelsExecutedInSplitLaunch = 0;
+    uint32_t reserveExtraPayloadSpace = 0;
     bool isIndirect = false;
     bool isPredicate = false;
     bool isCooperative = false;

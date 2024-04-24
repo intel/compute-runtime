@@ -61,6 +61,7 @@ struct EncodeDispatchKernelArgs {
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
     uint32_t partitionCount = 0u;
+    uint32_t reserveExtraPayloadSpace = 0;
     bool isIndirect = false;
     bool isPredicate = false;
     bool isTimestampEvent = false;

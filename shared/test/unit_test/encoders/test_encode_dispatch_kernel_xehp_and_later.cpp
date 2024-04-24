@@ -1594,3 +1594,24 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenCpuWalkerPointer
 
     EXPECT_EQ(0, memcmp(cmdWalkerGfxMemory, cpuWalkerPointer, sizeof(DefaultWalkerType)));
 }
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingExtraPayloadSpaceThenConsumeExtraIndirectHeapSpace, IsAtLeastXeHpCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.passInlineData = false;
+    dispatchInterface->getCrossThreadDataSizeResult = 64;
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.reserveExtraPayloadSpace = 1024;
+
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    auto heap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
+
+    size_t expectedConsumedSize = 64 + 1024;
+    expectedConsumedSize = alignUp(expectedConsumedSize, pDevice->getGfxCoreHelper().getIOHAlignment());
+    EXPECT_EQ(expectedConsumedSize, heap->getUsed());
+}

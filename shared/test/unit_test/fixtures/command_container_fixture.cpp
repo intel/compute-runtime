@@ -56,6 +56,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         NEO::RequiredDispatchWalkOrder::none,       // requiredDispatchWalkOrder
         NEO::additionalKernelLaunchSizeParamNotSet, // additionalSizeParam
         1,                                          // partitionCount
+        0,                                          // reserveExtraPayloadSpace
         false,                                      // isIndirect
         false,                                      // isPredicate
         false,                                      // isTimestampEvent

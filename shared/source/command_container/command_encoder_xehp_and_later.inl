@@ -241,7 +241,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
-    uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching;
+    uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching + args.reserveExtraPayloadSpace;
     {
         auto heap = container.getIndirectHeap(HeapType::indirectObject);
         UNRECOVERABLE_IF(!heap);
@@ -253,7 +253,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             ptr = container.getHeapSpaceAllowGrow(HeapType::indirectObject, iohRequiredSize);
         }
         UNRECOVERABLE_IF(!ptr);
-        offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData);
+        offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - args.reserveExtraPayloadSpace);
         auto &rootDeviceEnvironment = args.device->getRootDeviceEnvironment();
         if (pImplicitArgs) {
             offsetThreadData -= ImplicitArgs::getSize();

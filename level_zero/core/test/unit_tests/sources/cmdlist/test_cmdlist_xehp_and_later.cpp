@@ -9,8 +9,10 @@
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -2869,6 +2871,36 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
     auto walkerGfxMemory = reinterpret_cast<DefaultWalkerType *>(*computeWalkerList[0]);
     EXPECT_EQ(0, memcmp(walkerGfxMemory, launchParams.cmdWalkerBuffer, sizeof(DefaultWalkerType)));
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel,
+          givenCmdListParamHasExtraSpaceReserveWhenAppendingKernelThenExtraSpaceIsConsumed,
+          IsAtLeastXeHpCore) {
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+    kernel.descriptor.kernelAttributes.flags.passInlineData = false;
+    kernel.perThreadDataSizeForWholeThreadGroup = 0;
+    kernel.crossThreadDataSize = 64;
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(kernel.crossThreadDataSize);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandContainer = commandList->getCmdContainer();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.reserveExtraPayloadSpace = 1024;
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+
+    size_t totalSize = 1024 + 64;
+    size_t expectedSize = alignUp(totalSize, device->getGfxCoreHelper().getIOHAlignment());
+    EXPECT_EQ(expectedSize, ioh->getUsed());
 }
 
 } // namespace ult

@@ -202,6 +202,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         NEO::RequiredDispatchWalkOrder::none,       // requiredDispatchWalkOrder
         NEO::additionalKernelLaunchSizeParamNotSet, // additionalSizeParam
         0,                                          // partitionCount
+        0,                                          // reserveExtraPayloadSpace
         false,                                      // isIndirect
         false,                                      // isPredicate
         false,                                      // isTimestampEvent
