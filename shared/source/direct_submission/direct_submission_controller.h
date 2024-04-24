@@ -51,8 +51,6 @@ class DirectSubmissionController {
 
   protected:
     struct DirectSubmissionState {
-        std::atomic_bool isStopped{true};
-        std::atomic<TaskCountType> taskCount{0};
         DirectSubmissionState(DirectSubmissionState &&other) {
             isStopped = other.isStopped.load();
             taskCount = other.taskCount.load();
@@ -65,7 +63,15 @@ class DirectSubmissionController {
             this->taskCount = other.taskCount.load();
             return *this;
         }
+
         DirectSubmissionState() = default;
+        ~DirectSubmissionState() = default;
+
+        DirectSubmissionState(const DirectSubmissionState &other) = delete;
+        DirectSubmissionState &operator=(DirectSubmissionState &&other) = delete;
+
+        std::atomic_bool isStopped{true};
+        std::atomic<TaskCountType> taskCount{0};
     };
 
     static void *controlDirectSubmissionsState(void *self);
