@@ -51,8 +51,6 @@ struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
     DriverHandleImp();
 
-    static constexpr uint32_t initialDriverVersionValue = 0x01030000;
-
     ze_result_t createContext(const ze_context_desc_t *desc,
                               uint32_t numDevices,
                               ze_device_handle_t *phDevices,

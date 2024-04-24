@@ -113,9 +113,10 @@ ze_result_t DriverHandleImp::getApiVersion(ze_api_version_t *version) {
 }
 
 ze_result_t DriverHandleImp::getProperties(ze_driver_properties_t *properties) {
-    uint32_t versionBuild = static_cast<uint32_t>(NEO_VERSION_BUILD);
+    uint32_t versionBuild = static_cast<uint32_t>(NEO_VERSION_BUILD) << 12;
+    uint32_t versionHotfix = static_cast<uint32_t>(NEO_VERSION_HOTFIX);
 
-    properties->driverVersion = DriverHandleImp::initialDriverVersionValue + versionBuild;
+    properties->driverVersion = versionBuild + versionHotfix;
     if (NEO::debugManager.flags.OverrideDriverVersion.get() > -1) {
         properties->driverVersion = static_cast<uint32_t>(NEO::debugManager.flags.OverrideDriverVersion.get());
     }

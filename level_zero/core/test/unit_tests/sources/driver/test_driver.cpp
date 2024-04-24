@@ -203,8 +203,8 @@ TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsRet
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    auto expectedDriverVersion = static_cast<uint32_t>(DriverHandleImp::initialDriverVersionValue);
-    expectedDriverVersion += static_cast<uint32_t>(NEO_VERSION_BUILD);
+    auto expectedDriverVersion = static_cast<uint32_t>(NEO_VERSION_BUILD << 12);
+    expectedDriverVersion += static_cast<uint32_t>(NEO_VERSION_HOTFIX);
     EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
 }
 
@@ -227,12 +227,12 @@ TEST_F(DriverVersionTest, GivenDebugOverrideWhenGettingDriverVersionThenExpected
     expectedDriverVersion = 10;
     EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
 
-    NEO::debugManager.flags.OverrideDriverVersion.set(DriverHandleImp::initialDriverVersionValue + 20);
+    NEO::debugManager.flags.OverrideDriverVersion.set((29383 << 12) + 71);
 
     res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    expectedDriverVersion = DriverHandleImp::initialDriverVersionValue + 20;
+    expectedDriverVersion = (0x72c7000 + 0x47);
     EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
 }
 
@@ -249,8 +249,8 @@ TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
     EXPECT_NE(0u, uniqueId);
 
     auto driverVersion = static_cast<uint32_t>(uuid & 0xFFFFFFFF);
-    auto expectedDriverVersion = static_cast<uint32_t>(DriverHandleImp::initialDriverVersionValue);
-    expectedDriverVersion += static_cast<uint32_t>(NEO_VERSION_BUILD);
+    auto expectedDriverVersion = static_cast<uint32_t>(NEO_VERSION_BUILD << 12);
+    expectedDriverVersion += static_cast<uint32_t>(NEO_VERSION_HOTFIX);
     EXPECT_EQ(expectedDriverVersion, driverVersion);
 }
 
