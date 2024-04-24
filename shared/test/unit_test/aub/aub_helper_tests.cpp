@@ -9,6 +9,7 @@
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -124,6 +125,15 @@ TEST(AubHelper, givenAllocationTypeWhenAskingIfOneTimeWritableThenReturnCorrectR
             EXPECT_FALSE(isOneTimeWritable);
             break;
         }
+    }
+}
+
+TEST(AubHelper, givenSetBufferHostMemoryAlwaysAubWritableWhenAskingIfBufferHostMemoryAllocationIsOneTimeAubWritableThenReturnCorrectResult) {
+    DebugManagerStateRestore stateRestore;
+
+    for (auto isAlwaysAubWritable : {false, true}) {
+        NEO::debugManager.flags.SetBufferHostMemoryAlwaysAubWritable.set(isAlwaysAubWritable);
+        EXPECT_NE(AubHelper::isOneTimeAubWritableAllocationType(AllocationType::bufferHostMemory), isAlwaysAubWritable);
     }
 }
 
