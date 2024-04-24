@@ -1091,11 +1091,14 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
               d->handle, d->offset, d->flags, ret);
     } break;
     case DrmIoctl::getResetStats: {
-        ResetStats *d = static_cast<ResetStats *>(arg);
-        //    d->batchActive = 1; // fake gpu hang
-        ret = 0;
-        xeLog(" -> IoctlHelperXe::ioctl GetResetStats ctx=0x%x r=%d\n",
-              d->contextId, ret);
+        ResetStats *resetStats = static_cast<ResetStats *>(arg);
+        drm_xe_exec_queue_get_property getProperty{};
+        getProperty.exec_queue_id = resetStats->contextId;
+        getProperty.property = DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN;
+        ret = IoctlHelper::ioctl(request, &getProperty);
+        resetStats->batchPending = static_cast<uint32_t>(getProperty.value);
+        xeLog(" -> IoctlHelperXe::ioctl GetResetStats ctx=0x%x r=%d value=%llu\n",
+              resetStats->contextId, ret, getProperty.value);
     } break;
     case DrmIoctl::primeFdToHandle: {
         PrimeHandle *prime = static_cast<PrimeHandle *>(arg);
@@ -1526,6 +1529,8 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
         RETURN_ME(DRM_IOCTL_PRIME_FD_TO_HANDLE);
     case DrmIoctl::primeHandleToFd:
         RETURN_ME(DRM_IOCTL_PRIME_HANDLE_TO_FD);
+    case DrmIoctl::getResetStats:
+        RETURN_ME(DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY);
     case DrmIoctl::debuggerOpen:
     case DrmIoctl::metadataCreate:
     case DrmIoctl::metadataDestroy:
@@ -1570,6 +1575,8 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_CREATE);
     case DrmIoctl::metadataDestroy:
         STRINGIFY_ME(DRM_IOCTL_XE_DEBUG_METADATA_DESTROY);
+    case DrmIoctl::getResetStats:
+        STRINGIFY_ME(DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY);
     default:
         return "???";
     }

@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 
 using namespace NEO;
 
@@ -2130,4 +2131,21 @@ TEST(IoctlHelperXeTest, whenGetFdFromVmExportIsCalledThenFalseIsReturned) {
     uint32_t vmId = 0, flags = 0;
     int32_t fd = 0;
     EXPECT_FALSE(xeIoctlHelper->getFdFromVmExport(vmId, flags, &fd));
+}
+
+TEST(IoctlHelperXeTest, whenCheckingGpuHangThenBanPropertyIsQueried) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeHelper = std::make_unique<MockIoctlHelperXe>(drm);
+    drm.ioctlHelper = std::move(xeHelper);
+
+    MockOsContextLinux osContext(drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    osContext.drmContextIds.push_back(0);
+    drm.execQueueBanPropertyReturn = 0;
+    EXPECT_FALSE(drm.checkResetStatus(osContext));
+    EXPECT_FALSE(osContext.isHangDetected());
+
+    drm.execQueueBanPropertyReturn = 1;
+    EXPECT_TRUE(drm.checkResetStatus(osContext));
+    EXPECT_TRUE(osContext.isHangDetected());
 }

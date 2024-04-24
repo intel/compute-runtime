@@ -205,9 +205,14 @@ class DrmMockXe : public DrmMockCustom {
             ret = 0;
         } break;
         case DrmIoctl::getparam:
-        case DrmIoctl::getResetStats:
             ret = -2;
             break;
+        case DrmIoctl::getResetStats: {
+            auto execQueueProperty = static_cast<drm_xe_exec_queue_get_property *>(arg);
+            EXPECT_EQ(execQueueProperty->property, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_GET_PROPERTY_BAN));
+            execQueueProperty->value = execQueueBanPropertyReturn;
+            ret = 0;
+        } break;
         case DrmIoctl::query: {
             struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
             switch (deviceQuery->query) {
@@ -344,6 +349,7 @@ class DrmMockXe : public DrmMockCustom {
     StackVec<drm_xe_ext_set_property, 1> execQueueProperties;
 
     int waitUserFenceReturn = 0;
+    int execQueueBanPropertyReturn = 0;
     uint32_t createParamsFlags = 0u;
     uint16_t createParamsCpuCaching = 0u;
     uint32_t createParamsPlacement = 0u;
