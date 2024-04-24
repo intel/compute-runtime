@@ -860,7 +860,7 @@ bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes() const {
+const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const {
     return {};
 }
 

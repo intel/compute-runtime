@@ -173,7 +173,7 @@ class ProductHelperHw : public ProductHelper {
     bool isCachingOnCpuAvailable() const override;
     bool isNewCoherencyModelSupported() const override;
     bool supportReadOnlyAllocations() const override;
-    const std::vector<uint32_t> getSupportedLocalDispatchSizes() const override;
+    const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const override;
     bool isDeviceToHostCopySignalingFenceRequired() const override;
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 

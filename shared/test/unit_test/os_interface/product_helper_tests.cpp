@@ -921,7 +921,7 @@ HWTEST_F(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreference
 }
 
 HWTEST_F(ProductHelperTest, whenAskingForLocalDispatchSizeThenReturnEmpty) {
-    EXPECT_EQ(0u, productHelper->getSupportedLocalDispatchSizes().size());
+    EXPECT_EQ(0u, productHelper->getSupportedLocalDispatchSizes(pInHwInfo).size());
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSupportThenFalseReturned) {

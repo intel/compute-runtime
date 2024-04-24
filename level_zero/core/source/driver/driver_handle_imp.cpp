@@ -151,7 +151,7 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
             break;
         }
     }
-    devices[0]->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, devices[0]->getProductHelper());
+    devices[0]->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, devices[0]->getProductHelper(), devices[0]->getHwInfo());
 
     if (devices[0]->getL0GfxCoreHelper().synchronizedDispatchSupported()) {
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
