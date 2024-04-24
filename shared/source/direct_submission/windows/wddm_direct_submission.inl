@@ -87,7 +87,6 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::ensureRingCompletion() {
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
     bool ret = wddm->getWddmInterface()->createMonitoredFenceForDirectSubmission(ringFence, *this->osContextWin);
-    ringFence.currentFenceValue = 1;
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS resource allocation finished with: %d\n", ret);
     return ret;
 }

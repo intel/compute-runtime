@@ -111,10 +111,16 @@ TEST_F(Wddm23Tests, whenObjectIsDestructedThenDestroyHwQueue) {
 
 TEST_F(Wddm23Tests, whencreateMonitoredFenceForDirectSubmissionThenObtainHwQueueFenceAndReplaceResidencyControllerWithNewFence) {
     EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().fenceHandle, osContext->getHwQueue().progressFenceHandle);
+    osContext->getResidencyController().getMonitoredFence().currentFenceValue = 2u;
+    osContext->getResidencyController().getMonitoredFence().lastSubmittedFence = 1u;
     MonitoredFence fence{};
     wddm->getWddmInterface()->createMonitoredFenceForDirectSubmission(fence, *osContext);
     EXPECT_EQ(osContext->getHwQueue().progressFenceHandle, fence.fenceHandle);
     EXPECT_NE(osContext->getResidencyController().getMonitoredFence().fenceHandle, osContext->getHwQueue().progressFenceHandle);
+    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().currentFenceValue, 2u);
+    EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().lastSubmittedFence, 1u);
+    EXPECT_EQ(fence.currentFenceValue, 2u);
+    EXPECT_EQ(fence.lastSubmittedFence, 1u);
 }
 
 TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpdateMonitoredFence) {

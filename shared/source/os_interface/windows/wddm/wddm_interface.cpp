@@ -97,6 +97,12 @@ bool WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandH
     return STATUS_SUCCESS == status;
 }
 
+bool NEO::WddmInterface20::createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) {
+    auto ret = WddmInterface::createMonitoredFence(monitorFence);
+    monitorFence.currentFenceValue = 1;
+    return ret;
+}
+
 bool WddmInterface23::createHwQueue(OsContextWin &osContext) {
     D3DKMT_CREATEHWQUEUE createHwQueue = {};
 
@@ -165,14 +171,18 @@ bool NEO::WddmInterface23::createMonitoredFenceForDirectSubmission(MonitoredFenc
     MonitoredFence monitorFenceForResidency{};
     auto ret = WddmInterface::createMonitoredFence(monitorFenceForResidency);
     auto &residencyController = osContext.getResidencyController();
+    auto lastSubmittedFence = residencyController.getMonitoredFence().lastSubmittedFence;
+    auto currentFenceValue = residencyController.getMonitoredFence().currentFenceValue;
     residencyController.resetMonitoredFenceParams(monitorFenceForResidency.fenceHandle,
                                                   const_cast<uint64_t *>(monitorFenceForResidency.cpuAddress),
                                                   monitorFenceForResidency.gpuAddress);
+    residencyController.getMonitoredFence().currentFenceValue = currentFenceValue;
+    residencyController.getMonitoredFence().lastSubmittedFence = lastSubmittedFence;
 
     auto hwQueue = osContext.getHwQueue();
     monitorFence.cpuAddress = reinterpret_cast<uint64_t *>(hwQueue.progressFenceCpuVA);
-    monitorFence.currentFenceValue = 1u;
-    monitorFence.lastSubmittedFence = 0u;
+    monitorFence.currentFenceValue = currentFenceValue;
+    monitorFence.lastSubmittedFence = lastSubmittedFence;
     monitorFence.gpuAddress = hwQueue.progressFenceGpuVA;
     monitorFence.fenceHandle = hwQueue.progressFenceHandle;
 

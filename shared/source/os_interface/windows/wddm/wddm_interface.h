@@ -44,9 +44,7 @@ class WddmInterface20 : public WddmInterface {
     void destroyMonitorFence(MonitoredFence &monitorFence) override;
     bool hwQueuesSupported() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
-    bool createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) override {
-        return WddmInterface::createMonitoredFence(monitorFence);
-    };
+    bool createMonitoredFenceForDirectSubmission(MonitoredFence &monitorFence, OsContextWin &osContext) override;
 };
 
 class WddmInterface23 : public WddmInterface {
