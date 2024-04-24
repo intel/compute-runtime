@@ -137,6 +137,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNot
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice,
                                                                pDevice->getNumGenericSubDevices() > 1);
     mockHelper->globalBindlessDsh = false;
+    auto globalBase = mockHelper->getGlobalHeapsBase();
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
@@ -155,7 +156,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNot
 
     auto usedBefore = dsh->getUsed();
     EncodeStates<FamilyType>::copySamplerState(dsh, borderColorSize, numSamplers, 0, memory, pDevice->getBindlessHeapsHelper(), pDevice->getRootDeviceEnvironment());
-    auto expectedValue = usedBefore;
+    auto expectedValue = usedBefore + ptrDiff(dsh->getGpuBase(), globalBase);
     auto usedAfter = dsh->getUsed();
 
     EXPECT_EQ(alignUp(usedBefore + sizeof(SAMPLER_BORDER_COLOR_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE) + sizeof(SAMPLER_STATE), usedAfter);

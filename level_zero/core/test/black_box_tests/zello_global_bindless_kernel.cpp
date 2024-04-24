@@ -44,11 +44,13 @@ std::string getRunPath(char *argv0) {
 }
 
 int main(int argc, char *argv[], char **envp) {
-    char *argv2[] = {NULL, NULL};
+    char *argv2[] = {NULL, NULL, NULL};
     auto path = getRunPath(argv[0]);
     path += fSeparator;
     path += "zello_bindless_kernel";
     argv2[0] = const_cast<char *>(path.c_str());
+    const char verbose[] = "--verbose";
+    argv2[1] = const_cast<char *>(verbose);
     std::vector<const char *> allEnv;
 
     for (auto env = envp; *env != nullptr; env++) {

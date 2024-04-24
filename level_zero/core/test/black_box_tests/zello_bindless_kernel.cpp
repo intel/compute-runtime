@@ -83,6 +83,13 @@ __kernel void image_read_sampler(__global float4 *dst, image2d_t img, sampler_t 
     size_t dstOffset = get_global_id(1) * get_image_width(img) + get_global_id(0);
     dst[dstOffset] = read_imagef(img, sampler, coord);
 }
+
+__kernel void image_read_sampler_oob(__global float4 *dst, image2d_t img, sampler_t sampler) {
+    int2 coord = {get_global_id(0) + 1, get_global_id(1) + 1};
+    size_t dstOffset = get_global_id(1) * get_image_width(img) + get_global_id(0);
+    dst[dstOffset] = read_imagef(img, sampler, coord);
+    printf(" gid[ %d, %d]  %.2f , %.2f , %.2f , %.2f \n", get_global_id(0), get_global_id(1), dst[dstOffset].x, dst[dstOffset].y, dst[dstOffset].z, dst[dstOffset].w );
+}
 )===";
 
 const char *source5 = R"===(
@@ -172,6 +179,7 @@ static std::string kernelName = "kernel_copy";
 static std::string kernelName2 = "kernel_fill";
 static std::string kernelName3 = "image_copy";
 static std::string kernelName4 = "image_read_sampler";
+static std::string kernelName4a = "image_read_sampler_oob";
 
 enum class ExecutionMode : uint32_t {
     commandQueue,
@@ -336,6 +344,135 @@ bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t devi
 
     SUCCESS_OR_TERMINATE(zeKernelDestroy(copyKernel));
     SUCCESS_OR_TERMINATE(zeKernelDestroy(fillKernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module2));
+
+    return outputValidated;
+}
+
+void runBindlessBindful(const ze_kernel_handle_t &firstKernel, const ze_kernel_handle_t &secondKernel,
+                        ze_context_handle_t &context, ze_device_handle_t &device, ExecutionMode mode, bool &outputValidationSuccessful) {
+
+    LevelZeroBlackBoxTests::CommandHandler commandHandler;
+    bool isImmediateCmdList = (mode == ExecutionMode::immSyncCmdList);
+
+    SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
+
+    constexpr size_t allocSize = 32;
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED;
+
+    void *buffer1 = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &buffer1));
+
+    void *buffer2 = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &buffer2));
+
+    void *buffer3 = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &buffer3));
+
+    // Initialize memory
+    constexpr uint8_t val1 = 55;
+    constexpr uint8_t val2 = 22;
+    constexpr uint8_t val3 = 77;
+
+    memset(buffer1, 0, allocSize);
+    memset(buffer2, 0, allocSize);
+    memset(buffer3, 0, allocSize);
+
+    ze_group_count_t dispatchTraits;
+    dispatchTraits.groupCountX = 1u;
+    dispatchTraits.groupCountY = 1u;
+    dispatchTraits.groupCountZ = 1u;
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(firstKernel, 0, sizeof(buffer1), &buffer1));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(firstKernel, 1, sizeof(char), &val1));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(firstKernel, 32U, 1U, 1U));
+    SUCCESS_OR_TERMINATE(commandHandler.appendKernel(firstKernel, dispatchTraits));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(commandHandler.cmdList, nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(secondKernel, 0, sizeof(buffer2), &buffer2));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(secondKernel, 1, sizeof(val2), &val2));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(secondKernel, 32U, 1U, 1U));
+    SUCCESS_OR_TERMINATE(commandHandler.appendKernel(secondKernel, dispatchTraits));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(commandHandler.cmdList, nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(firstKernel, 0, sizeof(buffer1), &buffer3));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(firstKernel, 1, sizeof(char), &val3));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(firstKernel, 32U, 1U, 1U));
+    SUCCESS_OR_TERMINATE(commandHandler.appendKernel(firstKernel, dispatchTraits));
+
+    SUCCESS_OR_TERMINATE(commandHandler.execute());
+    SUCCESS_OR_TERMINATE(commandHandler.synchronize());
+
+    outputValidationSuccessful = true;
+    uint8_t *buffer1Uint = static_cast<uint8_t *>(buffer1);
+    uint8_t *buffer2Uint = static_cast<uint8_t *>(buffer2);
+    uint8_t *buffer3Uint = static_cast<uint8_t *>(buffer3);
+    for (size_t i = 0; i < allocSize; i++) {
+        if (buffer1Uint[i] != val1) {
+            std::cout << "buffer1Uint[" << i << "] = " << std::dec << static_cast<unsigned int>(buffer1Uint[i]) << " not equal to "
+                      << "val1 = " << std::dec << static_cast<unsigned int>(val1) << "\n";
+            outputValidationSuccessful = false;
+            break;
+        }
+        if (buffer2Uint[i] != val2) {
+            std::cout << "buffer2Uint[" << i << "] = " << std::dec << static_cast<unsigned int>(buffer2Uint[i]) << " not equal to "
+                      << "val2 = " << std::dec << static_cast<unsigned int>(val2) << "\n";
+            outputValidationSuccessful = false;
+            break;
+        }
+        if (buffer3Uint[i] != val3) {
+            std::cout << "buffer3Uint[" << i << "] = " << std::dec << static_cast<unsigned int>(buffer3Uint[i]) << " not equal to "
+                      << "val3 = " << std::dec << static_cast<unsigned int>(val3) << "\n";
+            outputValidationSuccessful = false;
+            break;
+        }
+    }
+
+    if (!outputValidationSuccessful) {
+        std::cout << " TEST FAILED\n"
+                  << std::endl;
+    }
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, buffer1));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, buffer2));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, buffer3));
+}
+
+bool testBindlessBindfulKernel(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId) {
+    bool outputValidated = false;
+
+    ze_module_handle_t module = nullptr;
+    ze_module_handle_t module2 = nullptr;
+    createModule(source2, AddressingMode::bindless, context, device, deviceId, revisionId, module, "");
+    createModule(source2, AddressingMode::defaultMode, context, device, deviceId, revisionId, module2, "");
+
+    ExecutionMode executionModes[] = {ExecutionMode::commandQueue, ExecutionMode::immSyncCmdList};
+    ze_kernel_handle_t bindlessKernel = nullptr;
+    ze_kernel_handle_t bindfulKernel = nullptr;
+    createKernel(module, bindlessKernel, kernelName2.c_str());
+    createKernel(module2, bindfulKernel, kernelName2.c_str());
+
+    std::pair<ze_kernel_handle_t, ze_kernel_handle_t> kernelOrder[2] = {{bindlessKernel, bindfulKernel},
+                                                                        {bindfulKernel, bindlessKernel}};
+
+    for (auto kernel : kernelOrder) {
+
+        for (auto mode : executionModes) {
+
+            runBindlessBindful(kernel.first, kernel.second, context, device, mode, outputValidated);
+
+            if (!outputValidated) {
+                std::cout << "testBindlessBindfulKernel with mode " << static_cast<uint32_t>(mode) << " failed.\n"
+                          << std::endl;
+                break;
+            }
+        }
+    }
+
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(bindlessKernel));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(bindfulKernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module2));
 
@@ -559,6 +696,132 @@ bool testBindlessImageSampled(ze_context_handle_t context, ze_device_handle_t de
     SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+
+    if (!outputValidated) {
+        std::cout << "\nTest FAILED" << std::endl;
+    } else {
+        std::cout << "\nTest PASSED" << std::endl;
+    }
+
+    return outputValidated;
+}
+
+bool testBindlessImageSampledBorderColor(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId,
+                                         const std::string &revisionId, AddressingMode mode) {
+    bool outputValidated = true;
+
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
+
+    createModule(source4, mode, context, device, deviceId, revisionId, module, "");
+    createKernel(module, kernel, kernelName4a.c_str());
+
+    LevelZeroBlackBoxTests::CommandHandler commandHandler;
+    SUCCESS_OR_TERMINATE(commandHandler.create(context, device, true));
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+
+    ze_sampler_desc_t samplerDesc = {ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+                                     nullptr,
+                                     ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+                                     ZE_SAMPLER_FILTER_MODE_NEAREST,
+                                     false};
+    ze_sampler_handle_t sampler;
+    SUCCESS_OR_TERMINATE(zeSamplerCreate(context, device, &samplerDesc, &sampler));
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  nullptr,
+                                  0,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32, ZE_IMAGE_FORMAT_TYPE_FLOAT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G},
+                                  2,
+                                  2,
+                                  1,
+                                  0,
+                                  0};
+
+    constexpr size_t bytesPerPixel = sizeof(float) * 4;
+    size_t bytesPerRow = srcImgDesc.width * bytesPerPixel;
+    size_t allocSize = bytesPerRow * srcImgDesc.height;
+
+    // Create and initialize host memory
+    void *dstBuffer;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &dstBuffer));
+    for (uint32_t i = 0; i < srcImgDesc.height; ++i) {
+        float *dstRow = reinterpret_cast<float *>(dstBuffer) + srcImgDesc.width * 4 * i;
+        for (size_t j = 0; j < srcImgDesc.width; ++j) {
+            for (size_t k = 0; k < 4; ++k) {
+                dstRow[j * 4 + k] = 4.f;
+            }
+        }
+    }
+
+    ze_image_handle_t srcImg;
+    ze_group_count_t dispatchTraits;
+    dispatchTraits.groupCountX = 1u;
+    dispatchTraits.groupCountY = 2u;
+    dispatchTraits.groupCountZ = 1u;
+
+    SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &srcImgDesc, &srcImg));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcImg), &srcImg));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(sampler), &sampler));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, 2U, 1U, 1U));
+
+    ze_image_region_t srcRegion = {0, 0, 0, (uint32_t)srcImgDesc.width, (uint32_t)srcImgDesc.height, (uint32_t)srcImgDesc.depth};
+
+    std::vector<float> data(srcImgDesc.width * srcImgDesc.height * 4);
+    memcpy(data.data(), dstBuffer, allocSize);
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyFromMemory(commandHandler.cmdList, srcImg, data.data(),
+                                                                &srcRegion, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(commandHandler.cmdList, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(commandHandler.appendKernel(kernel, dispatchTraits));
+    SUCCESS_OR_TERMINATE(commandHandler.execute());
+    SUCCESS_OR_TERMINATE(commandHandler.synchronize());
+
+    // Validate
+    float *dst = reinterpret_cast<float *>(dstBuffer);
+    std::vector<float> reference = {0.f, 0.f, 0.f, 0.f};
+
+    for (size_t i = 0; (i < srcImgDesc.height); ++i) {
+        for (size_t j = 0; j < srcImgDesc.width; ++j) {
+            if (i == 0 && j == 0) {
+                for (size_t k = 0; k < 4; k++) {
+                    if (dst[k] != 4.0f) {
+                        std::cerr << "error: dstBuffer[" << i << "][" << j << "] = " << dst[k] << " is not equal to " << 4.0f << "\n";
+                        outputValidated = false;
+                        break;
+                    }
+                }
+            } else {
+                for (size_t k = 0; k < 4; k++) {
+                    if (dst[k] != reference[k]) {
+                        std::cerr << "error: dstBuffer[" << i << "][" << j << "] = " << dst[k] << " is not equal to " << reference[k] << "\n";
+                        outputValidated = false;
+                        break;
+                    }
+                }
+            }
+            dst += 4;
+        }
+    }
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeSamplerDestroy(sampler));
+    SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+
+    if (!outputValidated) {
+        std::cout << "\nTest FAILED" << std::endl;
+    } else {
+        std::cout << "\nTest PASSED" << std::endl;
+    }
 
     return outputValidated;
 }
@@ -1005,7 +1268,7 @@ int main(int argc, char *argv[]) {
     ze_device_uuid_t uuid = deviceProperties.uuid;
     std::string revisionId = std::to_string(reinterpret_cast<uint16_t *>(uuid.id)[2]);
 
-    int numTests = 5;
+    int numTests = 7;
     int testCase = -1;
     testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", -1);
     if (testCase < -1 || testCase >= numTests) {
@@ -1078,7 +1341,7 @@ int main(int argc, char *argv[]) {
                 std::cout << "Skipped. testBindlessImageQuery not supported\n";
             }
             break;
-        case 4:
+        case 4: {
             std::cout << "\ntest case: testZeExperimentalBindlessImages\n"
                       << std::endl;
 
@@ -1123,7 +1386,29 @@ int main(int argc, char *argv[]) {
                 std::cout << "--bindless-images " << std::endl;
             }
             outputValidated &= testZeExperimentalBindlessImages(context, device, ss.str(), revisionId, mode);
+        } break;
+        case 5:
+            std::cout << "\ntest case: testBindlessImageSampledBorderColor\n"
+                      << std::endl;
 
+            if (!isIntegratedGPU && is2dImageSupported) {
+                if (bindlessImages) {
+                    std::cout << "--bindless-images " << std::endl;
+                }
+                outputValidated &= testBindlessImageSampledBorderColor(context, device, ss.str(), revisionId, mode);
+            } else {
+                std::cout << "Skipped. testBindlessImageSampledBorderColor not supported\n";
+            }
+            break;
+        case 6:
+            std::cout << "\ntest case: testBindlessBindfulKernel\n"
+                      << std::endl;
+
+            if (!isIntegratedGPU) {
+                outputValidated &= testBindlessBindfulKernel(context, device, ss.str(), revisionId);
+            } else {
+                std::cout << "Skipped. testBindlessBindfulKernel not supported\n";
+            }
             break;
         }
 

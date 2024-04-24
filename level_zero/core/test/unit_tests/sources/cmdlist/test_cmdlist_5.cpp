@@ -1492,18 +1492,9 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
 
     auto sshHeap = container.getIndirectHeap(NEO::HeapType::surfaceState);
     uint64_t ssBaseAddress = sshHeap->getHeapGpuBase();
-    uint64_t dsBaseAddress = -1;
-    uint32_t dsBaseSize = 0;
-    uint32_t dsFirstBaseSize = 0;
-
     auto dshHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
-    if (dshHeap) {
-        dsBaseAddress = dshHeap->getHeapGpuBase();
-        dsFirstBaseSize = dshHeap->getHeapSizeInPages();
-    }
 
     uint64_t ssFirstBaseAddress = ssBaseAddress;
-    uint64_t dsFirstBaseAddress = dsBaseAddress;
 
     sshHeap->getSpace(sshHeap->getAvailableSpace());
     container.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::surfaceState, sshHeap->getMaxAvailableSpace(), 0);
@@ -1519,10 +1510,6 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ssBaseAddress = sshHeap->getGpuBase();
-    if (dshHeap) {
-        dsBaseAddress = dshHeap->getGpuBase();
-        dsBaseSize = dshHeap->getHeapSizeInPages();
-    }
 
     cmdList.clear();
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1537,13 +1524,8 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     if (this->dshRequired) {
         EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
         EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
-        EXPECT_EQ(dsBaseAddress, sbaCmd->getDynamicStateBaseAddress());
-        EXPECT_EQ(dsBaseSize, sbaCmd->getDynamicStateBufferSize());
-    } else {
-        EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
-        EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
-        EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
-        EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+        EXPECT_EQ(globalBindlessBase, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, sbaCmd->getDynamicStateBufferSize());
     }
 
     EXPECT_TRUE(sbaCmd->getBindlessSurfaceStateBaseAddressModifyEnable());
@@ -1574,13 +1556,8 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     if (this->dshRequired) {
         EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
         EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
-        EXPECT_EQ(dsFirstBaseAddress, sbaCmd->getDynamicStateBaseAddress());
-        EXPECT_EQ(dsFirstBaseSize, sbaCmd->getDynamicStateBufferSize());
-    } else {
-        EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
-        EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
-        EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
-        EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+        EXPECT_EQ(globalBindlessBase, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, sbaCmd->getDynamicStateBufferSize());
     }
 
     EXPECT_TRUE(sbaCmd->getBindlessSurfaceStateBaseAddressModifyEnable());
@@ -1656,7 +1633,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
     EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
     EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
     EXPECT_EQ(globalBindlessBase, sbaCmd->getDynamicStateBaseAddress());
-    EXPECT_EQ(MemoryConstants::pageSize64k, sbaCmd->getDynamicStateBufferSize());
+    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, sbaCmd->getDynamicStateBufferSize());
 
     EXPECT_TRUE(sbaCmd->getBindlessSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(globalBindlessBase, sbaCmd->getBindlessSurfaceStateBaseAddress());

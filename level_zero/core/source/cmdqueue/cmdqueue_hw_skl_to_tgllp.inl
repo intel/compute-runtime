@@ -41,10 +41,10 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     uint64_t bindlessSurfStateBase = 0ull;
 
     if (neoDevice->getBindlessHeapsHelper()) {
-        if (neoDevice->getBindlessHeapsHelper()->isGlobalDshSupported()) {
-            useGlobalSshAndDsh = true;
-            globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
-        } else {
+        useGlobalSshAndDsh = true;
+        globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
+
+        if (!neoDevice->getBindlessHeapsHelper()->isGlobalDshSupported()) {
             bindlessSurfStateBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
         }
     }

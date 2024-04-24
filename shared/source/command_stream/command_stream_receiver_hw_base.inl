@@ -1701,9 +1701,13 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
     auto stateBaseAddressCmdOffset = csrCommandStream.getUsed();
     auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
     auto bindlessSurfStateBase = 0ull;
+    auto globalHeapsBase = 0ull;
+    bool useGlobalSshAndDsh = false;
 
     if (device.getBindlessHeapsHelper()) {
         bindlessSurfStateBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
+        globalHeapsBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
+        useGlobalSshAndDsh = true;
     }
 
     STATE_BASE_ADDRESS stateBaseAddressCmd;
@@ -1711,7 +1715,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
         generalStateBaseAddress,                  // generalStateBaseAddress
         indirectObjectStateBaseAddress,           // indirectObjectHeapBaseAddress
         instructionHeapBaseAddress,               // instructionHeapBaseAddress
-        0,                                        // globalHeapsBaseAddress
+        globalHeapsBase,                          // globalHeapsBaseAddress
         0,                                        // surfaceStateBaseAddress
         bindlessSurfStateBase,                    // bindlessSurfaceStateBaseAddress
         &stateBaseAddressCmd,                     // stateBaseAddressCmd
@@ -1726,7 +1730,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddressCommon(
         this->lastMemoryCompressionState,         // memoryCompressionState
         true,                                     // setInstructionStateBaseAddress
         setGeneralStateBaseAddress,               // setGeneralStateBaseAddress
-        false,                                    // useGlobalHeapsBaseAddress
+        useGlobalSshAndDsh,                       // useGlobalHeapsBaseAddress
         isMultiOsContextCapable(),                // isMultiOsContextCapable
         areMultipleSubDevicesInContext,           // areMultipleSubDevicesInContext
         false,                                    // overrideSurfaceStateBaseAddress

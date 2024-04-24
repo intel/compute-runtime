@@ -221,7 +221,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     EXPECT_EQ(surfaceStateCount, cmdSba->getBindlessSurfaceStateSize());
 
     EXPECT_EQ(globalHeapsBase, cmdSba->getDynamicStateBaseAddress());
-    EXPECT_EQ(MemoryConstants::pageSize64k, cmdSba->getDynamicStateBufferSize());
+    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmdSba->getDynamicStateBufferSize());
     EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
     EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
 

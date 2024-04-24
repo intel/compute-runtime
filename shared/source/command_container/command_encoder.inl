@@ -58,6 +58,10 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
     uint32_t borderColorOffsetInDsh = 0;
     if (!bindlessHeapHelper || (!bindlessHeapHelper->isGlobalDshSupported())) {
         borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
+        // add offset of graphics allocation base address relative to heap base address
+        if (bindlessHeapHelper) {
+            borderColorOffsetInDsh += static_cast<uint32_t>(ptrDiff(dsh->getGpuBase(), bindlessHeapHelper->getGlobalHeapsBase()));
+        }
         auto borderColor = dsh->getSpace(borderColorSize);
 
         memcpy_s(borderColor, borderColorSize, ptrOffset(fnDynamicStateHeap, borderColorOffset),

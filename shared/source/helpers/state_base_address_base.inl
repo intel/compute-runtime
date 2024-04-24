@@ -72,10 +72,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
         args.stateBaseAddressCmd->setDynamicStateBaseAddress(args.globalHeapsBaseAddress);
-        args.stateBaseAddressCmd->setDynamicStateBufferSize(MemoryConstants::pageSize64k);
-
-        args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
-        args.stateBaseAddressCmd->setSurfaceStateBaseAddress(args.globalHeapsBaseAddress);
+        args.stateBaseAddressCmd->setDynamicStateBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.globalHeapsBaseAddress);
@@ -87,11 +84,11 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
             args.stateBaseAddressCmd->setDynamicStateBaseAddress(args.dsh->getHeapGpuBase());
             args.stateBaseAddressCmd->setDynamicStateBufferSize(args.dsh->getHeapSizeInPages());
         }
+    }
 
-        if (args.ssh) {
-            args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
-            args.stateBaseAddressCmd->setSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
-        }
+    if (args.ssh) {
+        args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
     }
 
     if (args.setInstructionStateBaseAddress) {

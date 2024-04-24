@@ -213,6 +213,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     kernelDescriptor.payloadMappings.samplerTable.numSamplers, kernelDescriptor.payloadMappings.samplerTable.borderColor,
                     args.dispatchInterface->getDynamicStateHeapData(),
                     args.device->getBindlessHeapsHelper(), rootDeviceEnvironment);
+
+                if (args.device->getBindlessHeapsHelper() && !args.device->getBindlessHeapsHelper()->isGlobalDshSupported()) {
+                    // add offset of graphics allocation base address relative to heap base address
+                    samplerStateOffset += static_cast<uint32_t>(ptrDiff(dsHeap->getGpuBase(), args.device->getBindlessHeapsHelper()->getGlobalHeapsBase()));
+                }
             }
 
             idd.setSamplerStatePointer(samplerStateOffset);
@@ -307,7 +312,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 args.partitionCount > 1,     // multiOsContextCapable
                 args.isRcs,                  // isRcs
                 container.doubleSbaWaRef(),  // doubleSbaWa
-                heaplessModeEnabled,         // heaplessModeEnabled
+                heaplessModeEnabled          // heaplessModeEnabled
             };
             EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
             container.setDirtyStateForAllHeaps(false);
@@ -670,6 +675,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
 
     if (device.getBindlessHeapsHelper()) {
         bindlessSurfStateBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
+        globalHeapsBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
+        useGlobalSshAndDsh = true;
     }
 
     StateBaseAddressHelperArgs<Family> stateBaseAddressHelperArgs = {

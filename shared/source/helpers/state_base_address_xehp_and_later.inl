@@ -38,6 +38,12 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
             args.stateBaseAddressCmd->setGeneralStateBufferSizeModifyEnable(true);
             args.stateBaseAddressCmd->setGeneralStateBufferSize(0xfffff);
         }
+
+        if (args.sbaProperties->dynamicStateBaseAddress.value != StreamProperty64::initValue) {
+            args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddress(args.sbaProperties->dynamicStateBaseAddress.value);
+            args.stateBaseAddressCmd->setBindlessSamplerStateBufferSize(static_cast<uint32_t>(args.sbaProperties->dynamicStateSize.value));
+            args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
+        }
     }
     if (args.setGeneralStateBaseAddress && is64bit) {
         args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.indirectObjectHeapBaseAddress));

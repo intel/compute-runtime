@@ -462,6 +462,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
 
     if (device.getBindlessHeapsHelper()) {
         bindlessSurfStateBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
+        globalHeapsBase = device.getBindlessHeapsHelper()->getGlobalHeapsBase();
+        useGlobalSshAndDsh = true;
     }
 
     StateBaseAddressHelperArgs<Family> stateBaseAddressHelperArgs = {

@@ -98,6 +98,7 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(cmd, pDevice->getGmmHelper());
     args.globalHeapsBaseAddress = globalBindlessHeapsBaseAddress;
     args.useGlobalHeapsBaseAddress = true;
+    args.ssh = &ssh;
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -115,7 +116,8 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
     EXPECT_EQ(globalBindlessHeapsBaseAddress, cmd->getDynamicStateBaseAddress());
 
     EXPECT_TRUE(cmd->getSurfaceStateBaseAddressModifyEnable());
-    EXPECT_EQ(globalBindlessHeapsBaseAddress, cmd->getSurfaceStateBaseAddress());
+    EXPECT_NE(globalBindlessHeapsBaseAddress, cmd->getSurfaceStateBaseAddress());
+    EXPECT_EQ(ssh.getHeapGpuBase(), cmd->getSurfaceStateBaseAddress());
 }
 
 HWTEST2_F(SbaForBindlessTests,
