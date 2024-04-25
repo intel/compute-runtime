@@ -1566,12 +1566,11 @@ PhysicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
     return pciSpeedInfo;
 }
 
-void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, uint32_t postSyncOffset) {
+int Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset) {
     auto &drmContextIds = osContext.getDrmContextIds();
     UNRECOVERABLE_IF(numActiveTiles > drmContextIds.size());
     auto completionFenceCpuAddress = address;
-    static constexpr int64_t defaultTimeout = -1;
-    const auto selectedTimeout = osContext.isHangDetected() ? 1 : defaultTimeout;
+    const auto selectedTimeout = osContext.isHangDetected() ? 1 : timeout;
 
     for (auto drmIterator = 0u; drmIterator < numActiveTiles; drmIterator++) {
         if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < value) {
@@ -1584,6 +1583,9 @@ void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, ui
                           << ", current value: " << *reinterpret_cast<uint32_t *>(completionFenceCpuAddress)
                           << ", wait value: " << value << std::endl;
             }
+            if (retVal != 0) {
+                return retVal;
+            }
         } else if (debugManager.flags.PrintCompletionFenceUsage.get()) {
             std::cout << "Completion fence already completed."
                       << " CPU address: " << std::hex << completionFenceCpuAddress << std::dec
@@ -1592,6 +1594,8 @@ void Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, ui
         }
         completionFenceCpuAddress = ptrOffset(completionFenceCpuAddress, postSyncOffset);
     }
+
+    return 0;
 }
 const HardwareInfo *Drm::getHardwareInfo() const { return rootDeviceEnvironment.getHardwareInfo(); }
 

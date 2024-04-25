@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,10 +66,6 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironme
     int overrideUserFenceForCompletionWait = debugManager.flags.EnableUserFenceForCompletionWait.get();
     if (overrideUserFenceForCompletionWait != -1) {
         useUserFenceWait = !!(overrideUserFenceForCompletionWait);
-    }
-    int overrideUserFenceUseCtxId = debugManager.flags.EnableUserFenceUseCtxId.get();
-    if (overrideUserFenceUseCtxId != -1) {
-        useContextForUserFenceWait = !!(overrideUserFenceUseCtxId);
     }
     useNotifyEnableForPostSync = useUserFenceWait;
     int overrideUseNotifyEnableForPostSync = debugManager.flags.OverrideNotifyEnableForTagUpdatePostSync.get();
@@ -373,27 +369,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
 
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout) {
-    int ret = 0;
-    StackVec<uint32_t, 32> ctxIds;
-
-    if (useContextForUserFenceWait) {
-        for (auto tileIterator = 0u; tileIterator < this->osContext->getDeviceBitfield().size(); tileIterator++) {
-            uint32_t ctxId = 0u;
-            if (this->osContext->getDeviceBitfield().test(tileIterator)) {
-                ctxId = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[tileIterator];
-                ctxIds.push_back(ctxId);
-            }
-        }
-        UNRECOVERABLE_IF(ctxIds.size() != this->activePartitions);
-    }
-
-    for (uint32_t i = 0; i < this->activePartitions; i++) {
-        ret |= this->drm->waitUserFence(useContextForUserFenceWait ? ctxIds[i] : 0, hostAddress, waitValue, Drm::ValueWidth::u64, timeout, 0u);
-        if (ret != 0) {
-            break;
-        }
-        hostAddress += this->immWritePostSyncWriteOffset;
-    }
+    int ret = drm->waitOnUserFences(static_cast<const OsContextLinux &>(*this->osContext), hostAddress, waitValue, this->activePartitions, timeout, this->immWritePostSyncWriteOffset);
 
     return (ret == 0);
 }

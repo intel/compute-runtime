@@ -139,10 +139,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
 
     auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testDrmCsr->useUserFenceWait = true;
-    testDrmCsr->useContextForUserFenceWait = true;
     testDrmCsr->activePartitions = static_cast<uint32_t>(drmCtxSize);
 
-    uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(testDrmCsr->getTagAddress()));
+    auto tagPtr = const_cast<TagAddressType *>(testDrmCsr->getTagAddress());
+    *tagPtr = 0;
+    uint64_t tagAddress = castToUint64(tagPtr);
     FlushStamp handleToWait = 123;
     testDrmCsr->waitForFlushStamp(handleToWait);
 
@@ -153,39 +154,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_EQ(tagAddress, mock->context.receivedGemWaitUserFence.addr);
     EXPECT_EQ(handleToWait, mock->context.receivedGemWaitUserFence.value);
     EXPECT_NE(0u, mock->context.receivedGemWaitUserFence.ctxId);
-    EXPECT_EQ(DrmPrelimHelper::getGTEWaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.op);
-    EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.flags);
-    EXPECT_EQ(DrmPrelimHelper::getU64WaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.mask);
-    EXPECT_EQ(-1, mock->context.receivedGemWaitUserFence.timeout);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnabledWhenUseCtxIdNotSelectedThenExpectZeroContextId) {
-    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
-        GTEST_SKIP();
-    }
-
-    auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
-    std::vector<uint32_t> &drmCtxIds = const_cast<std::vector<uint32_t> &>(osContextLinux->getDrmContextIds());
-    size_t drmCtxSize = drmCtxIds.size();
-    for (uint32_t i = 0; i < drmCtxSize; i++) {
-        drmCtxIds[i] = 5u + i;
-    }
-
-    auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
-    testDrmCsr->useUserFenceWait = true;
-    testDrmCsr->useContextForUserFenceWait = false;
-
-    uint64_t tagAddress = castToUint64(const_cast<TaskCountType *>(testDrmCsr->getTagAddress()));
-    FlushStamp handleToWait = 123;
-    testDrmCsr->waitForFlushStamp(handleToWait);
-
-    EXPECT_EQ(1u, testDrmCsr->waitUserFenceResult.called);
-    EXPECT_EQ(123u, testDrmCsr->waitUserFenceResult.waitValue);
-
-    EXPECT_EQ(1u, mock->context.gemWaitUserFenceCalled);
-    EXPECT_EQ(tagAddress, mock->context.receivedGemWaitUserFence.addr);
-    EXPECT_EQ(handleToWait, mock->context.receivedGemWaitUserFence.value);
-    EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.ctxId);
     EXPECT_EQ(DrmPrelimHelper::getGTEWaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.op);
     EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.flags);
     EXPECT_EQ(DrmPrelimHelper::getU64WaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.mask);
@@ -206,9 +174,31 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
 
     auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testDrmCsr->useUserFenceWait = true;
-    testDrmCsr->useContextForUserFenceWait = false;
     testDrmCsr->activePartitions = 2u;
     EXPECT_NE(0u, testDrmCsr->immWritePostSyncWriteOffset);
+
+    auto rootExecEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    auto &gfxCoreHelper = rootExecEnvironment->getHelper<GfxCoreHelper>();
+    auto hwInfo = rootExecEnvironment->getHardwareInfo();
+
+    auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0,
+                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootExecEnvironment)[0],
+                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(3)));
+
+    osContext->ensureContextInitialized();
+    osContext->incRefInternal();
+
+    device->getMemoryManager()->unregisterEngineForCsr(testDrmCsr);
+
+    device->allEngines[0].osContext = osContext.get();
+
+    testDrmCsr->setupContext(*osContext);
+
+    auto tagPtr = testDrmCsr->getTagAddress();
+    *tagPtr = 0;
+
+    tagPtr = ptrOffset(tagPtr, testDrmCsr->immWritePostSyncWriteOffset);
+    *tagPtr = 0;
 
     uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(testDrmCsr->getTagAddress()));
     FlushStamp handleToWait = 123;
@@ -220,7 +210,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_EQ(2u, mock->context.gemWaitUserFenceCalled);
     EXPECT_EQ(tagAddress + testDrmCsr->immWritePostSyncWriteOffset, mock->context.receivedGemWaitUserFence.addr);
     EXPECT_EQ(handleToWait, mock->context.receivedGemWaitUserFence.value);
-    EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.ctxId);
+    EXPECT_NE(0u, mock->context.receivedGemWaitUserFence.ctxId);
     EXPECT_EQ(DrmPrelimHelper::getGTEWaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.op);
     EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.flags);
     EXPECT_EQ(DrmPrelimHelper::getU64WaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.mask);
@@ -234,14 +224,39 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenFailingIoctlWhenW
 
     auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testDrmCsr->useUserFenceWait = true;
-    testDrmCsr->useContextForUserFenceWait = false;
     testDrmCsr->activePartitions = 3u;
+
+    auto rootExecEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    auto &gfxCoreHelper = rootExecEnvironment->getHelper<GfxCoreHelper>();
+    auto hwInfo = rootExecEnvironment->getHardwareInfo();
+
+    auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0,
+                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootExecEnvironment)[0],
+                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(7)));
+
+    osContext->ensureContextInitialized();
+    osContext->incRefInternal();
+
+    device->getMemoryManager()->unregisterEngineForCsr(testDrmCsr);
+
+    device->allEngines[0].osContext = osContext.get();
+
+    testDrmCsr->setupContext(*osContext);
 
     mock->waitUserFenceCall.failSpecificCall = 2;
 
     FlushStamp handleToWait = 123;
 
     EXPECT_EQ(0u, mock->waitUserFenceCall.called);
+
+    auto tagPtr = testDrmCsr->getTagAddress();
+    *tagPtr = 0;
+
+    tagPtr = ptrOffset(tagPtr, testDrmCsr->immWritePostSyncWriteOffset);
+    *tagPtr = 0;
+
+    tagPtr = ptrOffset(tagPtr, testDrmCsr->immWritePostSyncWriteOffset);
+    *tagPtr = 0;
 
     testDrmCsr->waitForFlushStamp(handleToWait);
 

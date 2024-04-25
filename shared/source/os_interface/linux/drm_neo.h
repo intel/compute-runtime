@@ -224,7 +224,7 @@ class Drm : public DriverModel {
     };
     MOCKABLE_VIRTUAL int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags);
 
-    void waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, uint32_t postSyncOffset);
+    int waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset);
 
     void setNewResourceBoundToVM(BufferObject *bo, uint32_t vmHandleId);
 

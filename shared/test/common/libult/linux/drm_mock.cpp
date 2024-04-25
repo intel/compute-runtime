@@ -43,6 +43,10 @@ DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std
 }
 
 int DrmMock::handleRemainingRequests(DrmIoctl request, void *arg) {
+    if (request == DrmIoctl::gemWaitUserFence && arg != nullptr) {
+        return 0;
+    }
+
     ioctlCallsCount--;
     return -1;
 };
