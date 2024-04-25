@@ -92,6 +92,39 @@ TEST(DrmTest, givenMemRegionQueryNotSupportedWhenQueryingMemRegionInfoThenFailGr
     EXPECT_EQ(nullptr, drm->engineInfo);
 }
 
+class MockIoctlHelperEngineInfoDetection : public IoctlHelperPrelim20 {
+  public:
+    using IoctlHelperPrelim20::IoctlHelperPrelim20;
+
+    std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override {
+        std::vector<NEO::EngineCapabilities> engineInfo(0);
+
+        return std::make_unique<EngineInfo>(&drm, engineInfo);
+    }
+};
+
+TEST(DrmTest, givenEngineQueryOnIncorrectSetupWithZeroEnginesThenProperDebugMessageIsPrinted) {
+    DebugManagerStateRestore dbgState;
+    debugManager.flags.PrintDebugMessages.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperEngineInfoDetection>(*drm);
+    drm->ioctlHelper.reset(ioctlHelper.release());
+
+    testing::internal::CaptureStderr();
+
+    drm->queryEngineInfo();
+    EXPECT_EQ(0u, drm->engineInfo.get()->engines.size());
+
+    std::string output = testing::internal::GetCapturedStderr();
+    std::string expectedError = "FATAL: Engine info size is equal to 0.\n";
+
+    EXPECT_EQ(output, expectedError);
+}
+
 TEST(DrmTest, givenDistanceQueryNotSupportedWhenQueryingDistanceInfoThenFailGracefully) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
