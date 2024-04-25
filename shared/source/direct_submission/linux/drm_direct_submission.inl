@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto &drm = osContextLinux->getDrm();
         auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset;
-        drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, this->immWritePostSyncOffset);
+        drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, -1, this->immWritePostSyncOffset);
     }
     this->deallocateResources();
     if (this->pciBarrierPtr) {

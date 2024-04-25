@@ -545,7 +545,7 @@ TEST(DrmTestPrelim, givenHungContextWhenCallingWaitUserFenceThenSmallTimeoutIsPa
 
     uint64_t memory = 0;
     uint64_t value = 20;
-    drm.waitOnUserFences(osContext, reinterpret_cast<uint64_t>(&memory), value, 1, 0);
+    drm.waitOnUserFences(osContext, reinterpret_cast<uint64_t>(&memory), value, 1, -1, 0);
 
     EXPECT_EQ(osContext.getDrmContextIds().size(), drm.context.waitUserFenceCalled);
     const auto &waitUserFence = drm.context.receivedWaitUserFence;

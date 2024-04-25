@@ -1068,7 +1068,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhe
                                                        1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctlCnt.gemWait = 0;
 
@@ -1091,7 +1090,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutU
                                                        1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctlCnt.gemWait = 0;
 
@@ -1107,7 +1105,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceFlagSetAndVmBindAvailableAndUseDrmCtxWhenDrmCsrWaitsForFlushStampThenExpectUseDrmWaitUserFenceCallWithNonZeroContext) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUserFenceForCompletionWait.set(1);
-    debugManager.flags.EnableUserFenceUseCtxId.set(1);
 
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -1118,7 +1115,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                                                        1);
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_TRUE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
@@ -1131,6 +1127,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     }
 
     FlushStamp handleToWait = 123;
+    *testedCsr->getTagAddress() = 0;
     testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(0, mock->ioctlCnt.gemWait);
@@ -1159,7 +1156,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                                                        1);
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
@@ -1188,7 +1184,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                                                        1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
@@ -1207,7 +1202,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceSetAndUseCtxFlagsNotSetAndVmBindAvailableWhenDrmCsrWaitsForFlushStampThenExpectUseDrmWaitUserFenceCallWithZeroContext) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUserFenceForCompletionWait.set(1);
-    debugManager.flags.EnableUserFenceUseCtxId.set(0);
     debugManager.flags.SetKmdWaitTimeout.set(1000);
 
     mock->isVmBindAvailableCall.callParent = false;
@@ -1219,12 +1213,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                                                        1);
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
-    EXPECT_FALSE(testedCsr->useContextForUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
     mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
 
     FlushStamp handleToWait = 123;
+    *testedCsr->getTagAddress() = 0;
     testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(0, mock->ioctlCnt.gemWait);
@@ -1234,7 +1228,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     EXPECT_EQ(1u, mock->waitUserFenceCall.called);
     EXPECT_EQ(1u, mock->isVmBindAvailableCall.called);
 
-    EXPECT_EQ(0u, mock->waitUserFenceCall.ctxId);
+    EXPECT_NE(0u, mock->waitUserFenceCall.ctxId);
     EXPECT_EQ(1000, mock->waitUserFenceCall.timeout);
     EXPECT_EQ(Drm::ValueWidth::u64, mock->waitUserFenceCall.dataWidth);
 }
