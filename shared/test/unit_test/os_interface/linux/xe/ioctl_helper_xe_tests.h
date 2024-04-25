@@ -270,6 +270,7 @@ class DrmMockXe : public DrmMockCustom {
             ret = waitUserFenceReturn;
             auto waitUserFenceInput = static_cast<drm_xe_wait_user_fence *>(arg);
             waitUserFenceInputs.push_back(*waitUserFenceInput);
+            handleUserFenceWaitExtensions(waitUserFenceInput);
         } break;
 
         case DrmIoctl::gemContextCreateExt: {
@@ -301,6 +302,8 @@ class DrmMockXe : public DrmMockCustom {
         }
         return ret;
     }
+
+    virtual void handleUserFenceWaitExtensions(drm_xe_wait_user_fence *userFenceWait) {}
 
     void addMockedQueryTopologyData(uint16_t tileId, uint16_t maskType, uint32_t nBytes, const std::vector<uint8_t> &mask) {
 

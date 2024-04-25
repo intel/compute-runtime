@@ -626,27 +626,34 @@ CacheRegion IoctlHelperXe::closFree(CacheRegion closIndex) {
     return CacheRegion::none;
 }
 
-int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value,
-                                   int64_t timeout) {
-    struct drm_xe_wait_user_fence wait = {};
-    wait.addr = addr;
-    wait.op = op;
-    wait.value = value;
-    wait.mask = std::numeric_limits<uint64_t>::max();
-    wait.timeout = timeout;
-    wait.exec_queue_id = ctxId;
-    auto retVal = IoctlHelper::ioctl(DrmIoctl::gemWaitUserFence, &wait);
-    xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x ctx=0x%x retVal=0x%x\n", __FUNCTION__, addr, value,
-          timeout, wait.flags, ctxId, retVal);
+void IoctlHelperXe::setupXeWaitUserFenceStruct(void *arg, uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout) {
+    auto waitUserFence = reinterpret_cast<drm_xe_wait_user_fence *>(arg);
+    waitUserFence->addr = addr;
+    waitUserFence->op = op;
+    waitUserFence->value = value;
+    waitUserFence->mask = std::numeric_limits<uint64_t>::max();
+    waitUserFence->timeout = timeout;
+    waitUserFence->exec_queue_id = ctxId;
+}
+
+int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId) {
+    drm_xe_wait_user_fence waitUserFence = {};
+
+    setupXeWaitUserFenceStruct(&waitUserFence, ctxId, op, addr, value, timeout);
+
+    auto retVal = IoctlHelper::ioctl(DrmIoctl::gemWaitUserFence, &waitUserFence);
+    xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx T=0x%llx F=0x%x ctx=0x%x retVal=0x%x\n", __FUNCTION__,
+          addr, value, timeout, waitUserFence.flags, ctxId, retVal);
     return retVal;
 }
 
 int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
-                                 uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) {
+                                 uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                                 bool userInterrupt, uint32_t externalInterruptId) {
     xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x ctx=0x%x\n", __FUNCTION__, address, value, dataWidth, timeout, flags, ctxId);
     UNRECOVERABLE_IF(dataWidth != static_cast<uint32_t>(Drm::ValueWidth::u64));
     if (address) {
-        return xeWaitUserFence(ctxId, DRM_XE_UFENCE_WAIT_OP_GTE, address, value, timeout);
+        return xeWaitUserFence(ctxId, DRM_XE_UFENCE_WAIT_OP_GTE, address, value, timeout, userInterrupt, externalInterruptId);
     }
     return 0;
 }
@@ -1290,7 +1297,8 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         auto timeout = debuggingEnabled ? infiniteTimeout : oneSecTimeout;
         return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
                                sync[0].addr,
-                               sync[0].timeline_value, timeout);
+                               sync[0].timeline_value, timeout,
+                               false, NEO::InterruptId::notUsed);
     }
 
     xeLog("error:  -> IoctlHelperXe::%s %s index=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx pat=%hu r=%d\n",

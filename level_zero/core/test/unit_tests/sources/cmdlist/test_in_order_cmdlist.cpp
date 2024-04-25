@@ -122,7 +122,7 @@ HWTEST2_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThen
     syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
     syncModeDesc.externalInterruptId = 123;
     auto event4 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
-    EXPECT_EQ(0u, event4->externalInterruptId);
+    EXPECT_EQ(NEO::InterruptId::notUsed, event4->externalInterruptId);
 
     eventDesc.index = 5;
     syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
@@ -3895,7 +3895,7 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterrup
 
     syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT;
     auto event1 = createStandaloneCbEvent(reinterpret_cast<const ze_base_desc_t *>(&syncModeDesc));
-    EXPECT_EQ(0u, event1->externalInterruptId);
+    EXPECT_EQ(NEO::InterruptId::notUsed, event1->externalInterruptId);
 
     syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
     auto event2 = createStandaloneCbEvent(reinterpret_cast<const ze_base_desc_t *>(&syncModeDesc));

@@ -961,7 +961,7 @@ void Drm::getPrelimVersion(std::string &prelimVersion) {
 }
 
 int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) {
-    return ioctlHelper->waitUserFence(ctxId, address, value, static_cast<uint32_t>(dataWidth), timeout, flags);
+    return ioctlHelper->waitUserFence(ctxId, address, value, static_cast<uint32_t>(dataWidth), timeout, flags, false, NEO::InterruptId::notUsed);
 }
 
 bool Drm::querySystemInfo() {

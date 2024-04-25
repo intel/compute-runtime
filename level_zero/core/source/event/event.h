@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
@@ -337,7 +338,7 @@ struct Event : _ze_event_handle_t {
     uint32_t maxPacketCount = 0;
     uint32_t totalEventSize = 0;
     uint32_t counterBasedFlags = 0;
-    uint32_t externalInterruptId = 0;
+    uint32_t externalInterruptId = NEO::InterruptId::notUsed;
 
     CounterBasedMode counterBasedMode = CounterBasedMode::initiallyDisabled;
 

@@ -311,7 +311,8 @@ CacheRegion IoctlHelperPrelim20::closFree(CacheRegion closIndex) {
 }
 
 int IoctlHelperPrelim20::waitUserFence(uint32_t ctxId, uint64_t address,
-                                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) {
+                                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                                       bool userInterrupt, uint32_t externalInterruptId) {
     prelim_drm_i915_gem_wait_user_fence wait = {};
 
     wait.ctx_id = ctxId;

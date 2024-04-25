@@ -94,4 +94,8 @@ enum class SynchronizedDispatchMode : uint32_t {
     limited = 2
 };
 
+namespace InterruptId {
+static constexpr uint32_t notUsed = std::numeric_limits<uint32_t>::max();
+}
+
 } // namespace NEO

@@ -47,7 +47,8 @@ class IoctlHelperXe : public IoctlHelper {
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
     int waitUserFence(uint32_t ctxId, uint64_t address,
-                      uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
+                      uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                      bool userInterrupt, uint32_t externalInterruptId) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
     uint32_t getPreferredLocationAdvise() override;
@@ -139,7 +140,8 @@ class IoctlHelperXe : public IoctlHelper {
     const char *xeGetengineClassName(uint32_t engineClass);
     template <typename DataType>
     std::vector<DataType> queryData(uint32_t queryId);
-    int xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout);
+    virtual int xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId);
+    void setupXeWaitUserFenceStruct(void *arg, uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout);
     int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
     void xeShowBindTable();
     void updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size);

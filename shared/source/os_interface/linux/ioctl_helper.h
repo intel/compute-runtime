@@ -105,7 +105,8 @@ class IoctlHelper {
     virtual uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
     virtual CacheRegion closFree(CacheRegion closIndex) = 0;
     virtual int waitUserFence(uint32_t ctxId, uint64_t address,
-                              uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) = 0;
+                              uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                              bool userInterrupt, uint32_t externalInterruptId) = 0;
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getAtomicAccess(AtomicAccessMode mode) = 0;
     virtual uint32_t getPreferredLocationAdvise() = 0;
@@ -254,7 +255,8 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
     int waitUserFence(uint32_t ctxId, uint64_t address,
-                      uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
+                      uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                      bool userInterrupt, uint32_t externalInterruptId) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
     uint32_t getPreferredLocationAdvise() override;
@@ -331,7 +333,8 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
     int waitUserFence(uint32_t ctxId, uint64_t address,
-                      uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
+                      uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
+                      bool userInterrupt, uint32_t externalInterruptId) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
     uint32_t getPreferredLocationAdvise() override;
