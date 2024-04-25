@@ -79,7 +79,7 @@ struct FrontEndProperties {
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
 
-    void setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice);
+    void setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, bool engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice);
     void setPropertiesDisableOverdispatchEngineInstanced(bool disableOverdispatch, int32_t engineInstancedDevice, bool clearDirtyState);
     void setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(bool isCooperativeKernel, bool disableEuFusion);

@@ -86,7 +86,7 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
         for (auto isCooperativeKernel : ::testing::Bool()) {
             for (auto disableOverdispatch : ::testing::Bool()) {
                 for (auto disableEUFusion : ::testing::Bool()) {
-                    properties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEUFusion, disableOverdispatch, isEngineInstanced);
+                    properties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEUFusion, disableOverdispatch, isEngineInstanced, rootDeviceEnvironment);
                     if (frontEndPropertiesSupport.computeDispatchAllWalker) {
                         EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
                     } else {
@@ -103,7 +103,7 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
                         EXPECT_EQ(-1, properties.frontEndState.disableOverdispatch.value);
                     }
                     if (frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
-                        EXPECT_EQ(isEngineInstanced, properties.frontEndState.singleSliceDispatchCcsMode.value);
+                        EXPECT_EQ(isEngineInstanced || (productHelper.isSingleSliceDispatchNeededForCooperativeKernel() && isCooperativeKernel), properties.frontEndState.singleSliceDispatchCcsMode.value);
                     } else {
                         EXPECT_EQ(-1, properties.frontEndState.singleSliceDispatchCcsMode.value);
                     }
@@ -518,6 +518,8 @@ TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPro
 }
 
 TEST(StreamPropertiesTests, givenDisableOverdispatchEngineInstancedFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     bool clearDirtyState = false;
     MockFrontEndProperties feProperties{};
     feProperties.propertiesSupportLoaded = true;
@@ -540,7 +542,7 @@ TEST(StreamPropertiesTests, givenDisableOverdispatchEngineInstancedFrontEndPrope
     EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 
     engineInstancedDevice = 0;
-    feProperties.setPropertiesAll(false, false, disableOverdispatch, engineInstancedDevice);
+    feProperties.setPropertiesAll(false, false, disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
     EXPECT_EQ(0, feProperties.singleSliceDispatchCcsMode.value);
@@ -583,6 +585,8 @@ TEST(StreamPropertiesTests, givenDisableOverdispatchEngineInstancedFrontEndPrope
 }
 
 TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusionFrontEndPropertiesWhenSettingPropertiesAndCheckIfSupportedThenExpectCorrectState) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     MockFrontEndProperties feProperties{};
     feProperties.propertiesSupportLoaded = true;
     feProperties.frontEndPropertiesSupport.disableEuFusion = false;
@@ -597,7 +601,7 @@ TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusio
 
     feProperties.frontEndPropertiesSupport.disableEuFusion = true;
     feProperties.frontEndPropertiesSupport.computeDispatchAllWalker = true;
-    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, false, -1);
+    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, false, false, rootDeviceEnvironment);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableEUFusion.value);
     EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
@@ -661,6 +665,8 @@ TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusio
 }
 
 TEST(StreamPropertiesTests, givenSetAllFrontEndPropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     MockFrontEndProperties feProperties{};
     feProperties.propertiesSupportLoaded = true;
     feProperties.frontEndPropertiesSupport.computeDispatchAllWalker = true;
@@ -671,13 +677,13 @@ TEST(StreamPropertiesTests, givenSetAllFrontEndPropertiesWhenResetingStateThenRe
     bool isCooperativeKernel = false;
     bool disableEuFusion = true;
     bool disableOverdispatch = true;
-    int32_t engineInstancedDevice = 3;
-    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch, engineInstancedDevice);
+    bool engineInstancedDevice = true;
+    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(1, feProperties.disableEUFusion.value);
     EXPECT_EQ(1, feProperties.disableOverdispatch.value);
-    EXPECT_EQ(3, feProperties.singleSliceDispatchCcsMode.value);
+    EXPECT_EQ(1, feProperties.singleSliceDispatchCcsMode.value);
 
     feProperties.resetState();
     EXPECT_FALSE(feProperties.isDirty());
@@ -1433,7 +1439,7 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
     bool disableEuFusion = true;
     bool disableOverdispatch = true;
     int32_t engineInstancedDevice = 3;
-    globalStreamProperties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch, engineInstancedDevice);
+    globalStreamProperties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment);
 
     bool modeSelected = false;
     bool mediaSamplerDopClockGate = false;

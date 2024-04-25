@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenKernelExecutionTypeConcurrentAndRevisio
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::renderCompute);
     StreamProperties streamProperties{};
     streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
-    streamProperties.frontEndState.setPropertiesAll(true, false, false, false);
+    streamProperties.frontEndState.setPropertiesAll(true, false, false, false, pDevice->getRootDeviceEnvironment());
 
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
     parseCommands<FamilyType>(linearStream);

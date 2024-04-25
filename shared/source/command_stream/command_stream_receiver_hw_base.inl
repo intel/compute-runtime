@@ -901,7 +901,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
 
         auto isCooperative = dispatchFlags.kernelExecutionType == KernelExecutionType::concurrent;
         auto disableOverdispatch = (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::notSet);
-        this->streamProperties.frontEndState.setPropertiesAll(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced());
+        this->streamProperties.frontEndState.setPropertiesAll(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced(), this->peekRootDeviceEnvironment());
 
         auto &gfxCoreHelper = getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
