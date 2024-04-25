@@ -414,8 +414,8 @@ inline void EncodeStoreMMIO<Family>::encode(MI_STORE_REGISTER_MEM *cmdBuffer, ui
 template <typename Family>
 void EncodeSurfaceState<Family>::encodeBuffer(EncodeSurfaceStateArgs &args) {
     auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
-    auto bufferSize = alignUp(args.size, getSurfaceBaseAddressAlignment());
-
+    uint64_t bufferSize = alignUp(args.size, getSurfaceBaseAddressAlignment());
+    bufferSize = std::min(bufferSize, static_cast<uint64_t>(MemoryConstants::fullStatefulRegion - 1));
     SurfaceStateBufferLength length = {0};
     length.length = static_cast<uint32_t>(bufferSize - 1);
 
