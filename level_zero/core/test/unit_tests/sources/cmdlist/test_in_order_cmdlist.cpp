@@ -301,6 +301,41 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
     }
 }
 
+HWTEST2_F(InOrderCmdListTests, givenCounterBasedEventsWhenHostWaitsAreCalledThenLatestWaitIsRecorded, IsAtLeastSkl) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(2, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
+
+    auto inOrderExecInfo = events[1]->getInOrderExecInfo();
+    *inOrderExecInfo->getBaseHostAddress() = 2u;
+
+    auto status = events[1]->hostSynchronize(-1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+
+    auto counterValue = events[1]->inOrderExecSignalValue;
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(events[0]->inOrderExecSignalValue));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue + 1));
+
+    // setting lower counter ignored
+    inOrderExecInfo->setLastWaitedCounterValue(counterValue - 1);
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(events[0]->inOrderExecSignalValue));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue + 1));
+
+    status = events[0]->hostSynchronize(-1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(counterValue));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue + 1));
+
+    // setting offset disables mechanism
+    inOrderExecInfo->setAllocationOffset(4u);
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(0u));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue));
+}
+
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallWaitUserFence, IsAtLeastXeHpCore) {
     NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.set(1);
 

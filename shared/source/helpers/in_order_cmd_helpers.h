@@ -80,12 +80,20 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     void reset();
     bool isExternalMemoryExecInfo() const { return deviceCounterNode == nullptr; }
+    void setLastWaitedCounterValue(uint64_t value) {
+        lastWaitedCounterValue = std::max(value, lastWaitedCounterValue);
+    }
+
+    bool isCounterAlreadyDone(uint64_t waitValue) const {
+        return lastWaitedCounterValue >= waitValue && this->allocationOffset == 0u;
+    }
 
   protected:
     NEO::MemoryManager &memoryManager;
     NEO::TagNodeBase *deviceCounterNode = nullptr;
     NEO::TagNodeBase *hostCounterNode = nullptr;
     uint64_t counterValue = 0;
+    uint64_t lastWaitedCounterValue = 0;
 
     uint64_t regularCmdListSubmissionCounter = 0;
     uint64_t deviceAddress = 0;

@@ -184,6 +184,37 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
     tempNode2->returnTag();
 }
 
+HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenSetLastCounterValueIsCalledThenItReturnsProperQueries) {
+    MockDevice mockDevice;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    MockMemoryManager memoryManager(mockExecutionEnvironment);
+
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, mockDevice.getMemoryManager());
+    auto node = tagAllocator.getTag();
+
+    auto inOrderExecInfo = std::make_unique<InOrderExecInfo>(node, nullptr, memoryManager, 2, 0, true, false);
+    inOrderExecInfo->setLastWaitedCounterValue(1u);
+
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(1u));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(0u));
+
+    inOrderExecInfo->setLastWaitedCounterValue(0u);
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(1u));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(0u));
+
+    inOrderExecInfo->setLastWaitedCounterValue(3u);
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(2u));
+    EXPECT_TRUE(inOrderExecInfo->isCounterAlreadyDone(3u));
+
+    inOrderExecInfo->setAllocationOffset(4u);
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(3u));
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(0u));
+}
+
 HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValues) {
     MockDevice mockDevice;
 

@@ -223,21 +223,24 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
         return ZE_RESULT_NOT_READY;
     }
 
-    const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset);
     auto waitValue = getInOrderExecSignalValueWithSubmissionCounter();
-    bool signaled = true;
 
-    for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
-        if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {
-            signaled = false;
-            break;
+    if (!inOrderExecInfo->isCounterAlreadyDone(waitValue)) {
+        bool signaled = true;
+        const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset);
+        for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+            if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {
+                signaled = false;
+                break;
+            }
+
+            hostAddress = ptrOffset(hostAddress, sizeof(uint64_t));
         }
 
-        hostAddress = ptrOffset(hostAddress, sizeof(uint64_t));
-    }
-
-    if (!signaled) {
-        return ZE_RESULT_NOT_READY;
+        if (!signaled) {
+            return ZE_RESULT_NOT_READY;
+        }
+        inOrderExecInfo->setLastWaitedCounterValue(waitValue);
     }
 
     handleSuccessfulHostSynchronization();
