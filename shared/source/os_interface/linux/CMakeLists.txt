@@ -60,6 +60,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_info.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}memory_info_populate_tile_to_lmem_region_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/numa_library.h
     ${CMAKE_CURRENT_SOURCE_DIR}/numa_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux.cpp

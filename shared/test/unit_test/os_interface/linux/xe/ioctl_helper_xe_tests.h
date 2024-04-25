@@ -342,7 +342,7 @@ class DrmMockXe : public DrmMockCustom {
     static_assert(sizeof(drm_xe_mem_region) == 11 * sizeof(uint64_t), "");
     uint64_t queryMemUsage[34]{}; // 1 qword for num regions and 11 qwords per region
     static_assert(sizeof(drm_xe_gt) == 12 * sizeof(uint64_t), "");
-    StackVec<uint64_t, 37> queryGtList{}; // 1 qword for num gts and 12 qwords per gt
+    StackVec<uint64_t, 49> queryGtList{}; // 1 qword for num gts and 12 qwords per gt
     alignas(64) std::vector<uint8_t> queryTopology;
     static_assert(sizeof(drm_xe_query_engine_cycles) == 5 * sizeof(uint64_t), "");
     uint64_t queryEngineCycles[5]{}; // 1 qword for eci and 4 qwords

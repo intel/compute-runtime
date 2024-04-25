@@ -31,6 +31,8 @@ MemoryInfo::MemoryInfo(const RegionContainer &regionInfo, const Drm &inputDrm)
                      return (memoryRegionInfo.region.memoryClass == memoryClassDevice);
                  });
 
+    populateTileToLocalMemoryRegionIndexMap();
+
     memPolicySupported = false;
     if (debugManager.flags.EnableHostAllocationMemPolicy.get()) {
         memPolicySupported = Linux::NumaLibrary::init();
@@ -78,35 +80,37 @@ int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allo
     }
 }
 
-uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank) const {
+uint32_t MemoryInfo::getLocalMemoryRegionIndex(DeviceBitfield deviceBitfield) const {
+    UNRECOVERABLE_IF(deviceBitfield.count() != 1u);
     auto &hwInfo = *this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto &gfxCoreHelper = this->drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+    bool bankOverrideRequired{gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper)};
 
-    auto tileIndex = Math::log2(memoryBank);
-    tileIndex = gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper) ? 0 : tileIndex;
+    uint32_t tileIndex{bankOverrideRequired ? 0u : Math::log2(deviceBitfield.to_ulong())};
     if (debugManager.flags.OverrideDrmRegion.get() != -1) {
         tileIndex = debugManager.flags.OverrideDrmRegion.get();
     }
-    return tileIndex;
+    UNRECOVERABLE_IF(tileIndex >= tileToLocalMemoryRegionIndexMap.size());
+    return tileToLocalMemoryRegionIndexMap[tileIndex];
 }
 
-MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo) {
+MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(DeviceBitfield deviceBitfield, const HardwareInfo &hwInfo) {
 
     auto &gfxCoreHelper = this->drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     if (!gfxCoreHelper.getEnableLocalMemory(hwInfo)) {
-        memoryBank = 0;
+        deviceBitfield = 0u;
     }
 
-    return getMemoryRegion(memoryBank).region;
+    return getMemoryRegion(deviceBitfield).region;
 }
 
-const MemoryRegion &MemoryInfo::getMemoryRegion(uint32_t memoryBank) const {
-    if (memoryBank == 0) {
+const MemoryRegion &MemoryInfo::getMemoryRegion(DeviceBitfield deviceBitfield) const {
+    if (deviceBitfield.count() == 0) {
         return systemMemoryRegion;
     }
 
-    auto index = getTileIndex(memoryBank);
+    auto index = getLocalMemoryRegionIndex(deviceBitfield);
 
     UNRECOVERABLE_IF(index >= localMemoryRegions.size());
     return localMemoryRegions[index];
@@ -134,7 +138,7 @@ int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocS
     std::optional<uint32_t> vmId;
     if (!this->drm.isPerContextVMRequired()) {
         if (memoryBanks != 0 && debugManager.flags.EnablePrivateBO.get()) {
-            auto tileIndex = getTileIndex(memoryBanks);
+            auto tileIndex = getLocalMemoryRegionIndex(memoryBanks);
             vmId = this->drm.getVirtualMemoryAddressSpace(tileIndex);
         }
     }

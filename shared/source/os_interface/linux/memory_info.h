@@ -28,19 +28,20 @@ class MemoryInfo {
 
     MOCKABLE_VIRTUAL int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation);
 
-    MemoryClassInstance getMemoryRegionClassAndInstance(uint32_t memoryBank, const HardwareInfo &hwInfo);
+    MemoryClassInstance getMemoryRegionClassAndInstance(DeviceBitfield deviceBitfield, const HardwareInfo &hwInfo);
 
     MOCKABLE_VIRTUAL size_t getMemoryRegionSize(uint32_t memoryBank) const;
 
-    const MemoryRegion &getMemoryRegion(uint32_t memoryBank) const;
+    const MemoryRegion &getMemoryRegion(DeviceBitfield deviceBitfield) const;
 
     void printRegionSizes() const;
 
-    uint32_t getTileIndex(uint32_t memoryBank) const;
+    uint32_t getLocalMemoryRegionIndex(DeviceBitfield deviceBitfield) const;
 
     MOCKABLE_VIRTUAL int createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation);
     MOCKABLE_VIRTUAL int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation);
     MOCKABLE_VIRTUAL int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation);
+    void populateTileToLocalMemoryRegionIndexMap();
 
     const RegionContainer &getLocalMemoryRegions() const { return localMemoryRegions; }
     const RegionContainer &getDrmRegionInfos() const { return drmQueryRegions; }
@@ -54,6 +55,7 @@ class MemoryInfo {
     bool memPolicySupported;
     int memPolicyMode;
     RegionContainer localMemoryRegions;
+    std::array<uint32_t, 4> tileToLocalMemoryRegionIndexMap{};
 };
 
 } // namespace NEO
