@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,28 +30,31 @@ TEST(AubCenter, GivenUseAubStreamAndTbxServerIpDebugVariableSetWhenAubCenterIsCr
     debugManager.flags.TbxServer.set("10.10.10.10");
     VariableBackup<std::string> backup(&aub_stream_stubs::tbxServerIp);
 
+    ASSERT_STRNE("10.10.10.10", aub_stream_stubs::tbxServerIp.c_str());
+
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
-    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_TBX);
+    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
 
     EXPECT_STREQ("10.10.10.10", aub_stream_stubs::tbxServerIp.c_str());
 }
 
-TEST(AubCenter, GivenUseAubStreamAndTbxServerPortDebugVariableSetWhenAubCenterIsCreatedThenServerIpIsModified) {
+TEST(AubCenter, GivenUseAubStreamAndTbxServerPortDebugVariableSetWhenAubCenterIsCreatedThenServerPortIsModified) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseAubStream.set(true);
     debugManager.flags.TbxPort.set(1234);
 
     VariableBackup<uint16_t> backup(&aub_stream_stubs::tbxServerPort);
 
+    aub_stream_stubs::tbxServerPort = 4321u;
     uint16_t port = 1234u;
-    EXPECT_NE(port, aub_stream_stubs::tbxServerPort);
+    ASSERT_NE(port, aub_stream_stubs::tbxServerPort);
 
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
-    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_TBX);
+    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
     EXPECT_EQ(port, aub_stream_stubs::tbxServerPort);
 }
 
@@ -62,11 +65,12 @@ TEST(AubCenter, GivenUseAubStreamAndTbxFrontdoorModeDebugVariableSetWhenAubCente
 
     VariableBackup<bool> backup(&aub_stream_stubs::tbxFrontdoorMode);
 
+    aub_stream_stubs::tbxFrontdoorMode = false;
     EXPECT_FALSE(aub_stream_stubs::tbxFrontdoorMode);
 
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
-    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_TBX);
+    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
     EXPECT_TRUE(aub_stream_stubs::tbxFrontdoorMode);
 }

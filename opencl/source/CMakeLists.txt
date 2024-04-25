@@ -121,12 +121,12 @@ if(${GENERATE_EXECUTABLE})
                    $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>
                    ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
     )
+    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${AUB_STREAM_PROJECT_NAME})
   else()
     target_sources(${NEO_DYNAMIC_LIB_NAME}
                    PRIVATE
-                   ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface_stub.cpp
+                   $<TARGET_OBJECTS:aub_stream_stubs>
     )
-
   endif()
 
   if(UNIX)

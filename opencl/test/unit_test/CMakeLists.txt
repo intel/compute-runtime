@@ -55,6 +55,7 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
     $<TARGET_OBJECTS:neo_libult_cs>
     $<TARGET_OBJECTS:neo_libult>
     $<TARGET_OBJECTS:igdrcl_libult_env>
+    $<TARGET_OBJECTS:mock_aubstream>
     $<TARGET_OBJECTS:mock_gmm>
     $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
