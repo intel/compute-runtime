@@ -23,6 +23,7 @@ add_executable(neo_shared_tests
                ${NEO_SHARED_TEST_DIRECTORY}/common/common_main.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
+               $<TARGET_OBJECTS:mock_aubstream>
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:neo_libult_common>
                $<TARGET_OBJECTS:neo_libult_cs>

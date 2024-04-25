@@ -72,6 +72,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
   target_link_libraries(${TARGET_NAME} ${HW_LIBS_ULT})
   target_link_libraries(${TARGET_NAME} gmock-gtest)
   target_link_libraries(${TARGET_NAME} ${NEO_EXTRA_LIBS})
+  target_link_libraries(${TARGET_NAME} ${AUB_STREAM_PROJECT_NAME})
 
   if(UNIX)
     target_link_libraries(${TARGET_NAME} rt)

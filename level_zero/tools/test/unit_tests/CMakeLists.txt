@@ -71,6 +71,7 @@ target_link_libraries(${TARGET_NAME}
 )
 
 target_sources(${TARGET_NAME} PRIVATE
+               $<TARGET_OBJECTS:mock_aubstream>
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_fixtures>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>

@@ -73,10 +73,6 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
     endif()
   endif()
 
-  if(DEFINED AUB_STREAM_PROJECT_NAME)
-    target_link_libraries(${LIB_NAME} ${AUB_STREAM_PROJECT_NAME})
-  endif()
-
 endfunction()
 
 set(NEO_CORE_COMPILE_DEFS "")

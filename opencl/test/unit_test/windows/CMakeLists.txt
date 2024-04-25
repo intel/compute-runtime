@@ -13,6 +13,7 @@ if(WIN32)
       $<TARGET_OBJECTS:neo_unit_tests_config>
       $<TARGET_OBJECTS:igdrcl_libult>
       $<TARGET_OBJECTS:igdrcl_libult_env>
+      $<TARGET_OBJECTS:mock_aubstream>
       $<TARGET_OBJECTS:mock_gmm>
   )
 

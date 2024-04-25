@@ -235,10 +235,11 @@ if(BUILD_WITH_L0)
                    PRIVATE
                    ${NEO_SHARED_DIRECTORY}/aub/aub_stream_interface.cpp
     )
+    target_link_libraries(${TARGET_NAME_L0} PRIVATE ${AUB_STREAM_PROJECT_NAME})
   else()
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
-                   ${NEO_SHARED_DIRECTORY}/aub/aub_stream_interface_stub.cpp
+                   $<TARGET_OBJECTS:aub_stream_stubs>
     )
 
   endif()
