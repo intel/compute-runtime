@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/aub/aub_mapper_base.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
@@ -20,33 +19,7 @@ struct HardwareInfo;
 
 class AubHelper : public NonCopyableOrMovableClass {
   public:
-    static bool isOneTimeAubWritableAllocationType(const AllocationType &type) {
-        switch (type) {
-        case AllocationType::pipe:
-        case AllocationType::constantSurface:
-        case AllocationType::globalSurface:
-        case AllocationType::kernelIsa:
-        case AllocationType::kernelIsaInternal:
-        case AllocationType::privateSurface:
-        case AllocationType::scratchSurface:
-        case AllocationType::workPartitionSurface:
-        case AllocationType::buffer:
-        case AllocationType::image:
-        case AllocationType::timestampPacketTagBuffer:
-        case AllocationType::externalHostPtr:
-        case AllocationType::mapAllocation:
-        case AllocationType::svmGpu:
-        case AllocationType::gpuTimestampDeviceBuffer:
-        case AllocationType::assertBuffer:
-        case AllocationType::tagBuffer:
-            return true;
-        case AllocationType::bufferHostMemory:
-            return NEO::debugManager.flags.SetBufferHostMemoryAlwaysAubWritable.get() ? false : true;
-        default:
-            return false;
-        }
-    }
-
+    static bool isOneTimeAubWritableAllocationType(const AllocationType &type);
     static uint64_t getTotalMemBankSize(const ReleaseHelper *releaseHelper);
     static int getMemTrace(uint64_t pdEntryBits);
     static uint64_t getPTEntryBits(uint64_t pdEntryBits);

@@ -21,6 +21,33 @@
 
 namespace NEO {
 
+bool AubHelper::isOneTimeAubWritableAllocationType(const AllocationType &type) {
+    switch (type) {
+    case AllocationType::pipe:
+    case AllocationType::constantSurface:
+    case AllocationType::globalSurface:
+    case AllocationType::kernelIsa:
+    case AllocationType::kernelIsaInternal:
+    case AllocationType::privateSurface:
+    case AllocationType::scratchSurface:
+    case AllocationType::workPartitionSurface:
+    case AllocationType::buffer:
+    case AllocationType::image:
+    case AllocationType::timestampPacketTagBuffer:
+    case AllocationType::externalHostPtr:
+    case AllocationType::mapAllocation:
+    case AllocationType::svmGpu:
+    case AllocationType::gpuTimestampDeviceBuffer:
+    case AllocationType::assertBuffer:
+    case AllocationType::tagBuffer:
+        return true;
+    case AllocationType::bufferHostMemory:
+        return NEO::debugManager.flags.SetBufferHostMemoryAlwaysAubWritable.get() ? false : true;
+    default:
+        return false;
+    }
+}
+
 uint64_t AubHelper::getTotalMemBankSize(const ReleaseHelper *releaseHelper) {
     if (releaseHelper) {
         return releaseHelper->getTotalMemBankSize();
