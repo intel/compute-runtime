@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,12 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         auto &hwInfo = pClDevice->getHardwareInfo();
         auto &productHelper = pClDevice->getProductHelper();
         if (productHelper.isCooperativeEngineSupported(hwInfo)) {
-            commandQueue->gpgpuEngine = &pClDevice->getEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative);
+            auto engine = pClDevice->device.tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative);
+            if (engine) {
+                commandQueue->gpgpuEngine = engine;
+            } else {
+                GTEST_SKIP();
+            }
         }
     }
 
