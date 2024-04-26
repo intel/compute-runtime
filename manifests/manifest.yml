@@ -26,7 +26,7 @@ components:
     branch: master
     revision: V0.8.16
     repository: https://github.com/intel/igsc.git
-    component_version: 221
+    component_version: 222
   infra:
     branch: master
     dest_dir: infra
