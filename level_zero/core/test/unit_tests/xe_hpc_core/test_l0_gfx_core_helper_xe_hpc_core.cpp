@@ -80,7 +80,7 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenGettingSupportedRTASFo
 
 XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenGettingCmdlistUpdateCapabilityThenReturnCorrectValue) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(49u, l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities());
+    EXPECT_EQ(63u, l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities());
 }
 
 XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForDeletingIpSamplingEntryWithNullValuesThenMapRemainstheSameSize) {
