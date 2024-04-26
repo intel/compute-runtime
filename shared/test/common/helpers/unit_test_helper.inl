@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,6 +94,7 @@ bool UnitTestHelper<GfxFamily>::findStateCacheFlushPipeControl(LinearStream &csr
 
         if (pipeControl->getRenderTargetCacheFlushEnable() &&
             pipeControl->getStateCacheInvalidationEnable() &&
+            pipeControl->getTlbInvalidate() &&
             pipeControl->getTextureCacheInvalidationEnable()) {
             stateCacheFlushFound = true;
             break;

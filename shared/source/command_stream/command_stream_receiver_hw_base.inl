@@ -1220,6 +1220,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
         args.textureCacheInvalidationEnable = true;
         args.renderTargetCacheFlushEnable = true;
         args.stateCacheInvalidationEnable = true;
+        args.tlbInvalidation = true;
     }
 
     auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), args.tlbInvalidation) + this->getCmdSizeForPrologue();
