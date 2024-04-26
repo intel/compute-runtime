@@ -6066,6 +6066,12 @@ cl_int CL_API_CALL clGetKernelMaxConcurrentWorkGroupCountINTEL(cl_command_queue 
         return retVal;
     }
 
+    for (size_t i = 0; i < workDim; i++) {
+        if (localWorkSize[i] == 0) {
+            return CL_INVALID_WORK_GROUP_SIZE;
+        }
+    }
+
     withCastToInternal(commandQueue, &pCommandQueue);
     *suggestedWorkGroupCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
 
@@ -6112,6 +6118,9 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
     pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     size_t globalWorkSize[3];
     for (size_t i = 0; i < workDim; i++) {
+        if (localWorkSize[i] == 0) {
+            return CL_INVALID_WORK_GROUP_SIZE;
+        }
         globalWorkSize[i] = workgroupCount[i] * localWorkSize[i];
     }
 

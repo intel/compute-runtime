@@ -45,7 +45,7 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
     for (uint32_t i = 1; i < workDim; i++) {
         workGroupSize *= localWorkSize[i];
     }
-
+    UNRECOVERABLE_IF(workGroupSize == 0);
     auto numThreadsPerThreadGroup = static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, kernelDescriptor.kernelAttributes.simdSize));
     auto maxWorkGroupsCount = availableThreadCount / numThreadsPerThreadGroup;
 

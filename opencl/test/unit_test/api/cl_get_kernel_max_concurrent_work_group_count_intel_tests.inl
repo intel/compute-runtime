@@ -52,6 +52,10 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenInvalidInputWhenCalling
     retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
                                                          globalWorkOffset, nullptr, &suggestedWorkGroupCount);
     EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
+
+    retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim,
+                                                         globalWorkOffset, localWorkSize, &suggestedWorkGroupCount);
+    EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
 }
 
 TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenVariousInputWhenGettingMaxConcurrentWorkGroupCountThenCorrectValuesAreReturned) {

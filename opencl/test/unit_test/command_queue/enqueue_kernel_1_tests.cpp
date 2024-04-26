@@ -391,6 +391,20 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(EnqueueKernelTest, givenLocalWorkSizeEqualZeroThenClEnqueueNDCountKernelINTELReturnsError) {
+    size_t workgroupCount[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {0, 1, 1};
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create(pProgram, pProgram->getKernelInfosForKernel("CopyBuffer"), retVal));
+
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ, pMultiDeviceKernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
+
+    pMultiDeviceKernel.get()->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
+    retVal = clEnqueueNDCountKernelINTEL(pCmdQ, pMultiDeviceKernel.get(), 1, nullptr, workgroupCount, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, retVal);
+}
+
 TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalledTwiceThenClEnqueueNDCountKernelINTELReturnsError) {
     const size_t n = 512;
     size_t workgroupCount[3] = {2, 1, 1};
