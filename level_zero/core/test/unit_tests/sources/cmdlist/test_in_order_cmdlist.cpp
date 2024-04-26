@@ -387,6 +387,39 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
     EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenWaitForUserFenceWithParams, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(2, false);
+    events[0]->enableKmdWaitMode();
+    events[0]->enableInterruptMode();
+
+    events[1]->enableKmdWaitMode();
+    events[1]->enableInterruptMode();
+    events[1]->externalInterruptId = 0x123;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ultCsr->waitUserFenecParams.forceRetStatusEnabled = true;
+
+    EXPECT_EQ(0u, ultCsr->waitUserFenecParams.callCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(2));
+
+    EXPECT_EQ(1u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(NEO::InterruptId::notUsed, ultCsr->waitUserFenecParams.externalInterruptId);
+    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[1]->hostSynchronize(2));
+
+    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(events[1]->externalInterruptId, ultCsr->waitUserFenecParams.externalInterruptId);
+    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenHostResetOrSignalEventCalledThenReturnError, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 

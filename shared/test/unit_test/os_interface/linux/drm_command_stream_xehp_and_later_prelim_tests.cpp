@@ -217,6 +217,57 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_EQ(-1, mock->context.receivedGemWaitUserFence.timeout);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenExternalInterruptIdWhenWaitingTheExecuteFenceWaitOnce) {
+    if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
+        GTEST_SKIP();
+    }
+
+    auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
+    std::vector<uint32_t> &drmCtxIds = const_cast<std::vector<uint32_t> &>(osContextLinux->getDrmContextIds());
+    size_t drmCtxSize = drmCtxIds.size();
+    for (uint32_t i = 0; i < drmCtxSize; i++) {
+        drmCtxIds[i] = 5u + i;
+    }
+
+    auto testDrmCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testDrmCsr->useUserFenceWait = true;
+    testDrmCsr->activePartitions = 2u;
+    EXPECT_NE(0u, testDrmCsr->immWritePostSyncWriteOffset);
+
+    auto rootExecEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    auto &gfxCoreHelper = rootExecEnvironment->getHelper<GfxCoreHelper>();
+    auto hwInfo = rootExecEnvironment->getHardwareInfo();
+
+    auto osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0,
+                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootExecEnvironment)[0],
+                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(3)));
+
+    osContext->ensureContextInitialized();
+    osContext->incRefInternal();
+
+    device->getMemoryManager()->unregisterEngineForCsr(testDrmCsr);
+
+    device->allEngines[0].osContext = osContext.get();
+
+    testDrmCsr->setupContext(*osContext);
+
+    auto tagPtr = testDrmCsr->getTagAddress();
+    *tagPtr = 0;
+
+    tagPtr = ptrOffset(tagPtr, testDrmCsr->immWritePostSyncWriteOffset);
+    *tagPtr = 0;
+
+    uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(testDrmCsr->getTagAddress()));
+
+    EXPECT_EQ(0u, mock->context.gemWaitUserFenceCalled);
+
+    testDrmCsr->waitUserFence(123, tagAddress, 1, true, NEO::InterruptId::notUsed);
+    EXPECT_EQ(2u, mock->context.gemWaitUserFenceCalled);
+
+    testDrmCsr->waitUserFence(123, tagAddress, 1, true, 0x678);
+    EXPECT_EQ(3u, mock->context.gemWaitUserFenceCalled);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenFailingIoctlWhenWaitingThenDoEarlyReturn) {
     if (!FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
         GTEST_SKIP();

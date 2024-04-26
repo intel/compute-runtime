@@ -87,7 +87,7 @@ uint32_t MemoryInfo::getLocalMemoryRegionIndex(DeviceBitfield deviceBitfield) co
     auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
     bool bankOverrideRequired{gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper)};
 
-    uint32_t tileIndex{bankOverrideRequired ? 0u : Math::log2(deviceBitfield.to_ulong())};
+    uint32_t tileIndex{bankOverrideRequired ? 0u : Math::log2(static_cast<uint64_t>(deviceBitfield.to_ulong()))};
     if (debugManager.flags.OverrideDrmRegion.get() != -1) {
         tileIndex = debugManager.flags.OverrideDrmRegion.get();
     }

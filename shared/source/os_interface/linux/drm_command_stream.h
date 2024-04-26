@@ -64,7 +64,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
 
     SubmissionStatus printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
 
-    bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout) override;
+    bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId) override;
 
     using CommandStreamReceiver::pageTableManager;
 

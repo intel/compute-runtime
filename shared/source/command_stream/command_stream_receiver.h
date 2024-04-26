@@ -454,7 +454,7 @@ class CommandStreamReceiver {
 
     bool isRecyclingTagForHeapStorageRequired() const { return heapStorageRequiresRecyclingTag; }
 
-    virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout) { return false; }
+    virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId) { return false; }
 
     void requestPreallocation();
     void releasePreallocationRequest();

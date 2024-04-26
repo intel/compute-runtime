@@ -520,7 +520,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
 
     uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset));
 
-    if (!csrs[0]->waitUserFence(getInOrderExecSignalValueWithSubmissionCounter(), waitAddress, timeout)) {
+    if (!csrs[0]->waitUserFence(getInOrderExecSignalValueWithSubmissionCounter(), waitAddress, timeout, isKmdWaitModeEnabled(), this->externalInterruptId)) {
         return ZE_RESULT_NOT_READY;
     }
 

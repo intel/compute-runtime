@@ -960,8 +960,8 @@ void Drm::getPrelimVersion(std::string &prelimVersion) {
     ifs.close();
 }
 
-int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) {
-    return ioctlHelper->waitUserFence(ctxId, address, value, static_cast<uint32_t>(dataWidth), timeout, flags, false, NEO::InterruptId::notUsed);
+int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId) {
+    return ioctlHelper->waitUserFence(ctxId, address, value, static_cast<uint32_t>(dataWidth), timeout, flags, userInterrupt, externalInterruptId);
 }
 
 bool Drm::querySystemInfo() {
@@ -1165,7 +1165,7 @@ void Drm::waitForBind(uint32_t vmHandleId) {
     auto fenceValue = this->fenceVal[vmHandleId];
     lock.unlock();
 
-    waitUserFence(0u, fenceAddress, fenceValue, ValueWidth::u64, -1, ioctlHelper->getWaitUserFenceSoftFlag());
+    waitUserFence(0u, fenceAddress, fenceValue, ValueWidth::u64, -1, ioctlHelper->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed);
 }
 
 bool Drm::isSetPairAvailable() {
@@ -1557,7 +1557,7 @@ PhysicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
     return pciSpeedInfo;
 }
 
-int Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset) {
+int Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt, uint32_t externalInterruptId) {
     auto &drmContextIds = osContext.getDrmContextIds();
     UNRECOVERABLE_IF(numActiveTiles > drmContextIds.size());
     auto completionFenceCpuAddress = address;
@@ -1566,7 +1566,7 @@ int Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uin
     for (auto drmIterator = 0u; drmIterator < numActiveTiles; drmIterator++) {
         if (*reinterpret_cast<uint32_t *>(completionFenceCpuAddress) < value) {
             static constexpr uint16_t flags = 0;
-            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::u64, selectedTimeout, flags);
+            int retVal = waitUserFence(drmContextIds[drmIterator], completionFenceCpuAddress, value, Drm::ValueWidth::u64, selectedTimeout, flags, userInterrupt, externalInterruptId);
             if (debugManager.flags.PrintCompletionFenceUsage.get()) {
                 std::cout << "Completion fence waited."
                           << " Status: " << retVal
@@ -1583,6 +1583,11 @@ int Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uin
                       << ", current value: " << *reinterpret_cast<uint32_t *>(completionFenceCpuAddress)
                       << ", wait value: " << value << std::endl;
         }
+
+        if (externalInterruptId != NEO::InterruptId::notUsed) {
+            break;
+        }
+
         completionFenceCpuAddress = ptrOffset(completionFenceCpuAddress, postSyncOffset);
     }
 

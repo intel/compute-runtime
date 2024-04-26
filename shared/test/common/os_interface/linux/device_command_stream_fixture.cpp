@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -233,7 +233,7 @@ DrmMockCustom::DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment)
     reset();
 }
 
-int DrmMockCustom::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) {
+int DrmMockCustom::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId) {
     waitUserFenceCall.called++;
     waitUserFenceCall.ctxId = ctxId;
     waitUserFenceCall.address = address;
@@ -245,7 +245,7 @@ int DrmMockCustom::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t valu
     if (waitUserFenceCall.called == waitUserFenceCall.failSpecificCall) {
         return 123;
     }
-    return Drm::waitUserFence(ctxId, address, value, dataWidth, timeout, flags);
+    return Drm::waitUserFence(ctxId, address, value, dataWidth, timeout, flags, userInterrupt, externalInterruptId);
 }
 
 bool DrmMockCustom::isVmBindAvailable() {

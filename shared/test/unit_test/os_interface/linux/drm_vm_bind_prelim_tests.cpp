@@ -127,7 +127,7 @@ TEST(DrmVmBindTest, givenBoNotRequiringExplicitResidencyWhenCallingWaitForBindTh
     struct DrmQueryMockToTestWaitForBind : public DrmQueryMock {
         using DrmQueryMock::DrmQueryMock;
 
-        int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) override {
+        int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId) override {
             waitUserFenceCalled = true;
             return 0;
         }
