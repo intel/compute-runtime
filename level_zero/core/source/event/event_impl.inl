@@ -481,7 +481,10 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
     }
 
     if (packets > 0) {
-        std::vector<uint64_t> tempCopyData(totalSizeToCopy / sizeof(uint64_t), static_cast<uint64_t>(eventVal));
+        const size_t numElements = totalSizeToCopy / sizeof(uint64_t);
+        StackVec<uint64_t, 16 * 4 * 3> tempCopyData; // 16 packets, 4 timestamps, 3 kernels
+        tempCopyData.reserve(numElements);
+        std::fill_n(tempCopyData.begin(), numElements, static_cast<uint64_t>(eventVal));
         copyDataToEventAlloc(basePacketHostAddr, basePacketGpuAddr, totalSizeToCopy, tempCopyData[0]);
     }
 
