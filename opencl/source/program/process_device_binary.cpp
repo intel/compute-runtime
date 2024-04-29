@@ -265,16 +265,35 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
     }
 
     kernelInfoArray = std::move(src.kernelInfos);
+
+    bool isBindlessKernelPresent = false;
+    for (auto &kernelInfo : kernelInfoArray) {
+        if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
+            isBindlessKernelPresent = true;
+            break;
+        }
+    }
+
     auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
     auto globalConstDataSize = src.globalConstants.size + src.globalConstants.zeroInitSize;
     if (globalConstDataSize != 0) {
         buildInfos[rootDeviceIndex].constantSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), globalConstDataSize, src.globalConstants.zeroInitSize, true, linkerInput, src.globalConstants.initData);
+        if (isBindlessKernelPresent) {
+            if (!clDevice.getMemoryManager()->allocateBindlessSlot(buildInfos[rootDeviceIndex].constantSurface)) {
+                return CL_OUT_OF_HOST_MEMORY;
+            }
+        }
     }
 
     auto globalVariablesDataSize = src.globalVariables.size + src.globalVariables.zeroInitSize;
     buildInfos[rootDeviceIndex].globalVarTotalSize = globalVariablesDataSize;
     if (globalVariablesDataSize != 0) {
         buildInfos[rootDeviceIndex].globalSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), globalVariablesDataSize, src.globalVariables.zeroInitSize, false, linkerInput, src.globalVariables.initData);
+        if (isBindlessKernelPresent) {
+            if (!clDevice.getMemoryManager()->allocateBindlessSlot(buildInfos[rootDeviceIndex].globalSurface)) {
+                return CL_OUT_OF_HOST_MEMORY;
+            }
+        }
         if (clDevice.areOcl21FeaturesEnabled() == false) {
             buildInfos[rootDeviceIndex].globalVarTotalSize = 0u;
         }

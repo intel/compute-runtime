@@ -24,6 +24,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -393,6 +394,137 @@ TEST_F(KernelTests, WhenIsSingleSubdevicePreferredIsCalledThenCorrectValuesAreRe
             EXPECT_EQ(expectedSingleSubdevicePreferredInCurrentEnqueue, kernel->isSingleSubdevicePreferred());
         }
     }
+}
+
+using BindlessKernelTests = KernelTests;
+
+TEST_F(BindlessKernelTests, GivenBindlessAddressingKernelWhenInitializeThenSurfaceStateIsCreatedWithCorrectSize) {
+    KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindless;
+    kernelInfo.kernelDescriptor.kernelAttributes.numArgsStateful = 3;
+
+    MockKernel kernel(pProgram, kernelInfo, *pClDevice);
+
+    auto retVal = kernel.initialize();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    const auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    const auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize());
+    const auto expectedSsHeapSize = kernelInfo.kernelDescriptor.kernelAttributes.numArgsStateful * surfaceStateSize;
+
+    const auto ssHeap = kernel.getSurfaceStateHeap();
+    const auto ssHeapSize = kernel.getSurfaceStateHeapSize();
+
+    EXPECT_EQ(expectedSsHeapSize, ssHeapSize);
+    EXPECT_NE(nullptr, ssHeap);
+}
+
+TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
+
+    auto argDescriptorImg = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    argDescriptorImg.as<NEO::ArgDescImage>() = NEO::ArgDescImage();
+    argDescriptorImg.as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorImg.as<NEO::ArgDescImage>().bindless = sizeof(uint64_t);
+
+    auto argDescriptor2 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    argDescriptor2.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptor2.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor2.as<NEO::ArgDescPointer>().stateless = 2 * sizeof(uint64_t);
+
+    KernelInfo kernelInfo = {};
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorImg);
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor2);
+
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = 3 * sizeof(uint64_t);
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 4 * sizeof(uint64_t);
+
+    MockKernel mockKernel(pProgram, pProgram->mockKernelInfo, *pClDevice);
+
+    pProgram->mockKernelInfo.kernelDescriptor.initBindlessOffsetToSurfaceState();
+
+    mockKernel.crossThreadData = new char[5 * sizeof(uint64_t)];
+    mockKernel.crossThreadDataSize = 5 * sizeof(uint64_t);
+    memset(mockKernel.crossThreadData, 0x00, mockKernel.crossThreadDataSize);
+
+    const uint64_t baseAddress = 0x1000;
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+    auto patchValue1 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress));
+    auto patchValue2 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 1 * surfaceStateSize));
+    auto patchValue3 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 2 * surfaceStateSize));
+    auto patchValue4 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 3 * surfaceStateSize));
+
+    mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
+
+    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
+    memcpy(crossThreadData.get(), mockKernel.crossThreadData, mockKernel.crossThreadDataSize);
+
+    EXPECT_EQ(patchValue1, crossThreadData[0]);
+    EXPECT_EQ(patchValue2, crossThreadData[1]);
+    EXPECT_EQ(0u, crossThreadData[2]);
+    EXPECT_EQ(patchValue3, crossThreadData[3]);
+    EXPECT_EQ(patchValue4, crossThreadData[4]);
+}
+
+TEST_F(BindlessKernelTests, givenNoEntryInBindlessOffsetsMapWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = sizeof(uint64_t);
+
+    MockKernel mockKernel(pProgram, pProgram->mockKernelInfo, *pClDevice);
+
+    mockKernel.crossThreadData = new char[4 * sizeof(uint64_t)];
+    mockKernel.crossThreadDataSize = 4 * sizeof(uint64_t);
+    memset(mockKernel.crossThreadData, 0, mockKernel.crossThreadDataSize);
+
+    const uint64_t baseAddress = 0x1000;
+    mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
+
+    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
+    memcpy(crossThreadData.get(), mockKernel.crossThreadData, mockKernel.crossThreadDataSize);
+
+    EXPECT_EQ(0u, crossThreadData[0]);
+}
+
+TEST_F(BindlessKernelTests, givenNoStatefulArgsWhenPatchingBindlessOffsetsInCrossThreadDataThenMemoryIsNotPatched) {
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTValue);
+    argDescriptor.as<NEO::ArgDescValue>() = NEO::ArgDescValue();
+    argDescriptor.as<NEO::ArgDescValue>().elements.push_back(NEO::ArgDescValue::Element{0, 8, 0, false});
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+
+    MockKernel mockKernel(pProgram, pProgram->mockKernelInfo, *pClDevice);
+
+    mockKernel.crossThreadData = new char[sizeof(uint64_t)];
+    mockKernel.crossThreadDataSize = sizeof(uint64_t);
+    memset(mockKernel.crossThreadData, 0, mockKernel.crossThreadDataSize);
+
+    const uint64_t baseAddress = 0x1000;
+    mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
+
+    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
+    memcpy(crossThreadData.get(), mockKernel.crossThreadData, mockKernel.crossThreadDataSize);
+
+    EXPECT_EQ(0u, crossThreadData[0]);
 }
 
 class KernelFromBinaryTest : public ProgramSimpleFixture {
@@ -1214,6 +1346,42 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBuffe
         }
         EXPECT_EQ(1U, csrMock.residency.count(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getUnderlyingBuffer()));
     }
+
+    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+}
+
+HWTEST_F(KernelResidencyTest, givenBindlessHeapsHelperAndGlobalAndConstantBuffersWhenMakeResidentIsCalledThenGlobalAndConstantBufferHeapAllocationsAreMadeResident) {
+    auto bindlessHeapHelper = new MockBindlesHeapsHelper(pDevice, false);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
+
+    auto pKernelInfo = std::make_unique<KernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    auto memoryManager = commandStreamReceiver.getMemoryManager();
+    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    MockProgram program(toClDeviceVector(*pClDevice));
+    MockContext ctx;
+    program.setContext(&ctx);
+    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+    program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface = new MockGraphicsAllocation();
+    EXPECT_TRUE(memoryManager->allocateBindlessSlot(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface));
+    EXPECT_TRUE(memoryManager->allocateBindlessSlot(program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface));
+
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
+    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+
+    EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
+    kernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.getGlobalSurface(rootDeviceIndex)->getBindlessInfo().heapAllocation));
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.getConstantSurface(rootDeviceIndex)->getBindlessInfo().heapAllocation));
 
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
@@ -2960,6 +3128,108 @@ TEST(KernelTest, givenKernelWithPatchInfoCollectionDisabledWhenPatchWithImplicit
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
     kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
+}
+
+HWTEST_F(KernelTest, givenBindlessArgBufferWhenPatchWithImplicitSurfaceThenSurfaceStateIsEncodedAtProperOffset) {
+    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
+    MockKernelWithInternals kernel(*device);
+
+    uint64_t gpuAddress = 0x1200;
+    const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
+    size_t allocSize = 0x1000;
+    MockGraphicsAllocation mockAllocation(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
+
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+
+    const CrossThreadDataOffset bindlessOffset = 0x10;
+    kernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *), undefined<CrossThreadDataOffset>, bindlessOffset);
+
+    kernel.kernelInfo.kernelDescriptor.initBindlessOffsetToSurfaceState();
+
+    uint64_t crossThreadData = 0;
+    kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
+
+    const auto &gfxCoreHelper = device->getGfxCoreHelper();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+    const auto ssIndex = kernel.kernelInfo.kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
+    const auto ssOffset = ssIndex * surfaceStateSize;
+
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    const auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(kernel.mockKernel->getSurfaceStateHeap(), ssOffset));
+    const auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+
+    const auto bufferAddress = mockAllocation.getGpuAddressToPatch();
+    EXPECT_EQ(bufferAddress, surfaceAddress);
+}
+
+HWTEST_F(KernelTest, givenBindlessArgBufferAndNotInitializedBindlessOffsetToSurfaceStateWhenPatchWithImplicitSurfaceThenSurfaceStateIsNotEncoded) {
+    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
+    MockKernelWithInternals kernel(*device);
+
+    uint64_t gpuAddress = 0x1200;
+    const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
+    size_t allocSize = 0x1000;
+    MockGraphicsAllocation mockAllocation(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
+
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+
+    const CrossThreadDataOffset bindlessOffset = 0x10;
+    kernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *), undefined<CrossThreadDataOffset>, bindlessOffset);
+
+    const auto surfaceStateHeap = kernel.mockKernel->getSurfaceStateHeap();
+    const auto surfaceStateHeapSize = kernel.mockKernel->getSurfaceStateHeapSize();
+
+    auto ssHeapDataInitial = std::make_unique<char[]>(surfaceStateHeapSize);
+    std::memcpy(ssHeapDataInitial.get(), surfaceStateHeap, surfaceStateHeapSize);
+
+    kernel.kernelInfo.kernelDescriptor.bindlessArgsMap.clear();
+
+    uint64_t crossThreadData = 0;
+    kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
+
+    EXPECT_EQ(0, std::memcmp(ssHeapDataInitial.get(), surfaceStateHeap, surfaceStateHeapSize));
+}
+
+HWTEST_F(KernelTest, givenBindlessHeapsHelperAndBindlessArgBufferWhenPatchWithImplicitSurfaceThenCrossThreadDataIsPatchedAndSurfaceStateIsEncoded) {
+    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
+    auto &neoDevice = device->getDevice();
+
+    auto bindlessHeapHelper = new MockBindlesHeapsHelper(&neoDevice, false);
+    neoDevice.getExecutionEnvironment()->rootDeviceEnvironments[neoDevice.getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
+
+    MockKernelWithInternals kernel(*device);
+
+    uint64_t gpuAddress = 0x1200;
+    const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
+    size_t allocSize = 0x1000;
+    MockGraphicsAllocation mockAllocation(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
+
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+
+    EXPECT_TRUE(device->getMemoryManager()->allocateBindlessSlot(&mockAllocation));
+
+    const CrossThreadDataOffset bindlessOffset = 0x10;
+    kernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *), undefined<CrossThreadDataOffset>, bindlessOffset);
+
+    kernel.kernelInfo.kernelDescriptor.initBindlessOffsetToSurfaceState();
+
+    uint64_t crossThreadData = 0;
+    kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
+
+    auto ssInHeapInfo = mockAllocation.getBindlessInfo();
+
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(kernel.mockKernel->crossThreadData, bindlessOffset));
+    auto patchValue = device->getGfxCoreHelper().getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeapInfo.surfaceStateOffset));
+
+    EXPECT_EQ(patchValue, *patchLocation);
+
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    const auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ssInHeapInfo.ssPtr);
+    const auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+
+    const auto bufferAddress = mockAllocation.getGpuAddressToPatch();
+    EXPECT_EQ(bufferAddress, surfaceAddress);
 }
 
 TEST(KernelTest, givenDefaultKernelWhenItIsCreatedThenItReportsStatelessWrites) {

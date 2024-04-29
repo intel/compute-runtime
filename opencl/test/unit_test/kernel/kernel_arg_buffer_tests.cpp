@@ -651,6 +651,8 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
         pKernelInfo->argAsPtr(0).bindless = bindlessOffset;
         pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;
         pKernelInfo->argAsPtr(0).bindful = undefined<SurfaceStateHeapOffset>;
+
+        pKernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
     }
     void tearDown() {
         delete pBuffer;
@@ -672,6 +674,46 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenSettingKernelA
     retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
 
     EXPECT_EQ(0xdeadu, *patchLocation);
+}
+
+HWTEST_F(KernelArgBufferTestBindless, givenBindlessArgBufferWhenSettingKernelArgThenSurfaceStateIsEncodedAtProperOffset) {
+    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
+
+    const auto &gfxCoreHelper = pKernel->getGfxCoreHelper();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    const auto surfaceStateHeapSize = pKernel->getSurfaceStateHeapSize();
+
+    EXPECT_EQ(pKernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful * surfaceStateSize, surfaceStateHeapSize);
+
+    cl_mem memObj = pBuffer;
+    retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
+
+    const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
+    const auto ssOffset = ssIndex * surfaceStateSize;
+
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    const auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(), ssOffset));
+    const auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+
+    const auto bufferAddress = pBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress();
+    EXPECT_EQ(bufferAddress, surfaceAddress);
+}
+
+HWTEST_F(KernelArgBufferTestBindless, givenBindlessArgBufferAndNotInitializedBindlessOffsetToSurfaceStateWhenSettingKernelArgThenSurfaceStateIsNotEncoded) {
+    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
+
+    const auto surfaceStateHeap = pKernel->getSurfaceStateHeap();
+    const auto surfaceStateHeapSize = pKernel->getSurfaceStateHeapSize();
+
+    auto ssHeapDataInitial = std::make_unique<char[]>(surfaceStateHeapSize);
+    std::memcpy(ssHeapDataInitial.get(), surfaceStateHeap, surfaceStateHeapSize);
+
+    pKernelInfo->kernelDescriptor.bindlessArgsMap.clear();
+
+    cl_mem memObj = pBuffer;
+    retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
+
+    EXPECT_EQ(0, std::memcmp(ssHeapDataInitial.get(), surfaceStateHeap, surfaceStateHeapSize));
 }
 
 HWTEST_F(KernelArgBufferTestBindless, givenBindlessBuffersWhenPatchBindlessOffsetCalledThenBindlessOffsetToSurfaceStateWrittenInCrossThreadData) {

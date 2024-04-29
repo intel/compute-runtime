@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -322,6 +323,116 @@ TEST_F(ProgramDataTest, whenGlobalVariablesAreNotExportedThenAllocateSurfacesAsN
 
     ASSERT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
     EXPECT_EQ(nullptr, this->pContext->getSVMAllocsManager()->getSVMAlloc(reinterpret_cast<const void *>(pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex())->getGpuAddress())));
+}
+
+using ProgramDataBindlessTest = ProgramDataTest;
+
+TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndConstantsAndVariablesMemorySurfaceWhenProcessProgramInfoThenConstantsAndVariablesSurfaceBindlessSlotIsAllocated) {
+    auto &neoDevice = pClDevice->getDevice();
+    neoDevice.getExecutionEnvironment()->rootDeviceEnvironments[neoDevice.getRootDeviceIndex()]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto bindlessHeapHelper = new MockBindlesHeapsHelper(&neoDevice, false);
+    neoDevice.getExecutionEnvironment()->rootDeviceEnvironments[neoDevice.getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
+
+    ProgramInfo programInfo;
+
+    char globalConstantsData[128] = {};
+    programInfo.globalConstants.initData = globalConstantsData;
+    programInfo.globalConstants.size = sizeof(globalConstantsData);
+
+    char globalVariablesData[128] = {};
+    programInfo.globalVariables.initData = globalVariablesData;
+    programInfo.globalVariables.size = sizeof(globalVariablesData);
+
+    auto kernelInfo1 = std::make_unique<KernelInfo>();
+    kernelInfo1->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindful;
+    auto kernelInfo2 = std::make_unique<KernelInfo>();
+    kernelInfo1->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+
+    programInfo.kernelInfos.push_back(kernelInfo1.release());
+    programInfo.kernelInfos.push_back(kernelInfo2.release());
+
+    std::unique_ptr<WhiteBox<NEO::LinkerInput>> mockLinkerInput = std::make_unique<WhiteBox<NEO::LinkerInput>>();
+    programInfo.linkerInput = std::move(mockLinkerInput);
+    this->pProgram->processProgramInfo(programInfo, *pClDevice);
+
+    ASSERT_NE(nullptr, pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex()));
+    ASSERT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
+
+    auto globalConstantsAlloc = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    auto ssInHeap1 = globalConstantsAlloc->getBindlessInfo();
+
+    EXPECT_NE(nullptr, ssInHeap1.heapAllocation);
+
+    auto globalVariablesAlloc = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    auto ssInHeap2 = globalVariablesAlloc->getBindlessInfo();
+
+    EXPECT_NE(nullptr, ssInHeap2.heapAllocation);
+}
+
+TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalConstantsMemorySurfaceWhenProcessProgramInfoAndSSAllocationFailsThenGlobalConstantsSurfaceBindlessSlotIsNotAllocatedAndReturnOutOfHostMemory) {
+    auto &neoDevice = pClDevice->getDevice();
+    neoDevice.getExecutionEnvironment()->rootDeviceEnvironments[neoDevice.getRootDeviceIndex()]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto bindlessHeapHelper = new MockBindlesHeapsHelper(&neoDevice, false);
+    bindlessHeapHelper->failAllocateSS = true;
+    neoDevice.getExecutionEnvironment()->rootDeviceEnvironments[neoDevice.getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
+
+    ProgramInfo programInfo;
+
+    char globalConstantsData[128] = {};
+    programInfo.globalConstants.initData = globalConstantsData;
+    programInfo.globalConstants.size = sizeof(globalConstantsData);
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+
+    programInfo.kernelInfos.push_back(kernelInfo.release());
+
+    std::unique_ptr<WhiteBox<NEO::LinkerInput>> mockLinkerInput = std::make_unique<WhiteBox<NEO::LinkerInput>>();
+    programInfo.linkerInput = std::move(mockLinkerInput);
+    auto ret = this->pProgram->processProgramInfo(programInfo, *pClDevice);
+    EXPECT_EQ(ret, CL_OUT_OF_HOST_MEMORY);
+
+    auto globalConstantsAlloc = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, globalConstantsAlloc);
+
+    auto ssInHeap = globalConstantsAlloc->getBindlessInfo();
+    EXPECT_EQ(nullptr, ssInHeap.heapAllocation);
+}
+
+TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalVariablesMemorySurfaceWhenProcessProgramInfoAndSSAllocationFailsThenGlobalVariablesSurfaceBindlessSlotIsNotAllocatedAndReturnOutOfHostMemory) {
+    auto &neoDevice = pClDevice->getDevice();
+    neoDevice.getExecutionEnvironment()->rootDeviceEnvironments[neoDevice.getRootDeviceIndex()]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    auto bindlessHeapHelper = new MockBindlesHeapsHelper(&neoDevice, false);
+    bindlessHeapHelper->failAllocateSS = true;
+    neoDevice.getExecutionEnvironment()->rootDeviceEnvironments[neoDevice.getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
+
+    ProgramInfo programInfo;
+
+    char globalVariablesData[128] = {};
+    programInfo.globalVariables.initData = globalVariablesData;
+    programInfo.globalVariables.size = sizeof(globalVariablesData);
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+
+    programInfo.kernelInfos.push_back(kernelInfo.release());
+
+    std::unique_ptr<WhiteBox<NEO::LinkerInput>> mockLinkerInput = std::make_unique<WhiteBox<NEO::LinkerInput>>();
+    programInfo.linkerInput = std::move(mockLinkerInput);
+    auto ret = this->pProgram->processProgramInfo(programInfo, *pClDevice);
+    EXPECT_EQ(ret, CL_OUT_OF_HOST_MEMORY);
+
+    auto globalVariablesAlloc = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, globalVariablesAlloc);
+
+    auto ssInHeap = globalVariablesAlloc->getBindlessInfo();
+    EXPECT_EQ(nullptr, ssInHeap.heapAllocation);
 }
 
 TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {

@@ -98,6 +98,8 @@ class MockKernel : public Kernel {
     using Kernel::anyKernelArgumentUsingSystemMemory;
     using Kernel::auxTranslationRequired;
     using Kernel::containsStatelessWrites;
+    using Kernel::crossThreadData;
+    using Kernel::crossThreadDataSize;
     using Kernel::dataParameterSimdSize;
     using Kernel::executionType;
     using Kernel::getDevice;

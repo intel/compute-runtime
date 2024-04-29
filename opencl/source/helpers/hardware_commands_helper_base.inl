@@ -266,6 +266,18 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         if (EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch()) {
             bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
         }
+
+        const bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernel.getKernelInfo().kernelDescriptor);
+        if (isBindlessKernel) {
+            uint64_t bindlessSurfaceStateBaseOffset = ptrDiff(ssh.getSpace(0), ssh.getCpuBase());
+
+            auto sshHeapSize = kernel.getSurfaceStateHeapSize();
+            // Allocate space for new ssh data
+            auto dstSurfaceState = ssh.getSpace(sshHeapSize);
+            memcpy_s(dstSurfaceState, sshHeapSize, kernel.getSurfaceStateHeap(), sshHeapSize);
+
+            kernel.patchBindlessOffsetsInCrossThreadData(bindlessSurfaceStateBaseOffset);
+        }
     }
 
     auto &gfxCoreHelper = device.getGfxCoreHelper();

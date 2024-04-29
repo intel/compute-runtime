@@ -1080,6 +1080,82 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     delete[] mockDsh;
 }
 
+HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirectStateThenSurfaceStateIsCopiedToHeapAndCrossThreadDataIsCorrectlyPatched, IsAtLeastXeHpCore) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
+
+    auto &commandStream = cmdQ.getCS(1024);
+    auto pWalkerCmd = static_cast<DefaultWalkerType *>(commandStream.getSpace(sizeof(DefaultWalkerType)));
+
+    // define kernel info
+    std::unique_ptr<MockKernelInfo> pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+    pKernelInfo->addArgBuffer(0, 0x30, sizeof(void *), 0x0);
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::AddressingMode::BindlessAndStateless;
+
+    const auto bindlessOffset = 0x10;
+    pKernelInfo->argAsPtr(0).bindless = bindlessOffset;
+    pKernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
+
+    pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 1024;
+
+    MockKernel mockKernel(mockKernelWithInternal->mockKernel->getProgram(), *pKernelInfo, *pClDevice);
+
+    auto retVal = mockKernel.initialize();
+    EXPECT_EQ(0, retVal);
+
+    memset(mockKernel.getSurfaceStateHeap(), 0x22, mockKernel.getSurfaceStateHeapSize());
+    memset(mockKernel.getCrossThreadData(), 0x00, mockKernel.getCrossThreadDataSize());
+
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::Type::dynamicState, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::indirectObject, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::surfaceState, 8192);
+
+    const auto expectedDestinationInHeap = ssh.getSpace(0);
+    const uint64_t bindlessSurfaceStateBaseOffset = ptrDiff(ssh.getSpace(0), ssh.getCpuBase());
+
+    const size_t localWorkSize = 256;
+    const size_t localWorkSizes[3]{localWorkSize, 1, 1};
+    const uint32_t threadGroupCount = 1u;
+    uint32_t interfaceDescriptorIndex = 0;
+    auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(mockKernel);
+
+    INTERFACE_DESCRIPTOR_DATA interfaceDescriptorData;
+    HardwareCommandsHelper<FamilyType>::template sendIndirectState<DefaultWalkerType, INTERFACE_DESCRIPTOR_DATA>(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        mockKernel,
+        mockKernel.getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
+        pKernelInfo->getMaxSimdSize(),
+        localWorkSizes,
+        threadGroupCount,
+        0,
+        interfaceDescriptorIndex,
+        pDevice->getPreemptionMode(),
+        pWalkerCmd,
+        &interfaceDescriptorData,
+        true,
+        0,
+        *pDevice);
+
+    EXPECT_EQ(0, std::memcmp(expectedDestinationInHeap, mockKernel.getSurfaceStateHeap(), mockKernel.getSurfaceStateHeapSize()));
+
+    const auto &gfxCoreHelper = mockKernel.getGfxCoreHelper();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+    const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
+    const auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + ssIndex * surfaceStateSize);
+    const auto expectedPatchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateOffset));
+    const auto expectedPatchLocation = reinterpret_cast<uint32_t *>(ptrOffset(mockKernel.getCrossThreadData(), bindlessOffset));
+
+    EXPECT_EQ(expectedPatchValue, *expectedPatchLocation);
+}
+
 HWTEST_F(HardwareCommandsTest, whenNumLocalIdsIsBiggerThanZeroThenExpectLocalIdsInUseIsTrue) {
     mockKernelWithInternal->kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels = 1;
     EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel));
