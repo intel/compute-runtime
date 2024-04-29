@@ -235,7 +235,7 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
                 pushApiEvent(debugEvent);
                 processEntryEventGenerated = true;
             }
-
+            std::lock_guard<std::mutex> lock(asyncThreadMutex);
             clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].vmHandle = execQueue->vm_handle;
             clientHandleToConnection[execQueue->client_handle]->execQueues[execQueue->exec_queue_handle].engineClass = execQueue->engine_class;
             for (uint16_t idx = 0; idx < execQueue->width; idx++) {
@@ -246,10 +246,13 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
         }
 
         if (event->flags & DRM_XE_EUDEBUG_EVENT_DESTROY) {
-            for (uint16_t idx = 0; idx < execQueue->width; idx++) {
-                clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle.erase(execQueue->lrc_handle[idx]);
+            {
+                std::lock_guard<std::mutex> lock(asyncThreadMutex);
+                for (uint16_t idx = 0; idx < execQueue->width; idx++) {
+                    clientHandleToConnection[execQueue->client_handle]->lrcHandleToVmHandle.erase(execQueue->lrc_handle[idx]);
+                }
+                clientHandleToConnection[execQueue->client_handle]->execQueues.erase(execQueue->exec_queue_handle);
             }
-            clientHandleToConnection[execQueue->client_handle]->execQueues.erase(execQueue->exec_queue_handle);
             {
                 bool lastExecQueue = true;
                 for (const auto &connection : clientHandleToConnection) {
@@ -658,6 +661,7 @@ int DebugSessionLinuxXe::threadControlInterruptAll(drm_xe_eudebug_eu_control &eu
     int euControlRetVal = -1;
 
     DEBUG_BREAK_IF(clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end());
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
     for (const auto &execQueue : clientHandleToConnection[clientHandle]->execQueues) {
         euControl.exec_queue_handle = execQueue.first;
         for (const auto &lrcHandle : execQueue.second.lrcHandles) {
@@ -679,8 +683,47 @@ int DebugSessionLinuxXe::threadControlInterruptAll(drm_xe_eudebug_eu_control &eu
     return euControlRetVal;
 }
 
-int DebugSessionLinuxXe::threadControlResumeAndStopped(const std::vector<EuThread::ThreadId> &threads, drm_xe_eudebug_eu_control &euControl,
-                                                       std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
+int DebugSessionLinuxXe::threadControlStopped(drm_xe_eudebug_eu_control &euControl, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
+    int euControlRetVal = -1;
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({}, hwInfo, bitmask, bitmaskSize);
+    euControl.bitmask_size = static_cast<uint32_t>(bitmaskSize);
+    euControl.bitmask_ptr = reinterpret_cast<uint64_t>(bitmask.get());
+
+    DEBUG_BREAK_IF(clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end());
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    for (const auto &execQueue : clientHandleToConnection[clientHandle]->execQueues) {
+        euControl.exec_queue_handle = execQueue.first;
+        for (const auto &lrcHandle : execQueue.second.lrcHandles) {
+            euControl.lrc_handle = lrcHandle;
+            euControlRetVal = ioctl(DRM_XE_EUDEBUG_IOCTL_EU_CONTROL, &euControl);
+            if (euControlRetVal != 0) {
+                PRINT_DEBUGGER_ERROR_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d, execQueueHandle = %llu lrcHandle = %llu\n",
+                                         euControlRetVal, errno, static_cast<uint32_t>(euControl.cmd), static_cast<uint64_t>(euControl.exec_queue_handle),
+                                         static_cast<uint64_t>(euControl.lrc_handle));
+            } else {
+                PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", static_cast<uint64_t>(euControl.seqno),
+                                        static_cast<uint32_t>(euControl.cmd));
+                break;
+            }
+        }
+        if (euControlRetVal == 0) {
+            break;
+        }
+    }
+
+    printBitmask(bitmask.get(), bitmaskSize);
+    bitmaskOut = std::move(bitmask);
+    UNRECOVERABLE_IF(bitmaskOut.get() == nullptr);
+    bitmaskSizeOut = euControl.bitmask_size;
+    return euControlRetVal;
+}
+
+int DebugSessionLinuxXe::threadControlResume(const std::vector<EuThread::ThreadId> &threads, drm_xe_eudebug_eu_control &euControl) {
     int euControlRetVal = -1;
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
@@ -707,12 +750,6 @@ int DebugSessionLinuxXe::threadControlResumeAndStopped(const std::vector<EuThrea
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", static_cast<uint64_t>(euControl.seqno), static_cast<uint32_t>(euControl.cmd));
     }
 
-    if (euControl.cmd == DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED) {
-        bitmaskOut = std::move(bitmask);
-        UNRECOVERABLE_IF(bitmaskOut.get() == nullptr);
-        bitmaskSizeOut = euControl.bitmask_size;
-    }
-
     return euControlRetVal;
 }
 
@@ -731,10 +768,10 @@ int DebugSessionLinuxXe::threadControl(const std::vector<EuThread::ThreadId> &th
         return threadControlInterruptAll(euControl);
     case ThreadControlCmd::resume:
         euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME;
-        return threadControlResumeAndStopped(threads, euControl, bitmaskOut, bitmaskSizeOut);
+        return threadControlResume(threads, euControl);
     case ThreadControlCmd::stopped:
         euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED;
-        return threadControlResumeAndStopped(threads, euControl, bitmaskOut, bitmaskSizeOut);
+        return threadControlStopped(euControl, bitmaskOut, bitmaskSizeOut);
     default:
         break;
     }

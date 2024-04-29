@@ -1730,6 +1730,31 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForInterruptOrAnyInvalidThre
     EXPECT_EQ(result, -1);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenThreadControlStoppedCalledWhenExecQueueAndLRCIsValidThenIoctlSucceeds) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    auto handler = new MockIoctlHandlerXe;
+    sessionMock->ioctlHandler.reset(handler);
+
+    std::unique_ptr<uint8_t[]> bitmaskOut;
+    size_t bitmaskSizeOut = 0;
+
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle].reset(new MockDebugSessionLinuxXe::ClientConnectionXe);
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[100].lrcHandles.push_back(10000);
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[100].lrcHandles.push_back(10001);
+
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[101].lrcHandles.push_back(11000);
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[101].lrcHandles.push_back(11001);
+
+    auto result = sessionMock->threadControl({}, 0, MockDebugSessionLinuxXe::ThreadControlCmd::stopped, bitmaskOut, bitmaskSizeOut);
+    EXPECT_EQ(0, result);
+    EXPECT_EQ(1, handler->ioctlCalled);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenErrorFromIoctlWhenCallingThreadControlThenThreadControlCallFails) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -1773,7 +1798,7 @@ TEST_F(DebugApiLinuxTestXe, GivenErrorFromIoctlWhenCallingThreadControlThenThrea
 
     result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::stopped, bitmaskOut, bitmaskSizeOut);
     EXPECT_NE(0, result);
-    EXPECT_EQ(6, handler->ioctlCalled);
+    EXPECT_EQ(9, handler->ioctlCalled);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenSuccessFromIoctlWhenCallingThreadControlForInterruptAllThenSequenceNumbersProperlyUpdates) {
@@ -1870,6 +1895,10 @@ TEST_F(DebugApiLinuxTestXe, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheck
     std::vector<EuThread::ThreadId> threads;
     threads.push_back(thread);
     threads.push_back(thread1);
+
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle].reset(new MockDebugSessionLinuxXe::ClientConnectionXe);
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[100].lrcHandles.push_back(10000);
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->execQueues[100].lrcHandles.push_back(10001);
 
     sessionMock->allThreads[thread.packed]->verifyStopped(1);
     sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
