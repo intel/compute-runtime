@@ -26,7 +26,7 @@ this will be verified by clang-format and clang-tidy
 ### 2. Certificate of origin
 
 In order to get a clear contribution chain of trust we use the
-[signed-off-by language](https://01.org/community/signed-process) used by the Linux kernel project.
+[signed-off-by language](https://developercertificate.org/) used by the Linux kernel project.
 Please make sure your commit message adheres to this guideline.
 
 ### 3. Commit message content
