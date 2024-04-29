@@ -117,6 +117,10 @@ class MockMetric : public L0::MetricImp {
     ze_result_t destroy() override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+
+    void setPredefined(bool status) {
+        isPredefined = status;
+    }
 };
 
 } // namespace ult

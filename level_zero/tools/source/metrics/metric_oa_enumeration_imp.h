@@ -239,16 +239,12 @@ struct OaMetricImp : public MetricImp {
 
     static Metric *create(MetricSource &metricSource, zet_metric_properties_t &properties);
 
-    bool isImmutable() { return isPredefined; }
-
   protected:
     void copyProperties(const zet_metric_properties_t &source,
                         zet_metric_properties_t &destination);
 
     zet_metric_properties_t properties{
         ZET_STRUCTURE_TYPE_METRIC_PROPERTIES};
-
-    bool isPredefined{};
 };
 
 } // namespace L0

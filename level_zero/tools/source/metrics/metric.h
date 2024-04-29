@@ -147,9 +147,11 @@ struct MetricImp : public Metric {
     }
     ~MetricImp() override = default;
     MetricImp(MetricSource &metricSource) : metricSource(metricSource) {}
+    bool isImmutable() { return isPredefined; }
 
   protected:
     MetricSource &metricSource;
+    bool isPredefined = true;
 };
 
 struct MetricGroup : _zet_metric_group_handle_t {
