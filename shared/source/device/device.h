@@ -14,6 +14,7 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <array>
@@ -180,7 +181,9 @@ class Device : public ReferenceTrackedObject<Device> {
     const ProductHelper &getProductHelper() const;
     const CompilerProductHelper &getCompilerProductHelper() const;
     ReleaseHelper *getReleaseHelper() const;
-
+    ISAPoolAllocator &getIsaPoolAllocator() {
+        return isaPoolAllocator;
+    }
     uint32_t getNumberOfRegularContextsPerEngine() const { return numberOfRegularContextsPerEngine; }
     bool isMultiRegularContextSelectionAllowed(aub_stream::EngineType engineType, EngineUsage engineUsage) const;
     MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
@@ -269,6 +272,8 @@ class Device : public ReferenceTrackedObject<Device> {
 
     GraphicsAllocation *rtMemoryBackedBuffer = nullptr;
     std::vector<RTDispatchGlobalsInfo *> rtDispatchGlobalsInfos;
+
+    ISAPoolAllocator isaPoolAllocator;
 
     struct {
         bool isValid = false;

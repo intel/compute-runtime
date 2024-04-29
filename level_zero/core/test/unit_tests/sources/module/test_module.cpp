@@ -192,9 +192,14 @@ struct ModuleKernelIsaAllocationsFixture : public ModuleFixture {
     }
 
     void givenIsaMemoryRegionSharedBetweenKernelsWhenGraphicsAllocationFailsThenProperErrorReturned() {
-        mockModule->allocateKernelsIsaMemoryCallBase = false;
+        // Fill current pool so next request will try to allocate
+        auto alloc = device->getNEODevice()->getIsaPoolAllocator().requestGraphicsAllocationForIsa(false, MemoryConstants::pageSize2M * 2);
+
+        auto memoryManager = reinterpret_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager());
+        memoryManager->failInDevicePoolWithError = true;
         auto result = module->initialize(&this->moduleDesc, device->getNEODevice());
         EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+        device->getNEODevice()->getIsaPoolAllocator().freeSharedIsaAllocation(alloc);
     }
 
     void givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned() {
@@ -4713,15 +4718,17 @@ TEST_F(ModuleKernelImmDatasTest, givenDeviceOOMWhenMemoryManagerFailsToAllocateM
     moduleDesc.inputSize = src.size();
 
     ModuleBuildLog *moduleBuildLog = nullptr;
+    module.reset(nullptr);
+    auto module = std::make_unique<Module>(device, moduleBuildLog, ModuleType::user);
+    ASSERT_NE(nullptr, module.get());
+    // Fill current pool so next request will try to allocate
+    auto alloc = device->getNEODevice()->getIsaPoolAllocator().requestGraphicsAllocationForIsa(false, MemoryConstants::pageSize2M * 2);
     auto mockMemoryManager = static_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
     mockMemoryManager->isMockHostMemoryManager = true;
     mockMemoryManager->forceFailureInPrimaryAllocation = true;
-
-    auto module = std::make_unique<Module>(device, moduleBuildLog, ModuleType::user);
-    ASSERT_NE(nullptr, module.get());
-
     auto result = module->initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+    device->getNEODevice()->getIsaPoolAllocator().freeSharedIsaAllocation(alloc);
 };
 
 using MultiTileModuleTest = Test<MultiTileModuleFixture>;

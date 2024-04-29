@@ -23,6 +23,7 @@
 
 namespace NEO {
 struct KernelDescriptor;
+class SharedIsaAllocation;
 
 namespace Zebin::Debug {
 struct Segments;
@@ -125,7 +126,7 @@ struct ModuleImp : public Module {
     const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override;
 
     const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const override { return kernelImmDatas; }
-    NEO::GraphicsAllocation *getKernelsIsaParentAllocation() const { return kernelsIsaParentRegion.get(); }
+    NEO::GraphicsAllocation *getKernelsIsaParentAllocation() const;
 
     uint32_t getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const override;
 
@@ -189,7 +190,7 @@ struct ModuleImp : public Module {
     std::unique_ptr<ModuleTranslationUnit> translationUnit;
     ModuleBuildLog *moduleBuildLog = nullptr;
     NEO::GraphicsAllocation *exportedFunctionsSurface = nullptr;
-    std::unique_ptr<NEO::GraphicsAllocation> kernelsIsaParentRegion;
+    std::unique_ptr<NEO::SharedIsaAllocation> sharedIsaAllocation;
     std::vector<std::shared_ptr<Kernel>> printfKernelContainer;
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
     NEO::Linker::RelocatedSymbolsMap symbols;

@@ -58,7 +58,7 @@ Context::~Context() {
     }
 
     if (smallBufferPoolAllocator.isAggregatedSmallBuffersEnabled(this)) {
-        smallBufferPoolAllocator.releaseSmallBufferPool();
+        smallBufferPoolAllocator.releasePools();
     }
 
     cleanupUsmAllocationPools();

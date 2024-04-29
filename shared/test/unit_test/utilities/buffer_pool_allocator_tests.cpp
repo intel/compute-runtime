@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,7 +180,7 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenChunkOfMainStorageTrie
     EXPECT_EQ(effectiveChunkOffset, chunkOffset);
     EXPECT_EQ(size, chunkSize);
 
-    buffersAllocator.releaseSmallBufferPool();
+    buffersAllocator.releasePools();
     EXPECT_EQ(buffersAllocator.bufferPools.size(), 0u);
 }
 

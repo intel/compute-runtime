@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -47,6 +47,8 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/timer_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wait_util.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/isa_pool_allocator.h
 )
 
 set(NEO_CORE_UTILITIES_WINDOWS

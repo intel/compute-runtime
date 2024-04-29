@@ -49,6 +49,8 @@ struct AbstractBuffersPool : public SmallBuffersParams<PoolT>, public NonCopyabl
     AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback);
     AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool);
     AbstractBuffersPool &operator=(AbstractBuffersPool &&) = delete;
+    virtual ~AbstractBuffersPool() = default;
+
     void tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size);
     bool isPoolBuffer(const BufferParentType *buffer) const;
     void drain();
@@ -79,7 +81,7 @@ class AbstractBuffersAllocator : public SmallBuffersParams<BuffersPoolType> {
     using Params::startingOffset;
     static_assert(aggregatedSmallBuffersPoolSize > smallBufferThreshold, "Largest allowed buffer needs to fit in pool");
 
-    void releaseSmallBufferPool() { this->bufferPools.clear(); }
+    void releasePools() { this->bufferPools.clear(); }
     bool isPoolBuffer(const BufferParentType *buffer) const;
     void tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size);
 
