@@ -71,7 +71,9 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
     this->device = device;
     this->reusableAllocationList = reusableAllocationList;
     size_t usableSize = getMaxUsableSpace();
-    this->defaultSshSize = HeapSize::defaultHeapSize;
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto &productHelper = device->getProductHelper();
+    this->defaultSshSize = gfxCoreHelper.getDefaultSshSize(productHelper);
     if (this->stateBaseAddressTracking) {
         this->defaultSshSize = defaultSshSize;
     }
@@ -86,7 +88,6 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
     if (this->usingPrimaryBuffer) {
         this->selectedBbCmdSize = gfxCoreHelper.getBatchBufferStartSize();
     } else {

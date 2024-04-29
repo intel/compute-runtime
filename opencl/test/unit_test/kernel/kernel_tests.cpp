@@ -951,7 +951,8 @@ TEST_F(KernelPrivateSurfaceTest, givenNonNullDataParameterStreamWhenGettingConst
 
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenScratchSizeIsGreaterThanMaxScratchSizeThenReturnInvalidKernel) {
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
+    auto &productHelper = pDevice->getProductHelper();
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize(productHelper);
 
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;

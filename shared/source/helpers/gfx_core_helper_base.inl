@@ -19,6 +19,7 @@
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -113,7 +114,7 @@ void GfxCoreHelperHw<Family>::setRenderSurfaceStateForScratchResource(const Root
     state.setHeight(length.surfaceState.height + 1);
     state.setDepth(length.surfaceState.depth + 1);
     if (pitch) {
-        EncodeSurfaceState<Family>::setPitchForScratch(&state, pitch);
+        EncodeSurfaceState<Family>::setPitchForScratch(&state, pitch, rootDeviceEnvironment.getProductHelper());
     }
 
     // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
@@ -767,10 +768,10 @@ bool GfxCoreHelperHw<GfxFamily>::inOrderAtomicSignallingEnabled(const RootDevice
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getRenderSurfaceStatePitch(void *renderSurfaceState) const {
+uint32_t GfxCoreHelperHw<GfxFamily>::getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(renderSurfaceState);
-    return EncodeSurfaceState<GfxFamily>::getPitchForScratchInBytes(surfaceState);
+    return EncodeSurfaceState<GfxFamily>::getPitchForScratchInBytes(surfaceState, productHelper);
 }
 
 template <typename GfxFamily>
@@ -786,6 +787,16 @@ bool GfxCoreHelperHw<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t ac
                                                                                 requireInputWalkOrder,
                                                                                 requiredWalkOrder,
                                                                                 simd);
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getMaxPtssIndex(const ProductHelper &productHelper) const {
+    return 15u;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getDefaultSshSize(const ProductHelper &productHelper) const {
+    return HeapSize::defaultHeapSize;
 }
 
 template <typename GfxFamily>

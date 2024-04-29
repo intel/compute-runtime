@@ -467,7 +467,8 @@ HWTEST_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenNoAllocationProvid
     EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
     EXPECT_EQ(length.surfaceState.width + 1u, state->getWidth());
     EXPECT_EQ(length.surfaceState.height + 1u, state->getHeight());
-    EXPECT_EQ(pitch, EncodeSurfaceState<FamilyType>::getPitchForScratchInBytes(state));
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_EQ(pitch, EncodeSurfaceState<FamilyType>::getPitchForScratchInBytes(state, productHelper));
     addr += offset;
     EXPECT_EQ(addr, state->getSurfaceBaseAddress());
     EXPECT_EQ(type, state->getSurfaceType());
@@ -1293,9 +1294,10 @@ HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValu
 
     RENDER_SURFACE_STATE renderSurfaceState;
     uint32_t expectedPitch = 0x400;
-    EncodeSurfaceState<FamilyType>::setPitchForScratch(&renderSurfaceState, expectedPitch);
+    const auto &productHelper = getHelper<ProductHelper>();
+    EncodeSurfaceState<FamilyType>::setPitchForScratch(&renderSurfaceState, expectedPitch, productHelper);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(expectedPitch, gfxCoreHelper.getRenderSurfaceStatePitch(&renderSurfaceState));
+    EXPECT_EQ(expectedPitch, gfxCoreHelper.getRenderSurfaceStatePitch(&renderSurfaceState, productHelper));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine) {
@@ -1764,4 +1766,10 @@ HWTEST_F(GfxCoreHelperTest, givenEncodeDispatchKernelWhenUsingGfxHelperThenSameD
 
     EXPECT_EQ(encoderReturn, helperReturn);
     EXPECT_EQ(requiredWalkOrder, helperRequiredWalkOrder);
+}
+
+HWTEST_F(GfxCoreHelperTest, whenCallGetMaxPtssIndexThenCorrectValue) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_EQ(15u, gfxCoreHelper.getMaxPtssIndex(productHelper));
 }

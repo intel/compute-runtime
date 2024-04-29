@@ -153,9 +153,9 @@ class GfxCoreHelper {
     virtual size_t getSamplerStateSize() const = 0;
     virtual bool preferInternalBcsEngine() const = 0;
     virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
-    virtual uint32_t getMaxScratchSize() const = 0;
+    virtual uint32_t getMaxScratchSize(const NEO::ProductHelper &productHelper) const = 0;
     virtual uint64_t getRenderSurfaceStateBaseAddress(void *renderSurfaceState) const = 0;
-    virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState) const = 0;
+    virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const = 0;
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
     virtual uint64_t getMaxMemAllocSize() const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
@@ -194,6 +194,8 @@ class GfxCoreHelper {
                                                      bool requireInputWalkOrder,
                                                      uint32_t &requiredWalkOrder,
                                                      uint32_t simd) const = 0;
+    virtual uint32_t getMaxPtssIndex(const ProductHelper &productHelper) const = 0;
+    virtual uint32_t getDefaultSshSize(const ProductHelper &productHelper) const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -230,7 +232,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
         return reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(renderSurfaceState)->getSurfaceBaseAddress();
     }
 
-    uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState) const override;
+    uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const override;
 
     const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const override;
 
@@ -385,7 +387,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     void adjustPreemptionSurfaceSize(size_t &csrSize, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isScratchSpaceSurfaceStateAccessible() const override;
-    uint32_t getMaxScratchSize() const override;
+    uint32_t getMaxScratchSize(const NEO::ProductHelper &productHelper) const override;
     bool preferInternalBcsEngine() const override;
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
@@ -426,6 +428,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
                                              bool requireInputWalkOrder,
                                              uint32_t &requiredWalkOrder,
                                              uint32_t simd) const override;
+    uint32_t getMaxPtssIndex(const ProductHelper &productHelper) const override;
+    uint32_t getDefaultSshSize(const ProductHelper &productHelper) const override;
 
     ~GfxCoreHelperHw() override = default;
 

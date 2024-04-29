@@ -1149,7 +1149,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
                 return ret;
             }
 
-            auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data());
+            auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data(), connectedDevice->getProductHelper());
             auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, threadId);
             auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
             auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));

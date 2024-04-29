@@ -70,7 +70,8 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
 
 KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device) {
     auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
-    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
+    auto &productHelper = device->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize(productHelper);
     if ((attributes.perThreadScratchSize[0] > maxScratchSize) || (attributes.perThreadScratchSize[1] > maxScratchSize)) {
         return KernelHelper::ErrorCode::invalidKernel;
     }

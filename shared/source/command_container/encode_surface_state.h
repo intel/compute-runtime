@@ -16,6 +16,7 @@ class GraphicsAllocation;
 class IndirectHeap;
 class LinearStream;
 class ReleaseHelper;
+class ProductHelper;
 struct EncodeSurfaceStateArgs;
 struct HardwareInfo;
 struct PipeControlArgs;
@@ -68,8 +69,8 @@ struct EncodeSurfaceState {
     static void setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm);
     static void disableCompressionFlags(R_SURFACE_STATE *surfaceState);
     static void appendParamsForImageFromBuffer(R_SURFACE_STATE *surfaceState);
-    static void setPitchForScratch(R_SURFACE_STATE *surfaceState, uint32_t pitch);
-    static uint32_t getPitchForScratchInBytes(R_SURFACE_STATE *surfaceState);
+    static void setPitchForScratch(R_SURFACE_STATE *surfaceState, uint32_t pitch, const ProductHelper &productHelper);
+    static uint32_t getPitchForScratchInBytes(R_SURFACE_STATE *surfaceState, const ProductHelper &productHelper);
 };
 
 } // namespace NEO

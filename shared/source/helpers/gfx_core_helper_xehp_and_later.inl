@@ -180,7 +180,7 @@ bool GfxCoreHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
     return true;
 }
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getMaxScratchSize() const {
+uint32_t GfxCoreHelperHw<GfxFamily>::getMaxScratchSize(const NEO::ProductHelper &productHelper) const {
     return 256 * MemoryConstants::kiloByte;
 }
 

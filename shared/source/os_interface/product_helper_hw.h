@@ -177,6 +177,7 @@ class ProductHelperHw : public ProductHelper {
     const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const override;
     bool isDeviceToHostCopySignalingFenceRequired() const override;
     size_t getMaxFillPaternSizeForCopyEngine() const override;
+    bool isAvailableExtendedScratch() const override;
 
     ~ProductHelperHw() override = default;
 

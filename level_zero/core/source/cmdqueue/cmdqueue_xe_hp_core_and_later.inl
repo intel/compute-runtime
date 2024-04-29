@@ -130,8 +130,6 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     return 0;
 }
 
-constexpr uint32_t maxPtssIndex = 15u;
-
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHeaps,
                                                        NEO::ScratchSpaceController *scratchController,
@@ -143,8 +141,13 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
             scratchController->setRequiredScratchSpace(globalStatelessAllocation->getUnderlyingBuffer(), 0, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size, csr->peekTaskCount(),
                                                        csr->getOsContext(), gsbaState, frontEndState);
         }
+
+        NEO::Device *neoDevice = device->getNEODevice();
+        auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+        auto &productHelper = neoDevice->getProductHelper();
+
         if (sshHeaps.size() > 0) {
-            uint32_t offsetIndex = maxPtssIndex * csr->getOsContext().getEngineType() + 1u;
+            uint32_t offsetIndex = gfxCoreHelper.getMaxPtssIndex(productHelper) * csr->getOsContext().getEngineType() + 1u;
             scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size, csr->peekTaskCount(),
                                             csr->getOsContext(), gsbaState, frontEndState);
         }

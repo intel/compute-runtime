@@ -148,7 +148,8 @@ TEST_F(KernelHelperTest, GivenScratchSizeGreaterThanGlobalSizeWhenCheckingIfTher
     KernelDescriptor::KernelAttributes attributes = {};
     attributes.perThreadScratchSize[0] = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    if (attributes.perThreadScratchSize[0] > gfxCoreHelper.getMaxScratchSize()) {
+    auto &productHelper = pDevice->getProductHelper();
+    if (attributes.perThreadScratchSize[0] > gfxCoreHelper.getMaxScratchSize(productHelper)) {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::invalidKernel);
     } else {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::outOfDeviceMemory);
@@ -160,7 +161,8 @@ TEST_F(KernelHelperTest, GivenScratchPrivateSizeGreaterThanGlobalSizeWhenCheckin
     KernelDescriptor::KernelAttributes attributes = {};
     attributes.perThreadScratchSize[1] = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) + 100;
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    if (attributes.perThreadScratchSize[1] > gfxCoreHelper.getMaxScratchSize()) {
+    auto &productHelper = pDevice->getProductHelper();
+    if (attributes.perThreadScratchSize[1] > gfxCoreHelper.getMaxScratchSize(productHelper)) {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::invalidKernel);
     } else {
         EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::outOfDeviceMemory);
@@ -173,7 +175,8 @@ TEST_F(KernelHelperTest, GivenScratchAndPrivateSizeLessThanGlobalSizeWhenCheckin
     auto size = (static_cast<uint32_t>((globalSize + pDevice->getDeviceInfo().computeUnitsUsedForScratch) / pDevice->getDeviceInfo().computeUnitsUsedForScratch)) - 100;
     attributes.perHwThreadPrivateMemorySize = size;
     auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
-    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
+    auto &productHelper = pDevice->getProductHelper();
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize(productHelper);
     attributes.perThreadScratchSize[0] = (size > maxScratchSize) ? maxScratchSize : size;
     attributes.perThreadScratchSize[1] = (size > maxScratchSize) ? maxScratchSize : size;
     EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::success);
@@ -182,7 +185,8 @@ TEST_F(KernelHelperTest, GivenScratchAndPrivateSizeLessThanGlobalSizeWhenCheckin
 TEST_F(KernelHelperTest, GivenScratchSizeGreaterThanMaxScratchSizeWhenCheckingIfThereIsEnaughSpaceThenInvalidKernelIsReturned) {
     KernelDescriptor::KernelAttributes attributes = {};
     auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
-    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
+    auto &productHelper = pDevice->getProductHelper();
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize(productHelper);
     attributes.perHwThreadPrivateMemorySize = 0x10;
     attributes.perThreadScratchSize[0] = maxScratchSize + 1;
     attributes.perThreadScratchSize[1] = 0x10;
@@ -192,7 +196,8 @@ TEST_F(KernelHelperTest, GivenScratchSizeGreaterThanMaxScratchSizeWhenCheckingIf
 TEST_F(KernelHelperTest, GivenScratchPrivateSizeGreaterThanMaxScratchSizeWhenCheckingIfThereIsEnaughSpaceThenInvalidKernelIsReturned) {
     KernelDescriptor::KernelAttributes attributes = {};
     auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
-    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize();
+    auto &productHelper = pDevice->getProductHelper();
+    uint32_t maxScratchSize = gfxCoreHelper.getMaxScratchSize(productHelper);
     attributes.perHwThreadPrivateMemorySize = 0x10;
     attributes.perThreadScratchSize[0] = 0x10;
     attributes.perThreadScratchSize[1] = maxScratchSize + 1;
