@@ -194,6 +194,7 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
             DEBUG_BREAK_IF(clientHandleToConnection.find(clientEvent->client_handle) != clientHandleToConnection.end());
             clientHandleToConnection[clientEvent->client_handle].reset(new ClientConnectionXe);
             clientHandleToConnection[clientEvent->client_handle]->client = *clientEvent;
+            clientHandle = clientEvent->client_handle;
         }
 
         if (event->flags & DRM_XE_EUDEBUG_EVENT_DESTROY) {
@@ -229,7 +230,6 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
             UNRECOVERABLE_IF(clientHandleToConnection.find(execQueue->client_handle) == clientHandleToConnection.end());
 
             if (!processEntryEventGenerated) {
-                clientHandle = execQueue->client_handle;
                 zet_debug_event_t debugEvent = {};
                 debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
                 pushApiEvent(debugEvent);
