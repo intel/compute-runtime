@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -734,6 +734,7 @@ bool DebugSessionImp::readSystemRoutineIdentFromMemory(EuThread *thread, const v
     auto threadSlot = ptrOffset(stateSaveArea, srMagicOffset);
     memcpy_s(&srIdent, sizeof(SIP::sr_ident), threadSlot, sizeof(SIP::sr_ident));
 
+    PRINT_DEBUGGER_INFO_LOG("readSystemRoutineIdentFromMemory - threadSlotOffset %zu srMagicOffset %lu for thread %s\n", threadSlotOffset, srMagicOffset, EuThread::toString(thread->getThreadId()).c_str());
     if (0 != strcmp(srIdent.magic, "srmagic")) {
         PRINT_DEBUGGER_ERROR_LOG("readSystemRoutineIdentFromMemory - Failed to read srMagic for thread %s\n", EuThread::toString(thread->getThreadId()).c_str());
         return false;
