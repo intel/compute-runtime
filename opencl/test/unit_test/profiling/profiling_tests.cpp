@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,58 @@ struct ProfilingTests : public CommandEnqueueFixture,
     uint32_t kernelIsa[32];
     uint32_t crossThreadData[32];
 };
+
+template <typename TagType>
+struct MockTagNode : public TagNode<TagType> {
+  public:
+    using TagNode<TagType>::tagForCpuAccess;
+    using TagNode<TagType>::gfxAllocation;
+    MockTagNode() {
+        gfxAllocation = nullptr;
+        tagForCpuAccess = nullptr;
+    }
+    void returnTag() {
+    }
+};
+
+class MyOSDeviceTime : public DeviceTime {
+    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+        EXPECT_FALSE(true);
+        return 1.0;
+    }
+    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
+        EXPECT_FALSE(true);
+        return 0;
+    }
+    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *) override {
+        EXPECT_FALSE(true);
+        return false;
+    }
+};
+
+class MyOSTime : public OSTime {
+  public:
+    static int instanceNum;
+    MyOSTime() {
+        instanceNum++;
+        this->deviceTime = std::make_unique<MyOSDeviceTime>();
+    }
+
+    bool getCpuTime(uint64_t *timeStamp) override {
+        EXPECT_FALSE(true);
+        return false;
+    };
+    double getHostTimerResolution() const override {
+        EXPECT_FALSE(true);
+        return 0;
+    }
+    uint64_t getCpuRawTimestamp() override {
+        EXPECT_FALSE(true);
+        return 0;
+    }
+};
+
+int MyOSTime::instanceNum = 0;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingAndForWorkloadWithKernelWhenGetCSFromCmdQueueThenEnoughSpaceInCS) {
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
@@ -442,7 +494,7 @@ HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenNonBlockedEnqueueThenSetGpuPath) 
     cl_event event;
     pCmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
     auto eventObj = static_cast<Event *>(event);
-    EXPECT_TRUE(eventObj->isCPUProfilingPath() == CL_FALSE);
+    EXPECT_FALSE(eventObj->isCPUProfilingPath());
     pCmdQ->finish();
 
     uint64_t queued, submit;
@@ -455,6 +507,7 @@ HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenNonBlockedEnqueueThenSetGpuPath) 
 
     EXPECT_LT(0u, queued);
     EXPECT_LT(queued, submit);
+
     eventObj->release();
 }
 
@@ -474,7 +527,17 @@ HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenBlockedEnqueueThenSetGpuPath) {
 
     uint64_t queued = 0u, submit = 0u;
     cl_int retVal;
-
+    HwTimeStamps timestamp;
+    timestamp.globalStartTS = 10;
+    timestamp.contextStartTS = 10;
+    timestamp.globalEndTS = 80;
+    timestamp.contextEndTS = 80;
+    MockTagNode<HwTimeStamps> timestampNode;
+    timestampNode.tagForCpuAccess = &timestamp;
+    static_cast<MockEvent<Event> *>(eventObj)->timeStampNode = &timestampNode;
+    if (eventObj->getTimestampPacketNodes()) {
+        eventObj->getTimestampPacketNodes()->releaseNodes();
+    }
     retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(uint64_t), &queued, 0);
     EXPECT_EQ(CL_SUCCESS, retVal);
     retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
@@ -483,59 +546,10 @@ HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenBlockedEnqueueThenSetGpuPath) {
     EXPECT_LT(0u, queued);
     EXPECT_LT(queued, submit);
 
+    static_cast<MockEvent<Event> *>(eventObj)->timeStampNode = nullptr;
     eventObj->release();
     userEventObj->release();
 }
-
-template <typename TagType>
-struct MockTagNode : public TagNode<TagType> {
-  public:
-    using TagNode<TagType>::tagForCpuAccess;
-    using TagNode<TagType>::gfxAllocation;
-    MockTagNode() {
-        gfxAllocation = nullptr;
-        tagForCpuAccess = nullptr;
-    }
-};
-
-class MyOSDeviceTime : public DeviceTime {
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
-        EXPECT_FALSE(true);
-        return 1.0;
-    }
-    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
-        EXPECT_FALSE(true);
-        return 0;
-    }
-    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *) override {
-        EXPECT_FALSE(true);
-        return false;
-    }
-};
-
-class MyOSTime : public OSTime {
-  public:
-    static int instanceNum;
-    MyOSTime() {
-        instanceNum++;
-        this->deviceTime = std::make_unique<MyOSDeviceTime>();
-    }
-
-    bool getCpuTime(uint64_t *timeStamp) override {
-        EXPECT_FALSE(true);
-        return false;
-    };
-    double getHostTimerResolution() const override {
-        EXPECT_FALSE(true);
-        return 0;
-    }
-    uint64_t getCpuRawTimestamp() override {
-        EXPECT_FALSE(true);
-        return 0;
-    }
-};
-
-int MyOSTime::instanceNum = 0;
 
 using EventProfilingTest = ProfilingTests;
 

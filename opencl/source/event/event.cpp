@@ -163,12 +163,14 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
     // if paramValue is NULL, it is ignored
     switch (paramName) {
     case CL_PROFILING_COMMAND_QUEUED:
+        calcProfilingData();
         timestamp = getProfilingInfoData(queueTimeStamp);
         src = &timestamp;
         srcSize = sizeof(cl_ulong);
         break;
 
     case CL_PROFILING_COMMAND_SUBMIT:
+        calcProfilingData();
         timestamp = getProfilingInfoData(submitTimeStamp);
         src = &timestamp;
         srcSize = sizeof(cl_ulong);
@@ -365,15 +367,55 @@ bool Event::calcProfilingData() {
     return dataCalculated;
 }
 
+void Event::updateTimestamp(ProfilingInfo &timestamp, uint64_t newGpuTimestamp) const {
+    auto &device = this->cmdQueue->getDevice();
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+    auto resolution = device.getDeviceInfo().profilingTimerResolution;
+    timestamp.gpuTimeStamp = newGpuTimestamp;
+    timestamp.gpuTimeInNs = gfxCoreHelper.getGpuTimeStampInNS(timestamp.gpuTimeStamp, resolution);
+    timestamp.cpuTimeInNs = timestamp.gpuTimeInNs;
+}
+
+/**
+ * @brief Timestamp returned from GPU is initially 32 bits. This method performs XOR with
+ * other timestamp that tracks overflows, so passed timestamp will have correct overflow bits
+ *
+ * @param[out] timestamp Overflow bits will be added to this timestamp
+ * @param[in] timestampWithOverflow Timestamp that tracks overflows in remaining 32 most significant bits
+ *
+ */
+void Event::addOverflowToTimestamp(uint64_t &timestamp, uint64_t timestampWithOverflow) const {
+    auto &device = this->cmdQueue->getDevice();
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+    timestamp |= timestampWithOverflow & (maxNBitValue(64) - maxNBitValue(gfxCoreHelper.getGlobalTimeStampBits()));
+}
+
 void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS) {
     auto &device = this->cmdQueue->getDevice();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto resolution = device.getDeviceInfo().profilingTimerResolution;
 
     startTimeStamp.gpuTimeStamp = globalStartTS;
-    while (startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp) {
-        startTimeStamp.gpuTimeStamp += static_cast<uint64_t>(1ULL << gfxCoreHelper.getGlobalTimeStampBits());
+    addOverflowToTimestamp(startTimeStamp.gpuTimeStamp, submitTimeStamp.gpuTimeStamp);
+    if (startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp) {
+        auto diff = submitTimeStamp.gpuTimeStamp - startTimeStamp.gpuTimeStamp;
+        auto diffInNS = gfxCoreHelper.getGpuTimeStampInNS(diff, resolution);
+        auto osTime = device.getOSTime();
+        if (diffInNS < osTime->getTimestampRefreshTimeout()) {
+            auto alignedSubmitTimestamp = startTimeStamp.gpuTimeStamp - 1;
+            auto alignedQueueTimestamp = startTimeStamp.gpuTimeStamp - 2;
+            if (startTimeStamp.gpuTimeStamp <= 2) {
+                alignedSubmitTimestamp = 0;
+                alignedQueueTimestamp = 0;
+            }
+            updateTimestamp(submitTimeStamp, alignedSubmitTimestamp);
+            updateTimestamp(queueTimeStamp, alignedQueueTimestamp);
+            osTime->setRefreshTimestampsFlag();
+        } else {
+            startTimeStamp.gpuTimeStamp += static_cast<uint64_t>(1ULL << gfxCoreHelper.getGlobalTimeStampBits());
+        }
     }
+    UNRECOVERABLE_IF(startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp);
     auto gpuTicksDiff = startTimeStamp.gpuTimeStamp - submitTimeStamp.gpuTimeStamp;
     auto timeDiff = static_cast<uint64_t>(gpuTicksDiff * resolution);
     startTimeStamp.cpuTimeInNs = submitTimeStamp.cpuTimeInNs + timeDiff;
@@ -614,8 +656,8 @@ void Event::submitCommand(bool abortTasks) {
             this->setSubmitTimeStamp();
             if (profilingCpuPath) {
                 setStartTimeStamp();
-            } else {
             }
+
             if (perfCountersEnabled && perfCounterNode) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*perfCounterNode->getBaseGraphicsAllocation());
             }

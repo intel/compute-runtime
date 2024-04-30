@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/os_time.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include <mutex>
@@ -16,6 +18,13 @@ namespace NEO {
 double OSTime::getDeviceTimerResolution(HardwareInfo const &hwInfo) {
     return hwInfo.capabilityTable.defaultProfilingTimerResolution;
 };
+
+DeviceTime::DeviceTime() {
+    reusingTimestampsEnabled = debugManager.flags.EnableReusingGpuTimestamps.get();
+    if (reusingTimestampsEnabled) {
+        timestampRefreshTimeoutNS = NSEC_PER_MSEC * 100; // 100ms
+    }
+}
 
 bool DeviceTime::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     pGpuCpuTime->cpuTimeinNS = 0;
@@ -31,8 +40,63 @@ uint64_t DeviceTime::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) cons
     return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
 }
 
-bool DeviceTime::getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) {
-    if (!getGpuCpuTimeImpl(pGpuCpuTime, osTime)) {
+void DeviceTime::setDeviceTimerResolution(HardwareInfo const &hwInfo) {
+    deviceTimerResolution = getDynamicDeviceTimerResolution(hwInfo);
+    if (debugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
+        deviceTimerResolution = static_cast<double>(debugManager.flags.OverrideProfilingTimerResolution.get());
+    }
+}
+
+/**
+ * @brief If this method is called within interval, GPU timestamp
+ * will be calculated based on CPU timestamp and previous GPU ticks
+ * to reduce amount of internal KMD calls. Interval is selected
+ * adaptively, based on misalignment between calculated ticks and actual ticks.
+ *
+ * @return returns false if internal call to KMD failed. True otherwise.
+ */
+bool DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall) {
+    uint64_t cpuTimeinNS;
+    osTime->getCpuTime(&cpuTimeinNS);
+
+    auto cpuTimeDiffInNS = cpuTimeinNS - fetchedTimestamps.cpuTimeinNS;
+    if (forceKmdCall || cpuTimeDiffInNS >= timestampRefreshTimeoutNS) {
+        refreshTimestamps = true;
+    }
+
+    if (!reusingTimestampsEnabled || refreshTimestamps) {
+        if (!getGpuCpuTimeImpl(timeStamp, osTime)) {
+            return false;
+        }
+        if (!reusingTimestampsEnabled) {
+            return true;
+        }
+        if (initialGpuTimeStamp) {
+            UNRECOVERABLE_IF(deviceTimerResolution == 0);
+            auto calculatedTimestamp = fetchedTimestamps.gpuTimeStamp + static_cast<uint64_t>(cpuTimeDiffInNS / deviceTimerResolution);
+            auto diff = abs(static_cast<int64_t>(timeStamp->gpuTimeStamp - calculatedTimestamp));
+            auto elapsedTicks = timeStamp->gpuTimeStamp - fetchedTimestamps.gpuTimeStamp;
+            int64_t adaptValue = static_cast<int64_t>(diff * deviceTimerResolution);
+            adaptValue = std::min(adaptValue, static_cast<int64_t>(timestampRefreshMinTimeoutNS));
+            if (diff * 1.0f / elapsedTicks > 0.05) {
+                adaptValue = adaptValue * (-1);
+            }
+            timestampRefreshTimeoutNS += adaptValue;
+            timestampRefreshTimeoutNS = std::max(timestampRefreshMinTimeoutNS, std::min(timestampRefreshMaxTimeoutNS, timestampRefreshTimeoutNS));
+        }
+        fetchedTimestamps = *timeStamp;
+        refreshTimestamps = false;
+    } else {
+        timeStamp->cpuTimeinNS = cpuTimeinNS;
+        UNRECOVERABLE_IF(deviceTimerResolution == 0);
+        timeStamp->gpuTimeStamp = fetchedTimestamps.gpuTimeStamp + static_cast<uint64_t>(cpuTimeDiffInNS / deviceTimerResolution);
+    }
+
+    return true;
+}
+
+bool DeviceTime::getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime, bool forceKmdCall) {
+    if (!getGpuCpuTimestamps(pGpuCpuTime, osTime, forceKmdCall)) {
         return false;
     }
 

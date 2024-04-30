@@ -1048,7 +1048,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
 ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
     NEO::TimeStampData queueTimeStamp;
-    bool retVal = this->neoDevice->getOSTime()->getGpuCpuTime(&queueTimeStamp);
+    bool retVal = this->neoDevice->getOSTime()->getGpuCpuTime(&queueTimeStamp, true);
     if (!retVal)
         return ZE_RESULT_ERROR_DEVICE_LOST;
 

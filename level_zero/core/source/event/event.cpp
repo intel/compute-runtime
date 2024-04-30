@@ -489,7 +489,7 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
     const auto recalculate =
         (currentCpuTimeStamp - referenceTs.cpuTimeinNS) > timestampRefreshIntervalInNanoSec;
     if (referenceTs.cpuTimeinNS == 0 || recalculate) {
-        device->getNEODevice()->getOSTime()->getGpuCpuTime(&referenceTs);
+        device->getNEODevice()->getOSTime()->getGpuCpuTime(&referenceTs, true);
     }
 }
 

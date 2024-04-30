@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -359,6 +359,9 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     bool isWaitForTimestampsEnabled() const;
     bool areTimestampsCompleted();
+
+    void updateTimestamp(ProfilingInfo &timestamp, uint64_t newGpuTimestamp) const;
+    void addOverflowToTimestamp(uint64_t &timestamp, uint64_t timestampWithOverflow) const;
 
     bool currentCmdQVirtualEvent = false;
     std::atomic<Command *> cmdToSubmit{nullptr};
