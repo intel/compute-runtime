@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,7 @@ struct TimestampPacketDependencies : public NonCopyableClass {
     TimestampPacketContainer barrierNodes;
     TimestampPacketContainer auxToNonAuxNodes;
     TimestampPacketContainer nonAuxToAuxNodes;
+    TimestampPacketContainer multiCsrDependencies;
 
     void moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer);
 };

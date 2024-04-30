@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #pragma once
 #include "shared/source/utilities/stackvec.h"
+
+#include <set>
 
 namespace NEO {
 
@@ -27,5 +29,7 @@ class CsrDependencies {
     void makeResident(CommandStreamReceiver &commandStreamReceiver) const;
     void copyNodesToNewContainer(TimestampPacketContainer &newTimestampPacketContainer);
     void copyRootDeviceSyncNodesToNewContainer(TimestampPacketContainer &newTimestampPacketContainer);
+
+    std::set<CommandStreamReceiver *> csrWithMultiEngineDependencies;
 };
 } // namespace NEO

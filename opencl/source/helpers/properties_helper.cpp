@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,13 +58,14 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
         if (pushDependency) {
             csrDeps.timestampPacketContainer.push_back(timestampPacketContainer);
 
+            const auto &productHelper = event->getCommandQueue()->getDevice().getProductHelper();
             if (!sameCsr) {
-                const auto &productHelper = event->getCommandQueue()->getDevice().getProductHelper();
                 if (productHelper.isDcFlushAllowed()) {
                     if (!dependentCsr->isLatestTaskCountFlushed()) {
                         flushDependentCsr(*dependentCsr, csrDeps);
                         currentCsr.makeResident(*dependentCsr->getTagAllocation());
                     }
+                    csrDeps.csrWithMultiEngineDependencies.insert(dependentCsr);
                 }
             }
         }
