@@ -1166,18 +1166,6 @@ HWTEST_F(HardwareCommandsTest, whenNumLocalIdsIsZeroThenExpectLocalIdsInUseIsFal
     EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal->mockKernel));
 }
 
-TEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerEnabledWhenPlatformNotSupportFlushThenExpectNoCacheAllocationForFlush) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableCacheFlushAfterWalker.set(-1);
-    hardwareInfo.capabilityTable.supportCacheFlushAfterWalker = false;
-
-    StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;
-    mockKernelWithInternal->mockKernel->getAllocationsForCacheFlush(allocationsForCacheFlush);
-    EXPECT_EQ(0U, allocationsForCacheFlush.size());
-}
-
-using KernelCacheFlushTests = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
-
 struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
 
     void SetUp() override {

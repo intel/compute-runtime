@@ -328,9 +328,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     MOCKABLE_VIRTUAL bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const;
 
-    using CacheFlushAllocationsVec = StackVec<GraphicsAllocation *, 32>;
-    void getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const;
-
     void setAuxTranslationDirection(AuxTranslationDirection auxTranslationDirection) {
         this->auxTranslationDirection = auxTranslationDirection;
     }

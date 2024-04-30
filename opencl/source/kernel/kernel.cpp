@@ -2111,18 +2111,6 @@ bool Kernel::hasIndirectStatelessAccessToHostMemory() const {
     return false;
 }
 
-void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
-    if (false == GfxCoreHelper::cacheFlushAfterWalkerSupported(getHardwareInfo())) {
-        return;
-    }
-
-    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-    auto global = getProgram()->getGlobalSurface(rootDeviceIndex);
-    if (global != nullptr) {
-        out.push_back(global);
-    }
-}
-
 uint64_t Kernel::getKernelStartAddress(const bool localIdsGenerationByRuntime, const bool kernelUsesLocalIds, const bool isCssUsed, const bool returnFullAddress) const {
 
     uint64_t kernelStartOffset = 0;
