@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,13 +38,6 @@ void MockKernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 void MockKernel::getResidency(std::vector<Surface *> &dst) {
     getResidencyCalls++;
     Kernel::getResidency(dst);
-}
-bool MockKernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
-    if (debugManager.flags.EnableCacheFlushAfterWalker.get() != -1) {
-        return !!debugManager.flags.EnableCacheFlushAfterWalker.get();
-    }
-
-    return false;
 }
 
 cl_int MockKernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc, uint32_t allocId) {

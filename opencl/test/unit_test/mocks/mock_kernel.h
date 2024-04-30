@@ -248,8 +248,6 @@ class MockKernel : public Kernel {
 
     void setSystolicPipelineSelectMode(bool value) { systolicPipelineSelectMode = value; }
 
-    bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const override;
-
     cl_int setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocation *svmAlloc, uint32_t allocId) override;
 
     uint32_t makeResidentCalls = 0;

@@ -2335,37 +2335,6 @@ void Kernel::reconfigureKernel() {
     this->systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
 }
 
-bool Kernel::requiresCacheFlushCommand(const CommandQueue &commandQueue) const {
-    if (false == GfxCoreHelper::cacheFlushAfterWalkerSupported(commandQueue.getDevice().getHardwareInfo())) {
-        return false;
-    }
-
-    if (debugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get() != -1) {
-        return !!debugManager.flags.EnableCacheFlushAfterWalkerForAllQueues.get();
-    }
-
-    bool cmdQueueRequiresCacheFlush = commandQueue.getRequiresCacheFlushAfterWalker();
-    if (false == cmdQueueRequiresCacheFlush) {
-        return false;
-    }
-    if (commandQueue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable()) {
-        return false;
-    }
-    bool isMultiDevice = commandQueue.getContext().containsMultipleSubDevices(commandQueue.getDevice().getRootDeviceIndex());
-    if (false == isMultiDevice) {
-        return false;
-    }
-    bool isDefaultContext = (commandQueue.getContext().peekContextType() == ContextType::CONTEXT_TYPE_DEFAULT);
-    if (true == isDefaultContext) {
-        return false;
-    }
-
-    if (getProgram()->getGlobalSurface(commandQueue.getDevice().getRootDeviceIndex()) != nullptr) {
-        return true;
-    }
-    return false;
-}
-
 void Kernel::updateAuxTranslationRequired() {
     if (CompressionSelector::allowStatelessCompression()) {
         if (hasDirectStatelessAccessToHostMemory() ||

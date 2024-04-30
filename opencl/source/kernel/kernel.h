@@ -326,8 +326,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     std::unique_ptr<KernelObjsForAuxTranslation> fillWithKernelObjsForAuxTranslation();
 
-    MOCKABLE_VIRTUAL bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const;
-
     void setAuxTranslationDirection(AuxTranslationDirection auxTranslationDirection) {
         this->auxTranslationDirection = auxTranslationDirection;
     }

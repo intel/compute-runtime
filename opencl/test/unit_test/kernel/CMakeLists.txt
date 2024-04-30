@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,7 +16,6 @@ set(IGDRCL_SRCS_tests_kernel
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_pipe_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_svm_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_cache_flush_requirements_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info_cl_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_image_arg_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_immediate_arg_tests.cpp
