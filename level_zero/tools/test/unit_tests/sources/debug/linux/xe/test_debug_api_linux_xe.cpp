@@ -363,7 +363,6 @@ TEST_F(DebugApiLinuxTestXe, GivenPollReturnsNonZeroWhenReadingInternalEventsAsyn
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
-    //    session->synchronousInternalEventRead = true;
 
     uint64_t clientHandle = 2;
     drm_xe_eudebug_event_client client = {};
@@ -375,16 +374,14 @@ TEST_F(DebugApiLinuxTestXe, GivenPollReturnsNonZeroWhenReadingInternalEventsAsyn
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.len)});
 
     session->readInternalEventsAsync();
-
-    constexpr int clientEventCount = 1;
     constexpr int dummyReadEventCount = 1;
 
-    EXPECT_EQ(clientEventCount + dummyReadEventCount, handler->ioctlCalled);
+    EXPECT_EQ(dummyReadEventCount, handler->ioctlCalled);
     EXPECT_EQ(DebugSessionLinuxXe::maxEventSize, handler->debugEventInput.len);
     EXPECT_EQ(static_cast<decltype(drm_xe_eudebug_event::type)>(DRM_XE_EUDEBUG_EVENT_READ), handler->debugEventInput.type);
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenMoreThan3EventsInQueueThenInternalEventsOnlyReads3) {
+TEST_F(DebugApiLinuxTestXe, GivenMoreThan1EventsInQueueThenInternalEventsOnlyReads1) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -411,7 +408,7 @@ TEST_F(DebugApiLinuxTestXe, GivenMoreThan3EventsInQueueThenInternalEventsOnlyRea
 
     session->readInternalEventsAsync();
 
-    EXPECT_EQ(3, handler->ioctlCalled);
+    EXPECT_EQ(1, handler->ioctlCalled);
     EXPECT_EQ(DebugSessionLinuxXe::maxEventSize, handler->debugEventInput.len);
     EXPECT_EQ(static_cast<decltype(drm_xe_eudebug_event::type)>(DRM_XE_EUDEBUG_EVENT_READ), handler->debugEventInput.type);
 }

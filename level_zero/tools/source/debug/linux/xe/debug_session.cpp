@@ -139,28 +139,23 @@ void DebugSessionLinuxXe::readInternalEventsAsync() {
 
         ze_result_t result = ZE_RESULT_SUCCESS;
 
-        int maxLoopCount = 3;
-        do {
+        uint8_t maxEventBuffer[sizeof(drm_xe_eudebug_event) + maxEventSize];
+        auto event = reinterpret_cast<drm_xe_eudebug_event *>(maxEventBuffer);
+        event->len = maxEventSize;
+        event->type = DRM_XE_EUDEBUG_EVENT_READ;
+        event->flags = 0;
 
-            uint8_t maxEventBuffer[sizeof(drm_xe_eudebug_event) + maxEventSize];
-            auto event = reinterpret_cast<drm_xe_eudebug_event *>(maxEventBuffer);
-            event->len = maxEventSize;
-            event->type = DRM_XE_EUDEBUG_EVENT_READ;
-            event->flags = 0;
+        result = readEventImp(event);
 
-            result = readEventImp(event);
-            maxLoopCount--;
+        if (result == ZE_RESULT_SUCCESS) {
+            std::lock_guard<std::mutex> lock(internalEventThreadMutex);
 
-            if (result == ZE_RESULT_SUCCESS) {
-                std::lock_guard<std::mutex> lock(internalEventThreadMutex);
+            auto memory = std::make_unique<uint64_t[]>(maxEventSize / sizeof(uint64_t));
+            memcpy(memory.get(), event, maxEventSize);
 
-                auto memory = std::make_unique<uint64_t[]>(maxEventSize / sizeof(uint64_t));
-                memcpy(memory.get(), event, maxEventSize);
-
-                internalEventQueue.push(std::move(memory));
-                internalEventCondition.notify_one();
-            }
-        } while (result == ZE_RESULT_SUCCESS && maxLoopCount > 0);
+            internalEventQueue.push(std::move(memory));
+            internalEventCondition.notify_one();
+        }
     }
 }
 
