@@ -58,14 +58,13 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
         if (pushDependency) {
             csrDeps.timestampPacketContainer.push_back(timestampPacketContainer);
 
-            const auto &productHelper = event->getCommandQueue()->getDevice().getProductHelper();
             if (!sameCsr) {
+                const auto &productHelper = event->getCommandQueue()->getDevice().getProductHelper();
                 if (productHelper.isDcFlushAllowed()) {
                     if (!dependentCsr->isLatestTaskCountFlushed()) {
                         flushDependentCsr(*dependentCsr, csrDeps);
                         currentCsr.makeResident(*dependentCsr->getTagAllocation());
                     }
-                    csrDeps.csrWithMultiEngineDependencies.insert(dependentCsr);
                 }
             }
         }

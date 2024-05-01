@@ -2337,25 +2337,4 @@ inline void CommandStreamReceiverHw<GfxFamily>::chainCsrWorkToTask(LinearStream 
     this->makeResident(*chainedBatchBuffer);
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
 }
-template <typename GfxFamily>
-bool CommandStreamReceiverHw<GfxFamily>::submitDependencyUpdate(TagNodeBase *tag) {
-    auto ownership = obtainUniqueOwnership();
-    auto expectedSize = sizeof(typename GfxFamily::PIPE_CONTROL);
-    auto &commandStream = getCS(expectedSize);
-    auto commandStreamStart = commandStream.getUsed();
-    auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tag);
-    PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, this->peekRootDeviceEnvironment());
-    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-        commandStream,
-        PostSyncMode::immediateData,
-        cacheFlushTimestampPacketGpuAddress,
-        0,
-        this->peekRootDeviceEnvironment(),
-        args);
-
-    auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
-    this->latestFlushedTaskCount = taskCount.load();
-    return submissionStatus == SubmissionStatus::success;
-}
 } // namespace NEO

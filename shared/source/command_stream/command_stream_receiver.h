@@ -66,7 +66,6 @@ class TimestampPackets;
 
 template <typename T1>
 class TagAllocator;
-class TagNodeBase;
 
 enum class DispatchMode {
     deviceDefault = 0,          // default for given device
@@ -476,7 +475,6 @@ class CommandStreamReceiver {
 
     uint32_t getRequiredScratchSlot0Size() { return requiredScratchSlot0Size; }
     uint32_t getRequiredScratchSlot1Size() { return requiredScratchSlot1Size; }
-    virtual bool submitDependencyUpdate(TagNodeBase *tag) { return true; }
 
   protected:
     void cleanupResources();

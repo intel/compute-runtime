@@ -199,7 +199,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programStateBaseAddressHeapless(Device &device, LinearStream &commandStream);
     void programComputeModeHeapless(Device &device, LinearStream &commandStream);
     void handleAllocationsResidencyForflushTaskStateless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh);
-    bool submitDependencyUpdate(TagNodeBase *tag) override;
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
