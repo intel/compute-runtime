@@ -83,9 +83,9 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCalling
     EXPECT_STREQ("i915", pSysmanKmdInterface->getHwmonName(0, false).c_str());
 }
 
-TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEngineBasePathThenEmptyPathIsReturned) {
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEngineBasePathThenCorrectPathIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    EXPECT_STREQ("", pSysmanKmdInterface->getEngineBasePath(0).c_str());
+    EXPECT_STREQ("engine", pSysmanKmdInterface->getEngineBasePath(0).c_str());
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenGettingSysfsFileNamesThenProperPathsAreReturned) {
@@ -190,9 +190,9 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckin
     EXPECT_TRUE(pSysmanKmdInterface->isPhysicalMemorySizeSupported());
 }
 
-TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEngineClassStringThenInvalidValueIsReturned) {
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEngineClassStringForComputeThenValidStringIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    EXPECT_EQ(std::nullopt, pSysmanKmdInterface->getEngineClassString(EngineClass::ENGINE_CLASS_COMPUTE));
+    EXPECT_EQ("ccs", pSysmanKmdInterface->getEngineClassString(EngineClass::ENGINE_CLASS_COMPUTE));
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetNumEngineTypeAndInstancesThenErrorIsReturned) {

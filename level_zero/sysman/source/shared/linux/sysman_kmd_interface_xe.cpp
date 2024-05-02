@@ -24,47 +24,6 @@ static const std::map<__u16, std::string> xeEngineClassToSysfsEngineMap = {
     {DRM_XE_ENGINE_CLASS_VIDEO_DECODE, "vcs"},
     {DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, "vecs"}};
 
-static const std::map<std::string, zes_engine_type_flag_t> sysfsEngineMapToLevel0EngineType = {
-    {"rcs", ZES_ENGINE_TYPE_FLAG_RENDER},
-    {"ccs", ZES_ENGINE_TYPE_FLAG_COMPUTE},
-    {"bcs", ZES_ENGINE_TYPE_FLAG_DMA},
-    {"vcs", ZES_ENGINE_TYPE_FLAG_MEDIA},
-    {"vecs", ZES_ENGINE_TYPE_FLAG_OTHER}};
-
-static ze_result_t getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
-                                                             NEO::Drm *pDrm,
-                                                             SysmanKmdInterface *pSysmanKmdInterface,
-                                                             uint32_t subdeviceId) {
-    NEO::EngineInfo *engineInfo = nullptr;
-    {
-        auto hwDeviceId = static_cast<SysmanHwDeviceIdDrm *>(pDrm->getHwDeviceId().get())->getSingleInstance();
-        engineInfo = pDrm->getEngineInfo();
-    }
-    if (engineInfo == nullptr) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    std::vector<NEO::EngineClassInstance> listOfEngines;
-    engineInfo->getListOfEnginesOnATile(subdeviceId, listOfEngines);
-    for (const auto &engine : listOfEngines) {
-        std::string sysfEngineString = pSysmanKmdInterface->getEngineClassString(engine.engineClass).value_or(" ");
-        if (sysfEngineString == " ") {
-            continue;
-        }
-
-        std::string sysfsEngineDirNode = sysfEngineString + std::to_string(engine.engineInstance);
-        auto level0EngineType = sysfsEngineMapToLevel0EngineType.find(sysfEngineString);
-        auto ret = mapOfEngines.find(level0EngineType->second);
-        if (ret != mapOfEngines.end()) {
-            ret->second.push_back(sysfsEngineDirNode);
-        } else {
-            std::vector<std::string> engineVec = {};
-            engineVec.push_back(sysfsEngineDirNode);
-            mapOfEngines.emplace(level0EngineType->second, engineVec);
-        }
-    }
-    return ZE_RESULT_SUCCESS;
-}
-
 SysmanKmdInterfaceXe::SysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) {
     initSysfsNameToFileMap(productFamily);
 }
@@ -151,7 +110,7 @@ ze_result_t SysmanKmdInterfaceXe::getNumEngineTypeAndInstances(std::map<zes_engi
                                                                uint32_t subdeviceId) {
     if (onSubdevice) {
         return getNumEngineTypeAndInstancesForSubDevices(mapOfEngines,
-                                                         pLinuxSysmanImp->getDrm(), pLinuxSysmanImp->getSysmanKmdInterface(), subdeviceId);
+                                                         pLinuxSysmanImp->getDrm(), subdeviceId);
     }
     return getNumEngineTypeAndInstancesForDevice(getEngineBasePath(subdeviceId), mapOfEngines, pSysfsAccess);
 }

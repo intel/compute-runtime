@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {
@@ -17,6 +19,13 @@ SysmanKmdInterfaceI915Prelim::SysmanKmdInterfaceI915Prelim(const PRODUCT_FAMILY 
 }
 
 SysmanKmdInterfaceI915Prelim::~SysmanKmdInterfaceI915Prelim() = default;
+
+static const std::map<__u16, std::string> i915EngineClassToSysfsEngineMap = {
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, "rcs"},
+    {static_cast<__u16>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COMPUTE), "ccs"},
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY, "bcs"},
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO, "vcs"},
+    {drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE, "vecs"}};
 
 void SysmanKmdInterfaceI915Prelim::initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily) {
     sysfsNameToFileMap[SysfsName::sysfsNameMinFrequency] = std::make_pair("rps_min_freq_mhz", "gt_min_freq_mhz");
@@ -49,6 +58,9 @@ void SysmanKmdInterfaceI915Prelim::initSysfsNameToFileMap(const PRODUCT_FAMILY p
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactor] = std::make_pair("media_freq_factor", "");
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale] = std::make_pair("media_freq_factor.scale", "");
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceSystemPowerBalance] = std::make_pair("", "sys_pwr_balance");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerTimeout] = std::make_pair("", "preempt_timeout_ms");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerTimeslice] = std::make_pair("", "timeslice_duration_ms");
+    sysfsNameToFileMap[SysfsName::sysfsNameSchedulerWatchDogTimeout] = std::make_pair("", "heartbeat_interval_ms");
 }
 
 std::string SysmanKmdInterfaceI915Prelim::getBasePath(uint32_t subDeviceId) const {
@@ -80,7 +92,7 @@ std::string SysmanKmdInterfaceI915Prelim::getHwmonName(uint32_t subDeviceId, boo
 }
 
 std::string SysmanKmdInterfaceI915Prelim::getEngineBasePath(uint32_t subDeviceId) const {
-    return "";
+    return getEngineBasePathI915(subDeviceId);
 }
 
 ze_result_t SysmanKmdInterfaceI915Prelim::getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
@@ -88,11 +100,20 @@ ze_result_t SysmanKmdInterfaceI915Prelim::getNumEngineTypeAndInstances(std::map<
                                                                        SysFsAccessInterface *pSysfsAccess,
                                                                        ze_bool_t onSubdevice,
                                                                        uint32_t subdeviceId) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (onSubdevice) {
+        return getNumEngineTypeAndInstancesForSubDevices(mapOfEngines,
+                                                         pLinuxSysmanImp->getDrm(), subdeviceId);
+    }
+    return getNumEngineTypeAndInstancesForDevice(getEngineBasePath(subdeviceId), mapOfEngines, pSysfsAccess);
 }
 
 std::optional<std::string> SysmanKmdInterfaceI915Prelim::getEngineClassString(uint16_t engineClass) {
-    return std::nullopt;
+    auto sysfEngineString = i915EngineClassToSysfsEngineMap.find(engineClass);
+    if (sysfEngineString == i915EngineClassToSysfsEngineMap.end()) {
+        DEBUG_BREAK_IF(true);
+        return {};
+    }
+    return sysfEngineString->second;
 }
 
 uint32_t SysmanKmdInterfaceI915Prelim::getEventType(const bool isIntegratedDevice) {

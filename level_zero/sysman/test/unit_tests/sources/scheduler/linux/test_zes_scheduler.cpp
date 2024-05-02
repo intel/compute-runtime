@@ -136,6 +136,28 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingzesDe
     EXPECT_EQ(count, handleComponentCount);
 }
 
+TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroAndKMDVersionIsPrelimWhenCallingzesDeviceEnumSchedulersThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
+
+    pLinuxSysmanImp->pSysmanKmdInterface.reset();
+    pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Prelim>(pLinuxSysmanImp->getProductFamily());
+
+    auto pSchedulerHandleContextTest = std::make_unique<L0::Sysman::SchedulerHandleContext>(pOsSysman);
+    pSchedulerHandleContextTest->init(pOsSysman->getSubDeviceCount());
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumSchedulers(device->toHandle(), &count, NULL));
+    EXPECT_EQ(count, handleComponentCount);
+
+    uint32_t testcount = count + 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumSchedulers(device->toHandle(), &testcount, NULL));
+    EXPECT_EQ(testcount, count);
+
+    count = 0;
+    std::vector<zes_sched_handle_t> handles(count, nullptr);
+    EXPECT_EQ(zesDeviceEnumSchedulers(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, handleComponentCount);
+}
+
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerGetCurrentModeThenVerifyzesSchedulerGetCurrentModeCallSucceeds) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {

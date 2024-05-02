@@ -36,6 +36,13 @@ static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineType
     {ZES_ENGINE_TYPE_FLAG_MEDIA, "vcs"},
     {ZES_ENGINE_TYPE_FLAG_OTHER, "vecs"}};
 
+static const std::map<std::string, zes_engine_type_flag_t> sysfsEngineMapToLevel0EngineType = {
+    {"rcs", ZES_ENGINE_TYPE_FLAG_RENDER},
+    {"ccs", ZES_ENGINE_TYPE_FLAG_COMPUTE},
+    {"bcs", ZES_ENGINE_TYPE_FLAG_DMA},
+    {"vcs", ZES_ENGINE_TYPE_FLAG_MEDIA},
+    {"vecs", ZES_ENGINE_TYPE_FLAG_OTHER}};
+
 SysmanKmdInterface::SysmanKmdInterface() = default;
 SysmanKmdInterface::~SysmanKmdInterface() = default;
 
@@ -85,6 +92,39 @@ ProcFsAccessInterface *SysmanKmdInterface::getProcFsAccess() {
 SysFsAccessInterface *SysmanKmdInterface::getSysFsAccess() {
     UNRECOVERABLE_IF(nullptr == pSysfsAccess.get());
     return pSysfsAccess.get();
+}
+
+ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
+                                                                          NEO::Drm *pDrm,
+                                                                          uint32_t subdeviceId) {
+    NEO::EngineInfo *engineInfo = nullptr;
+    {
+        auto hwDeviceId = static_cast<SysmanHwDeviceIdDrm *>(pDrm->getHwDeviceId().get())->getSingleInstance();
+        engineInfo = pDrm->getEngineInfo();
+    }
+    if (engineInfo == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    std::vector<NEO::EngineClassInstance> listOfEngines;
+    engineInfo->getListOfEnginesOnATile(subdeviceId, listOfEngines);
+    for (const auto &engine : listOfEngines) {
+        std::string sysfEngineString = getEngineClassString(engine.engineClass).value_or(" ");
+        if (sysfEngineString == " ") {
+            continue;
+        }
+
+        std::string sysfsEngineDirNode = sysfEngineString + std::to_string(engine.engineInstance);
+        auto level0EngineType = sysfsEngineMapToLevel0EngineType.find(sysfEngineString);
+        auto ret = mapOfEngines.find(level0EngineType->second);
+        if (ret != mapOfEngines.end()) {
+            ret->second.push_back(sysfsEngineDirNode);
+        } else {
+            std::vector<std::string> engineVec = {};
+            engineVec.push_back(sysfsEngineDirNode);
+            mapOfEngines.emplace(level0EngineType->second, engineVec);
+        }
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForDevice(std::string engineDir, std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,

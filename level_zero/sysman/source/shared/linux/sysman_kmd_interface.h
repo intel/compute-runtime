@@ -129,6 +129,9 @@ class SysmanKmdInterface {
                                                      uint32_t subdeviceId) = 0;
     ze_result_t getNumEngineTypeAndInstancesForDevice(std::string engineDir, std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                                       SysFsAccessInterface *pSysfsAccess);
+    ze_result_t getNumEngineTypeAndInstancesForSubDevices(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
+                                                          NEO::Drm *pDrm,
+                                                          uint32_t subdeviceId);
     SysfsValueUnit getNativeUnit(const SysfsName sysfsName);
     void convertSysfsValueUnit(const SysfsValueUnit dstUnit, const SysfsValueUnit srcUnit,
                                const uint64_t srcValue, uint64_t &dstValue) const;
