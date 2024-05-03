@@ -48,12 +48,12 @@ class MockEngineSysmanHwDeviceIdDrm : public MockSysmanHwDeviceIdDrm {
     }
 };
 
-struct MockEngineNeoDrm : public Drm {
+struct MockEngineNeoDrmPrelim : public Drm {
     using Drm::engineInfo;
     using Drm::setupIoctlHelper;
     const int mockFd = 0;
-    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
-    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment, int mockFileDescriptor) : Drm(std::make_unique<MockEngineSysmanHwDeviceIdDrm>(mockFileDescriptor, ""), rootDeviceEnvironment) {}
+    MockEngineNeoDrmPrelim(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<MockSysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+    MockEngineNeoDrmPrelim(RootDeviceEnvironment &rootDeviceEnvironment, int mockFileDescriptor) : Drm(std::make_unique<MockEngineSysmanHwDeviceIdDrm>(mockFileDescriptor, ""), rootDeviceEnvironment) {}
 
     bool mockReadSysmanQueryEngineInfo = false;
     bool mockReadSysmanQueryEngineInfoMultiDevice = false;
@@ -118,9 +118,10 @@ struct MockEngineNeoDrm : public Drm {
     }
 };
 
-struct MockEnginePmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
+struct MockEnginePmuInterfaceImpPrelim : public L0::Sysman::PmuInterfaceImp {
     using PmuInterfaceImp::perfEventOpen;
-    MockEnginePmuInterfaceImp(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+    using PmuInterfaceImp::pSysmanKmdInterface;
+    MockEnginePmuInterfaceImpPrelim(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 
     bool mockPmuRead = false;
     bool mockPerfEventOpenRead = false;
@@ -152,60 +153,6 @@ struct MockEnginePmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
     int mockedPmuReadAndFailureReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
         return -1;
     }
-};
-
-struct MockEngineFsAccess : public L0::Sysman::FsAccessInterface {
-
-    bool mockReadVal = false;
-
-    ze_result_t read(const std::string file, uint32_t &val) override {
-
-        if (mockReadVal == true) {
-            return readValFailure(file, val);
-        }
-
-        val = 23;
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t readValFailure(const std::string file, uint32_t &val) {
-        val = 0;
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-};
-
-struct MockEngineSysfsAccess : public L0::Sysman::SysFsAccessInterface {
-
-    bool mockReadSymLinkFailure = false;
-    bool mockReadSymLinkSuccess = false;
-
-    ze_result_t readSymLink(const std::string file, std::string &val) override {
-
-        if (mockReadSymLinkFailure == true) {
-            return getValStringSymLinkFailure(file, val);
-        }
-
-        if (mockReadSymLinkSuccess == true) {
-            return getValStringSymLinkSuccess(file, val);
-        }
-
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getValStringSymLinkSuccess(const std::string file, std::string &val) {
-
-        if (file.compare(deviceDir) == 0) {
-            val = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0";
-            return ZE_RESULT_SUCCESS;
-        }
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getValStringSymLinkFailure(const std::string file, std::string &val) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    MockEngineSysfsAccess() = default;
 };
 
 } // namespace ult

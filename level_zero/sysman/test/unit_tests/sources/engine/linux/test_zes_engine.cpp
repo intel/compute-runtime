@@ -27,19 +27,29 @@ class ZesEngineFixture : public SysmanDeviceFixture {
 class ZesEngineFixtureI915 : public ZesEngineFixture {
   protected:
     std::unique_ptr<MockEnginePmuInterfaceImp> pPmuInterface;
+    L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
+        VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+            std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
+            std::memcpy(buf, str.c_str(), str.size());
+            return static_cast<int>(str.size());
+        });
         MockEngineNeoDrm *pDrm = new MockEngineNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
         pDrm->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrm>(pDrm));
 
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Upstream(pLinuxSysmanImp->getProductFamily()));
+        pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pDrm);
+
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);
         pPmuInterface->mockPmuFd = 10;
         pPmuInterface->mockActiveTime = 987654321;
         pPmuInterface->mockTimestamp = 87654321;
-        VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+        pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
+        pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
@@ -49,6 +59,7 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
     }
 
     void TearDown() override {
+        pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         SysmanDeviceFixture::TearDown();
     }
 
@@ -68,23 +79,6 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
         return handles;
     }
 };
-
-TEST_F(SysmanDeviceFixture, GivenComponentCountZeroAndOpenCallFailsWhenCallingZesDeviceEnumEngineGroupsThenErrorIsReturned) {
-
-    MockEngineNeoDrm *pDrm = nullptr;
-    int mockFd = -1;
-    pDrm = new MockEngineNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()), mockFd);
-    pDrm->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
-    auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
-    osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrm>(pDrm));
-
-    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
-    L0::Sysman::SysmanDevice *device = pSysmanDevice;
-
-    uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
-}
 
 TEST_F(ZesEngineFixtureI915, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
 

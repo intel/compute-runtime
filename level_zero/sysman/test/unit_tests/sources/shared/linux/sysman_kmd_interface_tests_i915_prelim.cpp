@@ -123,16 +123,10 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCalling
     EXPECT_EQ(SysmanKmdInterface::SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameDefaultPowerLimit));
 }
 
-TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCallingGetEngineActivityFdThenInvalidFdisReturned) {
-    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    auto pPmuInterface = std::make_unique<MockPmuInterfaceImp>(pLinuxSysmanImp);
-    EXPECT_EQ(-1, pSysmanKmdInterface->getEngineActivityFd(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get()));
-}
-
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForI915DriverThenProperStatusIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_FALSE(pSysmanKmdInterface->clientInfoAvailableInFdInfo());
-    EXPECT_FALSE(pSysmanKmdInterface->isGroupEngineInterfaceAvailable());
+    EXPECT_TRUE(pSysmanKmdInterface->isGroupEngineInterfaceAvailable());
     EXPECT_FALSE(pSysmanKmdInterface->useDefaultMaximumWatchdogTimeoutForExclusiveMode());
 }
 

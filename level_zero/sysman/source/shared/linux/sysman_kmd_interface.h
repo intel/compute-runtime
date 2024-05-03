@@ -221,7 +221,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return true; }
     bool clientInfoAvailableInFdInfo() const override { return false; }
-    bool isGroupEngineInterfaceAvailable() const override { return false; }
+    bool isGroupEngineInterfaceAvailable() const override { return true; }
     std::string getEngineBasePath(uint32_t subDeviceId) const override;
     bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return false; };
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,

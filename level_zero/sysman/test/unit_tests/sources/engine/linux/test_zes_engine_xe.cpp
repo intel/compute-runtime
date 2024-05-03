@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
     std::unique_ptr<MockPmuInterfaceImp> pPmuInterface;
+    L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -45,7 +46,7 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
         pPmuInterface->mockActiveTime = 987654321;
         pPmuInterface->mockTimestamp = 87654321;
         pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-        VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+        pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
@@ -55,6 +56,7 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
+        pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         SysmanDeviceFixture::TearDown();
     }
 

@@ -8,6 +8,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
+#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
@@ -84,7 +85,27 @@ std::string SysmanKmdInterfaceI915Prelim::getSysfsFilePathForPhysicalMemorySize(
 }
 
 int64_t SysmanKmdInterfaceI915Prelim::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
-    return -1;
+    uint64_t config = UINT64_MAX;
+    switch (engineGroup) {
+    case ZES_ENGINE_GROUP_ALL:
+        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_COMPUTE_ALL:
+    case ZES_ENGINE_GROUP_RENDER_ALL:
+        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_COPY_ALL:
+        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY(subDeviceId);
+        break;
+    case ZES_ENGINE_GROUP_MEDIA_ALL:
+        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY(subDeviceId);
+        break;
+    default:
+        auto engineClass = engineGroupToEngineClass.find(engineGroup);
+        config = I915_PMU_ENGINE_BUSY(engineClass->second, engineInstance);
+        break;
+    }
+    return pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
 }
 
 std::string SysmanKmdInterfaceI915Prelim::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {

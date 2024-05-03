@@ -72,6 +72,7 @@ struct MockEngineNeoDrm : public Drm {
 
 struct MockEnginePmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
     using PmuInterfaceImp::perfEventOpen;
+    using PmuInterfaceImp::pSysmanKmdInterface;
     int64_t mockPmuFd = 0;
     uint64_t mockTimestamp = 0;
     uint64_t mockActiveTime = 0;
