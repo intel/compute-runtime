@@ -19,6 +19,15 @@
 namespace NEO {
 
 class IndirectHeap;
+
+namespace BindlessImageSlot {
+constexpr uint32_t image = 0;
+constexpr uint32_t implicitArgs = 1;
+constexpr uint32_t sampler = 2;
+constexpr uint32_t redescribedImage = 3;
+constexpr uint32_t max = 4;
+}; // namespace BindlessImageSlot
+
 class BindlessHeapsHelper {
   public:
     enum BindlesHeapType {
@@ -27,6 +36,7 @@ class BindlessHeapsHelper {
         globalDsh,
         numHeapTypes
     };
+
     BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable);
     MOCKABLE_VIRTUAL ~BindlessHeapsHelper();
 
@@ -48,7 +58,7 @@ class BindlessHeapsHelper {
 
     int getReusedSshVectorIndex(size_t ssSize) {
         int index = 0;
-        if (ssSize == 3 * surfaceStateSize) {
+        if (ssSize == NEO::BindlessImageSlot::max * surfaceStateSize) {
             index = 1;
         } else {
             UNRECOVERABLE_IF(ssSize != surfaceStateSize);

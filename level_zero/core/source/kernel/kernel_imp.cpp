@@ -613,12 +613,12 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
 
             auto ssInHeap = image->getBindlessSlot();
             auto patchLocation = ptrOffset(getCrossThreadData(), arg.bindless);
-            // redescribed image's surface state is after image's implicit args
-            auto bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * 2;
+            // redescribed image's surface state is after image's implicit args and sampler
+            auto bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * NEO::BindlessImageSlot::redescribedImage;
             auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
 
-            image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize * 2), 0u);
+            image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage), 0u);
             isBindlessOffsetSet[argIndex] = true;
             this->residencyContainer.push_back(ssInHeap->heapAllocation);
         } else {

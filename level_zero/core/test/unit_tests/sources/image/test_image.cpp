@@ -1539,7 +1539,14 @@ HWTEST2_F(ImageCreate, WhenImageViewCreateExtThenSuccessIsReturned, IsAtLeastSkl
     zeImageDestroy(planeY);
 }
 
-HWTEST2_F(ImageCreate, GivenNonBindlessImageWhenGettingDeviceOffsetThenErrorIsReturned, IsAtLeastSkl) {
+struct ImageSupport {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily >= IGFX_SKYLAKE && NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
+    }
+};
+
+HWTEST2_F(ImageCreate, GivenNonBindlessImageWhenGettingDeviceOffsetThenErrorIsReturned, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1569,7 +1576,7 @@ HWTEST2_F(ImageCreate, GivenNonBindlessImageWhenGettingDeviceOffsetThenErrorIsRe
     ASSERT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, ret);
 }
 
-HWTEST2_F(ImageCreate, GivenNoBindlessHelperAndBindlessImageFlagWhenCreatingImageThenErrorIsReturned, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, GivenNoBindlessHelperAndBindlessImageFlagWhenCreatingImageThenErrorIsReturned, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1597,7 +1604,7 @@ HWTEST2_F(ImageCreate, GivenNoBindlessHelperAndBindlessImageFlagWhenCreatingImag
     ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ret);
 }
 
-HWTEST2_F(ImageCreate, GivenBindlessImageWhenGettingDeviceOffsetThenBindlessSlotIsReturned, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenGettingDeviceOffsetThenBindlessSlotIsReturned, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1641,7 +1648,7 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenGettingDeviceOffsetThenBindlessSlot
     EXPECT_EQ(ssHeapInfo->surfaceStateOffset, deviceOffset);
 }
 
-HWTEST2_F(ImageCreate, GivenBindlessImageWhenBindlessSlotAllocationFailsThenImageInitializationFails, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenBindlessSlotAllocationFailsThenImageInitializationFails, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1676,7 +1683,7 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenBindlessSlotAllocationFailsThenImag
     ASSERT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
 }
 
-HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithInvalidPitchedPtrThenErrorIsReturned, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithInvalidPitchedPtrThenErrorIsReturned, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1711,7 +1718,7 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithInvalidPitchedPtrTh
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
 }
 
-HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithDeviceUMSPitchedPtrThenImageIsCreated, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithDeviceUMSPitchedPtrThenImageIsCreated, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1782,7 +1789,7 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageCreatedWithDeviceUMSPitchedPtr
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithDeviceUMSPitchedPtrThenErrorIsReturned, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithDeviceUMSPitchedPtrThenErrorIsReturned, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1827,7 +1834,7 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithDeviceUMSPitche
     ret = context->freeMem(ptr);
 }
 
-HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithTheSameFormatThenImageViewHasCorrectImgInfo, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithTheSameFormatThenImageViewHasCorrectImgInfo, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1887,7 +1894,7 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenImageViewCreatedWithTheSameFormatTh
     ret = context->freeMem(ptr);
 }
 
-HWTEST2_F(ImageCreate, GivenBindlessImageWhenInitializedThenSurfaceStateCopiedToSSH, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, GivenBindlessImageWhenInitializedThenSurfaceStateCopiedToSSH, ImageSupport) {
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1929,6 +1936,350 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenInitializedThenSurfaceStateCopiedTo
     ASSERT_EQ(surfaceState->getWidth(), width);
     ASSERT_EQ(surfaceState->getHeight(), height);
     ASSERT_EQ(surfaceState->getDepth(), depth);
+}
+
+HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenCreatedThenSampledImageFlagAndSamplerDescIsSet, ImageSupport) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_sampler_desc_t samplerDesc = {
+        ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+        nullptr,
+        ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+        ZE_SAMPLER_FILTER_MODE_LINEAR,
+        false};
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &samplerDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS | ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->bindlessImage);
+
+    EXPECT_TRUE(imageHW->sampledImage);
+    EXPECT_EQ(imageHW->samplerDesc.addressMode, samplerDesc.addressMode);
+    EXPECT_EQ(imageHW->samplerDesc.filterMode, samplerDesc.filterMode);
+    EXPECT_EQ(imageHW->samplerDesc.isNormalized, samplerDesc.isNormalized);
+    EXPECT_EQ(nullptr, imageHW->samplerDesc.pNext);
+}
+
+HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenImageViewCreatedWithCorrectFlagsThenImageCreationIsSuccessful, ImageSupport) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_sampler_desc_t samplerDesc = {
+        ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+        nullptr,
+        ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+        ZE_SAMPLER_FILTER_MODE_LINEAR,
+        false};
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &samplerDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS | ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->bindlessImage);
+
+    ze_image_handle_t imageView = {};
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+    bindlessExtDesc.pNext = nullptr;
+    ret = imageHW->createView(device, &srcImgDesc, &imageView);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS | ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+    bindlessExtDesc.pNext = nullptr;
+    ret = imageHW->createView(device, &srcImgDesc, &imageView);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS | ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+    bindlessExtDesc.pNext = &samplerDesc;
+    ret = imageHW->createView(device, &srcImgDesc, &imageView);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto imageViewObject = static_cast<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> *>(Image::fromHandle(imageView));
+
+    EXPECT_TRUE(imageViewObject->bindlessImage);
+    EXPECT_TRUE(imageViewObject->sampledImage);
+
+    EXPECT_EQ(ZE_SAMPLER_ADDRESS_MODE_CLAMP, imageViewObject->samplerDesc.addressMode);
+    EXPECT_EQ(ZE_SAMPLER_FILTER_MODE_LINEAR, imageViewObject->samplerDesc.filterMode);
+
+    EXPECT_EQ(imageHW->imgInfo.slicePitch, imageViewObject->getImageInfo().slicePitch);
+    EXPECT_NE(0u, imageViewObject->getImageInfo().slicePitch);
+    EXPECT_EQ(imageHW->imgInfo.rowPitch, imageViewObject->getImageInfo().rowPitch);
+    EXPECT_NE(0u, imageViewObject->getImageInfo().rowPitch);
+    EXPECT_EQ(imageHW->imgInfo.offset, imageViewObject->getImageInfo().offset);
+    EXPECT_EQ(imageHW->imgInfo.size, imageViewObject->getImageInfo().size);
+    EXPECT_NE(0u, imageViewObject->getImageInfo().size);
+    EXPECT_EQ(imageHW->imgInfo.linearStorage, imageViewObject->getImageInfo().linearStorage);
+
+    Image::fromHandle(imageView)->destroy();
+}
+
+HWTEST2_F(ImageCreate, GivenNoBindlessFlagWhenSampledImageCreatedThenErrorIsReturned, ImageSupport) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_sampler_desc_t samplerDesc = {
+        ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+        nullptr,
+        ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+        ZE_SAMPLER_FILTER_MODE_LINEAR,
+        false};
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &samplerDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+HWTEST2_F(ImageCreate, GivenNoSamplerDescWhenSampledImageCreatedThenErrorIsReturned, ImageSupport) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = nullptr;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS | ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, ret);
+}
+
+HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenInitializedThenSamplerStateCopiedToSSH, ImageSupport) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_sampler_desc_t samplerDesc = {
+        ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+        nullptr,
+        ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+        ZE_SAMPLER_FILTER_MODE_LINEAR,
+        false};
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &samplerDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS | ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto ssHeapInfo = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, ssHeapInfo);
+
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    auto *surfaceState = static_cast<RENDER_SURFACE_STATE *>(ssHeapInfo->ssPtr);
+    ASSERT_EQ(surfaceState->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
+    ASSERT_EQ(surfaceState->getSurfaceFormat(),
+              RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UINT);
+    ASSERT_EQ(surfaceState->getWidth(), width);
+    ASSERT_EQ(surfaceState->getHeight(), height);
+    ASSERT_EQ(surfaceState->getDepth(), depth);
+
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    auto *samplerState = static_cast<SAMPLER_STATE *>(ptrOffset(ssHeapInfo->ssPtr, sizeof(RENDER_SURFACE_STATE) * NEO::BindlessImageSlot::sampler));
+
+    ASSERT_EQ(samplerState->getTcxAddressControlMode(), SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP);
+    ASSERT_EQ(samplerState->getTcyAddressControlMode(), SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP);
+    ASSERT_EQ(samplerState->getTczAddressControlMode(), SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP);
+
+    ASSERT_EQ(samplerState->getMinModeFilter(), SAMPLER_STATE::MIN_MODE_FILTER_LINEAR);
+    ASSERT_EQ(samplerState->getMagModeFilter(), SAMPLER_STATE::MAG_MODE_FILTER_LINEAR);
+}
+
+HWTEST2_F(ImageCreate, GivenBindlessSampledImageViewFromUnsampledImageWhenInitializedThenSamplerStateCopiedToSSH, ImageSupport) {
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_sampler_desc_t samplerDesc = {
+        ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+        nullptr,
+        ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+        ZE_SAMPLER_FILTER_MODE_LINEAR,
+        false};
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = nullptr;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_TRUE(imageHW->bindlessImage);
+    EXPECT_FALSE(imageHW->sampledImage);
+
+    ze_image_handle_t imageView = {};
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS | ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+    bindlessExtDesc.pNext = &samplerDesc;
+    ret = imageHW->createView(device, &srcImgDesc, &imageView);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto imageViewObject = static_cast<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>> *>(Image::fromHandle(imageView));
+
+    EXPECT_TRUE(imageViewObject->bindlessImage);
+    EXPECT_TRUE(imageViewObject->sampledImage);
+
+    EXPECT_EQ(ZE_SAMPLER_ADDRESS_MODE_CLAMP, imageViewObject->samplerDesc.addressMode);
+    EXPECT_EQ(ZE_SAMPLER_FILTER_MODE_LINEAR, imageViewObject->samplerDesc.filterMode);
+
+    EXPECT_EQ(imageHW->imgInfo.slicePitch, imageViewObject->getImageInfo().slicePitch);
+    EXPECT_NE(0u, imageViewObject->getImageInfo().slicePitch);
+    EXPECT_EQ(imageHW->imgInfo.rowPitch, imageViewObject->getImageInfo().rowPitch);
+    EXPECT_NE(0u, imageViewObject->getImageInfo().rowPitch);
+    EXPECT_EQ(imageHW->imgInfo.offset, imageViewObject->getImageInfo().offset);
+    EXPECT_EQ(imageHW->imgInfo.size, imageViewObject->getImageInfo().size);
+    EXPECT_NE(0u, imageViewObject->getImageInfo().size);
+    EXPECT_EQ(imageHW->imgInfo.linearStorage, imageViewObject->getImageInfo().linearStorage);
+
+    auto ssHeapInfo = imageViewObject->getBindlessSlot();
+    ASSERT_NE(nullptr, ssHeapInfo);
+    EXPECT_NE(imageHW->getBindlessSlot(), ssHeapInfo);
+
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    auto *surfaceState = static_cast<RENDER_SURFACE_STATE *>(ssHeapInfo->ssPtr);
+    ASSERT_EQ(surfaceState->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
+    ASSERT_EQ(surfaceState->getSurfaceFormat(), RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UINT);
+    ASSERT_EQ(surfaceState->getWidth(), width);
+    ASSERT_EQ(surfaceState->getHeight(), height);
+    ASSERT_EQ(surfaceState->getDepth(), depth);
+
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    auto *samplerState = static_cast<SAMPLER_STATE *>(ptrOffset(ssHeapInfo->ssPtr, sizeof(RENDER_SURFACE_STATE) * NEO::BindlessImageSlot::sampler));
+
+    ASSERT_EQ(samplerState->getTcxAddressControlMode(), SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP);
+    ASSERT_EQ(samplerState->getTcyAddressControlMode(), SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP);
+    ASSERT_EQ(samplerState->getTczAddressControlMode(), SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP);
+
+    ASSERT_EQ(samplerState->getMinModeFilter(), SAMPLER_STATE::MIN_MODE_FILTER_LINEAR);
+    ASSERT_EQ(samplerState->getMagModeFilter(), SAMPLER_STATE::MAG_MODE_FILTER_LINEAR);
+
+    Image::fromHandle(imageView)->destroy();
 }
 
 } // namespace ult

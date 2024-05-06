@@ -698,6 +698,7 @@ zeGetImageExpProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnGetMemoryPropertiesExp, L0::zeImageGetMemoryPropertiesExp, version, ZE_API_VERSION_1_2);
     fillDdiEntry(pDdiTable->pfnViewCreateExp, L0::zeImageViewCreateExp, version, ZE_API_VERSION_1_2);
+    fillDdiEntry(pDdiTable->pfnGetDeviceOffsetExp, L0::zeImageGetDeviceOffsetExp, version, ZE_API_VERSION_1_9);
     driverDdiTable.coreDdiTable.ImageExp = *pDdiTable;
     return result;
 }

@@ -24,6 +24,7 @@ typedef enum _ze_bindless_image_exp_version_t {
 
 typedef enum _ze_image_bindless_exp_flags_t {
     ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS = ZE_BIT(0),
+    ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE = ZE_BIT(1),
     ZE_IMAGE_BINDLESS_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
 } ze_image_bindless_exp_flags_t;
 
@@ -72,4 +73,7 @@ zeImageGetDeviceOffsetExp(
     uint64_t *pDeviceOffset);
 
 #endif // ZE_BINDLESS_IMAGE_EXP_NAME
+
+#define ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE 2
+
 #endif

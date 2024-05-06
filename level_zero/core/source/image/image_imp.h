@@ -57,9 +57,11 @@ struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
     NEO::GraphicsAllocation *allocation = nullptr;
     NEO::GraphicsAllocation *implicitArgsAllocation = nullptr;
     ze_image_desc_t imageFormatDesc = {};
+    ze_sampler_desc_t samplerDesc = {};
     std::optional<ze_image_desc_t> sourceImageFormatDesc = {};
     std::unique_ptr<NEO::SurfaceStateInHeapInfo> bindlessInfo;
     bool bindlessImage = false;
     bool imageFromBuffer = false;
+    bool sampledImage = false;
 };
 } // namespace L0

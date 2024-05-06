@@ -2883,7 +2883,7 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
 
     auto expectedSsInHeap = imageHW->getAllocation()->getBindlessInfo();
-    EXPECT_EQ(imageHW->passedRedescribedSurfaceStateHeap, ptrOffset(expectedSsInHeap.ssPtr, surfaceStateSize * 2));
+    EXPECT_EQ(imageHW->passedRedescribedSurfaceStateHeap, ptrOffset(expectedSsInHeap.ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage));
     EXPECT_EQ(imageHW->passedRedescribedSurfaceStateOffset, 0u);
     EXPECT_TRUE(kernel->isBindlessOffsetSet[3]);
     EXPECT_FALSE(kernel->usingSurfaceStateHeap[3]);

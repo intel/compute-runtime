@@ -29,9 +29,9 @@ struct WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>
     using BaseClass::redescribedSurfaceState;
     using BaseClass::surfaceState;
     using BaseClass::ImageImp::imageFromBuffer;
-    ;
     using BaseClass::ImageImp::imgInfo;
-    ;
+    using BaseClass::ImageImp::sampledImage;
+    using BaseClass::ImageImp::samplerDesc;
 };
 
 } // namespace ult

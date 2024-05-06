@@ -59,6 +59,7 @@ struct StructuresLookupTable {
         uint32_t planeIndex;
         bool isPlanarExtension;
         void *pitchedPtr;
+        const ze_sampler_desc_t *samplerDesc;
     } imageProperties;
 
     struct SharedHandleType {
@@ -77,6 +78,7 @@ struct StructuresLookupTable {
     bool uncompressedHint;
     bool rayTracingMemory;
     bool bindlessImage;
+    bool sampledImage;
 };
 
 inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupTable, const void *desc) {
@@ -122,11 +124,15 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             const ze_image_bindless_exp_desc_t *imageBindlessDesc =
                 reinterpret_cast<const ze_image_bindless_exp_desc_t *>(extendedDesc);
             lookupTable.bindlessImage = imageBindlessDesc->flags & ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
-
+            lookupTable.sampledImage = imageBindlessDesc->flags & ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC) {
             const ze_image_pitched_exp_desc_t *pitchedDesc = reinterpret_cast<const ze_image_pitched_exp_desc_t *>(extendedDesc);
             lookupTable.areImageProperties = true;
             lookupTable.imageProperties.pitchedPtr = pitchedDesc->ptr;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_SAMPLER_DESC) {
+            const ze_sampler_desc_t *samplerDesc = reinterpret_cast<const ze_sampler_desc_t *>(extendedDesc);
+            lookupTable.areImageProperties = true;
+            lookupTable.imageProperties.samplerDesc = samplerDesc;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
             const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
                 reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);

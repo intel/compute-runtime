@@ -13,6 +13,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/image/image_surface_state.h"
@@ -28,6 +29,7 @@
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/image_hw.h"
+#include "level_zero/core/source/sampler/sampler_imp.h"
 
 #include "encode_surface_state_args.h"
 
@@ -94,6 +96,15 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         this->imageFromBuffer = true;
+    }
+
+    if (lookupTable.sampledImage) {
+        if (!this->bindlessImage || lookupTable.imageProperties.samplerDesc == nullptr) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        this->sampledImage = true;
+        this->samplerDesc = *lookupTable.imageProperties.samplerDesc;
+        this->samplerDesc.pNext = nullptr;
     }
 
     if (!isImageView()) {
@@ -217,6 +228,20 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     if (this->bindlessImage) {
         auto ssInHeap = getBindlessSlot();
         copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, false);
+
+        if (this->sampledImage) {
+            auto productFamily = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+            auto sampler = Sampler::create(productFamily, device, &this->samplerDesc);
+            if (!sampler) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+            auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+            auto samplerStateOffset = static_cast<uint32_t>(NEO::BindlessImageSlot::sampler * surfaceStateSize);
+
+            sampler->copySamplerStateToDSH(ssInHeap->ssPtr, static_cast<uint32_t>(ssInHeap->ssSize), samplerStateOffset);
+            sampler->destroy();
+        }
     }
 
     if (this->bindlessImage && implicitArgsAllocation) {

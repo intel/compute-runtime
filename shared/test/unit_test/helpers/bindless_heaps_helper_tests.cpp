@@ -137,14 +137,14 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapForI
     EXPECT_TRUE(getMemoryManager()->allocateBindlessSlot(&alloc));
     auto ssInHeapInfo1 = alloc.getBindlessInfo();
 
-    EXPECT_EQ(surfaceStateSize * 3, ssInHeapInfo1.ssSize);
+    EXPECT_EQ(surfaceStateSize * NEO::BindlessImageSlot::max, ssInHeapInfo1.ssSize);
 
     MockGraphicsAllocation alloc2;
     alloc2.allocationType = AllocationType::sharedImage;
     EXPECT_TRUE(getMemoryManager()->allocateBindlessSlot(&alloc2));
     auto ssInHeapInfo2 = alloc2.getBindlessInfo();
 
-    EXPECT_EQ(surfaceStateSize * 3, ssInHeapInfo2.ssSize);
+    EXPECT_EQ(surfaceStateSize * NEO::BindlessImageSlot::max, ssInHeapInfo2.ssSize);
 }
 
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenAllocateSsInHeapTwiceForTheSameAllocationThenTheSameOffsetReturned) {
@@ -344,9 +344,9 @@ TEST_F(BindlessHeapsHelperTests, givenFreeSlotsExceedingThresholdInResuePoolWhen
     ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     ssInHeapInfos[1] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     // allocate triple size for image
-    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
-    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
 
     EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
 
@@ -375,9 +375,9 @@ TEST_F(BindlessHeapsHelperTests, givenReusePoolExhaustedWhenNewSlotsAllocatedThe
     ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     ssInHeapInfos[1] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     // allocate triple size for image
-    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
-    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
 
     EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
 
@@ -427,9 +427,9 @@ TEST_F(BindlessHeapsHelperTests, givenReleasedSlotsToSecondPoolWhenThresholdReac
     ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     ssInHeapInfos[1] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     // allocate triple size for image
-    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[2] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
-    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
 
     for (int i = 0; i < 5; i++) {
         bindlessHeapHelper->releaseSSToReusePool(ssInHeapInfos[i]);
@@ -457,7 +457,7 @@ TEST_F(BindlessHeapsHelperTests, givenReleasedSlotsToSecondPoolWhenThresholdReac
     EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][0].size(), 3u);
     EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[releasePoolIndex][1].size(), 2u);
 
-    ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[3] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
 
     EXPECT_EQ(1u, bindlessHeapHelper->allocatePoolIndex);
     EXPECT_EQ(0u, bindlessHeapHelper->releasePoolIndex);
@@ -467,7 +467,7 @@ TEST_F(BindlessHeapsHelperTests, givenReleasedSlotsToSecondPoolWhenThresholdReac
 
     EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][1].size(), 1u);
 
-    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[4] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
     EXPECT_EQ(bindlessHeapHelper->surfaceStateInHeapVectorReuse[allocatePoolIndex][1].size(), 0u);
     EXPECT_FALSE(bindlessHeapHelper->allocateFromReusePool);
 
@@ -482,7 +482,7 @@ TEST_F(BindlessHeapsHelperTests, givenReleasedSlotsToSecondPoolWhenThresholdReac
 
     bindlessHeapHelper->stateCacheDirtyForContext.reset();
 
-    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
 
     EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
     EXPECT_EQ(1u, bindlessHeapHelper->releasePoolIndex);
@@ -524,7 +524,7 @@ TEST_F(BindlessHeapsHelperTests, givenFreeSlotsInReusePoolForONeSizeWhenAllocati
         ssInHeapInfos[i] = {0};
     }
 
-    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(3 * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
+    ssInHeapInfos[0] = bindlessHeapHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * size, nullptr, BindlessHeapsHelper::BindlesHeapType::globalSsh);
 
     EXPECT_EQ(0u, bindlessHeapHelper->allocatePoolIndex);
     EXPECT_EQ(1u, bindlessHeapHelper->releasePoolIndex);
