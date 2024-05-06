@@ -4217,6 +4217,23 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithEve
     alignedFree(alignedPtr);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenImplicitScalingEnabledWhenAskingForExtensionsThenReturnSyncDispatchExtension, IsAtLeastXeHpCore) {
+    uint32_t count = 0;
+    ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    std::vector<ze_driver_extension_properties_t> extensionProperties(count);
+
+    res = driverHandle->getExtensionProperties(&count, extensionProperties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &param) {
+        return (strcmp(param.name, ZE_SYNCHRONIZED_DISPATCH_EXP_NAME) == 0);
+    });
+
+    EXPECT_EQ(extensionProperties.end(), it);
+}
+
 struct MultiTileInOrderCmdListTests : public InOrderCmdListTests {
     void SetUp() override {
         NEO::debugManager.flags.CreateMultipleSubDevices.set(partitionCount);
@@ -4306,6 +4323,27 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCa
     zeEventDestroy(eHandle1);
     zeEventDestroy(eHandle2);
     context->freeMem(hostAddress);
+}
+
+HWTEST2_F(MultiTileInOrderCmdListTests, givenImplicitScalingEnabledWhenAskingForExtensionsThenReturnSyncDispatchExtension, IsAtLeastXeHpCore) {
+    uint32_t count = 0;
+    ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    std::vector<ze_driver_extension_properties_t> extensionProperties(count);
+
+    res = driverHandle->getExtensionProperties(&count, extensionProperties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &param) {
+        return (strcmp(param.name, ZE_SYNCHRONIZED_DISPATCH_EXP_NAME) == 0);
+    });
+
+    if (device->getL0GfxCoreHelper().synchronizedDispatchSupported()) {
+        EXPECT_NE(extensionProperties.end(), it);
+    } else {
+        EXPECT_EQ(extensionProperties.end(), it);
+    }
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {

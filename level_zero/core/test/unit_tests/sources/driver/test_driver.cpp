@@ -118,7 +118,7 @@ TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensio
     std::vector<std::pair<std::string, uint32_t>> additionalExtensions;
     device->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, device->getProductHelper(), device->getHwInfo());
 
-    if (device->getL0GfxCoreHelper().synchronizedDispatchSupported()) {
+    if (device->getL0GfxCoreHelper().synchronizedDispatchSupported() && device->isImplicitScalingCapable()) {
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
     }
 
