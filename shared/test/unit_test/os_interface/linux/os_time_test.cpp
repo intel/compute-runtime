@@ -26,7 +26,7 @@ int getTimeFuncFalse(clockid_t clkId, struct timespec *tp) throw() {
 }
 int getTimeFuncTrue(clockid_t clkId, struct timespec *tp) throw() {
     tp->tv_sec = 0;
-    tp->tv_nsec = ++actualTime;
+    tp->tv_nsec = static_cast<long>(++actualTime);
     return 0;
 }
 
