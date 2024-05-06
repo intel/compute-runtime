@@ -2837,7 +2837,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 }
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
-          givenCommandQueueUsingGlobalStatelessWhenQueueInHeaplessModeThenUsingScratchControllerAndHeapAllocationFromDefaultEngine,
+          givenCommandQueueUsingGlobalStatelessWhenQueueInHeaplessModeThenUsingScratchControllerAndHeapAllocationFromPrimaryCsr,
           IsAtLeastXeHpCore) {
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
     defaultCsr->createGlobalStatelessHeap();
@@ -2862,8 +2862,56 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     auto result = otherCommandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(defaultCsr->getScratchSpaceController(), otherCommandQueue->recordedScratchController);
-    EXPECT_EQ(defaultCsr->getGlobalStatelessHeapAllocation(), otherCommandQueue->recordedGlobalStatelessAllocation);
+    EXPECT_EQ(otherCommandQueue->csr->getScratchSpaceController(), otherCommandQueue->recordedScratchController);
+    EXPECT_EQ(otherCommandQueue->csr->getGlobalStatelessHeapAllocation(), otherCommandQueue->recordedGlobalStatelessAllocation);
+    EXPECT_FALSE(otherCommandQueue->recordedLockScratchController);
+    otherCommandQueue->destroy();
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenContextGroupEnabledAndCommandQueueUsingGlobalStatelessWhenQueueInHeaplessModeThenUsingScratchControllerAndHeapAllocationFromPrimaryCsr,
+          IsAtLeastXeHpCore) {
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto neoDevice = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo));
+    const auto ccsIndex = 0;
+
+    auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    defaultCsr->createGlobalStatelessHeap();
+
+    NEO::EngineTypeUsage engineTypeUsage;
+    engineTypeUsage.first = hwInfo.capabilityTable.defaultEngineType;
+    engineTypeUsage.second = NEO::EngineUsage::regular;
+    auto primaryCsr = neoDevice->getSecondaryEngineCsr(ccsIndex, engineTypeUsage)->commandStreamReceiver;
+    EXPECT_EQ(nullptr, primaryCsr->getOsContext().getPrimaryContext());
+    EXPECT_TRUE(primaryCsr->getOsContext().isPartOfContextGroup());
+
+    auto secondaryCsr = neoDevice->getSecondaryEngineCsr(ccsIndex, engineTypeUsage)->commandStreamReceiver;
+
+    ze_command_queue_desc_t desc = {};
+    auto otherCommandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, secondaryCsr, &desc);
+    otherCommandQueue->initialize(false, false, false);
+    otherCommandQueue->heaplessModeEnabled = true;
+
+    commandList->close();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+
+    auto result = otherCommandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(primaryCsr->getScratchSpaceController(), otherCommandQueue->recordedScratchController);
+    EXPECT_EQ(primaryCsr->getGlobalStatelessHeapAllocation(), otherCommandQueue->recordedGlobalStatelessAllocation);
     EXPECT_TRUE(otherCommandQueue->recordedLockScratchController);
     otherCommandQueue->destroy();
 }

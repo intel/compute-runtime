@@ -84,8 +84,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     auto globalStatelessHeapAllocation = this->csr->getGlobalStatelessHeapAllocation();
     bool lockScratchController = false;
     if (this->heaplessModeEnabled) {
-        scratchController = neoDevice->getDefaultEngine().commandStreamReceiver->getScratchSpaceController();
-        globalStatelessHeapAllocation = neoDevice->getDefaultEngine().commandStreamReceiver->getGlobalStatelessHeapAllocation();
+        auto primaryScratchController = this->csr->getPrimaryScratchSpaceController();
+        scratchController = primaryScratchController;
+
+        globalStatelessHeapAllocation = this->csr->getGlobalStatelessHeapAllocation();
         lockScratchController = scratchController != this->csr->getScratchSpaceController();
     }
     auto ctx = CommandListExecutionContext{phCommandLists,

@@ -1233,6 +1233,7 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenReso
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     const auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
@@ -1244,15 +1245,16 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenReso
     EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver->isInitialized());
     EXPECT_EQ(1u, device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver->peekLatestSentTaskCount());
 
+    auto primaryCsr = device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver;
     for (uint32_t secondaryIndex = 1; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
 
         EXPECT_FALSE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].osContext->isInitialized());
         EXPECT_FALSE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->isInitialized());
 
         EXPECT_EQ(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
-        EXPECT_EQ(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
+        EXPECT_EQ(primaryCsr->getGlobalFenceAllocation(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-            EXPECT_EQ(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
+            EXPECT_EQ(primaryCsr->getPreemptionAllocation(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
         }
 
         device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});

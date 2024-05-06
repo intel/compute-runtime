@@ -645,6 +645,9 @@ void CommandStreamReceiver::startControllingDirectSubmissions() {
 
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
+    if (primaryCsr) {
+        return nullptr;
+    }
     debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, size, AllocationType::debugContextSaveArea, getOsContext().getDeviceBitfield()});
     return debugSurface;
 }

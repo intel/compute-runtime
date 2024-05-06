@@ -501,6 +501,7 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, uint32_t i
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterSecondaryOsContext(&primaryCsr->getOsContext(), commandStreamReceiver.get(), engineDescriptor);
     commandStreamReceiver->setupContext(*osContext);
+    commandStreamReceiver->setPrimaryCsr(primaryCsr);
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
     secondaryEngines[index].engines.push_back(engine);
@@ -544,10 +545,6 @@ EngineControl *Device::getSecondaryEngineCsr(uint32_t engineIndex, EngineTypeUsa
             }
 
             if (!commandStreamReceiver->initializeTagAllocation()) {
-                return nullptr;
-            }
-
-            if (!commandStreamReceiver->createGlobalFenceAllocation()) {
                 return nullptr;
             }
 

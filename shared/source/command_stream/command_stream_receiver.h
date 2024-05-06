@@ -15,6 +15,7 @@
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/options.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include "aubstream/allocation_params.h"
@@ -190,12 +191,34 @@ class CommandStreamReceiver {
 
     void setRequiredScratchSizes(uint32_t newRequiredScratchSlot0Size, uint32_t newRequiredPrivateScratchSlot1Size);
     GraphicsAllocation *getScratchAllocation();
-    GraphicsAllocation *getDebugSurfaceAllocation() const { return debugSurface; }
+    GraphicsAllocation *getDebugSurfaceAllocation() const {
+        if (primaryCsr) {
+            return primaryCsr->getDebugSurfaceAllocation();
+        }
+        return debugSurface;
+    }
     GraphicsAllocation *allocateDebugSurface(size_t size);
-    GraphicsAllocation *getPreemptionAllocation() const { return preemptionAllocation; }
-    GraphicsAllocation *getGlobalFenceAllocation() const { return globalFenceAllocation; }
+    GraphicsAllocation *getPreemptionAllocation() const {
+        if (primaryCsr) {
+            return primaryCsr->getPreemptionAllocation();
+        }
+        return preemptionAllocation;
+    }
+    GraphicsAllocation *getGlobalFenceAllocation() const {
+        if (primaryCsr) {
+            return primaryCsr->getGlobalFenceAllocation();
+        }
+
+        return globalFenceAllocation;
+    }
     GraphicsAllocation *getWorkPartitionAllocation() const { return workPartitionAllocation; }
-    GraphicsAllocation *getGlobalStatelessHeapAllocation() const { return globalStatelessHeapAllocation; }
+    GraphicsAllocation *getGlobalStatelessHeapAllocation() const {
+        if (primaryCsr) {
+            return primaryCsr->getGlobalStatelessHeapAllocation();
+        }
+
+        return globalStatelessHeapAllocation;
+    }
 
     virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
     virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait);
@@ -279,6 +302,13 @@ class CommandStreamReceiver {
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();
+    }
+
+    ScratchSpaceController *getPrimaryScratchSpaceController() const {
+        if (primaryCsr) {
+            return primaryCsr->getScratchSpaceController();
+        }
+        return getScratchSpaceController();
     }
 
     void downloadAllocation(GraphicsAllocation &gfxAllocation);
@@ -450,12 +480,18 @@ class CommandStreamReceiver {
     }
     void createGlobalStatelessHeap();
     IndirectHeap *getGlobalStatelessHeap() {
+        if (primaryCsr) {
+            return primaryCsr->getGlobalStatelessHeap();
+        }
         return globalStatelessHeap.get();
     }
 
     bool isRecyclingTagForHeapStorageRequired() const { return heapStorageRequiresRecyclingTag; }
 
     virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId) { return false; }
+    void setPrimaryCsr(CommandStreamReceiver *primaryCsr) {
+        this->primaryCsr = primaryCsr;
+    }
 
     void requestPreallocation();
     void releasePreallocationRequest();
@@ -543,6 +579,7 @@ class CommandStreamReceiver {
 
     IndirectHeap *indirectHeap[IndirectHeapType::numTypes];
     OsContext *osContext = nullptr;
+    CommandStreamReceiver *primaryCsr = nullptr;
     TaskCountType *completionFenceValuePointer = nullptr;
 
     std::atomic<TaskCountType> barrierCount{0};
