@@ -79,7 +79,7 @@ bool UnitTestHelper<GfxFamily>::expectNullDsh(const DeviceInfo &deviceInfo) {
 }
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::findStateCacheFlushPipeControl(LinearStream &csrStream) {
+bool UnitTestHelper<GfxFamily>::findStateCacheFlushPipeControl(CommandStreamReceiver &csr, LinearStream &csrStream) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     HardwareParse hwParserCsr;
@@ -94,8 +94,8 @@ bool UnitTestHelper<GfxFamily>::findStateCacheFlushPipeControl(LinearStream &csr
 
         if (pipeControl->getRenderTargetCacheFlushEnable() &&
             pipeControl->getStateCacheInvalidationEnable() &&
-            pipeControl->getTlbInvalidate() &&
-            pipeControl->getTextureCacheInvalidationEnable()) {
+            pipeControl->getTextureCacheInvalidationEnable() &&
+            ((csr.isTlbFlushRequiredForStateCacheFlush() && pipeControl->getTlbInvalidate()) || (!csr.isTlbFlushRequiredForStateCacheFlush() && !pipeControl->getTlbInvalidate()))) {
             stateCacheFlushFound = true;
             break;
         }

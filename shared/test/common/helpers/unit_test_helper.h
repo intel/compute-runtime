@@ -98,7 +98,7 @@ struct UnitTestHelper {
     static size_t getAdditionalDshSize(uint32_t iddCount);
     static bool expectNullDsh(const DeviceInfo &deviceInfo);
 
-    static bool findStateCacheFlushPipeControl(LinearStream &csrStream);
+    static bool findStateCacheFlushPipeControl(CommandStreamReceiver &csr, LinearStream &csrStream);
     static void verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator);
     static GenCmdList::iterator findWalkerCmd(GenCmdList::iterator begin, GenCmdList::iterator end, bool heapless);
 };

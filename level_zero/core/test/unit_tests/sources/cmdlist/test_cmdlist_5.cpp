@@ -3071,7 +3071,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     returnValue = cmdListObject->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(csrStream));
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(csr, csrStream));
 }
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,

@@ -275,6 +275,7 @@ class CommandStreamReceiver {
     virtual void updateTagFromWait() = 0;
     virtual bool isUpdateTagFromWaitEnabled() = 0;
     virtual void flushMonitorFence(){};
+    virtual bool isTlbFlushRequiredForStateCacheFlush();
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();

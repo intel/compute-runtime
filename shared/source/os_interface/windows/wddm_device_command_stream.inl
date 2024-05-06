@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -155,6 +155,11 @@ WddmMemoryManager *WddmCommandStreamReceiver<GfxFamily>::getMemoryManager() cons
 template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait) {
     return wddm->waitFromCpu(flushStampToWait, static_cast<OsContextWin *>(this->osContext)->getResidencyController().getMonitoredFence(), false);
+}
+
+template <typename GfxFamily>
+bool WddmCommandStreamReceiver<GfxFamily>::isTlbFlushRequiredForStateCacheFlush() {
+    return true;
 }
 
 template <typename GfxFamily>

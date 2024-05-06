@@ -625,6 +625,10 @@ AubSubCaptureStatus CommandStreamReceiver::checkAndActivateAubSubCapture(const s
 
 void CommandStreamReceiver::addAubComment(const char *comment) {}
 
+bool CommandStreamReceiver::isTlbFlushRequiredForStateCacheFlush() {
+    return false;
+}
+
 void CommandStreamReceiver::downloadAllocation(GraphicsAllocation &gfxAllocation) {
     if (this->downloadAllocationImpl) {
         this->downloadAllocationImpl(gfxAllocation);
