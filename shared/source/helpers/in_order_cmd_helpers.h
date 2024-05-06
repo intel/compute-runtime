@@ -49,7 +49,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     InOrderExecInfo() = delete;
 
     static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList);
-    static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, uint64_t deviceAddress, uint64_t *hostAddress, uint64_t counterValue);
+    static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation, uint64_t *hostAddress, uint64_t counterValue);
 
     InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::MemoryManager &memoryManager, uint32_t partitionCount, uint32_t rootDeviceIndex,
                     bool regularCmdList, bool atomicDeviceSignalling);
@@ -92,6 +92,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     NEO::MemoryManager &memoryManager;
     NEO::TagNodeBase *deviceCounterNode = nullptr;
     NEO::TagNodeBase *hostCounterNode = nullptr;
+    NEO::GraphicsAllocation *externalHostAllocation = nullptr;
     uint64_t counterValue = 0;
     uint64_t lastWaitedCounterValue = 0;
 

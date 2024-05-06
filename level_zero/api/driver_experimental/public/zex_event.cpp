@@ -9,8 +9,10 @@
 
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
 
 namespace L0 {
@@ -51,7 +53,16 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), castToUint64(deviceAddress), hostAddress, completionValue);
+    NEO::SvmAllocationData *externalHostAllocData = nullptr;
+    bool allocFound = device->getDriverHandle()->findAllocationDataForRange(hostAddress, sizeof(uint64_t), externalHostAllocData);
+
+    if (!allocFound) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto allocation = externalHostAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), castToUint64(deviceAddress), allocation, hostAddress, completionValue);
 
     *phEvent = Event::create<uint64_t>(eventDescriptor, desc, device);
     Event::fromHandle(*phEvent)->updateInOrderExecState(inOrderExecInfo, completionValue, 0);

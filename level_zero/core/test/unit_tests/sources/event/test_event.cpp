@@ -3399,7 +3399,14 @@ HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandle
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
 
     uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
+
+    ze_host_mem_alloc_desc_t desc = {};
+    void *ptr = nullptr;
+    context->allocHostMem(&desc, sizeof(uint64_t), 1, &ptr);
+
+    uint64_t *hostAddress = static_cast<uint64_t *>(ptr);
+
+    *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
     ze_event_desc_t eventDesc = {};
@@ -3414,6 +3421,7 @@ HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandle
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     zeEventDestroy(handle);
+    context->freeMem(hostAddress);
 }
 
 HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {

@@ -3865,7 +3865,10 @@ HWTEST2_F(InOrderCmdListTests, givenIncorrectInputParamsWhenAskingForEventAddres
 
 HWTEST2_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenReturnSuccess, IsAtLeastSkl) {
     uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
+
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
     ze_event_desc_t eventDesc = {};
@@ -3876,6 +3879,7 @@ HWTEST2_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRet
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, device, gpuAddress, nullptr, counterValue, &eventDesc, &handle));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, device, nullptr, hostAddress, counterValue, &eventDesc, &handle));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, nullptr, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, device, gpuAddress, &counterValue, counterValue, &eventDesc, &handle));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
 
@@ -3896,11 +3900,15 @@ HWTEST2_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRet
     EXPECT_EQ(value, counterValue);
 
     zeEventDestroy(handle);
+
+    context->freeMem(hostAddress);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingSynchronizeThenReturnCorrectValue, IsAtLeastSkl) {
     uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
     ze_event_desc_t eventDesc = {};
@@ -3912,11 +3920,13 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingSynchronizeThenRet
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, eventObj->hostSynchronize(1));
 
-    counterValue++;
+    (*hostAddress)++;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->hostSynchronize(1));
 
     zeEventDestroy(handle);
+
+    context->freeMem(hostAddress);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterruptIdThenAssign, IsAtLeastSkl) {
@@ -3937,7 +3947,9 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterrup
 
 HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
     uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
     ze_event_desc_t eventDesc = {};
@@ -3962,11 +3974,14 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess,
     zeEventDestroy(eHandle1);
     zeEventDestroy(eHandle2);
     zeEventDestroy(eHandle3);
+    context->freeMem(hostAddress);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
     uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
     ze_event_desc_t eventDesc = {};
@@ -3989,11 +4004,14 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCallingAppe
     alignedFree(alignedPtr);
     zeEventDestroy(eHandle1);
     zeEventDestroy(eHandle2);
+    context->freeMem(hostAddress);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
     uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
     ze_event_desc_t eventDesc = {};
@@ -4014,6 +4032,7 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWhenCalling
     context->freeMem(data);
     zeEventDestroy(eHandle1);
     zeEventDestroy(eHandle2);
+    context->freeMem(hostAddress);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenCounterBasedEventWhenAskingForEventAddressAndValueThenReturnCorrectValues, IsAtLeastSkl) {
@@ -4229,7 +4248,9 @@ struct MultiTileInOrderCmdListTests : public InOrderCmdListTests {
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
     uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
     ze_event_desc_t eventDesc = {};
@@ -4254,11 +4275,14 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventWhenCallingAppendThe
     zeEventDestroy(eHandle1);
     zeEventDestroy(eHandle2);
     zeEventDestroy(eHandle3);
+    context->freeMem(hostAddress);
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
     uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
     ze_event_desc_t eventDesc = {};
@@ -4281,11 +4305,14 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCa
     alignedFree(alignedPtr);
     zeEventDestroy(eHandle1);
     zeEventDestroy(eHandle2);
+    context->freeMem(hostAddress);
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
     uint64_t counterValue = 2;
-    uint64_t *hostAddress = &counterValue;
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
     uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
 
     ze_event_desc_t eventDesc = {};
@@ -4306,6 +4333,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWh
     context->freeMem(data);
     zeEventDestroy(eHandle1);
     zeEventDestroy(eHandle2);
+    context->freeMem(hostAddress);
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagSetWhenAskingForAtomicSignallingThenReturnTrue, IsAtLeastXeHpCore) {

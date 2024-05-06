@@ -80,7 +80,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         uint64_t *hostAddress = &(standaloneCbEventStorage.data()[standaloneCbEventStorage.size() - 1]);
         uint64_t *deviceAddress = ptrOffset(hostAddress, 0x1000);
 
-        auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), castToUint64(deviceAddress), hostAddress, 1);
+        auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), castToUint64(deviceAddress), nullptr, hostAddress, 1);
 
         ze_event_desc_t eventDesc = {};
         eventDesc.pNext = pNext;

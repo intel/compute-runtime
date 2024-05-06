@@ -59,7 +59,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingStandaloneInO
     uint64_t *hostAddress = &counterValue;
     uint64_t gpuAddress = castToUint64(ptrOffset(&counterValue, 64));
 
-    auto inOrderExecInfo = InOrderExecInfo::createFromExternalAllocation(mockDevice, gpuAddress, hostAddress, counterValue);
+    auto inOrderExecInfo = InOrderExecInfo::createFromExternalAllocation(mockDevice, gpuAddress, nullptr, hostAddress, counterValue);
 
     EXPECT_EQ(counterValue, inOrderExecInfo->getCounterValue());
     EXPECT_EQ(hostAddress, inOrderExecInfo->getBaseHostAddress());
