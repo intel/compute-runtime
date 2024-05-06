@@ -60,8 +60,6 @@ if(NOT NEO_SKIP_OCL_UNIT_TESTS)
                      POST_BUILD
                      COMMAND WORKING_DIRECTORY ${TargetDir}
                      COMMAND echo Running igdrcl_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}
-                     COMMAND ${CMAKE_COMMAND} -E remove_directory ${outputdir}/cl_cache
-                     COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}/cl_cache
                      COMMAND echo Cmd line: ${GTEST_ENV} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id}
                      COMMAND ${GTEST_ENV} ${NEO_RUN_INTERCEPTOR_LIST} $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${GTEST_OUTPUT} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION} --rev_id ${revision_id}
   )

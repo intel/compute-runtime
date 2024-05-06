@@ -40,10 +40,6 @@ See the enabling [guide](cl_intel_va_api_media_sharing.md).
 
 ## Feature: cl_cache
 
-Originally, compute-runtime had an experimental cache implementation, which was replaced
-in Q2'23 with a more robust approach. Legacy solution is now considered deprecated and the
-old experimental controls explained below will be removed by EOY 2023.
-
 ### What is cl_cache?
 
 This is a mechanism to cache binary representations of OpenCL kernels provided in text form by

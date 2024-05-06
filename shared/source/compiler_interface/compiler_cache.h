@@ -20,7 +20,7 @@ namespace NEO {
 struct HardwareInfo;
 
 struct CompilerCacheConfig {
-    bool enabled = true;
+    bool enabled = false;
     std::string cacheFileExtension;
     std::string cacheDir;
     size_t cacheSize = 0;

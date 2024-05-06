@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 - [Implementation](#Implementation)
 - [Key Features](#Key-Features)
 - [Debug Keys](#Debug-Keys)
-- [Potential Problems and Limitations](#Potential-Problems-and-Limitations)
+- [Potential Issues and Limitations](#Potential-Issues-and-Limitations)
 
 # Introduction
 

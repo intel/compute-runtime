@@ -483,12 +483,6 @@ TEST_F(DebugEnvReaderTests, GivenBoolEnvVariableWhenGettingThenCorrectValueIsRet
     }
 }
 
-TEST_F(DebugEnvReaderTests, WhenSettingAppSpecificLocationThenLocationIsReturned) {
-    std::string appSpecific;
-    appSpecific = "cl_cache_dir";
-    EXPECT_EQ(appSpecific, environmentVariableReader->appSpecificLocation(appSpecific));
-}
-
 TEST_F(DebugEnvReaderTests, givenEnvironmentVariableReaderWhenCreateOsReaderWithStringThenNotNullPointer) {
     std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(false, ""));
     EXPECT_NE(nullptr, settingsReader);
