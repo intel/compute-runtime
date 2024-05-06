@@ -1414,7 +1414,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenItUsesIndirectUnifiedMemoryDeviceAl
     svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectHostMemoryWhenMakeResidentIsCalledThenOnlyHostAllocationsAreMadeResident) {
+HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectHostMemoryWhenMakeResidentIsCalledThenAllAllocationsAreMadeResident) {
     MockKernelWithInternals mockKernel(*this->pClDevice);
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -1430,14 +1430,13 @@ HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectHostMemoryWhenMakeResident
     mockKernel.mockKernel->setUnifiedMemoryProperty(CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL, true);
 
     mockKernel.mockKernel->makeResident(this->pDevice->getGpgpuCommandStreamReceiver());
-    EXPECT_EQ(1u, commandStreamReceiver.getResidencyAllocations().size());
-    EXPECT_EQ(commandStreamReceiver.getResidencyAllocations()[0]->getGpuAddress(), castToUint64(unifiedHostMemoryAllocation));
+    EXPECT_EQ(2u, commandStreamReceiver.getResidencyAllocations().size());
 
     svmAllocationsManager->freeSVMAlloc(unifiedDeviceMemoryAllocation);
     svmAllocationsManager->freeSVMAlloc(unifiedHostMemoryAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectSharedMemoryWhenMakeResidentIsCalledThenOnlySharedAllocationsAreMadeResident) {
+HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectSharedMemoryWhenMakeResidentIsCalledThenAllSharedAllocationsAreMadeResident) {
     MockKernelWithInternals mockKernel(*this->pClDevice);
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -1452,8 +1451,7 @@ HWTEST_F(KernelResidencyTest, givenKernelUsingIndirectSharedMemoryWhenMakeReside
     mockKernel.mockKernel->setUnifiedMemoryProperty(CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL, true);
 
     mockKernel.mockKernel->makeResident(this->pDevice->getGpgpuCommandStreamReceiver());
-    EXPECT_EQ(1u, commandStreamReceiver.getResidencyAllocations().size());
-    EXPECT_EQ(commandStreamReceiver.getResidencyAllocations()[0]->getGpuAddress(), castToUint64(unifiedSharedMemoryAllocation));
+    EXPECT_EQ(2u, commandStreamReceiver.getResidencyAllocations().size());
 
     svmAllocationsManager->freeSVMAlloc(unifiedSharedMemoryAllocation);
     svmAllocationsManager->freeSVMAlloc(unifiedHostMemoryAllocation);
@@ -2463,6 +2461,74 @@ HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCor
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.samplerCacheFlushRequired);
+}
+
+HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenIndirectAllocationsArePacked) {
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
+    MockProgram program(toClDeviceVector(*pClDevice));
+    MockContext ctx;
+    program.setContext(&ctx);
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
+    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    kernel->setUnifiedMemoryProperty(CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL, true);
+
+    auto &csr = pDevice->getGpgpuCommandStreamReceiver();
+    auto svmAllocationsManager = ctx.getSVMAllocsManager();
+    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, ctx.getRootDeviceIndices(), ctx.getDeviceBitfields());
+    deviceProperties.device = pDevice;
+    auto unifiedMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
+    auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
+    auto graphicsAllocation = unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation();
+
+    // Verify that indirect allocation is always resident
+    kernel->makeResident(csr);
+    EXPECT_EQ(GraphicsAllocation::objectAlwaysResident, graphicsAllocation->getResidencyTaskCount(csr.getOsContext().getContextId()));
+
+    // Force to non-resident
+    graphicsAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, csr.getOsContext().getContextId());
+
+    // Verify that packed allocation is tracked and makeResident is called once
+    kernel->makeResident(csr);
+    EXPECT_EQ(GraphicsAllocation::objectNotResident, graphicsAllocation->getResidencyTaskCount(csr.getOsContext().getContextId()));
+
+    svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
+}
+
+HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledAndPackingIsDisabledThenIndirectAllocationsAreNotPacked) {
+    DebugManagerStateRestore dbgStateRestore;
+    debugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
+
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+
+    MockProgram program(toClDeviceVector(*pClDevice));
+    MockContext ctx;
+    program.setContext(&ctx);
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
+    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    kernel->setUnifiedMemoryProperty(CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL, true);
+
+    auto &csr = pDevice->getGpgpuCommandStreamReceiver();
+    auto svmAllocationsManager = ctx.getSVMAllocsManager();
+    auto deviceProperties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, ctx.getRootDeviceIndices(), ctx.getDeviceBitfields());
+    deviceProperties.device = pDevice;
+    auto unifiedMemoryAllocation = svmAllocationsManager->createUnifiedMemoryAllocation(4096u, deviceProperties);
+    auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
+    auto graphicsAllocation = unifiedMemoryGraphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation();
+
+    kernel->makeResident(csr);
+    EXPECT_EQ(1u, graphicsAllocation->getResidencyTaskCount(csr.getOsContext().getContextId()));
+
+    // Force to non-resident
+    graphicsAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, csr.getOsContext().getContextId());
+
+    // Verify that makeResident is always called when allocation is not packed
+    kernel->makeResident(csr);
+    EXPECT_EQ(1u, graphicsAllocation->getResidencyTaskCount(csr.getOsContext().getContextId()));
+
+    svmAllocationsManager->freeSVMAlloc(unifiedMemoryAllocation);
 }
 
 struct KernelExecutionEnvironmentTest : public Test<ClDeviceFixture> {

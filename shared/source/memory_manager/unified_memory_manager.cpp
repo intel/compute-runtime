@@ -909,4 +909,15 @@ void SVMAllocsManager::makeResidentForAllocationsWithId(uint32_t allocationId, C
     }
 }
 
+bool SVMAllocsManager::submitIndirectAllocationsAsPack(CommandStreamReceiver &csr) {
+    auto submitAsPack = memoryManager->allowIndirectAllocationsAsPack(csr.getRootDeviceIndex());
+    if (debugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
+        submitAsPack = !!NEO::debugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
+    }
+
+    if (submitAsPack) {
+        makeIndirectAllocationsResident(csr, csr.peekTaskCount() + 1u);
+    }
+    return submitAsPack;
+}
 } // namespace NEO

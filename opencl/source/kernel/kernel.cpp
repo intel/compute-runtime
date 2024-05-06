@@ -1410,7 +1410,11 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     if (getHasIndirectAccess() && (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
                                    unifiedMemoryControls.indirectHostAllocationsAllowed ||
                                    unifiedMemoryControls.indirectSharedAllocationsAllowed)) {
-        this->getContext().getSVMAllocsManager()->makeInternalAllocationsResident(commandStreamReceiver, unifiedMemoryControls.generateMask());
+        auto svmAllocsManager = this->getContext().getSVMAllocsManager();
+        auto submittedAsPack = svmAllocsManager->submitIndirectAllocationsAsPack(commandStreamReceiver);
+        if (!submittedAsPack) {
+            svmAllocsManager->makeInternalAllocationsResident(commandStreamReceiver, unifiedMemoryControls.generateMask());
+        }
     }
 }
 

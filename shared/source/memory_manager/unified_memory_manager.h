@@ -238,6 +238,8 @@ class SVMAllocsManager {
 
     void initUsmAllocationsCaches(Device &device);
 
+    bool submitIndirectAllocationsAsPack(CommandStreamReceiver &csr);
+
   protected:
     void *createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
                                       const RootDeviceIndicesContainer &rootDeviceIndices,

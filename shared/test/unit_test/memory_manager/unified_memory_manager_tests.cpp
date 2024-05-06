@@ -464,7 +464,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenInternalAllocationWhenItIsMadeResidentT
 
     EXPECT_EQ(0u, svmManager->indirectAllocationsResidency.size());
 
-    svmManager->makeIndirectAllocationsResident(*csr, 1u);
+    EXPECT_TRUE(svmManager->submitIndirectAllocationsAsPack(*csr));
     EXPECT_TRUE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(csr->getOsContext().getContextId()));
     EXPECT_EQ(GraphicsAllocation::objectAlwaysResident, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getResidencyTaskCount(csr->getOsContext().getContextId()));
     EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->peekEvictable());
@@ -473,6 +473,39 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenInternalAllocationWhenItIsMadeResidentT
     auto internalEntry = svmManager->indirectAllocationsResidency.find(csr.get())->second;
     EXPECT_EQ(1u, internalEntry.latestSentTaskCount);
     EXPECT_EQ(1u, internalEntry.latestResidentObjectId);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenSubmitIndirectAllocationsAsPackCalledButAllocationsAsPackNotAllowedThenDontMakeResident) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.MakeIndirectAllocationsResidentAsPack.set(0);
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager, false);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr->setupContext(*device->getDefaultEngine().osContext);
+
+    void *cmdQ = reinterpret_cast<void *>(0x12345);
+    auto mockPageFaultManager = new MockPageFaultManager();
+    memoryManager->pageFaultManager.reset(mockPageFaultManager);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+
+    ASSERT_NE(nullptr, ptr);
+    auto graphicsAllocation = svmManager->getSVMAlloc(ptr);
+
+    EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(csr->getOsContext().getContextId()));
+    EXPECT_EQ(0u, svmManager->indirectAllocationsResidency.size());
+
+    EXPECT_FALSE(svmManager->submitIndirectAllocationsAsPack(*csr));
+
+    EXPECT_FALSE(graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->isResident(csr->getOsContext().getContextId()));
+    EXPECT_EQ(0u, svmManager->indirectAllocationsResidency.size());
+    EXPECT_EQ(svmManager->indirectAllocationsResidency.find(csr.get()), svmManager->indirectAllocationsResidency.end());
 
     svmManager->freeSVMAlloc(ptr);
 }

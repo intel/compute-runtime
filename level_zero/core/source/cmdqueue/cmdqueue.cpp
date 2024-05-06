@@ -326,14 +326,9 @@ NEO::WaitStatus CommandQueueImp::CommandBufferManager::switchBuffers(NEO::Comman
 void CommandQueueImp::handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) {
     NEO::Device *neoDevice = this->device->getNEODevice();
     auto svmAllocsManager = this->device->getDriverHandle()->getSvmAllocsManager();
-    auto submitAsPack = this->device->getDriverHandle()->getMemoryManager()->allowIndirectAllocationsAsPack(neoDevice->getRootDeviceIndex());
-    if (NEO::debugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
-        submitAsPack = !!NEO::debugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
-    }
+    auto submittedAsPack = svmAllocsManager->submitIndirectAllocationsAsPack(*(this->csr));
 
-    if (submitAsPack) {
-        svmAllocsManager->makeIndirectAllocationsResident(*(this->csr), this->csr->peekTaskCount() + 1u);
-    } else {
+    if (!submittedAsPack) {
         lockForIndirect = this->device->getDriverHandle()->getSvmAllocsManager()->obtainOwnership();
         NEO::ResidencyContainer residencyAllocations;
         svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
