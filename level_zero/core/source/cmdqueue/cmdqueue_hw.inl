@@ -156,6 +156,15 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
         return ret;
     }
 
+    this->getGlobalFenceAndMakeItResident();
+    this->getWorkPartitionAndMakeItResident();
+    this->getGlobalStatelessHeapAndMakeItResident(ctx);
+    this->makePreemptionAllocationResidentForModeMidThread(ctx.isDevicePreemptionModeMidThread);
+    this->makeSipIsaResidentIfSipKernelUsed(ctx);
+    this->makeDebugSurfaceResidentIfNEODebuggerActive(ctx.isNEODebuggerActive(this->device));
+    this->makeRayTracingBufferResident(neoDevice->getRTMemoryBackedBuffer());
+    this->makeSbaTrackingBufferResidentIfL0DebuggerEnabled(ctx.isDebugEnabled);
+
     this->makeCsrTagAllocationResident();
 
     if (instructionCacheFlushRequired) {

@@ -2868,5 +2868,28 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     otherCommandQueue->destroy();
 }
 
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessAndHeaplessModeWhenExecutingCommandListThenMakeAllocationResident, IsAtLeastXeHpCore) {
+    EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandList->cmdListHeapAddressModel);
+    EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandListImmediate->cmdListHeapAddressModel);
+    EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandQueue->cmdListHeapAddressModel);
+
+    commandQueue->heaplessModeEnabled = true;
+
+    ASSERT_EQ(commandListImmediate->csr, commandQueue->getCsr());
+    auto globalStatelessAlloc = commandListImmediate->csr->getGlobalStatelessHeapAllocation();
+    EXPECT_NE(nullptr, globalStatelessAlloc);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->csr);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    commandList->close();
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(ultCsr->isMadeResident(globalStatelessAlloc));
+}
+
 } // namespace ult
 } // namespace L0
