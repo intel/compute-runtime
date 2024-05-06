@@ -270,7 +270,7 @@ class MemoryManager {
     }
 
     virtual bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) {
-        return false;
+        return true;
     }
 
     bool isKernelBinaryReuseEnabled();

@@ -1808,10 +1808,10 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryDisabledW
     EXPECT_FALSE(mockManager->freeMemoryCalled);
 }
 
-TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenCheckedForIndirectAllocationsAsPackSupportThenFalseIsReturned) {
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenCheckedForIndirectAllocationsAsPackSupportThenTrueIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    EXPECT_FALSE(memoryManager.allowIndirectAllocationsAsPack(0u));
+    EXPECT_TRUE(memoryManager.allowIndirectAllocationsAsPack(0u));
 }
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenVerifyHandleThenReturnTrue) {
