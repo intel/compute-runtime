@@ -251,8 +251,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(++this->allocationsCounter);
 
-    std::unique_lock<std::shared_mutex> lock(mtx);
-    this->svmAllocs.insert(usmPtr, allocData);
+    insertSVMAlloc(usmPtr, allocData);
 
     return usmPtr;
 }
@@ -333,10 +332,8 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.device = memoryProperties.device;
     allocData.setAllocId(++this->allocationsCounter);
 
-    std::unique_lock<std::shared_mutex> lock(mtx);
-
     auto retPtr = reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
-    this->svmAllocs.insert(retPtr, allocData);
+    insertSVMAlloc(retPtr, allocData);
     UNRECOVERABLE_IF(useExternalHostPtrForCpu && (externalPtr != retPtr));
 
     return retPtr;
@@ -420,9 +417,8 @@ void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(size_t size, const Sv
     allocData.pageSizeForAlignment = pageSizeForAlignment;
     allocData.setAllocId(++this->allocationsCounter);
 
-    std::unique_lock<std::shared_mutex> lock(mtx);
     auto retPtr = allocationGpu->getUnderlyingBuffer();
-    this->svmAllocs.insert(retPtr, allocData);
+    insertSVMAlloc(retPtr, allocData);
     return retPtr;
 }
 
@@ -432,12 +428,12 @@ void SVMAllocsManager::setUnifiedAllocationProperties(GraphicsAllocation *alloca
 }
 
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
-    std::unique_lock<std::shared_mutex> lock(mtx);
-    svmAllocs.insert(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), svmAllocData);
+    insertSVMAlloc(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), svmAllocData);
 }
 
 void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
     std::unique_lock<std::shared_mutex> lock(mtx);
+    internalAllocationsMap.erase(svmAllocData.getAllocId());
     svmAllocs.remove(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
 }
 
@@ -593,8 +589,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAlloca
     allocData.size = size;
     allocData.setAllocId(++this->allocationsCounter);
 
-    std::unique_lock<std::shared_mutex> lock(mtx);
-    this->svmAllocs.insert(usmPtr, allocData);
+    insertSVMAlloc(usmPtr, allocData);
     return usmPtr;
 }
 
@@ -663,14 +658,14 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     allocData.size = size;
     allocData.setAllocId(++this->allocationsCounter);
 
-    std::unique_lock<std::shared_mutex> lock(mtx);
-    this->svmAllocs.insert(svmPtr, allocData);
+    insertSVMAlloc(svmPtr, allocData);
     return svmPtr;
 }
 
 void SVMAllocsManager::freeSVMData(SvmAllocationData *svmData) {
     std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
     std::unique_lock<std::shared_mutex> lock(mtx);
+    internalAllocationsMap.erase(svmData->getAllocId());
     svmAllocs.remove(reinterpret_cast<void *>(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
 }
 
@@ -745,7 +740,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
     std::unique_lock<std::shared_mutex> lock(mtx);
     bool parseAllAllocations = false;
     auto entry = indirectAllocationsResidency.find(&commandStreamReceiver);
-
+    TaskCountType previousCounter = 0;
     if (entry == indirectAllocationsResidency.end()) {
         parseAllAllocations = true;
 
@@ -757,20 +752,14 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
     } else {
         if (this->allocationsCounter > entry->second.latestResidentObjectId) {
             parseAllAllocations = true;
-
+            previousCounter = entry->second.latestResidentObjectId;
             entry->second.latestResidentObjectId = this->allocationsCounter;
         }
         entry->second.latestSentTaskCount = taskCount;
     }
     if (parseAllAllocations) {
-        for (auto &allocation : this->svmAllocs.allocations) {
-            auto gpuAllocation = allocation.second->gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
-            if (gpuAllocation == nullptr) {
-                continue;
-            }
-            commandStreamReceiver.makeResident(*gpuAllocation);
-            gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, commandStreamReceiver.getOsContext().getContextId());
-            gpuAllocation->setEvictable(false);
+        for (auto allocationId = this->allocationsCounter.load(); allocationId > previousCounter; allocationId--) {
+            makeResidentForAllocationsWithId(allocationId, commandStreamReceiver);
         }
     }
 }
@@ -889,4 +878,35 @@ void SVMAllocsManager::prefetchSVMAllocs(Device &device, CommandStreamReceiver &
 std::unique_lock<std::mutex> SVMAllocsManager::obtainOwnership() {
     return std::unique_lock<std::mutex>(mtxForIndirectAccess);
 }
+
+void SVMAllocsManager::insertSVMAlloc(void *svmPtr, const SvmAllocationData &allocData) {
+    std::unique_lock<std::shared_mutex> lock(mtx);
+    this->svmAllocs.insert(svmPtr, allocData);
+    for (auto alloc : allocData.gpuAllocations.getGraphicsAllocations()) {
+        if (alloc != nullptr) {
+            internalAllocationsMap.insert({allocData.getAllocId(), alloc});
+        }
+    }
+}
+
+/**
+ * @brief This method calls makeResident for allocation with specific allocId.
+ * Since single allocation id might be shared for different allocations in multi gpu scenario,
+ * this method iterates over all of these allocations and selects correct one based on device index
+ *
+ * @param[in] allocationId id of the allocation which should be resident
+ * @param[in] csr command stream receiver which will make allocation resident
+ */
+void SVMAllocsManager::makeResidentForAllocationsWithId(uint32_t allocationId, CommandStreamReceiver &csr) {
+    for (auto [iter, rangeEnd] = internalAllocationsMap.equal_range(allocationId); iter != rangeEnd; ++iter) {
+        auto gpuAllocation = iter->second;
+        if (gpuAllocation->getRootDeviceIndex() != csr.getRootDeviceIndex()) {
+            continue;
+        }
+        csr.makeResident(*gpuAllocation);
+        gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, csr.getOsContext().getContextId());
+        gpuAllocation->setEvictable(false);
+    }
+}
+
 } // namespace NEO

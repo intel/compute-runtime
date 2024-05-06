@@ -64,7 +64,7 @@ struct SvmAllocationData {
     }
     bool mappedAllocData = false;
 
-    uint32_t getAllocId() {
+    uint32_t getAllocId() const {
         return allocId;
     }
 
@@ -249,6 +249,8 @@ class SVMAllocsManager {
     void initUsmDeviceAllocationsCache(Device &device);
     void initUsmHostAllocationsCache();
     void freeSVMData(SvmAllocationData *svmData);
+    void insertSVMAlloc(void *ptr, const SvmAllocationData &allocData);
+    void makeResidentForAllocationsWithId(uint32_t allocationId, CommandStreamReceiver &csr);
 
     SortedVectorBasedAllocationTracker svmAllocs;
     MapOperationsTracker svmMapOperations;
@@ -261,5 +263,6 @@ class SVMAllocsManager {
     SvmAllocationCache usmHostAllocationsCache;
     bool usmDeviceAllocationsCacheEnabled = false;
     bool usmHostAllocationsCacheEnabled = false;
+    std::multimap<uint32_t, GraphicsAllocation *> internalAllocationsMap;
 };
 } // namespace NEO
