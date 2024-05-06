@@ -11,6 +11,8 @@
 #include "level_zero/core/source/context/context.h"
 #include <level_zero/ze_api.h>
 
+#include "mcl_cmdlist.h"
+
 namespace L0 {
 ze_result_t zeCommandListCreate(
     ze_context_handle_t hContext,
