@@ -369,7 +369,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
 
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
-    int ret = drm->waitOnUserFences(static_cast<const OsContextLinux &>(*this->osContext), hostAddress, waitValue, this->activePartitions, timeout, this->immWritePostSyncWriteOffset, userInterrupt, externalInterruptId, allocForInterruptWait);
+    int ret = drm->waitOnUserFences(static_cast<OsContextLinux &>(*this->osContext), hostAddress, waitValue, this->activePartitions, timeout, this->immWritePostSyncWriteOffset, userInterrupt, externalInterruptId, allocForInterruptWait);
 
     return (ret == 0);
 }

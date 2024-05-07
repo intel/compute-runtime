@@ -275,7 +275,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         return storedRetValForGemClose;
     }
     if (request == DrmIoctl::getResetStats && arg != nullptr) {
-        ioctlCount.gemResetStats++;
+        ioctlCount.getResetStats++;
         auto outResetStats = static_cast<ResetStats *>(arg);
         for (const auto &resetStats : resetStatsToReturn) {
             if (resetStats.contextId == outResetStats->contextId) {

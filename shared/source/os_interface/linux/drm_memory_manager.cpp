@@ -2221,7 +2221,7 @@ void DrmMemoryManager::waitOnCompletionFence(GraphicsAllocation *allocation) {
 
             if (allocation->isUsedByOsContext(osContextId)) {
                 Drm &drm = getDrm(csr->getRootDeviceIndex());
-                drm.waitOnUserFences(static_cast<const OsContextLinux &>(*osContext), completionFenceAddress, allocationTaskCount, csr->getActivePartitions(), -1,
+                drm.waitOnUserFences(static_cast<OsContextLinux &>(*osContext), completionFenceAddress, allocationTaskCount, csr->getActivePartitions(), -1,
                                      csr->getImmWritePostSyncWriteOffset(), false, NEO::InterruptId::notUsed, nullptr);
             }
         }

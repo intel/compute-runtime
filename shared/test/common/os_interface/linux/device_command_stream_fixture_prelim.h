@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,10 @@ class DrmMockCustomPrelim : public DrmMockCustom {
 
     void execBufferExtensions(void *arg) override {
         return context.execBufferExtensions(arg);
+    }
+
+    bool checkResetStatus(OsContext &osContext) override {
+        return false;
     }
 
     DrmMockCustomPrelimContext context{};

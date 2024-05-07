@@ -1143,6 +1143,64 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
+                   givenWaitUserFenceFlagSetAndVmBindAvailableAndUseDrmCtxWhenDrmCsrWaitsForFlushStampiAndDifferentScratchPageOptionsThenCallResetStatusOnlyScratchPageDisabled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUserFenceForCompletionWait.set(1);
+
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+
+    for (int err : {EIO, ETIME}) {
+        for (bool disableScratchPage : {false, true}) {
+            for (int gpuFaultCheckThreshold : {0, 10}) {
+                debugManager.flags.DisableScratchPages.set(disableScratchPage);
+                debugManager.flags.GpuFaultCheckThreshold.set(gpuFaultCheckThreshold);
+                mock->disableScratch = disableScratchPage;
+
+                TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
+                    new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
+                                                                   *this->executionEnvironment,
+                                                                   1);
+                EXPECT_TRUE(testedCsr->useUserFenceWait);
+                EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
+
+                device->resetCommandStreamReceiver(testedCsr);
+                mock->ioctlCnt.reset();
+                mock->waitUserFenceCall.called = 0u;
+                mock->checkResetStatusCalled = 0u;
+
+                mock->waitUserFenceCall.failOnWaitUserFence = true;
+                mock->errnoValue = err;
+
+                testedCsr->waitUserFenceResult.callParent = true;
+
+                auto osContextLinux = static_cast<const OsContextLinux *>(device->getDefaultEngine().osContext);
+                std::vector<uint32_t> &drmCtxIds = const_cast<std::vector<uint32_t> &>(osContextLinux->getDrmContextIds());
+                size_t drmCtxSize = drmCtxIds.size();
+                for (uint32_t i = 0; i < drmCtxSize; i++) {
+                    drmCtxIds[i] = 5u + i;
+                }
+
+                TaskCountType waitValue = 2;
+                TaskCountType currentValue = 1;
+                uint64_t addr = castToUint64(&currentValue);
+                testedCsr->waitUserFence(waitValue, addr, -1, false, NEO::InterruptId::notUsed, nullptr);
+
+                EXPECT_EQ(0, mock->ioctlCnt.gemWait);
+                EXPECT_EQ(1u, testedCsr->waitUserFenceResult.called);
+                EXPECT_EQ(2u, testedCsr->waitUserFenceResult.waitValue);
+
+                EXPECT_EQ(1u, mock->waitUserFenceCall.called);
+                if (err == EIO && disableScratchPage && gpuFaultCheckThreshold != 0) {
+                    EXPECT_EQ(1u, mock->checkResetStatusCalled);
+                } else {
+                    EXPECT_EQ(0u, mock->checkResetStatusCalled);
+                }
+            }
+        }
+    }
+}
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                    givenWaitUserFenceFlagSetAndVmBindNotAvailableWhenDrmCsrWaitsForFlushStampThenExpectUseDrmGemWaitCall) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUserFenceForCompletionWait.set(1);

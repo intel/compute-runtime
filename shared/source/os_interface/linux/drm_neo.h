@@ -170,6 +170,9 @@ class Drm : public DriverModel {
     bool checkToDisableScratchPage();
     unsigned int getGpuFaultCheckThreshold() const;
 
+    bool checkGpuPageFaultRequired() {
+        return (checkToDisableScratchPage() && getGpuFaultCheckThreshold() != 0);
+    }
     MOCKABLE_VIRTUAL bool resourceRegistrationEnabled();
     MOCKABLE_VIRTUAL uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size);
     MOCKABLE_VIRTUAL void unregisterResource(uint32_t handle);
@@ -226,7 +229,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt,
                                        uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait);
 
-    int waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
+    int waitOnUserFences(OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
                          uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait);
 
     void setNewResourceBoundToVM(BufferObject *bo, uint32_t vmHandleId);
@@ -265,6 +268,9 @@ class Drm : public DriverModel {
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
+
+    int waitOnUserFencesImpl(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
+                             uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait);
 
     int getQueueSliceCount(GemContextParamSseu *sseu);
     std::string generateUUID();

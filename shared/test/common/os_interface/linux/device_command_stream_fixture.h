@@ -47,7 +47,7 @@ class Ioctls {
     std::atomic<int32_t> gemSetDomain;
     std::atomic<int32_t> gemWait;
     std::atomic<int32_t> gemClose;
-    std::atomic<int32_t> gemResetStats;
+    std::atomic<int32_t> getResetStats;
     std::atomic<int32_t> regRead;
     std::atomic<int32_t> getParam;
     std::atomic<int32_t> contextGetParam;
@@ -99,7 +99,9 @@ class DrmMockCustom : public Drm {
   public:
     using Drm::bindAvailable;
     using Drm::cacheInfo;
+    using Drm::checkToDisableScratchPage;
     using Drm::completionFenceSupported;
+    using Drm::disableScratch;
     using Drm::ioctlHelper;
     using Drm::memoryInfo;
     using Drm::pageFaultSupported;
@@ -123,6 +125,8 @@ class DrmMockCustom : public Drm {
 
         uint32_t called = 0u;
         uint32_t failSpecificCall = 0;
+        bool failOnWaitUserFence = false;
+        int errnoForFailedWaitUserFence = 0;
     };
 
     struct IsVmBindAvailableCall {

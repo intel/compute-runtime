@@ -241,7 +241,7 @@ bool Drm::isGpuHangDetected(OsContext &osContext) {
     bool ret = checkResetStatus(osContext);
     auto threshold = getGpuFaultCheckThreshold();
 
-    if (checkToDisableScratchPage() && getGpuFaultCheckThreshold() != 0) {
+    if (checkGpuPageFaultRequired()) {
         if (gpuFaultCheckCounter >= threshold) {
             auto memoryManager = static_cast<DrmMemoryManager *>(this->rootDeviceEnvironment.executionEnvironment.memoryManager.get());
             memoryManager->checkUnexpectedGpuPageFault();
@@ -1566,8 +1566,18 @@ PhysicalDevicePciSpeedInfo Drm::getPciSpeedInfo() const {
     return pciSpeedInfo;
 }
 
-int Drm::waitOnUserFences(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
+int Drm::waitOnUserFences(OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
                           uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
+
+    int ret = waitOnUserFencesImpl(static_cast<const OsContextLinux &>(osContext), address, value, numActiveTiles,
+                                   timeout, postSyncOffset, userInterrupt, externalInterruptId, allocForInterruptWait);
+    if (ret != 0 && getErrno() == EIO && checkGpuPageFaultRequired()) {
+        checkResetStatus(osContext);
+    }
+    return ret;
+}
+int Drm::waitOnUserFencesImpl(const OsContextLinux &osContext, uint64_t address, uint64_t value, uint32_t numActiveTiles, int64_t timeout, uint32_t postSyncOffset, bool userInterrupt,
+                              uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
     auto &drmContextIds = osContext.getDrmContextIds();
     UNRECOVERABLE_IF(numActiveTiles > drmContextIds.size());
     auto completionFenceCpuAddress = address;

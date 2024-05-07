@@ -327,7 +327,8 @@ TEST_F(DrmMemoryManagerTest, GivenAllocatePhysicalDeviceMemoryThenSuccessReturne
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerTest, whenCallingChekcUnexpectedGpuPagedfaultThenAllEnginesWereChecked) {
+TEST_F(DrmMemoryManagerTest, whenCallingCheckUnexpectedGpuPagedfaultThenAllEnginesWereChecked) {
+    mock->ioctlExpected.total = -1; // don't care
     memoryManager->checkUnexpectedGpuPageFault();
     size_t allEnginesSize = 0u;
     for (auto &engineContainer : memoryManager->allRegisteredEngines) {
@@ -7355,6 +7356,53 @@ TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOf
     EXPECT_EQ(expectedValue, mock->waitUserFenceCall.value);
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithDifferentScratchPageOptionsWhenHandleFenceCompletionThenCallResetStatsOnlyWithScratchPageDisabledAndProperFaultCheckThreshold) {
+    mock->ioctlExpected.total = -1;
+
+    DebugManagerStateRestore dbgStateRestore;
+
+    VariableBackup<bool> backupFenceSupported{&mock->completionFenceSupported, true};
+    VariableBackup<bool> backupVmBindCallParent{&mock->isVmBindAvailableCall.callParent, false};
+    VariableBackup<bool> backupVmBindReturnValue{&mock->isVmBindAvailableCall.returnValue, true};
+
+    for (int err : {EIO, ETIME}) {
+        for (bool disableScratchPage : {false, true}) {
+            for (int gpuFaultCheckThreshold : {0, 10}) {
+                debugManager.flags.DisableScratchPages.set(disableScratchPage);
+                debugManager.flags.GpuFaultCheckThreshold.set(gpuFaultCheckThreshold);
+                mock->disableScratch = disableScratchPage;
+
+                mock->ioctlCnt.reset();
+                mock->waitUserFenceCall.called = 0u;
+                mock->checkResetStatusCalled = 0u;
+
+                mock->waitUserFenceCall.failOnWaitUserFence = true;
+                mock->errnoValue = err;
+
+                auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1024, AllocationType::commandBuffer});
+                auto engine = memoryManager->getRegisteredEngines(rootDeviceIndex)[0];
+                allocation->updateTaskCount(2, engine.osContext->getContextId());
+
+                uint64_t expectedFenceAddress = castToUint64(const_cast<TagAddressType *>(engine.commandStreamReceiver->getTagAddress())) + TagAllocationLayout::completionFenceOffset;
+                constexpr uint64_t expectedValue = 2;
+
+                memoryManager->handleFenceCompletion(allocation);
+
+                EXPECT_EQ(1u, mock->waitUserFenceCall.called);
+                EXPECT_EQ(expectedFenceAddress, mock->waitUserFenceCall.address);
+                EXPECT_EQ(expectedValue, mock->waitUserFenceCall.value);
+                if (err == EIO && disableScratchPage && gpuFaultCheckThreshold != 0) {
+                    EXPECT_EQ(1u, mock->checkResetStatusCalled);
+                } else {
+                    EXPECT_EQ(0u, mock->checkResetStatusCalled);
+                }
+
+                memoryManager->freeGraphicsMemory(allocation);
+            }
+        }
+    }
 }
 
 TEST_F(DrmMemoryManagerTest, givenCompletionFenceEnabledWhenHandlingCompletionOfNotUsedAndEligbleAllocationThenDoNotCallWaitUserFence) {
