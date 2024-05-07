@@ -70,8 +70,6 @@ struct MockTagNode : public TagNode<TagType> {
         gfxAllocation = nullptr;
         tagForCpuAccess = nullptr;
     }
-    void returnTag() {
-    }
 };
 
 class MyOSDeviceTime : public DeviceTime {
