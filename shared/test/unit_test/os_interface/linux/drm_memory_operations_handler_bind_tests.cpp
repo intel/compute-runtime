@@ -1409,6 +1409,15 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenLockedAndResidentAllocationsWhen
     memoryManager->freeGraphicsMemory(allocation1);
 }
 
+TEST_F(DrmMemoryOperationsHandlerBindTest, whenCallMakeResidentThenWaitUntilResidencyCompleted) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    mock->fenceVal[0]++;
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1)), MemoryOperationsStatus::success);
+    EXPECT_EQ(mock->context.waitUserFenceCalled, 1u);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 using DrmResidencyHandlerTests = ::testing::Test;
 
 HWTEST2_F(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue, IsWithinXeGfxFamily) {
