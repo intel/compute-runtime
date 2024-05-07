@@ -52,7 +52,6 @@ class ProductHelperHw : public ProductHelper {
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     bool isNewResidencyModelSupported() const override;
-    bool isSingleSliceDispatchNeededForCooperativeKernel() const override;
     bool isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const override;
     bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const override;
     bool isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled() const override;

@@ -60,11 +60,6 @@ bool ProductHelperHw<gfxProduct>::isNewResidencyModelSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isSingleSliceDispatchNeededForCooperativeKernel() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
     coherencyFlag = false;
 }

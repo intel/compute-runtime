@@ -191,7 +191,7 @@ void FrontEndProperties::resetState() {
     this->singleSliceDispatchCcsMode.value = StreamProperty::initValue;
 }
 
-void FrontEndProperties::setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, bool engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void FrontEndProperties::setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
@@ -208,7 +208,7 @@ void FrontEndProperties::setPropertiesAll(bool isCooperativeKernel, bool disable
     }
 
     if (this->frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
-        this->singleSliceDispatchCcsMode.set(engineInstancedDevice || (rootDeviceEnvironment.getProductHelper().isSingleSliceDispatchNeededForCooperativeKernel() && isCooperativeKernel));
+        this->singleSliceDispatchCcsMode.set(engineInstancedDevice);
     }
 }
 

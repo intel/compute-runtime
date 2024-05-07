@@ -838,7 +838,7 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
     auto &streamProperties = this->csr->getStreamProperties();
     if (!frontEndTrackingEnabled()) {
         streamProperties.frontEndState.setPropertiesAll(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
-                                                        true, isEngineInstanced, this->getCsr()->peekRootDeviceEnvironment());
+                                                        true, isEngineInstanced);
         ctx.frontEndStateDirty |= streamProperties.frontEndState.isDirty();
     } else {
         ctx.engineInstanced = isEngineInstanced;
