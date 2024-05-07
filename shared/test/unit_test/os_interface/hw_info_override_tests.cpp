@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -28,4 +29,17 @@ HWTEST2_F(HwInfoOverrideTest, givenAnyHwConfigStringWhenPrepareDeviceEnvironment
     EXPECT_EQ(hwInfo->gtSystemInfo.SubSliceCount, 2u);
     EXPECT_EQ(hwInfo->gtSystemInfo.DualSubSliceCount, 2u);
     EXPECT_EQ(hwInfo->gtSystemInfo.EUCount, 6u);
+}
+
+HWTEST2_F(HwInfoOverrideTest, givenBcsNumberOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenCorrectBcsNumberIsReturned, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.BcsNumberOverride.set(2);
+
+    MockExecutionEnvironment executionEnvironment{};
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    EXPECT_TRUE(success);
+
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+    EXPECT_EQ(hwInfo->featureTable.ftrBcsInfo, maxNBitValue(2));
 }

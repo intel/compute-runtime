@@ -17,6 +17,7 @@ DECLARE_DEBUG_VARIABLE(std::string, AUBDumpFilterKernelName, std::string("unk"),
 DECLARE_DEBUG_VARIABLE(std::string, AUBDumpToggleFileName, std::string("unk"), "Name of file to save AUB in toggle mode")
 DECLARE_DEBUG_VARIABLE(std::string, OverrideGdiPath, std::string("unk"), "When different value than \"unk\", will override default path to gdi library.")
 DECLARE_DEBUG_VARIABLE(std::string, AubDumpAddMmioRegistersList, std::string("unk"), "Semicolon separated sequence of additional MMIO registers offset;values pairs i.e. 0x111;0x123;0x222;0x456")
+DECLARE_DEBUG_VARIABLE(int32_t, BcsNumberOverride, -1, "Specify number of BCS engines available on the platform, for use in AUB/TBX mode")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterNamedKernelStartIdx, 0, "Start index of named kernel to AUB capture")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterNamedKernelEndIdx, -1, "End index of named kernel to AUB capture")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpSubCaptureMode, 0, "AUB dump subcapture mode (0 - off, 1 - filter by kernel name and/or index range, 2 - toggle on/off with dynamic regkey)")
