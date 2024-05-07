@@ -197,14 +197,14 @@ ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::vector<wchar_t> path
     // Call DeviceIoControl
     status = this->pdeviceIoControl(handle, ioctl, bufferIn, inSize, bufferOut, outSize, reinterpret_cast<unsigned long *>(sizeReturned), NULL);
 
+    this->pcloseHandle(handle);
+
     if (status == FALSE) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "deviceIoControl call failed\n");
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
-
-    this->pcloseHandle(handle);
 
     return ZE_RESULT_SUCCESS;
 }
