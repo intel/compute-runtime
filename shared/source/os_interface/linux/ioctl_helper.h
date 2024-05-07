@@ -106,7 +106,7 @@ class IoctlHelper {
     virtual CacheRegion closFree(CacheRegion closIndex) = 0;
     virtual int waitUserFence(uint32_t ctxId, uint64_t address,
                               uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
-                              bool userInterrupt, uint32_t externalInterruptId) = 0;
+                              bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) = 0;
     virtual uint32_t getAtomicAdvise(bool isNonAtomic) = 0;
     virtual uint32_t getAtomicAccess(AtomicAccessMode mode) = 0;
     virtual uint32_t getPreferredLocationAdvise() = 0;
@@ -256,7 +256,7 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     CacheRegion closFree(CacheRegion closIndex) override;
     int waitUserFence(uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
-                      bool userInterrupt, uint32_t externalInterruptId) override;
+                      bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
     uint32_t getPreferredLocationAdvise() override;
@@ -334,7 +334,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     CacheRegion closFree(CacheRegion closIndex) override;
     int waitUserFence(uint32_t ctxId, uint64_t address,
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
-                      bool userInterrupt, uint32_t externalInterruptId) override;
+                      bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getAtomicAccess(AtomicAccessMode mode) override;
     uint32_t getPreferredLocationAdvise() override;

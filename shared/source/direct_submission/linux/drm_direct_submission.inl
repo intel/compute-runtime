@@ -93,7 +93,7 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto &drm = osContextLinux->getDrm();
         auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset;
-        drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, -1, this->immWritePostSyncOffset, false, NEO::InterruptId::notUsed);
+        drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, -1, this->immWritePostSyncOffset, false, NEO::InterruptId::notUsed, nullptr);
     }
     this->deallocateResources();
     if (this->pciBarrierPtr) {

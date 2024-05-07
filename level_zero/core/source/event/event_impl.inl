@@ -520,7 +520,14 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
 
     uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset));
 
-    if (!csrs[0]->waitUserFence(getInOrderExecSignalValueWithSubmissionCounter(), waitAddress, timeout, isKmdWaitModeEnabled(), this->externalInterruptId)) {
+    NEO::GraphicsAllocation *hostAlloc = nullptr;
+    if (inOrderExecInfo->isExternalMemoryExecInfo()) {
+        hostAlloc = inOrderExecInfo->getExternalHostAllocation();
+    } else {
+        hostAlloc = inOrderExecInfo->isHostStorageDuplicated() ? inOrderExecInfo->getHostCounterAllocation() : inOrderExecInfo->getDeviceCounterAllocation();
+    }
+
+    if (!csrs[0]->waitUserFence(getInOrderExecSignalValueWithSubmissionCounter(), waitAddress, timeout, isKmdWaitModeEnabled(), this->externalInterruptId, hostAlloc)) {
         return ZE_RESULT_NOT_READY;
     }
 

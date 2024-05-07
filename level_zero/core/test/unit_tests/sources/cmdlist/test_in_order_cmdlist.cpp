@@ -420,6 +420,70 @@ HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenWaitForUser
     EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenPassCorrectAllocation, IsAtLeastXeHpCore) {
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
+
+    auto singleStorageImmCmdList = createImmCmdList<gfxCoreFamily>();
+
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+    auto duplicatedStorageImmCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(2, false);
+    events[0]->enableKmdWaitMode();
+    events[0]->enableInterruptMode();
+
+    events[1]->enableKmdWaitMode();
+    events[1]->enableInterruptMode();
+
+    singleStorageImmCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    duplicatedStorageImmCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ultCsr->waitUserFenecParams.forceRetStatusEnabled = true;
+
+    EXPECT_EQ(0u, ultCsr->waitUserFenecParams.callCount);
+
+    // Single counter storage
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(2));
+
+    EXPECT_EQ(1u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(events[0]->getInOrderExecInfo()->getDeviceCounterAllocation(), ultCsr->waitUserFenecParams.latestAllocForInterruptWait);
+    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+
+    // Duplicated host storage
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[1]->hostSynchronize(2));
+
+    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(events[1]->getInOrderExecInfo()->getHostCounterAllocation(), ultCsr->waitUserFenecParams.latestAllocForInterruptWait);
+    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+
+    // External host storage
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+    *hostAddress = 0;
+
+    uint64_t *gpuAddress = ptrOffset(hostAddress, 0x100);
+
+    ze_event_desc_t eventDesc = {};
+    ze_event_handle_t handle = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, 1, &eventDesc, &handle));
+
+    auto event2 = L0::Event::fromHandle(handle);
+    event2->enableKmdWaitMode();
+    event2->enableInterruptMode();
+
+    event2->hostSynchronize(2);
+
+    EXPECT_EQ(3u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(event2->getInOrderExecInfo()->getExternalHostAllocation(), ultCsr->waitUserFenecParams.latestAllocForInterruptWait);
+    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+
+    event2->destroy();
+    context->freeMem(hostAddress);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenHostResetOrSignalEventCalledThenReturnError, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 

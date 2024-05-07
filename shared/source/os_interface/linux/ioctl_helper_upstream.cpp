@@ -128,7 +128,7 @@ CacheRegion IoctlHelperUpstream::closFree(CacheRegion closIndex) {
 }
 
 int IoctlHelperUpstream::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
-                                       bool userInterrupt, uint32_t externalInterruptId) {
+                                       bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
     return 0;
 }
 

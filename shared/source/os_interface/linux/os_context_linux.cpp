@@ -108,7 +108,7 @@ void OsContextLinux::waitForBind(uint32_t drmIterator) {
         auto fenceValue = this->fenceVal[drmIterator];
         lock.unlock();
 
-        drm.waitUserFence(0u, fenceAddress, fenceValue, Drm::ValueWidth::u64, -1, drm.getIoctlHelper()->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed);
+        drm.waitUserFence(0u, fenceAddress, fenceValue, Drm::ValueWidth::u64, -1, drm.getIoctlHelper()->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
 
     } else {
         drm.waitForBind(drmIterator);

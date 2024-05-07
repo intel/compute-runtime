@@ -30,6 +30,7 @@ struct WaitUserFenceParams {
     int64_t latestWaitedTimeout = 0;
     uint32_t callCount = 0;
     uint32_t externalInterruptId = NEO::InterruptId::notUsed;
+    GraphicsAllocation *latestAllocForInterruptWait = nullptr;
     bool userInterrupt = false;
     bool forceRetStatusEnabled = false;
     bool forceRetStatusValue = true;
@@ -471,19 +472,20 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         BaseClass::stopDirectSubmission(blocking);
     }
 
-    bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId) override {
+    bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
         waitUserFenecParams.callCount++;
         waitUserFenecParams.latestWaitedAddress = hostAddress;
         waitUserFenecParams.latestWaitedValue = waitValue;
         waitUserFenecParams.latestWaitedTimeout = timeout;
         waitUserFenecParams.userInterrupt = timeout;
         waitUserFenecParams.externalInterruptId = externalInterruptId;
+        waitUserFenecParams.latestAllocForInterruptWait = allocForInterruptWait;
 
         if (waitUserFenecParams.forceRetStatusEnabled) {
             return waitUserFenecParams.forceRetStatusValue;
         }
 
-        return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId);
+        return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId, allocForInterruptWait);
     }
 
     std::vector<std::string> aubCommentMessages;

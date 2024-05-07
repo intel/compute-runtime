@@ -503,7 +503,7 @@ TEST(DrmBufferObjectTestPrelim, givenProvidedCtxIdWhenCallingWaitUserFenceThenEx
 
     uint64_t gpuAddress = 0x1020304000ull;
     uint64_t value = 0x98765ull;
-    drm.waitUserFence(10u, gpuAddress, value, Drm::ValueWidth::u8, -1, 0u, false, NEO::InterruptId::notUsed);
+    drm.waitUserFence(10u, gpuAddress, value, Drm::ValueWidth::u8, -1, 0u, false, NEO::InterruptId::notUsed, nullptr);
 
     EXPECT_EQ(1u, drm.context.waitUserFenceCalled);
     const auto &waitUserFence = drm.context.receivedWaitUserFence;
@@ -524,7 +524,7 @@ TEST(DrmBufferObjectTestPrelim, givenProvidedNoCtxIdWhenCallingWaitUserFenceThen
 
     uint64_t gpuAddress = 0x1020304000ull;
     uint64_t value = 0x98765ull;
-    drm.waitUserFence(0u, gpuAddress, value, Drm::ValueWidth::u16, 2, 3u, false, NEO::InterruptId::notUsed);
+    drm.waitUserFence(0u, gpuAddress, value, Drm::ValueWidth::u16, 2, 3u, false, NEO::InterruptId::notUsed, nullptr);
 
     EXPECT_EQ(1u, drm.context.waitUserFenceCalled);
     const auto &waitUserFence = drm.context.receivedWaitUserFence;
@@ -546,7 +546,7 @@ TEST(DrmTestPrelim, givenHungContextWhenCallingWaitUserFenceThenSmallTimeoutIsPa
 
     uint64_t memory = 0;
     uint64_t value = 20;
-    drm.waitOnUserFences(osContext, reinterpret_cast<uint64_t>(&memory), value, 1, -1, 0, false, NEO::InterruptId::notUsed);
+    drm.waitOnUserFences(osContext, reinterpret_cast<uint64_t>(&memory), value, 1, -1, 0, false, NEO::InterruptId::notUsed, nullptr);
 
     EXPECT_EQ(osContext.getDrmContextIds().size(), drm.context.waitUserFenceCalled);
     const auto &waitUserFence = drm.context.receivedWaitUserFence;

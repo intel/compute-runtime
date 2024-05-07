@@ -106,12 +106,12 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
 
     WaitUserFenceResult waitUserFenceResult;
 
-    bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId) override {
+    bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
         waitUserFenceResult.called++;
         waitUserFenceResult.waitValue = waitValue;
 
         if (waitUserFenceResult.callParent) {
-            return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId);
+            return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId, allocForInterruptWait);
         } else {
             return (waitUserFenceResult.returnValue == 0);
         }

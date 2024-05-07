@@ -318,7 +318,7 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSta
     auto waitValue = static_cast<uint32_t>(flushStamp);
     if (isUserFenceWaitActive()) {
         uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(getTagAddress()));
-        return waitUserFence(waitValue, tagAddress, kmdWaitTimeout, false, NEO::InterruptId::notUsed);
+        return waitUserFence(waitValue, tagAddress, kmdWaitTimeout, false, NEO::InterruptId::notUsed, nullptr);
     } else {
         this->drm->waitHandle(waitValue, kmdWaitTimeout);
     }
@@ -368,8 +368,8 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchB
 }
 
 template <typename GfxFamily>
-bool DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId) {
-    int ret = drm->waitOnUserFences(static_cast<const OsContextLinux &>(*this->osContext), hostAddress, waitValue, this->activePartitions, timeout, this->immWritePostSyncWriteOffset, userInterrupt, externalInterruptId);
+bool DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
+    int ret = drm->waitOnUserFences(static_cast<const OsContextLinux &>(*this->osContext), hostAddress, waitValue, this->activePartitions, timeout, this->immWritePostSyncWriteOffset, userInterrupt, externalInterruptId, allocForInterruptWait);
 
     return (ret == 0);
 }

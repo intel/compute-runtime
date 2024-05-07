@@ -300,7 +300,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenWaitUserFenceThenCorrectValueRe
     uint64_t value = 0x98765ull;
     auto ioctlHelper = drm->getIoctlHelper();
     for (uint32_t i = 0u; i < 4; i++) {
-        auto ret = ioctlHelper->waitUserFence(10u, gpuAddress, value, i, -1, 0u, false, NEO::InterruptId::notUsed);
+        auto ret = ioctlHelper->waitUserFence(10u, gpuAddress, value, i, -1, 0u, false, NEO::InterruptId::notUsed, nullptr);
         EXPECT_EQ(0, ret);
     }
 }

@@ -88,6 +88,8 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
         return lastWaitedCounterValue >= waitValue && this->allocationOffset == 0u;
     }
 
+    NEO::GraphicsAllocation *getExternalHostAllocation() const { return externalHostAllocation; }
+
   protected:
     NEO::MemoryManager &memoryManager;
     NEO::TagNodeBase *deviceCounterNode = nullptr;

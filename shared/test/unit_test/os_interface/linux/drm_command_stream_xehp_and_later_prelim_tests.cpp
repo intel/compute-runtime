@@ -261,10 +261,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenExternalInterrupt
 
     EXPECT_EQ(0u, mock->context.gemWaitUserFenceCalled);
 
-    testDrmCsr->waitUserFence(123, tagAddress, 1, true, NEO::InterruptId::notUsed);
+    testDrmCsr->waitUserFence(123, tagAddress, 1, true, NEO::InterruptId::notUsed, nullptr);
     EXPECT_EQ(2u, mock->context.gemWaitUserFenceCalled);
 
-    testDrmCsr->waitUserFence(123, tagAddress, 1, true, 0x678);
+    testDrmCsr->waitUserFence(123, tagAddress, 1, true, 0x678, nullptr);
     EXPECT_EQ(3u, mock->context.gemWaitUserFenceCalled);
 }
 

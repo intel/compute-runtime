@@ -636,7 +636,7 @@ void IoctlHelperXe::setupXeWaitUserFenceStruct(void *arg, uint32_t ctxId, uint16
     waitUserFence->exec_queue_id = ctxId;
 }
 
-int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId) {
+int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
     drm_xe_wait_user_fence waitUserFence = {};
 
     setupXeWaitUserFenceStruct(&waitUserFence, ctxId, op, addr, value, timeout);
@@ -649,11 +649,11 @@ int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, u
 
 int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
                                  uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags,
-                                 bool userInterrupt, uint32_t externalInterruptId) {
+                                 bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
     xeLog(" -> IoctlHelperXe::%s a=0x%llx v=0x%llx w=0x%x T=0x%llx F=0x%x ctx=0x%x\n", __FUNCTION__, address, value, dataWidth, timeout, flags, ctxId);
     UNRECOVERABLE_IF(dataWidth != static_cast<uint32_t>(Drm::ValueWidth::u64));
     if (address) {
-        return xeWaitUserFence(ctxId, DRM_XE_UFENCE_WAIT_OP_GTE, address, value, timeout, userInterrupt, externalInterruptId);
+        return xeWaitUserFence(ctxId, DRM_XE_UFENCE_WAIT_OP_GTE, address, value, timeout, userInterrupt, externalInterruptId, allocForInterruptWait);
     }
     return 0;
 }
@@ -1298,7 +1298,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
                                sync[0].addr,
                                sync[0].timeline_value, timeout,
-                               false, NEO::InterruptId::notUsed);
+                               false, NEO::InterruptId::notUsed, nullptr);
     }
 
     xeLog("error:  -> IoctlHelperXe::%s %s index=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx pat=%hu r=%d\n",

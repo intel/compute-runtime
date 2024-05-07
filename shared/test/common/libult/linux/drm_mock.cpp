@@ -324,9 +324,9 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
 
     return handleRemainingRequests(request, arg);
 }
-int DrmMock::waitUserFence(uint32_t ctxIdx, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId) {
+int DrmMock::waitUserFence(uint32_t ctxIdx, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
     waitUserFenceParams.push_back({ctxIdx, address, value, dataWidth, timeout, flags});
-    return Drm::waitUserFence(ctxIdx, address, value, dataWidth, timeout, flags, userInterrupt, externalInterruptId);
+    return Drm::waitUserFence(ctxIdx, address, value, dataWidth, timeout, flags, userInterrupt, externalInterruptId, allocForInterruptWait);
 }
 int DrmMockEngine::handleRemainingRequests(DrmIoctl request, void *arg) {
     if ((request == DrmIoctl::query) && (arg != nullptr)) {

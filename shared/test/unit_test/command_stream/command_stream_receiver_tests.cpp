@@ -107,7 +107,7 @@ TEST_F(CommandStreamReceiverTest, givenCsrWhenGettingCompletionAddressThenUnderl
 }
 
 TEST_F(CommandStreamReceiverTest, givenBaseCsrWhenCallingWaitUserFenceThenReturnFalse) {
-    EXPECT_FALSE(commandStreamReceiver->waitUserFence(1, commandStreamReceiver->getCompletionAddress(), -1, false, InterruptId::notUsed));
+    EXPECT_FALSE(commandStreamReceiver->waitUserFence(1, commandStreamReceiver->getCompletionAddress(), -1, false, InterruptId::notUsed, nullptr));
 }
 
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenDefaultValuesAreSet) {
