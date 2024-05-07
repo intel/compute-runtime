@@ -362,13 +362,21 @@ void Program::updateNonUniformFlag() {
     if (pos == std::string::npos) {
         programOptionVersion = 12u; // Default is 1.2
     } else {
-        std::stringstream ss{options.c_str() + pos + clStdOptionName.size()};
-        uint32_t majorV = 0u, minorV = 0u;
-        char dot = 0u;
-        ss >> majorV;
-        ss >> dot;
-        ss >> minorV;
-        programOptionVersion = majorV * 10u + minorV;
+        const std::string_view opt(options.c_str() + pos + clStdOptionName.size());
+
+        if (opt.find("CLC++") == 0 || opt.find("CLC++1.0") == 0) {
+            programOptionVersion = 20;
+        } else if (opt.find("CLC++2021") == 0) {
+            programOptionVersion = 30;
+        } else {
+            std::stringstream ss{options.c_str() + pos + clStdOptionName.size()};
+            uint32_t majorV = 0u, minorV = 0u;
+            char dot = 0u;
+            ss >> majorV;
+            ss >> dot;
+            ss >> minorV;
+            programOptionVersion = majorV * 10u + minorV;
+        }
     }
 
     if (programOptionVersion >= 20u && (false == CompilerOptions::contains(options, CompilerOptions::uniformWorkgroupSize))) {
