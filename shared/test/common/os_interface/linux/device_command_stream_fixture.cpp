@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ void Ioctls::reset() {
     gemSetDomain = 0;
     gemWait = 0;
     gemClose = 0;
-    gemResetStats = 0;
+    getResetStats = 0;
     regRead = 0;
     getParam = 0;
     contextGetParam = 0;
@@ -62,6 +62,7 @@ void DrmMockCustom::testIoctls() {
     NEO_IOCTL_EXPECT_EQ(gemSetDomain);
     NEO_IOCTL_EXPECT_EQ(gemWait);
     NEO_IOCTL_EXPECT_EQ(gemClose);
+    NEO_IOCTL_EXPECT_EQ(getResetStats);
     NEO_IOCTL_EXPECT_EQ(regRead);
     NEO_IOCTL_EXPECT_EQ(getParam);
     NEO_IOCTL_EXPECT_EQ(contextGetParam);
@@ -206,6 +207,10 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         vmCreate->vmId = vmIdToCreate;
         break;
     }
+    case DrmIoctl::getResetStats: {
+        ioctlCnt.getResetStats++;
+        break;
+    }
     default:
         int res = ioctlExtra(request, arg);
         if (returnIoctlExtraErrorValue) {
@@ -245,6 +250,11 @@ int DrmMockCustom::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t valu
     if (waitUserFenceCall.called == waitUserFenceCall.failSpecificCall) {
         return 123;
     }
+
+    if (waitUserFenceCall.failOnWaitUserFence == true) {
+        return -1;
+    }
+
     return Drm::waitUserFence(ctxId, address, value, dataWidth, timeout, flags);
 }
 
