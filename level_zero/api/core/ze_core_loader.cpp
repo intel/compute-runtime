@@ -396,7 +396,7 @@ zeGetCommandListExpProcAddrTable(
         return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    fillDdiEntry(pDdiTable->pfnImmediateAppendCommandListsExp, L0::zeCommandListImmediateAppendCommandLists, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnImmediateAppendCommandListsExp, L0::zeCommandListImmediateAppendCommandListsExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnGetNextCommandIdExp, L0::zeCommandListGetNextCommandIdExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnUpdateMutableCommandsExp, L0::zeCommandListUpdateMutableCommandsExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnUpdateMutableCommandSignalEventExp, L0::zeCommandListUpdateMutableCommandSignalEventExp, version, ZE_API_VERSION_1_9);
