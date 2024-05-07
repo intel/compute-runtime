@@ -234,13 +234,15 @@ bool InOrderCmdListFixture::verifyInOrderDependency(GenCmdList::iterator &cmd, u
         if (!lri) {
             return false;
         }
+
+        uint32_t base = (isBcs) ? RegisterOffsets::bcs0Base : 0x0;
         EXPECT_EQ(getLowPart(counter), lri->getDataDword());
-        EXPECT_EQ(RegisterOffsets::csGprR0, lri->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR0 + base, lri->getRegisterOffset());
 
         lri++;
 
         EXPECT_EQ(getHighPart(counter), lri->getDataDword());
-        EXPECT_EQ(RegisterOffsets::csGprR0 + 4, lri->getRegisterOffset());
+        EXPECT_EQ(RegisterOffsets::csGprR0 + 4 + base, lri->getRegisterOffset());
 
         std::advance(cmd, 2);
     }

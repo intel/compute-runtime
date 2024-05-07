@@ -237,6 +237,69 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStre
     EXPECT_EQ(data, lri->getDataDword());
 }
 
+HWTEST_F(LriHelperTests, givenAddressAndOffsetAndRemapAndNotBlitterWhenHelperIsUsedThenProgramCmdStream) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint32_t address = 0x8888;
+    uint32_t data = 0x1234;
+
+    auto expectedLri = FamilyType::cmdInitLoadRegisterImm;
+    expectedLri.setRegisterOffset(address);
+    expectedLri.setDataDword(data);
+
+    LriHelper<FamilyType>::program(&stream, address, data, true, false);
+    auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(stream.getCpuBase());
+    ASSERT_NE(nullptr, lri);
+
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), stream.getUsed());
+    EXPECT_EQ(address, lri->getRegisterOffset());
+    EXPECT_EQ(data, lri->getDataDword());
+}
+
+HWTEST_F(LriHelperTests, givenAddressAndOffsetAndNotRemapAndBlitterWhenHelperIsUsedThenProgramCmdStream) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint32_t address = 0x8888;
+    uint32_t data = 0x1234;
+
+    auto expectedLri = FamilyType::cmdInitLoadRegisterImm;
+    expectedLri.setRegisterOffset(address);
+    expectedLri.setDataDword(data);
+
+    LriHelper<FamilyType>::program(&stream, address, data, false, true);
+    auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(stream.getCpuBase());
+    ASSERT_NE(nullptr, lri);
+
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), stream.getUsed());
+    EXPECT_EQ(address, lri->getRegisterOffset());
+    EXPECT_EQ(data, lri->getDataDword());
+}
+
+HWTEST_F(LriHelperTests, givenAddressAndOffsetAndRemapAndBlitterWhenHelperIsUsedThenProgramCmdStream) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint32_t address = 0x8888;
+    uint32_t data = 0x1234;
+
+    auto expectedLri = FamilyType::cmdInitLoadRegisterImm;
+    expectedLri.setRegisterOffset(address);
+    expectedLri.setDataDword(data);
+
+    LriHelper<FamilyType>::program(&stream, address, data, true, true);
+    auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(stream.getCpuBase());
+    ASSERT_NE(nullptr, lri);
+
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), stream.getUsed());
+    EXPECT_EQ(address + RegisterOffsets::bcs0Base, lri->getRegisterOffset());
+    EXPECT_EQ(data, lri->getDataDword());
+}
+
 using PipeControlHelperTests = ::testing::Test;
 
 HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsedThenProperFieldsAreProgrammed) {

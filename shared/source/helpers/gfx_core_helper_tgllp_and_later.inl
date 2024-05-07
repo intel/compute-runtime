@@ -24,6 +24,7 @@ inline bool GfxCoreHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareI
 template <typename GfxFamily>
 void *LriHelper<GfxFamily>::program(MI_LOAD_REGISTER_IMM *lriCmd, uint32_t address, uint32_t value, bool remap, bool isBcs) {
     MI_LOAD_REGISTER_IMM cmd = Family::cmdInitLoadRegisterImm;
+    address += (isBcs && remap) ? RegisterOffsets::bcs0Base : 0x0;
     cmd.setRegisterOffset(address);
     cmd.setDataDword(value);
     cmd.setMmioRemapEnable(remap);

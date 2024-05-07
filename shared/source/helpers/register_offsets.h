@@ -40,6 +40,7 @@ inline constexpr uint32_t csGprR11 = 0x2658;
 inline constexpr uint32_t csGprR12 = 0x2660;
 inline constexpr uint32_t csGprR13 = 0x2668;
 inline constexpr uint32_t csGprR14 = 0x2670;
+inline constexpr uint32_t bcs0Base = 0x20000;
 
 inline constexpr uint32_t csPredicateResult = 0x2418;
 inline constexpr uint32_t csPredicateResult2 = 0x23BC;
