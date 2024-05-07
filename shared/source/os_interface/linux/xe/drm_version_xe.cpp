@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ bool Drm::isDrmSupported(int fileDescriptor) {
 bool Drm::queryDeviceIdAndRevision() {
     auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
     if ("xe" == drmVersion) {
-        this->ioctlHelper = std::make_unique<IoctlHelperXe>(*this);
+        this->ioctlHelper = IoctlHelperXe::create(*this);
         auto xeIoctlHelperPtr = static_cast<IoctlHelperXe *>(this->ioctlHelper.get());
         this->setPerContextVMRequired(false);
         return xeIoctlHelperPtr->initialize();
