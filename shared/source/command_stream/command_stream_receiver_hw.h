@@ -355,7 +355,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     size_t cmdStreamStart = 0;
     uint32_t latestSentBcsWaValue = std::numeric_limits<uint32_t>::max();
-    bool heaplessPrologueSent = false;
 };
 
 } // namespace NEO
