@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -276,6 +276,23 @@ TEST_F(InternalAllocationStorageTest, givenAllocationListWhenTwoThreadsCleanConc
     thread2.join();
 
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+}
+
+HWTEST_F(InternalAllocationStorageTest, givenDirectSubmissionAvailableWhenCleanInternalStorageThenRestartDirectSubmission) {
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    ultCsr->directSubmissionAvailable = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation->updateTaskCount(10, csr->getOsContext().getContextId());
+    storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+
+    EXPECT_FALSE(ultCsr->stopDirectSubmissionForHostptrDestroyCalled);
+    EXPECT_FALSE(ultCsr->startDirectSubmissionForHostptrDestroyCalled);
+
+    storage->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
+
+    EXPECT_TRUE(ultCsr->stopDirectSubmissionForHostptrDestroyCalled);
+    EXPECT_TRUE(ultCsr->startDirectSubmissionForHostptrDestroyCalled);
 }
 
 HWTEST_F(InternalAllocationStorageTest, givenMultipleActivePartitionsWhenDetachingReusableAllocationThenCheckTaskCountFinishedOnAllTiles) {

@@ -358,6 +358,9 @@ class CommandStreamReceiver {
 
     virtual void stopDirectSubmission(bool blocking) {}
 
+    virtual void stopDirectSubmissionForHostptrDestroy() {}
+    virtual void startDirectSubmissionForHostptrDestroy() {}
+
     virtual QueueThrottle getLastDirectSubmissionThrottle() = 0;
 
     bool isStaticWorkPartitioningEnabled() const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,16 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
 }
 
 void InternalAllocationStorage::cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) {
+    bool restartDirectSubmission = allocationUsage == TEMPORARY_ALLOCATION && !allocationLists[allocationUsage].peekIsEmpty();
+    if (restartDirectSubmission) {
+        this->commandStreamReceiver.stopDirectSubmissionForHostptrDestroy();
+    }
+
     freeAllocationsList(waitTaskCount, allocationLists[allocationUsage]);
+
+    if (restartDirectSubmission) {
+        this->commandStreamReceiver.startDirectSubmissionForHostptrDestroy();
+    }
 }
 
 void InternalAllocationStorage::freeAllocationsList(TaskCountType waitTaskCount, AllocationsList &allocationsList) {

@@ -31,6 +31,9 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
     bool isTlbFlushRequiredForStateCacheFlush() override;
 
+    void stopDirectSubmissionForHostptrDestroy() override;
+    void startDirectSubmissionForHostptrDestroy() override;
+
     WddmMemoryManager *getMemoryManager() const;
     Wddm *peekWddm() const {
         return wddm;
