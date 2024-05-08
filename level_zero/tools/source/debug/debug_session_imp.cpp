@@ -1203,7 +1203,7 @@ void DebugSession::updateGrfRegisterSetProperties(EuThread::ThreadId thread, uin
     if (regsetType == ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU) {
         largeGrfModeEnabled = regPtr[0] & 0x2000;
     } else if (regsetType == ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU) {
-        largeGrfModeEnabled = regPtr[1] & 0x6000;
+        largeGrfModeEnabled = ((regPtr[1] & 0x6000) == 0x6000);
     }
 
     if (largeGrfModeEnabled) {
