@@ -96,6 +96,10 @@ TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenGettingCompletionValueTh
     EXPECT_EQ(expectedValue, commandStreamReceiver->getCompletionValue(allocation));
 }
 
+TEST_F(CommandStreamReceiverTest, givenOsAgnosticCsrWhenSubmitingCsrDependencyWithNoTagFlushThenFalseRturned) {
+    EXPECT_FALSE(commandStreamReceiver->submitDependencyUpdate(nullptr));
+}
+
 TEST_F(CommandStreamReceiverTest, givenCsrWhenGettingCompletionAddressThenProperAddressIsReturned) {
     auto expectedAddress = castToUint64(const_cast<TagAddressType *>(commandStreamReceiver->getTagAddress()));
     EXPECT_EQ(expectedAddress + TagAllocationLayout::completionFenceOffset, commandStreamReceiver->getCompletionAddress());
@@ -3406,6 +3410,26 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFlushPipeControlWhenFlushWithoutState
     commandStreamReceiver.flushPipeControl(false);
 
     EXPECT_FALSE(UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(commandStreamReceiver, commandStreamReceiver.commandStream));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenFCommandStreamWhenSubmitingDependencyUpdateThenPCWithTagAddresIsDispatched) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
+    auto tag = mockTagAllocator->getTag();
+    auto usedSizeBeforeSubmit = commandStreamReceiver.commandStream.getUsed();
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(commandStreamReceiver.peekRootDeviceEnvironment())) {
+        usedSizeBeforeSubmit += sizeof(PIPE_CONTROL);
+    }
+    commandStreamReceiver.submitDependencyUpdate(tag);
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSizeBeforeSubmit);
+    const auto pipeControlItor = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    const auto pipeControl = genCmdCast<PIPE_CONTROL *>(*pipeControlItor);
+    EXPECT_NE(nullptr, pipeControl);
+    auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tag);
+    EXPECT_EQ(UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl), cacheFlushTimestampPacketGpuAddress);
+    EXPECT_EQ(pipeControl->getDcFlushEnable(), MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, commandStreamReceiver.peekRootDeviceEnvironment()));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenFlushPipeControlWhenFlushWithStateCacheFlushThenExpectStateCacheFlushFlagsSet) {

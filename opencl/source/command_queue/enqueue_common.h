@@ -580,6 +580,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
         blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.cacheFlushNodes);
         blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
         blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.barrierNodes);
+        blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies.multiCsrDependencies);
     }
     blitProperties.multiRootDeviceEventSync = multiRootDeviceEventSync;
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
@@ -1437,7 +1438,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     if (isCacheFlushForBcsRequired() && gpgpuSubmission) {
         timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
     }
-
+    for (auto &dependentCsr : csrDeps.csrWithMultiEngineDependencies) {
+        auto tag = allocator->getTag();
+        timestampPacketDependencies.multiCsrDependencies.add(tag);
+        bool submitStatus = dependentCsr->submitDependencyUpdate(tag);
+        if (!submitStatus) {
+            return CL_OUT_OF_RESOURCES;
+        }
+    }
     obtainNewTimestampPacketNodes(1, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, bcsCsr);
     csrDeps.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
 

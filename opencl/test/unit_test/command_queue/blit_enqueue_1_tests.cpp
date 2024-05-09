@@ -1373,11 +1373,11 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBlockedEventWhenWaitingForCom
     userEvent.setStatus(CL_COMPLETE);
 
     clWaitForEvents(1, &outEvent2);
-    EXPECT_EQ(2u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(3u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
     EXPECT_EQ(2u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 
     clWaitForEvents(1, &outEvent1);
-    EXPECT_EQ(1u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(2u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
     EXPECT_EQ(1u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 
     clReleaseEvent(outEvent1);

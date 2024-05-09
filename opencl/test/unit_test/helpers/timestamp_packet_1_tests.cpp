@@ -130,7 +130,46 @@ HWTEST_F(TimestampPacketTests, givenCrossCsrDependenciesWhenFillCsrDepsThenFlush
     } else {
         EXPECT_FALSE(mockCmdQ2->getUltCommandStreamReceiver().flushBatchedSubmissionsCalled);
     }
-    EXPECT_FALSE(mockCmdQHw->getUltCommandStreamReceiver().flushBatchedSubmissionsCalled);
+
+    mockCmdQHw->getUltCommandStreamReceiver().latestFlushedTaskCount = 1;
+    *mockCmdQHw->getUltCommandStreamReceiver().tagAddress = 1;
+    mockCmdQ2->getUltCommandStreamReceiver().latestFlushedTaskCount = 1;
+    *mockCmdQ2->getUltCommandStreamReceiver().tagAddress = 1;
+}
+
+HWTEST_F(TimestampPacketTests, givenCrossCsrDependenciesWhenFillCsrDepsThendependentCsrIsStoredInSet) {
+    auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    mockCmdQHw->getUltCommandStreamReceiver().timestampPacketWriteEnabled = true;
+    mockCmdQHw->getUltCommandStreamReceiver().taskCount = 1;
+    mockCmdQHw->getUltCommandStreamReceiver().latestFlushedTaskCount = 0;
+
+    cl_queue_properties props[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto mockCmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), props);
+    mockCmdQ2->getUltCommandStreamReceiver().timestampPacketWriteEnabled = true;
+    mockCmdQ2->getUltCommandStreamReceiver().taskCount = 1;
+    mockCmdQ2->getUltCommandStreamReceiver().latestFlushedTaskCount = 0;
+
+    const cl_uint eventsOnWaitlist = 2;
+    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event(mockCmdQ, 0, 0, 0);
+    event.addTimestampPacketNodes(timestamp);
+    Event event2(mockCmdQ2.get(), 0, 0, 0);
+    event2.addTimestampPacketNodes(timestamp2);
+
+    cl_event waitlist[] = {&event, &event2};
+    EventsRequest eventsRequest(eventsOnWaitlist, waitlist, nullptr);
+    CsrDependencies csrDeps;
+
+    eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, mockCmdQ->getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::all);
+
+    const auto &productHelper = device->getProductHelper();
+    if (productHelper.isDcFlushAllowed()) {
+        EXPECT_NE(csrDeps.csrWithMultiEngineDependencies.size(), 0u);
+    } else {
+        EXPECT_EQ(csrDeps.csrWithMultiEngineDependencies.size(), 0u);
+    }
 
     mockCmdQHw->getUltCommandStreamReceiver().latestFlushedTaskCount = 1;
     *mockCmdQHw->getUltCommandStreamReceiver().tagAddress = 1;

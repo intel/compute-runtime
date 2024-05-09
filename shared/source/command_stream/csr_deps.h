@@ -8,6 +8,8 @@
 #pragma once
 #include "shared/source/utilities/stackvec.h"
 
+#include <set>
+
 namespace NEO {
 
 class TimestampPacketContainer;
@@ -27,5 +29,7 @@ class CsrDependencies {
     void makeResident(CommandStreamReceiver &commandStreamReceiver) const;
     void copyNodesToNewContainer(TimestampPacketContainer &newTimestampPacketContainer);
     void copyRootDeviceSyncNodesToNewContainer(TimestampPacketContainer &newTimestampPacketContainer);
+
+    std::set<CommandStreamReceiver *> csrWithMultiEngineDependencies;
 };
 } // namespace NEO

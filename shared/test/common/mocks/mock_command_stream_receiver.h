@@ -78,6 +78,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     SubmissionStatus flushTagUpdate() override { return SubmissionStatus::success; };
     void updateTagFromWait() override{};
+    bool submitDependencyUpdate(TagNodeBase *tag) override { return true; };
     bool isUpdateTagFromWaitEnabled() override { return false; };
 
     void writeMemoryAub(aub_stream::AllocationParams &allocationParams) override {

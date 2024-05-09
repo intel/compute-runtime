@@ -39,6 +39,7 @@ struct TimestampPacketDependencies : public NonCopyableClass {
     TimestampPacketContainer barrierNodes;
     TimestampPacketContainer auxToNonAuxNodes;
     TimestampPacketContainer nonAuxToAuxNodes;
+    TimestampPacketContainer multiCsrDependencies;
 
     void moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer);
 };

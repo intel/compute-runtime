@@ -642,6 +642,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     bool isUpdateTagFromWaitEnabled() override { return false; };
 
     bool isMultiOsContextCapable() const override { return false; }
+    bool submitDependencyUpdate(TagNodeBase *tag) override { return true; }
 
     MemoryCompressionState getMemoryCompressionState(bool auxTranslationRequired) const override {
         return MemoryCompressionState::notApplicable;

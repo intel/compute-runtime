@@ -65,6 +65,7 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
                         flushDependentCsr(*dependentCsr, csrDeps);
                         currentCsr.makeResident(*dependentCsr->getTagAllocation());
                     }
+                    csrDeps.csrWithMultiEngineDependencies.insert(dependentCsr);
                 }
             }
         }

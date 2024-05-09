@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,4 +65,5 @@ void TimestampPacketDependencies::moveNodesToNewContainer(TimestampPacketContain
     barrierNodes.moveNodesToNewContainer(timestampPacketContainer);
     auxToNonAuxNodes.moveNodesToNewContainer(timestampPacketContainer);
     nonAuxToAuxNodes.moveNodesToNewContainer(timestampPacketContainer);
+    multiCsrDependencies.moveNodesToNewContainer(timestampPacketContainer);
 }
