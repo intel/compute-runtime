@@ -828,24 +828,7 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenIsaIs
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 }
 
-struct KernelIsaCopyingMomentTest : public ModuleImmutableDataFixture, public ::testing::TestWithParam<std::pair<uint32_t, size_t>> {
-    void SetUp() override {
-        ModuleImmutableDataFixture::setUp();
-    }
-
-    void TearDown() override {
-        ModuleImmutableDataFixture::tearDown();
-    }
-};
-std::pair<uint32_t, size_t> kernelIsaCopyingPairs[] = {
-    {1, 1},
-    {static_cast<uint32_t>(MemoryConstants::pageSize64k + 1), 0}}; // pageSize64 is a common upper-bound for both system and local memory
-
-INSTANTIATE_TEST_CASE_P(, KernelIsaCopyingMomentTest, testing::ValuesIn(kernelIsaCopyingPairs));
-
-TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsaCopiedDuringLinkingOnlyIfCanFitInACommonParentPage) {
-    auto [testKernelHeapSize, numberOfCopiesToAllocationAtModuleInitialization] = GetParam();
-
+TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenIsaCopiedDuringLinking) {
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
@@ -866,11 +849,11 @@ TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsa
     moduleMock->translationUnit->programInfo.linkerInput = std::move(linkerInput);
     auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
     mockTranslationUnit->processUnpackedBinaryCallBase = false;
-
-    uint32_t kernelHeap = 0;
+    uint32_t testKernelHeapSize = MemoryConstants::pageSize;
+    auto kernelHeap = new char[testKernelHeapSize];
     auto kernelInfo = new KernelInfo();
     kernelInfo->heapInfo.kernelHeapSize = testKernelHeapSize;
-    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+    kernelInfo->heapInfo.pKernelHeap = kernelHeap;
 
     Mock<::L0::KernelImp> kernelMock;
     kernelMock.module = moduleMock.get();
@@ -883,24 +866,15 @@ TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsa
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
     moduleMock->kernelImmData = &kernelMock.immutableData;
 
-    size_t previouscopyMemoryToAllocationCalledTimes = mockMemoryManager->copyMemoryToAllocationCalledTimes;
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    auto initialAmountOfCopies = mockMemoryManager->copyMemoryToAllocationCalledTimes;
     result = moduleMock->initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
-    size_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes +
-                                                               numberOfCopiesToAllocationAtModuleInitialization;
-
-    EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes, mockMemoryManager->copyMemoryToAllocationCalledTimes);
+    EXPECT_EQ(mockMemoryManager->copyMemoryToAllocationCalledTimes, 1u + initialAmountOfCopies);
 
     for (auto &ki : moduleMock->kernelImmDatas) {
-        bool isaExpectedToBeCopied = (numberOfCopiesToAllocationAtModuleInitialization != 0u);
-        EXPECT_EQ(isaExpectedToBeCopied, ki->isIsaCopiedToAllocation());
-    }
-
-    if (numberOfCopiesToAllocationAtModuleInitialization == 0) {
-        // For large builtin kernels copying is not optimized and done at kernel initailization
-        expectedPreviouscopyMemoryToAllocationCalledTimes++;
+        EXPECT_TRUE(ki->isIsaCopiedToAllocation());
     }
 
     ze_kernel_desc_t desc = {};
@@ -910,7 +884,8 @@ TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsa
 
     kernelMock.initialize(&desc);
 
-    EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes, mockMemoryManager->copyMemoryToAllocationCalledTimes);
+    EXPECT_EQ(mockMemoryManager->copyMemoryToAllocationCalledTimes, 1u + initialAmountOfCopies);
+    delete[] kernelHeap;
 }
 
 TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenContainerHasOneExtraSpaceForAllocation) {

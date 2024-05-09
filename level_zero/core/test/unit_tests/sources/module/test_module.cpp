@@ -202,11 +202,13 @@ struct ModuleKernelIsaAllocationsFixture : public ModuleFixture {
         device->getNEODevice()->getIsaPoolAllocator().freeSharedIsaAllocation(alloc);
     }
 
+    template <typename FamilyType>
     void givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned() {
         mockModule->allocateKernelsIsaMemoryCallBase = false;
         mockModule->computeKernelIsaAllocationAlignedSizeWithPaddingCallBase = false;
         mockModule->computeKernelIsaAllocationAlignedSizeWithPaddingResult = isaAllocationPageSize;
-
+        auto debugger = MockDebuggerL0Hw<FamilyType>::allocate(device->getNEODevice());
+        device->getNEODevice()->getRootDeviceEnvironmentRef().debugger.reset(debugger);
         auto result = module->initialize(&this->moduleDesc, device->getNEODevice());
         EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
     }
@@ -223,7 +225,7 @@ HWTEST_F(ModuleKernelIsaAllocationsInLocalMemoryTests, givenIsaMemoryRegionShare
 }
 
 HWTEST_F(ModuleKernelIsaAllocationsInLocalMemoryTests, givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned) {
-    this->givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned();
+    this->givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned<FamilyType>();
 }
 
 using ModuleKernelIsaAllocationsInSharedMemoryTests = Test<ModuleKernelIsaAllocationsFixture<false>>;
@@ -233,7 +235,7 @@ HWTEST_F(ModuleKernelIsaAllocationsInSharedMemoryTests, givenIsaMemoryRegionShar
 }
 
 HWTEST_F(ModuleKernelIsaAllocationsInSharedMemoryTests, givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned) {
-    this->givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned();
+    this->givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned<FamilyType>();
 }
 
 HWTEST_F(ModuleTest, givenBuiltinModuleWhenCreatedThenCorrectAllocationTypeIsUsedForIsa) {
@@ -3825,7 +3827,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
     }
 
     template <typename FamilyType>
-    void givenMultipleKernelIsasWhichFitInSinglePageAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations() {
+    void givenMultipleKernelIsasAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations() {
         auto requestedSize = 0x40;
         this->prepareKernelInfoAndAddToTranslationUnit(requestedSize);
         this->prepareKernelInfoAndAddToTranslationUnit(requestedSize);
@@ -3839,32 +3841,6 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         EXPECT_NE(nullptr, kernelImmDatas[0]->getIsaGraphicsAllocation());
         EXPECT_EQ(nullptr, kernelImmDatas[1]->getIsaParentAllocation());
         EXPECT_NE(nullptr, kernelImmDatas[1]->getIsaGraphicsAllocation());
-    }
-
-    void givenMultipleKernelIsasWhichExceedSinglePageWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations() {
-        auto maxAllocationSizeInPage = alignDown(isaAllocationPageSize - this->isaPadding, this->kernelStartPointerAlignment);
-        this->prepareKernelInfoAndAddToTranslationUnit(maxAllocationSizeInPage);
-
-        auto tinyAllocationSize = 0x8;
-        this->prepareKernelInfoAndAddToTranslationUnit(tinyAllocationSize);
-
-        this->mockModule->initializeKernelImmutableDatas();
-        auto &kernelImmDatas = this->mockModule->getKernelImmutableDataVector();
-        EXPECT_EQ(nullptr, kernelImmDatas[0]->getIsaParentAllocation());
-        EXPECT_NE(nullptr, kernelImmDatas[0]->getIsaGraphicsAllocation());
-        EXPECT_EQ(kernelImmDatas[0]->getIsaOffsetInParentAllocation(), 0lu);
-        EXPECT_EQ(kernelImmDatas[0]->getIsaSubAllocationSize(), 0lu);
-        EXPECT_EQ(nullptr, kernelImmDatas[1]->getIsaParentAllocation());
-        EXPECT_NE(nullptr, kernelImmDatas[1]->getIsaGraphicsAllocation());
-        EXPECT_EQ(kernelImmDatas[1]->getIsaOffsetInParentAllocation(), 0lu);
-        EXPECT_EQ(kernelImmDatas[1]->getIsaSubAllocationSize(), 0lu);
-        if constexpr (localMemEnabled) {
-            EXPECT_EQ(isaAllocationPageSize, kernelImmDatas[0]->getIsaSize());
-            EXPECT_EQ(isaAllocationPageSize, kernelImmDatas[1]->getIsaSize());
-        } else {
-            EXPECT_EQ(this->computeKernelIsaAllocationSizeWithPadding(maxAllocationSizeInPage), kernelImmDatas[0]->getIsaSize());
-            EXPECT_EQ(this->computeKernelIsaAllocationSizeWithPadding(tinyAllocationSize), kernelImmDatas[1]->getIsaSize());
-        }
     }
 
     struct ProxyKernelImmutableData : public KernelImmutableData {
@@ -3940,12 +3916,8 @@ TEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhichFitInS
     EXPECT_EQ(kernelImmDatas[1]->getIsaGraphicsAllocation()->getMemoryPool(), isaAllocationMemoryPool);
 }
 
-HWTEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhichFitInSinglePage64KAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations) {
-    this->givenMultipleKernelIsasWhichFitInSinglePageAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations<FamilyType>();
-}
-
-TEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhichExceedSinglePage64KWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations) {
-    this->givenMultipleKernelIsasWhichExceedSinglePageWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations();
+HWTEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations) {
+    this->givenMultipleKernelIsasAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations<FamilyType>();
 }
 
 TEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhenKernelInitializationFailsThenItIsProperlyCleanedAndPreviouslyInitializedKernelsLeftUntouched) {
@@ -3995,12 +3967,8 @@ TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPage
     EXPECT_EQ(kernelImmDatas[1]->getIsaGraphicsAllocation()->getMemoryPool(), isaAllocationMemoryPool);
 }
 
-HWTEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenMultipleKernelIsasWhichFitInSinglePageAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations) {
-    this->givenMultipleKernelIsasWhichFitInSinglePageAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations<FamilyType>();
-}
-
-TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenMultipleKernelIsasWhichExceedSinglePageWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations) {
-    this->givenMultipleKernelIsasWhichExceedSinglePageWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations();
+HWTEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenMultipleKernelIsasAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations) {
+    this->givenMultipleKernelIsasAndDebuggerEnabledWhenKernelImmutableDatasAreInitializedThenKernelIsasGetSeparateAllocations<FamilyType>();
 }
 
 TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenMultipleKernelIsasWhenKernelInitializationFailsThenItIsProperlyCleanedAndPreviouslyInitializedKernelsLeftUntouched) {

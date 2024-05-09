@@ -805,7 +805,7 @@ ze_result_t ModuleImp::setIsaGraphicsAllocations() {
     }
 
     bool debuggerDisabled = (this->device->getL0Debugger() == nullptr);
-    if (debuggerDisabled && kernelsIsaTotalSize <= isaAllocationPageSize) {
+    if (debuggerDisabled) {
         auto neoDevice = this->device->getNEODevice();
         auto &isaAllocator = neoDevice->getIsaPoolAllocator();
         auto crossModuleAllocation = isaAllocator.requestGraphicsAllocationForIsa(this->type == ModuleType::builtin, kernelsIsaTotalSize);
