@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,6 +126,11 @@ ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properti
 ze_result_t PciImp::pciGetState(zes_pci_state_t *pState) {
     initPci();
     return pOsPci->getState(pState);
+}
+
+ze_result_t PciImp::pciGetStats(zes_pci_stats_t *pStats) {
+    initPci();
+    return pOsPci->getStats(pStats);
 }
 
 void PciImp::pciGetStaticFields() {

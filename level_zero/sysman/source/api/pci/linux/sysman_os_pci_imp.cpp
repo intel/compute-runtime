@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -287,6 +287,10 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
 
 ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
     NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxPciImp::getStats(zes_pci_stats_t *stats) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

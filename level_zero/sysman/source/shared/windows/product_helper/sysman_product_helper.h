@@ -43,6 +43,9 @@ class SysmanProductHelper {
     // Temperature
     virtual ze_result_t getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) = 0;
 
+    // Pci
+    virtual ze_result_t getPciStats(zes_pci_stats_t *pStats, WddmSysmanImp *pWddmSysmanImp) = 0;
+
   protected:
     SysmanProductHelper() = default;
 };

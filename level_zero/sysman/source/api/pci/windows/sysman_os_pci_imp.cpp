@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "level_zero/sysman/source/api/pci/windows/sysman_os_pci_imp.h"
 
+#include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
-#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 
 namespace L0 {
 namespace Sysman {
@@ -154,6 +154,11 @@ ze_result_t WddmPciImp::getState(zes_pci_state_t *state) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t WddmPciImp::getStats(zes_pci_stats_t *stats) {
+    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getPciStats(stats, pWddmSysmanImp);
+}
+
 bool WddmPciImp::resizableBarSupported() {
     uint32_t valueSmall = 0;
     bool supported = false;
@@ -200,7 +205,7 @@ ze_result_t WddmPciImp::initializeBarProperties(std::vector<zes_pci_bar_properti
 }
 
 WddmPciImp::WddmPciImp(OsSysman *pOsSysman) {
-    WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
+    pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 
     isLmemSupported = !(pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice);

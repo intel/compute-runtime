@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     ze_result_t getPciBdf(zes_pci_properties_t &pciProperties) override;
     void getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) override;
     ze_result_t getState(zes_pci_state_t *state) override;
+    ze_result_t getStats(zes_pci_stats_t *stats) override;
     ze_result_t getProperties(zes_pci_properties_t *properties) override;
     bool resizableBarSupported() override;
     bool resizableBarEnabled(uint32_t barIndex) override;

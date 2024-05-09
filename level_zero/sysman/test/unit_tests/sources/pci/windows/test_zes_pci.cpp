@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
@@ -197,6 +199,12 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetB
         EXPECT_LE(pBarProps[i].type, ZES_PCI_BAR_TYPE_MEM);
         EXPECT_EQ(props1dot2[i].stype, zes_structure_type_t::ZES_STRUCTURE_TYPE_PCI_STATE);
     }
+}
+
+HWTEST2_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzesPciGetStatsThenCallReturnsUnsupported, IsAtMostDg2) {
+    zes_pci_stats_t stats;
+    ze_result_t result = zesDevicePciGetStats(pSysmanDevice->toHandle(), &stats);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStatsWithLocalMemoryThenVerifyzetSysmanPciGetBarsCallSucceeds) {

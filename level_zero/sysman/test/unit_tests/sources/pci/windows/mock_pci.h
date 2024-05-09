@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,11 @@
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+constexpr uint64_t mockRxCounter = 242000000000;
+constexpr uint64_t mockTxCounter = 231000000000;
+constexpr uint64_t mockRxPacketCounter = 3000000000;
+constexpr uint64_t mockTxPacketCounter = 2000000000;
 
 struct PciKmdSysManager : public MockKmdSysManager {
     // PciCurrentDevice, PciParentDevice, PciRootPort
@@ -116,6 +121,12 @@ struct PciKmdSysManager : public MockKmdSysManager {
         pResponse->outDataSize = 0;
         pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
     }
+};
+
+class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
+  public:
+    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList) : PlatformMonitoringTech(deviceInterfaceList) {}
+    using PlatformMonitoringTech::keyOffsetMap;
 };
 
 } // namespace ult

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,3 +12,4 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/mock_pci.h
   )
 endif()
+add_subdirectories()
