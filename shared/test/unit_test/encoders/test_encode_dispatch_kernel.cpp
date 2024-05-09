@@ -996,11 +996,10 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenS
     EXPECT_NE(usedAfter, usedBefore);
 }
 
-HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithBindingTableWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {
+HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    uint32_t numBindingTable = 1;
     alignas(64) uint8_t data[2 * sizeof(RENDER_SURFACE_STATE)];
     RENDER_SURFACE_STATE state = FamilyType::cmdInitRenderSurfaceState;
     memset(data, 0, sizeof(data));
@@ -1009,8 +1008,8 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithBindingTableWhenDispa
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
-    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = static_cast<SurfaceStateHeapOffset>(sizeof(RENDER_SURFACE_STATE));
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = 0;
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = undefined<SurfaceStateHeapOffset>;
     dispatchInterface->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
 
     const uint8_t *sshData = data;
@@ -1027,11 +1026,6 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithBindingTableWhenDispa
     auto usedAfter = cmdContainer->getIndirectHeap(HeapType::surfaceState)->getUsed();
 
     EXPECT_NE(usedAfter, usedBefore);
-
-    auto ssh = ptrOffset(cmdContainer->getIndirectHeap(HeapType::surfaceState)->getCpuBase(), usedBefore);
-    auto *btiTableBase = reinterpret_cast<const BINDING_TABLE_STATE *>(ptrOffset(ssh, dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset));
-    uint32_t surfaceStateOffset = btiTableBase[0].getSurfaceStatePointer();
-    EXPECT_EQ(usedBefore, static_cast<size_t>(surfaceStateOffset));
 }
 
 HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithRequiringSshForMisalignedBufferAddressWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {

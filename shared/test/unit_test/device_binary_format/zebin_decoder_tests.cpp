@@ -1696,8 +1696,10 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::success, err);
 
     EXPECT_EQ(2u, kernelDescriptor->kernelAttributes.numArgsStateful);
+}
 
-    ConstStringRef zeinfo3 = R"===(
+TEST_F(decodeZeInfoKernelEntryTest, GivenStatefulAndBindlessArgsWhenDecodingZeInfoThenInvalidBinaryErrorReturned) {
+    ConstStringRef zeinfo = R"===(
 kernels:
     - name : some_kernel
       execution_env:
@@ -1720,10 +1722,8 @@ kernels:
           bti_value:       2
 ...
 )===";
-    err = decodeZeInfoKernelEntry(zeinfo3);
-    EXPECT_EQ(NEO::DecodeError::success, err);
-
-    EXPECT_EQ(3u, kernelDescriptor->kernelAttributes.numArgsStateful);
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenStatefulSamplerWhenDecodingZeInfoThenNumberOfStatefulArgsDoesNotCountSampler) {

@@ -151,17 +151,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     bindlessSshBaseOffset += ptrDiff(ssh->getGraphicsAllocation()->getGpuAddress(), ssh->getGraphicsAllocation()->getGpuBaseAddress());
                 }
 
-                if constexpr (heaplessModeEnabled == false) {
-                    if (bindingTableStateCount > 0u) {
-                        auto bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
-                            *ssh,
-                            args.dispatchInterface->getSurfaceStateHeapData(),
-                            args.dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
-                            kernelDescriptor.payloadMappings.bindingTable.tableOffset));
-
-                        idd.setBindingTablePointer(bindingTablePointer);
-                    }
-                }
+                DEBUG_BREAK_IF(bindingTableStateCount > 0u);
 
                 if (bindingTableStateCount == 0) {
                     // Allocate space for new ssh data

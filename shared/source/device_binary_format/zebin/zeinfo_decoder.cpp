@@ -1000,7 +1000,8 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
         }
 
         if ((bindlessBufferAccess && bindfulBufferAccess) ||
-            (bindlessImageAccess && bindfulImageAccess)) {
+            (bindlessImageAccess && bindfulImageAccess) ||
+            ((bindlessBufferAccess || bindlessImageAccess) && dst.payloadMappings.bindingTable.numEntries > 0)) {
             outErrReason.append("DeviceBinaryFormat::zebin::.ze_info : bindless and bindful addressing modes must not be mixed.\n");
             return DecodeError::invalidBinary;
         }
