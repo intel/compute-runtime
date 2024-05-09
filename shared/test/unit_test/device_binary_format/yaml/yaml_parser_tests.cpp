@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2087,7 +2087,7 @@ TEST(YamlParser, GivenNodeWhenReadValueIsCalledThenReturnsStringRepresentationOf
     EXPECT_STREQ("", parser.readValue(*apple).str().c_str());
 }
 
-TEST(YamlParser, GivenNodeWhenGetValueTokenIsCalledThenReturnsTokenRepresetingTheValue) {
+TEST(YamlParser, GivenNodeWhenGetValueTokenIsCalledThenReturnsTokenRepResettingTheValue) {
     ConstStringRef yaml =
         R"===(
     apple : 

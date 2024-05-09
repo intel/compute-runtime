@@ -386,7 +386,7 @@ TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePr
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
 }
 
-TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
     MockStateComputeModeProperties scmProperties{};
     scmProperties.propertiesSupportLoaded = true;
     scmProperties.scmPropertiesSupport.coherencyRequired = true;
@@ -660,7 +660,7 @@ TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusio
     EXPECT_EQ(1, fePropertiesCopy.computeDispatchAllWalkerEnable.value);
 }
 
-TEST(StreamPropertiesTests, givenSetAllFrontEndPropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+TEST(StreamPropertiesTests, givenSetAllFrontEndPropertiesWhenResettingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
     MockFrontEndProperties feProperties{};
     feProperties.propertiesSupportLoaded = true;
     feProperties.frontEndPropertiesSupport.computeDispatchAllWalker = true;
@@ -741,7 +741,7 @@ TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyWhenSettingChan
     EXPECT_TRUE(pipeProperties.isDirty());
 }
 
-TEST(StreamPropertiesTests, givenSetAllPipelineSelectPropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+TEST(StreamPropertiesTests, givenSetAllPipelineSelectPropertiesWhenResettingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
     MockPipelineSelectProperties psProperties{};
     psProperties.propertiesSupportLoaded = true;
     psProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
@@ -1371,7 +1371,7 @@ TEST(StreamPropertiesTests, givenIndirectObjectBaseAddressStateBaseAddressProper
     EXPECT_EQ(2u, sbaProperties.indirectObjectSize.value);
 }
 
-TEST(StreamPropertiesTests, givenSetAllStateBaseAddressPropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+TEST(StreamPropertiesTests, givenSetAllStateBaseAddressPropertiesWhenResettingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
     MockStateBaseAddressProperties sbaProperties{};
     sbaProperties.propertiesSupportLoaded = true;
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = true;

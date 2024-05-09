@@ -836,7 +836,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenDestructionThenNonHeapAllo
     EXPECT_EQ(alloc.getUnderlyingBufferSize(), size);
 }
 
-TEST_F(CommandContainerTest, givenContainerAllocatesNextCommandBufferWhenResetingContainerThenExpectFirstCommandBufferAllocationIsReused) {
+TEST_F(CommandContainerTest, givenContainerAllocatesNextCommandBufferWhenResettingContainerThenExpectFirstCommandBufferAllocationIsReused) {
     auto cmdContainer = std::make_unique<CommandContainer>();
     cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
