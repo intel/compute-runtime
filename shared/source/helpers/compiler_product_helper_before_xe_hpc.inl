@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,11 @@ bool CompilerProductHelperHw<gfxProduct>::isSubgroupNamedBarrierSupported() cons
 
 template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isSubgroupExtendedBlockReadSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isSubgroup2DBlockIOSupported() const {
     return false;
 }
 
