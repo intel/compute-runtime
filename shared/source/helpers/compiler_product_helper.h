@@ -64,6 +64,7 @@ class CompilerProductHelper {
     virtual bool isCreateBufferWithPropertiesSupported() const = 0;
     virtual bool isSubgroupNamedBarrierSupported() const = 0;
     virtual bool isSubgroupExtendedBlockReadSupported() const = 0;
+    virtual bool isSubgroup2DBlockIOSupported() const = 0;
     virtual bool isForceToStatelessRequired() const = 0;
     virtual bool failBuildProgramWithStatefulAccessPreference() const = 0;
     virtual bool isDotIntegerProductExtensionSupported() const = 0;
@@ -107,6 +108,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isCreateBufferWithPropertiesSupported() const override;
     bool isSubgroupNamedBarrierSupported() const override;
     bool isSubgroupExtendedBlockReadSupported() const override;
+    bool isSubgroup2DBlockIOSupported() const override;
     bool isForceToStatelessRequired() const override;
     bool failBuildProgramWithStatefulAccessPreference() const override;
     bool isDotIntegerProductExtensionSupported() const override;
