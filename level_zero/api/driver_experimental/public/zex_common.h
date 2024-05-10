@@ -98,8 +98,11 @@ typedef struct _ze_synchronized_dispatch_exp_desc_t {
 #define ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC (ze_structure_type_t)0x00020020
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief ze_intel_media_communication_desc_t
+/// @brief Forward-declare ze_intel_media_communication_desc_t
+typedef struct _ze_intel_media_communication_desc_t ze_intel_media_communication_desc_t;
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief ze_intel_media_communication_desc_t
 typedef struct _ze_intel_media_communication_desc_t {
     ze_structure_type_t stype;              ///< [in] type of this structure
     void *pNext;                            ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
@@ -107,8 +110,9 @@ typedef struct _ze_intel_media_communication_desc_t {
     uint32_t controlSharedMemoryBufferSize; ///< [in] control shared memory buffer size
     void *controlBatchBuffer;               ///< [in] control batch buffer pointer, must be USM address
     uint32_t controlBatchBufferSize;        ///< [in] control batch buffer size
-    uint64_t doorbellHandle;                ///< [out] This is address of the doorbell registers which needs to be mapped by user in order to update doorbell
 } ze_intel_media_communication_desc_t;
+
+#define ZE_STRUCTURE_TYPE_INTEL_MEDIA_COMMUNICATION_DESC (ze_structure_type_t)0x00020021
 
 #if defined(__cplusplus)
 } // extern "C"
