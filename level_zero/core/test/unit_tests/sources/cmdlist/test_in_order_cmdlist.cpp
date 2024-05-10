@@ -3977,14 +3977,27 @@ HWTEST2_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRet
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, &eventDesc, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, nullptr, &handle));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, device, gpuAddress, nullptr, counterValue, &eventDesc, &handle));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, device, nullptr, hostAddress, counterValue, &eventDesc, &handle));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, nullptr, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate(context, device, gpuAddress, &counterValue, counterValue, &eventDesc, &handle));
 
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, nullptr, counterValue, &eventDesc, &handle));
+    auto eventObj = Event::fromHandle(handle);
+    EXPECT_EQ(nullptr, eventObj->getInOrderExecInfo());
+    zeEventDestroy(handle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, nullptr, hostAddress, counterValue, &eventDesc, &handle));
+    eventObj = Event::fromHandle(handle);
+    EXPECT_EQ(nullptr, eventObj->getInOrderExecInfo());
+    zeEventDestroy(handle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, nullptr, nullptr, counterValue, &eventDesc, &handle));
+    eventObj = Event::fromHandle(handle);
+    EXPECT_EQ(nullptr, eventObj->getInOrderExecInfo());
+    zeEventDestroy(handle);
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
 
-    auto eventObj = Event::fromHandle(handle);
+    eventObj = Event::fromHandle(handle);
 
     ASSERT_NE(nullptr, eventObj);
     ASSERT_NE(nullptr, eventObj->getInOrderExecInfo().get());

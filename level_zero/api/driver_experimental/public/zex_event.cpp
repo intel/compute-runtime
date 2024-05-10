@@ -49,23 +49,26 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
 
     auto device = Device::fromHandle(hDevice);
 
-    if (!hDevice || !deviceAddress || !hostAddress || !desc || !phEvent) {
+    if (!hDevice || !desc || !phEvent) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     NEO::SvmAllocationData *externalHostAllocData = nullptr;
-    bool allocFound = device->getDriverHandle()->findAllocationDataForRange(hostAddress, sizeof(uint64_t), externalHostAllocData);
-
-    if (!allocFound) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    if (hostAddress) {
+        bool allocFound = device->getDriverHandle()->findAllocationDataForRange(hostAddress, sizeof(uint64_t), externalHostAllocData);
+        if (!allocFound) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
     }
 
-    auto allocation = externalHostAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-
-    auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), castToUint64(deviceAddress), allocation, hostAddress, completionValue);
-
     *phEvent = Event::create<uint64_t>(eventDescriptor, desc, device);
-    Event::fromHandle(*phEvent)->updateInOrderExecState(inOrderExecInfo, completionValue, 0);
+
+    if (hostAddress && deviceAddress) {
+        NEO::GraphicsAllocation *allocation = nullptr;
+        allocation = externalHostAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), castToUint64(deviceAddress), allocation, hostAddress, completionValue);
+        Event::fromHandle(*phEvent)->updateInOrderExecState(inOrderExecInfo, completionValue, 0);
+    }
 
     return ZE_RESULT_SUCCESS;
 }
