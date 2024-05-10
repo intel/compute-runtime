@@ -1113,10 +1113,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
 
         if (signalEvent->isCounterBased()) {
             signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
-            signalEvent->setIsCompleted();
-        } else {
-            signalEvent->hostSignal();
         }
+
+        signalEvent->hostSignal(true);
     }
 
     return ZE_RESULT_SUCCESS;
