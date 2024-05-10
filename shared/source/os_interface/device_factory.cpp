@@ -97,8 +97,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig, rootDeviceEnvironment.getReleaseHelper());
 
-        if (debugManager.flags.BcsNumberOverride.get() != -1) {
-            hardwareInfo->featureTable.ftrBcsInfo = maxNBitValue(static_cast<uint64_t>(debugManager.flags.BcsNumberOverride.get()));
+        if (debugManager.flags.BlitterEnableMaskOverride.get() > 0) {
+            hardwareInfo->featureTable.ftrBcsInfo = debugManager.flags.BlitterEnableMaskOverride.get();
         }
 
         auto &productHelper = rootDeviceEnvironment.getProductHelper();

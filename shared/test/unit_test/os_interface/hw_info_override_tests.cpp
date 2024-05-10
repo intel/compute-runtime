@@ -31,9 +31,9 @@ HWTEST2_F(HwInfoOverrideTest, givenAnyHwConfigStringWhenPrepareDeviceEnvironment
     EXPECT_EQ(hwInfo->gtSystemInfo.EUCount, 6u);
 }
 
-HWTEST2_F(HwInfoOverrideTest, givenBcsNumberOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenCorrectBcsNumberIsReturned, IsAtLeastXeHpCore) {
+HWTEST2_F(HwInfoOverrideTest, givenBlitterEnableMaskOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenCorrectBcsInfoMaskIsReturned, IsAtLeastXeHpCore) {
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.BcsNumberOverride.set(2);
+    debugManager.flags.BlitterEnableMaskOverride.set(0x6);
 
     MockExecutionEnvironment executionEnvironment{};
 
@@ -41,5 +41,5 @@ HWTEST2_F(HwInfoOverrideTest, givenBcsNumberOverrideWhenPrepareDeviceEnvironment
     EXPECT_TRUE(success);
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-    EXPECT_EQ(hwInfo->featureTable.ftrBcsInfo, maxNBitValue(2));
+    EXPECT_EQ(hwInfo->featureTable.ftrBcsInfo, 0x6);
 }
