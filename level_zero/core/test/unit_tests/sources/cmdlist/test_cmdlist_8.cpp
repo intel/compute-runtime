@@ -1115,7 +1115,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
 
     for (uint32_t i = 0; i < numEvents; i++) {
         events[i] = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-        events[i]->hostSignal();
+        events[i]->hostSignal(false);
         waitlist[i] = events[i]->toHandle();
     }
 

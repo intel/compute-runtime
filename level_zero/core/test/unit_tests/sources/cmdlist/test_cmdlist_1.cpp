@@ -1046,7 +1046,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendSignalEvent
 
     commandList->appendSignalEvent(event);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
@@ -1086,7 +1086,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
 
     commandList->appendBarrier(nullptr, 1, &event, false);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
@@ -2229,7 +2229,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     returnValue = commandList->appendSignalEvent(event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    returnValue = eventObject->hostSignal();
+    returnValue = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, eventObject->queryStatus());
 
@@ -2357,7 +2357,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendResetEventT
 
     commandList->appendEventReset(event);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
@@ -2398,7 +2398,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEven
 
     commandList->appendSignalEvent(event);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
@@ -2439,7 +2439,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
 
     commandList->appendBarrier(event, 0, nullptr, false);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
@@ -2483,7 +2483,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndCopyEngineAndApp
 
     commandList->appendBarrier(event, 0, nullptr, false);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
@@ -2526,7 +2526,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
 
     commandList->appendEventReset(event);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);

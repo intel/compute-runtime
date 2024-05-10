@@ -217,7 +217,7 @@ HWTEST_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventRes
 HWTEST_F(CommandListAppendEventReset, WhenIsCompletedClearedThenSetStateSignaledWhenSignalAgain) {
     event->reset();
     EXPECT_FALSE(event->isAlreadyCompleted());
-    event->hostSignal();
+    event->hostSignal(false);
     EXPECT_TRUE(event->isAlreadyCompleted());
 }
 
@@ -225,7 +225,7 @@ HWTEST_F(CommandListAppendEventReset, WhenIsCompletedDisabledThenDontSetStateSig
     auto result = commandList->appendEventReset(event->toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(event->isAlreadyCompleted());
-    event->hostSignal();
+    event->hostSignal(false);
     EXPECT_FALSE(event->isAlreadyCompleted());
 }
 
@@ -234,7 +234,7 @@ HWTEST_F(CommandListAppendEventReset, givenRegularCommandListWhenHostCachingDisa
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(event->isAlreadyCompleted());
     event->reset();
-    event->hostSignal();
+    event->hostSignal(false);
     EXPECT_FALSE(event->isAlreadyCompleted());
 }
 
@@ -245,7 +245,7 @@ HWTEST_F(CommandListAppendEventReset, givenRegulatCommandListWhenHostCachingDisa
 
     EXPECT_FALSE(event->isAlreadyCompleted());
     event->reset();
-    event->hostSignal();
+    event->hostSignal(false);
     EXPECT_TRUE(event->isAlreadyCompleted());
 }
 

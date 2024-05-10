@@ -70,7 +70,7 @@ ze_result_t zeCommandListAppendWaitOnEvents(
 
 ze_result_t zeEventHostSignal(
     ze_event_handle_t hEvent) {
-    return L0::Event::fromHandle(hEvent)->hostSignal();
+    return L0::Event::fromHandle(hEvent)->hostSignal(false);
 }
 
 ze_result_t zeEventHostSynchronize(

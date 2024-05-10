@@ -30,7 +30,7 @@ struct EventImp : public Event {
 
     ~EventImp() override {}
 
-    ze_result_t hostSignal() override;
+    ze_result_t hostSignal(bool allowCounterBased) override;
 
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
@@ -67,7 +67,7 @@ struct EventImp : public Event {
     ze_result_t queryCounterBasedEventStatus();
     void handleSuccessfulHostSynchronization();
     MOCKABLE_VIRTUAL ze_result_t hostEventSetValue(TagSizeT eventValue);
-    ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
+    MOCKABLE_VIRTUAL ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
     MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);
     void setRemainingPackets(TagSizeT eventVal, uint64_t nextPacketGpuVa, void *nextPacketAddress, uint32_t packetsAlreadySet);
     void getSynchronizedKernelTimestamps(ze_synchronized_timestamp_result_ext_t *pSynchronizedTimestampsBuffer,

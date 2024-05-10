@@ -1410,7 +1410,7 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     uint64_t gpuAddr = event->getGpuAddress(device);
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
 
-    event->hostSignal();
+    event->hostSignal(false);
     result = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(gpuAddr, event->getPacketAddress(device));
@@ -1839,7 +1839,7 @@ TEST_F(EventPoolIPCEventResetTests, whenOpeningIpcHandleForEventPoolCreateWithIp
     EXPECT_EQ(*hostAddr, Event::STATE_INITIAL);
 
     // change state
-    event0->hostSignal();
+    event0->hostSignal(false);
     EXPECT_EQ(*hostAddr, Event::STATE_SIGNALED);
 
     // create an event from the pool with the same index as event0, but this time, since isImportedIpcPool is true, no reset should happen
@@ -2015,7 +2015,7 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenEventTimestampWhenPacketCountIsS
 
 TEST_F(TimestampEventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAreSet) {
     EXPECT_NE(nullptr, event->kernelEventCompletionData);
-    event->hostSignal();
+    event->hostSignal(false);
     ze_result_t result = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -2897,7 +2897,7 @@ TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);
 
-    auto result = event->hostSignal();
+    auto result = event->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
@@ -2909,7 +2909,7 @@ TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);
 
-    auto result = event->hostSignal();
+    auto result = event->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     event->setUsingContextEndOffset(true);
@@ -2972,7 +2972,7 @@ TEST_F(EventTests, givenRegularEventUseMultiplePacketsWhenHostSignalThenExpectAl
 
     event->setPacketsInUse(packetsUsed);
     event->setEventTimestampFlag(false);
-    event->hostSignal();
+    event->hostSignal(false);
     for (uint32_t i = 0; i < packetsUsed; i++) {
         EXPECT_EQ(Event::STATE_SIGNALED, *hostAddr);
         hostAddr = ptrOffset(hostAddr, event->getSinglePacketSize());
@@ -3003,7 +3003,7 @@ TEST_F(EventUsedPacketSignalTests, givenEventUseMultiplePacketsWhenHostSignalThe
     event->setPacketsInUse(packetsUsed);
     event->setEventTimestampFlag(false);
 
-    event->hostSignal();
+    event->hostSignal(false);
     for (uint32_t i = 0; i < packetsUsed; i++) {
         EXPECT_EQ(Event::STATE_SIGNALED, *hostAddr);
         hostAddr = ptrOffset(hostAddr, event->getSinglePacketSize());
@@ -3569,7 +3569,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
     EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
 
-    auto status = event->hostSignal();
+    auto status = event->hostSignal(false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
 
     EXPECT_EQ(2u, ultCsr.writeMemoryParams.callCount);
@@ -3674,7 +3674,7 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
 
 TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThenDontAccessMemoryAndReturnSuccess) {
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
-    auto result = event->hostSignal();
+    auto result = event->hostSignal(false);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 0u);
@@ -3764,7 +3764,7 @@ TEST_F(EventTests, whenAppendAdditionalCsrThenStoreUniqueCsr) {
 TEST_F(EventTests, WhenQueryingStatusAfterHostSignalThatFailedThenAccessMemoryAndReturnSuccess) {
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
     event->shouldHostEventSetValueFail = true;
-    event->hostSignal();
+    event->hostSignal(false);
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
     EXPECT_EQ(event->assignKernelEventCompletionDataCounter, 1u);
 }
@@ -3780,7 +3780,7 @@ HWTEST_F(EventTests, givenQwordPacketSizeWhenSignalingThenCopyQword) {
         event->setSinglePacketSize(sizeof(uint64_t));
         *completionAddress = std::numeric_limits<uint64_t>::max();
 
-        event->hostSignal();
+        event->hostSignal(false);
 
         EXPECT_EQ(static_cast<uint64_t>(Event::STATE_SIGNALED), *completionAddress);
 
@@ -3792,7 +3792,7 @@ HWTEST_F(EventTests, givenQwordPacketSizeWhenSignalingThenCopyQword) {
 
         *completionAddress = std::numeric_limits<uint64_t>::max();
 
-        event->hostSignal();
+        event->hostSignal(false);
 
         if (sizeof(TimestampPacketType) == sizeof(uint32_t)) {
             uint64_t expectedValue = static_cast<uint64_t>(Event::STATE_SIGNALED);
@@ -4111,7 +4111,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(ZE_RESULT_NOT_READY, result);
         event->resetCompletionStatus();
 
-        event->hostSignal();
+        event->hostSignal(false);
 
         remainingPacketsAddress = ptrOffset(eventHostAddress, (usedPackets * packetSize));
         if (event->isUsingContextEndOffset()) {
@@ -4257,7 +4257,7 @@ void testQueryAllPackets(L0::Event *event, bool singlePacket) {
     result = event->queryStatus();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 
-    result = event->hostSignal();
+    result = event->hostSignal(false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     eventHostAddress = firstPacketAddress;
