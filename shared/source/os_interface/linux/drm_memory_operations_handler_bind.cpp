@@ -17,7 +17,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
-#include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 
@@ -35,10 +35,6 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *devi
         if (result != MemoryOperationsStatus::success) {
             break;
         }
-    }
-
-    for (const auto &engine : engines) {
-        static_cast<OsContextLinux *>(engine.osContext)->waitForPagingFence();
     }
     return result;
 }
