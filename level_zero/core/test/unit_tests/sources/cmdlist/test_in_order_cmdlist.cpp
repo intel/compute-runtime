@@ -505,7 +505,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenHostResetOrSignalEventCalledT
     EXPECT_EQ(events[0]->inOrderExecInfo.get(), immCmdList->inOrderExecInfo.get());
     EXPECT_EQ(events[0]->inOrderAllocationOffset, 123u);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, events[0]->hostSignal());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, events[0]->hostSignal(false));
 }
 
 HWTEST2_F(InOrderCmdListTests, whenCreatingInOrderExecInfoThenReuseDeviceAlloc, IsAtLeastSkl) {
@@ -3908,6 +3908,43 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDoingCpuCopyThenPassInfo
     EXPECT_NE(nullptr, events[0]->inOrderExecInfo.get());
     EXPECT_EQ(2u, events[0]->inOrderExecSignalValue);
     EXPECT_TRUE(events[0]->isAlreadyCompleted());
+
+    context->freeMem(deviceAlloc);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenProfilingEventWhenDoingCpuCopyThenSetProfilingData, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->copyThroughLockedPtrEnabled = true;
+
+    auto nonProfilingeventPool = createEvents<FamilyType>(1, false);
+    auto profilingeventPool = createEvents<FamilyType>(1, true);
+
+    auto eventHandle0 = events[0]->toHandle();
+    auto eventHandle1 = events[1]->toHandle();
+
+    EXPECT_EQ(nullptr, events[0]->inOrderExecInfo.get());
+
+    uint32_t hostCopyData = 0;
+
+    void *deviceAlloc = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 128, 128, &deviceAlloc);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+    *hostAddress = 3;
+
+    immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle0, 0, nullptr, false, false);
+
+    EXPECT_NE(nullptr, events[0]->inOrderExecInfo.get());
+    EXPECT_TRUE(events[0]->isAlreadyCompleted());
+    EXPECT_EQ(L0::Event::STATE_CLEARED, *static_cast<uint32_t *>(events[0]->getHostAddress()));
+
+    immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, eventHandle1, 0, nullptr, false, false);
+
+    EXPECT_NE(nullptr, events[1]->inOrderExecInfo.get());
+    EXPECT_TRUE(events[1]->isAlreadyCompleted());
+    EXPECT_NE(L0::Event::STATE_CLEARED, *static_cast<uint32_t *>(events[1]->getHostAddress()));
 
     context->freeMem(deviceAlloc);
 }

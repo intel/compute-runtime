@@ -1227,7 +1227,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEven
 
     commandList->appendSignalEvent(event);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
@@ -1268,7 +1268,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
 
     commandList->appendBarrier(event, 0, nullptr, false);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
@@ -1311,7 +1311,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventReset
 
     commandList->appendEventReset(event);
 
-    auto result = eventObject->hostSignal();
+    auto result = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
@@ -1351,11 +1351,11 @@ TEST_F(CommandListCreateWithBcs, givenQueueDescriptionwhenCreatingImmediateComma
             commandList->appendBarrier(nullptr, 0, nullptr, false);
             commandList->appendBarrier(event->toHandle(), 2, events, false);
 
-            auto result = event->hostSignal();
+            auto result = event->hostSignal(false);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-            result = event1->hostSignal();
+            result = event1->hostSignal(false);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-            result = event2->hostSignal();
+            result = event2->hostSignal(false);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
         }
     }

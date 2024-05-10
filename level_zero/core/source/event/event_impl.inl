@@ -496,12 +496,17 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::hostSignal() {
-    if (this->isCounterBased()) {
+ze_result_t EventImp<TagSizeT>::hostSignal(bool allowCounterBased) {
+    if (!allowCounterBased && this->isCounterBased()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    auto status = hostEventSetValue(Event::STATE_SIGNALED);
+    ze_result_t status = ZE_RESULT_SUCCESS;
+
+    if (!isCounterBased() || isEventTimestampFlagSet()) {
+        status = hostEventSetValue(Event::STATE_SIGNALED);
+    }
+
     if (status == ZE_RESULT_SUCCESS) {
         this->setIsCompleted();
     }

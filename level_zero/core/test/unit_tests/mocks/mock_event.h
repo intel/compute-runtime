@@ -75,7 +75,7 @@ struct Mock<Event> : public Event {
     ~Mock() override;
 
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
-    ADDMETHOD_NOBASE(hostSignal, ze_result_t, ZE_RESULT_SUCCESS, ());
+    ADDMETHOD_NOBASE(hostSignal, ze_result_t, ZE_RESULT_SUCCESS, (bool allowCounterBased));
     ADDMETHOD_NOBASE(hostSynchronize, ze_result_t, ZE_RESULT_SUCCESS, (uint64_t timeout));
     ADDMETHOD_NOBASE(queryStatus, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(reset, ze_result_t, ZE_RESULT_SUCCESS, ());
@@ -143,7 +143,7 @@ class MockEvent : public ::L0::Event {
     ze_result_t destroy() override {
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t hostSignal() override {
+    ze_result_t hostSignal(bool allowCounterBased) override {
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t hostSynchronize(uint64_t timeout) override {

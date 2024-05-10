@@ -345,7 +345,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     returnValue = commandList->appendSignalEvent(event);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    returnValue = eventObject->hostSignal();
+    returnValue = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
@@ -409,7 +409,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmedia
     returnValue = commandList->appendSignalEvent(event);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    returnValue = eventObject->hostSignal();
+    returnValue = eventObject->hostSignal(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
