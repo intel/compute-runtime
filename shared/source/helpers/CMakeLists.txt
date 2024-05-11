@@ -93,6 +93,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_bdw_to_icllp.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_pvc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tgllp_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gpu_page_fault_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gpu_page_fault_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_helper.cpp

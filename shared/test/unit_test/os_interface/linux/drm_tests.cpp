@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/gpu_page_fault_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -1414,14 +1415,31 @@ TEST(DrmTest, GivenBatchPendingGreaterThanZeroResetStatsWhenIsGpuHangIsCalledThe
 class MockIoctlHelperResetStats : public MockIoctlHelper {
   public:
     using MockIoctlHelper::MockIoctlHelper;
+    int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override {
+        int ret = MockIoctlHelper::getResetStats(resetStats, status, resetStatsFault);
+        if (status) {
+            *status = statusReturnValue;
+        }
+        if (resetStatsFault) {
+            *resetStatsFault = resetStatsFaultReturnValue;
+        }
+        return ret;
+    }
+
     bool validPageFault(uint16_t flags) override {
-        return validPageFaultReturnValue;
+        return true;
     }
+
     uint32_t getStatusForResetStats(bool banned) override {
-        return getStatusForResetStatsReturnValue;
+        if (banned) {
+            return statusReturnValue;
+        } else {
+            return 0u;
+        }
     }
-    bool validPageFaultReturnValue = 0;
-    uint32_t getStatusForResetStatsReturnValue = 0;
+
+    uint32_t statusReturnValue = 0;
+    ResetStatsFault resetStatsFaultReturnValue{};
 };
 
 TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcessTerminated) {
@@ -1439,15 +1457,50 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
     MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
     mockOsContextLinux.drmContextIds.push_back(0);
 
-    ResetStats resetStats{};
-    resetStats.contextId = 0;
-    drm.resetStatsToReturn.push_back(resetStats);
+    ResetStats resetStatsExpected{};
+    ResetStatsFault resetStatsFaultExpected{};
+    resetStatsExpected.contextId = 0;
+    drm.resetStatsToReturn.push_back(resetStatsExpected);
 
-    ioctlHelper->getStatusForResetStatsReturnValue = 1;
-    ioctlHelper->validPageFaultReturnValue = true;
+    resetStatsFaultExpected.flags = 1;
+    resetStatsFaultExpected.addr = 0x1234;
+    resetStatsFaultExpected.type = 2;
+    resetStatsFaultExpected.level = 3;
+
+    ioctlHelper->statusReturnValue = 2u;
+    ioctlHelper->resetStatsFaultReturnValue = resetStatsFaultExpected;
+
     drm.ioctlHelper = std::move(ioctlHelper);
 
+    int strSize = std::snprintf(nullptr, 0, "FATAL: Unexpected page fault from GPU at 0x%lx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                                resetStatsFaultExpected.addr,
+                                resetStatsExpected.contextId,
+                                EngineHelpers::engineTypeToString(aub_stream::ENGINE_BCS).c_str(),
+                                resetStatsFaultExpected.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(resetStatsFaultExpected.type)).c_str(),
+                                resetStatsFaultExpected.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(resetStatsFaultExpected.level)).c_str(),
+                                resetStatsFaultExpected.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(resetStatsFaultExpected.access)).c_str(),
+                                true) +
+                  1;
+
+    std::unique_ptr<char[]> buf(new char[strSize]);
+    std::snprintf(buf.get(), strSize, "FATAL: Unexpected page fault from GPU at 0x%lx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                  resetStatsFaultExpected.addr,
+                  resetStatsExpected.contextId,
+                  EngineHelpers::engineTypeToString(aub_stream::ENGINE_BCS).c_str(),
+                  resetStatsFaultExpected.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(resetStatsFaultExpected.type)).c_str(),
+                  resetStatsFaultExpected.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(resetStatsFaultExpected.level)).c_str(),
+                  resetStatsFaultExpected.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(resetStatsFaultExpected.access)).c_str(),
+                  true);
+
+    std::string expectedString = std::string(buf.get());
+
+    ::testing::internal::CaptureStderr();
+    ::testing::internal::CaptureStdout();
     EXPECT_THROW(drm.isGpuHangDetected(mockOsContextLinux), std::runtime_error);
+    auto stderrString = ::testing::internal::GetCapturedStderr();
+    auto stdoutString = ::testing::internal::GetCapturedStdout();
+    EXPECT_EQ(expectedString, stderrString);
+    EXPECT_EQ(expectedString, stdoutString);
 }
 
 struct DrmMockCheckPageFault : public DrmMock {
