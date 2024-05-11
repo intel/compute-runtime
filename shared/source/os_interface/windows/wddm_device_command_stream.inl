@@ -158,20 +158,6 @@ bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSt
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::stopDirectSubmissionForHostptrDestroy() {
-    auto lock = this->obtainUniqueOwnership();
-    this->stopDirectSubmission(false);
-}
-
-template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::startDirectSubmissionForHostptrDestroy() {
-    if (this->isAnyDirectSubmissionEnabled()) {
-        auto lock = this->obtainUniqueOwnership();
-        this->flushTagUpdate();
-    }
-}
-
-template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::isTlbFlushRequiredForStateCacheFlush() {
     return true;
 }

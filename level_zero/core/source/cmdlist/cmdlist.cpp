@@ -49,27 +49,10 @@ void CommandList::storePrintfKernel(Kernel *kernel) {
 
 void CommandList::removeHostPtrAllocations() {
     auto memoryManager = device ? device->getNEODevice()->getMemoryManager() : nullptr;
-
-    bool restartDirectSubmission = !this->hostPtrMap.empty() && memoryManager;
-    if (restartDirectSubmission) {
-        const auto &engines = memoryManager->getRegisteredEngines(device->getRootDeviceIndex());
-        for (const auto &engine : engines) {
-            engine.commandStreamReceiver->stopDirectSubmissionForHostptrDestroy();
-        }
-    }
-
     for (auto &allocation : hostPtrMap) {
         UNRECOVERABLE_IF(memoryManager == nullptr);
         memoryManager->freeGraphicsMemory(allocation.second);
     }
-
-    if (restartDirectSubmission) {
-        const auto &engines = memoryManager->getRegisteredEngines(device->getRootDeviceIndex());
-        for (const auto &engine : engines) {
-            engine.commandStreamReceiver->startDirectSubmissionForHostptrDestroy();
-        }
-    }
-
     hostPtrMap.clear();
 }
 

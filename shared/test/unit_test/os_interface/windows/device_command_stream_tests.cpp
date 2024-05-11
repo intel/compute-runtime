@@ -1151,29 +1151,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceTh
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
 }
 
-HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionWhenRestartForHostPtrThenRingIsRestarted) {
-    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
-    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
-
-    debugManager.flags.EnableDirectSubmission.set(1);
-
-    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
-
-    mockCsr->callParentInitDirectSubmission = false;
-    csr->initDirectSubmission();
-
-    mockCsr->directSubmission = std::make_unique<MockSubmission>(*device->getDefaultEngine().commandStreamReceiver);
-    auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
-    EXPECT_FALSE(directSubmission->ringStart);
-
-    csr->stopDirectSubmissionForHostptrDestroy();
-    EXPECT_FALSE(directSubmission->ringStart);
-
-    csr->startDirectSubmissionForHostptrDestroy();
-    EXPECT_TRUE(directSubmission->dispatchCommandBufferCalled);
-}
-
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerThanFenceValueToWaitWhenWaitFromCpuThenFlushMonitorFence) {
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);

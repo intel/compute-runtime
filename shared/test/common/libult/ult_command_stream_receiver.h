@@ -458,14 +458,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return *flushReturnValue;
     }
 
-    void stopDirectSubmissionForHostptrDestroy() override {
-        stopDirectSubmissionForHostptrDestroyCalled = true;
-    }
-
-    void startDirectSubmissionForHostptrDestroy() override {
-        startDirectSubmissionForHostptrDestroyCalled = true;
-    }
-
     void stopDirectSubmission(bool blocking) override {
         stopDirectSubmissionCalled = true;
         stopDirectSubmissionCalledBlocking = blocking;
@@ -551,8 +543,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool isKmdWaitOnTaskCountAllowedValue = false;
     bool stopDirectSubmissionCalled = false;
     bool stopDirectSubmissionCalledBlocking = false;
-    std::atomic_bool stopDirectSubmissionForHostptrDestroyCalled = false;
-    std::atomic_bool startDirectSubmissionForHostptrDestroyCalled = false;
 };
 
 } // namespace NEO
