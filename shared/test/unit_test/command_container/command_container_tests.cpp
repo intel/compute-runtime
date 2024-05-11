@@ -1011,7 +1011,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithAl
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
-HWTEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurfaceStateIndirectHeapSizeIsCorrect) {
+TEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurfaceStateIndirectHeapSizeIsCorrect) {
     MyMockCommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     auto size = cmdContainer.allocationIndirectHeaps[IndirectHeap::Type::surfaceState]->getUnderlyingBufferSize();
@@ -1634,11 +1634,11 @@ TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeA
 
     cmdContainer->fillReusableAllocationLists();
     auto &reusableHeapsList = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper())->storageForReuse->getAllocationsForReuse();
-    auto baseAlloc = cmdContainer->getIndirectHeapAllocation(HeapType::surfaceState);
-    auto reusableAlloc = reusableHeapsList.peekTail();
+    auto baseAlloc = cmdContainer->getIndirectHeapAllocation(HeapType::indirectObject);
+    auto reusableAlloc = reusableHeapsList.peekHead();
 
-    cmdContainer->getIndirectHeap(HeapType::surfaceState)->getSpace(cmdContainer->getIndirectHeap(HeapType::surfaceState)->getMaxAvailableSpace());
-    auto heap = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, 1024, 1024);
+    cmdContainer->getIndirectHeap(HeapType::indirectObject)->getSpace(cmdContainer->getIndirectHeap(HeapType::indirectObject)->getMaxAvailableSpace());
+    auto heap = cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, 1024, 1024);
 
     EXPECT_EQ(heap->getGraphicsAllocation(), reusableAlloc);
     EXPECT_TRUE(reusableHeapsList.peekContains(*baseAlloc));
@@ -1722,13 +1722,10 @@ TEST_F(CommandContainerTest, givenCmdContainerSetToSbaTrackingWhenStateHeapsCons
 
 TEST_F(CommandContainerTest, givenCmdContainerSetToSbaTrackingWhenContainerIsInitializedThenSurfaceHeapDefaultValueIsUsed) {
     constexpr size_t sshDefaultSize = 2 * HeapSize::defaultHeapSize;
-    auto &productHelper = pDevice->getProductHelper();
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto expectedSshSize = gfxCoreHelper.getDefaultSshSize(productHelper);
 
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     cmdContainer->initialize(pDevice, nullptr, sshDefaultSize, true, false);
-    EXPECT_EQ(expectedSshSize, cmdContainer->defaultSshSize);
+    EXPECT_EQ(HeapSize::defaultHeapSize, cmdContainer->defaultSshSize);
 
     cmdContainer = std::make_unique<MyMockCommandContainer>();
     cmdContainer->setStateBaseAddressTracking(true);

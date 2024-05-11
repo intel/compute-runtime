@@ -1335,10 +1335,7 @@ HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCr
 
         auto &commandContainer = commandList->getCmdContainer();
         auto sshSize = commandContainer.getIndirectHeap(NEO::IndirectHeapType::surfaceState)->getMaxAvailableSpace();
-        auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto &productHelper = device->getProductHelper();
-        auto expectedSshSize = gfxCoreHelper.getDefaultSshSize(productHelper);
-        EXPECT_EQ(expectedSshSize, sshSize);
+        EXPECT_EQ(NEO::HeapSize::defaultHeapSize, sshSize);
     }
     {
         debugManager.flags.EnableStateBaseAddressTracking.set(1);
