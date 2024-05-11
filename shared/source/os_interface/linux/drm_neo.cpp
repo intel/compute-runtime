@@ -20,6 +20,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/gpu_page_fault_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -265,9 +266,23 @@ bool Drm::checkResetStatus(OsContext &osContext) {
         const auto retVal{ioctlHelper->getResetStats(resetStats, &status, &fault)};
         UNRECOVERABLE_IF(retVal != 0);
         if (checkToDisableScratchPage() && ioctlHelper->validPageFault(fault.flags)) {
-            bool banned = ((status & ioctlHelper->getStatusForResetStats(true)) == 0);
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ERROR: Unexpected page fault from GPU at 0x%llx, type: %d, level: %d, access: %d, banned: %d, aborting.\n",
-                               fault.addr, fault.type, fault.level, fault.access, banned);
+            bool banned = ((status & ioctlHelper->getStatusForResetStats(true)) != 0);
+            fprintf(stderr, "FATAL: Unexpected page fault from GPU at 0x%lx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                    fault.addr,
+                    resetStats.contextId,
+                    EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
+                    fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
+                    fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
+                    fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
+                    banned);
+            fprintf(stdout, "FATAL: Unexpected page fault from GPU at 0x%lx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                    fault.addr,
+                    resetStats.contextId,
+                    EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
+                    fault.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(fault.type)).c_str(),
+                    fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
+                    fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
+                    banned);
             UNRECOVERABLE_IF(true);
         }
         if (resetStats.batchActive > 0 || resetStats.batchPending > 0) {

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -32,6 +32,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/hw_aot_config_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_default_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/gpu_page_fault_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/local_id_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/l3_range_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers_tests.cpp
