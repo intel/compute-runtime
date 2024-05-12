@@ -8,7 +8,6 @@
 #include "shared/source/utilities/isa_pool_allocator.h"
 
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
@@ -77,7 +76,6 @@ SharedIsaAllocation *ISAPoolAllocator::requestGraphicsAllocationForIsa(bool isBu
     auto maxAllocationSize = getAllocationSize(isBuiltin);
 
     if (size > maxAllocationSize) {
-        size = alignUp(size, MemoryConstants::pageSize);
         addNewBufferPool(ISAPool(device, isBuiltin, size));
     }
 
