@@ -758,7 +758,8 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
         entry->second.latestSentTaskCount = taskCount;
     }
     if (parseAllAllocations) {
-        for (auto allocationId = this->allocationsCounter.load(); allocationId > previousCounter; allocationId--) {
+        auto currentCounter = this->allocationsCounter.load();
+        for (auto allocationId = static_cast<uint32_t>(previousCounter + 1); allocationId <= currentCounter; allocationId++) {
             makeResidentForAllocationsWithId(allocationId, commandStreamReceiver);
         }
     }
