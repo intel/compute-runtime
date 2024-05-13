@@ -63,6 +63,8 @@ constexpr uint32_t tbxShm = 3;
 constexpr uint32_t tbxShm3 = 4;
 constexpr uint32_t tbxShm4 = 5;
 constexpr uint32_t null = 6;
+constexpr uint32_t aubFileAndShm = 7;
+constexpr uint32_t aubFileAndShm4 = 8;
 } // namespace mode
 
 namespace clearColorType {
@@ -78,6 +80,9 @@ extern "C" void setTbxServerPort(uint16_t port);
 extern "C" void setTbxServerIp(std::string server);
 extern "C" void setTbxFrontdoorMode(bool frontdoor);
 extern "C" void setAubStreamCaller(uint32_t caller);
+
+extern "C" void injectMMIOListLegacy(MMIOList mmioList);
+extern "C" void setTbxServerIpLegacy(std::string server);
 
 namespace caller {
 constexpr uint32_t neo = 0;

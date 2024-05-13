@@ -67,6 +67,8 @@ class AubManager {
     virtual uint32_t readMMIO(uint32_t offset) { return 0; }
     virtual void writePCICFG(uint32_t offset, uint32_t value) {}
     virtual uint32_t readPCICFG(uint32_t offset) { return 0; }
+
+    virtual void blockMemWritesViaTbx(bool onoff) {}
 };
 
 } // namespace aub_stream
