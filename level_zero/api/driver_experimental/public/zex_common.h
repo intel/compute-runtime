@@ -112,7 +112,21 @@ typedef struct _ze_intel_media_communication_desc_t {
     uint32_t controlBatchBufferSize;        ///< [in] control batch buffer size
 } ze_intel_media_communication_desc_t;
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Forward-declare ze_intel_media_doorbell_handle_desc_t
+typedef struct _ze_intel_media_doorbell_handle_desc_t ze_intel_media_doorbell_handle_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief ze_intel_media_doorbell_handle_desc_t
+/// @details Handle of the doorbell. This structure is passed as argument of zeIntelMediaCommunicationCreate and zeIntelMediaCommunicationDestroy
+typedef struct _ze_intel_media_doorbell_handle_desc_t {
+    ze_structure_type_t stype; ///< [in] type of this structure
+    void *pNext;               ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
+    uint64_t doorbell;         ///< [in,out] handle of the doorbell
+} ze_intel_media_doorbell_handle_desc_t;
+
 #define ZE_STRUCTURE_TYPE_INTEL_MEDIA_COMMUNICATION_DESC (ze_structure_type_t)0x00020021
+#define ZE_STRUCTURE_TYPE_INTEL_MEDIA_DOORBELL_HANDLE_DESC (ze_structure_type_t)0x00020022
 
 #if defined(__cplusplus)
 } // extern "C"
