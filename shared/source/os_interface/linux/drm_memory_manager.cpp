@@ -680,7 +680,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     }
     BufferObject::BOType boType{};
     if (tryToUseGemCreateExt && drm.getMemoryInfo()) {
-        ret = drm.getMemoryInfo()->createGemExtWithSingleRegion(allocationData.storageInfo.getMemoryBanks(), bufferSize, handle, patIndex, -1, allocationData.flags.isUSMHostAllocation);
+        ret = drm.getMemoryInfo()->createGemExtWithSingleRegion(allocationData.storageInfo.memoryBanks, bufferSize, handle, patIndex, -1, allocationData.flags.isUSMHostAllocation);
         boType = getBOTypeFromPatIndex(patIndex, productHelper.isVmBindPatIndexProgrammingSupported());
     }
 
@@ -1924,7 +1924,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 }
 
 BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress,
-                                                                 size_t size, uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) {
+                                                                 size_t size, DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) {
     auto drm = &getDrm(rootDeviceIndex);
     auto memoryInfo = drm->getMemoryInfo();
     if (!memoryInfo) {
@@ -1936,8 +1936,7 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
 
     auto patIndex = drm->getPatIndex(gmm, allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMemoryPool);
 
-    auto banks = std::bitset<4>(memoryBanks);
-    if (banks.count() > 1) {
+    if (memoryBanks.count() > 1) {
         ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex, isUsmHostAllocation);
     } else {
         ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, patIndex, pairHandle, isUsmHostAllocation);
@@ -2008,13 +2007,12 @@ bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *alloc
     auto &storageInfo = allocation->storageInfo;
     auto memoryInfo = drm->getMemoryInfo();
     uint32_t handle = 0;
-    auto memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
     auto alignSize = alignUp(boSize, MemoryConstants::pageSize64k);
     uint32_t numOfChunks = static_cast<uint32_t>(alignSize / getSizeOfChunk(alignSize));
 
     auto gmm = allocation->getGmm(0u);
     auto patIndex = drm->getPatIndex(gmm, allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, !allocation->isAllocatedInLocalMemoryPool());
-    int ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, boSize, handle, patIndex, -1, true, numOfChunks, allocation->isUsmHostAllocation());
+    int ret = memoryInfo->createGemExtWithMultipleRegions(storageInfo.memoryBanks, boSize, handle, patIndex, -1, true, numOfChunks, allocation->isUsmHostAllocation());
     if (ret != 0) {
         return false;
     }

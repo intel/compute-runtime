@@ -76,7 +76,7 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
         handle = 1u;
         return 0;
     }
-    int createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation) override {
+    int createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation) override {
         if (allocSize == 0) {
             return EINVAL;
         }
@@ -84,15 +84,15 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
         pairHandlePassed = pairHandle;
         return 0;
     }
-    int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation) override {
+    int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
-        banks = memoryBanks;
+        banks = static_cast<uint32_t>(memoryBanks.to_ulong());
         return 0;
     }
-    int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) override {
+    int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) override {
         if (allocSize == 0) {
             return EINVAL;
         }
@@ -100,7 +100,7 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
             return -1;
         }
         handle = 1u;
-        banks = memoryBanks;
+        banks = static_cast<uint32_t>(memoryBanks.to_ulong());
         isChunkedUsed = isChunked;
         return 0;
     }

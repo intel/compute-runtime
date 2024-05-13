@@ -447,11 +447,11 @@ class DrmMemoryManagerLocalMemoryMemoryBankMock : public TestedDrmMemoryManager 
                                                    AllocationType allocationType,
                                                    uint64_t gpuAddress,
                                                    size_t size,
-                                                   uint32_t memoryBanks,
+                                                   DeviceBitfield memoryBanks,
                                                    size_t maxOsContextCount,
                                                    int32_t pairHandle,
                                                    bool isSystemMemoryPool, bool isUSMHostAllocation) override {
-        memoryBankIsOne = (memoryBanks == 1) ? true : false;
+        memoryBankIsOne = (memoryBanks.to_ulong() == 1u) ? true : false;
         return nullptr;
     }
 

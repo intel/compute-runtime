@@ -131,13 +131,13 @@ void MemoryInfo::printRegionSizes() const {
     }
 }
 
-int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation) {
+int MemoryInfo::createGemExtWithSingleRegion(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isUSMHostAllocation) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
     MemRegionsVec region = {regionClassAndInstance};
     std::optional<uint32_t> vmId;
     if (!this->drm.isPerContextVMRequired()) {
-        if (memoryBanks != 0 && debugManager.flags.EnablePrivateBO.get()) {
+        if (memoryBanks.count() && debugManager.flags.EnablePrivateBO.get()) {
             auto tileIndex = getLocalMemoryRegionIndex(memoryBanks);
             vmId = this->drm.getVirtualMemoryAddressSpace(tileIndex);
         }
@@ -147,7 +147,7 @@ int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocS
     return ret;
 }
 
-int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation) {
+int MemoryInfo::createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto banks = std::bitset<4>(memoryBanks);
     MemRegionsVec memRegions{};
@@ -166,14 +166,13 @@ int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t all
     return ret;
 }
 
-int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) {
+int MemoryInfo::createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
-    auto banks = std::bitset<4>(memoryBanks);
     MemRegionsVec memRegions{};
     size_t currentBank = 0;
     size_t i = 0;
-    while (i < banks.count()) {
-        if (banks.test(currentBank)) {
+    while (i < memoryBanks.count()) {
+        if (memoryBanks.test(currentBank)) {
             auto regionClassAndInstance = getMemoryRegionClassAndInstance(1u << currentBank, *pHwInfo);
             memRegions.push_back(regionClassAndInstance);
             i++;
