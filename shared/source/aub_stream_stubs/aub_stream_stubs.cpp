@@ -12,9 +12,9 @@
 namespace aub_stream {
 
 extern "C" {
-void injectMMIOList(MMIOList mmioList){};
+void injectMMIOListLegacy(MMIOList mmioList){};
 void setTbxServerPort(uint16_t port){};
-void setTbxServerIp(std::string server){};
+void setTbxServerIpLegacy(std::string server){};
 void setTbxFrontdoorMode(bool frontdoor){};
 void setAubStreamCaller(uint32_t caller){};
 }

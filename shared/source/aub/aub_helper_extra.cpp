@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 namespace NEO {
 
 void AubHelper::setTbxConfiguration() {
-    aub_stream::setTbxServerIp(debugManager.flags.TbxServer.get());
+    aub_stream::setTbxServerIpLegacy(debugManager.flags.TbxServer.get());
     aub_stream::setTbxServerPort(debugManager.flags.TbxPort.get());
     aub_stream::setTbxFrontdoorMode(debugManager.flags.TbxFrontdoorMode.get());
 }

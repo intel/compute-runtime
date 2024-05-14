@@ -16,14 +16,14 @@ aub_stream::MMIOList mmioListInjected;
 
 namespace aub_stream {
 
-void injectMMIOList(MMIOList mmioList) {
+void injectMMIOListLegacy(MMIOList mmioList) {
     aub_stream_stubs::mmioListInjected = mmioList;
     aub_stream_stubs::mmioListInjected.shrink_to_fit();
 }
 void setTbxServerPort(uint16_t port) {
     aub_stream_stubs::tbxServerPort = port;
 }
-void setTbxServerIp(std::string server) {
+void setTbxServerIpLegacy(std::string server) {
     // better to avoid reassigning global variables which assume memory allocations since
     // we could step into false-positive memory leak detection with embedded leak check helper
     if (aub_stream_stubs::tbxServerIp != server) {

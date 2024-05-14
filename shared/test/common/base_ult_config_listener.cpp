@@ -34,7 +34,7 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
     if (enableAlarm) {
         EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(testEnd - testStart).count(), testCaseMaxTimeInMs);
     }
-    aub_stream::injectMMIOList(aub_stream::MMIOList{});
+    aub_stream::injectMMIOListLegacy(aub_stream::MMIOList{});
 
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
