@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,8 @@
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 
 #include "gtest/gtest.h"
+
+#include <algorithm>
 
 using namespace NEO;
 
