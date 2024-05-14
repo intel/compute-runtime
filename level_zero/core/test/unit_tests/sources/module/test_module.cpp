@@ -24,6 +24,7 @@
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/mock_file_io.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -693,6 +694,41 @@ HWTEST_F(ModuleTest, GivenIncorrectNameWhenCreatingKernelThenResultErrorInvalidA
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_KERNEL_NAME, res);
 }
+
+HWTEST_F(ModuleTest, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    NEO::GraphicsAllocation *allocation;
+    std::vector<std::unique_ptr<L0::ModuleImp>> modules;
+    constexpr size_t numModules = 10;
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto initialWriteMemoryCount = ultCsr.writeMemoryParams.callCount;
+    for (auto i = 0u; i < numModules; i++) {
+        modules.emplace_back(new L0::ModuleImp(device, moduleBuildLog, ModuleType::user));
+        modules[i]->initialize(&moduleDesc, device->getNEODevice());
+        EXPECT_EQ(initialWriteMemoryCount + (i + 1), ultCsr.writeMemoryParams.callCount);
+
+        if (i == 0) {
+            allocation = modules[i]->getKernelsIsaParentAllocation();
+        }
+        auto &vec = modules[i]->getKernelImmutableDataVector();
+        auto offsetForImmData = vec[0]->getIsaOffsetInParentAllocation();
+        for (auto &immData : vec) {
+            EXPECT_EQ(offsetForImmData, immData->getIsaOffsetInParentAllocation());
+            offsetForImmData += immData->getIsaSubAllocationSize();
+        }
+        // Verify that all imm datas share same parent allocation
+        if (i != 0) {
+            EXPECT_EQ(allocation, modules[i]->getKernelsIsaParentAllocation());
+        }
+    }
+};
 
 template <typename T1, typename T2>
 struct ModuleSpecConstantsFixture : public DeviceFixture {

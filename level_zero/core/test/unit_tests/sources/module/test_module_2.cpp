@@ -451,36 +451,5 @@ TEST_F(ModuleTests, givenFP64EmulationEnabledWhenCreatingModuleThenEnableFP64Gen
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, BuildOptions::enableFP64GenEmu));
 };
 
-TEST_F(ModuleTests, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableLocalMemory.set(1);
-    uint8_t binary[10];
-    ze_module_desc_t moduleDesc = {};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = binary;
-    moduleDesc.inputSize = 10;
-    ModuleBuildLog *moduleBuildLog = nullptr;
-    NEO::GraphicsAllocation *allocation;
-    std::vector<std::unique_ptr<L0::ModuleImp>> modules;
-    constexpr size_t numModules = 10;
-    for (auto i = 0u; i < numModules; i++) {
-        modules.emplace_back(new L0::ModuleImp(device, moduleBuildLog, ModuleType::user));
-        modules[i]->initialize(&moduleDesc, device->getNEODevice());
-        if (i == 0) {
-            allocation = modules[i]->getKernelsIsaParentAllocation();
-        }
-        auto &vec = modules[i]->getKernelImmutableDataVector();
-        auto offsetForImmData = vec[0]->getIsaOffsetInParentAllocation();
-        for (auto &immData : vec) {
-            EXPECT_EQ(offsetForImmData, immData->getIsaOffsetInParentAllocation());
-            offsetForImmData += immData->getIsaSubAllocationSize();
-        }
-        // Verify that all imm datas share same parent allocation
-        if (i != 0) {
-            EXPECT_EQ(allocation, modules[i]->getKernelsIsaParentAllocation());
-        }
-    }
-};
-
 } // namespace ult
 } // namespace L0
