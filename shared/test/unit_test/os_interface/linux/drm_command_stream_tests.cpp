@@ -1155,7 +1155,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
             for (int gpuFaultCheckThreshold : {0, 10}) {
                 debugManager.flags.DisableScratchPages.set(disableScratchPage);
                 debugManager.flags.GpuFaultCheckThreshold.set(gpuFaultCheckThreshold);
-                mock->disableScratch = disableScratchPage;
+                mock->configureScratchPagePolicy();
+                mock->configureGpuFaultCheckThreshold();
 
                 TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
                     new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,

@@ -1043,24 +1043,20 @@ bool Drm::hasKmdMigrationSupport() const {
     return kmdMigrationSupported;
 }
 
-bool Drm::checkToDisableScratchPage() {
-    std::call_once(checkToDisableScratchPageOnce, [this]() {
-        if (debugManager.flags.DisableScratchPages.get() != -1) {
-            disableScratch = !!debugManager.flags.DisableScratchPages.get();
-            return;
-        }
-        const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
-        disableScratch = (productHelper.isDisableScratchPagesSupported() &&
-                          !rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled());
-    });
-    return disableScratch;
+void Drm::configureScratchPagePolicy() {
+    if (debugManager.flags.DisableScratchPages.get() != -1) {
+        disableScratch = !!debugManager.flags.DisableScratchPages.get();
+        return;
+    }
+    const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    disableScratch = (productHelper.isDisableScratchPagesSupported() &&
+                      !rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled());
 }
 
-unsigned int Drm::getGpuFaultCheckThreshold() const {
+void Drm::configureGpuFaultCheckThreshold() {
     if (debugManager.flags.GpuFaultCheckThreshold.get() != -1) {
-        return debugManager.flags.GpuFaultCheckThreshold.get();
+        gpuFaultCheckThreshold = debugManager.flags.GpuFaultCheckThreshold.get();
     }
-    return 10u;
 }
 
 unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {

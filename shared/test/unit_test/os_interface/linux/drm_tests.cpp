@@ -1430,6 +1430,8 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
 
     MockExecutionEnvironment executionEnvironment{};
     DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
     auto ioctlHelper = std::make_unique<MockIoctlHelperResetStats>(drm);
@@ -1460,6 +1462,8 @@ HWTEST2_F(DrmDisableScratchPagesDefaultTest,
           givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultValueAndScratchPageIsDisabled, IsPVC) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockCheckPageFault drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
     EXPECT_TRUE(drm.checkToDisableScratchPage());
     EXPECT_EQ(10u, drm.getGpuFaultCheckThreshold());
 }
@@ -1468,6 +1472,8 @@ HWTEST2_F(DrmDisableScratchPagesDefaultTest,
           givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultAndScratchPageIsEnabled, IsNotPVC) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockCheckPageFault drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
     EXPECT_FALSE(drm.checkToDisableScratchPage());
     EXPECT_EQ(10u, drm.getGpuFaultCheckThreshold());
 }
@@ -1484,24 +1490,32 @@ TEST(DrmTest, givenDisableScratchPagesWhenSettingGpuFaultCheckThresholdThenThesh
     debugManager.flags.DisableScratchPages.set(false);
     debugManager.flags.GpuFaultCheckThreshold.set(-1);
     DrmMockCheckPageFault drm1{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm1.configureScratchPagePolicy();
+    drm1.configureGpuFaultCheckThreshold();
     EXPECT_FALSE(drm1.checkToDisableScratchPage());
     EXPECT_EQ(10u, drm1.getGpuFaultCheckThreshold());
 
     debugManager.flags.DisableScratchPages.set(true);
     debugManager.flags.GpuFaultCheckThreshold.set(-1);
     DrmMockCheckPageFault drm2{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm2.configureScratchPagePolicy();
+    drm2.configureGpuFaultCheckThreshold();
     EXPECT_TRUE(drm2.checkToDisableScratchPage());
     EXPECT_EQ(10u, drm2.getGpuFaultCheckThreshold());
 
     debugManager.flags.DisableScratchPages.set(true);
     debugManager.flags.GpuFaultCheckThreshold.set(threshold);
     DrmMockCheckPageFault drm3{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm3.configureScratchPagePolicy();
+    drm3.configureGpuFaultCheckThreshold();
     EXPECT_TRUE(drm3.checkToDisableScratchPage());
     EXPECT_EQ(threshold, drm3.getGpuFaultCheckThreshold());
 
     debugManager.flags.DisableScratchPages.set(false);
     debugManager.flags.GpuFaultCheckThreshold.set(threshold);
     DrmMockCheckPageFault drm4{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm4.configureScratchPagePolicy();
+    drm4.configureGpuFaultCheckThreshold();
     EXPECT_FALSE(drm4.checkToDisableScratchPage());
     EXPECT_EQ(threshold, drm4.getGpuFaultCheckThreshold());
 }
@@ -1532,6 +1546,8 @@ TEST(DrmTest, givenDisableScratchPagesSetWhenSettingGpuFaultCheckThresholdThenFa
     auto memoryManager = new MockDrmMemoryManagerCheckPageFault(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto &drm = *executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmMock>();
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
 
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
@@ -1573,6 +1589,8 @@ TEST(DrmTest, givenDisableScratchPagesSetWhenSettingGpuFaultCheckThresholdToZero
     auto memoryManager = new MockDrmMemoryManagerCheckPageFault(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto &drm = *executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmMock>();
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
 
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
@@ -1607,6 +1625,8 @@ TEST(DrmTest, whenNotDisablingScratchPagesThenFaultCheckingDoesNotHappen) {
     auto memoryManager = new MockDrmMemoryManagerCheckPageFault(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto &drm = *executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmMock>();
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
 
     uint32_t contextId{0};
     EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
