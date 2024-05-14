@@ -338,6 +338,6 @@ TEST(ReadWriteBufferOnCpu, whenLocalMemoryPoolAllocationIsAskedForPreferenceThen
     ASSERT_NE(nullptr, buffer.get());
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::localMemory);
 
-    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
     EXPECT_FALSE(buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));
 }
