@@ -2502,6 +2502,10 @@ kernels:
           offset : 32
           size : 8
           bti_value : 1
+        - arg_type:  global_base
+          offset: 56
+          size: 8
+          is_ptr: true
 ...
 )===";
 
@@ -2520,7 +2524,7 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    ASSERT_EQ(3U, args.size());
+    ASSERT_EQ(4U, args.size());
 
     EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::argTypeArgBypointer, args[0].argType);
     EXPECT_EQ(16, args[0].offset);
@@ -2540,6 +2544,11 @@ kernels:
     EXPECT_EQ(32, args[2].offset);
     EXPECT_EQ(8, args[2].size);
     EXPECT_EQ(1, args[2].btiValue);
+
+    EXPECT_EQ(NEO::Zebin::ZeInfo::Types::Kernel::argTypeDataGlobalBuffer, args[3].argType);
+    EXPECT_EQ(56, args[3].offset);
+    EXPECT_EQ(8, args[3].size);
+    EXPECT_TRUE(args[3].isPtr);
 }
 
 TEST(ReadZeInfoPayloadArguments, GivenUnknownEntryThenEmmitsWarning) {
@@ -5334,6 +5343,7 @@ TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrec
     NEO::Zebin::ZeInfo::Types::Kernel::PayloadArgument::PayloadArgumentBaseT dataGlobalBuffer;
     dataGlobalBuffer.argType = NEO::Zebin::ZeInfo::Types::Kernel::argTypeDataGlobalBuffer;
     dataGlobalBuffer.btiValue = 1;
+    dataGlobalBuffer.isPtr = true;
 
     std::string errors, warnings;
     auto retVal = NEO::Zebin::ZeInfo::populateKernelPayloadArgument(kernelDescriptor, dataGlobalBuffer, errors, warnings);
@@ -5345,6 +5355,7 @@ TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrec
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless));
     EXPECT_EQ(64U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful);
     EXPECT_EQ(2U, kernelDescriptor.payloadMappings.bindingTable.numEntries);
+    EXPECT_TRUE(kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess);
 }
 
 TEST(PopulateArgDescriptor, GivenGlobalDataBufferArgWithoutBTIThenItIsPopulatedCorrectly) {

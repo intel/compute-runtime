@@ -289,8 +289,8 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsIpSamplingSupportedThenCo
 
 PVCTEST_F(PvcProductHelper, givenPvcProductHelperAndKernelBinaryFormatsWhenCheckingIsDetectIndirectAccessInKernelSupportedThenCorrectValueIsReturned) {
     KernelDescriptor kernelDescriptor;
-    const uint32_t notAcceptedIndirectDetectionVersion = 1u;
-    const uint32_t acceptedIndirectDetectionVersion = 2u;
+    const uint32_t notAcceptedIndirectDetectionVersion = 2u;
+    const uint32_t acceptedIndirectDetectionVersion = 3u;
     {
         kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
         kernelDescriptor.kernelAttributes.simdSize = 8u;

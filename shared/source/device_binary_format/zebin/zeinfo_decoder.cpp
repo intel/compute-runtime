@@ -1326,6 +1326,7 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
             }
             setSSHOffsetBasedOnBti(dst.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful, src.btiValue, dst.payloadMappings.bindingTable.numEntries);
         }
+        dst.payloadMappings.implicitArgs.hasIndirectAccess |= src.isPtr;
         return DecodeError::success;
 
     case Types::Kernel::argTypeImageHeight:

@@ -838,8 +838,8 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckDummyBlitWaRequiredThenRe
 
 HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenCheckingIsDetectIndirectAccessInKernelSupportedThenCorrectValueIsReturned) {
     KernelDescriptor kernelDescriptor;
-    const uint32_t notAcceptedIndirectDetectionVersion = 0u;
-    const uint32_t acceptedIndirectDetectionVersion = 1u;
+    const uint32_t notAcceptedIndirectDetectionVersion = 2u;
+    const uint32_t acceptedIndirectDetectionVersion = 3u;
     {
         kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
         kernelDescriptor.kernelAttributes.simdSize = 8u;

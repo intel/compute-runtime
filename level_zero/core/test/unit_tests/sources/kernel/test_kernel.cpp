@@ -1328,6 +1328,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+    module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
 
     kernel->initialize(&desc);
 
@@ -1351,6 +1352,37 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
     ptrByValueArg.as<ArgDescValue>().elements.push_back(element);
     mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.push_back(ptrByValueArg);
     EXPECT_EQ(mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.size(), 1u);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+
+    kernel->initialize(&desc);
+
+    EXPECT_TRUE(kernel->hasIndirectAccess());
+}
+
+TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEnabledAndImplicitArgumentHasIndirectAccessWhenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicAndNoHasIndirectStatelessAccessThenHasIndirectAccessIsSetToTrue) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DisableIndirectAccess.set(0);
+    NEO::debugManager.flags.DetectIndirectAccessInKernel.set(1);
+
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+    bool isInternal = false;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+    mockKernelImmData->mockKernelDescriptor->kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::zebin;
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = true;
 
     createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
@@ -1395,6 +1427,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
+        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
 
         kernel->initialize(&desc);
 
@@ -1413,6 +1446,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
+        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
 
         kernel->initialize(&desc);
 
@@ -1431,6 +1465,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
+        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
 
         kernel->initialize(&desc);
 
@@ -1449,6 +1484,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = true;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
+        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
 
         kernel->initialize(&desc);
 
@@ -1468,6 +1504,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = false;
+        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
 
         kernel->initialize(&desc);
 
@@ -1487,6 +1524,27 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = true;
+        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
+
+        kernel->initialize(&desc);
+
+        EXPECT_TRUE(kernel->hasIndirectAccess());
+    }
+
+    {
+        std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+        ze_kernel_desc_t desc = {};
+        desc.pKernelName = kernelName.c_str();
+
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = false;
+        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = true;
 
         kernel->initialize(&desc);
 
