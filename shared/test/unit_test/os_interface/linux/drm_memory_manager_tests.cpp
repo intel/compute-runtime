@@ -7372,7 +7372,9 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithDifferentScratchPageOptionsWh
             for (int gpuFaultCheckThreshold : {0, 10}) {
                 debugManager.flags.DisableScratchPages.set(disableScratchPage);
                 debugManager.flags.GpuFaultCheckThreshold.set(gpuFaultCheckThreshold);
-                mock->disableScratch = disableScratchPage;
+
+                mock->configureScratchPagePolicy();
+                mock->configureGpuFaultCheckThreshold();
 
                 mock->ioctlCnt.reset();
                 mock->waitUserFenceCall.called = 0u;

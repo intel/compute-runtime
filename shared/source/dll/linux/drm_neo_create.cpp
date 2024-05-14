@@ -106,6 +106,9 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     drm->queryAdapterBDF();
 
+    drm->configureScratchPagePolicy();
+    drm->configureGpuFaultCheckThreshold();
+
     return drm.release();
 }
 

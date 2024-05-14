@@ -300,6 +300,8 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesWhenCreateDrmVirtualMemo
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
@@ -314,6 +316,8 @@ TEST(DrmBufferObjectPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagS
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
@@ -329,6 +333,8 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesAndDebuggingEnabledWhenC
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
