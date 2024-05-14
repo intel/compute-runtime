@@ -36,11 +36,13 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
 
         void makeCounterBasedInitiallyDisabled() {
             counterBasedMode = CounterBasedMode::initiallyDisabled;
+            resetCompletionStatus();
             counterBasedFlags = 0;
         }
 
         void makeCounterBasedImplicitlyDisabled() {
             counterBasedMode = CounterBasedMode::implicitlyDisabled;
+            resetCompletionStatus();
             counterBasedFlags = 0;
         }
     };

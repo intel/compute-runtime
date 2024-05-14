@@ -220,7 +220,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
     if (!this->inOrderExecInfo.get()) {
-        return ZE_RESULT_NOT_READY;
+        return ZE_RESULT_SUCCESS;
     }
 
     auto waitValue = getInOrderExecSignalValueWithSubmissionCounter();
@@ -520,7 +520,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
     }
 
     if (!inOrderExecInfo) {
-        return ZE_RESULT_NOT_READY;
+        return ZE_RESULT_SUCCESS;
     }
 
     uint64_t waitAddress = castToUint64(ptrOffset(inOrderExecInfo->getBaseHostAddress(), this->inOrderAllocationOffset));

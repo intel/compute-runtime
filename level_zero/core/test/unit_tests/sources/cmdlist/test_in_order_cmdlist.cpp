@@ -235,11 +235,11 @@ HWTEST2_F(InOrderCmdListTests, givenIpcPoolEventWhenTryingToImplicitlyConverToCo
     EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, event1->counterBasedMode);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderWhenWhenCallingQueryStatusThenReturnNotReady, IsAtLeastSkl) {
+HWTEST2_F(InOrderCmdListTests, givenNotSignaledInOrderWhenWhenCallingQueryStatusThenReturnSuccess, IsAtLeastSkl) {
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->enableCounterBasedMode(true, eventPool->getCounterBasedFlags());
 
-    EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->queryStatus());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCountForWaits, IsAtLeastSkl) {
@@ -347,7 +347,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
     EXPECT_TRUE(events[1]->isKmdWaitModeEnabled());
     EXPECT_TRUE(events[1]->isInterruptModeEnabled());
 
-    EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(2));
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 

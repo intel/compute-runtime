@@ -2646,16 +2646,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
 
+        if (event->isCounterBased() && !event->getInOrderExecInfo().get()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
+        }
+
         if ((isImmediateType() && event->isAlreadyCompleted()) ||
             canSkipInOrderEventWait(*event, this->allowCbWaitEventsNoopDispatch)) {
             continue;
         }
 
         if (event->isCounterBased()) {
-            if (!event->getInOrderExecInfo().get()) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT; // in-order event not signaled yet
-            }
-
             // 1. Regular CmdList adds submission counter to base value on each Execute
             // 2. Immediate CmdList takes current value (with submission counter)
             auto waitValue = !isImmediateType() ? event->getInOrderExecBaseSignalValue() : event->getInOrderExecSignalValueWithSubmissionCounter();
