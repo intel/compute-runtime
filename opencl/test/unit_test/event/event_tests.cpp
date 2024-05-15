@@ -911,16 +911,10 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
 }
 
 TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmallerThanQueueTSWithinRecalculationLimitWhenCalculateStartTimestampThenAdjustTimestmaps) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableReusingGpuTimestamps.set(true);
-
-    MockContext context{};
-    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-    MockCommandQueue cmdQ(&context, mockDevice.get(), props, false);
+    MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
-    auto resolution = mockDevice->getDevice().getDeviceInfo().profilingTimerResolution;
+    auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
 
     HwTimeStamps timestamp{};
     timestamp.globalStartTS = 3;
@@ -946,16 +940,10 @@ TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmalle
 }
 
 TEST_F(InternalsEventTest, givenDeviceTimestampBaseEnabledAndGlobalStartTSSmallerThanQueueTSWithinRecalculationLimitAndStartTSBelowOneWhenCalculateStartTimestampThenAdjustTimestmaps) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableReusingGpuTimestamps.set(true);
-
-    MockContext context{};
-    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-    MockCommandQueue cmdQ(&context, mockDevice.get(), props, false);
+    MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
     MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
-    auto resolution = mockDevice->getDevice().getDeviceInfo().profilingTimerResolution;
+    auto resolution = pClDevice->getDevice().getDeviceInfo().profilingTimerResolution;
 
     HwTimeStamps timestamp{};
     timestamp.globalStartTS = 2;

@@ -53,6 +53,8 @@ struct OSTimeWinTest : public ::testing::Test {
         rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
         osTime = std::unique_ptr<MockOSTimeWin>(new MockOSTimeWin(*rootDeviceEnvironment.osInterface));
+        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+        osTime->setDeviceTimerResolution(*hwInfo);
     }
 
     void TearDown() override {
@@ -62,8 +64,11 @@ struct OSTimeWinTest : public ::testing::Test {
 };
 
 TEST_F(OSTimeWinTest, given36BitGpuTimeStampWhenGpuTimeStampOverflowThenGpuTimeDoesNotDecrease) {
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     auto deviceTime = new MockDeviceTimeWin();
     osTime->deviceTime.reset(deviceTime);
+    osTime->setDeviceTimerResolution(*hwInfo);
 
     TimeStampData gpuCpuTime = {0ull, 0ull};
 
@@ -95,8 +100,11 @@ TEST_F(OSTimeWinTest, given36BitGpuTimeStampWhenGpuTimeStampOverflowThenGpuTimeD
 }
 
 TEST_F(OSTimeWinTest, given64BitGpuTimeStampWhenGpuTimeStampOverflowThenOverflowsAreNotDetected) {
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     auto deviceTime = new MockDeviceTimeWin();
     osTime->deviceTime.reset(deviceTime);
+    osTime->setDeviceTimerResolution(*hwInfo);
 
     TimeStampData gpuCpuTime = {0ull, 0ull};
 
@@ -183,9 +191,12 @@ TEST(OSTimeWinTests, givenOSInterfaceWhenGetGpuCpuTimeThenReturnsSuccess) {
     auto wddm = new WddmMock(rootDeviceEnvironment);
     TimeStampData gpuCpuTime01 = {};
     TimeStampData gpuCpuTime02 = {};
-    std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
-    auto osTime = OSTime::create(osInterface.get());
+    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+    wddm->init();
+    auto osTime = OSTime::create(rootDeviceEnvironment.osInterface.get());
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    osTime->setDeviceTimerResolution(*hwInfo);
     auto success = osTime->getGpuCpuTime(&gpuCpuTime01);
     EXPECT_TRUE(success);
     EXPECT_NE(0u, gpuCpuTime01.cpuTimeinNS);
@@ -208,8 +219,6 @@ TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueThenHwInfoBasedValueIsRetur
 }
 
 TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueWithinIntervalThenReuseFromPreviousCall) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReusingGpuTimestamps.set(true);
     osTime->overrideQueryPerformanceCounterFunction(queryPerformanceCounterMock);
     LARGE_INTEGER frequency = {};
     frequency.QuadPart = NSEC_PER_SEC;
@@ -245,8 +254,6 @@ TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueWithinIntervalThenReuseFrom
 }
 
 TEST_F(OSTimeWinTest, whenGettingGpuTimeStampValueAfterIntervalThenCallToKmdAndAdaptTimeout) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReusingGpuTimestamps.set(true);
     osTime->overrideQueryPerformanceCounterFunction(queryPerformanceCounterMock);
     LARGE_INTEGER frequency = {};
     frequency.QuadPart = NSEC_PER_SEC;
@@ -304,8 +311,6 @@ TEST_F(OSTimeWinTest, whenGetGpuCpuTimeFailedThenReturnFalse) {
 }
 
 TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueAfterFlagSetThenCallToKmd) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReusingGpuTimestamps.set(true);
     TimeStampData gpuCpuTime;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
@@ -324,8 +329,6 @@ TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueAfterFlagSetThenCallToKmd) 
 }
 
 TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueWhenForceFlagSetThenCallToKmd) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReusingGpuTimestamps.set(true);
     osTime->overrideQueryPerformanceCounterFunction(queryPerformanceCounterMock);
     LARGE_INTEGER frequency = {};
     frequency.QuadPart = NSEC_PER_SEC;
@@ -358,4 +361,20 @@ TEST_F(OSTimeWinTest, givenReusingTimestampsDisabledWhenGetTimestampRefreshTimeo
     osTime->deviceTime.reset(deviceTime);
     osTime->setDeviceTimerResolution(*hwInfo);
     EXPECT_EQ(0ul, osTime->getTimestampRefreshTimeout());
+}
+
+TEST_F(OSTimeWinTest, givenReusingTimestampsDisabledWhenGetGpuCpuTimeThenAlwaysCallKmd) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableReusingGpuTimestamps.set(0);
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto deviceTime = new MockDeviceTimeWin();
+    osTime->deviceTime.reset(deviceTime);
+    osTime->setDeviceTimerResolution(*hwInfo);
+    TimeStampData gpuCpuTime;
+    osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
+
+    osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
 }
