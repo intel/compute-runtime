@@ -1559,10 +1559,12 @@ ze_result_t ModuleImp::destroy() {
     auto &executionEnvironment = getDevice()->getNEODevice()->getRootDeviceEnvironment().executionEnvironment;
 
     for (const auto &kernelImmData : this->kernelImmDatas) {
-        for (auto &engine : executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
-            auto contextId = engine.osContext->getContextId();
-            if (kernelImmData->getIsaGraphicsAllocation()->isUsedByOsContext(contextId)) {
-                engine.commandStreamReceiver->registerInstructionCacheFlush();
+        if (kernelImmData->getIsaGraphicsAllocation()) {
+            for (auto &engine : executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
+                auto contextId = engine.osContext->getContextId();
+                if (kernelImmData->getIsaGraphicsAllocation()->isUsedByOsContext(contextId)) {
+                    engine.commandStreamReceiver->registerInstructionCacheFlush();
+                }
             }
         }
     }
