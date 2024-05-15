@@ -1017,5 +1017,10 @@ TEST_F(SysmanDeviceFixture, GivenValidLinuxSysmanImpWhenDrmVersionIsi915ThenTrue
     EXPECT_EQ(true, pLinuxSysmanImp->isDriverModelSupported());
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidLinuxSysmanImpWhenCallingInitDeviceAfterReleasingDeviceResourcesThenSuccessIsReturned) {
+    pLinuxSysmanImp->releaseDeviceResources();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->initDevice());
+}
+
 } // namespace ult
 } // namespace L0
