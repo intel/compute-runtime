@@ -208,6 +208,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.additionalSizeParam,                       // additionalSizeParam
         0,                                                      // partitionCount
         launchParams.reserveExtraPayloadSpace,                  // reserveExtraPayloadSpace
+        0,                                                      // defaultThreadArbitrationPolicy
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate
         false,                                                  // isTimestampEvent

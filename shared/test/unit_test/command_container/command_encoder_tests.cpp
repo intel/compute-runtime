@@ -15,6 +15,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -678,4 +679,21 @@ HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysRetur
     EXPECT_EQ(static_cast<uint32_t>(GfxCoreHelperHw<FamilyType>::getSingleTimestampPacketSizeHw()), ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset());
 
     EXPECT_FALSE(ImplicitScalingDispatch<FamilyType>::platformSupportsImplicitScaling(*rootExecEnv));
+}
+
+HWTEST_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPolicyIsCalledThenNothingIsChanged) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
+    INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
+    auto expectedIdd = idd;
+
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
+    int32_t defaultThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+    EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultThreadArbitrationPolicy);
+
+    constexpr uint32_t iddSizeInDW = 8;
+    for (uint32_t i = 0u; i < iddSizeInDW; i++) {
+        EXPECT_EQ(expectedIdd.getRawData(i), idd.getRawData(i));
+    }
 }

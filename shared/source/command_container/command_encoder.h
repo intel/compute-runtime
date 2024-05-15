@@ -62,6 +62,7 @@ struct EncodeDispatchKernelArgs {
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
     uint32_t partitionCount = 0u;
     uint32_t reserveExtraPayloadSpace = 0;
+    int32_t defaultThreadArbitrationPolicy = 0;
     bool isIndirect = false;
     bool isPredicate = false;
     bool isTimestampEvent = false;
@@ -124,6 +125,9 @@ struct EncodeDispatchKernel {
     template <typename InterfaceDescriptorType>
     static void appendAdditionalIDDFields(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
                                           const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
+
+    template <typename InterfaceDescriptorType>
+    static void encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultThreadArbitrationPolicy);
 
     template <typename WalkerType>
     static void encodeThreadData(WalkerType &walkerCmd,

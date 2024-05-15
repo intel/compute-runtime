@@ -590,6 +590,11 @@ bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDes
 }
 
 template <typename Family>
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultThreadArbitrationPolicy) {
+}
+
+template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
 

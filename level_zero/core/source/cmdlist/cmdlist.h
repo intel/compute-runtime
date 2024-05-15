@@ -431,6 +431,7 @@ struct CommandList : _ze_command_list_handle_t {
     CommandListType cmdListType = CommandListType::typeRegular;
     uint32_t partitionCount = 1;
     uint32_t defaultMocsIndex = 0;
+    int32_t defaultThreadArbitrationPolicy = 0;
 
     bool isFlushTaskSubmissionEnabled = false;
     bool isSyncModeQueue = false;

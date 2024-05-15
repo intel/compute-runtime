@@ -248,6 +248,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->inOrderAtomicSignalingEnabled = gfxCoreHelper.inOrderAtomicSignallingEnabled(rootDeviceEnvironment);
     this->scratchAddressPatchingEnabled = (this->heaplessModeEnabled && !isImmediateType());
     this->copyOperationFenceSupported = isCopyOnly() && productHelper.isDeviceToHostCopySignalingFenceRequired();
+    this->defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+    if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+        this->defaultThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
+    }
 
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;

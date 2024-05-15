@@ -115,6 +115,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                        kernelDescriptor.kernelAttributes.barrierCount,
                                                        hwInfo);
 
+    if (args.isHeaplessStateInitEnabled) {
+        EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, args.defaultThreadArbitrationPolicy);
+    }
+
     auto &gfxCoreHelper = args.device->getGfxCoreHelper();
     auto slmSize = static_cast<uint32_t>(
         gfxCoreHelper.computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
