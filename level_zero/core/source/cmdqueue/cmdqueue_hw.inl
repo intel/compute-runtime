@@ -70,6 +70,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     auto ret = ZE_RESULT_SUCCESS;
 
+    this->device->activateMetricGroups();
+
     auto lockCSR = this->csr->obtainUniqueOwnership();
     auto neoDevice = device->getNEODevice();
 
@@ -107,7 +109,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     ctx.lockScratchController = lockScratchController;
 
     this->startingCmdBuffer = &this->commandStream;
-    this->device->activateMetricGroups();
 
     if (this->isCopyOnlyCommandQueue) {
         ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, nullptr, 0, nullptr);
