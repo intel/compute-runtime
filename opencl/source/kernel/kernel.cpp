@@ -331,7 +331,7 @@ cl_int Kernel::initialize() {
                                         kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
                                         kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic ||
                                         kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess ||
-                                        kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess ||
+                                        kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg ||
                                         (program->getFunctionPointerWithIndirectAccessExists() && kernelDescriptor.kernelAttributes.flags.useStackCalls) ||
                                         NEO::KernelHelper::isAnyArgumentPtrByValue(kernelDescriptor);
     } else {

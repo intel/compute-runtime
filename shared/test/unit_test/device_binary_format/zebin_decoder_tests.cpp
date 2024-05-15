@@ -5355,7 +5355,7 @@ TEST(PopulateArgDescriptor, GivenValidGlobalDataBufferArgThenItIsPopulatedCorrec
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless));
     EXPECT_EQ(64U, kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful);
     EXPECT_EQ(2U, kernelDescriptor.payloadMappings.bindingTable.numEntries);
-    EXPECT_TRUE(kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg);
 }
 
 TEST(PopulateArgDescriptor, GivenGlobalDataBufferArgWithoutBTIThenItIsPopulatedCorrectly) {

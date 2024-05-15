@@ -1328,7 +1328,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
-    module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     kernel->initialize(&desc);
 
@@ -1382,7 +1382,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
     std::unique_ptr<MockImmutableData> mockKernelImmData =
         std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
     mockKernelImmData->mockKernelDescriptor->kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::zebin;
-    mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = true;
+    mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = true;
 
     createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
@@ -1427,7 +1427,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
-        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
 
@@ -1446,7 +1446,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
-        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
 
@@ -1465,7 +1465,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
-        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
 
@@ -1484,7 +1484,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = true;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
-        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
 
@@ -1504,7 +1504,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = false;
-        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
 
@@ -1524,7 +1524,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = true;
-        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
 
@@ -1544,7 +1544,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
         module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = false;
-        module->mockKernelImmData->mockKernelDescriptor->payloadMappings.implicitArgs.hasIndirectAccess = true;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = true;
 
         kernel->initialize(&desc);
 

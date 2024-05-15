@@ -2016,7 +2016,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithExternalFunctionWithIndirectAccessB
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess = false;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -2046,7 +2046,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithPtrByValueArgumentAndDetectIndirect
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess = false;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     auto ptrByValueArg = ArgDescriptor(ArgDescriptor::argTValue);
     ArgDescValue::Element element;
@@ -2081,7 +2081,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNor
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess = false;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -2110,7 +2110,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadAndDetectIndirectAcc
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess = false;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -2139,7 +2139,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgStoreAndDetectIndirectAc
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = true;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess = false;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -2168,7 +2168,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicAndDetectIndirectA
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = true;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess = false;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -2197,7 +2197,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicAndImplicitArgsHas
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess = true;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = true;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;

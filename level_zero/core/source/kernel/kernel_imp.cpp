@@ -1129,7 +1129,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                                   kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
                                   kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic ||
                                   kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess ||
-                                  kernelDescriptor.payloadMappings.implicitArgs.hasIndirectAccess ||
+                                  kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg ||
                                   (moduleImp->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists && kernelDescriptor.kernelAttributes.flags.useStackCalls) ||
                                   NEO::KernelHelper::isAnyArgumentPtrByValue(kernelDescriptor);
     } else {

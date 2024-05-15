@@ -69,6 +69,7 @@ struct KernelDescriptor {
         bool hasNonKernelArgStore = false;
         bool hasNonKernelArgAtomic = false;
         bool hasIndirectStatelessAccess = false;
+        bool hasIndirectAccessInImplicitArg = false;
 
         AddressingMode bufferAddressingMode = BindfulAndStateless;
         AddressingMode imageAddressingMode = Bindful;
@@ -193,7 +194,6 @@ struct KernelDescriptor {
             CrossThreadDataOffset implicitArgsBuffer = undefined<CrossThreadDataOffset>;
             ArgDescInlineDataPointer indirectDataPointerAddress;
             ArgDescInlineDataPointer scratchPointerAddress;
-            bool hasIndirectAccess = false;
         } implicitArgs;
 
         std::vector<std::unique_ptr<ArgDescriptorExtended>> explicitArgsExtendedDescriptors;
