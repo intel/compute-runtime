@@ -1117,19 +1117,16 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
     // function checks what is the delta between reading from cachead memory
     // compare to reading from provided pointer
     // if value is above threshold, it means that pointer is uncached.
-    constexpr auto slownessFactor = 5u;
-    static volatile int64_t meassurmentOverhead = std::numeric_limits<int64_t>::max();
-    static volatile int64_t fastestLocalRead = std::numeric_limits<int64_t>::max();
-    static volatile int64_t max = std::numeric_limits<int64_t>::min();
-    static volatile int64_t min = std::numeric_limits<int64_t>::max();
+    constexpr auto slownessFactor = 50u;
+    static int64_t meassurmentOverhead = std::numeric_limits<int64_t>::max();
+    static int64_t fastestLocalRead = std::numeric_limits<int64_t>::max();
 
     // local variable that we will read for comparison
-    volatile int cacheable = 1;
-    // auto hostPtr = std::make_unique<volatile int[]>(0x13000 / sizeof(int));
+    int cacheable = 1;
     volatile int *localVariablePointer = &cacheable;
-    volatile int *volatileInputPtr = (volatile int *)(ptr);
+    volatile const int *volatileInputPtr = static_cast<volatile const int *>(ptr);
 
-    volatile int64_t timestamp0, timestamp1, localVariableReadDelta, inputPointerReadDelta;
+    int64_t timestamp0, timestamp1, localVariableReadDelta, inputPointerReadDelta;
 
     // compute timing overhead
     _mm_lfence();
@@ -1143,7 +1140,7 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
     }
 
     // dummy read
-    // cacheable = *localVariablePointer;
+    cacheable = *localVariablePointer;
 
     _mm_lfence();
     timestamp0 = __rdtsc();
@@ -1161,7 +1158,7 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
         fastestLocalRead = localVariableReadDelta;
     }
     // dummy read
-    // cacheable = *volatileInputPtr;
+    cacheable = *volatileInputPtr;
 
     _mm_lfence();
     timestamp0 = __rdtsc();
@@ -1174,9 +1171,6 @@ bool WddmMemoryManager::isCpuCopyRequired(const void *ptr) {
     if (inputPointerReadDelta <= 0) {
         inputPointerReadDelta = 1;
     }
-    max = std::max(max, localVariableReadDelta);
-    min = std::min(min, inputPointerReadDelta);
-    // UNRECOVERABLE_IF(max > min);
     return inputPointerReadDelta > slownessFactor * fastestLocalRead;
 }
 
