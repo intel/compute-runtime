@@ -51,6 +51,7 @@ void OsAgnosticMemoryManager::initialize(bool aubUsage) {
             initialized = false;
             return;
         }
+        isLocalMemoryUsedForIsa(rootDeviceIndex);
     }
 
     initialized = true;

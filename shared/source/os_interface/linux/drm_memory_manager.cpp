@@ -100,6 +100,7 @@ DrmMemoryManager::DrmMemoryManager(GemCloseWorkerMode mode,
 void DrmMemoryManager::initialize(GemCloseWorkerMode mode) {
     bool disableGemCloseWorker = true;
 
+    localMemBanksCount.resize(localMemorySupported.size());
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
         uint64_t gfxTop{};
@@ -109,7 +110,9 @@ void DrmMemoryManager::initialize(GemCloseWorkerMode mode) {
             return;
         }
         localMemAllocs.emplace_back();
+        setLocalMemBanksCount(rootDeviceIndex);
         disableGemCloseWorker &= getDrm(rootDeviceIndex).isVmBindAvailable();
+        isLocalMemoryUsedForIsa(rootDeviceIndex);
     }
 
     if (disableGemCloseWorker) {
@@ -139,6 +142,13 @@ void DrmMemoryManager::initialize(GemCloseWorkerMode mode) {
 
     initialized = true;
 }
+
+void DrmMemoryManager::setLocalMemBanksCount(uint32_t rootDeviceIndex) {
+    const auto &drm = getDrm(rootDeviceIndex);
+    if (localMemorySupported[rootDeviceIndex] && drm.getMemoryInfo()) {
+        localMemBanksCount[rootDeviceIndex] = drm.getMemoryInfo()->getLocalMemoryRegions().size();
+    }
+};
 
 BufferObject *DrmMemoryManager::createRootDeviceBufferObject(uint32_t rootDeviceIndex) {
     BufferObject *bo = nullptr;
@@ -337,6 +347,12 @@ void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData
     if (forcePinEnabled && pinBBs.at(rootDeviceIndex) != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
         pinBBs.at(rootDeviceIndex)->pin(&bo, 1, getDefaultOsContext(rootDeviceIndex), 0, getDefaultDrmContextId(rootDeviceIndex));
     }
+}
+
+StorageInfo DrmMemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {
+    auto storageInfo{MemoryManager::createStorageInfoFromProperties(properties)};
+
+    return storageInfo;
 }
 
 GraphicsAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {

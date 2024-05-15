@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 
 #include "gtest/gtest.h"
 
@@ -62,11 +63,13 @@ class DrmCommandStreamTest : public ::testing::Test {
         csr->setupContext(*osContext);
 
         mock->ioctlCallsCount = 0u;
+        mock->memoryInfo.reset(new MockMemoryInfo{*mock});
         memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive,
                                              debugManager.flags.EnableForcePin.get(),
                                              true,
                                              executionEnvironment);
         executionEnvironment.memoryManager.reset(memoryManager);
+        mock->memoryInfo.reset();
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_EQ(1u, mock->ioctlCallsCount);
 

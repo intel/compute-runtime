@@ -300,7 +300,7 @@ class MemoryManager {
     static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
 
     bool useNonSvmHostPtrAlloc(AllocationType allocationType, uint32_t rootDeviceIndex);
-    StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
+    virtual StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties);
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) = 0;

@@ -118,6 +118,7 @@ class DrmMemoryManager : public MemoryManager {
     OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
     size_t getUserptrAlignment();
 
+    StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties) override;
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
@@ -159,6 +160,7 @@ class DrmMemoryManager : public MemoryManager {
     void releaseBufferObject(uint32_t rootDeviceIndex);
     bool retrieveMmapOffsetForBufferObject(uint32_t rootDeviceIndex, BufferObject &bo, uint64_t flags, uint64_t &offset);
     BufferObject::BOType getBOTypeFromPatIndex(uint64_t patIndex, bool isPatIndexSupported) const;
+    void setLocalMemBanksCount(uint32_t rootDeviceIndex);
 
     std::vector<BufferObject *> pinBBs;
     std::vector<void *> memoryForPinBBs;
@@ -174,6 +176,7 @@ class DrmMemoryManager : public MemoryManager {
 
     std::map<int, BufferObjectHandleWrapper> sharedBoHandles;
     std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;
+    std::vector<size_t> localMemBanksCount;
     std::vector<GraphicsAllocation *> sysMemAllocs;
     std::mutex allocMutex;
 };

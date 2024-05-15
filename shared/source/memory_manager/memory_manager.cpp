@@ -72,7 +72,6 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         gfxPartitions.push_back(std::make_unique<GfxPartition>(reservedCpuAddressRange));
 
         anyLocalMemorySupported |= this->localMemorySupported[rootDeviceIndex];
-        isLocalMemoryUsedForIsa(rootDeviceIndex);
 
         auto globalHeap = ApiSpecificConfig::getGlobalBindlessHeapConfiguration(rootDeviceEnvironment.getReleaseHelper());
         heapAssigners.push_back(std::make_unique<HeapAssigner>(globalHeap));
