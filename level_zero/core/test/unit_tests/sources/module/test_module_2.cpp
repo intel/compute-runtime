@@ -108,6 +108,37 @@ TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstru
     EXPECT_TRUE(mockCommandStreamReceiver->requiresInstructionCacheFlush);
 }
 
+TEST(ModuleDestroyTest, givenKernelImmutableDataWithNullIsaAllocationWhenIsModuleDestroyedThenRequiresInstructionCacheFlushIsNotSetInCsr) {
+    const uint32_t rootDeviceIndex = 0u;
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
+
+    MockCommandStreamReceiver *mockCommandStreamReceiver = new MockCommandStreamReceiver(*neoMockDevice->executionEnvironment, neoMockDevice->getRootDeviceIndex(), neoMockDevice->getDeviceBitfield());
+    mockCommandStreamReceiver->makeResidentParentCall = true;
+
+    neoMockDevice->resetCommandStreamReceiver(mockCommandStreamReceiver);
+
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    auto module = new MockModule{&deviceImp, nullptr, ModuleType::user};
+    module->translationUnit.reset(new MockModuleTranslationUnit{&deviceImp});
+
+    auto kernelInfo = new KernelInfo{};
+    kernelInfo->heapInfo.pKernelHeap = reinterpret_cast<const void *>(0xdeadbeef0000);
+    kernelInfo->heapInfo.kernelHeapSize = static_cast<uint32_t>(0x40);
+    module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+
+    module->initializeKernelImmutableDatas();
+    auto &kernelImmDatas = module->getKernelImmutableDataVector();
+    for (auto &kernelImmData : kernelImmDatas) {
+        kernelImmData->setIsaParentAllocation(nullptr);
+    }
+
+    module->destroy();
+
+    EXPECT_FALSE(mockCommandStreamReceiver->requiresInstructionCacheFlush);
+}
+
 TEST(ModuleBuildLog, WhenCreatingModuleBuildLogThenNonNullPointerReturned) {
     auto moduleBuildLog = ModuleBuildLog::create();
     ASSERT_NE(nullptr, moduleBuildLog);
