@@ -93,6 +93,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     HelperType &getHelper() const;
     const ProductHelper &getProductHelper() const;
     GraphicsAllocation *getDummyAllocation() const;
+    void releaseDummyAllocation();
 
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::count)];
     std::unique_ptr<GmmHelper> gmmHelper;

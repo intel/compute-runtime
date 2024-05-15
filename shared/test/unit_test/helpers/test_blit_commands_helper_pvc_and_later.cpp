@@ -357,3 +357,34 @@ HWTEST2_F(BlitTests, givenCopyCommandListWhenBytesPerPixelIsCalledForNonBlitCopy
     uint32_t bytesPerPixel = NEO::BlitCommandsHelper<FamilyType>::getAvailableBytesPerPixel(copySize, srcOrigin, dstOrigin, srcSize, dstSize);
     EXPECT_EQ(bytesPerPixel, 1u);
 }
+
+HWTEST2_F(BlitTests, GivenDispatchDummyBlitWhenRootDeviceEnviromentResourcesAreReleasedThenDummyAllocationIsNull, IsXeHpcCore) {
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get();
+
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+    EXPECT_EQ(nullptr, rootDeviceEnvironment->getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgs{true, rootDeviceEnvironment};
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgs);
+    EXPECT_NE(nullptr, rootDeviceEnvironment->getDummyAllocation());
+
+    executionEnvironment->releaseRootDeviceEnvironmentResources(rootDeviceEnvironment);
+    EXPECT_EQ(nullptr, rootDeviceEnvironment->getDummyAllocation());
+}
+
+HWTEST2_F(BlitTests, GivenDispatchDummyBlitWhenWorkaroundIsNotRequiredThenDummyAllocationIsNull, IsXeHpcCore) {
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get();
+
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+    EXPECT_EQ(nullptr, rootDeviceEnvironment->getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgs{false, rootDeviceEnvironment};
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgs);
+    EXPECT_EQ(nullptr, rootDeviceEnvironment->getDummyAllocation());
+}

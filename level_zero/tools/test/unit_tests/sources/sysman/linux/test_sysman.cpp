@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1015,6 +1015,11 @@ TEST_F(SysmanDeviceFixture, GivenValidLinuxSysmanImpWhenDrmVersionIsi915ThenTrue
         return 0;
     });
     EXPECT_EQ(true, pLinuxSysmanImp->isDriverModelSupported());
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidLinuxSysmanImpWhenCallingInitDeviceAfterReleasingDeviceResourcesThenSuccessIsReturned) {
+    pLinuxSysmanImp->releaseDeviceResources();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->initDevice());
 }
 
 } // namespace ult
