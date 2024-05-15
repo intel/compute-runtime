@@ -248,6 +248,10 @@ GraphicsAllocation *RootDeviceEnvironment::getDummyAllocation() const {
     return dummyAllocation.get();
 }
 
+void RootDeviceEnvironment::releaseDummyAllocation() {
+    dummyAllocation.reset();
+}
+
 AssertHandler *RootDeviceEnvironment::getAssertHandler(Device *neoDevice) {
     if (this->assertHandler.get() == nullptr) {
         std::lock_guard<std::mutex> autolock(this->mtx);
