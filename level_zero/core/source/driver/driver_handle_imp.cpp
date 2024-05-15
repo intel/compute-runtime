@@ -13,6 +13,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -182,6 +183,7 @@ DriverHandleImp::~DriverHandleImp() {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
         if (this->svmAllocsManager) {
             this->svmAllocsManager->trimUSMDeviceAllocCache();
+            this->usmHostMemAllocPool.cleanup();
         }
     }
 
@@ -278,6 +280,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
     this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
+    this->initHostUsmAllocPool();
 
     this->numDevices = static_cast<uint32_t>(this->devices.size());
 
@@ -400,6 +403,20 @@ ze_result_t DriverHandleImp::parseAffinityMaskCombined(uint32_t *pCount, ze_devi
         }
     }
     return ZE_RESULT_SUCCESS;
+}
+
+void DriverHandleImp::initHostUsmAllocPool() {
+    auto usmHostAllocPoolingEnabled = NEO::ApiSpecificConfig::isHostUsmPoolingEnabled();
+    auto poolSize = 2 * MemoryConstants::megaByte;
+    if (NEO::debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
+        usmHostAllocPoolingEnabled = NEO::debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
+        poolSize = NEO::debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;
+    }
+    if (usmHostAllocPoolingEnabled) {
+        NEO::SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
+                                                                        rootDeviceIndices, deviceBitfields);
+        usmHostMemAllocPool.initialize(svmAllocsManager, memoryProperties, poolSize);
+    }
 }
 
 ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) {

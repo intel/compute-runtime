@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,6 +136,10 @@ struct ContextHandleMock : public L0::ContextImp {
                                const ze_device_mem_alloc_desc_t *deviceDesc,
                                size_t size,
                                size_t alignment, void **ptr) override;
+
+    ze_result_t allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
+                             size_t size,
+                             size_t alignment, void **ptr) override;
 
     ze_result_t getMemAllocProperties(const void *ptr,
                                       ze_memory_allocation_properties_t *pMemAllocProperties,

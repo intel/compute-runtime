@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -130,6 +131,13 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
 
     if (hostDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {
         unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(*ptr);
+    }
+
+    if (false == lookupTable.exportMemory) {
+        if (auto usmPtrFromPool = this->driverHandle->usmHostMemAllocPool.createUnifiedMemoryAllocation(size, unifiedMemoryProperties)) {
+            *ptr = usmPtrFromPool;
+            return ZE_RESULT_SUCCESS;
+        }
     }
 
     auto usmPtr = this->driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size,
@@ -424,6 +432,10 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
     for (auto &pairDevice : this->devices) {
         this->freePeerAllocations(ptr, blocking, Device::fromHandle(pairDevice.second));
     }
+
+    if (this->driverHandle->usmHostMemAllocPool.freeSVMAlloc(ptr, blocking)) {
+        return ZE_RESULT_SUCCESS;
+    }
     this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
 
     return ZE_RESULT_SUCCESS;
@@ -588,6 +600,10 @@ void ContextImp::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, u
     ipcData.handle = handle;
     ipcData.type = type;
 
+    if (this->driverHandle->usmHostMemAllocPool.isInPool(addrToPtr(ptrAddress))) {
+        ipcData.poolOffset = this->driverHandle->usmHostMemAllocPool.getOffsetInPool(addrToPtr(ptrAddress));
+    }
+
     auto lock = this->driverHandle->lockIPCHandleMap();
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().find(handle);
     if (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
@@ -710,6 +726,8 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+
+    *ptr = ptrOffset(*ptr, ipcData.poolOffset);
 
     return ZE_RESULT_SUCCESS;
 }

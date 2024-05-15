@@ -9,6 +9,7 @@
 
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
@@ -33,6 +34,7 @@ enum L0DeviceHierarchyMode {
 #pragma pack(1)
 struct IpcMemoryData {
     uint64_t handle = 0;
+    uint64_t poolOffset = 0;
     uint8_t type = 0;
 };
 #pragma pack()
@@ -122,6 +124,7 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t parseAffinityMaskCombined(uint32_t *pCount, ze_device_handle_t *phDevices);
     std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
     [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
+    void initHostUsmAllocPool();
 
     std::unique_ptr<HostPointerManager> hostPointerManager;
 
@@ -142,6 +145,7 @@ struct DriverHandleImp : public DriverHandle {
 
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
+    NEO::UsmMemAllocPool usmHostMemAllocPool;
 
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;

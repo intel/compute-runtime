@@ -30,9 +30,10 @@ class UsmMemAllocPool {
     bool canBePooled(size_t size, const UnifiedMemoryProperties &memoryProperties);
     void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
     bool isInPool(const void *ptr);
-    bool freeSVMAlloc(void *ptr, bool blocking);
+    bool freeSVMAlloc(const void *ptr, bool blocking);
     size_t getPooledAllocationSize(const void *ptr);
     void *getPooledAllocationBasePtr(const void *ptr);
+    size_t getOffsetInPool(const void *ptr);
 
     static constexpr auto allocationThreshold = 1 * MemoryConstants::megaByte;
     static constexpr auto chunkAlignment = 512u;

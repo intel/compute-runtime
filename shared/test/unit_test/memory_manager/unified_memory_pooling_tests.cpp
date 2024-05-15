@@ -92,14 +92,21 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenDifferentAllocationSizesWhe
     EXPECT_FALSE(usmMemAllocPool.canBePooled(UsmMemAllocPool::allocationThreshold + 1, memoryProperties));
 }
 
-TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenVariousPointersWhenCallingIsInPoolThenCorrectValueIsReturned) {
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenVariousPointersWhenCallingIsInPoolAndGetOffsetInPoolThenCorrectValuesAreReturned) {
     void *ptrBeforePool = reinterpret_cast<void *>(reinterpret_cast<size_t>(usmMemAllocPool.pool) - 1);
     void *lastPtrInPool = reinterpret_cast<void *>(reinterpret_cast<size_t>(usmMemAllocPool.poolEnd) - 1);
 
     EXPECT_FALSE(usmMemAllocPool.isInPool(ptrBeforePool));
+    EXPECT_EQ(0u, usmMemAllocPool.getOffsetInPool(ptrBeforePool));
+
     EXPECT_TRUE(usmMemAllocPool.isInPool(usmMemAllocPool.pool));
+    EXPECT_EQ(0u, usmMemAllocPool.getOffsetInPool(usmMemAllocPool.pool));
+
     EXPECT_TRUE(usmMemAllocPool.isInPool(lastPtrInPool));
+    EXPECT_EQ(ptrDiff(lastPtrInPool, usmMemAllocPool.pool), usmMemAllocPool.getOffsetInPool(lastPtrInPool));
+
     EXPECT_FALSE(usmMemAllocPool.isInPool(usmMemAllocPool.poolEnd));
+    EXPECT_EQ(0u, usmMemAllocPool.getOffsetInPool(usmMemAllocPool.poolEnd));
 }
 
 TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenAlignmentsWhenCallingAlignmentIsAllowedThenCorrectValueIsReturned) {
@@ -226,4 +233,5 @@ TEST_F(InitializationFailedUnifiedMemoryPoolingTest, givenNotInitializedPoolWhen
     EXPECT_FALSE(usmMemAllocPool.freeSVMAlloc(bogusPtr, true));
     EXPECT_EQ(0u, usmMemAllocPool.getPooledAllocationSize(bogusPtr));
     EXPECT_EQ(nullptr, usmMemAllocPool.getPooledAllocationBasePtr(bogusPtr));
+    EXPECT_EQ(0u, usmMemAllocPool.getOffsetInPool(bogusPtr));
 }

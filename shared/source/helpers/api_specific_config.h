@@ -24,6 +24,8 @@ struct ApiSpecificConfig {
     static bool getBindlessMode(const ReleaseHelper *);
     static bool isDeviceAllocationCacheEnabled();
     static bool isHostAllocationCacheEnabled();
+    static bool isDeviceUsmPoolingEnabled();
+    static bool isHostUsmPoolingEnabled();
     static ApiType getApiType();
     static std::string getName();
     static uint64_t getReducedMaxAllocSize(uint64_t maxAllocSize);

@@ -23,7 +23,8 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, const Unifi
     this->poolEnd = ptrOffset(this->pool, poolSize);
     this->chunkAllocator.reset(new HeapAllocator(castToUint64(this->pool),
                                                  poolSize,
-                                                 chunkAlignment));
+                                                 chunkAlignment,
+                                                 allocationThreshold / 2));
     this->poolSize = poolSize;
     this->poolMemoryType = memoryProperties.memoryType;
     return true;
@@ -81,7 +82,7 @@ bool UsmMemAllocPool::isInPool(const void *ptr) {
     return ptr >= this->pool && ptr < this->poolEnd;
 }
 
-bool UsmMemAllocPool::freeSVMAlloc(void *ptr, bool blocking) {
+bool UsmMemAllocPool::freeSVMAlloc(const void *ptr, bool blocking) {
     if (isInitialized() && isInPool(ptr)) {
         std::unique_lock<std::mutex> lock(mtx);
         auto allocationInfo = allocations.extract(ptr);
@@ -114,6 +115,13 @@ void *UsmMemAllocPool::getPooledAllocationBasePtr(const void *ptr) {
         }
     }
     return nullptr;
+}
+
+size_t UsmMemAllocPool::getOffsetInPool(const void *ptr) {
+    if (isInitialized() && isInPool(ptr)) {
+        return ptrDiff(ptr, this->pool);
+    }
+    return 0u;
 }
 
 } // namespace NEO

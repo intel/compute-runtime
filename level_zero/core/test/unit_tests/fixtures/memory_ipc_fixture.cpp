@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -213,6 +213,18 @@ ze_result_t ContextHandleMock::allocDeviceMem(ze_device_handle_t hDevice,
                                               size_t size,
                                               size_t alignment, void **ptr) {
     ze_result_t res = L0::ContextImp::allocDeviceMem(hDevice, deviceDesc, size, alignment, ptr);
+    if (ZE_RESULT_SUCCESS == res) {
+        driverHandle->allocationMap.first = *ptr;
+        driverHandle->allocationMap.second = driverHandle->mockHandle;
+    }
+
+    return res;
+}
+
+ze_result_t ContextHandleMock::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
+                                            size_t size,
+                                            size_t alignment, void **ptr) {
+    ze_result_t res = L0::ContextImp::allocHostMem(hostDesc, size, alignment, ptr);
     if (ZE_RESULT_SUCCESS == res) {
         driverHandle->allocationMap.first = *ptr;
         driverHandle->allocationMap.second = driverHandle->mockHandle;
