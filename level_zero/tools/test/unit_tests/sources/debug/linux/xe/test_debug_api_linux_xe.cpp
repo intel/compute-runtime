@@ -2099,6 +2099,32 @@ TEST_F(DebugApiLinuxTestXe, GivenSentInterruptWhenHandlingAttEventThenAttBitsAre
     EXPECT_EQ(0u, sessionMock->readSystemRoutineIdentCallCount);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenStaleAttentionEventThenEventNotHandled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    sessionMock->newestAttSeqNo.store(10);
+    drm_xe_eudebug_event_eu_attention attention = {};
+    attention.base.type = DRM_XE_EUDEBUG_EVENT_EU_ATTENTION;
+    attention.base.flags = DRM_XE_EUDEBUG_EVENT_STATE_CHANGE;
+    attention.base.len = sizeof(drm_xe_eudebug_event_eu_attention);
+    attention.base.seqno = 2;
+    attention.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    attention.lrc_handle = 0;
+    attention.flags = 0;
+    attention.exec_queue_handle = 0;
+    attention.bitmask_size = 0;
+    uint8_t data[sizeof(drm_xe_eudebug_event_eu_attention) + 128];
+    memcpy(data, &attention, sizeof(drm_xe_eudebug_event_eu_attention));
+
+    sessionMock->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(data));
+
+    EXPECT_EQ(sessionMock->handleAttentionEventCalled, 0u);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenAttentionEventReceivedThenEventsTriggeredAfterExpectedAttentionEventCount) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

@@ -67,7 +67,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     int threadControlInterruptAll(drm_xe_eudebug_eu_control &euControl);
     int threadControlResume(const std::vector<EuThread::ThreadId> &threads, drm_xe_eudebug_eu_control &euControl);
     int threadControlStopped(drm_xe_eudebug_eu_control &euControl, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut);
-    void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention);
+    MOCKABLE_VIRTUAL void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention);
     void handleMetadataEvent(drm_xe_eudebug_event_metadata *pMetaData);
     bool handleMetadataOpEvent(drm_xe_eudebug_event_vm_bind_op_metadata *vmBindOpMetadata);
     void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) override;
@@ -158,6 +158,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     ze_result_t readEventImp(drm_xe_eudebug_event *drmDebugEvent);
     int ioctl(unsigned long request, void *arg);
     std::atomic<bool> processEntryEventGenerated = false;
+    std::atomic<uint64_t> newestAttSeqNo = 0;
 };
 
 } // namespace L0

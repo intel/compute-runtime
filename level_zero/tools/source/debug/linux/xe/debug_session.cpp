@@ -126,6 +126,9 @@ void DebugSessionLinuxXe::readInternalEventsAsync() {
 
         if (result == ZE_RESULT_SUCCESS) {
             std::lock_guard<std::mutex> lock(internalEventThreadMutex);
+            if (event->type == DRM_XE_EUDEBUG_EVENT_EU_ATTENTION) {
+                newestAttSeqNo.store(event->seqno);
+            }
 
             auto memory = std::make_unique<uint64_t[]>(maxEventSize / sizeof(uint64_t));
             memcpy(memory.get(), event, maxEventSize);
@@ -253,7 +256,11 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_EU_ATTENTION client_handle = %llu flags = %llu bitmask_size = %lu exec_queue_handle = %llu lrc_handle = %llu\n",
                                 (uint64_t)attention->client_handle, (uint64_t)attention->flags,
                                 (uint32_t)attention->bitmask_size, uint64_t(attention->exec_queue_handle), uint64_t(attention->lrc_handle));
-        handleAttentionEvent(attention);
+        if (attention->base.seqno < newestAttSeqNo.load()) {
+            PRINT_DEBUGGER_INFO_LOG("Dropping stale ATT event seqno=%llu\n", (uint64_t)attention->base.seqno);
+        } else {
+            handleAttentionEvent(attention);
+        }
     } break;
 
     case DRM_XE_EUDEBUG_EVENT_VM_BIND: {

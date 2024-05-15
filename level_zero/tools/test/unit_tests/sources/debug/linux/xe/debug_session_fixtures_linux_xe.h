@@ -171,6 +171,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::internalEventThread;
     using L0::DebugSessionLinuxXe::invalidClientHandle;
     using L0::DebugSessionLinuxXe::ioctlHandler;
+    using L0::DebugSessionLinuxXe::newestAttSeqNo;
     using L0::DebugSessionLinuxXe::newlyStoppedThreads;
     using L0::DebugSessionLinuxXe::pendingInterrupts;
     using L0::DebugSessionLinuxXe::readEventImp;
@@ -201,6 +202,11 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
             return initializeRetVal;
         }
         return DebugSessionLinuxXe::initialize();
+    }
+
+    void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention) override {
+        handleAttentionEventCalled++;
+        return DebugSessionLinuxXe::handleAttentionEvent(attention);
     }
 
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
@@ -266,6 +272,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
     uint32_t countToAddThreadToNewlyStoppedFromRaisedAttentionForTileSession = 0;
     int64_t returnTimeDiff = -1;
+    uint32_t handleAttentionEventCalled = 0;
 };
 
 struct MockAsyncThreadDebugSessionLinuxXe : public MockDebugSessionLinuxXe {
