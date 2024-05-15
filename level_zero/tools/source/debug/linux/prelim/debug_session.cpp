@@ -1028,7 +1028,11 @@ void DebugSessionLinuxi915::handlePageFaultEvent(prelim_drm_i915_debug_event_pag
         debugEvent.type = ZET_DEBUG_EVENT_TYPE_PAGE_FAULT;
         debugEvent.info.page_fault.address = pf->page_fault_address;
         PRINT_DEBUGGER_INFO_LOG("PageFault event for unknown thread", 0);
-        enqueueApiEvent(debugEvent);
+        if (tileSessionsEnabled) {
+            static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent);
+        } else {
+            enqueueApiEvent(debugEvent);
+        }
     }
 
     auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);

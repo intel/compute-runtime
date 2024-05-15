@@ -821,6 +821,69 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
     EXPECT_TRUE(tileSessions[1]->triggerEvents);
 }
 
+TEST_F(TileAttachTest, GivenNoPageFaultingThreadWhenHandlingPageFaultEventThenL0ApiEventGenerated) {
+
+    // debug attach both tiles
+    rootSession->tileSessions[0].second = true;
+    rootSession->tileSessions[1].second = true;
+    uint64_t ctxHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
+    rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
+    rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToTile[vmHandle] = 1;
+
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(rootSession->stateSaveAreaHeader, version, deviceImp);
+    DebugSessionLinuxi915::BindInfo cssaInfo = {reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()), rootSession->stateSaveAreaHeader.size()};
+    rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
+
+    auto handler = new MockIoctlHandlerI915;
+    rootSession->ioctlHandler.reset(handler);
+    handler->setPreadMemory(rootSession->stateSaveAreaHeader.data(), rootSession->stateSaveAreaHeader.size(), reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()));
+
+    uint8_t data[sizeof(prelim_drm_i915_debug_event_page_fault) + 128 * 3];
+
+    auto engineInfo = mockDrm->getEngineInfo();
+    auto engineInstance = engineInfo->getEngineInstance(1, hwInfo.capabilityTable.defaultEngineType);
+
+    EuThread::ThreadId thread = {1, 0, 0, 0, 0};
+    tileSessions[1]->stoppedThreads[thread.packed] = 1;
+
+    std::unique_ptr<uint8_t[]> bitmaskBefore, bitmaskAfter, bitmaskResolved;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({}, hwInfo, bitmaskBefore, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({thread}, hwInfo, bitmaskAfter, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads({thread}, hwInfo, bitmaskResolved, bitmaskSize);
+
+    prelim_drm_i915_debug_event_page_fault pf = {};
+    pf.base.type = PRELIM_DRM_I915_DEBUG_EVENT_PAGE_FAULT;
+    pf.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_STATE_CHANGE;
+    pf.base.size = sizeof(prelim_drm_i915_debug_event_page_fault);
+    pf.base.seqno = 2;
+    pf.client_handle = MockDebugSessionLinuxi915::mockClientHandle;
+    pf.lrc_handle = lrcHandle;
+    pf.flags = 0;
+    pf.ci.engine_class = engineInstance->engineClass;
+    pf.ci.engine_instance = engineInstance->engineInstance;
+    pf.bitmask_size = static_cast<uint32_t>(bitmaskSize * 3u);
+
+    bitmaskSize = std::min(size_t(128), bitmaskSize);
+    memcpy(data, &pf, sizeof(prelim_drm_i915_debug_event_page_fault));
+    memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_page_fault, bitmask)), bitmaskBefore.get(), bitmaskSize);
+    memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_page_fault, bitmask) + bitmaskSize), bitmaskAfter.get(), bitmaskSize);
+    memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_page_fault, bitmask) + (2 * bitmaskSize)), bitmaskResolved.get(), bitmaskSize);
+    rootSession->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
+
+    ASSERT_EQ(1u, tileSessions[1]->apiEvents.size());
+    auto event = tileSessions[1]->apiEvents.front();
+    ASSERT_EQ(event.type, ZET_DEBUG_EVENT_TYPE_PAGE_FAULT);
+}
+
 TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingPageFaultEventThenStoppedThreadsFromEventAreProcessed) {
     // debug attach both tiles
     rootSession->tileSessions[0].second = true;
