@@ -5896,6 +5896,7 @@ TEST_F(DebugApiLinuxPageFaultEventTest, GivenNoPageFaultingThreadWhenHandlingPag
     ASSERT_EQ(1u, sessionMock->apiEvents.size());
     auto event = sessionMock->apiEvents.front();
     ASSERT_EQ(event.type, ZET_DEBUG_EVENT_TYPE_PAGE_FAULT);
+    ASSERT_EQ(event.info.page_fault.address, pfAddress);
 }
 
 TEST_F(DebugApiLinuxPageFaultEventTest, GivenPageFaultEventWIthInvalidClientHandleThenNoThreadsReportedStopped) {

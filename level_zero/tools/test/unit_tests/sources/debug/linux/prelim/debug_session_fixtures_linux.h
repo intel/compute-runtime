@@ -549,6 +549,7 @@ struct DebugApiPageFaultEventFixture : public DebugApiLinuxPrelimFixture {
         pf.ci.engine_class = 0;
         pf.ci.engine_instance = 0;
         pf.bitmask_size = static_cast<uint32_t>(bitmaskSize * 3);
+        pf.page_fault_address = pfAddress;
 
         memcpy(data, &pf, sizeof(prelim_drm_i915_debug_event_page_fault));
         memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_page_fault, bitmask)), bitmaskBefore.get(), bitmaskSize);
@@ -563,6 +564,7 @@ struct DebugApiPageFaultEventFixture : public DebugApiLinuxPrelimFixture {
     uint64_t ctxHandle = 2;
     uint64_t vmHandle = 7;
     uint64_t lrcHandle = 8;
+    uint64_t pfAddress = 0x12345;
 };
 
 struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo {

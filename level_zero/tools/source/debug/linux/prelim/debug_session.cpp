@@ -1026,6 +1026,7 @@ void DebugSessionLinuxi915::handlePageFaultEvent(prelim_drm_i915_debug_event_pag
     if (threadsWithPF.size() == 0) {
         zet_debug_event_t debugEvent = {};
         debugEvent.type = ZET_DEBUG_EVENT_TYPE_PAGE_FAULT;
+        debugEvent.info.page_fault.address = pf->page_fault_address;
         PRINT_DEBUGGER_INFO_LOG("PageFault event for unknown thread", 0);
         enqueueApiEvent(debugEvent);
     }
