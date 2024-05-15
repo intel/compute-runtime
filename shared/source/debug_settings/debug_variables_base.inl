@@ -37,7 +37,7 @@ DECLARE_DEBUG_VARIABLE(bool, UseAubStream, true, "Use aubstream for aub dumping"
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueReadOnly, false, "Force dumping buffers and images on clEnqueueReadBuffer/Image only (blocking calls)")
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueSVMMemcpyOnly, false, "Force dumping allocations on clEnqueueSVMMemcpy only (blocking calls)")
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpForceAllToLocalMemory, false, "Force placing every allocation in local memory address space")
-DECLARE_DEBUG_VARIABLE(bool, GenerateAubFilePerProcessId, false, "Generate aub file with process id")
+DECLARE_DEBUG_VARIABLE(bool, GenerateAubFilePerProcessId, true, "Generate aub file with process id")
 DECLARE_DEBUG_VARIABLE(bool, SetBufferHostMemoryAlwaysAubWritable, false, "Make buffer host memory allocation always uploaded to AUB/TBX")
 
 /*DEBUG FLAGS*/

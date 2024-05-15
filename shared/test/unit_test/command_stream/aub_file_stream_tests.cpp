@@ -961,16 +961,26 @@ HWTEST2_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePat
     EXPECT_NE(std::string::npos, fullName.find("2tx"));
 }
 
-HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedWithRootDeviceIndex) {
+HWTEST_F(AubFileStreamTests, givenDisabledGeneratingPerProcessAubNameAndAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedWithRootDeviceIndex) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.GenerateAubFilePerProcessId.set(0);
+
     uint32_t rootDeviceIndex = 123u;
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", rootDeviceIndex);
     EXPECT_NE(std::string::npos, fullName.find("_123_aubfile.aub"));
 }
 
-HWTEST_F(AubFileStreamTests, givenGenerateAubFilePerProcessIdDebugFlagAndAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedRootDeviceIndex) {
+HWTEST_F(AubFileStreamTests, givenEnabledGeneratingAubFilePerProcessIdDebugFlagAndAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedRootDeviceIndex) {
     DebugManagerStateRestore stateRestore;
 
     debugManager.flags.GenerateAubFilePerProcessId.set(1);
+    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", 1u);
+    std::stringstream strExtendedFileName;
+    strExtendedFileName << "_1_aubfile_PID_" << SysCalls::getProcessId() << ".aub";
+    EXPECT_NE(std::string::npos, fullName.find(strExtendedFileName.str()));
+}
+
+HWTEST_F(AubFileStreamTests, givenAndAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedRootDeviceIndexAndPid) {
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", 1u);
     std::stringstream strExtendedFileName;
     strExtendedFileName << "_1_aubfile_PID_" << SysCalls::getProcessId() << ".aub";
