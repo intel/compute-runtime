@@ -636,8 +636,13 @@ void DebugSessionLinuxXe::handleAttentionEvent(drm_xe_eudebug_event_eu_attention
     return updateStoppedThreadsAndCheckTriggerEvents(attentionEventFields, 0, threadsWithAttention);
 }
 
-int DebugSessionLinuxXe::threadControlInterruptAll(drm_xe_eudebug_eu_control &euControl) {
+int DebugSessionLinuxXe::threadControlInterruptAll() {
     int euControlRetVal = -1;
+    struct drm_xe_eudebug_eu_control euControl = {};
+    euControl.client_handle = clientHandle;
+    euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL;
+    euControl.bitmask_size = 0;
+    euControl.bitmask_ptr = 0;
 
     DEBUG_BREAK_IF(clientHandleToConnection.find(clientHandle) == clientHandleToConnection.end());
     std::lock_guard<std::mutex> lock(asyncThreadMutex);
@@ -662,10 +667,13 @@ int DebugSessionLinuxXe::threadControlInterruptAll(drm_xe_eudebug_eu_control &eu
     return euControlRetVal;
 }
 
-int DebugSessionLinuxXe::threadControlStopped(drm_xe_eudebug_eu_control &euControl, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
+int DebugSessionLinuxXe::threadControlStopped(std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
     int euControlRetVal = -1;
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+    struct drm_xe_eudebug_eu_control euControl = {};
+    euControl.client_handle = clientHandle;
+    euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED;
 
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
@@ -702,10 +710,15 @@ int DebugSessionLinuxXe::threadControlStopped(drm_xe_eudebug_eu_control &euContr
     return euControlRetVal;
 }
 
-int DebugSessionLinuxXe::threadControlResume(const std::vector<EuThread::ThreadId> &threads, drm_xe_eudebug_eu_control &euControl) {
+int DebugSessionLinuxXe::threadControlResume(const std::vector<EuThread::ThreadId> &threads) {
     int euControlRetVal = -1;
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+    struct drm_xe_eudebug_eu_control euControl = {};
+    euControl.client_handle = clientHandle;
+    euControl.bitmask_size = 0;
+    euControl.bitmask_ptr = 0;
+    euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME;
 
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
@@ -736,21 +749,13 @@ int DebugSessionLinuxXe::threadControl(const std::vector<EuThread::ThreadId> &th
                                        ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
 
     bitmaskSizeOut = 0;
-    struct drm_xe_eudebug_eu_control euControl = {};
-    euControl.client_handle = clientHandle;
-    euControl.bitmask_size = 0;
-    euControl.bitmask_ptr = 0;
-
     switch (threadCmd) {
     case ThreadControlCmd::interruptAll:
-        euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL;
-        return threadControlInterruptAll(euControl);
+        return threadControlInterruptAll();
     case ThreadControlCmd::resume:
-        euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME;
-        return threadControlResume(threads, euControl);
+        return threadControlResume(threads);
     case ThreadControlCmd::stopped:
-        euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED;
-        return threadControlStopped(euControl, bitmaskOut, bitmaskSizeOut);
+        return threadControlStopped(bitmaskOut, bitmaskSizeOut);
     default:
         break;
     }

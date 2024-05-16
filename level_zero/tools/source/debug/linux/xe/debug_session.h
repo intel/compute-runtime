@@ -64,9 +64,9 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
   protected:
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override;
-    int threadControlInterruptAll(drm_xe_eudebug_eu_control &euControl);
-    int threadControlResume(const std::vector<EuThread::ThreadId> &threads, drm_xe_eudebug_eu_control &euControl);
-    int threadControlStopped(drm_xe_eudebug_eu_control &euControl, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut);
+    int threadControlInterruptAll();
+    int threadControlResume(const std::vector<EuThread::ThreadId> &threads);
+    int threadControlStopped(std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut);
     MOCKABLE_VIRTUAL void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention);
     void handleMetadataEvent(drm_xe_eudebug_event_metadata *pMetaData);
     bool handleMetadataOpEvent(drm_xe_eudebug_event_vm_bind_op_metadata *vmBindOpMetadata);
