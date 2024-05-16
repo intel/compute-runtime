@@ -13,7 +13,6 @@
 #include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
-#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
 #include "gtest/gtest.h"
 
@@ -219,13 +218,6 @@ class PublicLinuxFrequencyImp : public L0::Sysman::LinuxFrequencyImp {
     using L0::Sysman::LinuxFrequencyImp::getMin;
     using L0::Sysman::LinuxFrequencyImp::getMinVal;
     using L0::Sysman::LinuxFrequencyImp::pSysfsAccess;
-};
-
-class MockSysmanKmdInterfaceXe : public L0::Sysman::SysmanKmdInterfaceXe {
-  public:
-    std::unique_ptr<MockXeFrequencySysfsAccess> pSysfsAccess;
-    MockSysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceXe(productFamily) {}
-    ~MockSysmanKmdInterfaceXe() override = default;
 };
 
 } // namespace ult

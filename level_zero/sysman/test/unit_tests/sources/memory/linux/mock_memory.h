@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,6 @@
 #include "level_zero/sysman/source/api/memory/sysman_memory_imp.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
-#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
@@ -296,14 +295,6 @@ class PublicLinuxMemoryImp : public L0::Sysman::LinuxMemoryImp {
     PublicLinuxMemoryImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxMemoryImp(pOsSysman, onSubdevice, subdeviceId) {}
     PublicLinuxMemoryImp() = default;
     using L0::Sysman::LinuxMemoryImp::pSysmanKmdInterface;
-};
-
-class MockSysmanKmdInterfaceXe : public L0::Sysman::SysmanKmdInterfaceXe {
-  public:
-    using L0::Sysman::SysmanKmdInterface::pProcfsAccess;
-    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
-    MockSysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceXe(productFamily) {}
-    ~MockSysmanKmdInterfaceXe() override = default;
 };
 
 class MockSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
