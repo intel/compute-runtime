@@ -18,8 +18,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint32_t handleEngineCount = 10u;
-
 class ZesEngineFixtureXe : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
@@ -77,77 +75,20 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesEngineFixtureXe, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
+TEST_F(ZesEngineFixtureXe, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenZeroCountIsReturnedAndVerifyCallSucceeds) {
 
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
-    EXPECT_EQ(count, handleEngineCount);
+    EXPECT_EQ(count, 0u);
 
     uint32_t testcount = count + 1;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &testcount, NULL));
-    EXPECT_EQ(testcount, count);
+    EXPECT_EQ(testcount, 0u);
 
     count = 0;
     std::vector<zes_engine_handle_t> handles(count, nullptr);
     EXPECT_EQ(zesDeviceEnumEngineGroups(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, handleEngineCount);
-}
-
-TEST_F(ZesEngineFixtureXe, GivenValidEngineHandlesWhenCallingZesEngineGetPropertiesThenVerifyCallSucceeds) {
-    zes_engine_properties_t properties;
-    auto handle = getEngineHandles(handleEngineCount);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[0], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_ALL, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[1], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ALL, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[2], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_COPY_ALL, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[3], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[4], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[5], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[6], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[7], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_COPY_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[8], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_MEDIA_ENHANCEMENT_SINGLE, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetProperties(handle[9], &properties));
-    EXPECT_EQ(ZES_ENGINE_GROUP_RENDER_ALL, properties.type);
-    EXPECT_FALSE(properties.onSubdevice);
-}
-
-TEST_F(ZesEngineFixtureXe, GivenValidEngineHandleAndIntegratedDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
-    zes_engine_stats_t stats = {};
-    auto handles = getEngineHandles(handleEngineCount);
-    EXPECT_EQ(handleEngineCount, handles.size());
-
-    for (auto handle : handles) {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
-        EXPECT_EQ(pPmuInterface->mockActiveTime / microSecondsToNanoSeconds, stats.activeTime);
-        EXPECT_EQ(pPmuInterface->mockTimestamp / microSecondsToNanoSeconds, stats.timestamp);
-    }
+    EXPECT_EQ(count, 0u);
 }
 
 TEST_F(ZesEngineFixtureXe, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {

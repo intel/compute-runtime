@@ -83,7 +83,8 @@ std::string SysmanKmdInterfaceXe::getSysfsFilePathForPhysicalMemorySize(uint32_t
 }
 
 int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    constexpr int64_t fd = -1;
+    return fd;
 }
 
 std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
