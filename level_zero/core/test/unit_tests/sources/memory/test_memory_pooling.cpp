@@ -164,6 +164,7 @@ TEST_F(AllocUsmHostEnabledMemoryTest, givenDrmDriverModelWhenOpeningIpcHandleFro
     ze_ipc_memory_flags_t ipcFlags{};
     void *ipcPointer = nullptr;
     result = context->openIpcMemHandle(driverHandle->devices[0]->toHandle(), ipcHandle, ipcFlags, &ipcPointer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ptrOffset(addrToPtr(0x1u), pooledAllocationOffset), ipcPointer);
 
     context->closeIpcMemHandle(addrToPtr(0x1u));
