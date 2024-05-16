@@ -395,30 +395,26 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto resolution = device.getDeviceInfo().profilingTimerResolution;
 
-    // Calculate startTimestamp only if it was not already set on CPU
-    if (startTimeStamp.cpuTimeInNs == 0) {
-        startTimeStamp.gpuTimeStamp = globalStartTS;
-        addOverflowToTimestamp(startTimeStamp.gpuTimeStamp, submitTimeStamp.gpuTimeStamp);
-        if (startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp) {
-            auto diff = submitTimeStamp.gpuTimeStamp - startTimeStamp.gpuTimeStamp;
-            auto diffInNS = gfxCoreHelper.getGpuTimeStampInNS(diff, resolution);
-            auto osTime = device.getOSTime();
-            if (diffInNS < osTime->getTimestampRefreshTimeout()) {
-                auto alignedSubmitTimestamp = startTimeStamp.gpuTimeStamp - 1;
-                auto alignedQueueTimestamp = startTimeStamp.gpuTimeStamp - 2;
-                if (startTimeStamp.gpuTimeStamp <= 2) {
-                    alignedSubmitTimestamp = 0;
-                    alignedQueueTimestamp = 0;
-                }
-                updateTimestamp(submitTimeStamp, alignedSubmitTimestamp);
-                updateTimestamp(queueTimeStamp, alignedQueueTimestamp);
-                osTime->setRefreshTimestampsFlag();
-            } else {
-                startTimeStamp.gpuTimeStamp += static_cast<uint64_t>(1ULL << gfxCoreHelper.getGlobalTimeStampBits());
+    startTimeStamp.gpuTimeStamp = globalStartTS;
+    addOverflowToTimestamp(startTimeStamp.gpuTimeStamp, submitTimeStamp.gpuTimeStamp);
+    if (startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp) {
+        auto diff = submitTimeStamp.gpuTimeStamp - startTimeStamp.gpuTimeStamp;
+        auto diffInNS = gfxCoreHelper.getGpuTimeStampInNS(diff, resolution);
+        auto osTime = device.getOSTime();
+        if (diffInNS < osTime->getTimestampRefreshTimeout()) {
+            auto alignedSubmitTimestamp = startTimeStamp.gpuTimeStamp - 1;
+            auto alignedQueueTimestamp = startTimeStamp.gpuTimeStamp - 2;
+            if (startTimeStamp.gpuTimeStamp <= 2) {
+                alignedSubmitTimestamp = 0;
+                alignedQueueTimestamp = 0;
             }
+            updateTimestamp(submitTimeStamp, alignedSubmitTimestamp);
+            updateTimestamp(queueTimeStamp, alignedQueueTimestamp);
+            osTime->setRefreshTimestampsFlag();
+        } else {
+            startTimeStamp.gpuTimeStamp += static_cast<uint64_t>(1ULL << gfxCoreHelper.getGlobalTimeStampBits());
         }
     }
-
     UNRECOVERABLE_IF(startTimeStamp.gpuTimeStamp < submitTimeStamp.gpuTimeStamp);
     auto gpuTicksDiff = startTimeStamp.gpuTimeStamp - submitTimeStamp.gpuTimeStamp;
     auto timeDiff = static_cast<uint64_t>(gpuTicksDiff * resolution);
