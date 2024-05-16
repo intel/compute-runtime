@@ -60,6 +60,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::getUserptrAlignment;
     using DrmMemoryManager::gfxPartitions;
     using DrmMemoryManager::handleFenceCompletion;
+    using DrmMemoryManager::localMemBanksCount;
     using DrmMemoryManager::lockBufferObject;
     using DrmMemoryManager::lockResourceImpl;
     using DrmMemoryManager::mapPhysicalToVirtualMemory;

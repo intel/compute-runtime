@@ -144,9 +144,9 @@ void DrmMemoryManager::initialize(GemCloseWorkerMode mode) {
 }
 
 void DrmMemoryManager::setLocalMemBanksCount(uint32_t rootDeviceIndex) {
-    const auto &drm = getDrm(rootDeviceIndex);
-    if (localMemorySupported[rootDeviceIndex] && drm.getMemoryInfo()) {
-        localMemBanksCount[rootDeviceIndex] = drm.getMemoryInfo()->getLocalMemoryRegions().size();
+    const auto *memoryInfo = getDrm(rootDeviceIndex).getMemoryInfo();
+    if (localMemorySupported[rootDeviceIndex]) {
+        localMemBanksCount[rootDeviceIndex] = (memoryInfo ? memoryInfo->getLocalMemoryRegions().size() : 1u);
     }
 };
 

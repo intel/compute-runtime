@@ -275,6 +275,11 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
     }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
 
+    for (uint32_t i = 0; i < rootDevicesNumber; i++) {
+        auto isLocalMemorySupported = executionEnvironment->rootDeviceEnvironments[i]->getHelper<GfxCoreHelper>().getEnableLocalMemory(*defaultHwInfo);
+        EXPECT_EQ(memoryManager->localMemBanksCount[i], (isLocalMemorySupported ? 1u : 0u));
+    }
+
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, true, size, AllocationType::bufferHostMemory, false, {});
 
