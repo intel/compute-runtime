@@ -1445,6 +1445,30 @@ TEST_F(EventTest, whenSettingSubmitTimestampThenQueueAndSubmitTimestampsAreSet) 
     EXPECT_EQ(expectedSubmitGpuTimeInNs, event.submitTimeStamp.gpuTimeInNs);
 }
 
+TEST_F(EventTest, givenDiffBelowResolutionWhenSettingStartAndEndTimestampThenSetCorrectTimestamp) {
+    MyEvent event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
+
+    event.setSubmitTimeStamp();
+    auto submitCpuTimeInNs = event.submitTimeStamp.cpuTimeInNs;
+    auto submitGpuTimeInNs = event.submitTimeStamp.gpuTimeInNs;
+    auto submitGpuTimeStamp = event.submitTimeStamp.gpuTimeStamp;
+
+    auto resolution = static_cast<uint32_t>(pDevice->getDeviceInfo().profilingTimerResolution);
+
+    auto osTime = static_cast<MockOSTime *>(pDevice->getOSTime());
+    osTime->cpuTimeResult = submitCpuTimeInNs + (resolution - 1);
+
+    event.setStartTimeStamp();
+    event.setEndTimeStamp();
+    auto verifyTimestamp = [&](const Event::ProfilingInfo &timestamp) {
+        EXPECT_EQ(submitCpuTimeInNs + (resolution - 1), timestamp.cpuTimeInNs);
+        EXPECT_EQ(submitGpuTimeInNs + (resolution - 1), timestamp.gpuTimeInNs);
+        EXPECT_EQ(submitGpuTimeStamp + 1, timestamp.gpuTimeStamp);
+    };
+    verifyTimestamp(event.startTimeStamp);
+    verifyTimestamp(event.endTimeStamp);
+}
+
 HWTEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
     pDevice->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
 

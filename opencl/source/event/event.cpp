@@ -284,12 +284,12 @@ void Event::setupRelativeProfilingInfo(ProfilingInfo &profilingInfo) {
         auto timeDiff = profilingInfo.cpuTimeInNs - submitTimeStamp.cpuTimeInNs;
         auto gpuTicksDiff = static_cast<uint64_t>(timeDiff / resolution);
         profilingInfo.gpuTimeInNs = submitTimeStamp.gpuTimeInNs + timeDiff;
-        profilingInfo.gpuTimeStamp = submitTimeStamp.gpuTimeStamp + gpuTicksDiff;
+        profilingInfo.gpuTimeStamp = submitTimeStamp.gpuTimeStamp + std::max<uint64_t>(gpuTicksDiff, 1ul);
     } else {
         auto timeDiff = submitTimeStamp.cpuTimeInNs - profilingInfo.cpuTimeInNs;
         auto gpuTicksDiff = static_cast<uint64_t>(timeDiff / resolution);
         profilingInfo.gpuTimeInNs = submitTimeStamp.gpuTimeInNs - timeDiff;
-        profilingInfo.gpuTimeStamp = submitTimeStamp.gpuTimeStamp - gpuTicksDiff;
+        profilingInfo.gpuTimeStamp = submitTimeStamp.gpuTimeStamp - std::max<uint64_t>(gpuTicksDiff, 1ul);
     }
 }
 
