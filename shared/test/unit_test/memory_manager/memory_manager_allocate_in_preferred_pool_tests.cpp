@@ -401,6 +401,33 @@ TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeHostMemory
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithDifferentAlignmentsThenCorrectRoutineIsInvoked) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(true, false, executionEnvironment);
+    AllocationData allocData;
+
+    size_t alignment = 8 * MemoryConstants::megaByte;
+    do {
+        alignment >>= 1;
+
+        AllocationProperties properties(mockRootDeviceIndex, 10, AllocationType::buffer, mockDeviceBitfield);
+        properties.alignment = alignment;
+
+        memoryManager.getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
+
+        auto allocation = memoryManager.allocateGraphicsMemory(allocData);
+        ASSERT_NE(nullptr, allocation);
+        if (alignment <= MemoryConstants::pageSize64k) {
+            EXPECT_TRUE(memoryManager.allocation64kbPageCreated);
+        } else {
+            EXPECT_FALSE(memoryManager.allocation64kbPageCreated);
+        }
+        EXPECT_TRUE(memoryManager.allocationCreated);
+
+        memoryManager.freeGraphicsMemory(allocation);
+    } while (alignment != 0);
+}
+
 TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThen32BitAllocationOver64kbIsChosen) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, false, executionEnvironment);
