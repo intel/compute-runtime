@@ -698,7 +698,7 @@ void SVMAllocsManager::initUsmHostAllocationsCache() {
 }
 
 void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
-    this->usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled();
+    this->usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() && device.getProductHelper().isDeviceUsmAllocationReuseSupported();
     if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
         this->usmDeviceAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
     }

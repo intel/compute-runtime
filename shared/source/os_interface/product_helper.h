@@ -172,6 +172,7 @@ class ProductHelper {
     virtual bool isMidThreadPreemptionDisallowedForRayTracingKernels() const = 0;
     virtual bool isBufferPoolAllocatorSupported() const = 0;
     virtual bool isUsmPoolAllocatorSupported() const = 0;
+    virtual bool isDeviceUsmAllocationReuseSupported() const = 0;
     virtual bool useLocalPreferredForCacheableBuffers() const = 0;
     virtual bool useGemCreateExtInAllocateMemoryByKMD() const = 0;
     virtual bool isTlbFlushRequired() const = 0;

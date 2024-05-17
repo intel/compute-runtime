@@ -39,7 +39,8 @@ TEST(ApiSpecificConfigL0Tests, WhenGettingRegistryPathThenL0RegistryPathIsReturn
     EXPECT_STREQ(L0::registryPath, ApiSpecificConfig::getRegistryPath());
 }
 
-TEST(ApiSpecificConfigL0Tests, WhenCheckingIfDeviceAllocationCacheIsEnabledThenReturnFalse) {
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIfHostDeviceAllocationCacheIsEnabledThenReturnFalse) {
+    EXPECT_FALSE(ApiSpecificConfig::isHostAllocationCacheEnabled());
     EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
 }
 

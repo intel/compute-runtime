@@ -256,4 +256,9 @@ void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const 
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return false;
+}
+
 } // namespace NEO

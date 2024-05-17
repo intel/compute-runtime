@@ -33,7 +33,7 @@ bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *releaseHelper) {
 }
 
 bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
-    return false;
+    return true;
 }
 
 bool ApiSpecificConfig::isHostAllocationCacheEnabled() {

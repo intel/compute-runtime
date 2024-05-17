@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -821,6 +821,7 @@ TEST_F(GTPinContextDestroyTest, whenCallingConxtextDestructorThenGTPinIsNotified
     if (mockContext->svmAllocsManager) {
         mockContext->getDeviceMemAllocPool().cleanup();
         mockContext->getHostMemAllocPool().cleanup();
+        mockContext->svmAllocsManager->trimUSMDeviceAllocCache();
         delete mockContext->svmAllocsManager;
     }
     mockContext->svmAllocsManager = new MockSVMAllocManager();

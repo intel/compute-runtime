@@ -828,6 +828,18 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSup
     EXPECT_TRUE(productHelper->isUsmPoolAllocatorSupported());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtMostDg2) {
+    EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
+    EXPECT_FALSE(productHelper->isDeviceUsmAllocationReuseSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtLeastMtl) {
+    EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsUnlockingLockedPtrNecessaryThenReturnFalse) {
     EXPECT_FALSE(productHelper->isUnlockingLockedPtrNecessary(pInHwInfo));
 }

@@ -108,4 +108,9 @@ bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return true;
+}
+
 } // namespace NEO

@@ -104,6 +104,11 @@ bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
     return false;
 }

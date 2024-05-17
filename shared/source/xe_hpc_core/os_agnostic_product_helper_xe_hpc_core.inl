@@ -46,4 +46,9 @@ bool ProductHelperHw<gfxProduct>::isDeviceToHostCopySignalingFenceRequired() con
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
+    return false;
+}
+
 } // namespace NEO

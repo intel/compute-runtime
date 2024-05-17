@@ -20,5 +20,6 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_NOBASE(configureHwInfoWddm, int, 0, (const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment));
     ADDMETHOD_CONST_NOBASE(supportReadOnlyAllocations, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isBlitCopyRequiredForLocalMemory, bool, true, (const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation));
+    ADDMETHOD_CONST_NOBASE(isDeviceUsmAllocationReuseSupported, bool, false, ());
 };
 } // namespace NEO

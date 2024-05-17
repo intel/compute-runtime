@@ -5,17 +5,22 @@
  *
  */
 
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
+namespace NEO {
 
-using namespace NEO;
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
 
 TEST(SortedVectorBasedAllocationTrackerTests, givenSortedVectorBasedAllocationTrackerWhenInsertRemoveAndGetThenStoreDataProperly) {
     SvmAllocationData data(1u);
@@ -99,14 +104,36 @@ struct SvmAllocationCacheTestFixture {
 
 using SvmDeviceAllocationCacheTest = Test<SvmAllocationCacheTestFixture>;
 
-TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheDefaultWhenCheckingIfEnabledThenItIsDisabled) {
+TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheDisabledWhenCheckingIfEnabledThenItIsDisabled) {
+    DebugManagerStateRestore restorer;
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     auto device = deviceFactory->rootDevices[0];
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
-    ASSERT_EQ(debugManager.flags.ExperimentalEnableDeviceAllocationCache.get(), -1);
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(0);
     EXPECT_FALSE(svmManager->usmDeviceAllocationsCacheEnabled);
     svmManager->initUsmAllocationsCaches(*device);
     EXPECT_FALSE(svmManager->usmDeviceAllocationsCacheEnabled);
+}
+
+HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigWhenCheckingIfEnabledItIsEnabledIfProductHelperMethodReturnsTrue) {
+    VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
+    auto device = deviceFactory->rootDevices[0];
+    RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    {
+        raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = false;
+        auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+        EXPECT_FALSE(svmManager->usmDeviceAllocationsCacheEnabled);
+        svmManager->initUsmAllocationsCaches(*device);
+        EXPECT_FALSE(svmManager->usmDeviceAllocationsCacheEnabled);
+    }
+    {
+        raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
+        auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+        EXPECT_FALSE(svmManager->usmDeviceAllocationsCacheEnabled);
+        svmManager->initUsmAllocationsCaches(*device);
+        EXPECT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
+    }
 }
 
 struct SvmDeviceAllocationCacheSimpleTestDataType {
@@ -890,3 +917,4 @@ TEST_F(SvmHostAllocationCacheTest, givenHostOutOfMemoryWhenAllocatingThenCacheIs
     svmManager->trimUSMHostAllocCache();
     ASSERT_EQ(svmManager->usmHostAllocationsCache.allocations.size(), 0u);
 }
+} // namespace NEO

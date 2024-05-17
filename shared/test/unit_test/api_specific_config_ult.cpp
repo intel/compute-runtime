@@ -40,7 +40,11 @@ bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *) {
 }
 
 bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
-    return false;
+    if (apiTypeForUlts == ApiSpecificConfig::L0) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 bool ApiSpecificConfig::isHostAllocationCacheEnabled() {
