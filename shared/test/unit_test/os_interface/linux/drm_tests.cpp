@@ -1472,8 +1472,8 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
 
     drm.ioctlHelper = std::move(ioctlHelper);
 
-    int strSize = std::snprintf(nullptr, 0, "FATAL: Unexpected page fault from GPU at 0x%lx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
-                                resetStatsFaultExpected.addr,
+    int strSize = std::snprintf(nullptr, 0, "FATAL: Unexpected page fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                                static_cast<long long unsigned int>(resetStatsFaultExpected.addr),
                                 resetStatsExpected.contextId,
                                 EngineHelpers::engineTypeToString(aub_stream::ENGINE_BCS).c_str(),
                                 resetStatsFaultExpected.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(resetStatsFaultExpected.type)).c_str(),
@@ -1483,8 +1483,8 @@ TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcess
                   1;
 
     std::unique_ptr<char[]> buf(new char[strSize]);
-    std::snprintf(buf.get(), strSize, "FATAL: Unexpected page fault from GPU at 0x%lx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
-                  resetStatsFaultExpected.addr,
+    std::snprintf(buf.get(), strSize, "FATAL: Unexpected page fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+                  static_cast<long long unsigned int>(resetStatsFaultExpected.addr),
                   resetStatsExpected.contextId,
                   EngineHelpers::engineTypeToString(aub_stream::ENGINE_BCS).c_str(),
                   resetStatsFaultExpected.type, GpuPageFaultHelpers::faultTypeToString(static_cast<FaultType>(resetStatsFaultExpected.type)).c_str(),
