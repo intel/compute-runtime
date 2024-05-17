@@ -14,21 +14,25 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint32_t mockHandleCount = 2;
+constexpr uint32_t mockFwHandlesCount = 3;
 const std::string mockFwVersion("DG01->0->2026");
 const std::string mockOpromVersion("OPROM CODE VERSION:123_OPROM DATA VERSION:456");
-std::vector<std::string> mockSupportedFwTypes = {"GSC", "OptionROM"};
+const std::string mockPscVersion("version 1 : 2021/09/15 00:43:12");
+const std::string mockUnknownVersion("unknown");
+std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
 std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};
 std::string mockEmpty = {};
 class FirmwareInterface : public L0::Sysman::FirmwareUtil {};
 class FirmwareFsAccess : public L0::Sysman::FsAccessInterface {};
+class FirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {};
 
 struct MockFirmwareFsAccess : public FirmwareFsAccess {
     ze_bool_t isReadFwTypes = true;
     ze_result_t read(const std::string file, std::vector<std::string> &val) override {
         if (isReadFwTypes) {
             val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
-            val.push_back("mtd5: 00200000 00001000 \"i915-spi.42.auto.OptionROM\"");
+            val.push_back("mtd4: 00200000 00001000 \"i915-spi.42.auto.OptionROM\"");
+            val.push_back("mtd5: 00200000 00001000 \"i915-spi.42.auto.PSC\"");
         } else {
             val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
             val.push_back("mtd3: 005ef000 00001000 \"i915-spi.42.auto.GSC\"");
@@ -37,16 +41,58 @@ struct MockFirmwareFsAccess : public FirmwareFsAccess {
     }
 };
 
-struct MockFirmwareInterface : public L0::Sysman::FirmwareUtil {
+struct MockFirmwareSysfsAccess : public L0::Sysman::SysFsAccessInterface {
+
+    ze_result_t readResult = ZE_RESULT_SUCCESS;
+    ze_result_t scanDirEntriesResult = ZE_RESULT_SUCCESS;
+    ze_bool_t isNullDirEntries = false;
+
+    ze_result_t read(const std::string file, std::string &val) override {
+
+        if (readResult != ZE_RESULT_SUCCESS) {
+            return readResult;
+        }
+
+        if (!file.compare("device/iaf.31/pscbin_version") || !file.compare("device/iaf.0/pscbin_version")) {
+            val = mockPscVersion;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t scanDirEntries(const std::string dir, std::vector<std::string> &list) override {
+        if (scanDirEntriesResult != ZE_RESULT_SUCCESS) {
+            return scanDirEntriesResult;
+        }
+        if (!isNullDirEntries) {
+            if (!dir.compare("device/")) {
+                list.push_back(std::string("unusedfile"));
+                list.push_back(std::string("iaf.31"));
+                list.push_back(std::string("iaf.0"));
+            }
+        } else {
+            if (!dir.compare("device/")) {
+                list.clear();
+            }
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    MockFirmwareSysfsAccess() = default;
+    ~MockFirmwareSysfsAccess() override = default;
+};
+
+struct MockFirmwareInterface : public FirmwareInterface {
 
     ze_result_t getFwVersionResult = ZE_RESULT_SUCCESS;
 
     ze_result_t mockFwGetVersion(std::string &fwVersion) {
-        fwVersion = mockFwVersion;
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t mockOpromGetVersion(std::string &fwVersion) {
         fwVersion = mockOpromVersion;
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t mockPscGetVersion(std::string &fwVersion) {
+        fwVersion = mockPscVersion;
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) override {
@@ -59,12 +105,14 @@ struct MockFirmwareInterface : public L0::Sysman::FirmwareUtil {
             firmwareVersion = mockFwVersion;
         } else if (fwType == "OptionROM") {
             firmwareVersion = mockOpromVersion;
+        } else if (fwType == "PSC") {
+            firmwareVersion = mockPscVersion;
         }
         return ZE_RESULT_SUCCESS;
     }
 
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override {
-        fwTypes = mockSupportedFwTypes;
+        fwTypes = mockSupportedFirmwareTypes;
     }
 
     MockFirmwareInterface() = default;
