@@ -128,6 +128,31 @@ typedef struct _ze_intel_media_doorbell_handle_desc_t {
 #define ZE_STRUCTURE_TYPE_INTEL_MEDIA_COMMUNICATION_DESC (ze_structure_type_t)0x00020021
 #define ZE_STRUCTURE_TYPE_INTEL_MEDIA_DOORBELL_HANDLE_DESC (ze_structure_type_t)0x00020022
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported device media flags
+typedef uint32_t ze_intel_device_media_exp_flags_t;
+typedef enum _ze_intel_device_media_exp_flag_t {
+    ZE_INTEL_DEVICE_MEDIA_SUPPORTS_ENCODING_EXP_FLAG = ZE_BIT(0), ///< Supports encoding
+    ZE_INTEL_DEVICE_MEDIA_SUPPORTS_DECODING_EXP_FLAG = ZE_BIT(1), ///< Supports decoding
+    ZE_INTEL_DEVICE_MEDIA_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
+} ze_intel_device_media_exp_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Forward-declare ze_intel_device_media_exp_properties_t
+typedef struct _ze_intel_device_media_exp_properties_t ze_intel_device_media_exp_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief  May be passed to ze_device_properties_t through pNext.
+typedef struct _ze_intel_device_media_exp_properties_t {
+    ze_structure_type_t stype;               ///< [in] type of this structure
+    const void *pNext;                       ///< [in][optional] must be null or a pointer to an extension-specific
+    ze_intel_device_media_exp_flags_t flags; ///< [out] device media flags
+    uint32_t numEncoderCores;                ///< [out] number of encoder cores
+    uint32_t numDecoderCores;                ///< [out] number of decoder cores
+} ze_intel_device_media_exp_properties_t;
+
+#define ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES (ze_structure_type_t)0x00020023
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
