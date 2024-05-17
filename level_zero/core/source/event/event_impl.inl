@@ -440,7 +440,7 @@ void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpu
 
         csrs[0]->writeMemory(*alloc, true, offset, copySize);
 
-        alloc->setTbxWritable(true, allBanks);
+        alloc->setTbxWritable(false, allBanks);
     }
 }
 

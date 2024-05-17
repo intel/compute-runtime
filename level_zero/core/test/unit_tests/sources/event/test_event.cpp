@@ -3575,7 +3575,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(sizeof(uint64_t) * expectedCallCount, ultCsr.writeMemoryParams.latestChunkSize);
     EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
-    EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
+    EXPECT_FALSE(eventAllocation->isTbxWritable(expectedBanks));
 
     auto status = event->hostSignal(false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
@@ -3586,14 +3586,14 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(event->getSinglePacketSize(), ultCsr.writeMemoryParams.latestChunkSize);
     EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
 
-    EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
+    EXPECT_FALSE(eventAllocation->isTbxWritable(expectedBanks));
 
     std::bitset<32> singleBitMask;
     for (uint32_t i = 0; i < 32; i++) {
         singleBitMask.reset();
         singleBitMask.set(i, true);
         uint32_t bit = static_cast<uint32_t>(singleBitMask.to_ulong());
-        EXPECT_TRUE(eventAllocation->isTbxWritable(bit));
+        EXPECT_FALSE(eventAllocation->isTbxWritable(bit));
     }
 
     event->reset();
@@ -3605,7 +3605,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(event->getSinglePacketSize(), ultCsr.writeMemoryParams.latestChunkSize);
     EXPECT_EQ(0u, ultCsr.writeMemoryParams.latestGpuVaChunkOffset);
 
-    EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
+    EXPECT_FALSE(eventAllocation->isTbxWritable(expectedBanks));
 
     size_t offset = event->getCompletionFieldOffset();
     void *completionAddress = ptrOffset(event->hostAddress, offset);
