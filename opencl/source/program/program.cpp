@@ -18,6 +18,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -196,6 +197,19 @@ cl_int Program::createProgramFromBinary(
                 this->options += " " + NEO::CompilerOptions::enableZebin.str();
             }
 
+            auto deviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
+            auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(deviceBinary.get()), singleDeviceBinary.deviceBinary.size());
+            SingleDeviceBinary binary = {};
+            binary.deviceBinary = blob;
+            binary.targetDevice = NEO::getTargetDevice(clDevice.getRootDeviceEnvironment());
+
+            auto &gfxCoreHelper = clDevice.getGfxCoreHelper();
+            std::tie(decodedSingleDeviceBinary.decodeError, std::ignore) = NEO::decodeSingleDeviceBinary(decodedSingleDeviceBinary.programInfo,
+                                                                                                         binary,
+                                                                                                         decodedSingleDeviceBinary.decodeErrors,
+                                                                                                         decodedSingleDeviceBinary.decodeWarnings,
+                                                                                                         gfxCoreHelper);
+
             this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
             this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
 
@@ -203,7 +217,9 @@ cl_int Program::createProgramFromBinary(
             this->indirectDetectionVersion = singleDeviceBinary.generatorFeatureVersions.indirectMemoryAccessDetection;
 
             auto isVmeUsed = containsVmeUsage(this->buildInfos[rootDeviceIndex].kernelInfoArray);
-            bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed);
+            bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed) ||
+                           AddressingModeHelper::containsBindlessKernel(decodedSingleDeviceBinary.programInfo.kernelInfos);
+
             bool flagRebuild = debugManager.flags.RebuildPrecompiledKernels.get();
 
             if (0u == this->irBinarySize) {
@@ -219,12 +235,13 @@ cl_int Program::createProgramFromBinary(
             }
 
             if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == rebuild)) {
-                this->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
+                this->buildInfos[rootDeviceIndex].unpackedDeviceBinary = std::move(deviceBinary);
                 this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = singleDeviceBinary.deviceBinary.size();
                 this->buildInfos[rootDeviceIndex].packedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(archive.begin()), archive.size());
                 this->buildInfos[rootDeviceIndex].packedDeviceBinarySize = archive.size();
-
+                this->decodedSingleDeviceBinary.isSet = true;
             } else {
+                this->decodedSingleDeviceBinary.isSet = false;
                 this->isCreatedFromBinary = false;
                 this->requiresRebuild = true;
             }

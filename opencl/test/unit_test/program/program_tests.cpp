@@ -2904,6 +2904,50 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramNotBuiltInWhenBuiltInKernel
     EXPECT_EQ(0U, pProgram->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
 }
 
+TEST(CreateProgramFromBinaryTests, givenBinaryWithBindlessKernelWhenCreateProgramFromBinaryThenDeviceBinaryIsNotUsedAndRebuildIsRequired) {
+    std::string validZeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : kernel_bindless
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            4
+          arg_index:       0
+          addrmode:        bindless
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+
+    uint8_t kernelIsa[8]{0U};
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SectionHeaderTypeZebin::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_bindless", {kernelIsa, sizeof(kernelIsa)});
+    constexpr auto mockSpirvDataSize = 0x10;
+    uint8_t mockSpirvData[mockSpirvDataSize]{0};
+    zebin.appendSection(Elf::SHT_OPENCL_SPIRV, Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(mockSpirvData, mockSpirvDataSize));
+    zebin.elfHeader->machine = NEO::defaultHwInfo->platform.eProductFamily;
+
+    cl_int retVal = CL_INVALID_BINARY;
+
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    std::unique_ptr<MockProgram> pProgram(Program::createBuiltInFromGenBinary<MockProgram>(nullptr, toClDeviceVector(*clDevice), zebin.storage.data(), zebin.storage.size(), &retVal));
+    ASSERT_NE(nullptr, pProgram.get());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto rootDeviceIndex = clDevice->getRootDeviceIndex();
+    retVal = pProgram->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *clDevice);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get());
+    EXPECT_EQ(0U, pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
+    EXPECT_EQ(nullptr, pProgram->buildInfos[rootDeviceIndex].packedDeviceBinary);
+    EXPECT_EQ(0U, pProgram->buildInfos[rootDeviceIndex].packedDeviceBinarySize);
+    ASSERT_TRUE(pProgram->requiresRebuild);
+}
+
 TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsNotForcedThenDeviceBinaryIsUsed) {
     cl_int retVal = CL_INVALID_BINARY;
 

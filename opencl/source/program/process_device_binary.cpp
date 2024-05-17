@@ -216,29 +216,30 @@ cl_int Program::processGenBinary(const ClDevice &clDevice) {
         buildInfo.globalSurface = nullptr;
     }
 
-    ProgramInfo programInfo;
-    auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
-    SingleDeviceBinary binary = {};
-    binary.deviceBinary = blob;
-    binary.targetDevice = NEO::getTargetDevice(clDevice.getRootDeviceEnvironment());
-    std::string decodeErrors;
-    std::string decodeWarnings;
+    if (!decodedSingleDeviceBinary.isSet) {
+        decodedSingleDeviceBinary.programInfo = {};
 
-    DecodeError decodeError;
-    DeviceBinaryFormat singleDeviceBinaryFormat;
-    auto &gfxCoreHelper = clDevice.getGfxCoreHelper();
-    std::tie(decodeError, singleDeviceBinaryFormat) = NEO::decodeSingleDeviceBinary(programInfo, binary, decodeErrors, decodeWarnings, gfxCoreHelper);
+        auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
+        SingleDeviceBinary binary = {};
+        binary.deviceBinary = blob;
+        binary.targetDevice = NEO::getTargetDevice(clDevice.getRootDeviceEnvironment());
 
-    if (decodeWarnings.empty() == false) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
+        auto &gfxCoreHelper = clDevice.getGfxCoreHelper();
+        std::tie(decodedSingleDeviceBinary.decodeError, std::ignore) = NEO::decodeSingleDeviceBinary(decodedSingleDeviceBinary.programInfo, binary, decodedSingleDeviceBinary.decodeErrors, decodedSingleDeviceBinary.decodeWarnings, gfxCoreHelper);
+    } else {
+        decodedSingleDeviceBinary.isSet = false;
     }
 
-    if (DecodeError::success != decodeError) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
+    if (decodedSingleDeviceBinary.decodeWarnings.empty() == false) {
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodedSingleDeviceBinary.decodeWarnings.c_str());
+    }
+
+    if (DecodeError::success != decodedSingleDeviceBinary.decodeError) {
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodedSingleDeviceBinary.decodeErrors.c_str());
         return CL_INVALID_BINARY;
     }
 
-    return this->processProgramInfo(programInfo, clDevice);
+    return this->processProgramInfo(decodedSingleDeviceBinary.programInfo, clDevice);
 }
 
 cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {

@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"
 
@@ -388,6 +389,14 @@ class Program : public BaseObject<_cl_program> {
         std::once_flag generateDefaultMetadataOnce;
     };
     std::unique_ptr<MetadataGenerationFlags> metadataGenerationFlags;
+
+    struct DecodedSingleDeviceBinary {
+        bool isSet = false;
+        ProgramInfo programInfo;
+        DecodeError decodeError;
+        std::string decodeErrors;
+        std::string decodeWarnings;
+    } decodedSingleDeviceBinary;
 };
 
 } // namespace NEO

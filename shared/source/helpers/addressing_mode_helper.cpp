@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,6 +49,15 @@ bool containsStatefulAccess(const KernelDescriptor &kernelDescriptor, bool skipL
 bool containsStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, bool skipLastExplicitArg) {
     for (const auto &kernelInfo : kernelInfos) {
         if (containsStatefulAccess(kernelInfo->kernelDescriptor, skipLastExplicitArg)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool containsBindlessKernel(const std::vector<KernelInfo *> &kernelInfos) {
+    for (const auto &kernelInfo : kernelInfos) {
+        if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
             return true;
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,4 +63,34 @@ TEST(AddressingModeHelperTest, GivenLastArgIsPointerWithValidBindlessOffsetWhenI
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
     EXPECT_FALSE(AddressingModeHelper::containsStatefulAccess(kernelDescriptor, true));
+}
+
+TEST(AddressingModeHelperTest, GivenKernelInfosWhenCheckingForBindlessKernelThenReturnCorrectValue) {
+    KernelInfo kernelInfo1{};
+    KernelInfo kernelInfo2{};
+
+    {
+        kernelInfo1.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindless;
+        std::vector<KernelInfo *> kernelInfos{&kernelInfo1};
+        EXPECT_TRUE(AddressingModeHelper::containsBindlessKernel(kernelInfos));
+    }
+
+    {
+        kernelInfo1.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindful;
+        std::vector<KernelInfo *> kernelInfos{&kernelInfo1};
+        EXPECT_FALSE(AddressingModeHelper::containsBindlessKernel(kernelInfos));
+    }
+
+    {
+        kernelInfo1.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindful;
+        std::vector<KernelInfo *> kernelInfos{&kernelInfo1};
+        EXPECT_FALSE(AddressingModeHelper::containsBindlessKernel(kernelInfos));
+    }
+
+    {
+        kernelInfo1.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindful;
+        kernelInfo2.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindless;
+        std::vector<KernelInfo *> kernelInfos{&kernelInfo1, &kernelInfo2};
+        EXPECT_TRUE(AddressingModeHelper::containsBindlessKernel(kernelInfos));
+    }
 }
