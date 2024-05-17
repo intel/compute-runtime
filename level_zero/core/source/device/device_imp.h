@@ -170,6 +170,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     uint32_t getEventMaxKernelCount() const override;
     uint32_t queryDeviceNodeMask();
     NEO::EngineGroupType getInternalEngineGroupType();
+    uint32_t getCopyEngineOrdinal() const;
 
   protected:
     void adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index);

@@ -6810,5 +6810,102 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppend
     EXPECT_TRUE(verifyTokenCleanup());
 }
 
+struct CopyOffloadInOrderTests : public InOrderCmdListTests {
+    void SetUp() override {
+        backupHwInfo = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
+
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        defaultHwInfo->featureTable.ftrBcsInfo = 0b111;
+
+        InOrderCmdListTests::SetUp();
+    }
+
+    std::unique_ptr<VariableBackup<NEO::HardwareInfo>> backupHwInfo;
+};
+
+HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeHpCore) {
+    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+
+    ze_command_list_handle_t cmdListHandle;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+        auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+        EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+        EXPECT_EQ(cmdQueueDesc.priority, queue->desc.priority);
+        EXPECT_EQ(cmdQueueDesc.mode, queue->desc.mode);
+        EXPECT_TRUE(queue->peekIsCopyOnlyCommandQueue());
+        EXPECT_TRUE(NEO::EngineHelpers::isBcs(queue->getCsr()->getOsContext().getEngineType()));
+
+        zeCommandListDestroy(cmdListHandle);
+    }
+
+    {
+        cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
+        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+        auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+        EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+        EXPECT_EQ(cmdQueueDesc.priority, queue->desc.priority);
+        EXPECT_EQ(cmdQueueDesc.mode, queue->desc.mode);
+        EXPECT_TRUE(queue->peekIsCopyOnlyCommandQueue());
+        EXPECT_TRUE(NEO::EngineHelpers::isBcs(queue->getCsr()->getOsContext().getEngineType()));
+
+        zeCommandListDestroy(cmdListHandle);
+
+        cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    }
+
+    {
+        cmdQueueDesc.flags = 0;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+        auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+        EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        zeCommandListDestroy(cmdListHandle);
+
+        cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    }
+
+    {
+        cmdQueueDesc.ordinal = static_cast<DeviceImp *>(device)->getCopyEngineOrdinal();
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+        auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+        EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        zeCommandListDestroy(cmdListHandle);
+
+        cmdQueueDesc.ordinal = 0;
+    }
+
+    {
+        NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(-1);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+        auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+        EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        zeCommandListDestroy(cmdListHandle);
+    }
+}
+
 } // namespace ult
 } // namespace L0

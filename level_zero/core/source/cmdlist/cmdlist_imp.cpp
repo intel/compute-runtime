@@ -255,10 +255,34 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             pNext = reinterpret_cast<const ze_base_desc_t *>(pNext->pNext);
         }
 
+        if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1) && !commandList->isCopyOnly() && commandList->isInOrderExecutionEnabled()) {
+            commandList->enableCopyOperationOffload(productFamily, device, desc);
+        }
+
         return commandList;
     }
 
     return commandList;
+}
+
+void CommandListImp::enableCopyOperationOffload(uint32_t productFamily, Device *device, const ze_command_queue_desc_t *desc) {
+    NEO::CommandStreamReceiver *copyCsr = nullptr;
+    uint32_t ordinal = static_cast<DeviceImp *>(device)->getCopyEngineOrdinal();
+
+    device->getCsrForOrdinalAndIndexWithPriority(&copyCsr, ordinal, 0, desc->priority);
+    UNRECOVERABLE_IF(!copyCsr);
+
+    ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    copyQueueDesc.ordinal = ordinal;
+    copyQueueDesc.mode = desc->mode;
+    copyQueueDesc.priority = desc->priority;
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto offloadCommandQueue = CommandQueue::create(productFamily, device, copyCsr, &copyQueueDesc, true, false, true, returnValue);
+    UNRECOVERABLE_IF(!offloadCommandQueue);
+
+    this->cmdQImmediateCopyOffload = offloadCommandQueue;
+    this->copyOperationOffloadEnabled = true;
 }
 
 void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties) {

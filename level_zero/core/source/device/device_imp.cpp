@@ -417,6 +417,20 @@ uint32_t DeviceImp::getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCo
     return subDeviceQueueGroupsIter;
 }
 
+uint32_t DeviceImp::getCopyEngineOrdinal() const {
+    auto &engineGroups = neoDevice->getRegularEngineGroups();
+    uint32_t i = 0;
+    for (; i < static_cast<uint32_t>(engineGroups.size()); i++) {
+        if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy) {
+            return i;
+        }
+    }
+
+    UNRECOVERABLE_IF(this->subDeviceCopyEngineGroups.size() == 0);
+
+    return i;
+}
+
 ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
     NEO::Device *activeDevice = getActiveDevice();

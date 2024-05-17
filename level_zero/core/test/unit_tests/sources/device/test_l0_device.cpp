@@ -175,6 +175,54 @@ TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddD
     EXPECT_EQ(0b100u, deviceImp->subDevices[1]->getNEODevice()->getDeviceBitfield().to_ulong());
 }
 
+using DeviceCopyEngineTests = ::testing::Test;
+
+HWTEST2_F(DeviceCopyEngineTests, givenRootOrSubDeviceWhenAskingForCopyOrdinalThenReturnCorrectId, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.EnableImplicitScaling.set(1);
+
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b111;
+
+    auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->parseAffinityMask();
+    auto deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, 2, *executionEnvironment.release());
+    auto rootDevice = deviceFactory->rootDevices[0];
+    EXPECT_NE(nullptr, rootDevice);
+    EXPECT_EQ(2u, rootDevice->getNumSubDevices());
+
+    auto driverHandle = std::make_unique<DriverHandleImp>();
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), rootDevice, false, &returnValue));
+    ASSERT_NE(nullptr, device);
+
+    auto deviceImp = static_cast<DeviceImp *>(device.get());
+    ASSERT_EQ(2u, deviceImp->numSubDevices);
+
+    EXPECT_EQ(static_cast<uint32_t>(device->getNEODevice()->getRegularEngineGroups().size()), deviceImp->getCopyEngineOrdinal());
+
+    auto &subDeviceEngines = deviceImp->subDevices[0]->getNEODevice()->getRegularEngineGroups();
+
+    uint32_t subDeviceCopyEngineId = std::numeric_limits<uint32_t>::max();
+    for (uint32_t i = 0; i < subDeviceEngines.size(); i++) {
+        if (subDeviceEngines[i].engineGroupType == EngineGroupType::copy) {
+            subDeviceCopyEngineId = i;
+            break;
+        }
+    }
+    EXPECT_NE(std::numeric_limits<uint32_t>::max(), subDeviceCopyEngineId);
+
+    EXPECT_EQ(subDeviceCopyEngineId, static_cast<DeviceImp *>(deviceImp->subDevices[0])->getCopyEngineOrdinal());
+    EXPECT_EQ(subDeviceCopyEngineId, static_cast<DeviceImp *>(deviceImp->subDevices[1])->getCopyEngineOrdinal());
+}
+
 TEST(L0DeviceTest, givenMidThreadPreemptionWhenCreatingDeviceThenSipKernelIsInitialized) {
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;

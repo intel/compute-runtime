@@ -30,6 +30,9 @@ CommandList::~CommandList() {
     if (cmdQImmediate) {
         cmdQImmediate->destroy();
     }
+    if (cmdQImmediateCopyOffload) {
+        cmdQImmediateCopyOffload->destroy();
+    }
     removeDeallocationContainerData();
     if (!isImmediateType() || !this->isFlushTaskSubmissionEnabled) {
         removeHostPtrAllocations();

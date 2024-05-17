@@ -50,6 +50,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;
+    using BaseClass::cmdQImmediateCopyOffload;
     using BaseClass::commandContainer;
     using BaseClass::commandListPerThreadScratchSize;
     using BaseClass::commandListPreemptionMode;
@@ -58,6 +59,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
+    using BaseClass::copyOperationOffloadEnabled;
     using BaseClass::csr;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;
@@ -182,10 +184,12 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;
+    using BaseClass::cmdQImmediateCopyOffload;
     using BaseClass::commandContainer;
     using BaseClass::commandsToPatch;
     using BaseClass::compactL3FlushEvent;
     using BaseClass::compactL3FlushEventPacket;
+    using BaseClass::copyOperationOffloadEnabled;
     using BaseClass::csr;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
@@ -263,9 +267,11 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;
+    using BaseClass::cmdQImmediateCopyOffload;
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::commandsToPatch;
+    using BaseClass::copyOperationOffloadEnabled;
     using BaseClass::copyThroughLockedPtrEnabled;
     using BaseClass::csr;
     using BaseClass::currentBindingTablePoolBaseAddress;

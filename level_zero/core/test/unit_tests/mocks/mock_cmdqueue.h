@@ -28,6 +28,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::cmdListWithAssertExecuted;
     using BaseClass::commandStream;
     using BaseClass::csr;
+    using BaseClass::desc;
     using BaseClass::device;
     using BaseClass::preemptionCmdSyncProgramming;
     using BaseClass::printfKernelContainer;

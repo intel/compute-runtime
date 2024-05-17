@@ -412,6 +412,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
+    CommandQueue *cmdQImmediateCopyOffload = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
     Device *device = nullptr;
 

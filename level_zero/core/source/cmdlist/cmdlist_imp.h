@@ -46,6 +46,7 @@ struct CommandListImp : public CommandList {
     virtual void patchInOrderCmds() = 0;
     void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
+    void enableCopyOperationOffload(uint32_t productFamily, Device *device, const ze_command_queue_desc_t *desc);
 
   protected:
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
@@ -61,6 +62,7 @@ struct CommandListImp : public CommandList {
     static constexpr bool cmdListDefaultMediaSamplerClockGate = false;
     static constexpr bool cmdListDefaultGlobalAtomics = false;
     std::vector<Event *> mappedTsEventList{};
+    bool copyOperationOffloadEnabled = false;
 };
 
 } // namespace L0
