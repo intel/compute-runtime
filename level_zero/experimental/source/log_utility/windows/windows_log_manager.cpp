@@ -9,6 +9,7 @@
 
 namespace NEO {
 std::unique_ptr<LogManager> LogManager::instancePtr = nullptr;
+uint32_t LogManager::logLevel = UINT32_MAX;
 
 LogManager *LogManager::getInstance() {
     if (instancePtr == nullptr) {
@@ -27,6 +28,10 @@ void WinLogManager::createLogger(LogManager::LogType logType, std::string filena
 
 NEO::Logger *WinLogManager::getLogger(LogManager::LogType logType) {
     return nullptr;
+}
+
+uint32_t LogManager::getLoggingLevel() {
+    return (uint32_t)LogLevel::logLevelOff;
 }
 
 void WinLogManager::destroyLogger(LogManager::LogType logType) {

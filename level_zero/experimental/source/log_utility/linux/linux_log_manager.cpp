@@ -7,10 +7,13 @@
 
 #include "linux_log_manager.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include <map>
 
 namespace NEO {
 std::unique_ptr<LogManager> LogManager::instancePtr = nullptr;
+uint32_t LogManager::logLevel = UINT32_MAX;
 
 LogManager *LogManager::getInstance() {
     if (instancePtr == nullptr) {
@@ -57,6 +60,13 @@ std::unique_ptr<NEO::LinuxLogger> LinuxLogManager::createLoggerByType(LogManager
         return nullptr;
     }
     return pLogger;
+}
+
+uint32_t LogManager::getLoggingLevel() {
+    if (logLevel == UINT32_MAX) {
+        logLevel = NEO::debugManager.flags.EnableLogLevel.get();
+    }
+    return logLevel;
 }
 
 std::unique_ptr<NEO::LinuxLogger> LinuxLogManager::prepareLogger() {

@@ -20,8 +20,20 @@
 #include "level_zero/experimental/source/log_utility/log_manager.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include "driver_version.h"
+
 #include <memory>
 #include <thread>
+
+#define QTR(a) #a
+#define TOSTR(b) QTR(b)
+#define LOG_INFO_VERSION_SHA(logType, version, sha)                                              \
+    auto logger = NEO::LogManager::getInstance()->getLogger(logType);                            \
+    if (logger) {                                                                                \
+        char logBuffer[256];                                                                     \
+        snprintf(logBuffer, 256, "Level zero driver version and SHA : %s - %s\n", version, sha); \
+        logger->logInfo(logBuffer);                                                              \
+    }
 
 namespace L0 {
 
@@ -59,10 +71,8 @@ void DriverImp::initialize(ze_result_t *result) {
         executionEnvironment->setDebuggingMode(dbgMode);
     }
 
-    // spdlog enablement
-    if ((NEO::debugManager.flags.EnableLogLevel.get() != (uint32_t)NEO::LogLevel::logLevelOff)) {
-        CREATE_LOGGER(NEO::LogManager::LogType::coreLogger, "coreLogger.log", NEO::debugManager.flags.EnableLogLevel.get());
-    }
+    // Logging enablement if opted
+    initLogger();
 
     if (envVariables.fp64Emulation) {
         executionEnvironment->setFP64EmulationEnabled();
@@ -100,6 +110,13 @@ void DriverImp::initialize(ze_result_t *result) {
 }
 
 ze_result_t DriverImp::initStatus(ZE_RESULT_ERROR_UNINITIALIZED);
+
+void DriverImp::initLogger() {
+    if (NEO::LogManager::getLoggingLevel() != (uint32_t)NEO::LogLevel::logLevelOff) {
+        CREATE_LOGGER(NEO::LogManager::LogType::coreLogger, "coreLogger.log", NEO::LogManager::getLoggingLevel());
+        LOG_INFO_VERSION_SHA(NEO::LogManager::LogType::coreLogger, TOSTR(NEO_OCL_DRIVER_VERSION), NEO_REVISION);
+    }
+}
 
 ze_result_t DriverImp::driverInit(ze_init_flags_t flags) {
     std::call_once(initDriverOnce, [this]() {

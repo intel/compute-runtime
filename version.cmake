@@ -54,24 +54,24 @@ else()
   endif()
 endif()
 
-if(NOT DEFINED NEO_VERSION_BUILD)
-  set(NEO_VERSION_BUILD 0)
-  set(NEO_REVISION 0)
-else()
-  find_program(GIT NAMES git)
-  if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND")
-    if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
-      set(GIT_arg --git-dir=${NEO_SOURCE_DIR}/.git rev-parse HEAD)
-      execute_process(
-                      COMMAND ${GIT} ${GIT_arg}
-                      OUTPUT_VARIABLE NEO_REVISION
-                      OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
-    endif()
+find_program(GIT NAMES git)
+if(NOT "${GIT}" STREQUAL "GIT-NOTFOUND")
+  if(IS_DIRECTORY ${NEO_SOURCE_DIR}/.git)
+    set(GIT_arg --git-dir=${NEO_SOURCE_DIR}/.git rev-parse HEAD)
+    execute_process(
+                    COMMAND ${GIT} ${GIT_arg}
+                    OUTPUT_VARIABLE NEO_REVISION
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
   endif()
 endif()
+
 if(NOT DEFINED NEO_REVISION)
-  set(NEO_REVISION 0)
+  set(NEO_REVISION "No git SHA found, compiled outside git folder")
+endif()
+
+if(NOT DEFINED NEO_VERSION_BUILD)
+  set(NEO_VERSION_BUILD 0)
 endif()
 
 if(NOT DEFINED NEO_VERSION_HOTFIX)

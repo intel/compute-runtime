@@ -37,24 +37,35 @@ class LogManager {
 
     virtual void destroyLogger(LogManager::LogType logType) = 0;
 
+    static uint32_t getLoggingLevel();
+
     virtual ~LogManager() = default;
 
   protected:
     static std::unique_ptr<LogManager> instancePtr;
+    static uint32_t logLevel;
 };
 
 #define CREATE_LOGGER(logType, filename, logLevel) NEO::LogManager::getInstance()->createLogger(logType, filename, logLevel)
 
-#define LOG_CRITICAL(condition, logType, msg)                                                       \
-    if (condition) {                                                                                \
-        if (NEO::debugManager.flags.EnableLogLevel.get() != (uint32_t)NEO::LogLevel::logLevelOff) { \
-            auto logger = NEO::LogManager::getInstance()->getLogger(logType);                       \
-            if (logger) {                                                                           \
-                logger->logFatal(msg);                                                              \
-            }                                                                                       \
-        }                                                                                           \
+#define LOG_CRITICAL(condition, logType, msg)                                             \
+    if (condition) {                                                                      \
+        if (NEO::LogManager::getLoggingLevel() != (uint32_t)NEO::LogLevel::logLevelOff) { \
+            auto logger = NEO::LogManager::getInstance()->getLogger(logType);             \
+            if (logger) {                                                                 \
+                logger->logFatal(msg);                                                    \
+            }                                                                             \
+        }                                                                                 \
     }
 
 #define LOG_CRITICAL_FOR_CORE(condition, msg) LOG_CRITICAL(condition, NEO::LogManager::LogType::coreLogger, msg)
+
+#define LOG_INFO(logType, msg)                                                        \
+    if (NEO::LogManager::getLoggingLevel() != (uint32_t)NEO::LogLevel::logLevelOff) { \
+        auto logger = NEO::LogManager::getInstance()->getLogger(logType);             \
+        if (logger) {                                                                 \
+            logger->logInfo(msg);                                                     \
+        }                                                                             \
+    }
 
 } // namespace NEO
