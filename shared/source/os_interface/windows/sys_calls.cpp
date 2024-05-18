@@ -175,6 +175,14 @@ CONFIGRET cmGetDeviceInterfaceList(LPGUID interfaceClassGuid, DEVINSTID_W pDevic
     return CM_Get_Device_Interface_List(interfaceClassGuid, pDeviceID, buffer, bufferLen, ulFlags);
 }
 
+LPVOID heapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {
+    return HeapAlloc(hHeap, dwFlags, dwBytes);
+}
+
+BOOL heapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
+    return HeapFree(hHeap, dwFlags, lpMem);
+}
+
 SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
     return VirtualQuery(lpAddress, lpBuffer, dwLength);
 }

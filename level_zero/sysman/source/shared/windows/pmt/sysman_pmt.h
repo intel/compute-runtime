@@ -25,11 +25,11 @@ namespace Sysman {
 class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
   public:
     PlatformMonitoringTech() = delete;
-    PlatformMonitoringTech(std::vector<wchar_t> deviceInterface) : deviceInterface(deviceInterface) {}
+    PlatformMonitoringTech(std::vector<wchar_t> deviceInterface) : deviceInterface(std::move(deviceInterface)) {}
     virtual ~PlatformMonitoringTech();
 
-    virtual ze_result_t readValue(const std::string key, uint32_t &value);
-    virtual ze_result_t readValue(const std::string key, uint64_t &value);
+    virtual ze_result_t readValue(const std::string &key, uint32_t &value);
+    virtual ze_result_t readValue(const std::string &key, uint64_t &value);
     ze_result_t getKeyOffsetMap(std::map<std::string, std::pair<uint32_t, uint32_t>> &keyOffsetMap);
     static std::unique_ptr<PlatformMonitoringTech> create();
     static ze_result_t enumeratePMTInterface(const GUID *Guid, std::vector<wchar_t> &deviceInterface);
@@ -37,12 +37,14 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
   protected:
     std::map<std::string, std::pair<uint32_t, uint32_t>> keyOffsetMap;
     unsigned long guidToIndexList[PmtSysman::PmtMaxInterfaces] = {0};
-    ze_result_t ioctlReadWriteData(std::vector<wchar_t> path, uint32_t ioctl, void *bufferIn, uint32_t inSize, void *bufferOut, uint32_t outSize, uint32_t *sizeReturned);
+    ze_result_t ioctlReadWriteData(std::vector<wchar_t> &path, uint32_t ioctl, void *bufferIn, uint32_t inSize, void *bufferOut, uint32_t outSize, uint32_t *sizeReturned);
     virtual ze_result_t init();
     ze_result_t getGuid();
     decltype(&NEO::SysCalls::deviceIoControl) pdeviceIoControl = NEO::SysCalls::deviceIoControl;
     decltype(&NEO::SysCalls::createFile) pcreateFile = NEO::SysCalls::createFile;
     decltype(&NEO::SysCalls::closeHandle) pcloseHandle = NEO::SysCalls::closeHandle;
+    decltype(&NEO::SysCalls::heapAlloc) heapAllocFunction = NEO::SysCalls::heapAlloc;
+    decltype(&NEO::SysCalls::heapFree) heapFreeFunction = NEO::SysCalls::heapFree;
 
   private:
     std::vector<wchar_t> deviceInterface;

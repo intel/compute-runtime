@@ -111,6 +111,12 @@ CONFIGRET(*sysCallsCmGetDeviceInterfaceListSize)
 CONFIGRET(*sysCallsCmGetDeviceInterfaceList)
 (LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) = nullptr;
 
+LPVOID(*sysCallsHeapAlloc)
+(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) = nullptr;
+
+BOOL(*sysCallsHeapFree)
+(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) = nullptr;
+
 bool pathExists(const std::string &path) {
     std::string tempP1 = path;
     if (!path.empty() && path.back() == PATH_SEPARATOR) {
@@ -327,6 +333,20 @@ CONFIGRET cmGetDeviceInterfaceList(LPGUID interfaceClassGuid, DEVINSTID_W pDevic
         return sysCallsCmGetDeviceInterfaceList(interfaceClassGuid, pDeviceID, buffer, bufferLen, ulFlags);
     }
     return -1;
+}
+
+LPVOID heapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) {
+    if (sysCallsHeapAlloc != nullptr) {
+        return sysCallsHeapAlloc(hHeap, dwFlags, dwBytes);
+    }
+    return HeapAlloc(hHeap, dwFlags, dwBytes);
+}
+
+BOOL heapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
+    if (sysCallsHeapFree != nullptr) {
+        return sysCallsHeapFree(hHeap, dwFlags, lpMem);
+    }
+    return HeapFree(hHeap, dwFlags, lpMem);
 }
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {

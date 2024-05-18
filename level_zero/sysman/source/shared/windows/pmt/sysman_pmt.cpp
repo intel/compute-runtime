@@ -13,7 +13,7 @@
 namespace L0 {
 namespace Sysman {
 
-ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint32_t &value) {
+ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint32_t &value) {
 
     auto offset = keyOffsetMap.find(key);
     if (offset == keyOffsetMap.end()) {
@@ -43,7 +43,7 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint32_t &v
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint64_t &value) {
+ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint64_t &value) {
     auto offset = keyOffsetMap.find(key);
     if (offset == keyOffsetMap.end()) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -73,13 +73,12 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint64_t &v
 }
 
 ze_result_t PlatformMonitoringTech::getGuid() {
-    int status;
+    ze_result_t status;
     unsigned long sizeNeeded;
-    PmtSysman::PmtTelemetryDiscovery *telemetryDiscovery;
+    PmtSysman::PmtTelemetryDiscovery *telemetryDiscovery = nullptr;
 
     // Get Telmetry Discovery size
     status = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemetryDiscoverySize, NULL, 0, (void *)&sizeNeeded, sizeof(sizeNeeded), NULL);
-
     if (status != ZE_RESULT_SUCCESS || sizeNeeded == 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Ioctl call could not return a valid value for the PMT interface telemetry size needed\n");
@@ -87,23 +86,33 @@ ze_result_t PlatformMonitoringTech::getGuid() {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    telemetryDiscovery = (PmtSysman::PmtTelemetryDiscovery *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeNeeded);
+    telemetryDiscovery = (PmtSysman::PmtTelemetryDiscovery *)heapAllocFunction(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeNeeded);
+    if (telemetryDiscovery == nullptr) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
 
     // Get Telmetry Discovery Structure
     status = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemetryDiscovery, NULL, 0, (void *)telemetryDiscovery, sizeNeeded, NULL);
-
     if (status != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Ioctl call could not return a valid value for the PMT telemetry structure which provides the guids supported.\n");
         DEBUG_BREAK_IF(true);
+        heapFreeFunction(GetProcessHeap(), 0, telemetryDiscovery);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    for (uint32_t x = 0; x < telemetryDiscovery->count; x++) {
-        guidToIndexList[telemetryDiscovery->telemetry[x].index] = telemetryDiscovery->telemetry[x].guid;
+    for (uint32_t i = 0; i < telemetryDiscovery->count; i++) {
+        if (telemetryDiscovery->telemetry[i].index < PmtSysman::PmtMaxInterfaces) {
+            guidToIndexList[telemetryDiscovery->telemetry[i].index] = telemetryDiscovery->telemetry[i].guid;
+        } else {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Telemetry index is out of range.\n");
+            DEBUG_BREAK_IF(true);
+            heapFreeFunction(GetProcessHeap(), 0, telemetryDiscovery);
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
     }
-
-    return ZE_RESULT_SUCCESS;
+    return heapFreeFunction(GetProcessHeap(), 0, telemetryDiscovery) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
 ze_result_t PlatformMonitoringTech::init() {
@@ -173,10 +182,9 @@ ze_result_t PlatformMonitoringTech::enumeratePMTInterface(const GUID *guid, std:
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::vector<wchar_t> path, uint32_t ioctl, void *bufferIn, uint32_t inSize, void *bufferOut, uint32_t outSize, uint32_t *sizeReturned) {
-
+ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::vector<wchar_t> &path, uint32_t ioctl, void *bufferIn, uint32_t inSize, void *bufferOut, uint32_t outSize, uint32_t *sizeReturned) {
     void *handle;
-    int32_t status = FALSE;
+    BOOL status = FALSE;
 
     if (path.empty()) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -187,13 +195,13 @@ ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::vector<wchar_t> path
 
     // Open handle to driver
     handle = this->pcreateFile(&path[0], GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-
     if (handle == INVALID_HANDLE_VALUE) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                               "Could not open the pmt interface path %s.\n", &path[0]);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }
+
     // Call DeviceIoControl
     status = this->pdeviceIoControl(handle, ioctl, bufferIn, inSize, bufferOut, outSize, reinterpret_cast<unsigned long *>(sizeReturned), NULL);
 
