@@ -88,6 +88,7 @@ zeGetMemProcAddrTable(
     fillDdiEntry(pDdiTable->pfnCloseIpcHandle, L0::zeMemCloseIpcHandle, version, ZE_API_VERSION_1_0);
     fillDdiEntry(pDdiTable->pfnFreeExt, L0::zeMemFreeExt, version, ZE_API_VERSION_1_3);
     fillDdiEntry(pDdiTable->pfnPutIpcHandle, L0::zeMemPutIpcHandle, version, ZE_API_VERSION_1_6);
+    fillDdiEntry(pDdiTable->pfnGetPitchFor2dImage, L0::zeMemGetPitchFor2dImage, version, ZE_API_VERSION_1_9);
     driverDdiTable.coreDdiTable.Mem = *pDdiTable;
     if (driverDdiTable.enableTracing) {
         fillDdiEntry(pDdiTable->pfnAllocShared, zeMemAllocSharedTracing, version, ZE_API_VERSION_1_0);
