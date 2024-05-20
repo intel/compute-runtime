@@ -47,6 +47,7 @@ struct CommandListImp : public CommandList {
     void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
     void enableCopyOperationOffload(uint32_t productFamily, Device *device, const ze_command_queue_desc_t *desc);
+    bool isCopyOffloadEnabled() const { return copyOperationOffloadEnabled; }
 
   protected:
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;

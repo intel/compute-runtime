@@ -1468,7 +1468,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents,
                                                                    bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) {
-    const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !forceDisableCopyOnlyInOrderSignaling && isCopyOnly();
+    const bool isCopyOnlyEnabled = isCopyOnly() || isCopyOffloadEnabled();
+
+    const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
@@ -1496,7 +1498,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     bool isStateless = this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless;
     const bool isHeapless = this->isHeaplessModeEnabled();
 
-    if (!isCopyOnly()) {
+    if (!isCopyOnlyEnabled) {
         uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
 
         const size_t middleAlignment = MemoryConstants::cacheLineSize;
@@ -1527,7 +1529,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         kernelCounter += rightSize > 0 ? 1 : 0;
     }
 
-    bool waitForImplicitInOrderDependency = !isCopyOnly() || inOrderCopyOnlySignalingAllowed;
+    bool waitForImplicitInOrderDependency = !isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed;
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, false, waitForImplicitInOrderDependency, false);
 
@@ -1559,7 +1561,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false);
 
-    if (isCopyOnly()) {
+    if (isCopyOnlyEnabled) {
         if (NEO::debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
             NEO::MiFlushArgs args{this->dummyBlitWa};
             args.tlbFlush = true;
@@ -1634,18 +1636,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     addToMappedEventList(signalEvent);
 
     if (this->isInOrderExecutionEnabled()) {
-        bool emitPipeControl = !isCopyOnly() && launchParams.pipeControlSignalling;
+        bool emitPipeControl = !isCopyOnlyEnabled && launchParams.pipeControlSignalling;
 
         if (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed || emitPipeControl) {
-            if (!signalEvent && !isCopyOnly()) {
+            if (!signalEvent && !isCopyOnlyEnabled) {
                 NEO::PipeControlArgs args;
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
             }
             appendSignalInOrderDependencyCounter(signalEvent);
         }
 
-        if (!isCopyOnly() || inOrderCopyOnlySignalingAllowed) {
-            bool nonWalkerInOrderCmdChaining = !isCopyOnly() && isInOrderNonWalkerSignalingRequired(signalEvent) && !emitPipeControl;
+        if (!isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed) {
+            bool nonWalkerInOrderCmdChaining = !isCopyOnlyEnabled && isInOrderNonWalkerSignalingRequired(signalEvent) && !emitPipeControl;
             handleInOrderDependencyCounter(signalEvent, nonWalkerInOrderCmdChaining);
         }
     } else {
@@ -1678,8 +1680,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                                                          uint32_t numWaitEvents,
                                                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch,
                                                                          bool forceDisableCopyOnlyInOrderSignaling) {
+    const bool isCopyOnlyEnabled = isCopyOnly() || isCopyOffloadEnabled();
 
-    const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !forceDisableCopyOnlyInOrderSignaling && isCopyOnly();
+    const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
@@ -1717,7 +1720,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    if (isCopyOnly()) {
+    if (isCopyOnlyEnabled) {
         result = appendMemoryCopyBlitRegion(&srcAllocationStruct, &dstAllocationStruct, *srcRegion, *dstRegion,
                                             {srcRegion->width, srcRegion->height, srcRegion->depth},
                                             srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3,

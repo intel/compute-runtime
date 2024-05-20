@@ -587,7 +587,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     auto estimatedSize = commonImmediateCommandSize;
-    if (isCopyOnly()) {
+    if (isCopyOnly() || isCopyOffloadEnabled()) {
         auto nBlits = size / (NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(this->device->getNEODevice()->getRootDeviceEnvironment()) *
                               NEO::BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(this->device->getNEODevice()->getRootDeviceEnvironment(), true));
         auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize();
@@ -641,7 +641,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
     auto estimatedSize = commonImmediateCommandSize;
-    if (isCopyOnly()) {
+    if (isCopyOnly() || isCopyOffloadEnabled()) {
         auto xBlits = static_cast<size_t>(std::ceil(srcRegion->width / static_cast<double>(BlitterConstants::maxBlitWidth)));
         auto yBlits = static_cast<size_t>(std::ceil(srcRegion->height / static_cast<double>(BlitterConstants::maxBlitHeight)));
         auto zBlits = static_cast<size_t>(srcRegion->depth);

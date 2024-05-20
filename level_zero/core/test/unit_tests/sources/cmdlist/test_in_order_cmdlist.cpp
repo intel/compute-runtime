@@ -2025,7 +2025,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
     ultCsr->registerClient(&client1);
     ultCsr->registerClient(&client2);
 
-    auto immCmdList = createImmCmdListImpl<gfxCoreFamily, MyMockCmdList>();
+    auto immCmdList = createImmCmdListImpl<gfxCoreFamily, MyMockCmdList>(false);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -2138,7 +2138,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
     ultCsr->registerClient(&client1);
     ultCsr->registerClient(&client2);
 
-    auto immCmdList = createImmCmdListImpl<gfxCoreFamily, MyMockCmdList>();
+    auto immCmdList = createImmCmdListImpl<gfxCoreFamily, MyMockCmdList>(false);
 
     auto eventPool = createEvents<FamilyType>(1, true);
     events[0]->signalScope = 0;
@@ -6438,7 +6438,7 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppend
     auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    auto immCmdList = createImmCmdListImpl<gfxCoreFamily, MyCmdList>();
+    auto immCmdList = createImmCmdListImpl<gfxCoreFamily, MyCmdList>(false);
     immCmdList->partitionCount = partitionCount;
     immCmdList->synchronizedDispatchMode = NEO::SynchronizedDispatchMode::limited;
 
@@ -6820,6 +6820,11 @@ struct CopyOffloadInOrderTests : public InOrderCmdListTests {
         InOrderCmdListTests::SetUp();
     }
 
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdListWithOffload() {
+        return createImmCmdListImpl<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(true);
+    }
+
     std::unique_ptr<VariableBackup<NEO::HardwareInfo>> backupHwInfo;
 };
 
@@ -6904,6 +6909,46 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
         EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
 
         zeCommandListDestroy(cmdListHandle);
+    }
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsThenUserCopyCommands, IsAtLeastXeHpCore) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+    EXPECT_FALSE(immCmdList->isCopyOnly());
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    uint32_t copyData = 0;
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), copyItor);
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+        immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), copyItor);
     }
 }
 

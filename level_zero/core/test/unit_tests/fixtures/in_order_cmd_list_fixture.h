@@ -124,11 +124,11 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
 
     template <GFXCORE_FAMILY gfxCoreFamily>
     DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createImmCmdList() {
-        return createImmCmdListImpl<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+        return createImmCmdListImpl<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(false);
     }
 
     template <GFXCORE_FAMILY gfxCoreFamily, typename CmdListT>
-    DestroyableZeUniquePtr<CmdListT> createImmCmdListImpl() {
+    DestroyableZeUniquePtr<CmdListT> createImmCmdListImpl(bool copyOffloadEnabled) {
         auto cmdList = makeZeUniquePtr<CmdListT>();
 
         auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
@@ -145,6 +145,10 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);
         cmdList->enableInOrderExecution();
+
+        if (copyOffloadEnabled) {
+            cmdList->enableCopyOperationOffload(device->getHwInfo().platform.eProductFamily, device, &desc);
+        }
 
         createdCmdLists++;
 
