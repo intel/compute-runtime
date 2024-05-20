@@ -151,6 +151,7 @@ class IoctlHelperXe : public IoctlHelper {
     int debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg);
     void *freeDebugMetadata(void *metadata);
     int getRunaloneExtProperty();
+    virtual bool isExtraEngineClassAllowed(uint16_t engineClass) const { return false; }
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;

@@ -338,7 +338,7 @@ class DrmMockXe : public DrmMockCustom {
     static constexpr int32_t mockMaxExecQueuePriority = 3;
     static constexpr uint32_t mockTimestampFrequency = 12500000;
     static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
-    uint64_t queryEngines[45]{}; // 1 qword for num engines and 4 qwords per engine
+    uint64_t queryEngines[52]{}; // 1 qword for num engines and 4 qwords per engine
     static_assert(sizeof(drm_xe_mem_region) == 11 * sizeof(uint64_t), "");
     uint64_t queryMemUsage[34]{}; // 1 qword for num regions and 11 qwords per region
     static_assert(sizeof(drm_xe_gt) == 12 * sizeof(uint64_t), "");

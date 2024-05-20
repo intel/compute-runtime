@@ -240,12 +240,14 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
         engineClassInstance.engineInstance = engine.engine_instance;
         xeLog("\t%s:%d:%d\n", xeGetClassName(engineClassInstance.engineClass), engineClassInstance.engineInstance, engine.gt_id);
 
-        if (engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCompute) ||
-            engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassRender) ||
-            engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCopy) ||
-            (isSysmanEnabled && (engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideo) ||
-                                 engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideoEnhance)))) {
+        const bool isBaseEngineClass = engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCompute) ||
+                                       engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassRender) ||
+                                       engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassCopy);
 
+        const bool isSysmanEngineClass = isSysmanEnabled && (engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideo) ||
+                                                             engineClassInstance.engineClass == getDrmParamValue(DrmParam::engineClassVideoEnhance));
+
+        if (isBaseEngineClass || isSysmanEngineClass || isExtraEngineClassAllowed(engineClassInstance.engineClass)) {
             if (enginesPerTile.size() <= tile) {
                 enginesPerTile.resize(tile + 1);
             }
