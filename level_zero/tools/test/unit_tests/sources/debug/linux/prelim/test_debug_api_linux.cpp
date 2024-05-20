@@ -1035,7 +1035,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerSucceedsThenCorrectMe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto errorMessage = ::testing::internal::GetCapturedStdout();
-    EXPECT_EQ(std::string("\nINFO: PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: open.pid: 4660, open.events: 0, debugFd: 10\n"), errorMessage);
+    EXPECT_TRUE(hasSubstr(errorMessage, std::string("INFO: PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: open.pid: 4660, open.events: 0, debugFd: 10\n")));
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClosingConnectionThenSysCallCloseOnFdIsCalled) {
@@ -5276,7 +5276,8 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerInfoLogsWhenHandlingContextParamEventWith
               session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.find(77));
 
     auto errorMessage = ::testing::internal::GetCapturedStdout();
-    EXPECT_TRUE(hasSubstr(errorMessage, std::string("client_handle = 1 ctx_handle = 20\n\nINFO: I915_CONTEXT_PARAM UNHANDLED = 1\n")));
+    EXPECT_TRUE(hasSubstr(errorMessage, std::string("client_handle = 1 ctx_handle = 20\n")));
+    EXPECT_TRUE(hasSubstr(errorMessage, std::string("INFO: I915_CONTEXT_PARAM UNHANDLED = 1\n")));
 }
 
 TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForInterruptThenProperIoctlsIsCalled) {

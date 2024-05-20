@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,11 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/io_functions.h"
 
+#include <chrono>
 #include <cstdint>
+#include <iostream>
 #include <memory>
+#include <sstream>
 #include <string_view>
 
 enum class DebugFunctionalityLevel {
@@ -172,6 +175,13 @@ class DebugSettingsManager {
 
 extern DebugSettingsManager<globalDebugFunctionalityLevel> debugManager;
 
+class DurationLog {
+    DurationLog() = delete;
+
+  public:
+    static std::string getTimeString();
+};
+
 #define PRINT_DEBUGGER_LOG_TO_FILE(...)                            \
     NEO::debugManager.logLazyEvaluateArgs([&] {                    \
         char temp[4000];                                           \
@@ -189,7 +199,10 @@ extern DebugSettingsManager<globalDebugFunctionalityLevel> debugManager;
 
 #define PRINT_DEBUGGER_INFO_LOG(STR, ...)                                                                         \
     if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) { \
-        PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                   \
+                                                                                                                  \
+        auto time = NEO::DurationLog::getTimeString();                                                            \
+        time = "\n" + time + " INFO: " + STR;                                                                     \
+        PRINT_DEBUGGER_LOG(stdout, time.c_str(), __VA_ARGS__)                                                     \
     }
 
 #define PRINT_DEBUGGER_THREAD_LOG(STR, ...)                                                                          \
