@@ -440,7 +440,8 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
 
             auto relocAddress = ptrOffset(segment.hostPointer, static_cast<uintptr_t>(relocation.offset));
             if (relocation.type == LinkerInput::RelocationInfo::Type::perThreadPayloadOffset) {
-                *reinterpret_cast<uint32_t *>(relocAddress) = kernelDescriptors.at(segId)->kernelAttributes.crossThreadDataSize;
+                uint32_t crossThreadDataSize = kernelDescriptors.at(segId)->kernelAttributes.crossThreadDataSize - kernelDescriptors.at(segId)->kernelAttributes.inlineDataPayloadSize;
+                *reinterpret_cast<uint32_t *>(relocAddress) = crossThreadDataSize;
             } else if (relocation.symbolName == implicitArgsRelocationSymbolName) {
                 pImplicitArgsRelocationAddresses[static_cast<uint32_t>(segId)].push_back(reinterpret_cast<uint32_t *>(relocAddress));
             } else if (relocation.symbolName.empty()) {

@@ -2378,7 +2378,8 @@ TEST_F(LinkerTests, givenPerThreadPayloadOffsetRelocationWhenPatchingInstruction
 
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     KernelDescriptor kd;
-    kd.kernelAttributes.crossThreadDataSize = 0x20;
+    kd.kernelAttributes.crossThreadDataSize = 0x40;
+    kd.kernelAttributes.inlineDataPayloadSize = 0x20;
     kernelDescriptors.push_back(&kd);
 
     WhiteBox<NEO::Linker> linker(linkerInput);
@@ -2391,5 +2392,6 @@ TEST_F(LinkerTests, givenPerThreadPayloadOffsetRelocationWhenPatchingInstruction
     NEO::Linker::UnresolvedExternals unresolvedExternals;
     linker.patchInstructionsSegments({segmentToPatch}, unresolvedExternals, kernelDescriptors);
     auto perThreadPayloadOffsetPatchedValue = reinterpret_cast<uint32_t *>(ptrOffset(segmentToPatch.hostPointer, static_cast<size_t>(rel.offset)));
-    EXPECT_EQ(kd.kernelAttributes.crossThreadDataSize, static_cast<uint32_t>(*perThreadPayloadOffsetPatchedValue));
+    uint32_t expectedPatchedValue = kd.kernelAttributes.crossThreadDataSize - kd.kernelAttributes.inlineDataPayloadSize;
+    EXPECT_EQ(expectedPatchedValue, static_cast<uint32_t>(*perThreadPayloadOffsetPatchedValue));
 }
