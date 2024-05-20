@@ -242,6 +242,7 @@ class Device : public ReferenceTrackedObject<Device> {
     EnginesT allEngines;
 
     std::vector<SecondaryContexts> secondaryEngines;
+    std::vector<std::unique_ptr<CommandStreamReceiver>> secondaryCsrs;
 
     EngineGroupsT regularEngineGroups;
     std::vector<SubDevice *> subdevices;

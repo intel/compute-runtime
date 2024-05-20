@@ -70,6 +70,7 @@ Device::~Device() {
 
     syncBufferHandler.reset();
     isaPoolAllocator.releasePools();
+    secondaryCsrs.clear();
     executionEnvironment->memoryManager->releaseSecondaryOsContexts(this->getRootDeviceIndex());
     commandStreamReceivers.clear();
     executionEnvironment->memoryManager->waitForDeletions();
@@ -500,13 +501,13 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, uint32_t i
     EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, false);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterSecondaryOsContext(&primaryCsr->getOsContext(), commandStreamReceiver.get(), engineDescriptor);
+    osContext->incRefInternal();
     commandStreamReceiver->setupContext(*osContext);
     commandStreamReceiver->setPrimaryCsr(primaryCsr);
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
     secondaryEngines[index].engines.push_back(engine);
-
-    commandStreamReceivers.push_back(std::move(commandStreamReceiver));
+    secondaryCsrs.push_back(std::move(commandStreamReceiver));
 
     return true;
 }

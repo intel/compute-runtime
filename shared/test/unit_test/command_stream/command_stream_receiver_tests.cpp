@@ -5339,3 +5339,53 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrWhenGettingInte
         EXPECT_EQ(primaryCsr->getPrimaryScratchSpaceController(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getPrimaryScratchSpaceController());
     }
 }
+
+HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    const auto ccsIndex = 0;
+    auto &commandStreamReceiver0 = *device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular})->commandStreamReceiver;
+    auto &commandStreamReceiver1 = *device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular})->commandStreamReceiver;
+
+    auto csr0ContextId = commandStreamReceiver0.getOsContext().getContextId();
+    auto csr1ContextId = commandStreamReceiver1.getOsContext().getContextId();
+
+    auto initialTaskCount0 = commandStreamReceiver0.peekTaskCount();
+    auto initialTaskCount1 = commandStreamReceiver1.peekTaskCount();
+    MockGraphicsAllocation graphicsAllocation;
+
+    commandStreamReceiver0.makeResident(graphicsAllocation);
+    EXPECT_EQ(1u, commandStreamReceiver0.getResidencyAllocations().size());
+    EXPECT_EQ(0u, commandStreamReceiver1.getResidencyAllocations().size());
+
+    commandStreamReceiver1.makeResident(graphicsAllocation);
+    EXPECT_EQ(1u, commandStreamReceiver0.getResidencyAllocations().size());
+    EXPECT_EQ(1u, commandStreamReceiver1.getResidencyAllocations().size());
+
+    EXPECT_EQ(initialTaskCount0 + 1u, graphicsAllocation.getResidencyTaskCount(csr0ContextId));
+    EXPECT_EQ(initialTaskCount1 + 1u, graphicsAllocation.getResidencyTaskCount(csr1ContextId));
+
+    commandStreamReceiver0.makeNonResident(graphicsAllocation);
+    EXPECT_FALSE(graphicsAllocation.isResident(csr0ContextId));
+    EXPECT_TRUE(graphicsAllocation.isResident(csr1ContextId));
+
+    commandStreamReceiver1.makeNonResident(graphicsAllocation);
+    EXPECT_FALSE(graphicsAllocation.isResident(csr0ContextId));
+    EXPECT_FALSE(graphicsAllocation.isResident(csr1ContextId));
+
+    EXPECT_EQ(1u, commandStreamReceiver0.getEvictionAllocations().size());
+    EXPECT_EQ(1u, commandStreamReceiver1.getEvictionAllocations().size());
+}

@@ -25,6 +25,7 @@
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -2868,7 +2869,17 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     otherCommandQueue->destroy();
 }
 
-HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+struct ContextGroupStateBaseAddressGlobalStatelessFixture : public CommandListGlobalHeapsFixture<static_cast<int32_t>(NEO::HeapAddressModel::globalStateless)> {
+    using BaseClass = CommandListGlobalHeapsFixture<static_cast<int32_t>(NEO::HeapAddressModel::globalStateless)>;
+    void setUp() {
+        debugManager.flags.ContextGroupSize.set(5);
+        BaseClass::setUpParams(static_cast<int32_t>(NEO::HeapAddressModel::globalStateless));
+    }
+    DebugManagerStateRestore restorer;
+};
+
+using ContextGroupStateBaseAddressGlobalStatelessTest = Test<ContextGroupStateBaseAddressGlobalStatelessFixture>;
+HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
           givenContextGroupEnabledAndCommandQueueUsingGlobalStatelessWhenQueueInHeaplessModeThenUsingScratchControllerAndHeapAllocationFromPrimaryCsr,
           IsAtLeastXeHpCore) {
 
@@ -2876,9 +2887,6 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
         GTEST_SKIP();
     }
-
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ContextGroupSize.set(5);
 
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
@@ -2903,7 +2911,8 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     auto otherCommandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, secondaryCsr, &desc);
     otherCommandQueue->initialize(false, false, false);
     otherCommandQueue->heaplessModeEnabled = true;
-
+    ze_result_t returnValue;
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false)));
     commandList->close();
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
 

@@ -367,7 +367,7 @@ OsContext *MemoryManager::createAndRegisterSecondaryOsContext(const OsContext *p
 
     updateLatestContextIdForRootDevice(rootDeviceIndex);
 
-    auto contextId = primaryContext->getContextId();
+    auto contextId = ++latestContextId;
     auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), rootDeviceIndex, contextId, engineDescriptor);
     osContext->incRefInternal();
 
@@ -376,6 +376,7 @@ OsContext *MemoryManager::createAndRegisterSecondaryOsContext(const OsContext *p
     UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
 
     secondaryEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
+    allRegisteredEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
 
     return osContext;
 }

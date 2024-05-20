@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -21,6 +22,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
@@ -1135,8 +1137,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenCCSEngineAndContextGroupSizeEnabl
 
     UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
 
-    deviceFactory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular});
-
     auto defaultEngine = deviceFactory.rootDevices[0]->getDefaultEngine();
     EXPECT_NE(nullptr, &defaultEngine);
 
@@ -1308,5 +1308,63 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledWhenDeviceIsDestroyedThenSecondary
     device.reset(nullptr);
 
     EXPECT_EQ(0u, memoryManager->secondaryEngines[0].size());
+    executionEnvironment->decRefInternal();
+}
+
+HWTEST_F(DeviceTests, givenContextGroupEnabledAndAllocationUsedBySeconadryContextWhenDeviceIsDestroyedThenNotCompletedAllocationsAreWaitedOn) {
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    executionEnvironment->incRefInternal();
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+    auto memoryManager = static_cast<MockMemoryManager *>(executionEnvironment->memoryManager.get());
+
+    const auto ccsIndex = 0;
+    auto secondaryEnginesCount = device->secondaryEngines[ccsIndex].engines.size();
+    ASSERT_EQ(5u, secondaryEnginesCount);
+
+    auto engine = device->getSecondaryEngineCsr(ccsIndex, {aub_stream::ENGINE_CCS, EngineUsage::regular});
+    ASSERT_NE(nullptr, engine);
+    auto csr = engine->commandStreamReceiver;
+    auto engine2 = device->getSecondaryEngineCsr(ccsIndex, {aub_stream::ENGINE_CCS, EngineUsage::regular});
+    ASSERT_NE(nullptr, engine2);
+    auto csr2 = engine2->commandStreamReceiver;
+    ASSERT_NE(csr, csr2);
+    auto tagAddress = csr->getTagAddress();
+    auto tagAddress2 = csr2->getTagAddress();
+
+    EXPECT_NE(csr->getOsContext().getContextId(), csr2->getOsContext().getContextId());
+    EXPECT_NE(tagAddress, tagAddress2);
+
+    auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    usedAllocationAndNotGpuCompleted->updateTaskCount(*tagAddress + 1, csr->getOsContext().getContextId());
+
+    auto usedAllocationAndNotGpuCompleted2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    usedAllocationAndNotGpuCompleted2->updateTaskCount(*tagAddress2 + 1, csr2->getOsContext().getContextId());
+
+    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationAndNotGpuCompleted);
+    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationAndNotGpuCompleted2);
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(csr->getDeferredAllocations().peekIsEmpty());
+    EXPECT_EQ(csr->getDeferredAllocations().peekHead(), usedAllocationAndNotGpuCompleted);
+
+    usedAllocationAndNotGpuCompleted->updateTaskCount(csr->peekLatestFlushedTaskCount(), csr->getOsContext().getContextId());
+    usedAllocationAndNotGpuCompleted2->updateTaskCount(csr2->peekLatestFlushedTaskCount(), csr2->getOsContext().getContextId());
+
+    device.reset(nullptr);
+
+    EXPECT_EQ(0u, memoryManager->secondaryEngines[0].size());
+    EXPECT_EQ(0u, memoryManager->allRegisteredEngines[0].size());
     executionEnvironment->decRefInternal();
 }
