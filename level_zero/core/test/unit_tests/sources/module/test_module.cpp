@@ -25,6 +25,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -1879,22 +1880,11 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithInternalRelocationAndUnresolvedExt
     EXPECT_EQ(externalSymbolAddress, *reinterpret_cast<uint64_t *>(ptrOffset(isaPtr, externalRelocationOffset)));
 }
 
-template <PRODUCT_FAMILY productFamily>
-class MockCompilerProductHelperHw : public CompilerProductHelperHw<productFamily> {
-  public:
-    bool isHeaplessModeEnabled() const override {
-        return heaplessModeEnabled;
-    }
-
-    MockCompilerProductHelperHw(bool heaplessModeEnabled) : CompilerProductHelperHw<productFamily>(), heaplessModeEnabled(heaplessModeEnabled) {}
-    bool heaplessModeEnabled = false;
-};
-
 HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAndUnresolvedExternalSymbolWhenLinkModuleThenPatchedAddressesAreCorrect, MatchAny) {
 
     for (bool heaplessModeEnabled : {true, false}) {
 
-        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHw<productFamily>(heaplessModeEnabled));
+        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeaplessHw<productFamily>(heaplessModeEnabled));
         neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
 
         auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -1941,7 +1931,7 @@ HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAn
 
     for (bool heaplessModeEnabled : {true, false}) {
 
-        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHw<productFamily>(heaplessModeEnabled));
+        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHeaplessHw<productFamily>(heaplessModeEnabled));
         neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
 
         auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
