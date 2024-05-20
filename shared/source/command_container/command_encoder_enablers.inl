@@ -25,7 +25,7 @@ template void NEO::EncodeDispatchKernel<Family>::programBarrierEnable<Family::IN
 template void NEO::EncodeDispatchKernel<Family>::setScratchAddress<false>(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr);
 template void NEO::EncodeDispatchKernel<Family>::setScratchAddress<true>(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr);
 template void NEO::EncodeDispatchKernel<Family>::programInlineDataHeapless<false>(uint8_t *inlineDataPtr, EncodeDispatchKernelArgs &args, CommandContainer &container, uint64_t offsetThreadData);
-template void NEO::EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultThreadArbitrationPolicy);
+template void NEO::EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy);
 
 template struct NEO::EncodeStates<Family>;
 template struct NEO::EncodeMath<Family>;

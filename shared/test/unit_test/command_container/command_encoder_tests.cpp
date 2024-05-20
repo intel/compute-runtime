@@ -689,8 +689,8 @@ HWTEST_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPoli
 
     KernelDescriptor kernelDescriptor;
     kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
-    int32_t defaultThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
-    EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultThreadArbitrationPolicy);
+    int32_t defaultPipelinedThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+    EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
 
     constexpr uint32_t iddSizeInDW = 8;
     for (uint32_t i = 0u; i < iddSizeInDW; i++) {

@@ -10,6 +10,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
@@ -432,7 +433,7 @@ struct CommandList : _ze_command_list_handle_t {
     CommandListType cmdListType = CommandListType::typeRegular;
     uint32_t partitionCount = 1;
     uint32_t defaultMocsIndex = 0;
-    int32_t defaultThreadArbitrationPolicy = 0;
+    int32_t defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
 
     bool isFlushTaskSubmissionEnabled = false;
     bool isSyncModeQueue = false;

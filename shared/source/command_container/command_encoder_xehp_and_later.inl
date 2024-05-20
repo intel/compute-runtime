@@ -116,7 +116,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                        hwInfo);
 
     if (args.isHeaplessStateInitEnabled) {
-        EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, args.defaultThreadArbitrationPolicy);
+        EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, args.defaultPipelinedThreadArbitrationPolicy);
     }
 
     auto &gfxCoreHelper = args.device->getGfxCoreHelper();
