@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 
 #include <queue>
 #include <string>
+#include <vector>
 
 namespace NEO {
 
@@ -54,8 +55,8 @@ struct ElfEncoder {
     ElfEncoder(bool addUndefSectionHeader = true, bool addHeaderSectionNamesSection = true,
                typename ElfSectionHeaderTypes<numBits>::AddrAlign defaultDataAlignment = 8U);
 
-    void appendSection(const ElfSectionHeader<numBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData);
-    void appendSegment(const ElfProgramHeader<numBits> &programHeader, const ArrayRef<const uint8_t> segmentData);
+    ElfSectionHeader<numBits> &appendSection(const ElfSectionHeader<numBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData);
+    ElfProgramHeader<numBits> &appendSegment(const ElfProgramHeader<numBits> &programHeader, const ArrayRef<const uint8_t> segmentData);
 
     ElfSectionHeader<numBits> &appendSection(SectionHeaderType sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData);
     ElfProgramHeader<numBits> &appendSegment(ProgramHeaderType segmentType, const ArrayRef<const uint8_t> segmentData);
@@ -98,6 +99,17 @@ struct ElfEncoder {
     StackVec<ProgramSectionID, 32> programSectionLookupTable;
     uint32_t shStrTabNameOffset = 0;
 };
+
+struct NoteToEncode {
+    std::string name;
+    std::string desc;
+    uint32_t type;
+};
+
+template <ElfIdentifierClass numBits = EI_CLASS_64>
+std::vector<uint8_t> encodeNoteSectionData(ArrayRef<const NoteToEncode> notes);
+extern template std::vector<uint8_t> encodeNoteSectionData<EI_CLASS_64>(ArrayRef<const NoteToEncode> notes);
+extern template std::vector<uint8_t> encodeNoteSectionData<EI_CLASS_32>(ArrayRef<const NoteToEncode> notes);
 
 extern template struct ElfEncoder<EI_CLASS_32>;
 extern template struct ElfEncoder<EI_CLASS_64>;

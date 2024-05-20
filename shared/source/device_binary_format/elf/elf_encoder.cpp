@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ ElfEncoder<numBits>::ElfEncoder(bool addUndefSectionHeader, bool addHeaderSectio
 }
 
 template <ElfIdentifierClass numBits>
-void ElfEncoder<numBits>::appendSection(const ElfSectionHeader<numBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData) {
+ElfSectionHeader<numBits> &ElfEncoder<numBits>::appendSection(const ElfSectionHeader<numBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData) {
     sectionHeaders.push_back(sectionHeader);
     if ((SHT_NOBITS != sectionHeader.type) && (false == sectionData.empty())) {
         auto sectionDataAlignment = std::min<uint64_t>(defaultDataAlignment, 8U);
@@ -42,10 +42,11 @@ void ElfEncoder<numBits>::appendSection(const ElfSectionHeader<numBits> &section
         sectionHeaders.rbegin()->offset = static_cast<decltype(sectionHeaders.rbegin()->offset)>(alignedOffset);
         sectionHeaders.rbegin()->size = static_cast<decltype(sectionHeaders.rbegin()->size)>(sectionData.size());
     }
+    return *sectionHeaders.rbegin();
 }
 
 template <ElfIdentifierClass numBits>
-void ElfEncoder<numBits>::appendSegment(const ElfProgramHeader<numBits> &programHeader, const ArrayRef<const uint8_t> segmentData) {
+ElfProgramHeader<numBits> &ElfEncoder<numBits>::appendSegment(const ElfProgramHeader<numBits> &programHeader, const ArrayRef<const uint8_t> segmentData) {
     maxDataAlignmentNeeded = std::max<uint64_t>(maxDataAlignmentNeeded, static_cast<uint64_t>(programHeader.align));
     programHeaders.push_back(programHeader);
     if (false == segmentData.empty()) {
@@ -59,6 +60,7 @@ void ElfEncoder<numBits>::appendSegment(const ElfProgramHeader<numBits> &program
         programHeaders.rbegin()->offset = static_cast<decltype(programHeaders.rbegin()->offset)>(alignedOffset);
         programHeaders.rbegin()->fileSz = static_cast<decltype(programHeaders.rbegin()->fileSz)>(segmentData.size());
     }
+    return *programHeaders.rbegin();
 }
 
 template <ElfIdentifierClass numBits>
@@ -89,8 +91,7 @@ ElfSectionHeader<numBits> &ElfEncoder<numBits>::appendSection(SectionHeaderType 
     default:
         break;
     }
-    appendSection(section, sectionData);
-    return *sectionHeaders.rbegin();
+    return appendSection(section, sectionData);
 }
 
 template <ElfIdentifierClass numBits>
@@ -100,8 +101,7 @@ ElfProgramHeader<numBits> &ElfEncoder<numBits>::appendSegment(ProgramHeaderType 
     segment.flags = static_cast<decltype(segment.flags)>(PF_NONE);
     segment.offset = 0U;
     segment.align = static_cast<decltype(segment.align)>(defaultDataAlignment);
-    appendSegment(segment, segmentData);
-    return *programHeaders.rbegin();
+    return appendSegment(segment, segmentData);
 }
 
 template <ElfIdentifierClass numBits>
@@ -199,6 +199,37 @@ std::vector<uint8_t> ElfEncoder<numBits>::encode() const {
     ret.resize(ret.size() + alignedSectionNamesDataSize - static_cast<size_t>(sectionHeaderNamesSection.size), 0U);
     return ret;
 }
+
+template <ElfIdentifierClass numBits>
+std::vector<uint8_t> encodeNoteSectionData(ArrayRef<const NoteToEncode> notes) {
+    std::vector<uint8_t> ret;
+    {
+        size_t dataSize = 0U;
+        for (auto &note : notes) {
+            dataSize += sizeof(ElfNoteSection);
+            dataSize += note.name.size();
+            dataSize += note.desc.size();
+            dataSize = alignUp(dataSize, 4);
+        }
+        ret.reserve(dataSize);
+    }
+
+    for (auto &note : notes) {
+        ElfNoteSection entry;
+        entry.nameSize = static_cast<uint32_t>(note.name.size());
+        entry.descSize = static_cast<uint32_t>(note.desc.size());
+        entry.type = note.type;
+        ret.insert(ret.end(), reinterpret_cast<uint8_t *>(&entry), reinterpret_cast<uint8_t *>((&entry) + 1));
+        ret.insert(ret.end(), reinterpret_cast<const uint8_t *>(note.name.c_str()), reinterpret_cast<const uint8_t *>(note.name.c_str() + note.name.size()));
+        ret.insert(ret.end(), reinterpret_cast<const uint8_t *>(note.desc.c_str()), reinterpret_cast<const uint8_t *>(note.desc.c_str() + note.desc.size()));
+        ret.resize(alignUp(ret.size(), 4), 0U);
+    }
+
+    return ret;
+}
+
+template std::vector<uint8_t> encodeNoteSectionData<EI_CLASS_64>(ArrayRef<const NoteToEncode> notes);
+template std::vector<uint8_t> encodeNoteSectionData<EI_CLASS_32>(ArrayRef<const NoteToEncode> notes);
 
 template struct ElfEncoder<EI_CLASS_32>;
 template struct ElfEncoder<EI_CLASS_64>;

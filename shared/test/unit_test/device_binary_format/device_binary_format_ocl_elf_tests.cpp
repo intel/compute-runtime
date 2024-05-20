@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -309,7 +309,7 @@ TEST(PackDeviceBinaryOclElf, WhenPackingBinaryWitIntermediateRepresentationThenC
         EXPECT_EQ(3U, elf.elfFileHeader->shNum);
 
         auto spirVSection = std::find_if(elf.sectionHeaders.begin(), elf.sectionHeaders.end(),
-                                         [](const Elf<>::SectionHeaderAndData &section) { return section.header->type == NEO::Elf::SHT_OPENCL_SPIRV; });
+                                         [](const SectionHeaderAndData<> &section) { return section.header->type == NEO::Elf::SHT_OPENCL_SPIRV; });
         ASSERT_NE(nullptr, spirVSection);
         ASSERT_EQ(spirV.size(), spirVSection->data.size());
         EXPECT_EQ(0, memcmp(spirV.begin(), spirVSection->data.begin(), spirV.size()));
@@ -338,7 +338,7 @@ TEST(PackDeviceBinaryOclElf, WhenPackingBinaryWitIntermediateRepresentationThenC
         EXPECT_EQ(3U, elf.elfFileHeader->shNum);
 
         auto llvmSection = std::find_if(elf.sectionHeaders.begin(), elf.sectionHeaders.end(),
-                                        [](const Elf<>::SectionHeaderAndData &section) { return section.header->type == NEO::Elf::SHT_OPENCL_LLVM_BINARY; });
+                                        [](const SectionHeaderAndData<> &section) { return section.header->type == NEO::Elf::SHT_OPENCL_LLVM_BINARY; });
         ASSERT_NE(nullptr, llvmSection);
         ASSERT_EQ(llvmBc.size(), llvmSection->data.size());
         EXPECT_EQ(0, memcmp(llvmBc.begin(), llvmSection->data.begin(), llvmBc.size()));
@@ -372,16 +372,16 @@ TEST(PackDeviceBinaryOclElf, WhenPackingBinaryThenSectionsAreProperlyPopulated) 
     ASSERT_NE(nullptr, elf.elfFileHeader);
 
     auto spirvSection = std::find_if(elf.sectionHeaders.begin(), elf.sectionHeaders.end(),
-                                     [](const Elf<>::SectionHeaderAndData &section) { return section.header->type == NEO::Elf::SHT_OPENCL_SPIRV; });
+                                     [](const SectionHeaderAndData<> &section) { return section.header->type == NEO::Elf::SHT_OPENCL_SPIRV; });
 
     auto deviceBinarySection = std::find_if(elf.sectionHeaders.begin(), elf.sectionHeaders.end(),
-                                            [](const Elf<>::SectionHeaderAndData &section) { return section.header->type == NEO::Elf::SHT_OPENCL_DEV_BINARY; });
+                                            [](const SectionHeaderAndData<> &section) { return section.header->type == NEO::Elf::SHT_OPENCL_DEV_BINARY; });
 
     auto deviceDebugSection = std::find_if(elf.sectionHeaders.begin(), elf.sectionHeaders.end(),
-                                           [](const Elf<>::SectionHeaderAndData &section) { return section.header->type == NEO::Elf::SHT_OPENCL_DEV_DEBUG; });
+                                           [](const SectionHeaderAndData<> &section) { return section.header->type == NEO::Elf::SHT_OPENCL_DEV_DEBUG; });
 
     auto buildOptionsSection = std::find_if(elf.sectionHeaders.begin(), elf.sectionHeaders.end(),
-                                            [](const Elf<>::SectionHeaderAndData &section) { return section.header->type == NEO::Elf::SHT_OPENCL_OPTIONS; });
+                                            [](const SectionHeaderAndData<> &section) { return section.header->type == NEO::Elf::SHT_OPENCL_OPTIONS; });
 
     ASSERT_NE(nullptr, spirvSection);
     ASSERT_EQ(spirV.size(), spirvSection->data.size());

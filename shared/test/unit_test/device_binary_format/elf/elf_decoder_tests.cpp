@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -15,6 +16,9 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
+
+#include <string>
+#include <vector>
 
 using namespace NEO::Elf;
 
@@ -811,4 +815,78 @@ TEST(ElfDecoder, GivenElfWithRelocationsWhenDecodedThenCorrectRelocationsAndSymo
 
     EXPECT_EQ(SymbolTableType::STT_OBJECT, elf64.extractSymbolType(symbolTable[3]));
     EXPECT_EQ(SymbolTableBind::STB_GLOBAL, elf64.extractSymbolBind(symbolTable[3]));
+}
+
+TEST(DecodeElfNoteSection, GivenEmptyDataSectionThenDecodeAsZeroEntries) {
+    std::vector<NEO::Elf::DecodedNote> decodedNotes;
+    std::string err, warn;
+    auto ret = NEO::Elf::decodeNoteSection(ArrayRef<const uint8_t>{}, decodedNotes, err, warn);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(err.empty()) << err;
+    EXPECT_TRUE(warn.empty()) << warn;
+    EXPECT_TRUE(decodedNotes.empty());
+}
+
+TEST(DecodeElfNoteSection, GivenDataSectionWithInvalidSizeThenReturnError) {
+    std::vector<NEO::Elf::DecodedNote> decodedNotes;
+    std::string err, warn;
+    NEO::Elf::ElfNoteSection note;
+    note.nameSize = 5;
+    note.descSize = 7;
+    auto ret = NEO::Elf::decodeNoteSection(ArrayRef<const uint8_t>::fromAny(&note, 1), decodedNotes, err, warn);
+    EXPECT_FALSE(ret);
+    EXPECT_FALSE(err.empty());
+    EXPECT_TRUE(warn.empty()) << warn;
+    EXPECT_TRUE(decodedNotes.empty());
+}
+
+TEST(DecodeElfNoteSection, GivenValidNotesThenDecodeThem) {
+    std::string unalignedDescName = "note"
+                                    "Type";
+    std::string unalignedDesc = "some"
+                                " Des"
+                                "c ";
+    uint32_t unalignedDescNoteType = 3;
+
+    std::string unalignedNameName = "note"
+                                    "Ty";
+    std::string unalignedNameDesc = "so"
+                                    "me";
+    uint32_t unalignedNameNoteType = 5;
+
+    std::string alignedDescName = "some"
+                                  "Note";
+    std::string alignedDesc = "some"
+                              "Desc";
+    uint32_t alignedDescNoteType = 7;
+
+    NEO::Elf::DecodedNote notes[] = {{unalignedDescName, unalignedDesc, unalignedDescNoteType},
+                                     {unalignedNameName, unalignedNameDesc, unalignedNameNoteType},
+                                     {alignedDescName, alignedDesc, alignedDescNoteType}};
+    std::vector<uint8_t> data;
+    for (const auto &note : notes) {
+        NEO::Elf::ElfNoteSection section;
+        section.nameSize = static_cast<uint32_t>(note.name.size());
+        section.descSize = static_cast<uint32_t>(note.desc.size());
+        section.type = note.type;
+        data.insert(data.end(), reinterpret_cast<const uint8_t *>(&section), reinterpret_cast<const uint8_t *>(&section + 1));
+        data.insert(data.end(), reinterpret_cast<const uint8_t *>(note.name.begin()), reinterpret_cast<const uint8_t *>(note.name.end()));
+        data.insert(data.end(), reinterpret_cast<const uint8_t *>(note.desc.begin()), reinterpret_cast<const uint8_t *>(note.desc.end()));
+        data.resize(alignUp(data.size(), 4));
+    }
+
+    std::vector<NEO::Elf::DecodedNote> decodedNotes;
+    std::string err, warn;
+    auto ret = NEO::Elf::decodeNoteSection(data, decodedNotes, err, warn);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(err.empty()) << err;
+    EXPECT_TRUE(warn.empty()) << warn;
+    EXPECT_FALSE(decodedNotes.empty());
+
+    ASSERT_EQ(3U, decodedNotes.size());
+    for (int i = 0; i < 3; ++i) {
+        EXPECT_EQ(notes[i].type, decodedNotes[i].type);
+        EXPECT_EQ(notes[i].name, decodedNotes[i].name);
+        EXPECT_EQ(notes[i].desc, decodedNotes[i].desc);
+    }
 }

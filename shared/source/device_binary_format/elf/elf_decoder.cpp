@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 
 #include "shared/source/device_binary_format/elf/elf.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include <string.h>
@@ -15,6 +16,30 @@
 namespace NEO {
 
 namespace Elf {
+
+template <ElfIdentifierClass numBits>
+bool decodeNoteSection(ArrayRef<const uint8_t> sectionData, std::vector<DecodedNote> &out, std::string &outErrReason, std::string &outWarning) {
+    uint64_t pos = 0;
+    auto sectionSize = sectionData.size();
+    auto base = sectionData.begin();
+    while (pos < sectionSize) {
+        auto note = reinterpret_cast<const ElfNoteSection *>(base + pos);
+        auto alignedEntrySize = alignUp(sizeof(ElfNoteSection) + note->nameSize + note->descSize, 4);
+        if (pos + alignedEntrySize > sectionSize) {
+            outErrReason.append("Invalid elf note section - not enough data\n");
+            return false;
+        }
+        ConstStringRef name{reinterpret_cast<const char *>(note + 1), note->nameSize};
+        ConstStringRef desc{reinterpret_cast<const char *>(note + 1) + note->nameSize, note->descSize};
+        pos += alignedEntrySize;
+
+        out.push_back(DecodedNote{name, desc, note->type});
+    }
+    return true;
+}
+
+template bool decodeNoteSection<EI_CLASS_32>(ArrayRef<const uint8_t> sectionData, std::vector<DecodedNote> &out, std::string &outErrReason, std::string &outWarning);
+template bool decodeNoteSection<EI_CLASS_64>(ArrayRef<const uint8_t> sectionData, std::vector<DecodedNote> &out, std::string &outErrReason, std::string &outWarning);
 
 template <ElfIdentifierClass numBits>
 const ElfFileHeader<numBits> *decodeElfFileHeader(const ArrayRef<const uint8_t> binary) {
@@ -87,7 +112,7 @@ Elf<numBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErr
 }
 
 template <ElfIdentifierClass numBits>
-bool Elf<numBits>::decodeSymTab(SectionHeaderAndData &sectionHeaderData, std::string &outError) {
+bool Elf<numBits>::decodeSymTab(SectionHeaderAndData<numBits> &sectionHeaderData, std::string &outError) {
     if (sectionHeaderData.header->type == SectionHeaderType::SHT_SYMTAB) {
         auto symSize = sizeof(ElfSymbolEntry<numBits>);
         if (symSize != sectionHeaderData.header->entsize) {
@@ -107,7 +132,7 @@ bool Elf<numBits>::decodeSymTab(SectionHeaderAndData &sectionHeaderData, std::st
 }
 
 template <ElfIdentifierClass numBits>
-bool Elf<numBits>::decodeRelocations(SectionHeaderAndData &sectionHeaderData, std::string &outError) {
+bool Elf<numBits>::decodeRelocations(SectionHeaderAndData<numBits> &sectionHeaderData, std::string &outError) {
     if (sectionHeaderData.header->type == SectionHeaderType::SHT_RELA) {
         auto relaSize = sizeof(ElfRela<numBits>);
         if (relaSize != sectionHeaderData.header->entsize) {

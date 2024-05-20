@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -29,7 +30,7 @@ namespace Zebin {
 
 template <Elf::ElfIdentifierClass numBits = Elf::EI_CLASS_64>
 struct ZebinSections {
-    using SectionHeaderData = typename NEO::Elf::Elf<numBits>::SectionHeaderAndData;
+    using SectionHeaderData = NEO::Elf::SectionHeaderAndData<numBits>;
     StackVec<SectionHeaderData *, 32> textKernelSections;
     StackVec<SectionHeaderData *, 32> gtpinInfoSections;
     StackVec<SectionHeaderData *, 1> zeInfoSections;

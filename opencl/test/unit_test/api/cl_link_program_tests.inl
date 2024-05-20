@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -227,11 +227,11 @@ TEST_F(ClLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     ASSERT_EQ(sizeof(ir2), elf.sectionHeaders[6].data.size());
     ASSERT_EQ(sizeof(ir3), elf.sectionHeaders[7].data.size());
 
-    auto readSpecConstId = [](NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::SectionHeaderAndData &section, uint32_t offset) {
+    auto readSpecConstId = [](NEO::Elf::SectionHeaderAndData<NEO::Elf::EI_CLASS_64> &section, uint32_t offset) {
         return *(reinterpret_cast<const uint32_t *>(section.data.begin()) + offset);
     };
 
-    auto readSpecConstValue = [](NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::SectionHeaderAndData &section, uint32_t offset) {
+    auto readSpecConstValue = [](NEO::Elf::SectionHeaderAndData<NEO::Elf::EI_CLASS_64> &section, uint32_t offset) {
         return *(reinterpret_cast<const uint64_t *>(section.data.begin()) + offset);
     };
 
