@@ -78,7 +78,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     SubmissionStatus flushTagUpdate() override { return SubmissionStatus::success; };
     void updateTagFromWait() override{};
-    bool submitDependencyUpdate(TagNodeBase *tag) override { return true; };
+    bool submitDependencyUpdate(TagNodeBase *tag) override {
+        submitDependencyUpdateCalledTimes++;
+        return submitDependencyUpdateReturnValue;
+    }
     bool isUpdateTagFromWaitEnabled() override { return false; };
 
     void writeMemoryAub(aub_stream::AllocationParams &allocationParams) override {
@@ -243,6 +246,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t writeMemoryAubCalled = 0;
     uint32_t makeResidentCalledTimes = 0;
     uint32_t downloadAllocationsCalledCount = 0;
+    uint32_t submitDependencyUpdateCalledTimes = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
@@ -259,6 +263,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     BatchBuffer latestFlushedBatchBuffer = {};
     QueueThrottle getLastDirectSubmissionThrottleReturnValue = QueueThrottle::MEDIUM;
     bool getAcLineConnectedReturnValue = true;
+    bool submitDependencyUpdateReturnValue = true;
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {

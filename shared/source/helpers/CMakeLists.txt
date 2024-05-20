@@ -20,6 +20,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aux_translation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/bcs_ccs_dependency_pair_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bindless_heaps_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bindless_heaps_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers.h

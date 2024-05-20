@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_context.h"
@@ -401,7 +402,8 @@ class CommandQueueHw : public CommandQueue {
                         EventBuilder &externalEventBuilder,
                         std::unique_ptr<PrintfHandler> &&printfHandler,
                         CommandStreamReceiver *bcsCsr,
-                        TagNodeBase *multiRootDeviceSyncNode);
+                        TagNodeBase *multiRootDeviceSyncNode,
+                        CsrDependencyContainer *csrDependencies);
 
     CompletionStamp enqueueCommandWithoutKernel(Surface **surfaces,
                                                 size_t surfaceCount,
@@ -449,6 +451,7 @@ class CommandQueueHw : public CommandQueue {
 
   protected:
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo){};
+    MOCKABLE_VIRTUAL bool prepareCsrDependency(CsrDependencies &csrDeps, CsrDependencyContainer &dependencyTags, TimestampPacketDependencies &timestampPacketDependencies, TagAllocatorBase *allocator, bool blockQueue);
     size_t calculateHostPtrSizeForImage(const size_t *region, size_t rowPitch, size_t slicePitch, Image *image);
 
     cl_int enqueueReadWriteBufferOnCpuWithMemoryTransfer(cl_command_type commandType, Buffer *buffer,

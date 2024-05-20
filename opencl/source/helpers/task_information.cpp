@@ -130,7 +130,7 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::uniq
                                            bool flushDC, bool usesSLM, uint32_t commandType, std::unique_ptr<PrintfHandler> &&printfHandler,
                                            PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount,
                                            TagNodeBase *multiRootDeviceSyncNode)
-    : Command(commandQueue, kernelOperation), surfaces(std::move(surfaces)), flushDC(flushDC), slmUsed(usesSLM),
+    : Command(commandQueue, kernelOperation, nullptr), surfaces(std::move(surfaces)), flushDC(flushDC), slmUsed(usesSLM),
       commandType(commandType), printfHandler(std::move(printfHandler)), kernel(kernel),
       kernelCount(kernelCount), preemptionMode(preemptionMode), multiRootDeviceSyncNode(multiRootDeviceSyncNode) {
     UNRECOVERABLE_IF(nullptr == this->kernel);
@@ -326,6 +326,7 @@ TaskCountType CommandWithoutKernel::dispatchBlitOperation() {
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->cacheFlushNodes);
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->previousEnqueueNodes);
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->barrierNodes);
+    blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->multiCsrDependencies);
     blitProperties.outputTimestampPacket = currentTimestampPacketNodes->peekNodes()[0];
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
@@ -348,7 +349,13 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         this->terminated = true;
         return completionStamp;
     }
-
+    for (auto &tagCsrPair : csrDependencies) {
+        bool submitStatus = tagCsrPair.first->submitDependencyUpdate(tagCsrPair.second);
+        if (!submitStatus) {
+            completionStamp.taskCount = CompletionStamp::gpuHang;
+            return completionStamp;
+        }
+    }
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
 
     if (!kernelOperation) {
@@ -532,6 +539,10 @@ void Command::makeTimestampPacketsResident(CommandStreamReceiver &commandStreamR
 
 Command::Command(CommandQueue &commandQueue) : commandQueue(commandQueue) {}
 
-Command::Command(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation)
-    : commandQueue(commandQueue), kernelOperation(std::move(kernelOperation)) {}
+Command::Command(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, CsrDependencyContainer *csrDependencies)
+    : commandQueue(commandQueue), kernelOperation(std::move(kernelOperation)) {
+    if (csrDependencies) {
+        this->csrDependencies = *csrDependencies;
+    }
+}
 } // namespace NEO

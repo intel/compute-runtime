@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/map_operation_type.h"
@@ -87,7 +88,7 @@ class Command : public IFNode<Command> {
 
     Command() = delete;
     Command(CommandQueue &commandQueue);
-    Command(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation);
+    Command(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> &kernelOperation, CsrDependencyContainer *csrDependencies);
 
     ~Command() override;
     virtual LinearStream *getCommandStream() {
@@ -108,6 +109,7 @@ class Command : public IFNode<Command> {
     std::unique_ptr<TimestampPacketDependencies> timestampPacketDependencies;
     EventsRequest eventsRequest = {0, nullptr, nullptr};
     std::vector<cl_event> eventsWaitlist;
+    CsrDependencyContainer csrDependencies;
 };
 
 class CommandMapUnmap : public Command {

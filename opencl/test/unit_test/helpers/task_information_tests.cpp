@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -372,7 +373,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandWithoutKernelWhenSubmitThenPassCorrectD
     auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, AllocationType::commandBuffer, device->getDeviceBitfield()}));
     auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
     kernelOperation->setHeaps(ih1, ih2, ih3);
-    std::unique_ptr<Command> command(new CommandWithoutKernel(*mockCmdQ, kernelOperation));
+    std::unique_ptr<Command> command(new CommandWithoutKernel(*mockCmdQ, kernelOperation, nullptr));
     command->setTimestampPacketNode(*mockCmdQ->timestampPacketContainer, std::move(timestampPacketDependencies));
 
     command->submit(20, false);
@@ -391,6 +392,64 @@ HWTEST_F(DispatchFlagsTests, givenCommandWithoutKernelWhenSubmitThenPassCorrectD
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_EQ(mockCmdQ->getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.epilogueRequired);
+}
+
+HWTEST_F(DispatchFlagsTests, givenCsrDependencyWhenSubmitCommandWithoutKernelThenDependencyUpdateWasCalled) {
+    using CsrType = MockCsr1<FamilyType>;
+    setUpImpl<CsrType>();
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
+    auto dependentCsr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+
+    mockCsr->timestampPacketWriteEnabled = true;
+    mockCmdQ->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
+    TimestampPacketDependencies timestampPacketDependencies;
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::indirectObject, 1, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::surfaceState, 1, ih3);
+
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, AllocationType::commandBuffer, device->getDeviceBitfield()}));
+    auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    kernelOperation->setHeaps(ih1, ih2, ih3);
+    CsrDependencyContainer dependencyMap;
+    auto tag = mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag();
+    dependencyMap.push_back(std::make_pair(dependentCsr.get(), tag));
+    std::unique_ptr<Command> command(new CommandWithoutKernel(*mockCmdQ, kernelOperation, &dependencyMap));
+    command->setTimestampPacketNode(*mockCmdQ->timestampPacketContainer, std::move(timestampPacketDependencies));
+
+    command->submit(20, false);
+    EXPECT_EQ(dependentCsr->submitDependencyUpdateCalledTimes, 1u);
+}
+
+HWTEST_F(DispatchFlagsTests, givenCsrDependencyWhendependencyUpdateReturnsFalseThenSubmitReturnGpuHang) {
+    using CsrType = MockCsr1<FamilyType>;
+    setUpImpl<CsrType>();
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
+    auto dependentCsr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+
+    mockCsr->timestampPacketWriteEnabled = true;
+    mockCmdQ->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
+    TimestampPacketDependencies timestampPacketDependencies;
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::indirectObject, 1, ih2);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::Type::surfaceState, 1, ih3);
+
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 1, AllocationType::commandBuffer, device->getDeviceBitfield()}));
+    auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    kernelOperation->setHeaps(ih1, ih2, ih3);
+    CsrDependencyContainer dependencyMap;
+    auto tag = mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag();
+    dependencyMap.push_back(std::make_pair(dependentCsr.get(), tag));
+    std::unique_ptr<Command> command(new CommandWithoutKernel(*mockCmdQ, kernelOperation, &dependencyMap));
+    command->setTimestampPacketNode(*mockCmdQ->timestampPacketContainer, std::move(timestampPacketDependencies));
+    dependentCsr->submitDependencyUpdateReturnValue = false;
+    auto stamp = command->submit(20, false);
+    EXPECT_EQ(stamp.taskCount, CompletionStamp::gpuHang);
 }
 
 HWTEST_F(DispatchFlagsTests, givenCommandComputeKernelWhenSubmitThenPassCorrectDispatchHints) {

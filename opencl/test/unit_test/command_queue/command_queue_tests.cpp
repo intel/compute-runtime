@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -2512,6 +2513,76 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenQueueWhenSettingAndQueryingLas
     for (auto &containers : queue.bcsTimestampPacketContainers) {
         EXPECT_TRUE(containers.lastSignalledPacket.peekNodes().empty());
     }
+}
+
+HWTEST_F(CommandQueueWithTimestampPacketTests, givedDependencyBetweenCsrWhenPrepareDependencyUpdateCalledThenNewTagAddedToTimestampDependencies) {
+    MockContext context{};
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+    auto dependentCsr = std::make_unique<MockCommandStreamReceiver>(*context.getDevice(0)->getExecutionEnvironment(), context.getDevice(0)->getRootDeviceIndex(), 1);
+    TimestampPacketDependencies dependencies{};
+    CsrDependencies csrDeps;
+    csrDeps.csrWithMultiEngineDependencies.insert(dependentCsr.get());
+    CsrDependencyContainer dependencyMap;
+    TagAllocatorBase *allocator = mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+    bool blockQueue = false;
+    mockCmdQ->prepareCsrDependency(csrDeps, dependencyMap, dependencies, allocator, blockQueue);
+    EXPECT_EQ(dependencies.multiCsrDependencies.peekNodes().size(), 1u);
+}
+
+HWTEST_F(CommandQueueWithTimestampPacketTests, givedNoDependencyBetweenCsrWhenPrepareDependencyUpdateCalledThenTagIsNotAddedToTimestampDependencies) {
+    MockContext context{};
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+    TimestampPacketDependencies dependencies{};
+    CsrDependencies csrDeps;
+    CsrDependencyContainer dependencyMap;
+    TagAllocatorBase *allocator = mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+    bool blockQueue = false;
+    mockCmdQ->prepareCsrDependency(csrDeps, dependencyMap, dependencies, allocator, blockQueue);
+    EXPECT_EQ(dependencies.multiCsrDependencies.peekNodes().size(), 0u);
+}
+
+HWTEST_F(CommandQueueWithTimestampPacketTests, givedDependencyBetweenCsrWhenPrepareDependencyUpdateCalledForNonBlockedQueueThenSubmitDependencyUpdateCalled) {
+    MockContext context{};
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+    auto dependentCsr = std::make_unique<MockCommandStreamReceiver>(*context.getDevice(0)->getExecutionEnvironment(), context.getDevice(0)->getRootDeviceIndex(), 1);
+    TimestampPacketDependencies dependencies{};
+    CsrDependencies csrDeps;
+    csrDeps.csrWithMultiEngineDependencies.insert(dependentCsr.get());
+    CsrDependencyContainer dependencyMap;
+    TagAllocatorBase *allocator = mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+    bool blockQueue = false;
+    mockCmdQ->prepareCsrDependency(csrDeps, dependencyMap, dependencies, allocator, blockQueue);
+    EXPECT_EQ(dependentCsr->submitDependencyUpdateCalledTimes, 1u);
+    EXPECT_EQ(dependencyMap.size(), 0u);
+}
+
+HWTEST_F(CommandQueueWithTimestampPacketTests, givedDependencyBetweenCsrWhenPrepareDependencyUpdateCalledForBlockedQueueThenDependencyMapHasOneItem) {
+    MockContext context{};
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+    auto dependentCsr = std::make_unique<MockCommandStreamReceiver>(*context.getDevice(0)->getExecutionEnvironment(), context.getDevice(0)->getRootDeviceIndex(), 1);
+    TimestampPacketDependencies dependencies{};
+    CsrDependencies csrDeps;
+    csrDeps.csrWithMultiEngineDependencies.insert(dependentCsr.get());
+    CsrDependencyContainer dependencyMap;
+    TagAllocatorBase *allocator = mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+    bool blockQueue = true;
+    mockCmdQ->prepareCsrDependency(csrDeps, dependencyMap, dependencies, allocator, blockQueue);
+    EXPECT_EQ(dependentCsr->submitDependencyUpdateCalledTimes, 0u);
+    EXPECT_EQ(dependencyMap.size(), 1u);
+}
+
+HWTEST_F(CommandQueueWithTimestampPacketTests, givedDependencyBetweenCsrWhenSubmitDependencyUpdateReturnsFalseThenProcessDependencyReturnsFalse) {
+    MockContext context{};
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+    auto dependentCsr = std::make_unique<MockCommandStreamReceiver>(*context.getDevice(0)->getExecutionEnvironment(), context.getDevice(0)->getRootDeviceIndex(), 1);
+    TimestampPacketDependencies dependencies{};
+    CsrDependencies csrDeps;
+    csrDeps.csrWithMultiEngineDependencies.insert(dependentCsr.get());
+    CsrDependencyContainer dependencyMap;
+    TagAllocatorBase *allocator = mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
+    bool blockQueue = false;
+    dependentCsr->submitDependencyUpdateReturnValue = false;
+    EXPECT_FALSE(mockCmdQ->prepareCsrDependency(csrDeps, dependencyMap, dependencies, allocator, blockQueue));
 }
 
 using KernelExecutionTypesTests = DispatchFlagsTests;

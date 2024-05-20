@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
+#include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
@@ -457,7 +458,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                        eventBuilder,
                        std::move(printfHandler),
                        nullptr,
-                       multiRootEventSyncStamp);
+                       multiRootEventSyncStamp,
+                       nullptr);
     }
 
     if (deferredTimestampPackets.get()) {
@@ -994,7 +996,8 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     EventBuilder &externalEventBuilder,
     std::unique_ptr<PrintfHandler> &&printfHandler,
     CommandStreamReceiver *bcsCsr,
-    TagNodeBase *multiRootDeviceSyncNode) {
+    TagNodeBase *multiRootDeviceSyncNode,
+    CsrDependencyContainer *dependencyTags) {
 
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
@@ -1033,9 +1036,8 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
 
         storeTimestampPackets = (timestampPacketContainer != nullptr);
     }
-
     if (enqueueProperties.operation != EnqueueProperties::Operation::gpuKernel) {
-        command = std::make_unique<CommandWithoutKernel>(*this, blockedCommandsData);
+        command = std::make_unique<CommandWithoutKernel>(*this, blockedCommandsData, dependencyTags);
     } else {
         // store task data in event
         std::vector<Surface *> allSurfaces;
@@ -1245,6 +1247,23 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 }
 
 template <typename GfxFamily>
+bool CommandQueueHw<GfxFamily>::prepareCsrDependency(CsrDependencies &csrDeps, CsrDependencyContainer &dependencyTags, TimestampPacketDependencies &timestampPacketDependencies, TagAllocatorBase *allocator, bool blockQueue) {
+    for (auto &dependentCsr : csrDeps.csrWithMultiEngineDependencies) {
+        auto tag = allocator->getTag();
+        timestampPacketDependencies.multiCsrDependencies.add(tag);
+        if (!blockQueue) {
+            bool submitStatus = dependentCsr->submitDependencyUpdate(tag);
+            if (!submitStatus) {
+                return submitStatus;
+            }
+        } else {
+            dependencyTags.push_back(std::make_pair(dependentCsr, tag));
+        }
+    }
+    return true;
+}
+
+template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::isSplitEnqueueBlitNeeded(TransferDirection transferDirection, size_t transferSize, CommandStreamReceiver &csr) {
     auto bcsSplit = getDevice().isBcsSplitSupported() &&
                     csr.getOsContext().getEngineType() == aub_stream::EngineType::ENGINE_BCS &&
@@ -1438,14 +1457,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     if (isCacheFlushForBcsRequired() && gpgpuSubmission) {
         timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
     }
-    for (auto &dependentCsr : csrDeps.csrWithMultiEngineDependencies) {
-        auto tag = allocator->getTag();
-        timestampPacketDependencies.multiCsrDependencies.add(tag);
-        bool submitStatus = dependentCsr->submitDependencyUpdate(tag);
-        if (!submitStatus) {
-            return CL_OUT_OF_RESOURCES;
-        }
-    }
+
     obtainNewTimestampPacketNodes(1, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, bcsCsr);
     csrDeps.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
 
@@ -1471,6 +1483,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         }
         gpgpuCommandStream = obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0, false, false);
         gpgpuCommandStreamStart = gpgpuCommandStream->getUsed();
+    }
+    CsrDependencyContainer dependencyTags;
+    if (csrDeps.csrWithMultiEngineDependencies.size() > 0) {
+        bool submitStatus = prepareCsrDependency(csrDeps, dependencyTags, timestampPacketDependencies, allocator, blockQueue);
+        if (!submitStatus) {
+            return CL_OUT_OF_RESOURCES;
+        }
     }
 
     blitPropertiesContainer.push_back(processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
@@ -1501,7 +1520,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     updateFromCompletionStamp(completionStamp, pEventBuilder->getEvent());
 
     if (blockQueue) {
-        enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, *pEventBuilder, nullptr, &bcsCsr, multiRootEventSyncStamp);
+        enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, *pEventBuilder, nullptr, &bcsCsr, multiRootEventSyncStamp, &dependencyTags);
 
         if (gpgpuSubmission) {
             if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() == 1) {

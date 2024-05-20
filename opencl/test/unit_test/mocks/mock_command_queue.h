@@ -281,6 +281,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     using BaseClass::obtainCommandStream;
     using BaseClass::obtainNewTimestampPacketNodes;
     using BaseClass::overrideEngine;
+    using BaseClass::prepareCsrDependency;
     using BaseClass::processDispatchForKernels;
     using BaseClass::relaxedOrderingForGpgpuAllowed;
     using BaseClass::requiresCacheFlushAfterWalker;
