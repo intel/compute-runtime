@@ -1862,7 +1862,7 @@ TEST(IoctlHelperTest, givenIoctlHelperWhenCallCreateGemThenProperValuesSet) {
     uint32_t memoryBanks = 3u;
 
     EXPECT_EQ(0, drm.ioctlCount.gemCreate);
-    uint32_t handle = ioctlHelper->createGem(size, memoryBanks);
+    uint32_t handle = ioctlHelper->createGem(size, memoryBanks, false);
     EXPECT_EQ(1, drm.ioctlCount.gemCreate);
 
     EXPECT_EQ(size, drm.createParamsSize);

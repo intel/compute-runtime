@@ -109,6 +109,15 @@ bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
 }
 
 template <>
+std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t patIndex) const {
+    std::array<uint64_t, 2> listOfCoherentPatIndexes = {3, 4};
+    if (std::find(listOfCoherentPatIndexes.begin(), listOfCoherentPatIndexes.end(), patIndex) != listOfCoherentPatIndexes.end()) {
+        return true;
+    }
+    return false;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
     return true;
 }

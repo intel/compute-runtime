@@ -178,6 +178,7 @@ class ProductHelperHw : public ProductHelper {
     bool isDeviceToHostCopySignalingFenceRequired() const override;
     size_t getMaxFillPaternSizeForCopyEngine() const override;
     bool isAvailableExtendedScratch() const override;
+    std::optional<bool> isCoherentAllocation(uint64_t patIndex) const override;
 
     ~ProductHelperHw() override = default;
 

@@ -69,11 +69,11 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::sharedBuffer:
     case AllocationType::svmGpu:
     case AllocationType::unifiedSharedMemory:
-    case AllocationType::externalHostPtr:
         if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
+    case AllocationType::externalHostPtr:
     case AllocationType::bufferHostMemory:
     case AllocationType::internalHostMemory:
     case AllocationType::mapAllocation:

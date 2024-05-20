@@ -422,6 +422,11 @@ bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
     return false;
 }
 
+template <>
+std::optional<bool> ProductHelperHw<IGFX_UNKNOWN>::isCoherentAllocation(uint64_t patIndex) const {
+    return std::nullopt;
+}
+
 struct UnknownProduct {
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = false;

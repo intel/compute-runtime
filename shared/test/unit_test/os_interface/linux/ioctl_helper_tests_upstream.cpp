@@ -346,7 +346,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtThenReturnCorrectVal
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     uint32_t numOfChunks = 0;
-    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt);
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt, false);
 
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, handle);
@@ -368,7 +368,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCreateGemExtWithDebugFlagThenPri
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     uint32_t numOfChunks = 0;
-    ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt);
+    ioctlHelper->createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt, false);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: 0 BO-1 with size: 1024\n");
@@ -383,13 +383,13 @@ TEST(IoctlHelperTestsUpstream, givenSetPatSupportedWhenCreateGemExtThenSetPatExt
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     mockIoctlHelper.isSetPatSupported = false;
-    auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, 0, {}, -1, false, 0, std::nullopt, std::nullopt);
+    auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, 0, {}, -1, false, 0, std::nullopt, std::nullopt, false);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, mockIoctlHelper.ioctlCallCount);
     EXPECT_FALSE(mockIoctlHelper.lastGemCreateContainedSetPat);
 
     mockIoctlHelper.isSetPatSupported = true;
-    ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, 0, {}, -1, false, 0, std::nullopt, std::nullopt);
+    ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, 0, {}, -1, false, 0, std::nullopt, std::nullopt, false);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(2u, mockIoctlHelper.ioctlCallCount);
     EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedSetPat);
@@ -404,13 +404,13 @@ TEST(IoctlHelperTestsUpstream, givenInvalidPatIndexWhenCreateGemExtThenSetPatExt
     mockIoctlHelper.isSetPatSupported = true;
     uint64_t invalidPatIndex = CommonConstants::unsupportedPatIndex;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
-    auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, invalidPatIndex, {}, -1, false, 0, std::nullopt, std::nullopt);
+    auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, invalidPatIndex, {}, -1, false, 0, std::nullopt, std::nullopt, false);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, mockIoctlHelper.ioctlCallCount);
     EXPECT_FALSE(mockIoctlHelper.lastGemCreateContainedSetPat);
 
     invalidPatIndex = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1;
-    ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, invalidPatIndex, {}, -1, false, 0, std::nullopt, std::nullopt);
+    ret = mockIoctlHelper.createGemExt(memClassInstance, 1, handle, invalidPatIndex, {}, -1, false, 0, std::nullopt, std::nullopt, false);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(2u, mockIoctlHelper.ioctlCallCount);
     EXPECT_FALSE(mockIoctlHelper.lastGemCreateContainedSetPat);
@@ -432,7 +432,7 @@ TEST(IoctlHelperTestsUpstream, givenSetPatSupportedWhenCreateGemExtWithDebugFlag
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     uint32_t numOfChunks = 0;
     uint64_t patIndex = 5;
-    mockIoctlHelper.createGemExt(memClassInstance, 1024, handle, patIndex, {}, -1, false, numOfChunks, std::nullopt, std::nullopt);
+    mockIoctlHelper.createGemExt(memClassInstance, 1024, handle, patIndex, {}, -1, false, numOfChunks, std::nullopt, std::nullopt, false);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0, pat index: 5 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS with EXT_SET_PAT has returned: 0 BO-1 with size: 1024\n");
