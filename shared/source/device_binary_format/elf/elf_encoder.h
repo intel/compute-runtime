@@ -13,6 +13,7 @@
 
 #include <queue>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace NEO {
@@ -25,15 +26,39 @@ struct StringSectionBuilder {
         undefStringIdx = 0U;
     }
 
+    void setInitialStringsTab(ArrayRef<const uint8_t> data) {
+        DEBUG_BREAK_IF(stringTable.size() > 1);
+        stringTable.assign(reinterpret_cast<const char *>(data.begin()), reinterpret_cast<const char *>(data.end()));
+        if (stringTable.size() < 1) {
+            stringTable.push_back('\0');
+        }
+        if (*stringTable.rbegin() != '\0') {
+            stringTable.push_back('\0');
+        }
+        auto it = stringTable.begin() + 1;
+        while (it != stringTable.end()) {
+            stringOffsetsMap[std::string(&*it)] = static_cast<uint32_t>(it - stringTable.begin());
+            while (*it != '\0') {
+                ++it;
+            }
+            ++it;
+        }
+    }
+
     uint32_t appendString(ConstStringRef str) {
         if (str.empty()) {
             return undefStringIdx;
+        }
+        auto existingEntry = stringOffsetsMap.find(str.str());
+        if (stringOffsetsMap.end() != existingEntry) {
+            return existingEntry->second;
         }
         uint32_t offset = static_cast<uint32_t>(stringTable.size());
         stringTable.insert(stringTable.end(), str.begin(), str.end());
         if (str[str.size() - 1] != '\0') {
             stringTable.push_back('\0');
         }
+        stringOffsetsMap[str.str()] = offset;
         return offset;
     }
 
@@ -47,6 +72,7 @@ struct StringSectionBuilder {
 
   protected:
     std::vector<char> stringTable;
+    std::unordered_map<std::string, uint32_t> stringOffsetsMap;
     uint32_t undefStringIdx;
 };
 
@@ -54,6 +80,10 @@ template <ElfIdentifierClass numBits = EI_CLASS_64>
 struct ElfEncoder {
     ElfEncoder(bool addUndefSectionHeader = true, bool addHeaderSectionNamesSection = true,
                typename ElfSectionHeaderTypes<numBits>::AddrAlign defaultDataAlignment = 8U);
+
+    void setInitialStringsTab(ArrayRef<const uint8_t> data) {
+        strSecBuilder.setInitialStringsTab(data);
+    }
 
     ElfSectionHeader<numBits> &appendSection(const ElfSectionHeader<numBits> &sectionHeader, const ArrayRef<const uint8_t> sectionData);
     ElfProgramHeader<numBits> &appendSegment(const ElfProgramHeader<numBits> &programHeader, const ArrayRef<const uint8_t> segmentData);

@@ -501,12 +501,33 @@ TEST(ElfEncoder, WhenGetSectionHeaderIndexIsCalledThenCorrectSectionIdxIsReturne
     EXPECT_EQ(1U, elfEncoder64.getSectionHeaderIndex(sec1));
 }
 
-TEST(DecodeElfNoteSection, givenZeroNotesToEncodeThenReturnsEmptyDataVector) {
+TEST(ElfEncoder, givenEmptyArrayWhenSetInitialStringTabIsUsedThenResetsStringTabToEmpty) {
+    ElfEncoder<EI_CLASS_64> elfEncoder;
+    elfEncoder.setInitialStringsTab({});
+    EXPECT_EQ(0U, elfEncoder.appendSectionName({}));
+}
+
+TEST(ElfEncoder, givenUnterminatedArrayWhenSetInitialStringTabIsUsedThenTerminateUnderlyingArray) {
+    ElfEncoder<EI_CLASS_64> elfEncoder;
+    char data[2] = {'\0', 's'};
+    elfEncoder.setInitialStringsTab(ArrayRef<const uint8_t>::fromAny(data, sizeof(data)));
+    EXPECT_EQ(1U, elfEncoder.appendSectionName("s"));
+}
+
+TEST(ElfEncoder, givenArrayWhenSetInitialStringTabIsUsedThenIncorporateItToInternalStringTab) {
+    ElfEncoder<EI_CLASS_64> elfEncoder;
+    char data[] = "\0string0\0string1";
+    elfEncoder.setInitialStringsTab(ArrayRef<const uint8_t>::fromAny(data, sizeof(data)));
+    EXPECT_EQ(1U, elfEncoder.appendSectionName("string0"));
+    EXPECT_EQ(9U, elfEncoder.appendSectionName("string1"));
+}
+
+TEST(EncodeElfNoteSection, givenZeroNotesToEncodeThenReturnsEmptyDataVector) {
     auto encoded = NEO::Elf::encodeNoteSectionData({});
     EXPECT_TRUE(encoded.empty());
 }
 
-TEST(DecodeElfNoteSection, givenValidNotesToEncodeThenReturnsProperlyEncodedData) {
+TEST(EncodeElfNoteSection, givenValidNotesToEncodeThenReturnsProperlyEncodedData) {
     std::string unalignedDescName = "note"
                                     "Type";
     std::string unalignedDesc = "some"

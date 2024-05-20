@@ -22,37 +22,37 @@ namespace NEO {
 
 namespace Elf {
 
-template <ElfIdentifierClass NumBits = NEO::Elf::EI_CLASS_64>
+template <ElfIdentifierClass numBits = NEO::Elf::EI_CLASS_64>
 struct MutableSectionHeader {
-    MutableSectionHeader(const std::string &name, const NEO::Elf::ElfSectionHeader<NumBits> &header, const std::vector<uint8_t> &data)
+    MutableSectionHeader(const std::string &name, const NEO::Elf::ElfSectionHeader<numBits> &header, const std::vector<uint8_t> &data)
         : name(name), header(header), data(data) {
     }
     std::string name;
-    NEO::Elf::ElfSectionHeader<NumBits> header{};
+    NEO::Elf::ElfSectionHeader<numBits> header{};
     std::vector<uint8_t> data;
 };
 
-template <ElfIdentifierClass NumBits = NEO::Elf::EI_CLASS_64>
+template <ElfIdentifierClass numBits = NEO::Elf::EI_CLASS_64>
 struct MutableProgramHeader {
-    MutableProgramHeader(const NEO::Elf::ElfProgramHeader<NumBits> &header, const std::vector<uint8_t> &data)
+    MutableProgramHeader(const NEO::Elf::ElfProgramHeader<numBits> &header, const std::vector<uint8_t> &data)
         : header(header), data(data) {
     }
-    NEO::Elf::ElfProgramHeader<NumBits> header = {};
+    NEO::Elf::ElfProgramHeader<numBits> header = {};
     std::vector<uint8_t> data;
-    MutableSectionHeader<NumBits> *referencedSectionData = nullptr;
+    MutableSectionHeader<numBits> *referencedSectionData = nullptr;
 };
 
-template <ElfIdentifierClass NumBits = NEO::Elf::EI_CLASS_64>
+template <ElfIdentifierClass numBits = NEO::Elf::EI_CLASS_64>
 struct ElfRewriter {
     using SectionId = uint32_t;
 
-    ElfRewriter(NEO::Elf::Elf<NumBits> &src) {
+    ElfRewriter(NEO::Elf::Elf<numBits> &src) {
         elfFileHeader = *src.elfFileHeader;
         for (const auto &sh : src.sectionHeaders) {
-            this->sectionHeaders.push_back(std::make_unique<MutableSectionHeader<NumBits>>(src.getName(sh.header->name), *sh.header, std::vector<uint8_t>{sh.data.begin(), sh.data.end()}));
+            this->sectionHeaders.push_back(std::make_unique<MutableSectionHeader<numBits>>(src.getName(sh.header->name), *sh.header, std::vector<uint8_t>{sh.data.begin(), sh.data.end()}));
         }
         for (const auto &ph : src.programHeaders) {
-            this->programHeaders.push_back(std::make_unique<MutableProgramHeader<NumBits>>(*ph.header, std::vector<uint8_t>{ph.data.begin(), ph.data.end()}));
+            this->programHeaders.push_back(std::make_unique<MutableProgramHeader<numBits>>(*ph.header, std::vector<uint8_t>{ph.data.begin(), ph.data.end()}));
             for (const auto &sh : this->sectionHeaders) {
                 if ((sh->header.offset == ph.header->offset) && (sh->header.size == ph.header->fileSz)) {
                     (*this->programHeaders.rbegin())->referencedSectionData = sh.get();
@@ -62,15 +62,20 @@ struct ElfRewriter {
     }
 
     std::vector<uint8_t> encode() const {
-        NEO::Elf::ElfEncoder<NumBits> encoder;
+        NEO::Elf::ElfEncoder<numBits> encoder{};
+        for (const auto &sh : this->sectionHeaders) {
+            if (sh->header.type == SHT_STRTAB) {
+                encoder.setInitialStringsTab(sh->data);
+            }
+        }
         encoder.getElfFileHeader() = elfFileHeader;
-        std::unordered_map<MutableSectionHeader<NumBits> *, decltype(NEO::Elf::ElfSectionHeader<NumBits>::offset)> encodedSectionsOffsets;
+        std::unordered_map<MutableSectionHeader<numBits> *, decltype(NEO::Elf::ElfSectionHeader<numBits>::offset)> encodedSectionsOffsets;
         for (const auto &sh : this->sectionHeaders) {
             if ((sh->header.type == SHT_NULL) || (sh->header.type == SHT_STRTAB)) {
                 continue;
             }
             auto nameIdx = encoder.appendSectionName(sh->name);
-            NEO::Elf::ElfSectionHeader<NumBits> header = sh->header;
+            NEO::Elf::ElfSectionHeader<numBits> header = sh->header;
             header.name = nameIdx;
             encodedSectionsOffsets[sh.get()] = encoder.appendSection(header, sh->data).offset;
         }
@@ -86,7 +91,7 @@ struct ElfRewriter {
         return encoder.encode();
     }
 
-    StackVec<SectionId, 16> findSections(typename ElfSectionHeaderTypes<NumBits>::Type type, ConstStringRef name) {
+    StackVec<SectionId, 16> findSections(typename ElfSectionHeaderTypes<numBits>::Type type, ConstStringRef name) {
         StackVec<SectionId, 16> ret;
         for (size_t i = 0; i < this->sectionHeaders.size(); i++) {
             auto &section = this->sectionHeaders[i];
@@ -97,7 +102,7 @@ struct ElfRewriter {
         return ret;
     }
 
-    MutableSectionHeader<NumBits> &getSection(SectionId idx) {
+    MutableSectionHeader<numBits> &getSection(SectionId idx) {
         return *sectionHeaders[idx];
     }
 
@@ -114,11 +119,11 @@ struct ElfRewriter {
         }
     }
 
-    ElfFileHeader<NumBits> elfFileHeader = {};
+    ElfFileHeader<numBits> elfFileHeader = {};
 
   protected:
-    StackVec<std::unique_ptr<MutableSectionHeader<NumBits>>, 32> sectionHeaders;
-    StackVec<std::unique_ptr<MutableProgramHeader<NumBits>>, 32> programHeaders;
+    StackVec<std::unique_ptr<MutableSectionHeader<numBits>>, 32> sectionHeaders;
+    StackVec<std::unique_ptr<MutableProgramHeader<numBits>>, 32> programHeaders;
 };
 
 } // namespace Elf
