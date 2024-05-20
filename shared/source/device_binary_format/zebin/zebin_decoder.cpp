@@ -161,7 +161,7 @@ DecodeError decodeIntelGTNoteSection(ArrayRef<const uint8_t> intelGTNotesSection
         auto currOffset = sizeof(Elf::ElfNoteSection) + alignUp(nameSz, 4) + alignUp(descSz, 4);
         if (currentPos + currOffset > sectionSize) {
             intelGTNotes.clear();
-            outErrReason.append("DeviceBinaryFormat::zebin : Offseting will cause out-of-bound memory read! Section size: " + std::to_string(sectionSize) +
+            outErrReason.append("DeviceBinaryFormat::zebin : Offsetting will cause out-of-bound memory read! Section size: " + std::to_string(sectionSize) +
                                 ", current section data offset: " + std::to_string(currentPos) + ", next offset : " + std::to_string(currOffset) + "\n");
             return DecodeError::invalidBinary;
         }

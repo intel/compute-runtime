@@ -6294,7 +6294,7 @@ TEST_F(IntelGTNotesFixture, WhenValidatingTargetDeviceGivenInvalidIntelGTNotesSe
     auto result = validateTargetDevice(elf, targetDevice, outErrReason, outWarning, singleDeviceBinary);
     EXPECT_FALSE(result);
     EXPECT_TRUE(outWarning.empty());
-    auto errStr{"DeviceBinaryFormat::zebin : Offseting will cause out-of-bound memory read! Section size: " + std::to_string(incorrectSectionDataSize) +
+    auto errStr{"DeviceBinaryFormat::zebin : Offsetting will cause out-of-bound memory read! Section size: " + std::to_string(incorrectSectionDataSize) +
                 ", current section data offset: " + std::to_string(sectionDataSize)};
     EXPECT_TRUE(std::string::npos != outErrReason.find(errStr));
 }
