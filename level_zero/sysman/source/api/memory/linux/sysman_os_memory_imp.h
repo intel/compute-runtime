@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "level_zero/sysman/source/api/memory/sysman_os_memory.h"
-#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+
+#include <string>
 
 namespace NEO {
 class Drm;
@@ -19,9 +19,10 @@ class Drm;
 namespace L0 {
 namespace Sysman {
 
-class SysmanKmdInterface;
 class PlatformMonitoringTech;
 class LinuxSysmanImp;
+class SysmanKmdInterface;
+struct SysmanDeviceImp;
 
 class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
   public:
@@ -37,8 +38,8 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     NEO::Drm *pDrm = nullptr;
     SysmanDeviceImp *pDevice = nullptr;
-    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     PlatformMonitoringTech *pPmt = nullptr;
+    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
 
   private:
     bool isSubdevice = false;

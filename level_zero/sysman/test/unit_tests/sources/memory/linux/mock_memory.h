@@ -20,6 +20,9 @@
 
 using namespace NEO;
 
+constexpr uint64_t hbmRP0Frequency = 4200;
+constexpr uint64_t mockMaxBwDg2 = 1343616u;
+
 constexpr uint32_t vF0HbmLRead = 16;
 constexpr uint32_t vF0HbmHRead = 2;
 constexpr uint32_t vF0HbmLWrite = 8;
@@ -60,10 +63,12 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::hbm2e;
+const std::string deviceMemoryHealth("device_memory_health");
+
 struct MockMemoryNeoDrm : public NEO::Drm {
     using Drm::ioctlHelper;
     const int mockFd = 33;
+    uint32_t mockMemoryType = NEO::DeviceBlobConstants::MemoryType::hbm2e;
     std::vector<bool> mockQuerySystemInfoReturnValue{};
     bool isRepeated = false;
     bool mockReturnEmptyRegions = false;
@@ -98,6 +103,7 @@ struct MockMemoryNeoDrm : public NEO::Drm {
         return returnValue;
     }
 };
+
 struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
     using L0::Sysman::PlatformMonitoringTech::guid;
     using L0::Sysman::PlatformMonitoringTech::keyOffsetMap;
@@ -297,16 +303,54 @@ class PublicLinuxMemoryImp : public L0::Sysman::LinuxMemoryImp {
     using L0::Sysman::LinuxMemoryImp::pSysmanKmdInterface;
 };
 
-class MockSysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
+class MockMemorySysmanKmdInterfaceXe : public L0::Sysman::SysmanKmdInterfaceXe {
   public:
-    MockSysFsAccessInterface() = default;
-    ~MockSysFsAccessInterface() override = default;
+    using L0::Sysman::SysmanKmdInterface::pProcfsAccess;
+    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
+    MockMemorySysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceXe(productFamily) {}
+    ~MockMemorySysmanKmdInterfaceXe() override = default;
+};
+
+struct MockMemorySysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
+    std::vector<ze_result_t> mockReadReturnStatus{};
+    std::vector<std::string> mockReadStringValue{};
+    bool isRepeated = false;
+
+    ze_result_t read(const std::string file, std::string &val) override {
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        if (!mockReadReturnStatus.empty()) {
+            result = mockReadReturnStatus.front();
+            if (!mockReadStringValue.empty()) {
+                val = mockReadStringValue.front();
+            }
+
+            if (isRepeated != true) {
+                mockReadReturnStatus.erase(mockReadReturnStatus.begin());
+                if (!mockReadStringValue.empty()) {
+                    mockReadStringValue.erase(mockReadStringValue.begin());
+                }
+            }
+            return result;
+        }
+
+        if (file.compare(deviceMemoryHealth) == 0) {
+            val = "OK";
+        }
+        return result;
+    }
 };
 
 class MockProcFsAccessInterface : public L0::Sysman::ProcFsAccessInterface {
   public:
     MockProcFsAccessInterface() = default;
     ~MockProcFsAccessInterface() override = default;
+};
+
+class MockSysmanKmdInterfaceI915Prelim : public L0::Sysman::SysmanKmdInterfaceI915Prelim {
+  public:
+    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
+    MockSysmanKmdInterfaceI915Prelim(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceI915Prelim(productFamily) {}
+    ~MockSysmanKmdInterfaceI915Prelim() override = default;
 };
 
 } // namespace ult
