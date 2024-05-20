@@ -1905,7 +1905,6 @@ HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAn
         uint32_t externalRelocationOffset = 0x20;
         constexpr auto externalSymbolName = "unresolved";
         linkerInput->textRelocations[0].push_back({externalSymbolName, externalRelocationOffset, LinkerInput::RelocationInfo::Type::address, SegmentType::instructions});
-
         char kernelHeap[MemoryConstants::cacheLineSize] = {};
         auto kernelInfo = std::make_unique<NEO::KernelInfo>();
         kernelInfo->heapInfo.pKernelHeap = kernelHeap;
@@ -1924,6 +1923,7 @@ HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAn
         expectedIsaAddressToPatch += heaplessModeEnabled ? isaAlloc->getGpuAddress() : isaAlloc->getGpuAddressToPatch();
 
         module->kernelImmDatas.push_back(std::move(kernelImmData));
+
         EXPECT_TRUE(module->linkBinary());
 
         EXPECT_EQ(expectedIsaAddressToPatch, module->isaSegmentsForPatching[0].gpuAddress);
@@ -1932,6 +1932,50 @@ HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAn
         } else {
             EXPECT_EQ(expectedIsaAddressToPatch, module->exportedFunctionsSurface->getGpuAddressToPatch());
         }
+
+        neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
+    }
+}
+
+HWTEST2_F(ModuleDynamicLinkTests, givenHeaplessAndModuleWithInternalRelocationAndUnresolvedExternalSymbolWhenDynamicLinkModuleThenPatchedAddressesAreCorrect, MatchAny) {
+
+    for (bool heaplessModeEnabled : {true, false}) {
+
+        auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHw<productFamily>(heaplessModeEnabled));
+        neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
+
+        auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+        linkerInput->traits.requiresPatchingOfInstructionSegments = true;
+        linkerInput->exportedFunctionsSegmentId = 0;
+        uint32_t internalRelocationOffset = 0x10;
+        linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, internalRelocationOffset, LinkerInput::RelocationInfo::Type::address, SegmentType::instructions}});
+        uint32_t externalRelocationOffset = 0x20;
+        constexpr auto externalSymbolName = "unresolved";
+        linkerInput->textRelocations[0].push_back({externalSymbolName, externalRelocationOffset, LinkerInput::RelocationInfo::Type::address, SegmentType::instructions});
+
+        char kernelHeap[MemoryConstants::cacheLineSize] = {};
+        auto kernelInfo = std::make_unique<NEO::KernelInfo>();
+        kernelInfo->heapInfo.pKernelHeap = kernelHeap;
+        kernelInfo->heapInfo.kernelHeapSize = MemoryConstants::cacheLineSize;
+        kernelInfo->kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
+        auto module = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::user);
+        module->getTranslationUnit()->programInfo.kernelInfos.push_back(kernelInfo.release());
+        module->getTranslationUnit()->programInfo.linkerInput = std::move(linkerInput);
+        auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(device);
+        kernelImmData->isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+            {device->getRootDeviceIndex(), MemoryConstants::cacheLineSize, NEO::AllocationType::kernelIsa, neoDevice->getDeviceBitfield()}));
+
+        auto isaAlloc = kernelImmData->getIsaGraphicsAllocation();
+        auto offsetInParentAllocation = kernelImmData->getIsaOffsetInParentAllocation();
+        auto expectedIsaAddressToPatch = offsetInParentAllocation;
+        expectedIsaAddressToPatch += heaplessModeEnabled ? isaAlloc->getGpuAddress() : isaAlloc->getGpuAddressToPatch();
+        module->kernelImmDatas.push_back(std::move(kernelImmData));
+
+        std::vector<ze_module_handle_t> hModules = {module->toHandle()};
+        ze_result_t res = module->performDynamicLink(1, hModules.data(), nullptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_TRUE(module->isFullyLinked);
+        EXPECT_EQ(expectedIsaAddressToPatch, module->isaSegmentsForPatching[0].gpuAddress);
 
         neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(backup);
     }
