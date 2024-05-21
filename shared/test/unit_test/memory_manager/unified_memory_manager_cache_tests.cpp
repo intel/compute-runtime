@@ -519,6 +519,36 @@ TEST_F(SvmDeviceAllocationCacheTest, givenDeviceOutOfMemoryWhenAllocatingThenCac
     ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
 }
 
+TEST_F(SvmDeviceAllocationCacheTest, givenAllocationWithNeedZeroedOutAllocationWhenAllocatingAfterFreeThenDoNotReuseAllocation) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+    svmManager->initUsmAllocationsCaches(*device);
+    EXPECT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
+    svmManager->usmDeviceAllocationsCache.maxSize = 1 * MemoryConstants::gigaByte;
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+    auto allocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
+    EXPECT_NE(allocation, nullptr);
+    svmManager->freeSVMAlloc(allocation);
+    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 1u);
+
+    unifiedMemoryProperties.needZeroedOutAllocation = true;
+    auto testedAllocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
+    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 1u);
+    auto svmData = svmManager->getSVMAlloc(testedAllocation);
+    EXPECT_NE(nullptr, svmData);
+
+    svmManager->freeSVMAlloc(testedAllocation);
+
+    svmManager->trimUSMDeviceAllocCache();
+}
+
 using SvmHostAllocationCacheTest = Test<SvmAllocationCacheTestFixture>;
 
 TEST_F(SvmHostAllocationCacheTest, givenAllocationCacheDefaultWhenCheckingIfEnabledThenItIsDisabled) {

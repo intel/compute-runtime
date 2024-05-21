@@ -297,7 +297,8 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
 
     if (memoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {
         unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
-        if (this->usmDeviceAllocationsCacheEnabled) {
+        if (this->usmDeviceAllocationsCacheEnabled &&
+            false == memoryProperties.needZeroedOutAllocation) {
             void *allocationFromCache = this->usmDeviceAllocationsCache.get(size, memoryProperties, this);
             if (allocationFromCache) {
                 return allocationFromCache;

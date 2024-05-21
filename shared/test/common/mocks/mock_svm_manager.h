@@ -32,6 +32,12 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
         prefetchMemoryCalled = true;
     }
     bool prefetchMemoryCalled = false;
+
+    void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties) override {
+        requestedZeroedOutAllocation = memoryProperties.needZeroedOutAllocation;
+        return SVMAllocsManager::createUnifiedMemoryAllocation(size, memoryProperties);
+    }
+    bool requestedZeroedOutAllocation = false;
 };
 
 template <bool enableLocalMemory>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, subDeviceBitfields);
         unifiedMemoryProperties.device = &device;
         unifiedMemoryProperties.requestedAllocationType = allocationType;
+        unifiedMemoryProperties.needZeroedOutAllocation = true;
         auto ptr = svmAllocManager->createUnifiedMemoryAllocation(totalSize, unifiedMemoryProperties);
         DEBUG_BREAK_IF(ptr == nullptr);
         if (ptr == nullptr) {
