@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,6 @@
 #pragma once
 
 #ifdef SUPPORT_XE_HPG_CORE
-#ifdef SUPPORT_DG2
-#include "device_ids_configs_dg2.h"
-#endif
 #ifdef SUPPORT_MTL
 #include "shared/source/xe_hpg_core/xe_lpg/device_ids_configs_xe_lpg.h"
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,6 @@
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 
 #include "aubstream/engine_node.h"
-#include "device_ids_configs_dg2.h"
 
 namespace NEO {
 
@@ -139,7 +138,6 @@ void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     gtSysInfo->IsL3HashModeEnabled = false;
     gtSysInfo->IsDynamicallyPopulated = false;
 
-    adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
     }
@@ -181,7 +179,6 @@ void Dg2HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
         gtSysInfo->SliceInfo[slice].Enabled = true;
     }
 
-    adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
         DG2::setupFeatureAndWorkaroundTable(hwInfo);
     }
@@ -195,5 +192,4 @@ void setupDG2HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWor
 }
 
 void (*DG2::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const ReleaseHelper *) = setupDG2HardwareInfoImpl;
-#include "hw_info_setup_dg2.inl"
 } // namespace NEO

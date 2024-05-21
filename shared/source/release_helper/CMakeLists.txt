@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -26,7 +26,7 @@ if(SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE)
        ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1271.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1274.cpp
   )
-  set_property(GLOBAL APPEND PROPERTY NEO_CORE_SRCS_LINK ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_release_helper_xe.cpp)
+  set_property(GLOBAL APPEND PROPERTY NEO_CORE_SRCS_LINK ${CMAKE_CURRENT_SOURCE_DIR}/enable_release_helper_xe.cpp)
 endif()
 
 set_property(GLOBAL APPEND PROPERTY NEO_CORE_RELEASE_HELPER ${NEO_CORE_RELEASE_HELPER})

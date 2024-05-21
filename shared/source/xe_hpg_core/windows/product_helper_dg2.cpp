@@ -31,7 +31,6 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     if (allowCompression(*hwInfo)) {
         enableCompression(hwInfo);
     }
-    DG2::adjustHardwareInfo(hwInfo);
     enableBlitterOperationsSupport(hwInfo);
 
     hwInfo->workaroundTable.flags.wa_15010089951 = true;

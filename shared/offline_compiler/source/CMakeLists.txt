@@ -81,7 +81,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1270.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1271.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1274.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper${BRANCH_DIR_SUFFIX}enable_release_helper_xe.cpp
+    ${NEO_SHARED_DIRECTORY}/release_helper/enable_release_helper_xe.cpp
     ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_common_xe_lpg.inl
     ${NEO_SHARED_DIRECTORY}/release_helper/definitions${BRANCH_DIR_SUFFIX}release_definitions.h
     ${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX}sku_info.cpp

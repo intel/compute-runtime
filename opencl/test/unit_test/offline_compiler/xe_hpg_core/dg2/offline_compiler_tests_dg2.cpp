@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,19 +8,27 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
-#include "shared/test/common/xe_hpg_core/dg2/product_configs_dg2.h"
 
 #include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"
 #include "opencl/test/unit_test/offline_compiler/ocloc_product_config_tests.h"
 
-#include "device_ids_configs_dg2.h"
-
+#include "platforms.h"
 namespace NEO {
+
+inline constexpr AOT::PRODUCT_CONFIG productConfigs[] = {
+    AOT::DG2_G10_A0,
+    AOT::DG2_G10_A1,
+    AOT::DG2_G10_B0,
+    AOT::DG2_G10_C0,
+    AOT::DG2_G11_A0,
+    AOT::DG2_G11_B0,
+    AOT::DG2_G11_B1,
+    AOT::DG2_G12_A0};
 INSTANTIATE_TEST_CASE_P(
     OclocProductConfigDg2TestsValues,
     OclocProductConfigTests,
     ::testing::Combine(
-        ::testing::ValuesIn(AOT_DG2::productConfigs),
+        ::testing::ValuesIn(productConfigs),
         ::testing::Values(IGFX_DG2)));
 
 INSTANTIATE_TEST_CASE_P(
