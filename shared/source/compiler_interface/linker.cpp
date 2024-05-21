@@ -185,6 +185,7 @@ bool LinkerInput::addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegme
     relocationInfo.symbolName = reloc.symbolName;
     relocationInfo.type = static_cast<LinkerInput::RelocationInfo::Type>(reloc.relocType);
     relocationInfo.relocationSegment = getSegmentForSection(sectionName);
+    relocationInfo.relocationSegmentName = sectionName;
 
     if (SegmentType::instructions == relocationInfo.relocationSegment) {
         auto kernelName = sectionName.substr(Zebin::Elf::SectionNames::textPrefix.length());
@@ -326,7 +327,7 @@ LinkingStatus Linker::link(const SegmentInfo &globalVariablesSegInfo, const Segm
                       outUnresolvedExternals, pDevice, constantsInitData, constantsInitDataSize, variablesInitData, variablesInitDataSize);
     removeLocalSymbolsFromRelocatedSymbols();
     resolveImplicitArgs(kernelDescriptors, pDevice);
-    resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments);
+    resolveBuiltins(pDevice, outUnresolvedExternals, instructionsSegments, kernelDescriptors);
 
     if (initialUnresolvedExternalsCount < outUnresolvedExternals.size()) {
         return LinkingStatus::linkedPartially;
@@ -405,6 +406,9 @@ void Linker::patchAddress(void *relocAddress, const uint64_t value, const Linker
         break;
     case RelocationInfo::Type::addressHigh:
         *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>((value >> 32) & 0xffffffff);
+        break;
+    case RelocationInfo::Type::address16:
+        *reinterpret_cast<uint16_t *>(relocAddress) = static_cast<uint16_t>(value);
         break;
     }
 }
@@ -656,7 +660,7 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
     }
 }
 
-void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments) {
+void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments, const KernelDescriptorsT &kernelDescriptors) {
     auto &productHelper = pDevice->getProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();
 
@@ -673,6 +677,22 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
             }
             outUnresolvedExternals[vecIndex] = outUnresolvedExternals[outUnresolvedExternals.size() - 1u];
             outUnresolvedExternals.resize(outUnresolvedExternals.size() - 1u);
+        } else if (outUnresolvedExternals[vecIndex].unresolvedRelocation.symbolName == perThreadOff) {
+            RelocatedSymbol<SymbolInfo> symbol;
+
+            auto kernelName = outUnresolvedExternals[vecIndex].unresolvedRelocation.relocationSegmentName.substr(Zebin::Elf::SectionNames::textPrefix.length());
+
+            auto kernelDescriptor = std::find_if(kernelDescriptors.begin(), kernelDescriptors.end(), [&kernelName](const KernelDescriptor *obj) { return obj->kernelMetadata.kernelName == kernelName; });
+            if (kernelDescriptor != std::end(kernelDescriptors)) {
+                uint64_t crossThreadDataSize = (*kernelDescriptor)->kernelAttributes.crossThreadDataSize - (*kernelDescriptor)->kernelAttributes.inlineDataPayloadSize;
+                symbol.gpuAddress = crossThreadDataSize;
+                auto relocAddress = ptrOffset(instructionsSegments[outUnresolvedExternals[vecIndex].instructionsSegmentId].hostPointer,
+                                              static_cast<uintptr_t>(outUnresolvedExternals[vecIndex].unresolvedRelocation.offset));
+
+                NEO::Linker::patchAddress(relocAddress, symbol.gpuAddress, outUnresolvedExternals[vecIndex].unresolvedRelocation);
+                outUnresolvedExternals[vecIndex] = outUnresolvedExternals[outUnresolvedExternals.size() - 1u];
+                outUnresolvedExternals.resize(outUnresolvedExternals.size() - 1u);
+            }
         }
     }
 }

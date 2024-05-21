@@ -92,6 +92,7 @@ struct LinkerInput {
             addressLow,
             addressHigh,
             perThreadPayloadOffset,
+            address16 = 7,
             relocTypeMax
         };
 
@@ -99,6 +100,7 @@ struct LinkerInput {
         uint64_t offset = std::numeric_limits<uint64_t>::max();
         Type type = Type::unknown;
         SegmentType relocationSegment = SegmentType::unknown;
+        std::string relocationSegmentName;
         int64_t addend = 0U;
     };
 
@@ -189,6 +191,7 @@ struct LinkerInput {
 
 struct Linker {
     inline static const std::string subDeviceID = "__SubDeviceID";
+    inline static const std::string perThreadOff = "__INTEL_PER_THREAD_OFF";
 
     using RelocationInfo = LinkerInput::RelocationInfo;
 
@@ -257,7 +260,7 @@ struct Linker {
 
     bool resolveExternalFunctions(const KernelDescriptorsT &kernelDescriptors, std::vector<ExternalFunctionInfo> &externalFunctions);
     void resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, Device *pDevice);
-    void resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments);
+    void resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolvedExternals, const std::vector<PatchableSegment> &instructionsSegments, const KernelDescriptorsT &kernelDescriptors);
 
     template <typename PatchSizeT>
     void patchIncrement(void *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue);

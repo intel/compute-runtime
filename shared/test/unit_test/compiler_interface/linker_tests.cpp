@@ -802,7 +802,8 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsWhenResolveBuiltinsIsCalledT
     debugManager.flags.CreateMultipleSubDevices.set(2);
     debugManager.flags.EnableImplicitScaling.set(1);
 
-    linker.resolveBuiltins(pDevice, unresolvedExternals, instructionsSegments);
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    linker.resolveBuiltins(pDevice, unresolvedExternals, instructionsSegments, kernelDescriptors);
 
     EXPECT_EQ(2U, unresolvedExternals.size());
     for (auto &symbol : unresolvedExternals) {
@@ -856,6 +857,103 @@ HWTEST_F(LinkerTests, givenUnresolvedExternalsWhenLinkThenSubDeviceIDSymbolsAreC
     auto gpuAddressAs64bit = pDevice->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
     EXPECT_EQ(*reinterpret_cast<uint32_t *>(&instructionSegment[64]), static_cast<uint32_t>((gpuAddressAs64bit >> 32) & 0xffffffff));
     EXPECT_EQ(*reinterpret_cast<uint32_t *>(instructionSegment.data()), static_cast<uint32_t>(gpuAddressAs64bit & 0xffffffff));
+}
+
+HWTEST_F(LinkerTests, givenUnresolvedExternalSymbolsWhenResolveBuiltinsIsCalledThenPerThreadOffSymbolsAreResolvedAndRemoved) {
+    struct LinkerMock : public NEO::Linker {
+      public:
+        using NEO::Linker::resolveBuiltins;
+
+        LinkerMock(const LinkerInput &data) : NEO::Linker(data) {
+        }
+    };
+
+    const uint64_t kernel1RelocOffset = 40;
+    const uint64_t kernel2RelocOffset = 0;
+
+    NEO::LinkerInput linkerInput;
+    LinkerMock linker(linkerInput);
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    unresolvedExternals.push_back({{"__INTEL_PER_THREAD_OFF", 0, NEO::Linker::RelocationInfo::Type::addressLow, NEO::SegmentType::instructions, ".text.kernel_func2"}, 0u, false});
+    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 156, NEO::Linker::RelocationInfo::Type::addressLow, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 140, NEO::Linker::RelocationInfo::Type::addressHigh, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__INTEL_PER_THREAD_OFF", kernel1RelocOffset, static_cast<NEO::Linker::RelocationInfo::Type>(7u), NEO::SegmentType::instructions, ".text.kernel_func1"}, 0u, false});
+
+    std::vector<char> instructionSegment;
+    instructionSegment.resize(kernel1RelocOffset + 16);
+    NEO::Linker::PatchableSegments instructionsSegments;
+    instructionsSegments.push_back({instructionSegment.data(), 0u});
+
+    KernelDescriptor kernelDescriptor1;
+    kernelDescriptor1.kernelMetadata.kernelName = "kernel_func1";
+    kernelDescriptor1.kernelAttributes.crossThreadDataSize = 96;
+    kernelDescriptor1.kernelAttributes.inlineDataPayloadSize = 64;
+
+    KernelDescriptor kernelDescriptor2;
+    kernelDescriptor2.kernelMetadata.kernelName = "kernel_func2";
+    kernelDescriptor2.kernelAttributes.crossThreadDataSize = 192;
+    kernelDescriptor2.kernelAttributes.inlineDataPayloadSize = 64;
+
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    kernelDescriptors.push_back(&kernelDescriptor1);
+    kernelDescriptors.push_back(&kernelDescriptor2);
+    linker.resolveBuiltins(pDevice, unresolvedExternals, instructionsSegments, kernelDescriptors);
+
+    EXPECT_EQ(2U, unresolvedExternals.size());
+    for (auto &symbol : unresolvedExternals) {
+        EXPECT_NE(NEO::Linker::perThreadOff, symbol.unresolvedRelocation.symbolName);
+    }
+
+    uint16_t gpuAddress1 = kernelDescriptor1.kernelAttributes.crossThreadDataSize -
+                           kernelDescriptor1.kernelAttributes.inlineDataPayloadSize;
+
+    uint16_t gpuAddress2 = kernelDescriptor2.kernelAttributes.crossThreadDataSize -
+                           kernelDescriptor2.kernelAttributes.inlineDataPayloadSize;
+
+    EXPECT_EQ(*reinterpret_cast<uint16_t *>(&instructionSegment[kernel1RelocOffset]), static_cast<uint16_t>(gpuAddress1));
+    EXPECT_EQ(*reinterpret_cast<uint32_t *>(&instructionSegment[kernel2RelocOffset]), static_cast<uint32_t>(gpuAddress2 & 0xffffffff));
+}
+
+HWTEST_F(LinkerTests, givenPerThreadOffSymbolInUnresolvedExternalSymbolsAndMissingKernelDescriptorForPerThreadOffSymbolWhenResolveBuiltinsThenPerThreadOffSymbolIsNotResolved) {
+    struct LinkerMock : public NEO::Linker {
+      public:
+        using NEO::Linker::resolveBuiltins;
+
+        LinkerMock(const LinkerInput &data) : NEO::Linker(data) {
+        }
+    };
+
+    const uint64_t kernelRelocOffset = 40;
+
+    NEO::LinkerInput linkerInput;
+    LinkerMock linker(linkerInput);
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 156, NEO::Linker::RelocationInfo::Type::addressLow, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__MaxHWThreadIDPerSubDevice", 140, NEO::Linker::RelocationInfo::Type::addressHigh, NEO::SegmentType::instructions}, 0u, false});
+    unresolvedExternals.push_back({{"__INTEL_PER_THREAD_OFF", kernelRelocOffset, NEO::Linker::RelocationInfo::Type::address16, NEO::SegmentType::instructions, ".text.kernel_func"}, 0u, false});
+
+    std::vector<char> instructionSegment;
+    instructionSegment.resize(64);
+    NEO::Linker::PatchableSegments instructionsSegments;
+    instructionsSegments.push_back({instructionSegment.data(), 0u});
+
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelMetadata.kernelName = "kernel_name";
+    kernelDescriptor.kernelAttributes.crossThreadDataSize = 96;
+
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
+    kernelDescriptors.push_back(&kernelDescriptor);
+    linker.resolveBuiltins(pDevice, unresolvedExternals, instructionsSegments, kernelDescriptors);
+
+    EXPECT_EQ(3U, unresolvedExternals.size());
+
+    bool isPerThreadOffUnresolved = false;
+    for (auto &symbol : unresolvedExternals) {
+        if (NEO::Linker::perThreadOff == symbol.unresolvedRelocation.symbolName) {
+            isPerThreadOffUnresolved = true;
+        }
+    }
+    EXPECT_TRUE(isPerThreadOffUnresolved);
 }
 
 HWTEST_F(LinkerTests, givenUnresolvedExternalWhenPatchingInstructionsThenLinkPartially) {
