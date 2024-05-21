@@ -282,6 +282,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::overridePatAndUsageForDcFlushMitigation(Allo
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::overrideCacheableForDcFlushMitigation(AllocationType allocationType) const {
+    return false;
+}
+
+template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
     return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
 }

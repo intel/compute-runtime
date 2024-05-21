@@ -408,15 +408,21 @@ bool ProductHelperHw<gfxProduct>::isDcFlushMitigated() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::overridePatAndUsageForDcFlushMitigation(AllocationType allocationType) const {
     return this->isDcFlushMitigated() &&
+           (this->overrideCacheableForDcFlushMitigation(allocationType) ||
+            allocationType == AllocationType::timestampPacketTagBuffer ||
+            allocationType == AllocationType::tagBuffer ||
+            allocationType == AllocationType::gpuTimestampDeviceBuffer);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::overrideCacheableForDcFlushMitigation(AllocationType allocationType) const {
+    return this->isDcFlushMitigated() &&
            (allocationType == AllocationType::externalHostPtr ||
             allocationType == AllocationType::bufferHostMemory ||
             allocationType == AllocationType::mapAllocation ||
             allocationType == AllocationType::svmCpu ||
             allocationType == AllocationType::svmZeroCopy ||
-            allocationType == AllocationType::internalHostMemory ||
-            allocationType == AllocationType::timestampPacketTagBuffer ||
-            allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::gpuTimestampDeviceBuffer);
+            allocationType == AllocationType::internalHostMemory);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
