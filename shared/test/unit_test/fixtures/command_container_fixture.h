@@ -19,6 +19,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
   public:
     class MyMockCommandContainer : public CommandContainer {
       public:
+        using CommandContainer::allocationIndirectHeaps;
         using CommandContainer::dirtyHeaps;
         using CommandContainer::indirectHeaps;
 
