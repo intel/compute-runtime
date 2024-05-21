@@ -35,6 +35,8 @@ class AubMemoryOperationsHandler : public MemoryOperationsHandler {
     bool isAubWritable(GraphicsAllocation &graphicsAllocation, Device *device) const;
     void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation, Device *device);
 
+    void processFlushResidency(Device *device);
+
   protected:
     DeviceBitfield getMemoryBanksBitfield(GraphicsAllocation *allocation, Device *device) const;
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {

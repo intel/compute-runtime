@@ -141,4 +141,33 @@ DeviceBitfield AubMemoryOperationsHandler::getMemoryBanksBitfield(GraphicsAlloca
     return {};
 }
 
+void AubMemoryOperationsHandler::processFlushResidency(Device *device) {
+    for (const auto &allocation : this->residentAllocations) {
+        if (!isAubWritable(*allocation, device)) {
+            continue;
+        }
+
+        uint64_t gpuAddress = device->getGmmHelper()->decanonize(allocation->getGpuAddress());
+        aub_stream::AllocationParams params(gpuAddress,
+                                            allocation->getUnderlyingBuffer(),
+                                            allocation->getUnderlyingBufferSize(),
+                                            allocation->storageInfo.getMemoryBanks(),
+                                            AubMemDump::DataTypeHintValues::TraceNotype,
+                                            allocation->getUsedPageSize());
+
+        auto gmm = allocation->getDefaultGmm();
+
+        if (gmm) {
+            params.additionalParams.compressionEnabled = gmm->isCompressionEnabled();
+            params.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->resourceParams.Usage);
+        }
+
+        if (allocation->storageInfo.cloningOfPageTables || !allocation->isAllocatedInLocalMemoryPool()) {
+            aubManager->writeMemory2(params);
+        } else {
+            device->getDefaultEngine().commandStreamReceiver->writeMemoryAub(params);
+        }
+    }
+}
+
 } // namespace NEO
