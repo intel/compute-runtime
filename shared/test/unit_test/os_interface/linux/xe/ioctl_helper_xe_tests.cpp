@@ -662,6 +662,7 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     }
     auto engineInfo = mockXeIoctlHelper->createEngineInfo(false);
     EXPECT_NE(nullptr, engineInfo);
+    EXPECT_TRUE(engineInfo->hasEngines());
     {
         GetParam test = {};
         int dstvalue;

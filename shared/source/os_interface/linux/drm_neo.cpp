@@ -992,7 +992,7 @@ bool Drm::queryMemoryInfo() {
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     this->engineInfo = ioctlHelper->createEngineInfo(isSysmanEnabled);
-    if (this->engineInfo && this->engineInfo.get()->engines.size() == 0) {
+    if (this->engineInfo && (this->engineInfo->hasEngines() == false)) {
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Engine info size is equal to 0.\n");
     }
 

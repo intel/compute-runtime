@@ -583,10 +583,11 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithoutDeviceMemo
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 
     auto engineInfo = drm->getEngineInfo();
+    ASSERT_NE(nullptr, engineInfo);
     std::vector<EngineClassInstance> engines;
     engineInfo->getListOfEnginesOnATile(0, engines);
     auto totalEnginesCount = engineInfo->engines.size();
-    ASSERT_NE(nullptr, engineInfo);
+    EXPECT_TRUE(engineInfo->hasEngines());
     EXPECT_EQ(totalEnginesCount, engines.size());
 }
 

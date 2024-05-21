@@ -224,6 +224,10 @@ void EngineInfo::assignCopyEngine(aub_stream::EngineType baseEngineType, uint32_
     bcsInfoMask.set(0, true);
 }
 
+bool EngineInfo::hasEngines() {
+    return (tileToEngineMap.size() > 0LU);
+}
+
 // EngineIndex = (Base + EngineCounter - 1)
 aub_stream::EngineType EngineInfo::getBaseCopyEngineType(IoctlHelper *ioctlHelper, uint64_t capabilities, bool isIntegratedDevice) {
     if (!isIntegratedDevice) {
