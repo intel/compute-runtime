@@ -50,7 +50,7 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
     using DWORD_LENGTH = typename FamilyType::MI_ATOMIC::DWORD_LENGTH;
 
-    constexpr size_t bufferSize = sizeof(MI_ATOMIC) * 3;
+    constexpr size_t bufferSize = sizeof(MI_ATOMIC) * 4;
     uint8_t buffer[bufferSize];
     uint64_t address = (static_cast<uint64_t>(3) << 32) + 0x123400;
     LinearStream cmdbuffer(buffer, bufferSize);
@@ -90,6 +90,15 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
                                               operand1Data,
                                               operand2Data);
 
+    EncodeAtomic<FamilyType>::programMiAtomic(cmdbuffer,
+                                              address,
+                                              ATOMIC_OPCODES::ATOMIC_8B_ADD,
+                                              DATA_SIZE::DATA_SIZE_QWORD,
+                                              0x0u,
+                                              0x0u,
+                                              operand1Data,
+                                              operand2Data);
+
     MI_ATOMIC *miAtomicCmd = reinterpret_cast<MI_ATOMIC *>(cmdbuffer.getCpuBase());
 
     EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_4B_MOVE, miAtomicCmd->getAtomicOpcode());
@@ -117,6 +126,18 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
 
     miAtomicCmd++;
     EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_CMP_WR, miAtomicCmd->getAtomicOpcode());
+    EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomicCmd->getDataSize());
+    EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
+    EXPECT_EQ(0x0u, miAtomicCmd->getReturnDataControl());
+    EXPECT_EQ(DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, miAtomicCmd->getDwordLength());
+    EXPECT_EQ(0x1u, miAtomicCmd->getInlineData());
+    EXPECT_EQ(operand1DataLow, miAtomicCmd->getOperand1DataDword0());
+    EXPECT_EQ(operand1DataHigh, miAtomicCmd->getOperand1DataDword1());
+    EXPECT_EQ(operand2DataLow, miAtomicCmd->getOperand2DataDword0());
+    EXPECT_EQ(operand2DataHigh, miAtomicCmd->getOperand2DataDword1());
+
+    miAtomicCmd++;
+    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomicCmd->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomicCmd->getDataSize());
     EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
     EXPECT_EQ(0x0u, miAtomicCmd->getReturnDataControl());

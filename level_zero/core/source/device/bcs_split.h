@@ -143,9 +143,9 @@ struct BcsSplit {
         cmdList->appendEventForProfilingAllWalkers(this->events.marker[markerEventIndex], nullptr, nullptr, false, true, false);
 
         if (cmdList->isInOrderExecutionEnabled()) {
-            cmdList->appendSignalInOrderDependencyCounter(signalEvent);
+            cmdList->appendSignalInOrderDependencyCounter(signalEvent, false);
         }
-        cmdList->handleInOrderDependencyCounter(signalEvent, false);
+        cmdList->handleInOrderDependencyCounter(signalEvent, false, false);
 
         return result;
     }

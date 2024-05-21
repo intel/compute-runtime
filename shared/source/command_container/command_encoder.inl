@@ -985,7 +985,7 @@ void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic,
     cmd.setReturnDataControl(returnDataControl);
     cmd.setCsStall(csStall);
 
-    if (opcode == ATOMIC_OPCODES::ATOMIC_4B_MOVE || opcode == ATOMIC_OPCODES::ATOMIC_8B_MOVE || opcode == ATOMIC_OPCODES::ATOMIC_8B_CMP_WR) {
+    if (opcode == ATOMIC_OPCODES::ATOMIC_4B_MOVE || opcode == ATOMIC_OPCODES::ATOMIC_8B_MOVE || opcode == ATOMIC_OPCODES::ATOMIC_8B_CMP_WR || opcode == ATOMIC_OPCODES::ATOMIC_8B_ADD) {
         cmd.setDwordLength(MI_ATOMIC::DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1);
         cmd.setInlineData(0x1);
 

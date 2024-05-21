@@ -915,6 +915,7 @@ typedef struct tagMI_ATOMIC {
         ATOMIC_8B_MOVE = 0x24,
         ATOMIC_8B_INCREMENT = 0x25,
         ATOMIC_8B_DECREMENT = 0x26,
+        ATOMIC_8B_ADD = 0x27,
         ATOMIC_8B_CMP_WR = 0x2E,
     } ATOMIC_OPCODES;
     inline void init() {

@@ -290,7 +290,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         NEO::PipeControlArgs args;
 
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
-        appendSignalInOrderDependencyCounter(event);
+        appendSignalInOrderDependencyCounter(event, false);
     }
 
     return ZE_RESULT_SUCCESS;

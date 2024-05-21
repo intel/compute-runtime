@@ -4782,7 +4782,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSy
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    immCmdList->appendSignalInOrderDependencyCounter(nullptr);
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -6825,6 +6825,14 @@ struct CopyOffloadInOrderTests : public InOrderCmdListTests {
         return createImmCmdListImpl<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(true);
     }
 
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createMultiTileImmCmdListWithOffload(uint32_t partitionCount) {
+        auto cmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+        cmdList->partitionCount = partitionCount;
+        return cmdList;
+    }
+
+    uint32_t copyData = 0;
     std::unique_ptr<VariableBackup<NEO::HardwareInfo>> backupHwInfo;
 };
 
@@ -6920,8 +6928,6 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    uint32_t copyData = 0;
-
     {
         auto offset = cmdStream->getUsed();
 
@@ -6949,6 +6955,103 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), copyItor);
+    }
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterThenUseCorrectHwCommands, IsAtLeastXeHpCore) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    constexpr uint32_t partitionCount = 4;
+
+    debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
+
+    {
+        debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
+
+        auto immCmdList = createMultiTileImmCmdListWithOffload<gfxCoreFamily>(partitionCount);
+
+        auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+        size_t offset = cmdStream->getUsed();
+
+        immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto miAtomics = findAll<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(1u, miAtomics.size());
+
+        auto atomicCmd = genCmdCast<MI_ATOMIC *>(*miAtomics[0]);
+        ASSERT_NE(nullptr, atomicCmd);
+
+        auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress();
+
+        EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd));
+        EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, atomicCmd->getAtomicOpcode());
+        EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
+        EXPECT_EQ(getLowPart(partitionCount), atomicCmd->getOperand1DataDword0());
+        EXPECT_EQ(getHighPart(partitionCount), atomicCmd->getOperand1DataDword1());
+    }
+
+    {
+        debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
+
+        auto immCmdList = createMultiTileImmCmdListWithOffload<gfxCoreFamily>(partitionCount);
+
+        auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+        size_t offset = cmdStream->getUsed();
+
+        immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto miStoreDws = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(partitionCount, miStoreDws.size());
+
+        for (uint32_t i = 0; i < partitionCount; i++) {
+
+            auto storeDw = genCmdCast<MI_STORE_DATA_IMM *>(*miStoreDws[i]);
+            ASSERT_NE(nullptr, storeDw);
+
+            auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress() + (i * device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+            EXPECT_EQ(gpuAddress, storeDw->getAddress());
+            EXPECT_EQ(1u, storeDw->getDataDword0());
+        }
+    }
+
+    {
+        debugManager.flags.InOrderAtomicSignallingEnabled.set(0);
+        debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
+
+        auto immCmdList = createMultiTileImmCmdListWithOffload<gfxCoreFamily>(partitionCount);
+
+        auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+        size_t offset = cmdStream->getUsed();
+
+        immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto miStoreDws = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(partitionCount * 2, miStoreDws.size());
+
+        for (uint32_t i = 0; i < partitionCount; i++) {
+
+            auto storeDw = genCmdCast<MI_STORE_DATA_IMM *>(*miStoreDws[i + partitionCount]);
+            ASSERT_NE(nullptr, storeDw);
+
+            auto gpuAddress = immCmdList->inOrderExecInfo->getBaseHostGpuAddress() + (i * device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+            EXPECT_EQ(gpuAddress, storeDw->getAddress());
+            EXPECT_EQ(1u, storeDw->getDataDword0());
+        }
     }
 }
 

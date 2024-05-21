@@ -399,7 +399,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
                 appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
-                appendSignalInOrderDependencyCounter(eventForInOrderExec);
+                appendSignalInOrderDependencyCounter(eventForInOrderExec, false);
             }
         } else {
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
