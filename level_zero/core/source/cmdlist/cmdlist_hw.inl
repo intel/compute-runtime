@@ -176,7 +176,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
         uint32_t newOffset = 0;
         if (inOrderExecInfo->getAllocationOffset() == 0) {
             // multitile immediate writes are uint64_t aligned
-            newOffset = this->partitionCount * static_cast<uint32_t>(sizeof(uint64_t));
+            newOffset = this->partitionCount * device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
         }
 
         inOrderExecInfo->setAllocationOffset(newOffset);
@@ -2523,6 +2523,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 
     uint64_t gpuAddress = inOrderExecInfo->getBaseDeviceAddress() + offset;
 
+    const uint32_t immWriteOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+
     for (uint32_t i = 0; i < inOrderExecInfo->getNumDevicePartitionsToWait(); i++) {
         if (relaxedOrderingAllowed) {
             NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, waitValue, NEO::CompareOperation::less, true, isQwordInOrderCounter(), isCopyOnly());
@@ -2594,12 +2596,12 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                 auto &semaphoreWaitPatch = outListCommands->emplace_back();
                 semaphoreWaitPatch.type = CommandToPatch::CbWaitEventSemaphoreWait;
                 semaphoreWaitPatch.pDestination = semaphoreCommand;
-                semaphoreWaitPatch.offset = i * sizeof(uint64_t);
+                semaphoreWaitPatch.offset = i * immWriteOffset;
                 semaphoreWaitPatch.inOrderPatchListIndex = inOrderPatchListIndex;
             }
         }
 
-        gpuAddress += sizeof(uint64_t);
+        gpuAddress += immWriteOffset;
     }
 }
 

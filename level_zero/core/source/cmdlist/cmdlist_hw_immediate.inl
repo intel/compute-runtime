@@ -1386,7 +1386,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
                 break;
             }
 
-            hostAddress = ptrOffset(hostAddress, sizeof(uint64_t));
+            hostAddress = ptrOffset(hostAddress, this->device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
         }
 
         if (signaled) {

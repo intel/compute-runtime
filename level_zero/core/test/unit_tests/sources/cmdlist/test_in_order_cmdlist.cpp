@@ -517,7 +517,7 @@ HWTEST2_F(InOrderCmdListTests, whenCreatingInOrderExecInfoThenReuseDeviceAlloc, 
     auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
     auto gpuVa2 = immCmdList2->inOrderExecInfo->getBaseDeviceAddress();
 
-    EXPECT_NE(gpuVa1, gpuVa2);
+    EXPECT_EQ(alignUp(gpuVa1 + (device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset() * 2), MemoryConstants::cacheLineSize), gpuVa2);
 
     // allocation from the same allocator
     EXPECT_EQ(immCmdList1->inOrderExecInfo->getDeviceCounterAllocation(), tag->getBaseGraphicsAllocation()->getGraphicsAllocation(0));
@@ -3252,7 +3252,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
             expectedCounter += static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) - 1;
         } else {
             expectedCounter = 1;
-            expectedOffset = useZeroOffset ? 0 : static_cast<uint32_t>(sizeof(uint64_t));
+            expectedOffset = useZeroOffset ? 0 : device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
         }
 
         EXPECT_EQ(expectedCounter, immCmdList->inOrderExecInfo->getCounterValue());
@@ -3344,7 +3344,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
         auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
         ASSERT_NE(nullptr, sdiCmd);
 
-        offset = static_cast<uint32_t>(sizeof(uint64_t));
+        offset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
 
         EXPECT_EQ(baseGpuVa + offset, sdiCmd->getAddress());
         EXPECT_EQ(1u, sdiCmd->getDataDword0());
@@ -4770,7 +4770,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
             auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
             ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, gpuAddress, immCmdList->isQwordInOrderCounter(), false));
-            ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, gpuAddress + sizeof(uint64_t), immCmdList->isQwordInOrderCounter(), false));
+            ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, gpuAddress + device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset(), immCmdList->isQwordInOrderCounter(), false));
         }
     }
 }
@@ -4806,7 +4806,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
     auto hostAddress0 = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
-    auto hostAddress1 = ptrOffset(hostAddress0, sizeof(uint64_t));
+    auto hostAddress1 = ptrOffset(hostAddress0, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
 
     *hostAddress0 = 0;
     *hostAddress1 = 0;

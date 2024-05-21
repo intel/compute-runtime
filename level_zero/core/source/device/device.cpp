@@ -11,6 +11,8 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+
 namespace L0 {
 
 uint32_t Device::getRootDeviceIndex() const {
@@ -22,7 +24,7 @@ NEO::DebuggerL0 *Device::getL0Debugger() {
 }
 
 template <typename NodeT>
-NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAllocatorBase> &allocator, std::mutex &inOrderAllocatorMutex, NEO::Device &neoDevice) {
+NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAllocatorBase> &allocator, std::mutex &inOrderAllocatorMutex, NEO::Device &neoDevice, uint32_t immediateWritePostSyncOffset) {
     if (!allocator.get()) {
         std::unique_lock<std::mutex> lock(inOrderAllocatorMutex);
 
@@ -31,7 +33,7 @@ NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAlloca
 
             const size_t maxPartitionCount = neoDevice.getDeviceBitfield().count();
 
-            const size_t nodeSize = sizeof(uint64_t) * maxPartitionCount * 2; // Multiplied by 2 to handle 32b overflow
+            const size_t nodeSize = immediateWritePostSyncOffset * maxPartitionCount * 2; // Multiplied by 2 to handle 32b overflow
 
             DEBUG_BREAK_IF(alignUp(nodeSize, MemoryConstants::cacheLineSize) * NodeT::defaultAllocatorTagCount > MemoryConstants::pageSize64k);
 
@@ -44,11 +46,11 @@ NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAlloca
 }
 
 NEO::TagAllocatorBase *Device::getDeviceInOrderCounterAllocator() {
-    return getInOrderCounterAllocator<NEO::DeviceAllocNodeType<true>>(deviceInOrderCounterAllocator, inOrderAllocatorMutex, *getNEODevice());
+    return getInOrderCounterAllocator<NEO::DeviceAllocNodeType<true>>(deviceInOrderCounterAllocator, inOrderAllocatorMutex, *getNEODevice(), getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
 }
 
 NEO::TagAllocatorBase *Device::getHostInOrderCounterAllocator() {
-    return getInOrderCounterAllocator<NEO::DeviceAllocNodeType<false>>(hostInOrderCounterAllocator, inOrderAllocatorMutex, *getNEODevice());
+    return getInOrderCounterAllocator<NEO::DeviceAllocNodeType<false>>(hostInOrderCounterAllocator, inOrderAllocatorMutex, *getNEODevice(), getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
 }
 
 uint32_t Device::getNextSyncDispatchQueueId() {

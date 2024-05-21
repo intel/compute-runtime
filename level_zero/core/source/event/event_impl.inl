@@ -234,7 +234,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
                 break;
             }
 
-            hostAddress = ptrOffset(hostAddress, sizeof(uint64_t));
+            hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
         }
 
         if (!signaled) {
