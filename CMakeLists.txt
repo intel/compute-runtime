@@ -4,10 +4,9 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(WIN32)
-  cmake_minimum_required(VERSION 3.13.0 FATAL_ERROR)
-else()
-  cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13.0 FATAL_ERROR)
+if(POLICY CMP0065)
+  cmake_policy(SET CMP0065 OLD)
 endif()
 
 include(ExternalProject)

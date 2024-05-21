@@ -88,7 +88,7 @@ fi
 
 #needs a top level CMAKE file
 cat << EOF | tee $BUILD_DIR/CMakeLists.txt
-cmake_minimum_required (VERSION 3.2 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.13.0 FATAL_ERROR)
 
 project(neo)
 

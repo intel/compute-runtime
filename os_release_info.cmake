@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,9 +11,6 @@ if(NOT DEFINED _os_release_info)
 
   # This file has no dependencies on other files (e.g., functions or definitions)
   # of the local cmake environment.
-
-  # Set cmake policies for at least this level:
-  cmake_minimum_required(VERSION 2.8.12)
 
   # Function get_os_release_info - Determine and return OS name and version
   #
