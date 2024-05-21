@@ -113,9 +113,4 @@ bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
     return false;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t patIndex) const {
-    return std::nullopt;
-}
-
 } // namespace NEO

@@ -948,10 +948,3 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSuppo
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceFalseReturned) {
     EXPECT_FALSE(productHelper->isDeviceToHostCopySignalingFenceRequired());
 }
-
-HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnNullopt, IsAtMostPVC) {
-    std::array<uint64_t, 5> listOfCoherentPatIndexes = {0, 1, 2, 3, 4};
-    for (auto patIndex : listOfCoherentPatIndexes) {
-        EXPECT_EQ(std::nullopt, productHelper->isCoherentAllocation(patIndex));
-    }
-}

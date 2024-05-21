@@ -544,7 +544,7 @@ bool IoctlHelperI915::getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *
     return false;
 }
 
-uint32_t IoctlHelperI915::createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) {
+uint32_t IoctlHelperI915::createGem(uint64_t size, uint32_t memoryBanks) {
     GemCreate gemCreate = {};
     gemCreate.size = size;
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &gemCreate);

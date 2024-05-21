@@ -537,9 +537,9 @@ uint16_t IoctlHelperXe::getDefaultEngineClass(const aub_stream::EngineType &defa
  *
  * @return returns caching policy defined as DRM_XE_GEM_CPU_CACHING_WC or DRM_XE_GEM_CPU_CACHING_WB
  */
-uint16_t IoctlHelperXe::getCpuCachingMode(std::optional<bool> isCoherent, bool allocationInSystemMemory) const {
+uint16_t IoctlHelperXe::getCpuCachingMode(bool allocationInSystemMemory) const {
     uint16_t cpuCachingMode = DRM_XE_GEM_CPU_CACHING_WC;
-    if ((isCoherent.value_or(false) == true) || (isCoherent == std::nullopt && allocationInSystemMemory)) {
+    if (allocationInSystemMemory) {
         cpuCachingMode = DRM_XE_GEM_CPU_CACHING_WB;
     }
 
@@ -550,7 +550,7 @@ uint16_t IoctlHelperXe::getCpuCachingMode(std::optional<bool> isCoherent, bool a
     return cpuCachingMode;
 }
 
-int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) {
+int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask) {
     struct drm_xe_gem_create create = {};
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
 
@@ -570,7 +570,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
         memoryInstances.set(memoryClassInstance.memoryInstance);
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
-    create.cpu_caching = this->getCpuCachingMode(isCoherent, mem.memoryClass == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
+    create.cpu_caching = this->getCpuCachingMode(mem.memoryClass == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
     auto ret = IoctlHelper::ioctl(DrmIoctl::gemCreate, &create);
     handle = create.handle;
 
@@ -581,7 +581,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     return ret;
 }
 
-uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) {
+uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks) {
     struct drm_xe_gem_create create = {};
     create.size = size;
     auto pHwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
@@ -603,7 +603,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
         memoryInstances.set(regionClassAndInstance.memoryInstance);
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
-    create.cpu_caching = this->getCpuCachingMode(isCoherent, create.placement == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
+    create.cpu_caching = this->getCpuCachingMode(create.placement == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &create);
 
     xeLog(" -> IoctlHelperXe::%s vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,

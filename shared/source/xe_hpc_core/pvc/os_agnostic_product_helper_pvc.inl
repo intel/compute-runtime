@@ -242,9 +242,4 @@ bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
     return true;
 }
 
-template <>
-std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t patIndex) const {
-    return std::nullopt;
-}
-
 } // namespace NEO

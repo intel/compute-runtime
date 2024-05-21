@@ -708,7 +708,6 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
                 expectedUsage = (forceUncached || productHelper.isDcFlushAllowed()) ? uncachedGmmUsageType
                                                                                     : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
-            case AllocationType::externalHostPtr:
             case AllocationType::bufferHostMemory:
             case AllocationType::internalHostMemory:
             case AllocationType::mapAllocation:
@@ -780,7 +779,6 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
             case AllocationType::linearStream:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
                 break;
-            case AllocationType::externalHostPtr:
             case AllocationType::bufferHostMemory:
             case AllocationType::internalHostMemory:
             case AllocationType::mapAllocation:
