@@ -1742,10 +1742,27 @@ TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndSupportAvailab
     EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
 }
 
-TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableKmdMigrationDisabledThenReturnFalse) {
+TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableKmdMigrationDisabledAndDefaultEnableBOChunkingThenReturnTrue) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableBOChunking.set(1);
     debugManager.flags.UseKmdMigration.set(0);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.chunkingQueryValue = 1;
+    drm.context.chunkingQueryReturn = 0;
+    EXPECT_FALSE(drm.chunkingAvailable);
+
+    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+    drm.callBaseIsChunkingAvailable = true;
+    EXPECT_TRUE(drm.isChunkingAvailable());
+    EXPECT_TRUE(drm.chunkingAvailable);
+    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
+}
+
+TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableKmdMigrationDisabledAndDefaultEnableBOChunkingSharedThenReturnFalse) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseKmdMigration.set(0);
+    debugManager.flags.EnableBOChunking.set(1);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1757,7 +1774,7 @@ TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableKmdMigrationDisab
     drm.callBaseIsChunkingAvailable = true;
     EXPECT_FALSE(drm.isChunkingAvailable());
     EXPECT_FALSE(drm.chunkingAvailable);
-    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
 }
 
 TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndChangingMinimalSizeForChunkingAndSupportAvailableThenExpectedValuesAreReturned) {

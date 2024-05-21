@@ -1205,18 +1205,22 @@ bool Drm::isSetPairAvailable() {
 }
 
 bool Drm::isChunkingAvailable() {
-    if ((debugManager.flags.EnableBOChunking.get() != 0) && (hasKmdMigrationSupport())) {
+    if (debugManager.flags.EnableBOChunking.get() != 0) {
         std::call_once(checkChunkingOnce, [this]() {
             int ret = ioctlHelper->isChunkingAvailable();
             if (ret) {
-                chunkingAvailable = true;
                 if (debugManager.flags.EnableBOChunking.get() == -1) {
                     chunkingMode = chunkingModeDevice;
                 } else {
                     chunkingMode = debugManager.flags.EnableBOChunking.get();
+                    if (!(hasKmdMigrationSupport())) {
+                        chunkingMode &= (~(chunkingModeShared));
+                    }
                 }
             }
-
+            if (chunkingMode > 0) {
+                chunkingAvailable = true;
+            }
             if (debugManager.flags.MinimalAllocationSizeForChunking.get() != -1) {
                 minimalChunkingSize = debugManager.flags.MinimalAllocationSizeForChunking.get();
             }
