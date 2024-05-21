@@ -59,6 +59,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
+    using BaseClass::copyOperationFenceSupported;
     using BaseClass::copyOperationOffloadEnabled;
     using BaseClass::csr;
     using BaseClass::currentBindingTablePoolBaseAddress;
@@ -189,6 +190,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::commandsToPatch;
     using BaseClass::compactL3FlushEvent;
     using BaseClass::compactL3FlushEventPacket;
+    using BaseClass::copyOperationFenceSupported;
     using BaseClass::copyOperationOffloadEnabled;
     using BaseClass::csr;
     using BaseClass::dcFlushSupport;

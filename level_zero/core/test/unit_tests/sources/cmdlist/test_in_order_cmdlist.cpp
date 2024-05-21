@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -6812,6 +6813,7 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppend
 
 struct CopyOffloadInOrderTests : public InOrderCmdListTests {
     void SetUp() override {
+        debugManager.flags.EnableLocalMemory.set(1);
         backupHwInfo = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
 
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -6993,6 +6995,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
 
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
     {
         debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
 
@@ -7015,7 +7019,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
         auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
-        EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd));
+        EXPECT_EQ(gpuAddress, gmmHelper->canonize(NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd)));
         EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, atomicCmd->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
         EXPECT_EQ(getLowPart(partitionCount), atomicCmd->getOperand1DataDword0());
@@ -7045,7 +7049,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
             ASSERT_NE(nullptr, storeDw);
 
             auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress() + (i * device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
-            EXPECT_EQ(gpuAddress, storeDw->getAddress());
+            EXPECT_EQ(gpuAddress, gmmHelper->canonize(storeDw->getAddress()));
             EXPECT_EQ(1u, storeDw->getDataDword0());
         }
     }
@@ -7078,6 +7082,57 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
             EXPECT_EQ(1u, storeDw->getDataDword0());
         }
     }
+}
+HWTEST2_F(CopyOffloadInOrderTests, givenDeviceToHostCopyWhenProgrammingThenAddFence, IsAtLeastXeHpcCore) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using MI_MEM_FENCE = typename GfxFamily::MI_MEM_FENCE;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDescHostVisible = {};
+    eventDescHostVisible.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
+    auto hostVisibleEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDescHostVisible, device));
+
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+
+    constexpr size_t allocSize = 1;
+    void *hostBuffer = nullptr;
+    void *deviceBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    result = context->allocHostMem(&hostDesc, allocSize, allocSize, &hostBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, allocSize, allocSize, &deviceBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_copy_region_t dstRegion = {0, 0, 0, 1, 1, 1};
+    ze_copy_region_t srcRegion = {0, 0, 0, 1, 1, 1};
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    size_t offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+
+    bool expected = device->getProductHelper().isDeviceToHostCopySignalingFenceRequired();
+
+    GenCmdList genCmdList;
+    EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(genCmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    itor = find<MI_MEM_FENCE *>(itor, genCmdList.end());
+    EXPECT_EQ(expected, genCmdList.end() != itor);
+
+    context->freeMem(hostBuffer);
+    context->freeMem(deviceBuffer);
 }
 
 } // namespace ult

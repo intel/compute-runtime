@@ -247,7 +247,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->duplicatedInOrderCounterStorageEnabled = gfxCoreHelper.duplicatedInOrderCounterStorageEnabled(rootDeviceEnvironment);
     this->inOrderAtomicSignalingEnabled = gfxCoreHelper.inOrderAtomicSignallingEnabled(rootDeviceEnvironment);
     this->scratchAddressPatchingEnabled = (this->heaplessModeEnabled && !isImmediateType());
-    this->copyOperationFenceSupported = isCopyOnly() && productHelper.isDeviceToHostCopySignalingFenceRequired();
+    this->copyOperationFenceSupported = (isCopyOnly() || isCopyOffloadEnabled()) && productHelper.isDeviceToHostCopySignalingFenceRequired();
     this->defaultPipelinedThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
     if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         this->defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
@@ -1629,7 +1629,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
     }
 
-    appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc);
+    appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc, isCopyOffloadEnabled());
 
     appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false, isCopyOnlyEnabled);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent, isCopyOnlyEnabled);
@@ -1741,7 +1741,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         return result;
     }
 
-    appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc);
+    appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc, isCopyOffloadEnabled());
 
     addToMappedEventList(signalEvent);
     addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent, isCopyOnlyEnabled);
@@ -4122,13 +4122,13 @@ bool CommandListCoreFamily<gfxCoreFamily>::isDeviceToHostCopyEventFenceRequired(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isDeviceToHostBcsCopy(NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation) const {
-    return (isCopyOnly() && (srcAllocation->isAllocatedInLocalMemoryPool() && !dstAllocation->isAllocatedInLocalMemoryPool()));
+bool CommandListCoreFamily<gfxCoreFamily>::isDeviceToHostBcsCopy(NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation, bool copyOffloadOperation) const {
+    return ((isCopyOnly() || copyOffloadOperation) && (srcAllocation->isAllocatedInLocalMemoryPool() && !dstAllocation->isAllocatedInLocalMemoryPool()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendCopyOperationFence(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation) {
-    if (this->copyOperationFenceSupported && isDeviceToHostBcsCopy(srcAllocation, dstAllocation)) {
+void CommandListCoreFamily<gfxCoreFamily>::appendCopyOperationFence(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation, bool copyOffloadOperation) {
+    if (this->copyOperationFenceSupported && isDeviceToHostBcsCopy(srcAllocation, dstAllocation, copyOffloadOperation)) {
         if (isDeviceToHostCopyEventFenceRequired(signalEvent)) {
             NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), 0, false, device->getNEODevice()->getRootDeviceEnvironment());
             taskCountUpdateFenceRequired = false;
