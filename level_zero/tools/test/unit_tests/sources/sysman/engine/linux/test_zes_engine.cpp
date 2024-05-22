@@ -253,7 +253,7 @@ TEST_F(ZesEngineFixture, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThen
     drm->sysmanQueryEngineInfo();
     auto engineInfo = drm->getEngineInfo();
     ASSERT_NE(nullptr, engineInfo);
-    EXPECT_EQ(2u, engineInfo->engines.size());
+    EXPECT_EQ(2u, engineInfo->getEngineInfos().size());
 }
 
 TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQuerySupportedWhenQueryingEngineInfoWithVideoThenEngineInfoIsCreatedWithEngines) {
@@ -265,7 +265,7 @@ TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQuerySupportedWhenQueryingEngin
     drm->sysmanQueryEngineInfo();
     auto engineInfo = drm->getEngineInfo();
     ASSERT_NE(nullptr, engineInfo);
-    EXPECT_EQ(2u, engineInfo->engines.size());
+    EXPECT_EQ(2u, engineInfo->getEngineInfos().size());
 }
 
 TEST_F(ZesEngineFixture, GivenEngineInfoWithVideoQueryFailsThenFailureIsReturned) {

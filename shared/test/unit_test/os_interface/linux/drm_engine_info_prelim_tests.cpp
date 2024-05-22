@@ -117,7 +117,7 @@ TEST(DrmTest, givenEngineQueryOnIncorrectSetupWithZeroEnginesThenProperDebugMess
     testing::internal::CaptureStderr();
 
     drm->queryEngineInfo();
-    EXPECT_EQ(0u, drm->engineInfo.get()->engines.size());
+    EXPECT_EQ(0u, drm->engineInfo.get()->getEngineInfos().size());
 
     std::string output = testing::internal::GetCapturedStderr();
     std::string expectedError = "FATAL: Engine info size is equal to 0.\n";

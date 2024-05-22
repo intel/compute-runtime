@@ -40,7 +40,7 @@ TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngi
     auto engineInfo = drm->getEngineInfo();
 
     ASSERT_NE(nullptr, engineInfo);
-    EXPECT_EQ(2u, engineInfo->engines.size());
+    EXPECT_EQ(2u, engineInfo->getEngineInfos().size());
 }
 
 TEST(EngineInfoTest, whenQueryingEngineInfoWithoutMemoryInfoThenEngineInfoCreated) {

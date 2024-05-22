@@ -228,6 +228,10 @@ bool EngineInfo::hasEngines() {
     return (tileToEngineMap.size() > 0LU);
 }
 
+const std::vector<EngineCapabilities> &EngineInfo::getEngineInfos() const {
+    return engines;
+}
+
 // EngineIndex = (Base + EngineCounter - 1)
 aub_stream::EngineType EngineInfo::getBaseCopyEngineType(IoctlHelper *ioctlHelper, uint64_t capabilities, bool isIntegratedDevice) {
     if (!isIntegratedDevice) {

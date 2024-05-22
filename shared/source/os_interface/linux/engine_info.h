@@ -36,7 +36,7 @@ struct EngineInfo {
     void getListOfEnginesOnATile(uint32_t tile, std::vector<EngineClassInstance> &listOfEngines);
     std::multimap<uint32_t, EngineClassInstance> getEngineTileInfo();
     bool hasEngines();
-    std::vector<EngineCapabilities> engines;
+    const std::vector<EngineCapabilities> &getEngineInfos() const;
 
   protected:
     static aub_stream::EngineType getBaseCopyEngineType(IoctlHelper *ioctlHelper, uint64_t capabilities, bool isIntegratedDevice);
@@ -47,6 +47,7 @@ struct EngineInfo {
     void mapEngine(const NEO::IoctlHelper *ioctlHelper, const EngineClassInstance &engine, BcsInfoMask &bcsInfoMask, const NEO::RootDeviceEnvironment &rootDeviceEnvironment,
                    const aub_stream::EngineType *&mappingCopyEngineIt, uint32_t &computeEnginesCounter, uint32_t tileId = 0u);
 
+    std::vector<EngineCapabilities> engines;
     std::vector<EngineToInstanceMap> tileToEngineToInstanceMap;
     std::multimap<uint32_t, EngineClassInstance> tileToEngineMap;
 };
