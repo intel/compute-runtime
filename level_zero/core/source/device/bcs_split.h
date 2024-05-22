@@ -110,7 +110,7 @@ struct BcsSplit {
             cmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, hasRelaxedOrderingDependencies, false, true, false);
 
             if (signalEvent && i == 0u) {
-                cmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, true, false);
+                cmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, true, false, true);
             }
 
             auto localSize = totalSize / engineCount;
@@ -138,9 +138,9 @@ struct BcsSplit {
 
         cmdList->addEventsToCmdList(static_cast<uint32_t>(cmdQsForSplit.size()), eventHandles.data(), nullptr, hasRelaxedOrderingDependencies, false, true, false);
         if (signalEvent) {
-            cmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, true, false);
+            cmdList->appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, true, false, true);
         }
-        cmdList->appendEventForProfilingAllWalkers(this->events.marker[markerEventIndex], nullptr, nullptr, false, true, false);
+        cmdList->appendEventForProfilingAllWalkers(this->events.marker[markerEventIndex], nullptr, nullptr, false, true, false, true);
 
         if (cmdList->isInOrderExecutionEnabled()) {
             cmdList->appendSignalInOrderDependencyCounter(signalEvent, false);

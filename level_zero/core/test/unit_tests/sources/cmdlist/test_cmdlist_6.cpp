@@ -257,7 +257,7 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenRequiredFlushOperationThenExp
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, nullptr);
+    commandList->addFlushRequiredCommand(true, nullptr, true);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(usedBefore, usedAfter);
 }
@@ -354,7 +354,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationThen
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, nullptr);
+    commandList->addFlushRequiredCommand(true, nullptr, false);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(sizeof(PIPE_CONTROL), usedAfter - usedBefore);
 
@@ -381,7 +381,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenNoRequiredFlushOperationTh
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(false, nullptr);
+    commandList->addFlushRequiredCommand(false, nullptr, false);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(usedBefore, usedAfter);
 }
@@ -408,7 +408,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndN
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, event.get());
+    commandList->addFlushRequiredCommand(true, event.get(), false);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(sizeof(PIPE_CONTROL), usedAfter - usedBefore);
 
@@ -446,7 +446,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndS
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, event.get());
+    commandList->addFlushRequiredCommand(true, event.get(), false);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(usedBefore, usedAfter);
 }

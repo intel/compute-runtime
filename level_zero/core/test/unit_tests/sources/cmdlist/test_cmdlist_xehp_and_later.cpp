@@ -835,7 +835,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         commandList->setupTimestampEventForMultiTile(event.get());
         size_t sizeBefore = cmdStream->getUsed();
-        commandList->appendEventForProfiling(event.get(), nullptr, false, false, false);
+        commandList->appendEventForProfiling(event.get(), nullptr, false, false, false, false);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -920,7 +920,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         commandList->setupTimestampEventForMultiTile(event.get());
         size_t sizeBefore = cmdStream->getUsed();
-        commandList->appendSignalEventPostWalker(event.get(), nullptr, nullptr, false, false);
+        commandList->appendSignalEventPostWalker(event.get(), nullptr, nullptr, false, false, copyOnly);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -2404,7 +2404,7 @@ HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThe
 
     auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
     bool skipAdd = true;
-    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, nullptr, false, true, skipAdd);
+    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, nullptr, false, true, skipAdd, false);
 
     auto eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
     EXPECT_EQ(residencyContainer.end(), eventAllocIt);
@@ -2431,7 +2431,7 @@ HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThe
 
     commandStreamOffset = commandContainer.getCommandStream()->getUsed();
     skipAdd = false;
-    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, nullptr, false, true, skipAdd);
+    commandList->appendEventForProfilingAllWalkers(event.get(), &pipeControlBuffer, nullptr, false, true, skipAdd, false);
     eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
     EXPECT_NE(residencyContainer.end(), eventAllocIt);
 
@@ -2488,9 +2488,9 @@ HWTEST2_F(CommandListCreate,
     bool skipAdd = true;
 
     bool before = true;
-    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, &outStoreRegMemCmdList, before, true, skipAdd);
+    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, &outStoreRegMemCmdList, before, true, skipAdd, false);
     before = false;
-    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, &outStoreRegMemCmdList, before, true, skipAdd);
+    commandList->appendEventForProfilingAllWalkers(event.get(), nullptr, &outStoreRegMemCmdList, before, true, skipAdd, false);
 
     auto eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), eventAllocation);
     EXPECT_EQ(residencyContainer.end(), eventAllocIt);

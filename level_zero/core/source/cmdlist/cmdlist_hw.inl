@@ -497,12 +497,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    appendEventForProfiling(event, nullptr, true, false, false);
+    appendEventForProfiling(event, nullptr, true, false, false, false);
     launchParams.isIndirect = true;
     ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), pDispatchArgumentsBuffer,
                                        nullptr, launchParams);
     addToMappedEventList(event);
-    appendSignalEventPostWalker(event, nullptr, nullptr, false, false);
+    appendSignalEventPostWalker(event, nullptr, nullptr, false, false, false);
 
     handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event), false);
 
@@ -541,7 +541,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    appendEventForProfiling(event, nullptr, true, false, false);
+    appendEventForProfiling(event, nullptr, true, false, false, false);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<const void *>(pNumLaunchArguments));
     auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     commandContainer.addToResidencyContainer(alloc);
@@ -557,7 +557,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         }
     }
     addToMappedEventList(event);
-    appendSignalEventPostWalker(event, nullptr, nullptr, false, false);
+    appendSignalEventPostWalker(event, nullptr, nullptr, false, false, false);
 
     appendSynchronizedDispatchCleanupSection();
 
@@ -599,7 +599,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     bool useMaxPackets = event->isEventTimestampFlagSet() || (event->getPacketsInUse() < this->partitionCount);
 
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync, false);
+    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_CLEARED, false, useMaxPackets, appendPipeControlWithPostSync, false, isCopyOnly());
 
     if (!isCopyOnly()) {
         if (this->partitionCount > 1) {
@@ -649,9 +649,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    appendEventForProfiling(signalEvent, nullptr, true, false, false);
+    appendEventForProfiling(signalEvent, nullptr, true, false, false, isCopyOnly());
     applyMemoryRangesBarrier(numRanges, pRangeSizes, pRanges);
-    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, isCopyOnly());
     addToMappedEventList(signalEvent);
 
     if (this->isInOrderExecutionEnabled()) {
@@ -1015,7 +1015,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
                                                                    event, numWaitEvents, phWaitEvents, launchParams, relaxedOrderingDispatch);
     addToMappedEventList(event);
 
-    addFlushRequiredCommand(allocationStruct.needsFlush, event);
+    addFlushRequiredCommand(allocationStruct.needsFlush, event, isCopyOnly());
 
     return ret;
 }
@@ -1358,7 +1358,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    appendEventForProfiling(signalEvent, nullptr, true, false, false);
+    appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     bool copyRegionPreferred = NEO::BlitCommandsHelper<GfxFamily>::isCopyRegionPreferred(copySizeModified, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
     if (copyRegionPreferred) {
@@ -1368,7 +1368,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(Ali
     }
     dummyBlitWa.isWaRequired = true;
 
-    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1393,11 +1393,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     commandContainer.addToResidencyContainer(src);
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
-    appendEventForProfiling(signalEvent, nullptr, true, false, false);
+    appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
     dummyBlitWa.isWaRequired = true;
 
-    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1559,7 +1559,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     launchParams.pipeControlSignalling = (signalEvent && singlePipeControlPacket) || dstAllocationStruct.needsFlush;
 
-    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false);
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false, isCopyOnlyEnabled);
 
     if (isCopyOnlyEnabled) {
         if (NEO::debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
@@ -1631,8 +1631,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc);
 
-    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false);
-    addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false, isCopyOnlyEnabled);
+    addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent, isCopyOnlyEnabled);
     addToMappedEventList(signalEvent);
 
     if (this->isInOrderExecutionEnabled()) {
@@ -1744,7 +1744,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc);
 
     addToMappedEventList(signalEvent);
-    addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent);
+    addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent, isCopyOnlyEnabled);
 
     if (this->isInOrderExecutionEnabled()) {
         if (inOrderCopyOnlySignalingAllowed) {
@@ -2032,7 +2032,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     launchParams.isKernelSplitOperation = (fillArguments.leftRemainingBytes > 0 || fillArguments.rightRemainingBytes > 0);
     bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
 
-    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false);
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, true, singlePipeControlPacket, false, isCopyOnly());
 
     if (fillArguments.leftRemainingBytes > 0) {
         launchParams.numKernelsInSplitLaunch++;
@@ -2177,8 +2177,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     addToMappedEventList(signalEvent);
-    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false);
-    addFlushRequiredCommand(hostPointerNeedsFlush, signalEvent);
+    appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false, isCopyOnly());
+    addFlushRequiredCommand(hostPointerNeedsFlush, signalEvent, isCopyOnly());
 
     bool nonWalkerInOrderCmdChaining = false;
     if (this->isInOrderExecutionEnabled()) {
@@ -2228,7 +2228,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         }
 
         auto neoDevice = device->getNEODevice();
-        appendEventForProfiling(signalEvent, nullptr, true, false, false);
+        appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
         NEO::GraphicsAllocation *gpuAllocation = device->getDriverHandle()->getDriverSystemMemoryAllocation(ptr,
                                                                                                             size,
                                                                                                             neoDevice->getRootDeviceIndex(),
@@ -2256,7 +2256,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
                                                                         neoDevice->getRootDeviceEnvironmentRef());
         dummyBlitWa.isWaRequired = true;
 
-        appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false);
+        appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
 
         if (isInOrderExecutionEnabled()) {
             appendSignalInOrderDependencyCounter(signalEvent, false);
@@ -2267,20 +2267,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency) {
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation) {
     if (event == nullptr || !event->getPoolAllocation(this->device)) {
         return;
     }
     if (event->isEventTimestampFlagSet()) {
-        appendEventForProfiling(event, outTimeStampSyncCmds, false, skipBarrierForEndProfiling, skipAddingEventToResidency);
+        appendEventForProfiling(event, outTimeStampSyncCmds, false, skipBarrierForEndProfiling, skipAddingEventToResidency, copyOperation);
     } else {
         event->resetKernelCountAndPacketUsedCount();
         if (!skipAddingEventToResidency) {
             commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
         }
 
-        event->setPacketsInUse(this->partitionCount);
-        dispatchEventPostSyncOperation(event, syncCmdBuffer, nullptr, Event::STATE_SIGNALED, false, false, !isCopyOnly(), false);
+        event->setPacketsInUse(copyOperation ? 1 : this->partitionCount);
+        dispatchEventPostSyncOperation(event, syncCmdBuffer, nullptr, Event::STATE_SIGNALED, false, false, !copyOperation, false, copyOperation);
     }
 }
 
@@ -2296,9 +2296,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
     } else {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         encodeMiFlush(0, 0, args);
-        dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, false);
+        dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, false, true);
     }
-    appendWriteKernelTimestamp(event, nullptr, beforeWalker, false, false);
+    appendWriteKernelTimestamp(event, nullptr, beforeWalker, false, false, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2491,7 +2491,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
 
     event->setPacketsInUse(this->partitionCount);
     bool appendPipeControlWithPostSync = (!isCopyOnly()) && (event->isSignalScope() || event->isEventTimestampFlagSet());
-    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false);
+    dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false, isCopyOnly());
 
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(event, false);
@@ -2790,7 +2790,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition) {
+void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition, bool copyOperation) {
     constexpr uint32_t mask = 0xfffffffe;
 
     auto baseAddr = event->getPacketAddress(this->device);
@@ -2813,8 +2813,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *eve
     uint64_t contextAddress = ptrOffset(baseAddr, contextOffset);
 
     if (maskLsb) {
-        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::globalTimestampLdw, mask, globalAddress, workloadPartition, globalPostSyncCmdBuffer, isCopyOnly());
-        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, mask, contextAddress, workloadPartition, contextPostSyncCmdBuffer, isCopyOnly());
+        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::globalTimestampLdw, mask, globalAddress, workloadPartition, globalPostSyncCmdBuffer, copyOperation);
+        NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, mask, contextAddress, workloadPartition, contextPostSyncCmdBuffer, copyOperation);
     } else {
         NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::globalTimestampLdw, globalAddress, workloadPartition, globalPostSyncCmdBuffer);
         NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextAddress, workloadPartition, contextPostSyncCmdBuffer);
@@ -2833,16 +2833,16 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *eve
         outTimeStampSyncCmds->push_back(ctxCmd);
     }
 
-    adjustWriteKernelTimestamp(globalAddress, contextAddress, baseAddr, outTimeStampSyncCmds, maskLsb, mask, workloadPartition);
+    adjustWriteKernelTimestamp(globalAddress, contextAddress, baseAddr, outTimeStampSyncCmds, maskLsb, mask, workloadPartition, copyOperation);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation) {
     if (!event) {
         return;
     }
 
-    if (isCopyOnly()) {
+    if (copyOperation) {
         appendEventForProfilingCopyCommand(event, beforeWalker);
     } else {
         if (!event->isEventTimestampFlagSet()) {
@@ -2859,9 +2859,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
         if (beforeWalker) {
             event->resetKernelCountAndPacketUsedCount();
             bool workloadPartition = setupTimestampEventForMultiTile(event);
-            appendWriteKernelTimestamp(event, outTimeStampSyncCmds, beforeWalker, true, workloadPartition);
+            appendWriteKernelTimestamp(event, outTimeStampSyncCmds, beforeWalker, true, workloadPartition, copyOperation);
         } else {
-            dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, true);
+            dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, true, copyOperation);
 
             const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
 
@@ -2875,7 +2875,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
 
             uint64_t baseAddr = event->getGpuAddress(this->device);
             NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), baseAddr, false, rootDeviceEnvironment);
-            appendWriteKernelTimestamp(event, outTimeStampSyncCmds, beforeWalker, true, workloadPartition);
+            appendWriteKernelTimestamp(event, outTimeStampSyncCmds, beforeWalker, true, workloadPartition, copyOperation);
         }
 
         appendDispatchOffsetRegister(workloadPartition, false);
@@ -2903,7 +2903,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    appendEventForProfiling(signalEvent, nullptr, true, false, false);
+    appendEventForProfiling(signalEvent, nullptr, true, false, false, isCopyOnly());
 
     auto allocationStruct = getAlignedAllocationData(this->device, dstptr, sizeof(uint64_t), false);
     if (allocationStruct.alloc == nullptr) {
@@ -2929,7 +2929,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
             args);
     }
 
-    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, isCopyOnly());
 
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent, false);
@@ -3455,7 +3455,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    appendEventForProfiling(signalEvent, nullptr, true, false, false);
+    appendEventForProfiling(signalEvent, nullptr, true, false, false, isCopyOnly());
 
     if (!this->isInOrderExecutionEnabled()) {
         if (isCopyOnly()) {
@@ -3476,7 +3476,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     }
 
     addToMappedEventList(signalEvent);
-    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, this->isInOrderExecutionEnabled(), false);
+    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, this->isInOrderExecutionEnabled(), false, isCopyOnly());
 
     if (isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent, false);
@@ -3489,8 +3489,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent) {
-    if (isCopyOnly()) {
+void CommandListCoreFamily<gfxCoreFamily>::addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent, bool copyOperation) {
+    if (copyOperation) {
         return;
     }
     if (signalEvent) {
@@ -3611,7 +3611,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    appendEventForProfiling(signalEvent, nullptr, true, false, false);
+    appendEventForProfiling(signalEvent, nullptr, true, false, false, isCopyOnly());
 
     commandContainer.addToResidencyContainer(srcAllocationStruct.alloc);
     uint64_t gpuAddress = static_cast<uint64_t>(srcAllocationStruct.alignedAllocationPtr);
@@ -3643,7 +3643,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, rootDeviceEnvironment);
     }
 
-    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false);
+    appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, isCopyOnly());
 
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(signalEvent, false);
@@ -3767,9 +3767,10 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute(uint64_t gpuA
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, void **syncCmdBuffer, CommandToPatchContainer *outListCommands,
+                                                                    uint32_t value, bool useLastPipeControl, bool signalScope, bool skipPartitionOffsetProgramming, bool copyOperation) {
     decltype(&CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute) dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCompute;
-    if (isCopyOnly()) {
+    if (copyOperation) {
         dispatchFunction = &CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy;
     }
 
@@ -3833,7 +3834,8 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl, bool skipPartitionOffsetProgramming) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useMax,
+                                                                          bool useLastPipeControl, bool skipPartitionOffsetProgramming, bool copyOeration) {
     uint32_t packets = event->getPacketsInUse();
     if (this->signalAllEventPackets || useMax) {
         packets = event->getMaxPacketsCount();
@@ -3846,11 +3848,11 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event 
         eventPostSync.operationCount--;
     }
 
-    dispatchPostSyncCommands(eventPostSync, gpuAddress, syncCmdBuffer, outListCommands, value, useLastPipeControl, event->isSignalScope(), skipPartitionOffsetProgramming);
+    dispatchPostSyncCommands(eventPostSync, gpuAddress, syncCmdBuffer, outListCommands, value, useLastPipeControl, event->isSignalScope(), skipPartitionOffsetProgramming, copyOeration);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSyncOperation(Event *event) {
+void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSyncOperation(Event *event, bool copyOperation) {
     if (this->signalAllEventPackets && event->getPacketsInUse() < event->getMaxPacketsCount()) {
         uint32_t packets = event->getMaxPacketsCount() - event->getPacketsInUse();
         CmdListEventOperation remainingPacketsOperation = estimateEventPostSync(event, packets);
@@ -3859,7 +3861,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
         eventAddress += event->getSinglePacketSize() * event->getPacketsInUse();
 
         constexpr bool appendLastPipeControl = false;
-        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, nullptr, nullptr, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope(), false);
+        dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, nullptr, nullptr, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope(), false, copyOperation);
     }
 }
 

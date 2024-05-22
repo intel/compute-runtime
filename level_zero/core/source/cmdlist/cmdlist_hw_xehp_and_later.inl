@@ -295,7 +295,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     std::list<void *> additionalCommands;
 
     if (compactEvent) {
-        appendEventForProfilingAllWalkers(compactEvent, nullptr, launchParams.outListCommands, true, true, launchParams.omitAddingEventResidency);
+        appendEventForProfilingAllWalkers(compactEvent, nullptr, launchParams.outListCommands, true, true, launchParams.omitAddingEventResidency, false);
     }
 
     bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
@@ -306,7 +306,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
-            dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false);
+            dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
         } else {
             inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
             inOrderExecInfo = this->inOrderExecInfo.get();
@@ -381,7 +381,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             launchParams.outSyncCommand->type = CommandToPatch::SignalEventPostSyncPipeControl;
             syncCmdBuffer = &launchParams.outSyncCommand->pDestination;
         }
-        appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, launchParams.outListCommands, false, true, launchParams.omitAddingEventResidency);
+        appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, launchParams.outListCommands, false, true, launchParams.omitAddingEventResidency, false);
         if (compactEvent->isInterruptModeEnabled()) {
             NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
         }
@@ -391,7 +391,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             programEventL3Flush<gfxCoreFamily>(event, this->device, partitionCount, commandContainer);
         }
         if (!launchParams.isKernelSplitOperation) {
-            dispatchEventRemainingPacketsPostSyncOperation(event);
+            dispatchEventRemainingPacketsPostSyncOperation(event, false);
         }
     }
 
@@ -543,12 +543,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency) {
-    if (isCopyOnly() || singlePacketEvent) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency, bool copyOperation) {
+    if (copyOperation || singlePacketEvent) {
         if (beforeWalker) {
-            appendEventForProfiling(event, outTimeStampSyncCmds, true, false, skipAddingEventToResidency);
+            appendEventForProfiling(event, outTimeStampSyncCmds, true, false, skipAddingEventToResidency, copyOperation);
         } else {
-            appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, false, skipAddingEventToResidency);
+            appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, false, skipAddingEventToResidency, copyOperation);
         }
     } else {
         if (event) {
@@ -560,7 +560,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
                     if (getDcFlushRequired(event->isSignalScope())) {
                         programEventL3Flush<gfxCoreFamily>(event, this->device, this->partitionCount, this->commandContainer);
                     }
-                    dispatchEventRemainingPacketsPostSyncOperation(event);
+                    dispatchEventRemainingPacketsPostSyncOperation(event, copyOperation);
                 }
             }
         }
