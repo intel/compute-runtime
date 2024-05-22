@@ -172,6 +172,7 @@ bool IoctlHelperXe::initialize() {
             tileIdToGtId[gt.tile_id] = gt.gt_id;
         }
     }
+    querySupportedFeatures();
     return true;
 }
 
@@ -784,6 +785,7 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
     if (bindCapture) {
         ret |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
     }
+    ret |= getAdditionalFlagsForVmBind(bindImmediate, readOnlyResource);
     return ret;
 }
 

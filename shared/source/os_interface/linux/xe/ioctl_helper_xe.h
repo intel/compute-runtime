@@ -204,6 +204,21 @@ class IoctlHelperXe : public IoctlHelper {
         uint64_t startOffset;
         uint32_t drmContextId;
     };
+
+    struct SupportedFeatures {
+        union {
+            struct {
+                uint32_t vmBindReadOnly : 1;
+                uint32_t vmBindImmediate : 1;
+                uint32_t reserved : 30;
+            } flags;
+            uint32_t allFlags = 0;
+        };
+    } supportedFeatures{};
+    static_assert(sizeof(SupportedFeatures::flags) == sizeof(SupportedFeatures::allFlags), "");
+
+    void querySupportedFeatures();
+    uint64_t getAdditionalFlagsForVmBind(bool bindImmediate, bool readOnlyResource);
 };
 
 template <typename... XeLogArgs>

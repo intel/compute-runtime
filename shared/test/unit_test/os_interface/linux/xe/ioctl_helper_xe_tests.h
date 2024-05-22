@@ -38,6 +38,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::maxExecQueuePriority;
     using IoctlHelperXe::queryGtListData;
     using IoctlHelperXe::setContextProperties;
+    using IoctlHelperXe::supportedFeatures;
     using IoctlHelperXe::UserFenceExtension;
     using IoctlHelperXe::xeGetBindFlagsName;
     using IoctlHelperXe::xeGetBindOperationName;
@@ -260,10 +261,10 @@ class DrmMockXe : public DrmMockCustom {
             auto vmBindInput = static_cast<drm_xe_vm_bind *>(arg);
             vmBindInputs.push_back(*vmBindInput);
 
-            EXPECT_EQ(1u, vmBindInput->num_syncs);
-
-            auto &syncInput = reinterpret_cast<drm_xe_sync *>(vmBindInput->syncs)[0];
-            syncInputs.push_back(syncInput);
+            if (vmBindInput->num_syncs == 1) {
+                auto &syncInput = reinterpret_cast<drm_xe_sync *>(vmBindInput->syncs)[0];
+                syncInputs.push_back(syncInput);
+            }
         } break;
 
         case DrmIoctl::gemWaitUserFence: {
