@@ -314,46 +314,6 @@ HWTEST2_F(CommandListCreate,
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
 }
 
-HWTEST2_F(CommandListCreate,
-          givenCmdListHostPointerUsedWhenRemoveHostPtrAllocationThenStopDirectSubmissions,
-          IsAtLeastSkl) {
-    const auto &engines = device->getNEODevice()->getMemoryManager()->getRegisteredEngines(device->getRootDeviceIndex());
-    for (const auto &engine : engines) {
-        auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
-        ultCsr->callFlushTagUpdate = false;
-    }
-
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-
-    size_t cmdListHostPtrSize = MemoryConstants::pageSize;
-    void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
-
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, cmdListHostBuffer, cmdListHostPtrSize, false);
-    ASSERT_NE(nullptr, outData.alloc);
-
-    for (const auto &engine : engines) {
-        auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
-        EXPECT_FALSE(ultCsr->stopDirectSubmissionCalled);
-        EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-    }
-
-    commandList->removeHostPtrAllocations();
-
-    for (const auto &engine : engines) {
-        auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
-        if (device->getNEODevice()->getRootDeviceEnvironment().getProductHelper().restartDirectSubmissionForHostptrFree()) {
-            EXPECT_TRUE(ultCsr->stopDirectSubmissionCalled);
-            EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
-        } else {
-            EXPECT_FALSE(ultCsr->stopDirectSubmissionCalled);
-            EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-        }
-    }
-
-    device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
-}
-
 using PlatformSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
 HWTEST2_F(CommandListCreate,
           givenCommandListWhenMemoryCopyRegionHavingHostMemoryWithSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlsWithDcFlushIsFound,

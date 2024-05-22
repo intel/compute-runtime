@@ -54,7 +54,6 @@ class ProductHelperHw : public ProductHelper {
     bool isNewResidencyModelSupported() const override;
     bool isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const override;
     bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const override;
-    bool restartDirectSubmissionForHostptrFree() const override;
     bool isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled() const override;
     TimeoutParams getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const override;
     std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const override;
