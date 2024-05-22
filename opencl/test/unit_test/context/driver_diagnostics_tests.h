@@ -212,9 +212,6 @@ struct PerformanceHintEnqueueMapTest : public PerformanceHintEnqueueTest,
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
-        if (context->getDevice(0)->getRootDeviceEnvironment().getProductHelper().isDcFlushMitigated()) {
-            GTEST_SKIP();
-        }
     }
 
     void TearDown() override {

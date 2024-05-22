@@ -389,18 +389,13 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    bool dcFlushAllowed = GfxProduct::isDcFlushAllowed && !this->mitigateDcFlush();
+    bool dcFlushAllowed = GfxProduct::isDcFlushAllowed;
 
     if (debugManager.flags.AllowDcFlush.get() != -1) {
         dcFlushAllowed = debugManager.flags.AllowDcFlush.get();
     }
 
     return dcFlushAllowed;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::mitigateDcFlush() const {
-    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

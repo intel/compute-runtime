@@ -277,11 +277,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDcFlushMitigated() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::mitigateDcFlush() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::overridePatAndUsageForDcFlushMitigation(AllocationType allocationType) const {
     return false;
 }
