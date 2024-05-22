@@ -333,6 +333,7 @@ DECLARE_DEBUG_VARIABLE(bool, LogGdiCallsToFile, false, "Log GDI calls to file")
 DECLARE_DEBUG_VARIABLE(bool, PrintGmmCompressionParams, false, "Print Gmm compression resource params")
 DECLARE_DEBUG_VARIABLE(bool, PrintCpuFlags, false, "Print CPU Flags and properties upon detection")
 DECLARE_DEBUG_VARIABLE(bool, PrintL0MetricLogs, false, "Print Logs from L0 Metrics")
+DECLARE_DEBUG_VARIABLE(bool, PrintL0SetKernelArg, false, "Print L0 Set Kernel Arg data")
 
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")

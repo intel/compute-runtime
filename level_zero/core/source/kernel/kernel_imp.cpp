@@ -683,6 +683,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     NEO::SvmAllocationData *allocData = nullptr;
     if (argVal != nullptr) {
         const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintL0SetKernelArg.get(), stderr, "set arg buffer index : %u requested address : %p", argIndex, requestedAddress);
         if (argInfo.allocId > 0 &&
             argInfo.allocId < NEO::SvmAllocationData::uninitializedAllocId &&
             requestedAddress == argInfo.value) {
