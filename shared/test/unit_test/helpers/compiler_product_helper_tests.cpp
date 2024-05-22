@@ -201,6 +201,25 @@ HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenSplitMatrixMultipl
     EXPECT_FALSE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper));
 }
 
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenBindlessAddressingIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
+
+    if (releaseHelper) {
+
+        EXPECT_EQ(releaseHelper->isBindlessAddressingDisabled(), compilerProductHelper.isBindlessAddressingDisabled(releaseHelper));
+    } else {
+        EXPECT_TRUE(compilerProductHelper.isBindlessAddressingDisabled(releaseHelper));
+    }
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenBindlessAddressingIsNotSupported, IsXeHpcCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
+
+    EXPECT_TRUE(compilerProductHelper.isBindlessAddressingDisabled(releaseHelper));
+}
+
 HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostDg2) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto hwInfo = *defaultHwInfo;

@@ -304,4 +304,12 @@ void CompilerProductHelperHw<gfxProduct>::getKernelCapabilitiesExtra(const Relea
         extraCaps |= releaseHelper->getAdditionalExtraCaps();
     }
 }
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isBindlessAddressingDisabled();
+    }
+    return true;
+}
+
 } // namespace NEO

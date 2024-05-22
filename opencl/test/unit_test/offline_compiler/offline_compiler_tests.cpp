@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_compiler_cache.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_fcl_facade.h"
@@ -3847,6 +3848,51 @@ HWTEST2_F(OfflineCompilerStatelessToStatefulTests, givenMockWhenAppendExtraInter
 
     runTest();
     this->mockOfflineCompiler->compilerProductHelper.swap(backup);
+}
+
+struct OfflineCompilerBindlessOptionsTests : public ::testing::Test {
+    void SetUp() override {
+        mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+        mockOfflineCompiler->deviceName = gEnvironment->devicePrefix;
+        mockOfflineCompiler->initHardwareInfo(mockOfflineCompiler->deviceName);
+        mockOfflineCompiler->internalOptions.clear();
+
+        releaseHelper = std::make_unique<MockReleaseHelper>();
+    }
+
+    std::unique_ptr<MockOfflineCompiler> mockOfflineCompiler;
+    std::unique_ptr<MockReleaseHelper> releaseHelper;
+};
+
+TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingEnabledWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreAddedToInternalOptions) {
+    releaseHelper->isBindlessAddressingDisabledResult = false;
+    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+
+    auto internalOptions = mockOfflineCompiler->internalOptions;
+    mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
+
+    EXPECT_NE(std::string::npos, internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
+}
+
+TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingDisabledWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotAddedToInternalOptions) {
+    releaseHelper->isBindlessAddressingDisabledResult = true;
+    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+
+    auto internalOptions = mockOfflineCompiler->internalOptions;
+    mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
+
+    EXPECT_EQ(std::string::npos, internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
+}
+
+TEST_F(OfflineCompilerBindlessOptionsTests, givenNullReleaseHelperWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotAddedToInternalOptions) {
+    mockOfflineCompiler->releaseHelper.reset();
+
+    ASSERT_EQ(nullptr, mockOfflineCompiler->releaseHelper);
+
+    auto internalOptions = mockOfflineCompiler->internalOptions;
+    mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
+
+    EXPECT_EQ(std::string::npos, internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
 }
 
 TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadOptionsFromFileReturnsFalse) {

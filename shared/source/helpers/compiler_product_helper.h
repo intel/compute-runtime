@@ -83,6 +83,7 @@ class CompilerProductHelper {
     virtual void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const = 0;
     virtual void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const = 0;
     virtual void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const = 0;
+    virtual bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const = 0;
 
     virtual ~CompilerProductHelper() = default;
     uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const;
@@ -131,6 +132,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const override;
     void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const override;
     void getKernelCapabilitiesExtra(const ReleaseHelper *releaseHelper, uint32_t &extraCaps) const override;
+    bool isBindlessAddressingDisabled(const ReleaseHelper *releaseHelper) const override;
 
     ~CompilerProductHelperHw() override = default;
 

@@ -1136,6 +1136,10 @@ void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     if (compilerProductHelper->isForceEmuInt32DivRemSPRequired()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
+    if (!compilerProductHelper->isBindlessAddressingDisabled(releaseHelper.get())) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
+    }
+
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper->getCachingPolicyOptions(false));
     CompilerOptions::applyExtraInternalOptions(internalOptions, *compilerProductHelper);
 }
