@@ -15,6 +15,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/numa_library.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include <iostream>
 
@@ -68,15 +69,17 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
 int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation) {
     std::vector<unsigned long> memPolicyNodeMask;
     int mode = -1;
+    auto &productHelper = this->drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+    auto isCoherent = productHelper.isCoherentAllocation(patIndex);
     if (memPolicySupported &&
         isUSMHostAllocation &&
         Linux::NumaLibrary::getMemPolicy(&mode, memPolicyNodeMask)) {
         if (memPolicyMode != -1) {
             mode = memPolicyMode;
         }
-        return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, mode, memPolicyNodeMask);
+        return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, mode, memPolicyNodeMask, isCoherent);
     } else {
-        return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, std::nullopt, std::nullopt);
+        return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, patIndex, vmId, pairHandle, isChunked, numOfChunks, std::nullopt, std::nullopt, isCoherent);
     }
 }
 

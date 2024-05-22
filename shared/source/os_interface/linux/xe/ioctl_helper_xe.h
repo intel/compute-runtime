@@ -41,8 +41,8 @@ class IoctlHelperXe : public IoctlHelper {
     bool isSetPairAvailable() override;
     bool isChunkingAvailable() override;
     bool isVmBindAvailable() override;
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask) override;
-    uint32_t createGem(uint64_t size, uint32_t memoryBanks) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) override;
+    uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override;
     CacheRegion closAlloc() override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
@@ -120,7 +120,7 @@ class IoctlHelperXe : public IoctlHelper {
     void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId) override;
     void logExecBuffer(const ExecBuffer &execBuffer, std::stringstream &logger) override;
     bool setDomainCpu(uint32_t handle, bool writeEnable) override;
-    uint16_t getCpuCachingMode(bool allocationInSystemMemory) const;
+    uint16_t getCpuCachingMode(std::optional<bool> isCoherent, bool allocationInSystemMemory) const;
     void addDebugMetadata(DrmResourceClass type, uint64_t *offset, uint64_t size);
     void addDebugMetadataCookie(uint64_t cookie);
     uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;

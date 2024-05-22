@@ -498,7 +498,7 @@ TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolic
     uint32_t memPolicyMode = 0;
     mockIoctlHelper.overrideGemCreateExtReturnValue = 0;
     mockIoctlHelper.initialize();
-    auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, memPolicyMode, memPolicy);
+    auto ret = mockIoctlHelper.createGemExt(memClassInstance, 1024, handle, 0, {}, -1, false, numOfChunks, memPolicyMode, memPolicy, false);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedSubstring("memory policy:");
@@ -524,7 +524,7 @@ TEST(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMemPolic
     uint32_t memPolicyMode = 0;
     mockIoctlHelper.overrideGemCreateExtReturnValue = 0;
     mockIoctlHelper.initialize();
-    auto ret = mockIoctlHelper.createGemExt(memClassInstance, size, handle, 0, {}, -1, true, numOfChunks, memPolicyMode, memPolicy);
+    auto ret = mockIoctlHelper.createGemExt(memClassInstance, size, handle, 0, {}, -1, true, numOfChunks, memPolicyMode, memPolicy, false);
 
     EXPECT_EQ(0, ret);
     EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedMemPolicy);

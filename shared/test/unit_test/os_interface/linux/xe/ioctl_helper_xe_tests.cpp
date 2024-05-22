@@ -65,7 +65,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsThen
     uint32_t numOfChunks = 0;
 
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt, false));
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm.createParamsCpuCaching);
 }
@@ -88,7 +88,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndV
 
     GemVmControl test = {};
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, test.vmId, -1, false, numOfChunks, std::nullopt, std::nullopt));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, test.vmId, -1, false, numOfChunks, std::nullopt, std::nullopt, false));
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm.createParamsCpuCaching);
 }
@@ -109,7 +109,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenP
 
     EXPECT_EQ(0, drm.ioctlCnt.gemCreate);
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
-    uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks);
+    uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks, false);
     EXPECT_EQ(1, drm.ioctlCnt.gemCreate);
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 
@@ -139,7 +139,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroTh
 
     EXPECT_EQ(0, drm.ioctlCnt.gemCreate);
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
-    uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks);
+    uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks, false);
     EXPECT_EQ(1, drm.ioctlCnt.gemCreate);
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 
@@ -169,7 +169,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenPro
 
     EXPECT_EQ(0, drm.ioctlCnt.gemCreate);
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
-    uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks);
+    uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks, false);
     EXPECT_EQ(1, drm.ioctlCnt.gemCreate);
     EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
 
@@ -236,7 +236,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     MemRegionsVec memRegions{};
     uint32_t handle = 0u;
     uint32_t numOfChunks = 0;
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt));
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, 0, {}, -1, false, numOfChunks, std::nullopt, std::nullopt, false));
 
     EXPECT_TRUE(xeIoctlHelper->isVmBindAvailable());
 
@@ -1745,11 +1745,16 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenGetCpuCachingModeCalledThenCorrect
     drm.memoryInfo.reset(xeIoctlHelper->createMemoryInfo().release());
     ASSERT_NE(nullptr, xeIoctlHelper);
 
-    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false), DRM_XE_GEM_CPU_CACHING_WC);
-    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(true), DRM_XE_GEM_CPU_CACHING_WB);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false, false), DRM_XE_GEM_CPU_CACHING_WC);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false, true), DRM_XE_GEM_CPU_CACHING_WC);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(true, true), DRM_XE_GEM_CPU_CACHING_WB);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(true, false), DRM_XE_GEM_CPU_CACHING_WB);
+
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(std::nullopt, false), DRM_XE_GEM_CPU_CACHING_WC);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(std::nullopt, true), DRM_XE_GEM_CPU_CACHING_WB);
 
     debugManager.flags.OverrideCpuCaching.set(DRM_XE_GEM_CPU_CACHING_WB);
-    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false), DRM_XE_GEM_CPU_CACHING_WB);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false, false), DRM_XE_GEM_CPU_CACHING_WB);
 }
 
 TEST(IoctlHelperXeTest, whenCallingVmBindThenPatIndexIsSet) {
