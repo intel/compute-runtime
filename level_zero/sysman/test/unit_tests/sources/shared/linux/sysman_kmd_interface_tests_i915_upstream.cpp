@@ -227,6 +227,12 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceAndIsNotI
     EXPECT_EQ(0u, pSysmanKmdInterface->getEventType(isIntegratedDevice));
 }
 
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForSettingSchedulerModesThenTrueValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_TRUE(pSysmanKmdInterface->isSettingExclusiveModeSupported());
+    EXPECT_TRUE(pSysmanKmdInterface->isSettingTimeoutModeSupported());
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

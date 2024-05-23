@@ -805,33 +805,14 @@ TEST_F(SysmanDeviceSchedulerFixtureXe, GivenValidDeviceHandleWhenCallingzesSched
     }
 }
 
-TEST_F(SysmanDeviceSchedulerFixtureXe, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeThenVerifyzesSchedulerSetTimeoutModeCallSucceeds) {
+TEST_F(SysmanDeviceSchedulerFixtureXe, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeThenVerifyzesSchedulerSetTimeoutModeCallReturnsError) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
         zes_sched_timeout_properties_t setConfig;
         setConfig.watchdogTimeout = 10000u;
         ze_result_t result = zesSchedulerSetTimeoutMode(handle, &setConfig, &needReboot);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_FALSE(needReboot);
-        auto getConfig = fixtureGetTimeoutModeProperties(handle, false);
-        EXPECT_EQ(getConfig.watchdogTimeout, setConfig.watchdogTimeout);
-        auto mode = fixtureGetCurrentMode(handle);
-        EXPECT_EQ(mode, ZES_SCHED_MODE_TIMEOUT);
-    }
-}
-
-TEST_F(SysmanDeviceSchedulerFixtureXe, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeWhenCurrentModeIsTimeoutModeThenVerifyzesSchedulerSetTimeoutModeCallSucceeds) {
-    auto handles = getSchedHandles(handleComponentCount);
-    for (auto handle : handles) {
-        ze_bool_t needReboot;
-        zes_sched_timeout_properties_t setTimeOutConfig;
-        setTimeOutConfig.watchdogTimeout = 10000u;
-        ze_result_t result = zesSchedulerSetTimeoutMode(handle, &setTimeOutConfig, &needReboot);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-        result = zesSchedulerSetTimeoutMode(handle, &setTimeOutConfig, &needReboot);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     }
 }
 
@@ -853,15 +834,12 @@ TEST_F(SysmanDeviceSchedulerFixtureXe, GivenValidDeviceHandleWhenCallingzesSched
     }
 }
 
-TEST_F(SysmanDeviceSchedulerFixtureXe, GivenValidDeviceHandleWhenCallingzesSchedulerSetExclusiveModeThenVerifyzesSchedulerSetExclusiveModeCallSucceeds) {
+TEST_F(SysmanDeviceSchedulerFixtureXe, GivenValidDeviceHandleWhenCallingzesSchedulerSetExclusiveModeThenVerifyzesSchedulerSetExclusiveModeCallReturnsError) {
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
         ze_result_t result = zesSchedulerSetExclusiveMode(handle, &needReboot);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_FALSE(needReboot);
-        auto mode = fixtureGetCurrentMode(handle);
-        EXPECT_EQ(mode, ZES_SCHED_MODE_EXCLUSIVE);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     }
 }
 

@@ -121,7 +121,6 @@ class SysmanKmdInterface {
     ProcFsAccessInterface *getProcFsAccess();
     SysFsAccessInterface *getSysFsAccess();
     virtual std::string getEngineBasePath(uint32_t subDeviceId) const = 0;
-    virtual bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() = 0;
     virtual ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                                      LinuxSysmanImp *pLinuxSysmanImp,
                                                      SysFsAccessInterface *pSysfsAccess,
@@ -142,6 +141,8 @@ class SysmanKmdInterface {
     virtual bool isTdpFrequencyAvailable() const = 0;
     virtual bool isPhysicalMemorySizeSupported() const = 0;
     virtual void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) = 0;
+    virtual bool isSettingTimeoutModeSupported() const = 0;
+    virtual bool isSettingExclusiveModeSupported() const = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -176,7 +177,6 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     bool clientInfoAvailableInFdInfo() const override { return false; }
     bool isGroupEngineInterfaceAvailable() const override { return false; }
     std::string getEngineBasePath(uint32_t subDeviceId) const override;
-    bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return false; };
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                              LinuxSysmanImp *pLinuxSysmanImp,
                                              SysFsAccessInterface *pSysfsAccess,
@@ -192,6 +192,8 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     bool isTdpFrequencyAvailable() const override { return true; }
     bool isPhysicalMemorySizeSupported() const override { return false; }
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override;
+    bool isSettingTimeoutModeSupported() const override { return true; }
+    bool isSettingExclusiveModeSupported() const override { return true; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -223,7 +225,6 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     bool clientInfoAvailableInFdInfo() const override { return false; }
     bool isGroupEngineInterfaceAvailable() const override { return true; }
     std::string getEngineBasePath(uint32_t subDeviceId) const override;
-    bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return false; };
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                              LinuxSysmanImp *pLinuxSysmanImp,
                                              SysFsAccessInterface *pSysfsAccess,
@@ -239,6 +240,8 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     bool isTdpFrequencyAvailable() const override { return true; }
     bool isPhysicalMemorySizeSupported() const override { return true; }
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override;
+    bool isSettingTimeoutModeSupported() const override { return true; }
+    bool isSettingExclusiveModeSupported() const override { return true; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -270,7 +273,6 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isStandbyModeControlAvailable() const override { return false; }
     bool clientInfoAvailableInFdInfo() const override { return true; }
     bool isGroupEngineInterfaceAvailable() const override { return true; }
-    bool useDefaultMaximumWatchdogTimeoutForExclusiveMode() override { return true; };
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                              LinuxSysmanImp *pLinuxSysmanImp,
                                              SysFsAccessInterface *pSysfsAccess,
@@ -288,6 +290,8 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
 
     // Wedged state is not supported in XE.
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override{};
+    bool isSettingTimeoutModeSupported() const override { return false; }
+    bool isSettingExclusiveModeSupported() const override { return false; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

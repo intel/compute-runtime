@@ -127,7 +127,6 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckin
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_FALSE(pSysmanKmdInterface->clientInfoAvailableInFdInfo());
     EXPECT_TRUE(pSysmanKmdInterface->isGroupEngineInterfaceAvailable());
-    EXPECT_FALSE(pSysmanKmdInterface->useDefaultMaximumWatchdogTimeoutForExclusiveMode());
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForStandbyModeThenProperStatusIsReturned) {
@@ -220,6 +219,12 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCalling
     zes_device_state_t deviceState = {};
     pSysmanKmdInterface->getWedgedStatus(pLinuxSysmanImp, &deviceState);
     EXPECT_EQ(0u, deviceState.reset & ZES_RESET_REASON_FLAG_WEDGED);
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForSettingSchedulerModesThenTrueValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_TRUE(pSysmanKmdInterface->isSettingExclusiveModeSupported());
+    EXPECT_TRUE(pSysmanKmdInterface->isSettingTimeoutModeSupported());
 }
 
 } // namespace ult
