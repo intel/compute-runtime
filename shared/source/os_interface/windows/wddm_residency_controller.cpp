@@ -192,12 +192,12 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
         bool fragmentResidency[maxFragments] = {false, false, false};
         totalSize += allocation->getAlignedSize();
 
-        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, residencyData.resident[osContextId] ? "resident" : "not resident");
+        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), residencyData.resident[osContextId] ? "resident" : "not resident");
 
         const auto fragmentCount = allocation->fragmentsStorage.fragmentCount;
         UNRECOVERABLE_IF(fragmentCount > maxFragments);
         if (allocation->getTrimCandidateListPosition(this->osContextId) != trimListUnusedPosition) {
-            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, "on trimCandidateList");
+            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), "on trimCandidateList");
             this->removeFromTrimCandidateList(allocation, false);
         } else {
             for (uint32_t allocationId = 0; allocationId < fragmentCount; allocationId++) {
@@ -248,6 +248,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
             WddmAllocation *allocation = static_cast<WddmAllocation *>(allocationsForResidency[i]);
             // Update fence value not to early destroy / evict allocation
             const auto currentFence = this->getMonitoredFence().currentFenceValue;
+            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), "fence value to reach for eviction = ", currentFence);
             allocation->getResidencyData().updateCompletionData(currentFence, this->osContextId);
             allocation->getResidencyData().resident[osContextId] = true;
 
