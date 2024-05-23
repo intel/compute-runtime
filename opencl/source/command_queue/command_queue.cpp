@@ -202,7 +202,7 @@ void CommandQueue::initializeGpgpu() const {
             } else {
 
                 if (secondaryContextsEnabled && EngineHelpers::isCcs(defaultEngineType)) {
-                    gpgpuEngine = device->getDevice().getSecondaryEngineCsr(0, {defaultEngineType, EngineUsage::regular});
+                    gpgpuEngine = device->getDevice().getSecondaryEngineCsr({defaultEngineType, EngineUsage::regular});
                 }
 
                 if (gpgpuEngine == nullptr) {
@@ -1227,8 +1227,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
         if (multiRegularContextAllowed) {
             gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(engineType);
         } else if (secondaryContextsEnabled && EngineHelpers::isCcs(engineType)) {
-            auto index = EngineHelpers::getCcsIndex(engineType);
-            gpgpuEngine = device->getDevice().getSecondaryEngineCsr(index, {engineType, engineUsage});
+            gpgpuEngine = device->getDevice().getSecondaryEngineCsr({engineType, engineUsage});
         } else {
             gpgpuEngine = &device->getEngine(engineType, engineUsage);
         }

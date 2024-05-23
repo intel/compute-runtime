@@ -2893,7 +2893,6 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
     auto neoDevice = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo));
-    const auto ccsIndex = 0;
 
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
     defaultCsr->createGlobalStatelessHeap();
@@ -2901,11 +2900,11 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     NEO::EngineTypeUsage engineTypeUsage;
     engineTypeUsage.first = hwInfo.capabilityTable.defaultEngineType;
     engineTypeUsage.second = NEO::EngineUsage::regular;
-    auto primaryCsr = neoDevice->getSecondaryEngineCsr(ccsIndex, engineTypeUsage)->commandStreamReceiver;
+    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage)->commandStreamReceiver;
     EXPECT_EQ(nullptr, primaryCsr->getOsContext().getPrimaryContext());
     EXPECT_TRUE(primaryCsr->getOsContext().isPartOfContextGroup());
 
-    auto secondaryCsr = neoDevice->getSecondaryEngineCsr(ccsIndex, engineTypeUsage)->commandStreamReceiver;
+    auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage)->commandStreamReceiver;
 
     ze_command_queue_desc_t desc = {};
     auto otherCommandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, secondaryCsr, &desc);

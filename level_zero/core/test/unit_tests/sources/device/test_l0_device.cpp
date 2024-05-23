@@ -4018,10 +4018,12 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingLowPriorityCsrThenCorr
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, lowPriorityCsr);
 
-        ASSERT_EQ(8u, neoMockDevice->secondaryEngines[0].engines.size());
+        auto &secondaryEngines = neoMockDevice->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+
+        ASSERT_EQ(8u, secondaryEngines.engines.size());
         for (int i = 0; i < 8; i++) {
-            EXPECT_NE(neoMockDevice->secondaryEngines[0].engines[i].osContext, &lowPriorityCsr->getOsContext());
-            EXPECT_NE(neoMockDevice->secondaryEngines[0].engines[i].commandStreamReceiver, lowPriorityCsr);
+            EXPECT_NE(secondaryEngines.engines[i].osContext, &lowPriorityCsr->getOsContext());
+            EXPECT_NE(secondaryEngines.engines[i].commandStreamReceiver, lowPriorityCsr);
         }
 
         EXPECT_FALSE(lowPriorityCsr->getOsContext().isPartOfContextGroup());
@@ -4101,13 +4103,15 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, highPriorityCsr);
 
-        ASSERT_EQ(8u, neoMockDevice->secondaryEngines[index].engines.size());
+        auto &secondaryEngines = neoMockDevice->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(index)];
 
-        auto highPriorityIndex = neoMockDevice->secondaryEngines[index].regularEnginesTotal;
-        ASSERT_LT(highPriorityIndex, static_cast<uint32_t>(neoMockDevice->secondaryEngines[index].engines.size()));
+        ASSERT_EQ(8u, secondaryEngines.engines.size());
 
-        EXPECT_EQ(neoMockDevice->secondaryEngines[index].engines[highPriorityIndex].osContext, &highPriorityCsr->getOsContext());
-        EXPECT_EQ(neoMockDevice->secondaryEngines[index].engines[highPriorityIndex].commandStreamReceiver, highPriorityCsr);
+        auto highPriorityIndex = secondaryEngines.regularEnginesTotal;
+        ASSERT_LT(highPriorityIndex, static_cast<uint32_t>(secondaryEngines.engines.size()));
+
+        EXPECT_EQ(secondaryEngines.engines[highPriorityIndex].osContext, &highPriorityCsr->getOsContext());
+        EXPECT_EQ(secondaryEngines.engines[highPriorityIndex].commandStreamReceiver, highPriorityCsr);
 
         EXPECT_TRUE(highPriorityCsr->getOsContext().isPartOfContextGroup());
         EXPECT_NE(nullptr, highPriorityCsr->getOsContext().getPrimaryContext());
@@ -4117,7 +4121,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         ASSERT_NE(nullptr, highPriorityCsr2);
         EXPECT_NE(highPriorityCsr, highPriorityCsr2);
 
-        EXPECT_EQ(neoMockDevice->secondaryEngines[index].engines[highPriorityIndex + 1].commandStreamReceiver, highPriorityCsr2);
+        EXPECT_EQ(secondaryEngines.engines[highPriorityIndex + 1].commandStreamReceiver, highPriorityCsr2);
         EXPECT_TRUE(highPriorityCsr2->getOsContext().isPartOfContextGroup());
 
         index = 100;

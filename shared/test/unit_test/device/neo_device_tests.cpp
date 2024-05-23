@@ -1173,51 +1173,53 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
     }
 
     ASSERT_EQ(computeEnginesCount, device->secondaryEngines.size());
-    ASSERT_EQ(contextGroupSize, device->secondaryEngines[0].engines.size());
+    ASSERT_EQ(contextGroupSize, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
 
     auto defaultEngine = device->getDefaultEngine();
-    EXPECT_EQ(defaultEngine.commandStreamReceiver, device->secondaryEngines[0].engines[0].commandStreamReceiver);
+    EXPECT_EQ(defaultEngine.commandStreamReceiver, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines[0].commandStreamReceiver);
 
     const uint32_t regularContextCount = std::min(contextGroupSize / 2, 4u);
 
     for (uint32_t ccsIndex = 0; ccsIndex < computeEnginesCount; ccsIndex++) {
-        EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[0].osContext->isPartOfContextGroup());
-        EXPECT_EQ(nullptr, device->secondaryEngines[ccsIndex].engines[0].osContext->getPrimaryContext());
+        auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(ccsIndex)];
 
-        for (size_t i = 1; i < device->secondaryEngines[0].engines.size(); i++) {
-            EXPECT_EQ(device->secondaryEngines[ccsIndex].engines[0].osContext, device->secondaryEngines[ccsIndex].engines[i].osContext->getPrimaryContext());
-            EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[i].osContext->isPartOfContextGroup());
+        EXPECT_TRUE(secondaryEngines.engines[0].osContext->isPartOfContextGroup());
+        EXPECT_EQ(nullptr, secondaryEngines.engines[0].osContext->getPrimaryContext());
+
+        for (size_t i = 1; i < device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size(); i++) {
+            EXPECT_EQ(secondaryEngines.engines[0].osContext, secondaryEngines.engines[i].osContext->getPrimaryContext());
+            EXPECT_TRUE(secondaryEngines.engines[i].osContext->isPartOfContextGroup());
         }
 
-        EXPECT_EQ(0u, device->secondaryEngines[ccsIndex].regularCounter.load());
-        EXPECT_EQ(0u, device->secondaryEngines[ccsIndex].highPriorityCounter.load());
+        EXPECT_EQ(0u, secondaryEngines.regularCounter.load());
+        EXPECT_EQ(0u, secondaryEngines.highPriorityCounter.load());
 
-        EXPECT_EQ(regularContextCount, device->secondaryEngines[ccsIndex].regularEnginesTotal);
-        EXPECT_EQ(contextGroupSize - regularContextCount, device->secondaryEngines[ccsIndex].highPriorityEnginesTotal);
+        EXPECT_EQ(regularContextCount, secondaryEngines.regularEnginesTotal);
+        EXPECT_EQ(contextGroupSize - regularContextCount, secondaryEngines.highPriorityEnginesTotal);
 
         for (size_t contextId = 0; contextId < regularContextCount + 1; contextId++) {
-            auto engine = device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
+            auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
             ASSERT_NE(nullptr, engine);
 
-            EXPECT_EQ(contextId + 1, device->secondaryEngines[ccsIndex].regularCounter.load());
+            EXPECT_EQ(contextId + 1, secondaryEngines.regularCounter.load());
             if (contextId == regularContextCount) {
-                EXPECT_EQ(&device->secondaryEngines[ccsIndex].engines[0], engine);
+                EXPECT_EQ(&secondaryEngines.engines[0], engine);
             }
         }
 
         for (size_t contextId = 0; contextId < contextGroupSize - regularContextCount + 1; contextId++) {
-            auto engine = device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
+            auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
             ASSERT_NE(nullptr, engine);
 
-            EXPECT_EQ(contextId + 1, device->secondaryEngines[ccsIndex].highPriorityCounter.load());
+            EXPECT_EQ(contextId + 1, secondaryEngines.highPriorityCounter.load());
             if (contextId == contextGroupSize - regularContextCount) {
-                EXPECT_EQ(&device->secondaryEngines[ccsIndex].engines[regularContextCount], engine);
+                EXPECT_EQ(&secondaryEngines.engines[regularContextCount], engine);
             }
         }
     }
 
     auto internalEngine = device->getInternalEngine();
-    EXPECT_NE(internalEngine.commandStreamReceiver, device->getSecondaryEngineCsr(0, {aub_stream::EngineType::ENGINE_CCS, EngineUsage::internal})->commandStreamReceiver);
+    EXPECT_NE(internalEngine.commandStreamReceiver, device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::internal})->commandStreamReceiver);
 }
 
 HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenResourcesAndContextAreInitialized) {
@@ -1239,43 +1241,46 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenReso
     const auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 
     const auto ccsIndex = 0;
-    auto secondaryEnginesCount = device->secondaryEngines[ccsIndex].engines.size();
+
+    auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(ccsIndex)];
+
+    auto secondaryEnginesCount = secondaryEngines.engines.size();
     ASSERT_EQ(5u, secondaryEnginesCount);
 
-    EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver->isInitialized());
-    EXPECT_EQ(1u, device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver->peekLatestSentTaskCount());
+    EXPECT_TRUE(secondaryEngines.engines[0].commandStreamReceiver->isInitialized());
+    EXPECT_EQ(1u, secondaryEngines.engines[0].commandStreamReceiver->peekLatestSentTaskCount());
 
-    auto primaryCsr = device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver;
+    auto primaryCsr = secondaryEngines.engines[0].commandStreamReceiver;
     for (uint32_t secondaryIndex = 1; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
 
-        EXPECT_FALSE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].osContext->isInitialized());
-        EXPECT_FALSE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->isInitialized());
+        EXPECT_FALSE(secondaryEngines.engines[secondaryIndex].osContext->isInitialized());
+        EXPECT_FALSE(secondaryEngines.engines[secondaryIndex].commandStreamReceiver->isInitialized());
 
-        EXPECT_EQ(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
-        EXPECT_EQ(primaryCsr->getGlobalFenceAllocation(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
+        EXPECT_EQ(nullptr, secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
+        EXPECT_EQ(primaryCsr->getGlobalFenceAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-            EXPECT_EQ(primaryCsr->getPreemptionAllocation(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
+            EXPECT_EQ(primaryCsr->getPreemptionAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
         }
 
-        device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
     }
 
-    for (uint32_t i = 0; i < device->secondaryEngines[ccsIndex].highPriorityEnginesTotal; i++) {
-        device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
+    for (uint32_t i = 0; i < secondaryEngines.highPriorityEnginesTotal; i++) {
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
     }
 
     for (uint32_t secondaryIndex = 0; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
 
-        EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].osContext->isInitialized());
-        EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->isInitialized());
+        EXPECT_TRUE(secondaryEngines.engines[secondaryIndex].osContext->isInitialized());
+        EXPECT_TRUE(secondaryEngines.engines[secondaryIndex].commandStreamReceiver->isInitialized());
 
-        EXPECT_NE(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
+        EXPECT_NE(nullptr, secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
 
         if (gfxCoreHelper.isFenceAllocationRequired(hwInfo)) {
-            EXPECT_NE(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
+            EXPECT_NE(nullptr, secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
         }
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-            EXPECT_NE(nullptr, device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
+            EXPECT_NE(nullptr, secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
         }
     }
 }
@@ -1300,7 +1305,8 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledWhenDeviceIsDestroyedThenSecondary
     auto memoryManager = static_cast<MockMemoryManager *>(executionEnvironment->memoryManager.get());
 
     const auto ccsIndex = 0;
-    auto secondaryEnginesCount = device->secondaryEngines[ccsIndex].engines.size();
+    auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(ccsIndex)];
+    auto secondaryEnginesCount = secondaryEngines.engines.size();
     ASSERT_EQ(5u, secondaryEnginesCount);
     ASSERT_LE(1u, memoryManager->secondaryEngines.size());
     EXPECT_EQ(secondaryEnginesCount - 1, memoryManager->secondaryEngines[0].size());
@@ -1330,14 +1336,15 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledAndAllocationUsedBySeconadryContex
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
     auto memoryManager = static_cast<MockMemoryManager *>(executionEnvironment->memoryManager.get());
 
-    const auto ccsIndex = 0;
-    auto secondaryEnginesCount = device->secondaryEngines[ccsIndex].engines.size();
+    EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(aub_stream::ENGINE_CCS));
+    auto &secondaryEngines = device->secondaryEngines[aub_stream::ENGINE_CCS];
+    auto secondaryEnginesCount = secondaryEngines.engines.size();
     ASSERT_EQ(5u, secondaryEnginesCount);
 
-    auto engine = device->getSecondaryEngineCsr(ccsIndex, {aub_stream::ENGINE_CCS, EngineUsage::regular});
+    auto engine = device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::regular});
     ASSERT_NE(nullptr, engine);
     auto csr = engine->commandStreamReceiver;
-    auto engine2 = device->getSecondaryEngineCsr(ccsIndex, {aub_stream::ENGINE_CCS, EngineUsage::regular});
+    auto engine2 = device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::regular});
     ASSERT_NE(nullptr, engine2);
     auto csr2 = engine2->commandStreamReceiver;
     ASSERT_NE(csr, csr2);

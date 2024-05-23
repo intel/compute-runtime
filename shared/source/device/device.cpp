@@ -313,32 +313,31 @@ bool Device::createEngines() {
     }
 
     if (gfxCoreHelper.areSecondaryContextsSupported()) {
+        auto engineGroupType = EngineGroupType::compute;
 
-        auto &hardwareInfo = this->getHardwareInfo();
-        auto engineType = aub_stream::EngineType::ENGINE_CCS;
+        auto engineGroup = tryGetRegularEngineGroup(engineGroupType);
 
-        if (tryGetEngine(engineType, EngineUsage::regular)) {
+        if (engineGroup) {
             auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
             auto highPriorityContextCount = std::min(contextCount / 2, 4u);
 
-            const EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engineType, EngineUsage::regular, hardwareInfo);
-            const auto engineGroupIndex = this->getEngineGroupIndexFromEngineGroupType(engineGroupType);
-            auto &engineGroup = this->getRegularEngineGroups()[engineGroupIndex];
+            for (uint32_t engineIndex = 0; engineIndex < static_cast<uint32_t>(engineGroup->engines.size()); engineIndex++) {
+                auto engineType = engineGroup->engines[engineIndex].getEngineType();
 
-            secondaryEngines.resize(engineGroup.engines.size());
+                UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
+                auto &secondaryEnginesForType = secondaryEngines[engineType];
 
-            for (uint32_t engineIndex = 0; engineIndex < static_cast<uint32_t>(engineGroup.engines.size()); engineIndex++) {
-                auto primaryEngine = engineGroup.engines[engineIndex];
+                auto primaryEngine = engineGroup->engines[engineIndex];
 
-                secondaryEngines[engineIndex].regularEnginesTotal = contextCount - highPriorityContextCount;
-                secondaryEngines[engineIndex].highPriorityEnginesTotal = highPriorityContextCount;
-                secondaryEngines[engineIndex].regularCounter = 0;
-                secondaryEngines[engineIndex].highPriorityCounter = 0;
+                secondaryEnginesForType.regularEnginesTotal = contextCount - highPriorityContextCount;
+                secondaryEnginesForType.highPriorityEnginesTotal = highPriorityContextCount;
+                secondaryEnginesForType.regularCounter = 0;
+                secondaryEnginesForType.highPriorityCounter = 0;
 
                 NEO::EngineTypeUsage engineTypeUsage;
                 engineTypeUsage.first = primaryEngine.getEngineType();
 
-                secondaryEngines[engineIndex].engines.push_back(primaryEngine);
+                secondaryEnginesForType.engines.push_back(primaryEngine);
 
                 for (uint32_t i = 1; i < contextCount; i++) {
                     engineTypeUsage.second = EngineUsage::regular;
@@ -346,7 +345,7 @@ bool Device::createEngines() {
                     if (i >= contextCount - highPriorityContextCount) {
                         engineTypeUsage.second = EngineUsage::highPriority;
                     }
-                    createSecondaryEngine(primaryEngine.commandStreamReceiver, engineIndex, engineTypeUsage);
+                    createSecondaryEngine(primaryEngine.commandStreamReceiver, engineTypeUsage);
                 }
 
                 primaryEngine.osContext->setContextGroup(true);
@@ -486,7 +485,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     return true;
 }
 
-bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, uint32_t index, EngineTypeUsage engineTypeUsage) {
+bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineTypeUsage engineTypeUsage) {
     auto engineUsage = engineTypeUsage.second;
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver = createCommandStreamReceiver();
     if (!commandStreamReceiver) {
@@ -506,30 +505,32 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, uint32_t i
     commandStreamReceiver->setPrimaryCsr(primaryCsr);
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
-    secondaryEngines[index].engines.push_back(engine);
+
+    secondaryEngines[engineTypeUsage.first].engines.push_back(engine);
     secondaryCsrs.push_back(std::move(commandStreamReceiver));
 
     return true;
 }
 
-EngineControl *Device::getSecondaryEngineCsr(uint32_t engineIndex, EngineTypeUsage engineTypeUsage) {
-
-    if (secondaryEngines.size() == 0 || !EngineHelpers::isCcs(engineTypeUsage.first) || engineIndex >= secondaryEngines.size()) {
+EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage) {
+    if (secondaryEngines.find(engineTypeUsage.first) == secondaryEngines.end()) {
         return nullptr;
     }
 
+    auto &secondaryEnginesForType = secondaryEngines[engineTypeUsage.first];
+
     auto secondaryEngineIndex = 0;
     if (engineTypeUsage.second == EngineUsage::highPriority) {
-        secondaryEngineIndex = (secondaryEngines[engineIndex].highPriorityCounter.fetch_add(1)) % (secondaryEngines[engineIndex].highPriorityEnginesTotal);
-        secondaryEngineIndex += secondaryEngines[engineIndex].regularEnginesTotal;
+        secondaryEngineIndex = (secondaryEnginesForType.highPriorityCounter.fetch_add(1)) % (secondaryEnginesForType.highPriorityEnginesTotal);
+        secondaryEngineIndex += secondaryEnginesForType.regularEnginesTotal;
     } else if (engineTypeUsage.second == EngineUsage::regular) {
-        secondaryEngineIndex = (secondaryEngines[engineIndex].regularCounter.fetch_add(1)) % (secondaryEngines[engineIndex].regularEnginesTotal);
+        secondaryEngineIndex = (secondaryEnginesForType.regularCounter.fetch_add(1)) % (secondaryEnginesForType.regularEnginesTotal);
     } else {
         DEBUG_BREAK_IF(true);
     }
 
     if (secondaryEngineIndex > 0) {
-        auto commandStreamReceiver = secondaryEngines[engineIndex].engines[secondaryEngineIndex].commandStreamReceiver;
+        auto commandStreamReceiver = secondaryEnginesForType.engines[secondaryEngineIndex].commandStreamReceiver;
 
         auto lock = commandStreamReceiver->obtainUniqueOwnership();
 
@@ -554,7 +555,7 @@ EngineControl *Device::getSecondaryEngineCsr(uint32_t engineIndex, EngineTypeUsa
             }
         }
     }
-    return &secondaryEngines[engineIndex].engines[secondaryEngineIndex];
+    return &secondaryEnginesForType.engines[secondaryEngineIndex];
 }
 
 const HardwareInfo &Device::getHardwareInfo() const { return *getRootDeviceEnvironment().getHardwareInfo(); }
@@ -1144,5 +1145,14 @@ bool Device::isMultiRegularContextSelectionAllowed(aub_stream::EngineType engine
     }
 
     return EngineHelpers::isCcs(engineType);
+}
+
+const EngineGroupT *Device::tryGetRegularEngineGroup(EngineGroupType engineGroupType) const {
+    for (auto &engineGroup : regularEngineGroups) {
+        if (engineGroup.engineGroupType == engineGroupType) {
+            return &engineGroup;
+        }
+    }
+    return nullptr;
 }
 } // namespace NEO

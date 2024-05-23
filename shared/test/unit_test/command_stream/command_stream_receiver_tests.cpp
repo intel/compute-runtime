@@ -5307,36 +5307,37 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrWhenGettingInte
     const auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 
     const auto ccsIndex = 0;
-    auto secondaryEnginesCount = device->secondaryEngines[ccsIndex].engines.size();
+    auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(ccsIndex)];
+    auto secondaryEnginesCount = secondaryEngines.engines.size();
     ASSERT_EQ(5u, secondaryEnginesCount);
 
-    EXPECT_TRUE(device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver->isInitialized());
+    EXPECT_TRUE(secondaryEngines.engines[0].commandStreamReceiver->isInitialized());
 
-    auto primaryCsr = device->secondaryEngines[ccsIndex].engines[0].commandStreamReceiver;
+    auto primaryCsr = secondaryEngines.engines[0].commandStreamReceiver;
     primaryCsr->createGlobalStatelessHeap();
 
     for (uint32_t secondaryIndex = 1; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
-        device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
     }
 
-    for (uint32_t i = 0; i < device->secondaryEngines[ccsIndex].highPriorityEnginesTotal; i++) {
-        device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
+    for (uint32_t i = 0; i < secondaryEngines.highPriorityEnginesTotal; i++) {
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
     }
 
     for (uint32_t secondaryIndex = 0; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
 
         if (secondaryIndex > 0) {
-            EXPECT_NE(primaryCsr->getTagAllocation(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
+            EXPECT_NE(primaryCsr->getTagAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
         }
 
         if (gfxCoreHelper.isFenceAllocationRequired(hwInfo)) {
-            EXPECT_EQ(primaryCsr->getGlobalFenceAllocation(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
+            EXPECT_EQ(primaryCsr->getGlobalFenceAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
         }
 
-        EXPECT_EQ(primaryCsr->getPreemptionAllocation(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
-        EXPECT_EQ(primaryCsr->getGlobalStatelessHeapAllocation(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getGlobalStatelessHeapAllocation());
-        EXPECT_EQ(primaryCsr->getGlobalStatelessHeap(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getGlobalStatelessHeap());
-        EXPECT_EQ(primaryCsr->getPrimaryScratchSpaceController(), device->secondaryEngines[ccsIndex].engines[secondaryIndex].commandStreamReceiver->getPrimaryScratchSpaceController());
+        EXPECT_EQ(primaryCsr->getPreemptionAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
+        EXPECT_EQ(primaryCsr->getGlobalStatelessHeapAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalStatelessHeapAllocation());
+        EXPECT_EQ(primaryCsr->getGlobalStatelessHeap(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalStatelessHeap());
+        EXPECT_EQ(primaryCsr->getPrimaryScratchSpaceController(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPrimaryScratchSpaceController());
     }
 }
 
@@ -5357,8 +5358,8 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrsWhenSameResour
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
     const auto ccsIndex = 0;
-    auto &commandStreamReceiver0 = *device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular})->commandStreamReceiver;
-    auto &commandStreamReceiver1 = *device->getSecondaryEngineCsr(ccsIndex, {EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular})->commandStreamReceiver;
+    auto &commandStreamReceiver0 = *device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular})->commandStreamReceiver;
+    auto &commandStreamReceiver1 = *device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular})->commandStreamReceiver;
 
     auto csr0ContextId = commandStreamReceiver0.getOsContext().getContextId();
     auto csr1ContextId = commandStreamReceiver1.getOsContext().getContextId();

@@ -1712,7 +1712,7 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
             NEO::EngineTypeUsage engineTypeUsage;
             engineTypeUsage.first = osContext.getEngineType();
             engineTypeUsage.second = NEO::EngineUsage::regular;
-            auto engine = neoDevice->getSecondaryEngineCsr(index, engineTypeUsage);
+            auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage);
             if (engine) {
                 *csr = engine->commandStreamReceiver;
             }
@@ -1754,7 +1754,7 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamRe
                 NEO::EngineTypeUsage engineTypeUsage;
                 engineTypeUsage.first = osContext.getEngineType();
                 engineTypeUsage.second = NEO::EngineUsage::highPriority;
-                auto engine = neoDevice->getSecondaryEngineCsr(index, engineTypeUsage);
+                auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage);
                 if (engine) {
                     *csr = engine->commandStreamReceiver;
                     return ZE_RESULT_SUCCESS;

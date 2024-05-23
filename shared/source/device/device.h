@@ -102,6 +102,7 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineGroupsT &getRegularEngineGroups() {
         return this->regularEngineGroups;
     }
+    const EngineGroupT *tryGetRegularEngineGroup(EngineGroupType engineGroupType) const;
     size_t getEngineGroupIndexFromEngineGroupType(EngineGroupType engineGroupType) const;
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
@@ -192,7 +193,7 @@ class Device : public ReferenceTrackedObject<Device> {
         return getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr;
     }
 
-    MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(uint32_t engineIndex, EngineTypeUsage engineTypeUsage);
+    MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage);
     bool isSecondaryContextEngineType(aub_stream::EngineType type) {
         return EngineHelpers::isCcs(type);
     }
@@ -219,7 +220,7 @@ class Device : public ReferenceTrackedObject<Device> {
 
     void addEngineToEngineGroup(EngineControl &engine);
     MOCKABLE_VIRTUAL bool createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage);
-    MOCKABLE_VIRTUAL bool createSecondaryEngine(CommandStreamReceiver *primaryCsr, uint32_t index, EngineTypeUsage engineTypeUsage);
+    MOCKABLE_VIRTUAL bool createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineTypeUsage engineTypeUsage);
 
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
@@ -241,7 +242,7 @@ class Device : public ReferenceTrackedObject<Device> {
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     EnginesT allEngines;
 
-    std::vector<SecondaryContexts> secondaryEngines;
+    std::unordered_map<aub_stream::EngineType, SecondaryContexts> secondaryEngines;
     std::vector<std::unique_ptr<CommandStreamReceiver>> secondaryCsrs;
 
     EngineGroupsT regularEngineGroups;
