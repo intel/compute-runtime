@@ -713,7 +713,7 @@ HWTEST_F(ModuleTest, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
     for (auto i = 0u; i < numModules; i++) {
         modules.emplace_back(new L0::ModuleImp(device, moduleBuildLog, ModuleType::user));
         modules[i]->initialize(&moduleDesc, device->getNEODevice());
-        EXPECT_EQ(initialWriteMemoryCount + (i + 1), ultCsr.writeMemoryParams.callCount);
+        EXPECT_EQ(initialWriteMemoryCount, ultCsr.writeMemoryParams.callCount);
 
         if (i == 0) {
             allocation = modules[i]->getKernelsIsaParentAllocation();
@@ -729,6 +729,37 @@ HWTEST_F(ModuleTest, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
             EXPECT_EQ(allocation, modules[i]->getKernelsIsaParentAllocation());
         }
     }
+    modules.clear();
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+
+    for (auto i = 0u; i < 5; i++) {
+        modules.emplace_back(new L0::ModuleImp(device, moduleBuildLog, ModuleType::user));
+        modules[i]->initialize(&moduleDesc, device->getNEODevice());
+        EXPECT_EQ(initialWriteMemoryCount + i + 1, ultCsr.writeMemoryParams.callCount);
+
+        if (i == 0) {
+            allocation = modules[i]->getKernelsIsaParentAllocation();
+        }
+        auto &vec = modules[i]->getKernelImmutableDataVector();
+        auto offsetForImmData = vec[0]->getIsaOffsetInParentAllocation();
+        for (auto &immData : vec) {
+            EXPECT_EQ(offsetForImmData, immData->getIsaOffsetInParentAllocation());
+            offsetForImmData += immData->getIsaSubAllocationSize();
+        }
+        // Verify that all imm datas share same parent allocation
+        if (i != 0) {
+            EXPECT_EQ(allocation, modules[i]->getKernelsIsaParentAllocation());
+        }
+    }
+    modules.clear();
+
+    ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    initialWriteMemoryCount = ultCsr.writeMemoryParams.callCount;
+
+    auto module = std::make_unique<L0::ModuleImp>(device, moduleBuildLog, ModuleType::user);
+    module->initialize(&moduleDesc, device->getNEODevice());
+    EXPECT_EQ(initialWriteMemoryCount + 1, ultCsr.writeMemoryParams.callCount);
 };
 
 template <typename T1, typename T2>

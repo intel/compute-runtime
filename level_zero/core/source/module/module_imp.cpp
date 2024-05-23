@@ -612,9 +612,11 @@ void ModuleImp::transferIsaSegmentsToAllocation(NEO::Device *neoDevice, const NE
                                                               moduleOffset,
                                                               isaBuffer.data(),
                                                               isaBuffer.size());
-        for (auto &engine : neoDevice->getAllEngines()) {
-            engine.commandStreamReceiver->writeMemory(*moduleAllocation);
+
+        if (neoDevice->getDefaultEngine().commandStreamReceiver->getType() != NEO::CommandStreamReceiverType::hardware) {
+            neoDevice->getDefaultEngine().commandStreamReceiver->writeMemory(*moduleAllocation);
         }
+
         for (auto &kernelImmData : kernelImmDatas) {
             kernelImmData->setIsaCopiedToAllocation();
         }
