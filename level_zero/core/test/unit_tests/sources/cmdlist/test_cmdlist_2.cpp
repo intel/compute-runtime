@@ -1745,6 +1745,10 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
+    if (device->getProductHelper().isNewCoherencyModelSupported()) {
+        GTEST_SKIP();
+    }
+
     // command list 1 will have two kernels, transition from cached MOCS to uncached MOCS state
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -1918,6 +1922,10 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           IsAtLeastXeHpCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    if (device->getProductHelper().isNewCoherencyModelSupported()) {
+        GTEST_SKIP();
+    }
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->recordFlusheBatchBuffer = true;
