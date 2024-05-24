@@ -135,10 +135,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
 
+    auto neoDevice = this->device->getNEODevice();
+    this->csr->initializeDeviceWithFirstSubmission(*neoDevice);
+
     this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence);
     ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
     bool instructionCacheFlushRequired = this->csr->isInstructionCacheFlushRequired();
-    auto neoDevice = this->device->getNEODevice();
     bool stateCacheFlushRequired = neoDevice->getBindlessHeapsHelper() ? neoDevice->getBindlessHeapsHelper()->getStateDirtyForContext(this->csr->getOsContext().getContextId()) : false;
 
     std::unique_lock<std::mutex> lockForIndirect;

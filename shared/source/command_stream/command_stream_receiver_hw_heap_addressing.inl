@@ -11,6 +11,9 @@ namespace NEO {
 
 template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission(Device &device) {
+    if (this->latestFlushedTaskCount > 0) {
+        return SubmissionStatus::success;
+    }
     return flushTagUpdate();
 }
 

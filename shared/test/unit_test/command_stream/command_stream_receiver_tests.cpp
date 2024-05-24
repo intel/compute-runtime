@@ -5236,6 +5236,21 @@ HWTEST_F(CommandStreamReceiverTest, givenBcsCsrWhenInitializeDeviceWithFirstSubm
     EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenInitializeDeviceWithFirstSubmissionIsCalledThenFlushOnlyForTheFirstTime) {
+    MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({defaultHwInfo->capabilityTable.defaultEngineType, EngineUsage::regular}));
+    pDevice->setPreemptionMode(PreemptionMode::Disabled);
+
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver.setupContext(mockOsContext);
+    commandStreamReceiver.initializeTagAllocation();
+    EXPECT_EQ(0u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+}
+
 using CommandStreamReceiverHwHeaplessTest = Test<DeviceFixture>;
 
 HWTEST_F(CommandStreamReceiverHwHeaplessTest, whenHeaplessCommandStreamReceiverFunctionsAreCalledThenExceptionIsThrown) {
