@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ class DeviceTimeDrm : public DeviceTime {
     bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override;
     uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override;
+    bool isTimestampsRefreshEnabled() const override;
 
   protected:
     Drm *pDrm = nullptr;

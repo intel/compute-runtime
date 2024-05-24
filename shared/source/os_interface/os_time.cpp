@@ -19,13 +19,6 @@ double OSTime::getDeviceTimerResolution(HardwareInfo const &hwInfo) {
     return hwInfo.capabilityTable.defaultProfilingTimerResolution;
 };
 
-DeviceTime::DeviceTime() {
-    reusingTimestampsEnabled = debugManager.flags.EnableReusingGpuTimestamps.get();
-    if (reusingTimestampsEnabled) {
-        timestampRefreshTimeoutNS = NSEC_PER_MSEC * 100; // 100ms
-    }
-}
-
 bool DeviceTime::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     pGpuCpuTime->cpuTimeinNS = 0;
     pGpuCpuTime->gpuTimeStamp = 0;
@@ -47,6 +40,14 @@ void DeviceTime::setDeviceTimerResolution(HardwareInfo const &hwInfo) {
     }
 }
 
+bool DeviceTime::isTimestampsRefreshEnabled() const {
+    bool timestampsRefreshEnabled = true;
+    if (debugManager.flags.EnableReusingGpuTimestamps.get() != -1) {
+        timestampsRefreshEnabled = debugManager.flags.EnableReusingGpuTimestamps.get();
+    }
+    return timestampsRefreshEnabled;
+}
+
 /**
  * @brief If this method is called within interval, GPU timestamp
  * will be calculated based on CPU timestamp and previous GPU ticks
@@ -63,7 +64,7 @@ bool DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, b
     if (forceKmdCall || cpuTimeDiffInNS >= timestampRefreshTimeoutNS) {
         refreshTimestamps = true;
     }
-
+    bool reusingTimestampsEnabled = isTimestampsRefreshEnabled();
     if (!reusingTimestampsEnabled || refreshTimestamps) {
         if (!getGpuCpuTimeImpl(timeStamp, osTime)) {
             return false;
