@@ -83,7 +83,8 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     false,                                                     // p2pAtomicAccessSupported
     true,                                                      // fusedEuEnabled
     true,                                                      // l0DebuggerSupported
-    true                                                       // supportsFloatAtomics
+    true,                                                      // supportsFloatAtomics
+    0                                                          // cxlType
 };
 
 WorkaroundTable DG2::workaroundTable = {};

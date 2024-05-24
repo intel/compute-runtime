@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,8 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     true,                                                      // p2pAtomicAccessSupported
     false,                                                     // fusedEuEnabled
     true,                                                      // l0DebuggerSupported;
-    true                                                       // supportsFloatAtomics
+    true,                                                      // supportsFloatAtomics
+    0                                                          // cxlType
 };
 
 void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {

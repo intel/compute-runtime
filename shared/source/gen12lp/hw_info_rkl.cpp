@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,8 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     false,                                           // p2pAtomicAccessSupported
     true,                                            // fusedEuEnabled
     false,                                           // l0DebuggerSupported;
-    true                                             // supportsFloatAtomics
+    true,                                            // supportsFloatAtomics
+    0                                                // cxlType
 };
 
 WorkaroundTable RKL::workaroundTable = {};

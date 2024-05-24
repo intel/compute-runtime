@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,8 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     false,                                         // p2pAtomicAccessSupported
     false,                                         // fusedEuEnabled
     false,                                         // l0DebuggerSupported;
-    false                                          // supportsFloatAtomics
+    false,                                         // supportsFloatAtomics
+    0                                              // cxlType
 };
 
 WorkaroundTable LKF::workaroundTable = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,8 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     false,                                                     // p2pAtomicAccessSupported
     true,                                                      // fusedEuEnabled
     true,                                                      // l0DebuggerSupported
-    true                                                       // supportsFloatAtomics
+    true,                                                      // supportsFloatAtomics
+    0                                                          // cxlType
 };
 
 WorkaroundTable MTL::workaroundTable = {};

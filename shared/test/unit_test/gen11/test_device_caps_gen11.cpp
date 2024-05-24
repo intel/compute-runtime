@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,4 +78,8 @@ GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingCoherencySupportThenReturnFal
 
 GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingFloatAtomicsSupportThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsFloatAtomics);
+}
+
+GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingCxlTypeThenReturnZero) {
+    EXPECT_EQ(0u, pDevice->getHardwareInfo().capabilityTable.cxlType);
 }

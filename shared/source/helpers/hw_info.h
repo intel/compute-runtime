@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,7 @@ struct RuntimeCapabilityTable {
     bool fusedEuEnabled;
     bool l0DebuggerSupported;
     bool supportsFloatAtomics;
+    uint32_t cxlType;
 };
 
 inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilityTable &rhs) {

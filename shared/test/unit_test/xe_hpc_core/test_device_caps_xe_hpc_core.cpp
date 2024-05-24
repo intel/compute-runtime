@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,10 @@ XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenXeHpcCoreWhenCheckingCoherencySuppor
 
 XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenXeHpcCoreWhenCheckingFloatAtomicsSupportThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsFloatAtomics);
+}
+
+XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenXeHpcCoreWhenCheckingCxlTypeThenReturnZero) {
+    EXPECT_EQ(0u, pDevice->getHardwareInfo().capabilityTable.cxlType);
 }
 
 XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue) {
