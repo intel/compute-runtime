@@ -313,16 +313,22 @@ bool Device::createEngines() {
     }
 
     if (gfxCoreHelper.areSecondaryContextsSupported()) {
-        auto engineGroupType = EngineGroupType::compute;
+        for (auto engineGroupType : {EngineGroupType::compute, EngineGroupType::copy, EngineGroupType::linkedCopy}) {
+            auto engineGroup = tryGetRegularEngineGroup(engineGroupType);
 
-        auto engineGroup = tryGetRegularEngineGroup(engineGroupType);
+            if (!engineGroup) {
+                continue;
+            }
 
-        if (engineGroup) {
             auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
             auto highPriorityContextCount = std::min(contextCount / 2, 4u);
 
             for (uint32_t engineIndex = 0; engineIndex < static_cast<uint32_t>(engineGroup->engines.size()); engineIndex++) {
                 auto engineType = engineGroup->engines[engineIndex].getEngineType();
+
+                if ((static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) == 0) {
+                    continue;
+                }
 
                 UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
                 auto &secondaryEnginesForType = secondaryEngines[engineType];
@@ -352,6 +358,7 @@ bool Device::createEngines() {
             }
         }
     }
+
     return true;
 }
 

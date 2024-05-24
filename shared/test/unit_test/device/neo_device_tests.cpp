@@ -1375,3 +1375,82 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledAndAllocationUsedBySeconadryContex
     EXPECT_EQ(0u, memoryManager->allRegisteredEngines[0].size());
     executionEnvironment->decRefInternal();
 }
+
+HWTEST_F(DeviceTests, givenCopyEnginesWhenCreatingSecondaryContextsThenUseCopyTypes) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b1111;
+
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    executionEnvironment->incRefInternal();
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+    auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+
+    auto memoryManager = static_cast<MockMemoryManager *>(executionEnvironment->memoryManager.get());
+
+    auto &enabledEngines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+
+    for (auto engineType : {aub_stream::EngineType::ENGINE_BCS, aub_stream::EngineType::ENGINE_BCS1, aub_stream::EngineType::ENGINE_BCS2, aub_stream::EngineType::ENGINE_BCS3}) {
+        auto supported = std::find_if(enabledEngines.begin(), enabledEngines.end(),
+                                      [&engineType](const auto &engine) { return (engine.first == engineType) && (engine.second == EngineUsage::regular); }) != enabledEngines.end();
+
+        if (supported) {
+            EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(engineType));
+            EXPECT_EQ(5u, device->secondaryEngines[engineType].engines.size());
+
+            auto engine = device->getSecondaryEngineCsr({engineType, EngineUsage::regular});
+            ASSERT_NE(nullptr, engine);
+
+            auto csr = engine->commandStreamReceiver;
+            auto engine2 = device->getSecondaryEngineCsr({engineType, EngineUsage::regular});
+            ASSERT_NE(nullptr, engine2);
+
+            auto csr2 = engine2->commandStreamReceiver;
+            ASSERT_NE(csr, csr2);
+
+            auto tagAddress = csr->getTagAddress();
+            auto tagAddress2 = csr2->getTagAddress();
+
+            EXPECT_NE(csr->getOsContext().getContextId(), csr2->getOsContext().getContextId());
+            EXPECT_NE(tagAddress, tagAddress2);
+        } else {
+            EXPECT_EQ(device->secondaryEngines.end(), device->secondaryEngines.find(engineType));
+        }
+    }
+
+    device.reset(nullptr);
+
+    EXPECT_EQ(0u, memoryManager->secondaryEngines[0].size());
+    EXPECT_EQ(0u, memoryManager->allRegisteredEngines[0].size());
+
+    executionEnvironment->decRefInternal();
+}
+
+HWTEST_F(DeviceTests, givenDebugFlagSetWhenCreatingSecondaryEnginesThenSkipSelectedEngineTypes) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    uint32_t computeEngineBit = 1 << static_cast<uint32_t>(aub_stream::EngineType::ENGINE_CCS);
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+    debugManager.flags.SecondaryContextEngineTypeMask.set(~computeEngineBit);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    executionEnvironment->incRefInternal();
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+
+    EXPECT_EQ(device->secondaryEngines.end(), device->secondaryEngines.find(aub_stream::ENGINE_CCS));
+
+    executionEnvironment->decRefInternal();
+}
