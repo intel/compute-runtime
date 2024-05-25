@@ -17,7 +17,6 @@ class DeviceTimeDrm : public DeviceTime {
     bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override;
     uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override;
-    bool isTimestampsRefreshEnabled() const override;
 
   protected:
     Drm *pDrm = nullptr;

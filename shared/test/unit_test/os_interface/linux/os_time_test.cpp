@@ -390,7 +390,7 @@ TEST_F(DrmTimeTest, whenGettingMaxGpuTimeStampValueWhenForceFlagSetThenCallToKmd
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
 }
 
-TEST_F(DrmTimeTest, givenReusingTimestampsDisabledWhenGetGpuCpuTimeThenAlwaysCallKmd) {
+TEST_F(DrmTimeTest, givenReusingTimestampsDisabledWhenGetTimestampRefreshTimeoutThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableReusingGpuTimestamps.set(0);
     // Recreate mock to apply debug flag
@@ -398,11 +398,5 @@ TEST_F(DrmTimeTest, givenReusingTimestampsDisabledWhenGetGpuCpuTimeThenAlwaysCal
     osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
     osTime->setResolutionFunc(resolutionFuncTrue);
     osTime->setGetTimeFunc(getTimeFuncTrue);
-    auto deviceTime = osTime->getDeviceTime();
-    TimeStampData gpuCpuTime;
-    osTime->getGpuCpuTime(&gpuCpuTime);
-    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 1u);
-
-    osTime->getGpuCpuTime(&gpuCpuTime);
-    EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 2u);
+    EXPECT_EQ(0ul, osTime->getTimestampRefreshTimeout());
 }

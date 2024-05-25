@@ -25,12 +25,12 @@ class OSTime;
 
 class DeviceTime {
   public:
+    DeviceTime();
     virtual ~DeviceTime() = default;
     bool getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime, bool forceKmdCall);
     virtual bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime);
     virtual double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const;
     virtual uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const;
-    virtual bool isTimestampsRefreshEnabled() const;
     bool getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall);
     void setDeviceTimerResolution(HardwareInfo const &hwInfo);
     void setRefreshTimestampsFlag() {
@@ -47,8 +47,9 @@ class DeviceTime {
     double deviceTimerResolution = 0;
     const uint64_t timestampRefreshMinTimeoutNS = NSEC_PER_MSEC; // 1ms
     const uint64_t timestampRefreshMaxTimeoutNS = NSEC_PER_SEC;  // 1s
-    uint64_t timestampRefreshTimeoutNS = NSEC_PER_MSEC * 100;    // 100ms
+    uint64_t timestampRefreshTimeoutNS = 0;
     bool refreshTimestamps = true;
+    bool reusingTimestampsEnabled = false;
     TimeStampData fetchedTimestamps{};
 };
 
