@@ -1044,35 +1044,11 @@ TEST(GmmHelperTest, givenEnableFtrTile64OptimizationDebugKeyWhenSetThenProperVal
     }
 }
 
-TEST(GmmHelperTest, givenNewCoherencyModelWhenGetMocsThenDeferToPat) {
-    decltype(GmmHelper::createGmmContextWrapperFunc) createGmmContextSave = GmmHelper::createGmmContextWrapperFunc;
-    GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
-
-    MockExecutionEnvironment executionEnvironment{};
-    if (!executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().isNewCoherencyModelSupported()) {
-        GTEST_SKIP();
-    }
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
-
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE_FROM_BUFFER));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
-    EXPECT_EQ(0u, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
-
-    GmmHelper::createGmmContextWrapperFunc = createGmmContextSave;
-}
-
 TEST(GmmHelperTest, givenGmmHelperAndL3CacheDisabledForDebugThenCorrectMOCSIsReturned) {
     decltype(GmmHelper::createGmmContextWrapperFunc) createGmmContextSave = GmmHelper::createGmmContextWrapperFunc;
     GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
 
     MockExecutionEnvironment executionEnvironment{};
-    if (executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().isNewCoherencyModelSupported()) {
-        GTEST_SKIP();
-    }
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
     auto uncachedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
@@ -1102,9 +1078,6 @@ TEST(GmmHelperTest, givenGmmHelperAndForceAllResourcesUncachedDebugVariableSetTh
     GmmHelper::createGmmContextWrapperFunc = GmmClientContext::create<MockGmmClientContext>;
 
     MockExecutionEnvironment executionEnvironment{};
-    if (executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().isNewCoherencyModelSupported()) {
-        GTEST_SKIP();
-    }
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
     auto uncachedMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);

@@ -9,7 +9,7 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 
 namespace CacheSettings {
-inline constexpr uint32_t unknownMocs = -1;
+inline constexpr uint32_t unknownMocs = GMM_RESOURCE_USAGE_UNKNOWN;
 } // namespace CacheSettings
 
 namespace NEO {
