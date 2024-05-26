@@ -416,9 +416,23 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWi
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-    PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
 
-    LinearStream pipelineSelectStream(&cmd, sizeof(cmd));
+    std::vector<uint8_t> linearStreamBackingMemory;
+    size_t sizeNeededForCommandSream = 0;
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
+        PipeControlArgs args;
+        args.csStallOnly = true;
+        args.renderTargetCacheFlushEnable = true;
+        sizeNeededForCommandSream += MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(args.tlbInvalidation);
+    }
+
+    sizeNeededForCommandSream += sizeof(PIPELINE_SELECT);
+    linearStreamBackingMemory.resize(linearStreamBackingMemory.size() + sizeNeededForCommandSream);
+
+    PIPELINE_SELECT *cmd = reinterpret_cast<PIPELINE_SELECT *>(linearStreamBackingMemory.data() + linearStreamBackingMemory.size() - sizeof(PIPELINE_SELECT));
+    *cmd = FamilyType::cmdInitPipelineSelect;
+
+    LinearStream pipelineSelectStream(linearStreamBackingMemory.data(), linearStreamBackingMemory.size());
 
     PipelineSelectArgs pipelineArgs = {};
     pipelineArgs.systolicPipelineSelectSupport = PreambleHelper<FamilyType>::isSystolicModeConfigurable(rootDeviceEnvironment);
@@ -434,5 +448,5 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWi
         expectedMask |= pipelineSelectSystolicModeEnableMaskBits;
     }
 
-    EXPECT_EQ(expectedMask, cmd.getMaskBits());
+    EXPECT_EQ(expectedMask, cmd->getMaskBits());
 }

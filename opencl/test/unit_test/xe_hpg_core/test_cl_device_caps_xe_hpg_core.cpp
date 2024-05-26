@@ -37,7 +37,8 @@ XE_HPG_CORETEST_F(XeHpgCoreClDeviceCaps, giveDeviceExtensionsWhenDeviceCapsIniti
 
     bool expectMatrixMultiplyAccumulateExtensions = compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper);
     EXPECT_EQ(expectMatrixMultiplyAccumulateExtensions, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
-    EXPECT_EQ(expectMatrixMultiplyAccumulateExtensions, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
+    bool expectSpliyMatrixMultiplyAccumulateExtensions = compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(releaseHelper);
+    EXPECT_EQ(expectSpliyMatrixMultiplyAccumulateExtensions, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
 
     bool expectBFloat16ConversionsExtension = compilerProductHelper.isBFloat16ConversionSupported(releaseHelper);
     EXPECT_EQ(expectBFloat16ConversionsExtension, hasSubstr(caps.deviceExtensions, std::string("cl_intel_bfloat16_conversions")));

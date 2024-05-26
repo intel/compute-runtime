@@ -129,7 +129,7 @@ target_include_directories(igdrcl_tests BEFORE PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
 )
 
-function(neo_gen_kernels platform_it_lower revision_id forcePatchtokenFormat)
+function(neo_gen_kernels platform_it_lower device revision_id forcePatchtokenFormat)
   set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
 
   if(forcePatchtokenFormat)
@@ -143,7 +143,8 @@ function(neo_gen_kernels platform_it_lower revision_id forcePatchtokenFormat)
     get_filename_component(workdir ${filepath} DIRECTORY)
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
-    set(outputpath_base "${outputdir}${basename}_${platform_it_lower}")
+    set(outputname_base "${basename}_${platform_it_lower}")
+    set(outputpath_base "${outputdir}${outputname_base}")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(output_files
           ${outputpath_base}.spv
@@ -152,7 +153,7 @@ function(neo_gen_kernels platform_it_lower revision_id forcePatchtokenFormat)
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_it_lower} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir} ${formatArgument}
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir} ${formatArgument} -output_no_suffix -output ${outputname_base}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -175,7 +176,7 @@ function(neo_gen_kernels platform_it_lower revision_id forcePatchtokenFormat)
   set(kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile_${platform_it_lower}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
-function(neo_gen_kernels_with_options platform_it_lower revision_id filepath)
+function(neo_gen_kernels_with_options platform_it_lower device revision_id filepath)
   set(kernels_to_compile)
   foreach(filearg ${filepath})
     get_filename_component(filename ${filearg} NAME)
@@ -189,7 +190,8 @@ function(neo_gen_kernels_with_options platform_it_lower revision_id filepath)
     foreach(arg ${ARGN})
       string(REPLACE " " "_" argwospaces ${arg})
       set(base_filename ${basename}_${argwospaces})
-      set(outputpath_base "${outputdir}/${base_filename}_${platform_it_lower}")
+      set(outputname_base "${base_filename}_${platform_it_lower}")
+      set(outputpath_base "${outputdir}/${outputname_base}")
       if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
         set(output_files
             ${outputpath_base}.spv
@@ -198,7 +200,7 @@ function(neo_gen_kernels_with_options platform_it_lower revision_id filepath)
 
         add_custom_command(
                            OUTPUT ${output_files}
-                           COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_it_lower} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id} -options ${arg} -output ${base_filename}
+                           COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${arg}
                            WORKING_DIRECTORY ${workdir}
                            DEPENDS ${filearg} ocloc
         )
@@ -221,7 +223,7 @@ function(neo_gen_kernels_with_options platform_it_lower revision_id filepath)
   set(kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile_${platform_it_lower}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
-function(neo_gen_kernels_with_internal_options platform_it_lower revision_id filepath output_name_prefix)
+function(neo_gen_kernels_with_internal_options platform_it_lower device revision_id filepath output_name_prefix)
   set(kernels_to_compile)
 
   set(filearg ${filepath})
@@ -237,20 +239,17 @@ function(neo_gen_kernels_with_internal_options platform_it_lower revision_id fil
     set(basename ${output_name_prefix}_${basename})
   endif()
 
-  set(outputpath_base "${outputdir}/${basename}_${platform_it_lower}")
+  set(outputname_base "${basename}_${platform_it_lower}")
+  set(outputpath_base "${outputdir}/${outputname_base}")
   if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
     set(output_files
         ${outputpath_base}.spv
         ${outputpath_base}.bin
     )
 
-    if(NOT "${output_name_prefix}" STREQUAL "")
-      set(output_name -output ${basename})
-    endif()
-
     add_custom_command(
                        OUTPUT ${output_files}
-                       COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_it_lower} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
+                       COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -internal_options ${ARGN}
                        WORKING_DIRECTORY ${workdir}
                        DEPENDS ${filearg} ocloc
     )
@@ -351,37 +350,42 @@ macro(macro_for_each_platform)
   endforeach()
 
   if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
-    foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-      neo_gen_kernels(${PLATFORM_IT_LOWER} ${REVISION_ID} FALSE ${PLATFORM_TEST_KERNELS})
-      neo_gen_kernels_with_options(${PLATFORM_IT_LOWER} ${REVISION_ID} ${TEST_KERNEL} ${TEST_KERNEL_options})
+    foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+      parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+      neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} FALSE ${PLATFORM_TEST_KERNELS})
+      neo_gen_kernels_with_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL} ${TEST_KERNEL_options})
     endforeach()
 
     #compile gen specific kernels if any were found
     file(GLOB_RECURSE ${CORE_TYPE_LOWER}_TEST_KERNELS test_files/*.${CORE_TYPE_LOWER})
     if(NOT "${${CORE_TYPE_LOWER}_TEST_KERNELS}" STREQUAL "")
-      foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        neo_gen_kernels(${PLATFORM_IT_LOWER} ${REVISION_ID} FALSE ${${CORE_TYPE_LOWER}_TEST_KERNELS})
+      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} FALSE ${${CORE_TYPE_LOWER}_TEST_KERNELS})
       endforeach()
     endif()
 
     # Compile platform specific kernels if any were found
     file(GLOB_RECURSE ${PLATFORM_IT_LOWER}_TEST_KERNELS test_files/*.${PLATFORM_IT_LOWER})
     if(NOT "${${PLATFORM_IT_LOWER}_TEST_KERNELS}" STREQUAL "")
-      foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        neo_gen_kernels(${PLATFORM_IT_LOWER} ${REVISION_ID} FALSE ${${PLATFORM_IT_LOWER}_TEST_KERNELS})
+      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} FALSE ${${PLATFORM_IT_LOWER}_TEST_KERNELS})
       endforeach()
     endif()
 
     # Gen9lp needs extra -m32 flag
     if(("${CORE_TYPE_LOWER}" STREQUAL "gen9") AND (("${PLATFORM_IT_LOWER}" STREQUAL "bxt") OR ("${PLATFORM_IT_LOWER}" STREQUAL "glk")))
-      foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${REVISION_ID} ${TEST_KERNEL_PRINTF} "" ${TEST_KERNEL_PRINTF_internal_options_gen9lp})
-        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${REVISION_ID} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options_gen9lp})
+      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL_PRINTF} "" ${TEST_KERNEL_PRINTF_internal_options_gen9lp})
+        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options_gen9lp})
       endforeach()
     else()
-      foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${REVISION_ID} ${TEST_KERNEL_PRINTF} "" " ")
-        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${REVISION_ID} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options})
+      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL_PRINTF} "" " ")
+        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options})
       endforeach()
     endif()
 
@@ -391,26 +395,30 @@ macro(macro_for_each_platform)
     endif()
 
     foreach(file ${TEST_KERNEL_BINDLESS} ${BINDLESS_KERNELS_IMAGES})
-      foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
         if(NOT ("${CORE_TYPE_LOWER}" STREQUAL "gen8"))
-          neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${REVISION_ID} ${file} "bindless" ${TEST_KERNEL_BINDLESS_internal_options})
+          neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${file} "bindless" ${TEST_KERNEL_BINDLESS_internal_options})
         endif()
       endforeach()
     endforeach()
 
     if(PLATFORM_2_0_LOWER)
-      foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        neo_gen_kernels_with_options(${PLATFORM_IT_LOWER} ${REVISION_ID} "${TEST_KERNEL_2_0}" ${TEST_KERNEL_2_0_options})
+      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+        neo_gen_kernels_with_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} "${TEST_KERNEL_2_0}" ${TEST_KERNEL_2_0_options})
       endforeach()
     endif()
     if(PLATFORM_VME_LOWER)
-      foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        neo_gen_kernels(${PLATFORM_IT_LOWER} ${REVISION_ID} TRUE ${TEST_KERNEL_VME})
+      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} TRUE ${TEST_KERNEL_VME})
       endforeach()
     endif()
   endif()
 
-  foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+  foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+    parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
     add_custom_target(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${kernels_to_compile_${PLATFORM_IT_LOWER}_${REVISION_ID}} copy_compiler_files)
     add_dependencies(prepare_test_kernels_for_ocl prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
     set_target_properties(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}/${REVISION_ID}")

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -37,10 +38,12 @@ HWTEST2_F(DeviceFixtureGen12LP, GivenTargetGen12LPWhenGettingDpSupportThenReturn
     ze_result_t res = device->getKernelProperties(&deviceModProps);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
+    auto expDpas = this->neoDevice->getReleaseHelper()->isDotProductAccumulateSystolicSupported();
+
     bool dp4a = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
     bool dpas = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
     EXPECT_TRUE(dp4a);
-    EXPECT_FALSE(dpas);
+    EXPECT_EQ(expDpas, dpas);
 }
 
 using CommandQueueGroupTest = Test<DeviceFixture>;

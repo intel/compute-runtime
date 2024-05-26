@@ -175,6 +175,7 @@ int main(int argc, char **argv) {
     uint32_t sliceCount = 0;
     uint32_t subSlicePerSliceCount = 0;
     int32_t revId = -1;
+    int32_t devId = -1;
     int dieRecovery = 0;
     bool productOptionSelected = false;
 
@@ -207,6 +208,11 @@ int main(int argc, char **argv) {
             ++i;
             if (i < argc) {
                 revId = atoi(argv[i]);
+            }
+        } else if (!strcmp("--dev_id", argv[i])) {
+            ++i;
+            if (i < argc) {
+                devId = static_cast<int32_t>(strtol(argv[i], nullptr, 16));
             }
         } else if (!strcmp("--product", argv[i])) {
             ++i;
@@ -311,11 +317,18 @@ int main(int argc, char **argv) {
         PLATFORM &platform = hwInfoForTests.platform;
 
         auto testRevId = revId;
+        auto testDevId = devId;
 
         if (testRevId != -1) {
             platform.usRevId = testRevId;
         } else {
             testRevId = platform.usRevId;
+        }
+
+        if (testDevId != -1) {
+            platform.usDeviceID = testDevId;
+        } else {
+            testDevId = platform.usDeviceID;
         }
 
         adjustHwInfoForTests(hwInfoForTests, euPerSubSlice, sliceCount, subSlicePerSliceCount, dieRecovery);

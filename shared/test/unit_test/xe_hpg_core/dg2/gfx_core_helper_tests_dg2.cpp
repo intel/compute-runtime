@@ -122,11 +122,12 @@ DG2TEST_F(GfxCoreHelperTestDg2, givenRcsDisabledButDebugVariableSetWhenGetGpgpuE
 
 using GfxCoreHelperTests = Test<DeviceFixture>;
 DG2TEST_F(GfxCoreHelperTests, givenAllocationTypeInternalHeapWhenSetExtraAllocationDataThenUseSystemMemory) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+    HardwareInfo &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     hwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    hwInfo.platform.usRevId = 0;
 
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     constexpr DeviceBitfield singleTileBitfield = 0b0100;
 
     const AllocationProperties singleTileAllocProperties(0, 1, AllocationType::internalHeap, singleTileBitfield);

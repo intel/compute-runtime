@@ -10,6 +10,12 @@ list(GET aub_test_config 1 slices)
 list(GET aub_test_config 2 subslices)
 list(GET aub_test_config 3 eu_per_ss)
 list(GET aub_test_config 4 revision_id)
+list(LENGTH aub_test_config aub_test_config_num_entries)
+if(${aub_test_config_num_entries} GREATER_EQUAL 6)
+  list(GET aub_test_config 5 device_id)
+else()
+  set(device_id 0)
+endif()
 
 if(NOT TARGET aub_tests)
   add_custom_target(aub_tests)
@@ -84,7 +90,7 @@ if(TARGET igdrcl_aub_tests)
                      POST_BUILD
                      COMMAND WORKING_DIRECTORY ${TargetDir}
                      COMMAND echo Running AUB generation for ${product} in ${TargetDir}/${product}_aub
-                     COMMAND ${aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_OUTPUT} --rev_id ${revision_id}
+                     COMMAND ${aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${NEO_TESTS_LISTENER_OPTION} ${GTEST_OUTPUT} --rev_id ${revision_id} --dev_id ${device_id}
   )
 endif()
 
@@ -108,7 +114,7 @@ if(TARGET ze_intel_gpu_aub_tests)
                      POST_BUILD
                      COMMAND WORKING_DIRECTORY ${TargetDir}
                      COMMAND echo Running Level Zero AUB generation for ${product} in ${TargetDir}/${product}_aub
-                     COMMAND ${l0_aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${GTEST_OUTPUT} --rev_id ${revision_id}
+                     COMMAND ${l0_aub_test_cmd_prefix} --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${aub_tests_options} ${GTEST_OUTPUT} --rev_id ${revision_id} --dev_id ${device_id}
   )
 endif()
 

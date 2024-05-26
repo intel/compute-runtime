@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -157,10 +157,11 @@ endif()
 
 macro(macro_for_each_platform)
   if("${PLATFORM_IT_LOWER}" STREQUAL "${CLOC_LIB_DEFAULT_DEVICE}")
-    list(GET ${PLATFORM_IT}_${CORE_TYPE}_REVISIONS 0 REVISION_ID)
+    list(GET ${PLATFORM_IT}_${CORE_TYPE}_REVISIONS 0 REVISION_CONFIG)
+    parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
     add_dependencies(run_ocloc_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
     add_dependencies(unit_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
-    set(run_tests_cmd ocloc_tests --device ${PLATFORM_IT_LOWER} --rev_id ${REVISION_ID})
+    set(run_tests_cmd ocloc_tests --device ${DEVICE_ID} --rev_id ${REVISION_ID})
   endif()
 endmacro()
 macro(macro_for_each_core_type)

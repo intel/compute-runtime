@@ -326,7 +326,11 @@ HWTEST2_F(XeLpgProductHelperTests, whenSetForceNonCoherentThenNothingChanged, Is
 HWTEST2_F(XeLpgProductHelperTests, givenCompilerProductHelperWhenGetDefaultHwIpVersionThenCorrectValueIsSet, IsXeLpg) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::MTL_M_A0);
+    if (hwInfo.platform.eProductFamily == IGFX_ARROWLAKE) {
+        EXPECT_EQ(AOT::XE_LPGPLUS_B0, compilerProductHelper->getDefaultHwIpVersion());
+    } else {
+        EXPECT_EQ(AOT::MTL_M_B0, compilerProductHelper->getDefaultHwIpVersion());
+    }
 }
 
 HWTEST2_F(XeLpgProductHelperTests, whenCheckDirectSubmissionSupportedThenValueFromReleaseHelperIsReturned, IsXeLpg) {

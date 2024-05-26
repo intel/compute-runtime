@@ -183,6 +183,7 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2ProductHelperWhenIsInitBuiltinAsyncSuppo
 DG2TEST_F(ProductHelperTestDg2, givenG10DevIdWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     myHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];
+    myHwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, myHwInfo);
     EXPECT_FALSE(productHelper->isDisableOverdispatchAvailable(myHwInfo));
 
     FrontEndPropertiesSupport fePropertiesSupport{};
@@ -764,7 +765,7 @@ DG2TEST_F(ProductConfigTests, givenInvalidRevisionIdWhenDeviceIdIsDefaultThenDef
     hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
 
     productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
-    EXPECT_EQ(productConfig, AOT::DG2_G10_A0);
+    EXPECT_EQ(productConfig, AOT::DG2_G10_C0);
 }
 
 DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdWhenDifferentRevisionIsPassedThenCorrectProductConfigIsReturned) {
@@ -795,7 +796,7 @@ DG2TEST_F(ProductConfigTests, givenDg2DeviceIdWhenIncorrectRevisionIsPassedThenD
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
             productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
-            EXPECT_EQ(productConfig, AOT::DG2_G10_A0);
+            EXPECT_EQ(productConfig, AOT::DG2_G10_C0);
         }
     }
 }
@@ -831,7 +832,7 @@ DG2TEST_F(ProductConfigTests, givenNotSetDeviceAndRevisionIdWhenGetProductConfig
     hwInfo.platform.usDeviceID = 0x0;
 
     productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
-    EXPECT_EQ(productConfig, AOT::DG2_G10_A0);
+    EXPECT_EQ(productConfig, AOT::DG2_G10_C0);
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenAskedIfStorageInfoAdjustmentIsRequiredThenTrueIsReturned) {

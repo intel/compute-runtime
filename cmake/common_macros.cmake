@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -84,3 +84,18 @@ macro(append_sources_from_properties list_name)
     list(APPEND ${list_name} ${${name}})
   endforeach()
 endmacro()
+
+function(parse_revision_config config default_device out_device out_revision_id)
+  string(REPLACE "/" ";" config_as_list ${config})
+  list(LENGTH config_as_list config_entries)
+  if(${config_entries} EQUAL 2)
+    list(GET config_as_list 0 device_id)
+    list(GET config_as_list 1 revision_id)
+    set(${out_device} ${device_id} PARENT_SCOPE)
+    set(${out_revision_id} ${revision_id} PARENT_SCOPE)
+  else()
+    list(GET config_as_list 0 revision_id)
+    set(${out_device} ${default_device} PARENT_SCOPE)
+    set(${out_revision_id} ${revision_id} PARENT_SCOPE)
+  endif()
+endfunction()

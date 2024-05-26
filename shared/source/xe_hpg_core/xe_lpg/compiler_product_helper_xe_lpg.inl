@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,10 +15,3 @@
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
 
 #include "platforms.h"
-
-namespace NEO {
-template <>
-uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
-    return AOT::MTL_M_A0;
-}
-} // namespace NEO

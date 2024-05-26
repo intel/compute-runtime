@@ -641,7 +641,8 @@ HWTEST2_F(L0DebuggerTest, givenNotXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3Ca
 }
 
 HWTEST2_F(L0DebuggerTest, givenDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, IsDG2) {
-    EXPECT_TRUE(static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->allResourcesUncached);
+    bool disableL3CacheForDebug = neoDevice->getProductHelper().disableL3CacheForDebug(neoDevice->getHardwareInfo());
+    EXPECT_EQ(disableL3CacheForDebug, static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->allResourcesUncached);
 }
 
 INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));

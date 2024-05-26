@@ -5,7 +5,7 @@
 #
 
 set(SHARED_TEST_PROJECTS_SUB_FOLDER "prepare test files")
-function(compile_kernels_gen revision_id platform_name)
+function(compile_kernels_gen device revision_id platform_name)
 
   set(outputdir "${TargetDir}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/")
   set(compiled_kernels)
@@ -16,7 +16,8 @@ function(compile_kernels_gen revision_id platform_name)
     get_filename_component(workdir ${filepath} DIRECTORY)
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
-    set(outputpath_base "${outputdir}${basename}_${platform_name}")
+    set(outputname_base "${basename}_${platform_name}")
+    set(outputpath_base "${outputdir}${outputname_base}")
 
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(output_files
@@ -26,7 +27,7 @@ function(compile_kernels_gen revision_id platform_name)
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
+                         COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc copy_compiler_files
       )
@@ -69,8 +70,9 @@ macro(macro_for_each_platform)
     list(REMOVE_ITEM KERNELS_TO_COMPILE ${TEST_KERNELS_IMAGES})
   endif()
 
-  foreach(REVISION_ID ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-    compile_kernels_gen(${REVISION_ID} ${PLATFORM_IT_LOWER} ${KERNELS_TO_COMPILE})
+  foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
+    parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
+    compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} ${KERNELS_TO_COMPILE})
 
     add_custom_target(prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${compiled_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}})
     set_target_properties(prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}/${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}/${REVISION_ID}")

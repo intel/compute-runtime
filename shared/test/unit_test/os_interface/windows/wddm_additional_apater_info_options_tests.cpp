@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ HWTEST2_F(WddmTest, WhenPopulateIpVersionWddmIsCalledAndIpVersionIsZeroThenDefau
     auto &compilerProductHelper = wddm->rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.ipVersion = 0;
+    hwInfo.platform.usDeviceID = 0;
     auto config = compilerProductHelper.getDefaultHwIpVersion();
     wddm->populateIpVersion(hwInfo);
 

@@ -423,9 +423,15 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
             }
         }
     } else {
-        helper->printf("Error: Invalid command line. Unknown acronym %s.\n", allArgs[2].c_str());
-        retVal = OCLOC_INVALID_COMMAND_LINE;
-        return retVal;
+        auto hwInfoDepAcr = getHwInfoForDeprecatedAcronym(queryAcronym);
+        if (nullptr != hwInfoDepAcr) {
+            auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfoDepAcr->platform.eProductFamily);
+            matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(compilerProductHelper->getDefaultHwIpVersion()));
+        } else {
+            helper->printf("Error: Invalid command line. Unknown acronym %s.\n", allArgs[2].c_str());
+            retVal = OCLOC_INVALID_COMMAND_LINE;
+            return retVal;
+        }
     }
 
     std::ostringstream os;

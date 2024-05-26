@@ -51,6 +51,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using MemoryManagerCreate<OsAgnosticMemoryManager>::MemoryManagerCreate;
     using MemoryManager::enable64kbpages;
+    using MemoryManager::executionEnvironment;
     using MemoryManager::getPreferredAllocationMethod;
     using MemoryManager::isaInLocalMemory;
     using MemoryManager::isAllocationTypeToCapture;

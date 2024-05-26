@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,17 +113,27 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenComputeModeCmdSizeWhenL
     overrideComputeModeRequest<FamilyType>(false, false, false, false, 128u);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
-    auto cmdSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
+    auto expSize = sizeof(STATE_COMPUTE_MODE);
+    auto &rootDeviceEnvironment = csr->peekRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, getCsrHw<FamilyType>()->isRcs(), releaseHelper);
+    std::ignore = isExtendedWARequired;
+
+    if (isBasicWARequired) {
+        expSize += sizeof(PIPE_CONTROL);
+    }
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, 256u);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
-    EXPECT_EQ(cmdSize, retSize);
+    EXPECT_EQ(expSize, retSize);
 
     overrideComputeModeRequest<FamilyType>(true, false, false, true, 256u);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
-    EXPECT_EQ(cmdSize, retSize);
+    EXPECT_EQ(expSize, retSize);
 }
 
 XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenCoherencyWithSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
@@ -137,31 +147,51 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenCoherencyWithSharedHand
     overrideComputeModeRequest<FamilyType>(false, true, true);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + (2 * sizeof(PIPE_CONTROL));
+    auto expSize = sizeof(STATE_COMPUTE_MODE) + (sizeof(PIPE_CONTROL));
+    auto &rootDeviceEnvironment = csr->peekRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, getCsrHw<FamilyType>()->isRcs(), releaseHelper);
+    std::ignore = isExtendedWARequired;
+
+    if (isBasicWARequired) {
+        expSize += sizeof(PIPE_CONTROL);
+    }
 
     overrideComputeModeRequest<FamilyType>(true, true, true);
     auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
-    EXPECT_EQ(cmdsSize, retSize);
+    EXPECT_EQ(expSize, retSize);
 
     overrideComputeModeRequest<FamilyType>(true, false, true);
     retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
-    EXPECT_EQ(cmdsSize, retSize);
+    EXPECT_EQ(expSize, retSize);
 }
 
 XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     setUpImpl<FamilyType>();
-
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
-
     overrideComputeModeRequest<FamilyType>(false, false, false, false);
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true);
-    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+
+    auto expSize = sizeof(STATE_COMPUTE_MODE);
+    auto &rootDeviceEnvironment = csr->peekRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, getCsrHw<FamilyType>()->isRcs(), releaseHelper);
+    std::ignore = isExtendedWARequired;
+
+    if (isBasicWARequired) {
+        expSize += sizeof(PIPE_CONTROL);
+    }
+
+    auto gotSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
     EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
-    EXPECT_EQ(cmdsSize, retSize);
+    EXPECT_EQ(expSize, gotSize);
 }

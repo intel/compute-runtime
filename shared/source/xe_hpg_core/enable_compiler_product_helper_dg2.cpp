@@ -28,7 +28,7 @@ uint64_t CompilerProductHelperHw<IGFX_DG2>::getHwInfoConfig(const HardwareInfo &
 
 template <>
 uint32_t CompilerProductHelperHw<IGFX_DG2>::getDefaultHwIpVersion() const {
-    return AOT::DG2_G10_A0;
+    return AOT::DG2_G10_C0;
 }
 
 template <>

@@ -1,10 +1,10 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-function(level_zero_generate_kernels target_list platform_name revision_id options)
+function(level_zero_generate_kernels target_list platform_name device revision_id options)
 
   list(APPEND results copy_compiler_files)
 
@@ -18,7 +18,8 @@ function(level_zero_generate_kernels target_list platform_name revision_id optio
     get_filename_component(workdir ${filepath} DIRECTORY)
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
-    set(outputpath_base "${outputdir}${basename}_${platform_name}")
+    set(outputname_base "${basename}_${platform_name}")
+    set(outputpath_base "${outputdir}${outputname_base}")
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(output_files
           ${outputpath_base}.bin
@@ -26,9 +27,9 @@ function(level_zero_generate_kernels target_list platform_name revision_id optio
       )
 
       add_custom_command(
-                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
+                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options "${options}"
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} -revision_id ${revision_id} -options "${options}"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options "${options}"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -51,7 +52,7 @@ function(level_zero_generate_kernels target_list platform_name revision_id optio
   set(${target_list} ${${target_list}} PARENT_SCOPE)
 endfunction()
 
-function(level_zero_generate_kernels_with_internal_options target_list platform_name prefix revision_id options internal_options)
+function(level_zero_generate_kernels_with_internal_options target_list platform_name prefix device revision_id options internal_options)
 
   list(APPEND results copy_compiler_files)
 
@@ -65,7 +66,8 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
     get_filename_component(workdir ${filepath} DIRECTORY)
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
-    set(outputpath_base "${outputdir}${prefix}_${basename}_${platform_name}")
+    set(outputname_base "${prefix}_${basename}_${platform_name}")
+    set(outputpath_base "${outputdir}${outputname_base}")
 
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
       set(output_files
@@ -73,12 +75,10 @@ function(level_zero_generate_kernels_with_internal_options target_list platform_
           ${outputpath_base}.spv
       )
 
-      set(output_name "-output" "${prefix}_${basename}")
-
       add_custom_command(
-                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >" , workdir is ${workdir}
+                         COMMAND echo generate ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >" , workdir is ${workdir}
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${platform_name} -out_dir ${outputdir} ${output_name} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${options} -internal_options "$<JOIN:${internal_options}, >"
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
                          VERBATIM

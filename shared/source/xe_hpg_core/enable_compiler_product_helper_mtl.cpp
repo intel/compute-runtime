@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,11 @@ constexpr auto gfxProduct = IGFX_METEORLAKE;
 #include "shared/source/xe_hpg_core/xe_lpg/compiler_product_helper_xe_lpg.inl"
 
 namespace NEO {
+template <>
+uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
+    return AOT::MTL_M_B0;
+}
+
 template <>
 uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     if (hwInfo.ipVersion.value) {
@@ -54,6 +59,7 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
     }
     return getDefaultHwIpVersion();
 }
+
 } // namespace NEO
 
 static NEO::EnableCompilerProductHelper<gfxProduct> enableCompilerProductHelperMTL;

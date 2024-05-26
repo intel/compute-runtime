@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,8 @@ using MemoryManagerTestsDg2 = ::testing::Test;
 DG2TEST_F(MemoryManagerTestsDg2, givenEnabledLocalMemoryWhenLinearStreamIsAllocatedInPreferredPoolThenLocalMemoryPoolIsNotUsed) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, true, executionEnvironment);
+    HardwareInfo &hwInfo = *memoryManager.executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo.platform.usRevId = 0;
 
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool({mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::linearStream, mockDeviceBitfield}, nullptr);
     EXPECT_NE(MemoryPool::localMemory, allocation->getMemoryPool());
@@ -44,6 +46,8 @@ DG2TEST_F(MemoryManagerTestsDg2, givenEnabledLocalMemoryWhenLinearStreamIsAlloca
 DG2TEST_F(MemoryManagerTestsDg2, givenLinearStreamTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
+    HardwareInfo &hwInfo = *mockMemoryManager.executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo.platform.usRevId = 0;
     AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::linearStream, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_TRUE(allocData.flags.useSystemMemory);
@@ -53,6 +57,8 @@ DG2TEST_F(MemoryManagerTestsDg2, givenLinearStreamTypeWhenGetAllocationDataIsCal
 DG2TEST_F(MemoryManagerTestsDg2, givenLinearStreamWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
+    HardwareInfo &hwInfo = *mockMemoryManager.executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo.platform.usRevId = 0;
     AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::linearStream, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_TRUE(allocData.flags.useSystemMemory);
@@ -109,6 +115,8 @@ DG2TEST_F(MemoryManagerTestsDg2, givenSemaphoreBufferAllocationWhenGetAllocation
 DG2TEST_F(MemoryManagerTestsDg2, givenConstantSurfaceTypeWhenGetAllocationDataIsCalledThenLocalMemoryIsRequestedWithoutCpuAccess) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
+    HardwareInfo &hwInfo = *mockMemoryManager.executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo.platform.usRevId = 0;
     AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::constantSurface, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_FALSE(allocData.flags.useSystemMemory);
@@ -118,6 +126,8 @@ DG2TEST_F(MemoryManagerTestsDg2, givenConstantSurfaceTypeWhenGetAllocationDataIs
 DG2TEST_F(MemoryManagerTestsDg2, givenPrintfAllocationWhenGetAllocationDataIsCalledThenUseSystemMemoryAndRequireCpuAccess) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
+    HardwareInfo &hwInfo = *mockMemoryManager.executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo.platform.usRevId = 0;
     AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::printfSurface, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_TRUE(allocData.flags.useSystemMemory);
@@ -127,6 +137,8 @@ DG2TEST_F(MemoryManagerTestsDg2, givenPrintfAllocationWhenGetAllocationDataIsCal
 DG2TEST_F(MemoryManagerTestsDg2, givenGpuTimestampTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
+    HardwareInfo &hwInfo = *mockMemoryManager.executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo.platform.usRevId = 0;
     AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::gpuTimestampDeviceBuffer, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_TRUE(allocData.flags.useSystemMemory);
