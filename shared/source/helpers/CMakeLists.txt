@@ -188,6 +188,7 @@ endif()
 if(SUPPORT_DG2_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_dg2_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/get_caching_policy_options.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_dg2_and_later.inl
   )
 endif()
