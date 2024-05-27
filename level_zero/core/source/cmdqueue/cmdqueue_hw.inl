@@ -64,9 +64,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     ze_command_list_handle_t *phCommandLists,
     ze_fence_handle_t hFence,
     bool performMigration,
-    ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
+    NEO::LinearStream *parentImmediateCommandlistLinearStream) {
 
     auto ret = ZE_RESULT_SUCCESS;
 
@@ -116,7 +114,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         ctx.globalInit = false;
         ret = this->executeCommandListsRegularHeapless(ctx, numCommandLists, phCommandLists, hFence, nullptr, 0, nullptr);
     } else {
-        ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence, nullptr, 0, nullptr);
+        ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     }
 
     if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) {
@@ -260,8 +258,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     uint32_t numCommandLists,
     ze_command_list_handle_t *commandListHandles,
     ze_fence_handle_t hFence,
-    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
+    NEO::LinearStream *parentImmediateCommandlistLinearStream) {
 
     this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence);
     ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();

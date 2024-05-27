@@ -142,7 +142,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
 
     auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto mockMemoryManager = reinterpret_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
@@ -178,7 +178,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenNoForceMemoryPrefetchForKmdMig
 
     auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto mockMemoryManager = reinterpret_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
@@ -214,7 +214,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenEnableBOChunkingPrefetchWhenEx
 
     auto commandQueue = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto mockMemoryManager = reinterpret_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
@@ -532,7 +532,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     commandList->close();
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(memoryManager->setMemPrefetchCalled);
@@ -613,7 +613,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     result = commandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(memoryManager->setMemPrefetchCalled);

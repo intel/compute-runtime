@@ -105,7 +105,7 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
     commandList->close();
 
-    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
     pCmdq->synchronize(std::numeric_limits<uint64_t>::max());
 
     expectMemory<FamilyType>(reinterpret_cast<void *>(driverHandle->svmAllocsManager->getSVMAlloc(bufferDst)->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()),

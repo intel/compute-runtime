@@ -15,6 +15,7 @@
 
 namespace NEO {
 class ScratchSpaceController;
+class LinearStream;
 } // namespace NEO
 
 namespace L0 {
@@ -27,8 +28,7 @@ struct CommandQueueHw : public CommandQueueImp {
     ze_result_t executeCommandLists(uint32_t numCommandLists,
                                     ze_command_list_handle_t *phCommandLists,
                                     ze_fence_handle_t hFence, bool performMigration,
-                                    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                    ze_event_handle_t *phWaitEvents) override;
+                                    NEO::LinearStream *parentImmediateCommandlistLinearStream) override;
     ze_result_t executeCommands(uint32_t numCommands,
                                 void *phCommands,
                                 ze_fence_handle_t hFence) override;
@@ -130,8 +130,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                             uint32_t numCommandLists,
                                                             ze_command_list_handle_t *commandListHandles,
                                                             ze_fence_handle_t hFence,
-                                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                                            ze_event_handle_t *phWaitEvents);
+                                                            NEO::LinearStream *parentImmediateCommandlistLinearStream);
     inline ze_result_t executeCommandListsCopyOnly(CommandListExecutionContext &ctx,
                                                    uint32_t numCommandLists,
                                                    ze_command_list_handle_t *phCommandLists,

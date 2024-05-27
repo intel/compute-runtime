@@ -1604,7 +1604,7 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenRegularCmdListWhenFlushingThenPassS
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->close());
 
     auto cmdListHandle = commandList->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr));
 
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
 }
@@ -1621,7 +1621,7 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenCmdListWhenCallingSynchronizeThenUn
     auto numClients = csr->getNumClients();
 
     auto cmdListHandle = commandList->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr));
 
     EXPECT_EQ(numClients + 1, csr->getNumClients());
 
@@ -1705,7 +1705,7 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenCopyCommandLi
     size_t blitterContextInitSize = ultCsr->getCmdsSizeForHardwareContext();
 
     auto cmdListHandle = commandListCopy->toHandle();
-    returnValue = commandQueueCopy->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr, 0, nullptr);
+    returnValue = commandQueueCopy->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartSpace);
@@ -1720,7 +1720,7 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenCopyCommandLi
     }
     size_t queueSizeUsed = cmdQueueStream.getUsed();
 
-    returnValue = commandQueueCopy->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr, 0, nullptr);
+    returnValue = commandQueueCopy->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartSpace);
@@ -1777,7 +1777,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
 
     // first command list settles global init and leaves state as uncached MOCS
     auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &cmdQueueStream = commandQueue->commandStream;
@@ -1786,7 +1786,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     ze_command_list_handle_t sameCommandListTwice[] = {commandList2->toHandle(), commandList2->toHandle()};
     // second command list requires uncached MOCS state, so no dynamic preamble for the fist instance, but leaves cached MOCS state
     // second instance require dynamic preamble to reload MOCS to uncached state
-    result = commandQueue->executeCommandLists(2, sameCommandListTwice, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(2, sameCommandListTwice, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -1820,7 +1820,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &cmdQueueStream = commandQueue->commandStream;
@@ -1829,7 +1829,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     size_t queueUsedSize = cmdQueueStream.getUsed();
     auto gpuReturnAddress = cmdQueueStream.getGpuBase() + queueUsedSize;
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &cmdContainer = commandList->getCmdContainer();
@@ -1862,7 +1862,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
                                                commandList2->toHandle(),
                                                commandList3->toHandle()};
 
-    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &cmdQueueStream = commandQueue->commandStream;
@@ -1883,7 +1883,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     result = commandList3->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = commandQueue->executeCommandLists(3, commandLists, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(3, commandLists, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -1942,7 +1942,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
                                                commandList2->toHandle(),
                                                commandList3->toHandle()};
 
-    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &cmdQueueStream = commandQueue->commandStream;
@@ -1965,7 +1965,7 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     result = commandList3->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = commandQueue->executeCommandLists(3, commandLists, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(3, commandLists, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // 1st command list is preambleless

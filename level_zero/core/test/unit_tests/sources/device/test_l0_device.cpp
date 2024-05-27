@@ -2978,8 +2978,8 @@ TEST_F(MultipleDevicesTest, givenDeviceFailsExecuteCommandListThenCanAccessPeerR
             ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
                                             ze_fence_handle_t hFence, bool performMigration,
-                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                            ze_event_handle_t *phWaitEvents) override { return ZE_RESULT_ERROR_UNKNOWN; }
+                                            NEO::LinearStream *parentImmediateCommandlistLinearStream)
+                override { return ZE_RESULT_ERROR_UNKNOWN; }
         };
 
         MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
@@ -3037,8 +3037,8 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthZeroAndDeviceFa
             ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
                                             ze_fence_handle_t hFence, bool performMigration,
-                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                            ze_event_handle_t *phWaitEvents) override { return ZE_RESULT_ERROR_UNKNOWN; }
+                                            NEO::LinearStream *parentImmediateCommandlistLinearStream)
+                override { return ZE_RESULT_ERROR_UNKNOWN; }
         };
 
         MockDeviceFail(L0::Device *device) : MockDeviceImp(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
@@ -3097,8 +3097,7 @@ TEST_F(MultipleDevicesTest, givenQueryPeerStatsReturningBandwidthNonZeroAndDevic
             ze_result_t executeCommandLists(uint32_t numCommandLists,
                                             ze_command_list_handle_t *phCommandLists,
                                             ze_fence_handle_t hFence, bool performMigration,
-                                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                            ze_event_handle_t *phWaitEvents) override {
+                                            NEO::LinearStream *parentImmediateCommandlistLinearStream) override {
                 return ZE_RESULT_SUCCESS;
             }
         };

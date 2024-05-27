@@ -156,7 +156,7 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     L0::CommandList::fromHandle(commandList)->close();
 
     if (ret == ZE_RESULT_SUCCESS) {
-        ret = L0::CommandQueue::fromHandle(commandQueue)->executeCommandLists(1, &commandList, nullptr, true, nullptr, 0, nullptr);
+        ret = L0::CommandQueue::fromHandle(commandQueue)->executeCommandLists(1, &commandList, nullptr, true, nullptr);
         if (ret == ZE_RESULT_SUCCESS) {
             this->crossAccessEnabledDevices[peerRootDeviceIndex] = true;
             pPeerDevice->crossAccessEnabledDevices[this->getNEODevice()->getRootDeviceIndex()] = true;

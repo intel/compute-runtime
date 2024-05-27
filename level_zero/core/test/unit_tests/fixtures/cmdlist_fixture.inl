@@ -172,7 +172,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -258,7 +258,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -383,7 +383,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -440,7 +440,7 @@ void CmdListPipelineSelectStateFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -512,7 +512,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     commandList->close();
 
     sizeBefore = cmdQueueStream.getUsed();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = cmdQueueStream.getUsed();
 
@@ -688,7 +688,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     commandList->close();
 
     sizeBefore = cmdQueueStream.getUsed();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = cmdQueueStream.getUsed();
 
@@ -735,7 +735,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
 
     // execute first clear command list to settle global init
     ze_command_list_handle_t commandLists[2] = {commandList->toHandle(), nullptr};
-    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto queueSize = cmdQueueStream.getUsed();
@@ -743,7 +743,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
     // scratch makes globally front end dirty and so global init too,
     // but dispatch systolic programming only before second command list
     commandLists[1] = commandList2->toHandle();
-    result = commandQueue->executeCommandLists(2, commandLists, nullptr, true, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(2, commandLists, nullptr, true, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     GenCmdList cmdList;
@@ -840,7 +840,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         EXPECT_TRUE(queueCsr->getStateComputeModeDirty());
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -909,7 +909,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -999,7 +999,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1042,7 +1042,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1107,7 +1107,7 @@ void CmdListLargeGrfFixture::testBody() {
         EXPECT_TRUE(queueCsr->getStateComputeModeDirty());
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1176,7 +1176,7 @@ void CmdListLargeGrfFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1266,7 +1266,7 @@ void CmdListLargeGrfFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1309,7 +1309,7 @@ void CmdListLargeGrfFixture::testBody() {
         commandList->close();
 
         sizeBefore = cmdQueueStream.getUsed();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
 
@@ -1471,7 +1471,7 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         auto commandListHandle = commandList->toHandle();
-        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     }
 
@@ -1530,7 +1530,7 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0x40u, commandList->getCommandListPatchedPerThreadScratchSize(0));
@@ -1573,7 +1573,7 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     // simulate slot 0 is already patched - to check slot 1 change is detected
     commandList->setCommandListPatchedPerThreadScratchSize(0, 0x40);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0x40u, commandList->getCommandListPatchedPerThreadScratchSize(0));
@@ -1588,7 +1588,7 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
 
     memset(scratchInlinePtr, 0, scratchInlinePointerSize);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
@@ -1632,7 +1632,7 @@ void CommandListScratchPatchFixtureInit::testScratchSameNotPatching() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto scratchAddress = scratchController->getScratchPatchAddress();
@@ -1646,7 +1646,7 @@ void CommandListScratchPatchFixtureInit::testScratchSameNotPatching() {
 
     memset(scratchInlinePtr, 0, scratchInlinePointerSize);
 
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
@@ -1701,7 +1701,7 @@ void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
     memset(scratchInlinePtr, 0, scratchInlinePointerSize);
 
     auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));

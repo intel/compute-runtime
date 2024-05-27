@@ -349,7 +349,7 @@ HWTEST_F(CommandQueueCreate, given100CmdListsWhenExecutingThenCommandStreamIsNot
     }
 
     auto sizeBefore = commandQueue->commandStream.getUsed();
-    commandQueue->executeCommandLists(numHandles, cmdListHandles, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(numHandles, cmdListHandles, nullptr, false, nullptr);
     auto sizeAfter = commandQueue->commandStream.getUsed();
     EXPECT_LT(sizeBefore, sizeAfter);
 
@@ -387,7 +387,7 @@ HWTEST2_F(CommandQueueCreate, givenOutOfHostMemoryErrorFromSubmitBatchBufferWhen
 
     ze_command_list_handle_t cmdListHandles[1] = {commandList->toHandle()};
 
-    const auto result = commandQueue->executeCommandLists(1, cmdListHandles, nullptr, false, nullptr, 0, nullptr);
+    const auto result = commandQueue->executeCommandLists(1, cmdListHandles, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
     commandQueue->destroy();
 }
@@ -414,7 +414,7 @@ HWTEST2_F(CommandQueueCreate, givenGpuHangInReservingLinearStreamWhenExecutingCo
 
     ze_command_list_handle_t cmdListHandles[1] = {commandList->toHandle()};
 
-    const auto result = commandQueue->executeCommandLists(1, cmdListHandles, nullptr, false, nullptr, 0, nullptr);
+    const auto result = commandQueue->executeCommandLists(1, cmdListHandles, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 
     commandQueue->destroy();
@@ -483,11 +483,11 @@ HWTEST2_F(CommandQueueCreate, GivenDispatchTaskCountPostSyncRequiredWhenExecuteC
     commandList->close();
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
     commandQueue->dispatchTaskCountPostSyncRequired = false;
-    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
     auto estimatedSizeWithoutBarrier = commandQueue->requiredSizeCalled;
 
     commandQueue->dispatchTaskCountPostSyncRequired = true;
-    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
     auto estimatedSizeWithtBarrier = commandQueue->requiredSizeCalled;
 
     auto sizeForBarrier = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false);
@@ -521,7 +521,7 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDi
     commandList->close();
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -562,7 +562,7 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndImmediateCmdListWhen
     ASSERT_NE(nullptr, commandList);
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -766,7 +766,7 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
     commandList->close();
 
     auto commandListHandle = commandList->toHandle();
-    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
 
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
 
@@ -1161,7 +1161,7 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation1);
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation2);
 
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
 
     EXPECT_EQ(0u, commandQueue->csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, commandQueue->heapContainer.size());
@@ -1186,10 +1186,10 @@ HWTEST2_F(ExecuteCommandListTests, givenRegularCmdListWhenExecutionThenIncSubmis
         auto commandListHandle = computeCmdList->toHandle();
         computeCmdList->close();
 
-        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(1u, computeCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
 
-        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(2u, computeCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
     }
 
@@ -1202,10 +1202,10 @@ HWTEST2_F(ExecuteCommandListTests, givenRegularCmdListWhenExecutionThenIncSubmis
         copyCmdList->close();
 
         commandQueue->isCopyOnlyCommandQueue = true;
-        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(1u, copyCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
 
-        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+        commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
         EXPECT_EQ(2u, copyCmdList->inOrderExecInfo->getRegularCmdListSubmissionCounter());
     }
 }
@@ -1233,7 +1233,7 @@ HWTEST2_F(ExecuteCommandListTests, givenOutOfMemorySubmitBatchBufferThenExecuteC
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
 
     commandQueue->destroy();
@@ -1263,7 +1263,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation1);
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation2);
 
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
 
     EXPECT_EQ(commandQueue->mockHeapContainer.size(), 3u);
     commandQueue->destroy();
@@ -1293,7 +1293,7 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation1);
     commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation2);
 
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
 
     EXPECT_EQ(commandQueue->mockHeapContainer.size(), 3u);
     commandQueue->destroy();
@@ -1319,7 +1319,7 @@ HWTEST2_F(ExecuteCommandListTests, givenBindlessHelperWhenCommandListIsExecutedO
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
 
     EXPECT_EQ(commandQueue->mockHeapContainer.size(), 0u);
     EXPECT_EQ(commandQueue->heapContainer.size(), 0u);
@@ -1341,7 +1341,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenExecuteComma
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
 
     commandQueue->destroy();
@@ -1369,7 +1369,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     commandList->commandContainer.addToResidencyContainer(&graphicsAllocation1);
     commandList->commandContainer.addToResidencyContainer(&graphicsAllocation2);
     static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->taskCount = 0;
-    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
 
     EXPECT_EQ(NEO::GraphicsAllocation::objectNotUsed, graphicsAllocation1.getTaskCount(csr->getOsContext().getContextId()));
@@ -1400,7 +1400,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     commandList->commandContainer.addToResidencyContainer(&graphicsAllocation1);
     commandList->commandContainer.addToResidencyContainer(&graphicsAllocation2);
     static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->taskCount = 2;
-    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
 
     EXPECT_EQ(2u, graphicsAllocation1.getTaskCount(csr->getOsContext().getContextId()));
@@ -1425,7 +1425,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenWaitForCompl
 
     TaskCountType flushedTaskCountPrior = csr->peekTaskCount();
     csr->setLatestFlushedTaskCount(flushedTaskCountPrior);
-    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
     EXPECT_EQ(csr->peekLatestFlushedTaskCount(), flushedTaskCountPrior);
 
@@ -1446,7 +1446,7 @@ HWTEST2_F(ExecuteCommandListTests, givenSuccessfulSubmitBatchBufferThenExecuteCo
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     commandQueue->destroy();
@@ -1479,10 +1479,10 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
 
     EXPECT_EQ(true, csr->getMediaVFEStateDirty());
     EXPECT_EQ(true, csr->getGSBAStateDirty());
-    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(false, csr->getMediaVFEStateDirty());
     EXPECT_EQ(false, csr->getGSBAStateDirty());
-    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(false, csr->getMediaVFEStateDirty());
     EXPECT_EQ(false, csr->getGSBAStateDirty());
 
@@ -1518,8 +1518,8 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
 
     ASSERT_NE(nullptr, commandQueue);
 
-    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
-    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
@@ -1560,9 +1560,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
-    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
-    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
@@ -1593,9 +1593,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            false,
                                                            returnValue));
 
-    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
-    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
@@ -1638,9 +1638,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
-    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
-    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
@@ -1671,9 +1671,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            false,
                                                            returnValue));
 
-    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
-    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
@@ -1716,9 +1716,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
-    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
-    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
@@ -1749,9 +1749,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            false,
                                                            returnValue));
 
-    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
-    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
@@ -1794,9 +1794,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
-    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
-    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
@@ -1826,9 +1826,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            false,
                                                            false,
                                                            returnValue));
-    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
-    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadScratchSpaceSizeSlot0());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
@@ -1870,9 +1870,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
-    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
-    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
@@ -1900,9 +1900,9 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            false,
                                                            false,
                                                            returnValue));
-    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
     EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
-    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr, 0, nullptr);
+    commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
     EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
@@ -1939,7 +1939,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
@@ -1984,7 +1984,7 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr, 0, nullptr);
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 

@@ -63,7 +63,7 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaPro
         ze_command_list_handle_t commandListHandle = commandList->toHandle();
         const uint32_t numCommandLists = 1u;
 
-        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, true, nullptr, 0, nullptr);
+        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, true, nullptr);
         ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
         auto usedSpaceAfter = cmdStream.getUsed();

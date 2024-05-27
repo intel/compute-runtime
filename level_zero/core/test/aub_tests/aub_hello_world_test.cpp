@@ -36,7 +36,7 @@ TEST_F(AUBHelloWorldL0, whenAppendMemoryCopyIsCalledThenMemoryIsProperlyCopied) 
     commandList->close();
     auto pHCmdList = std::make_unique<ze_command_list_handle_t>(commandList->toHandle());
 
-    pCmdq->executeCommandLists(1, pHCmdList.get(), nullptr, false, nullptr, 0, nullptr);
+    pCmdq->executeCommandLists(1, pHCmdList.get(), nullptr, false, nullptr);
     pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
 
     EXPECT_TRUE(csr->expectMemory(dstMemory, srcMemory, size, AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual));

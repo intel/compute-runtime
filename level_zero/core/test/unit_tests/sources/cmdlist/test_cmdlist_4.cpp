@@ -644,7 +644,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    result = commandList->appendWaitOnEvents(1, &hEventHandle, nullptr, false, true, false, false);
+    result = commandList->appendWaitOnEvents(1, &hEventHandle, nullptr, false, true, false, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -809,7 +809,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     auto eventHandle = event->toHandle();
 
-    result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, true, false, false);
+    result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, true, false, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(whiteBoxCmdList->csr->getNextBarrierCount(), 2u);
 
@@ -851,7 +851,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     auto eventHandle = event->toHandle();
 
-    result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, false, false, false);
+    result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, false, false, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(whiteBoxCmdList->csr->getNextBarrierCount(), 1u);
 }

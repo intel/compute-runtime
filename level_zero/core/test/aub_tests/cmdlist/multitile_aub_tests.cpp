@@ -90,7 +90,7 @@ HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecu
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernel.get(), &groupCount, nullptr, 0, nullptr));
     commandList->close();
 
-    cmdQ->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, 0, nullptr);
+    cmdQ->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
     cmdQ->synchronize(std::numeric_limits<uint32_t>::max());
 
     auto csr = getSimulatedCsr<FamilyType>(0, 0);

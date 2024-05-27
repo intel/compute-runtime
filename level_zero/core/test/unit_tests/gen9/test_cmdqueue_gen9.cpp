@@ -26,7 +26,7 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
     size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t hCommandList = commandList->toHandle();
-    auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true, nullptr, 0, nullptr);
+    auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
@@ -57,7 +57,7 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
     size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t hCommandList = commandList->toHandle();
-    auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true, nullptr, 0, nullptr);
+    auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
@@ -88,7 +88,7 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
     size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t hCommandList = commandList->toHandle();
-    auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true, nullptr, 0, nullptr);
+    auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
