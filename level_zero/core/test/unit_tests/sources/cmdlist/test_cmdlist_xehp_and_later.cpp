@@ -1914,6 +1914,10 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
           IsAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
+    if (neoDevice->getProductHelper().isNewCoherencyModelSupported()) {
+        GTEST_SKIP();
+    }
+
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csrImmediate.commandStream;
 
@@ -2035,6 +2039,10 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           givenImmediateFlushOnCsrSharedHeapsWhenAppendingSecondKernelWithChangedMocsThenExpectStateBaseAddressCommandDispatchedTwiceWithChangedMocs,
           IsAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    if (neoDevice->getProductHelper().isNewCoherencyModelSupported()) {
+        GTEST_SKIP();
+    }
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csrImmediate.commandStream;

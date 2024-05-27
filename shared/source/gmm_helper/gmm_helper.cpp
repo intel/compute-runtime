@@ -15,6 +15,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include <algorithm>
 
@@ -35,6 +36,10 @@ const RootDeviceEnvironment &GmmHelper::getRootDeviceEnvironment() const {
 uint32_t GmmHelper::getMOCS(uint32_t type) const {
     if (allResourcesUncached || (debugManager.flags.ForceAllResourcesUncached.get() == true)) {
         type = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+    }
+
+    if (this->deferMOCSToPatIndex()) {
+        return 0u;
     }
 
     MEMORY_OBJECT_CONTROL_STATE mocs = gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));

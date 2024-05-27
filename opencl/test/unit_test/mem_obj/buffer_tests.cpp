@@ -2030,6 +2030,9 @@ HWTEST_P(BufferL3CacheTests, DISABLED_givenMisalignedAndAlignedBufferWhenClEnque
 
 HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteBufferRectThenL3CacheIsOn) {
     auto device = ctx.getDevice(0);
+    if (device->getProductHelper().isNewCoherencyModelSupported()) {
+        GTEST_SKIP();
+    }
     const auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();

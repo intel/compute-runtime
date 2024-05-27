@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ class GmmHelper {
     void setAddressWidth(uint32_t width) { addressWidth = width; };
 
     bool isValidCanonicalGpuAddress(uint64_t address);
+    bool deferMOCSToPatIndex() const;
 
     GmmClientContext *getClientContext() const;
 

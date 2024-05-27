@@ -69,6 +69,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_logging.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_logging.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_profiling.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_wddm.cpp
