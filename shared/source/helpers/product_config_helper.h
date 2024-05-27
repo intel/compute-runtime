@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,6 +60,7 @@ struct ProductConfigHelper {
 
     static std::vector<NEO::ConstStringRef> getDeviceAcronyms();
     static NEO::ConstStringRef getAcronymFromAFamily(AOT::FAMILY family);
+    static NEO::ConstStringRef getAcronymFromARelease(AOT::RELEASE release);
     static uint32_t getProductConfigFromVersionValue(const std::string &device);
     static AOT::PRODUCT_CONFIG getProductConfigFromAcronym(const std::string &device);
 
@@ -104,6 +105,7 @@ struct ProductConfigHelper {
     }
 
     void initialize();
+    void adjustClosedRangeDeviceLegacyAcronyms(std::string &rangeFromStr, std::string &rangeToStr);
     bool isSupportedFamily(uint32_t family) const;
     bool isSupportedRelease(uint32_t release) const;
     bool isSupportedProductConfig(uint32_t config) const;

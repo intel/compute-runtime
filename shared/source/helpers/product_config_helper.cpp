@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,9 +51,45 @@ void ProductConfigHelper::adjustDeviceName(std::string &device) {
     }
 }
 
+void ProductConfigHelper::adjustClosedRangeDeviceLegacyAcronyms(std::string &rangeFromStr, std::string &rangeToStr) {
+    // gen12lp is allowed for backwards compatibilty, but it only functions as a release.
+    // When gen12lp is used in a range with a family this function translates the family to a matching release
+    std::string gen12lpAcronym = "gen12lp";
+    bool isGen12lpAcronymPresent = (rangeFromStr == gen12lpAcronym || rangeToStr == gen12lpAcronym);
+    bool isGen12lpFamilyEnabled = getFamilyFromDeviceName(gen12lpAcronym) != AOT::UNKNOWN_FAMILY;
+    if (isGen12lpAcronymPresent && !isGen12lpFamilyEnabled) {
+        auto &allSuppportedProducts = getDeviceAotInfo();
+
+        auto adjustFamilyAcronymToRelease = [&](std::string &device) {
+            AOT::FAMILY family = getFamilyFromDeviceName(device);
+            if (family == AOT::UNKNOWN_FAMILY)
+                return;
+            auto latestReleaseInFamily = AOT::UNKNOWN_RELEASE;
+            for (const auto &product : allSuppportedProducts) {
+                if (product.family == family) {
+                    latestReleaseInFamily = std::max(product.release, latestReleaseInFamily);
+                }
+            }
+            device = getAcronymFromARelease(latestReleaseInFamily).str();
+        };
+
+        adjustFamilyAcronymToRelease(rangeFromStr);
+        adjustFamilyAcronymToRelease(rangeToStr);
+    }
+}
+
 NEO::ConstStringRef ProductConfigHelper::getAcronymFromAFamily(AOT::FAMILY family) {
     for (const auto &[acronym, value] : AOT::familyAcronyms) {
         if (value == family) {
+            return NEO::ConstStringRef(acronym);
+        }
+    }
+    return {};
+}
+
+NEO::ConstStringRef ProductConfigHelper::getAcronymFromARelease(AOT::RELEASE release) {
+    for (const auto &[acronym, value] : AOT::releaseAcronyms) {
+        if (value == release) {
             return NEO::ConstStringRef(acronym);
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,23 @@ TEST_F(ProductConfigHelperTests, givenFamilyEnumWhenHelperSearchForAMatchThenCor
 
 TEST_F(ProductConfigHelperTests, givenUnknownFamilyEnumWhenHelperSearchForAMatchThenEmptyAcronymIsReturned) {
     auto acronym = ProductConfigHelper::getAcronymFromAFamily(AOT::UNKNOWN_FAMILY);
+    EXPECT_TRUE(acronym.empty());
+}
+
+TEST_F(ProductConfigHelperTests, givenReleaseEnumWhenHelperSearchForAMatchThenCorrespondingAcronymIsReturned) {
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
+    for (const auto &[acronym, value] : AOT::releaseAcronyms) {
+        if (acronym == "xe-lp") { // only case of multiple acronyms, for backward compatibility
+            continue;
+        }
+        auto acronymFromARelease = ProductConfigHelper::getAcronymFromARelease(value);
+        auto retrievedRelease = productConfigHelper->getReleaseFromDeviceName(acronymFromARelease.str());
+        EXPECT_EQ(retrievedRelease, value);
+    }
+}
+
+TEST_F(ProductConfigHelperTests, givenUnknownReleaseEnumWhenHelperSearchForAMatchThenEmptyAcronymIsReturned) {
+    auto acronym = ProductConfigHelper::getAcronymFromARelease(AOT::UNKNOWN_RELEASE);
     EXPECT_TRUE(acronym.empty());
 }
 
@@ -83,6 +100,66 @@ TEST_F(ProductConfigHelperTests, givenFamilyAcronymWhenAdjustDeviceNameThenNothi
         std::string acronymCopy = family.first;
         ProductConfigHelper::adjustDeviceName(acronymCopy);
         EXPECT_STREQ(acronymCopy.c_str(), family.first.c_str());
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenGen12lpFamilyAcronymWhenAdjustClosedRangeDeviceNamesThenProperReleaseAcronymsAreAssigned) {
+    bool isGen12lpFamilyEnabled = productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
+    if (productConfigHelper->getReleasesAcronyms().size() < 2 || isGen12lpFamilyEnabled) {
+        GTEST_SKIP();
+    }
+    std::map<AOT::FAMILY, AOT::RELEASE> familyToReleaseAcronyms = {{AOT::GEN8_FAMILY, AOT::GEN8_RELEASE},
+                                                                   {AOT::GEN9_FAMILY, AOT::GEN9_RELEASE},
+                                                                   {AOT::GEN11_FAMILY, AOT::GEN11_RELEASE},
+                                                                   {AOT::XE_FAMILY, AOT::XE_LPGPLUS_RELEASE}};
+
+    EXPECT_EQ(productConfigHelper->getFamilyFromDeviceName("gen12lp"), AOT::UNKNOWN_FAMILY);
+    for (const auto &[family, release] : familyToReleaseAcronyms) {
+        std::string acronymFrom = "gen12lp";
+        std::string acronymTo = ProductConfigHelper::getAcronymFromAFamily(family).str();
+        productConfigHelper->adjustClosedRangeDeviceLegacyAcronyms(acronymFrom, acronymTo);
+        EXPECT_STREQ(acronymTo.c_str(), ProductConfigHelper::getAcronymFromARelease(release).str().c_str());
+
+        acronymFrom = ProductConfigHelper::getAcronymFromAFamily(family).str();
+        acronymTo = "gen12lp";
+        productConfigHelper->adjustClosedRangeDeviceLegacyAcronyms(acronymFrom, acronymTo);
+        EXPECT_STREQ(acronymFrom.c_str(), ProductConfigHelper::getAcronymFromARelease(release).str().c_str());
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenFamilyAcronymsWithoutGen12lpWhenAdjustClosedRangeDeviceNamesThenNothingIsChanged) {
+    bool isGen12lpFamilyEnabled = productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
+    if (isGen12lpFamilyEnabled) {
+        GTEST_SKIP();
+    }
+    for (const auto &[acronymFrom, value] : AOT::familyAcronyms) {
+        std::ignore = value;
+        for (const auto &[acronymTo, value] : AOT::familyAcronyms) {
+            std::ignore = value;
+            std::string adjustedAcronymFrom = acronymFrom;
+            std::string adjustedAcronymTo = acronymTo;
+            productConfigHelper->adjustClosedRangeDeviceLegacyAcronyms(adjustedAcronymFrom, adjustedAcronymTo);
+            EXPECT_STREQ(acronymTo.c_str(), adjustedAcronymTo.c_str());
+            EXPECT_STREQ(acronymFrom.c_str(), adjustedAcronymFrom.c_str());
+        }
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenReleaseAcronymsWhenAdjustClosedRangeDeviceNamesThenNothingIsChanged) {
+    bool isGen12lpFamilyEnabled = productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
+    if (isGen12lpFamilyEnabled) {
+        GTEST_SKIP();
+    }
+    for (const auto &[acronymFrom, value] : AOT::releaseAcronyms) {
+        std::ignore = value;
+        for (const auto &[acronymTo, value] : AOT::releaseAcronyms) {
+            std::ignore = value;
+            std::string adjustedAcronymFrom = acronymFrom;
+            std::string adjustedAcronymTo = acronymTo;
+            productConfigHelper->adjustClosedRangeDeviceLegacyAcronyms(adjustedAcronymFrom, adjustedAcronymTo);
+            EXPECT_STREQ(acronymTo.c_str(), adjustedAcronymTo.c_str());
+            EXPECT_STREQ(acronymFrom.c_str(), adjustedAcronymFrom.c_str());
+        }
     }
 }
 

@@ -134,6 +134,7 @@ std::vector<ConstStringRef> getProductForClosedRange(ConstStringRef rangeFrom, C
 
     ProductConfigHelper::adjustDeviceName(rangeToStr);
     ProductConfigHelper::adjustDeviceName(rangeFromStr);
+    argHelper->productConfigHelper->adjustClosedRangeDeviceLegacyAcronyms(rangeToStr, rangeFromStr);
 
     auto familyFrom = argHelper->productConfigHelper->getFamilyFromDeviceName(rangeFromStr);
     auto familyTo = argHelper->productConfigHelper->getFamilyFromDeviceName(rangeToStr);

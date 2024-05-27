@@ -852,6 +852,61 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWithoutDashes
     EXPECT_EQ(got, expected);
 }
 
+TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeWithOneFamilyBeingGen12lpLegacyAliasWhenGetProductsForFatBinaryThenCorrectAcronymsAreReturned) {
+    bool isGen12lpFamilyEnabled = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
+    if (enabledFamiliesAcronyms.size() < 2 || isGen12lpFamilyEnabled) {
+        GTEST_SKIP();
+    }
+
+    auto familiesToReleases = {
+        std::make_tuple("gen8:gen12lp", AOT::GEN8_FAMILY, AOT::GEN8_RELEASE, AOT::GEN12LP_RELEASE),
+        std::make_tuple("gen12lp:gen8", AOT::GEN8_FAMILY, AOT::GEN8_RELEASE, AOT::GEN12LP_RELEASE),
+
+        std::make_tuple("gen9:gen12lp", AOT::GEN9_FAMILY, AOT::GEN9_RELEASE, AOT::GEN12LP_RELEASE),
+        std::make_tuple("gen12lp:gen9", AOT::GEN9_FAMILY, AOT::GEN9_RELEASE, AOT::GEN12LP_RELEASE),
+
+        std::make_tuple("gen11:gen12lp", AOT::GEN11_FAMILY, AOT::GEN11_RELEASE, AOT::GEN12LP_RELEASE),
+        std::make_tuple("gen12lp:gen11", AOT::GEN11_FAMILY, AOT::GEN11_RELEASE, AOT::GEN12LP_RELEASE),
+
+        std::make_tuple("gen12lp:xe", AOT::XE_FAMILY, AOT::GEN12LP_RELEASE, AOT::XE_LPGPLUS_RELEASE),
+        std::make_tuple("xe:gen12lp", AOT::XE_FAMILY, AOT::GEN12LP_RELEASE, AOT::XE_LPGPLUS_RELEASE),
+    };
+
+    for (auto [acronymsTarget, requiredFamily, releaseFrom, releaseTo] : familiesToReleases) {
+        if (std::find(enabledFamiliesAcronyms.begin(), enabledFamiliesAcronyms.end(), requiredFamily) == enabledFamiliesAcronyms.end()) {
+            continue;
+        }
+
+        std::vector<ConstStringRef> expected{};
+        while (releaseFrom <= releaseTo) {
+            getProductsAcronymsForTarget(expected, releaseFrom, oclocArgHelperWithoutInput.get());
+            releaseFrom = static_cast<AOT::RELEASE>(static_cast<unsigned int>(releaseFrom) + 1);
+        }
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, OCLOC_SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
 TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
     if (enabledFamiliesAcronyms.size() < 3) {
         GTEST_SKIP();
