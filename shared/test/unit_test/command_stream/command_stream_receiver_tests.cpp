@@ -5251,6 +5251,26 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenInitializeDeviceWithFirstSubmiss
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenMakeResidentCalledThenUpdateTaskCountIfObjectIsAlwaysResident) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto contextId = csr.getOsContext().getContextId();
+    MockGraphicsAllocation graphicsAllocation;
+
+    csr.makeResident(graphicsAllocation);
+    auto initialAllocTaskCount = graphicsAllocation.getTaskCount(contextId);
+    auto csrTaskCount = csr.peekTaskCount();
+    EXPECT_EQ(initialAllocTaskCount, csr.peekTaskCount() + 1);
+
+    graphicsAllocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, contextId);
+    csr.taskCount = 10;
+
+    csr.makeResident(graphicsAllocation);
+    auto updatedTaskCount = graphicsAllocation.getTaskCount(contextId);
+    csrTaskCount = csr.peekTaskCount();
+    EXPECT_EQ(updatedTaskCount, csr.peekTaskCount() + 1);
+    EXPECT_NE(updatedTaskCount, initialAllocTaskCount);
+}
+
 using CommandStreamReceiverHwHeaplessTest = Test<DeviceFixture>;
 
 HWTEST_F(CommandStreamReceiverHwHeaplessTest, whenHeaplessCommandStreamReceiverFunctionsAreCalledThenExceptionIsThrown) {

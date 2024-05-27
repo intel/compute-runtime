@@ -170,6 +170,7 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
             }
         }
     }
+    gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
     gfxAllocation.updateResidencyTaskCount(submissionTaskCount, osContext->getContextId());
 }
 
