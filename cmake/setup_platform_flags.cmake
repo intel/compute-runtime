@@ -4,6 +4,10 @@
 # SPDX-License-Identifier: MIT
 #
 
+if(NEO_SKIP_BASE_PLATFORMS)
+  return()
+endif()
+
 if(NOT NEO_ALLOW_LEGACY_PLATFORMS_SUPPORT)
   if(WIN32)
     DISABLE_FLAGS_FOR("GEN8" "BDW")
@@ -61,9 +65,9 @@ foreach(CORE_TYPE ${PVC_AND_LATER_CORE_TYPES})
 endforeach()
 
 if(SUPPORT_ARL)
-  set(SUPPORT_MTL TRUE CACHE BOOL "Support MTL/ARL devices" FORCE)
+  ENABLE_ADDITIONAL_SKU("MTL")
   if(TESTS_ARL)
-    set(TESTS_MTL TRUE CACHE BOOL "Tests MTL/ARL devices" FORCE)
+    TEST_ADDITIONAL_SKU("MTL")
   endif()
 endif()
 

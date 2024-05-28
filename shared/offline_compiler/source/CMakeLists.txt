@@ -171,7 +171,91 @@ else()
   )
 endif()
 
-string(REPLACE ";" "," ALL_SUPPORTED_PRODUCT_FAMILIES "${ALL_SUPPORTED_PRODUCT_FAMILY}")
+set(ALL_OCLOC_PRODUCT_FAMILY "")
+set(ALL_OCLOC_PRODUCT_TO_PRODUCT_FAMILY "")
+set(OCLOC_SUPPORTED_CORE_FLAGS_DEFINITONS "")
+
+get_cmake_property(OCLOC_SUPPORT_VARS VARIABLES)
+list(FILTER OCLOC_SUPPORT_VARS INCLUDE REGEX "OCLOC_SUPPORT_.+")
+foreach(OCLOC_SUPPORT_VAR ${OCLOC_SUPPORT_VARS})
+  string(REPLACE "OCLOC_SUPPORT_" "SUPPORT_" SUPPORT_VAR ${OCLOC_SUPPORT_VAR})
+  set(${SUPPORT_VAR} ${${OCLOC_SUPPORT_VAR}})
+endforeach()
+
+macro(SET_FLAGS_FOR CORE_TYPE)
+  foreach(SKU_NAME ${ARGN})
+    if(SUPPORT_${SKU_NAME} OR NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
+      if(NOT SUPPORT_${CORE_TYPE})
+        message(STATUS "Auto-Enabling ${CORE_TYPE} support for ${SKU_NAME} in ocloc")
+        set(SUPPORT_${CORE_TYPE} TRUE)
+      endif()
+    endif()
+    string(TOLOWER ${CORE_TYPE} MAP_${SKU_NAME}_CORE_lower)
+    string(TOLOWER ${SKU_NAME} MAP_${SKU_NAME}_lower)
+    set(MAP_${SKU_NAME}_CORE_lower "${CORE_PREFIX}${MAP_${SKU_NAME}_CORE_lower}${CORE_SUFFIX}")
+    set(MAP_${SKU_NAME}_lower ${MAP_${SKU_NAME}_lower})
+  endforeach()
+
+  if(NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
+    set(SUPPORT_${CORE_TYPE} TRUE)
+  elseif(NOT SUPPORT_${CORE_TYPE})
+    set(SUPPORT_${CORE_TYPE} ${SUPPORT_GEN_DEFAULT})
+  endif()
+
+  if(SUPPORT_${CORE_TYPE} OR NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
+    list(APPEND ALL_SUPPORTED_CORE_FAMILIES ${CORE_TYPE})
+    list(REMOVE_DUPLICATES ALL_SUPPORTED_CORE_FAMILIES)
+
+    foreach(${CORE_TYPE}_PLATFORM ${ARGN})
+      if(NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
+        set(SUPPORT_${${CORE_TYPE}_PLATFORM} TRUE)
+      elseif(NOT SUPPORT_${${CORE_TYPE}_PLATFORM})
+        set(SUPPORT_${${CORE_TYPE}_PLATFORM} ${SUPPORT_PLATFORM_DEFAULT})
+      endif()
+    endforeach()
+  endif()
+endmacro()
+
+macro(ADD_PRODUCT TYPE PRODUCT ITEM)
+  if(${TYPE} MATCHES "SUPPORTED")
+    list(APPEND ALL_OCLOC_PRODUCT_FAMILY ${ITEM})
+    list(APPEND ALL_OCLOC_PRODUCT_TO_PRODUCT_FAMILY ${PRODUCT})
+  endif()
+endmacro()
+
+macro(ENABLE_ADDITIONAL_SKU SKU_NAME)
+  set(SUPPORT_${SKU_NAME} TRUE)
+endmacro()
+
+macro(TEST_ADDITIONAL_SKU SKU_NAME)
+endmacro()
+
+macro(DISABLE_WDDM_LINUX_FOR SKU_NAME)
+endmacro()
+
+macro(DISABLE_FLAGS_FOR CORE_TYPE)
+  set(SUPPORT_${CORE_TYPE} FALSE)
+  foreach(SKU_NAME ${ARGN})
+    set(SUPPORT_${SKU_NAME} FALSE)
+  endforeach()
+endmacro()
+if(NOT NEO_SINGLE_SKU_BUILD)
+  set(NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC TRUE)
+endif()
+include(${NEO_SOURCE_DIR}/cmake/setup_platform_flags.cmake)
+
+unset(NEO_FORCE_ENABLE_PLATFORMS_FOR_OCLOC)
+set(NEO_SKIP_BASE_PLATFORMS TRUE)
+if(NOT ${NEO_SOURCE_DIR}/cmake/setup_platform_flags.cmake MATCHES ${NEO_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}setup_platform_flags.cmake)
+  include(${NEO_SOURCE_DIR}/cmake${BRANCH_DIR_SUFFIX}setup_platform_flags.cmake)
+endif()
+
+message(STATUS "[OCLOC] All supported platforms: ${ALL_OCLOC_PRODUCT_TO_PRODUCT_FAMILY}")
+foreach(PRODUCT ${ALL_OCLOC_PRODUCT_TO_PRODUCT_FAMILY})
+  add_definitions("-DSUPPORT_${PRODUCT}")
+endforeach()
+
+string(REPLACE ";" "," ALL_SUPPORTED_PRODUCT_FAMILIES "${ALL_OCLOC_PRODUCT_FAMILY}")
 
 set(CLOC_LIB_LIB_FLAGS_DEFINITIONS
     -DCIF_HEADERS_ONLY_BUILD
@@ -180,9 +264,16 @@ set(CLOC_LIB_LIB_FLAGS_DEFINITIONS
 
 set(NEO_SHARED_COREX_CPP_FILES
     hw_info
+    enable
 )
 
 macro(macro_for_each_platform)
+  list(APPEND OCLOC_SUPPORTED_CORE_FLAGS_DEFINITONS "-DSUPPORT_${PLATFORM_IT}")
+  if(EXISTS ${NEO_SHARED_DIRECTORY}/${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX})
+    include_directories(${NEO_SHARED_DIRECTORY}/${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX})
+  elseif(EXISTS ${NEO_SHARED_DIRECTORY}/${CORE_TYPE_LOWER}/definitions)
+    include_directories(${NEO_SHARED_DIRECTORY}/${CORE_TYPE_LOWER}/definitions)
+  endif()
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     foreach(BRANCH ${BRANCH_DIR_LIST})
       foreach(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}hw_info_setup_${PLATFORM_IT_LOWER}.inl
@@ -193,11 +284,13 @@ macro(macro_for_each_platform)
                 ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}enable_compiler_product_helper_${PLATFORM_IT_LOWER}.cpp
                 ${NEO_SOURCE_DIR}/shared/source/ail${BRANCH_DIR}${CORE_TYPE_LOWER}${BRANCH}${PLATFORM_IT_LOWER}/ail_configuration_${PLATFORM_IT_LOWER}.cpp
         )
+        if(${SRC_FILE} IN_LIST CLOC_LIB_SRCS_LIB)
+          continue()
+        endif()
         if(EXISTS ${SRC_FILE})
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
         endif()
       endforeach()
-
       if(WIN32)
         set(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}windows/hw_info_extra_${PLATFORM_IT_LOWER}.cpp)
         if(EXISTS ${SRC_FILE})
@@ -209,12 +302,12 @@ macro(macro_for_each_platform)
           list(APPEND CLOC_LIB_SRCS_LIB ${SRC_FILE})
         endif()
       endif()
-
     endforeach()
   endforeach()
 endmacro()
 
 macro(macro_for_each_core_type)
+  list(APPEND OCLOC_SUPPORTED_CORE_FLAGS_DEFINITONS "-DSUPPORT_${CORE_TYPE}")
   foreach(SRC_IT ${NEO_SHARED_COREX_CPP_FILES})
     foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
       foreach(BRANCH ${BRANCH_DIR_LIST})
@@ -266,7 +359,7 @@ endif()
 target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${CLOC_LIB_INCLUDES})
 target_include_directories(${OCLOC_NAME}_lib BEFORE PRIVATE ${IGA_INCLUDE_DIR})
 
-target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_CORE_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM}
+target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINITIONS} ${OCLOC_SUPPORTED_CORE_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM}
                            IGA_LIBRARY_NAME="${CMAKE_SHARED_LIBRARY_PREFIX}${IGA_LIBRARY_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}"
                            ${AOT_DEFINITIONS}
 )

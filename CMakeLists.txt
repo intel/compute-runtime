@@ -489,8 +489,13 @@ endif()
 # We want to organize our IDE targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# Get available platfroms
+# Get available platforms
 include(platforms.cmake)
+list(LENGTH ALL_PRODUCT_FAMILY_LIST ALL_PRODUCT_FAMILY_LIST_COUNT)
+if(1 EQUAL ${ALL_PRODUCT_FAMILY_LIST_COUNT})
+  SET(NEO_SINGLE_SKU_BUILD TRUE)
+  message(STATUS "Single Sku Build detected")
+endif()
 
 if(WIN32)
   set(DISABLE_WDDM_LINUX TRUE)
