@@ -30,12 +30,12 @@ ARLTEST_F(ArlProductHelper, givenArlWithoutHwIpVersionInHwInfoWhenGettingIpVersi
         for (auto &revision : {0}) {
             hwInfo.platform.usRevId = revision;
 
-            EXPECT_EQ(AOT::MTL_M_A0, compilerProductHelper->getHwIpVersion(hwInfo));
+            EXPECT_EQ(AOT::MTL_U_A0, compilerProductHelper->getHwIpVersion(hwInfo));
         }
         for (auto &revision : {3, 6}) {
             hwInfo.platform.usRevId = revision;
 
-            EXPECT_EQ(AOT::MTL_M_B0, compilerProductHelper->getHwIpVersion(hwInfo));
+            EXPECT_EQ(AOT::MTL_U_B0, compilerProductHelper->getHwIpVersion(hwInfo));
         }
         hwInfo.platform.usRevId = 0xdead;
 
@@ -47,12 +47,12 @@ ARLTEST_F(ArlProductHelper, givenArlWithoutHwIpVersionInHwInfoWhenGettingIpVersi
         for (auto &revision : {0, 3}) {
             hwInfo.platform.usRevId = revision;
 
-            EXPECT_EQ(AOT::XE_LPGPLUS_A0, compilerProductHelper->getHwIpVersion(hwInfo));
+            EXPECT_EQ(AOT::ARL_H_A0, compilerProductHelper->getHwIpVersion(hwInfo));
         }
         for (auto &revision : {6}) {
             hwInfo.platform.usRevId = revision;
 
-            EXPECT_EQ(AOT::XE_LPGPLUS_B0, compilerProductHelper->getHwIpVersion(hwInfo));
+            EXPECT_EQ(AOT::ARL_H_B0, compilerProductHelper->getHwIpVersion(hwInfo));
         }
         hwInfo.platform.usRevId = 0xdead;
 

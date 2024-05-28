@@ -2141,7 +2141,7 @@ TEST_P(OclocFatbinaryPerProductTests, givenReleaseWhenGetTargetProductsForFarbin
     auto hasDeviceAcronym = std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(releaseValue));
 
     for (const auto &aotInfo : aotInfos) {
-        if (aotInfo.hwInfo->platform.eProductFamily == productFamily) {
+        if (aotInfo.hwInfo->platform.eProductFamily == productFamily && aotInfo.release == releaseValue) {
             if (hasDeviceAcronym) {
                 if (!aotInfo.deviceAcronyms.empty()) {
                     expected.push_back(aotInfo.deviceAcronyms.front());

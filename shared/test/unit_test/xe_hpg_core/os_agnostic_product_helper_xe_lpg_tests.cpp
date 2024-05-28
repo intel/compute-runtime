@@ -271,7 +271,7 @@ HWTEST2_F(XeLpgProductHelperTests, givenHwIpVersionWhenIsPipeControlPriorToNonPi
     HardwareInfo hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
-    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_M_A0, AOT::MTL_M_B0, AOT::MTL_P_A0, AOT::MTL_P_B0, AOT::XE_LPGPLUS_A0, AOT::XE_LPGPLUS_B0};
+    AOT::PRODUCT_CONFIG ipReleases[] = {AOT::MTL_U_A0, AOT::MTL_U_B0, AOT::MTL_H_A0, AOT::MTL_H_B0, AOT::ARL_H_A0, AOT::ARL_H_B0};
     for (auto &ipRelease : ipReleases) {
         hwInfo.ipVersion.value = ipRelease;
         auto releaseHelper = ReleaseHelper::create(ipRelease);
@@ -327,9 +327,9 @@ HWTEST2_F(XeLpgProductHelperTests, givenCompilerProductHelperWhenGetDefaultHwIpV
     HardwareInfo hwInfo = *defaultHwInfo;
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     if (hwInfo.platform.eProductFamily == IGFX_ARROWLAKE) {
-        EXPECT_EQ(AOT::XE_LPGPLUS_B0, compilerProductHelper->getDefaultHwIpVersion());
+        EXPECT_EQ(AOT::ARL_H_B0, compilerProductHelper->getDefaultHwIpVersion());
     } else {
-        EXPECT_EQ(AOT::MTL_M_B0, compilerProductHelper->getDefaultHwIpVersion());
+        EXPECT_EQ(AOT::MTL_U_B0, compilerProductHelper->getDefaultHwIpVersion());
     }
 }
 

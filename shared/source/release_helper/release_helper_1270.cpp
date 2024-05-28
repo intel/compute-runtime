@@ -19,12 +19,12 @@ constexpr auto release = ReleaseType::release1270;
 
 template <>
 bool ReleaseHelperHw<release>::isPipeControlPriorToNonPipelinedStateCommandsWARequired() const {
-    return hardwareIpVersion.value == AOT::MTL_M_A0;
+    return hardwareIpVersion.value == AOT::MTL_U_A0;
 }
 
 template <>
 bool ReleaseHelperHw<release>::isProgramAllStateComputeCommandFieldsWARequired() const {
-    return hardwareIpVersion.value == AOT::MTL_M_A0;
+    return hardwareIpVersion.value == AOT::MTL_U_A0;
 }
 
 template <>

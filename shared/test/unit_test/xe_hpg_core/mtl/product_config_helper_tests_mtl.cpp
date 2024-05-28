@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ MTLTEST_F(ProductConfigHelperMtlTests, givenVariousVariantsOfXeLpgAcronymsWhenGe
 
 MTLTEST_F(ProductConfigHelperMtlTests, givenMtlConfigsWhenSearchForDeviceAcronymsThenObjectIsFound) {
     auto productConfigHelper = std::make_unique<ProductConfigHelper>();
-    std::vector<AOT::PRODUCT_CONFIG> mtlConfigs = {AOT::MTL_M_B0, AOT::MTL_P_B0};
+    std::vector<AOT::PRODUCT_CONFIG> mtlConfigs = {AOT::MTL_U_B0, AOT::MTL_H_B0};
     auto deviceAcronyms = productConfigHelper->getDeviceAcronyms();
     for (const auto &config : mtlConfigs) {
         auto acronym = productConfigHelper->getAcronymForProductConfig(config);

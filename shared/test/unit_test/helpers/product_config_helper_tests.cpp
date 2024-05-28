@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "platforms.h"
 
@@ -103,7 +103,7 @@ TEST_F(ProductConfigHelperTests, givenFamilyAcronymWhenAdjustDeviceNameThenNothi
     }
 }
 
-TEST_F(AotDeviceInfoTests, givenGen12lpFamilyAcronymWhenAdjustClosedRangeDeviceNamesThenProperReleaseAcronymsAreAssigned) {
+HWTEST2_F(AotDeviceInfoTests, givenGen12lpFamilyAcronymWhenAdjustClosedRangeDeviceNamesThenProperReleaseAcronymsAreAssigned, IsGen12LP) {
     bool isGen12lpFamilyEnabled = productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
     if (productConfigHelper->getReleasesAcronyms().size() < 2 || isGen12lpFamilyEnabled) {
         GTEST_SKIP();

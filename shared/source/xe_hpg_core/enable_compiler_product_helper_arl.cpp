@@ -14,7 +14,7 @@ constexpr auto gfxProduct = IGFX_ARROWLAKE;
 namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
-    return AOT::XE_LPGPLUS_B0;
+    return AOT::ARL_H_B0;
 }
 
 template <>
@@ -27,10 +27,10 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
     case 0x7D41: {
         switch (hwInfo.platform.usRevId) {
         case 0x0:
-            return AOT::MTL_M_A0;
+            return AOT::MTL_U_A0;
         case 0x3:
         case 0x6:
-            return AOT::MTL_M_B0;
+            return AOT::MTL_U_B0;
         }
         break;
     }
@@ -39,9 +39,9 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
         switch (hwInfo.platform.usRevId) {
         case 0x0:
         case 0x3:
-            return AOT::XE_LPGPLUS_A0;
+            return AOT::ARL_H_A0;
         case 0x6:
-            return AOT::XE_LPGPLUS_B0;
+            return AOT::ARL_H_B0;
         }
         break;
     }

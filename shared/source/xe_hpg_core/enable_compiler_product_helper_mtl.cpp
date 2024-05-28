@@ -14,7 +14,7 @@ constexpr auto gfxProduct = IGFX_METEORLAKE;
 namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
-    return AOT::MTL_M_B0;
+    return AOT::MTL_U_B0;
 }
 
 template <>
@@ -28,10 +28,10 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
         switch (hwInfo.platform.usRevId) {
         case 0x0:
         case 0x2:
-            return AOT::MTL_M_A0;
+            return AOT::MTL_U_A0;
         case 0x3:
         case 0x8:
-            return AOT::MTL_M_B0;
+            return AOT::MTL_U_B0;
         }
         break;
     }
@@ -40,19 +40,19 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
         switch (hwInfo.platform.usRevId) {
         case 0x0:
         case 0x2:
-            return AOT::MTL_P_A0;
+            return AOT::MTL_H_A0;
         case 0x3:
         case 0x8:
-            return AOT::MTL_P_B0;
+            return AOT::MTL_H_B0;
         }
         break;
     }
     case 0x7D60: {
         switch (hwInfo.platform.usRevId) {
         case 0x0:
-            return AOT::MTL_M_A0;
+            return AOT::MTL_U_A0;
         case 0x2:
-            return AOT::MTL_M_B0;
+            return AOT::MTL_U_B0;
         }
         break;
     }
