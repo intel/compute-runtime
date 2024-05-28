@@ -129,9 +129,9 @@ TEST_P(CommandQueueTest, GivenNonFailingAllocationWhenCreatingCommandQueueThenCo
     injectFailures(method);
 }
 
-INSTANTIATE_TEST_CASE_P(CommandQueue,
-                        CommandQueueTest,
-                        ::testing::ValuesIn(allCommandQueueProperties));
+INSTANTIATE_TEST_SUITE_P(CommandQueue,
+                         CommandQueueTest,
+                         ::testing::ValuesIn(allCommandQueueProperties));
 
 TEST(CommandQueue, WhenGettingErrorCodeFromTaskCountThenProperValueIsReturned) {
     EXPECT_EQ(CL_SUCCESS, CommandQueue::getErrorCodeFromTaskCount(0));
@@ -351,15 +351,15 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
     }
 }
 
-INSTANTIATE_TEST_CASE_P(uint32_t,
-                        CommandQueueWithBlitOperationsTests,
-                        ::testing::Values(CL_COMMAND_WRITE_BUFFER,
-                                          CL_COMMAND_WRITE_BUFFER_RECT,
-                                          CL_COMMAND_READ_BUFFER,
-                                          CL_COMMAND_READ_BUFFER_RECT,
-                                          CL_COMMAND_COPY_BUFFER,
-                                          CL_COMMAND_COPY_BUFFER_RECT,
-                                          CL_COMMAND_SVM_MEMCPY));
+INSTANTIATE_TEST_SUITE_P(uint32_t,
+                         CommandQueueWithBlitOperationsTests,
+                         ::testing::Values(CL_COMMAND_WRITE_BUFFER,
+                                           CL_COMMAND_WRITE_BUFFER_RECT,
+                                           CL_COMMAND_READ_BUFFER,
+                                           CL_COMMAND_READ_BUFFER_RECT,
+                                           CL_COMMAND_COPY_BUFFER,
+                                           CL_COMMAND_COPY_BUFFER_RECT,
+                                           CL_COMMAND_SVM_MEMCPY));
 
 TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -882,7 +882,7 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledW
     pDevice->getMemoryManager()->freeGraphicsMemory(indirectHeap->getGraphicsAllocation());
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Device,
     CommandQueueIndirectHeapTest,
     testing::Values(

@@ -689,7 +689,7 @@ class CommandContainerHeaps : public DeviceFixture,
     }
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Device,
     CommandContainerHeaps,
     testing::Values(

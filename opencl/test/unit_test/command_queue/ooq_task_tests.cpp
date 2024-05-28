@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ struct OOQTaskTypedTests : public HelloWorldTest<OOQFixtureFactory> {
     DebugManagerStateRestore stateRestore;
 };
 
-TYPED_TEST_CASE_P(OOQTaskTypedTests);
+TYPED_TEST_SUITE_P(OOQTaskTypedTests);
 
 bool isBlockingCall(unsigned int cmdType) {
     if (cmdType == CL_COMMAND_WRITE_BUFFER ||
@@ -116,12 +116,12 @@ typedef ::testing::Types<
     EnqueueWriteImageHelper<>>
     EnqueueParams;
 
-REGISTER_TYPED_TEST_CASE_P(OOQTaskTypedTests,
-                           givenNonBlockingCallWhenDoneOnOutOfOrderQueueThenTaskLevelDoesntChange,
-                           givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCountIsUpdated);
+REGISTER_TYPED_TEST_SUITE_P(OOQTaskTypedTests,
+                            givenNonBlockingCallWhenDoneOnOutOfOrderQueueThenTaskLevelDoesntChange,
+                            givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCountIsUpdated);
 
 // Instantiate all of these parameterized tests
-INSTANTIATE_TYPED_TEST_CASE_P(OOQ, OOQTaskTypedTests, EnqueueParams);
+INSTANTIATE_TYPED_TEST_SUITE_P(OOQ, OOQTaskTypedTests, EnqueueParams);
 
 typedef OOQTaskTypedTests<EnqueueKernelHelper<>> OOQTaskTests;
 

@@ -292,17 +292,17 @@ static cl_image_desc invalidImageSize[] = {
      {0}},                  /*mem_object */
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidDescriptor,
     ::testing::ValuesIn(validImageDesc));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidDescriptor,
     ::testing::ValuesIn(invalidImageDesc));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidSize,
     ::testing::ValuesIn(invalidImageSize));
@@ -346,14 +346,14 @@ TEST_P(InvalidSingleChannelFormat, givenInvalidSingleChannelChannelDataTypeWhenV
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidSingleChannelFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validSingleChannelOrder),
         ::testing::ValuesIn(validSingleChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidSingleChannelFormat,
     ::testing::Combine(
@@ -376,14 +376,14 @@ TEST_P(InvalidIntensityFormat, givenInvalidIntensityChannelDataTypeWhenValidateI
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidIntensityFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validIntensityChannelOrders),
         ::testing::ValuesIn(validIntensityChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidIntensityFormat,
     ::testing::Combine(
@@ -406,14 +406,14 @@ TEST_P(InvalidLuminanceFormat, givenInvalidLuminanceChannelDataTypeWhenValidateI
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidLuminanceFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validLuminanceChannelOrders),
         ::testing::ValuesIn(validLuminanceChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidLuminanceFormat,
     ::testing::Combine(
@@ -436,14 +436,14 @@ TEST_P(InvalidDepthFormat, givenInvalidDepthChannelDataTypeWhenValidateImageForm
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidDepthFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validDepthChannelOrders),
         ::testing::ValuesIn(validDepthChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidDepthFormat,
     ::testing::Combine(
@@ -466,14 +466,14 @@ TEST_P(InvalidDoubleChannelFormat, givenInvalidDoubleChannelDataTypeWhenValidate
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidDoubleChannelFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validDoubleChannelOrders),
         ::testing::ValuesIn(validDoubleChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidDoubleChannelFormat,
     ::testing::Combine(
@@ -496,14 +496,14 @@ TEST_P(InvalidTripleChannelFormat, givenInvalidTripleChannelDataTypeWhenValidate
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidTripleChannelFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validTripleChannelOrders),
         ::testing::ValuesIn(validTripleChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidTripleChannelFormat,
     ::testing::Combine(
@@ -526,14 +526,14 @@ TEST_P(InvalidRGBAChannelFormat, givenInvalidRGBAChannelDataTypeWhenValidateImag
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidRGBAChannelFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validRGBAChannelOrders),
         ::testing::ValuesIn(validRGBAChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidRGBAChannelFormat,
     ::testing::Combine(
@@ -556,14 +556,14 @@ TEST_P(InvalidSRGBChannelFormat, givenInvalidSRGBChannelDataTypeWhenValidateImag
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidSRGBChannelFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validSRGBChannelOrders),
         ::testing::ValuesIn(validSRGBChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidSRGBChannelFormat,
     ::testing::Combine(
@@ -586,14 +586,14 @@ TEST_P(InvalidARGBChannelFormat, givenInvalidARGBChannelDataTypeWhenValidateImag
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidARGBChannelFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validARGBChannelOrders),
         ::testing::ValuesIn(validARGBChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidARGBChannelFormat,
     ::testing::Combine(
@@ -616,14 +616,14 @@ TEST_P(InvalidDepthStencilChannelFormat, givenInvalidDepthStencilChannelDataType
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidDepthStencilChannelFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validDepthStencilChannelOrders),
         ::testing::ValuesIn(validDepthStencilChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidDepthStencilChannelFormat,
     ::testing::Combine(
@@ -646,14 +646,14 @@ TEST_P(InvalidYUVImageFormat, givenInvalidYUVChannelDataTypeWhenValidateImageFor
     validateFormat();
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     ValidYUVImageFormat,
     ::testing::Combine(
         ::testing::ValuesIn(validYUVChannelOrders),
         ::testing::ValuesIn(validYUVChannelDataTypes)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageValidate,
     InvalidYUVImageFormat,
     ::testing::Combine(
@@ -751,7 +751,7 @@ TEST_P(NormalizingFactorTests, givenChannelTypeWhenAskingForFactorThenReturnVali
     EXPECT_EQ(std::get<1>(GetParam()), factor);
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     NormalizingFactorTests,
     NormalizingFactorTests,
     ::testing::ValuesIn(normalizingFactorValues));
@@ -820,7 +820,7 @@ std::tuple<uint32_t, uint32_t> imageFromImageValidChannelOrderPairs[] = {
     std::make_tuple(CL_NV12_INTEL, 0),
     std::make_tuple(CL_YUYV_INTEL, CL_RGBA)};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidParentImageFormatTests,
     ValidParentImageFormatTest,
     ::testing::ValuesIn(imageFromImageValidChannelOrderPairs));

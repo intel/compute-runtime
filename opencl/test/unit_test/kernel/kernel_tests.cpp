@@ -3494,9 +3494,9 @@ static ThreadArbitrationPolicy threadArbitrationPolicies[] = {
     ThreadArbitrationPolicy::RoundRobin,
     ThreadArbitrationPolicy::RoundRobinAfterDependency};
 
-INSTANTIATE_TEST_CASE_P(ThreadArbitrationPolicyKernelInitializationTests,
-                        ThreadArbitrationPolicyKernelTest,
-                        testing::ValuesIn(threadArbitrationPolicies));
+INSTANTIATE_TEST_SUITE_P(ThreadArbitrationPolicyKernelInitializationTests,
+                         ThreadArbitrationPolicyKernelTest,
+                         testing::ValuesIn(threadArbitrationPolicies));
 
 TEST(KernelTest, givenKernelWhenSettingAdditionalKernelExecInfoThenCorrectValueIsSet) {
     UltClDeviceFactory deviceFactory{1, 0};

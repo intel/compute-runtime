@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -308,14 +308,14 @@ HWTEST2_P(AUBWriteImageCCS, GivenUnalignedMemoryWhenWritingImageThenExpectations
     testWriteImageUnaligned<FamilyType>();
 }
 
-INSTANTIATE_TEST_CASE_P(AUBWriteImage_simple, AUBWriteImageCCS,
-                        ::testing::Combine(::testing::Values( // formats
-                                               CL_UNORM_INT8, CL_SIGNED_INT16,
-                                               CL_UNSIGNED_INT32, CL_HALF_FLOAT,
-                                               CL_FLOAT),
-                                           ::testing::Values( // channels
-                                               CL_R, CL_RG, CL_RGBA),
-                                           ::testing::ValuesIn(writeImageParams)));
+INSTANTIATE_TEST_SUITE_P(AUBWriteImage_simple, AUBWriteImageCCS,
+                         ::testing::Combine(::testing::Values( // formats
+                                                CL_UNORM_INT8, CL_SIGNED_INT16,
+                                                CL_UNSIGNED_INT32, CL_HALF_FLOAT,
+                                                CL_FLOAT),
+                                            ::testing::Values( // channels
+                                                CL_R, CL_RG, CL_RGBA),
+                                            ::testing::ValuesIn(writeImageParams)));
 
 using AUBWriteImageBCS = AUBWriteImage<true>;
 
@@ -345,11 +345,11 @@ HWTEST2_P(AUBWriteImageBCS, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabl
     ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
 }
 
-INSTANTIATE_TEST_CASE_P(AUBWriteImage_simple, AUBWriteImageBCS,
-                        ::testing::Combine(::testing::Values( // formats
-                                               CL_UNORM_INT8, CL_SIGNED_INT16,
-                                               CL_UNSIGNED_INT32, CL_HALF_FLOAT,
-                                               CL_FLOAT),
-                                           ::testing::Values( // channels
-                                               CL_R, CL_RG, CL_RGBA),
-                                           ::testing::ValuesIn(writeImageParams)));
+INSTANTIATE_TEST_SUITE_P(AUBWriteImage_simple, AUBWriteImageBCS,
+                         ::testing::Combine(::testing::Values( // formats
+                                                CL_UNORM_INT8, CL_SIGNED_INT16,
+                                                CL_UNSIGNED_INT32, CL_HALF_FLOAT,
+                                                CL_FLOAT),
+                                            ::testing::Values( // channels
+                                                CL_R, CL_RG, CL_RGBA),
+                                            ::testing::ValuesIn(writeImageParams)));

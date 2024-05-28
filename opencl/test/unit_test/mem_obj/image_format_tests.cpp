@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ std::tuple<uint32_t, bool> paramsForAlphaChannelTests[] = {
     {CL_YVYU_INTEL, false},
     {CL_VYUY_INTEL, false}};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageFormatTests,
     HasAlphaChannelTest,
     ::testing::ValuesIn(paramsForAlphaChannelTests));

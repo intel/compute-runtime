@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,7 +120,7 @@ TEST_P(GetCommandQueueInfoTest, GivenInvalidParameterWhenGettingCommandQueueInfo
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     GetCommandQueueInfoTest,
     GetCommandQueueInfoTest,
     ::testing::ValuesIn(defaultCommandQueueProperties));

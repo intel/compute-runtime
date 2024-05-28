@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,9 +66,9 @@ struct TestParam {
 
 typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturnSizeTest;
 
-INSTANTIATE_TEST_CASE_P(wgs,
-                        KernelSubGroupInfoKhrReturnSizeTest,
-                        ::testing::ValuesIn(kernelSubGroupInfoKhrWGS));
+INSTANTIATE_TEST_SUITE_P(wgs,
+                         KernelSubGroupInfoKhrReturnSizeTest,
+                         ::testing::ValuesIn(kernelSubGroupInfoKhrWGS));
 
 TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGroupSizeThenCorrectValueIsReturned) {
     paramValueSizeRet = 0;
@@ -91,9 +91,9 @@ TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGr
 
 typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturnCountTest;
 
-INSTANTIATE_TEST_CASE_P(wgs,
-                        KernelSubGroupInfoKhrReturnCountTest,
-                        ::testing::ValuesIn(kernelSubGroupInfoKhrWGS));
+INSTANTIATE_TEST_SUITE_P(wgs,
+                         KernelSubGroupInfoKhrReturnCountTest,
+                         ::testing::ValuesIn(kernelSubGroupInfoKhrWGS));
 
 TEST_P(KernelSubGroupInfoKhrReturnCountTest, GivenLwsParameterWhenGettingSubGroupCountThenCorrectValueIsReturned) {
     paramValueSizeRet = 0;
@@ -226,9 +226,9 @@ uint32_t /*cl_kernel_sub_group_info_khr*/ kernelSubGroupInfoKhrInputParams[] = {
 
 typedef KernelSubGroupInfoKhrParamFixture<uint32_t /*cl_kernel_sub_group_info_khr*/> KernelSubGroupInfoKhrInputParamsTest;
 
-INSTANTIATE_TEST_CASE_P(KernelSubGroupInfoKhrInputParams,
-                        KernelSubGroupInfoKhrInputParamsTest,
-                        ::testing::ValuesIn(kernelSubGroupInfoKhrInputParams));
+INSTANTIATE_TEST_SUITE_P(KernelSubGroupInfoKhrInputParams,
+                         KernelSubGroupInfoKhrInputParamsTest,
+                         ::testing::ValuesIn(kernelSubGroupInfoKhrInputParams));
 
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
     // work dim == 0

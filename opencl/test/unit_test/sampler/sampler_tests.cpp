@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,12 +86,12 @@ static cl_filter_mode filterModes[] = {
     CL_FILTER_NEAREST,
     CL_FILTER_LINEAR};
 
-INSTANTIATE_TEST_CASE_P(Sampler,
-                        CreateSampler,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(normalizedCoordModes),
-                            ::testing::ValuesIn(addressingModes),
-                            ::testing::ValuesIn(filterModes)));
+INSTANTIATE_TEST_SUITE_P(Sampler,
+                         CreateSampler,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(normalizedCoordModes),
+                             ::testing::ValuesIn(addressingModes),
+                             ::testing::ValuesIn(filterModes)));
 
 typedef ::testing::TestWithParam<std::tuple<uint32_t /*normalizedCoords*/, uint32_t /*addressingMode*/, uint32_t /*filterMode*/>> TransformableSamplerTest;
 
@@ -112,12 +112,12 @@ TEST_P(TransformableSamplerTest, givenSamplerWhenHasProperParametersThenIsTransf
     retVal = sampler.isTransformable();
     EXPECT_EQ(expectedRetVal, retVal);
 }
-INSTANTIATE_TEST_CASE_P(Sampler,
-                        TransformableSamplerTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(normalizedCoordModes),
-                            ::testing::ValuesIn(addressingModes),
-                            ::testing::ValuesIn(filterModes)));
+INSTANTIATE_TEST_SUITE_P(Sampler,
+                         TransformableSamplerTest,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(normalizedCoordModes),
+                             ::testing::ValuesIn(addressingModes),
+                             ::testing::ValuesIn(filterModes)));
 
 TEST(castToSamplerTest, GivenGenericPointerWhichHoldsSamplerObjectWhenCastToSamplerIsCalledThenCastWithSuccess) {
     cl_int retVal;

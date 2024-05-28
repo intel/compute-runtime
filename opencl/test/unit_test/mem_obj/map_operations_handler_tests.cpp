@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,9 +165,9 @@ TEST_P(MapOperationsHandlerOverlapTests, givenAlreadyMappedPtrWhenAskingForOverl
     EXPECT_EQ(expectOverlap, mockHandler.isOverlapping(requestedInfo));
 }
 
-INSTANTIATE_TEST_CASE_P(MapOperationsHandlerOverlapTests,
-                        MapOperationsHandlerOverlapTests,
-                        ::testing::ValuesIn(overlappingCombinations));
+INSTANTIATE_TEST_SUITE_P(MapOperationsHandlerOverlapTests,
+                         MapOperationsHandlerOverlapTests,
+                         ::testing::ValuesIn(overlappingCombinations));
 
 struct MapOperationsStorageWhitebox : MapOperationsStorage {
     using MapOperationsStorage::handlers;

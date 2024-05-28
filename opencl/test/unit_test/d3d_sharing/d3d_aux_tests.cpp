@@ -23,7 +23,7 @@
 namespace NEO {
 template <typename T>
 class D3DAuxTests : public D3DTests<T> {};
-TYPED_TEST_CASE_P(D3DAuxTests);
+TYPED_TEST_SUITE_P(D3DAuxTests);
 
 TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetAsCompressed) {
     this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
@@ -187,16 +187,16 @@ TYPED_TEST_P(D3DAuxTests, given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
-REGISTER_TYPED_TEST_CASE_P(D3DAuxTests,
-                           given2dSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetAsCompressed,
-                           given2dSharableTextureWithUnifiedAuxFlagsWhenFailOnAuxMappingThenDontSetAsCompressed,
-                           given2dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable,
-                           given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetCompressed,
-                           given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetAsCompressed,
-                           given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAuxMappingThenDontSetAsCompressed,
-                           given3dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable,
-                           given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetCompressed);
+REGISTER_TYPED_TEST_SUITE_P(D3DAuxTests,
+                            given2dSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetAsCompressed,
+                            given2dSharableTextureWithUnifiedAuxFlagsWhenFailOnAuxMappingThenDontSetAsCompressed,
+                            given2dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable,
+                            given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetCompressed,
+                            given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetAsCompressed,
+                            given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAuxMappingThenDontSetAsCompressed,
+                            given3dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable,
+                            given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetCompressed);
 
-INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DAuxTests, D3DTypes);
+INSTANTIATE_TYPED_TEST_SUITE_P(D3DSharingTests, D3DAuxTests, D3DTypes);
 
 } // namespace NEO

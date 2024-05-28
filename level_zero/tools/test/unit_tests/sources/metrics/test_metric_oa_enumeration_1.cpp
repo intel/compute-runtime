@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2497,8 +2497,8 @@ getListOfMetricTypes() {
     return metricTypes;
 }
 
-INSTANTIATE_TEST_CASE_P(parameterizedMetricEnumerationTestMetricTypes, MetricEnumerationTestMetricTypes,
-                        ::testing::ValuesIn(getListOfMetricTypes()));
+INSTANTIATE_TEST_SUITE_P(parameterizedMetricEnumerationTestMetricTypes, MetricEnumerationTestMetricTypes,
+                         ::testing::ValuesIn(getListOfMetricTypes()));
 
 class MetricEnumerationTestInformationTypes : public MetricEnumerationTest,
                                               public ::testing::WithParamInterface<MetricsDiscovery::TInformationType> {
@@ -2604,9 +2604,9 @@ getListOfInfoTypes() {
     return infoTypes;
 }
 
-INSTANTIATE_TEST_CASE_P(parameterizedMetricEnumerationTestInformationTypes,
-                        MetricEnumerationTestInformationTypes,
-                        ::testing::ValuesIn(getListOfInfoTypes()));
+INSTANTIATE_TEST_SUITE_P(parameterizedMetricEnumerationTestInformationTypes,
+                         MetricEnumerationTestInformationTypes,
+                         ::testing::ValuesIn(getListOfInfoTypes()));
 
 TEST_F(MetricEnumerationTest, givenMetricSetWhenActivateIsCalledActivateReturnsTrue) {
 

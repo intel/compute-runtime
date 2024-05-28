@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -159,13 +159,13 @@ cl_queue_throttle_khr queueThrottles[] =
         CL_QUEUE_THROTTLE_MED_KHR,
         CL_QUEUE_THROTTLE_HIGH_KHR};
 
-INSTANTIATE_TEST_CASE_P(api,
-                        clCreateCommandQueueWithPropertiesTests,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(commandQueueProperties),
-                            ::testing::ValuesIn(queueSizes),
-                            ::testing::ValuesIn(queuePriorities),
-                            ::testing::ValuesIn(queueThrottles)));
+INSTANTIATE_TEST_SUITE_P(api,
+                         clCreateCommandQueueWithPropertiesTests,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(commandQueueProperties),
+                             ::testing::ValuesIn(queueSizes),
+                             ::testing::ValuesIn(queuePriorities),
+                             ::testing::ValuesIn(queueThrottles)));
 
 TEST_F(ClCreateCommandQueueWithPropertiesApi, GivenNullContextWhenCreatingCommandQueueWithPropertiesThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
@@ -496,9 +496,9 @@ TEST_P(ClCreateCommandQueueWithPropertiesApiPriority, GivenValidPriorityWhenCrea
     EXPECT_EQ(retVal, CL_SUCCESS);
 }
 
-INSTANTIATE_TEST_CASE_P(AllValidPriorities,
-                        ClCreateCommandQueueWithPropertiesApiPriority,
-                        ::testing::ValuesIn(priorityParams));
+INSTANTIATE_TEST_SUITE_P(AllValidPriorities,
+                         ClCreateCommandQueueWithPropertiesApiPriority,
+                         ::testing::ValuesIn(priorityParams));
 
 std::pair<uint32_t, QueueThrottle> throttleParams[3]{
     std::make_pair(CL_QUEUE_THROTTLE_LOW_KHR, QueueThrottle::LOW),
@@ -523,8 +523,8 @@ TEST_P(ClCreateCommandQueueWithPropertiesApiThrottle, GivenThrottlePropertiesWhe
     EXPECT_EQ(retVal, CL_SUCCESS);
 }
 
-INSTANTIATE_TEST_CASE_P(AllValidThrottleValues,
-                        ClCreateCommandQueueWithPropertiesApiThrottle,
-                        ::testing::ValuesIn(throttleParams));
+INSTANTIATE_TEST_SUITE_P(AllValidThrottleValues,
+                         ClCreateCommandQueueWithPropertiesApiThrottle,
+                         ::testing::ValuesIn(throttleParams));
 
 } // namespace ULT

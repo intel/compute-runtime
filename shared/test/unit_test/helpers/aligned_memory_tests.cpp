@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ TEST(AlignedMallocTests, GivenSizeZeroAndAlign4096WhenAllocatingAlignedThenAlign
     alignedFree(ptr);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AlignedMallocParameterized,
     AlignedMalloc,
     testing::Values(
@@ -107,7 +107,7 @@ TEST_P(AlignUp, WhenAligningUpThen64BitIsPreserved) {
     EXPECT_EQ(aligned, result);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AlignUpParameterized,
     AlignUp,
     testing::Values(
@@ -130,7 +130,7 @@ TEST_P(AlignUpNonZero, GivenSizeAndAlignmentThenAlignedResultIsNonZero) {
     EXPECT_TRUE(0 == result % alignment);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AlignUpNonZeroParameterized,
     AlignUpNonZero,
     testing::Combine(
@@ -260,7 +260,7 @@ class IsAlignedTests : public ::testing::Test {
 
 typedef ::testing::Types<int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t, float, double> IsAlignedTypes;
 
-TYPED_TEST_CASE(IsAlignedTests, IsAlignedTypes);
+TYPED_TEST_SUITE(IsAlignedTests, IsAlignedTypes);
 TYPED_TEST(IsAlignedTests, WhenCheckingForAlignmentThenReturnCorrectValue) {
     TypeParam *ptr = reinterpret_cast<TypeParam *>(static_cast<uintptr_t>(0xdeadbeefu));
     // one byte alignment should always return true

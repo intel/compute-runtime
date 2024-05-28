@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ static cl_mem_flags validFlags[] = {
     CL_MEM_HOST_NO_ACCESS,
     CL_MEM_FORCE_HOST_MEMORY_INTEL};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateBufferCheckFlags,
     ClCreateBufferValidFlagsTests,
     testing::ValuesIn(validFlags));
@@ -100,7 +100,7 @@ cl_mem_flags invalidFlags[] = {
     0xffcc,
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateBufferCheckFlags,
     clCreateBufferInvalidFlagsTests,
     testing::ValuesIn(invalidFlags));
@@ -122,7 +122,7 @@ static cl_mem_flags validFlagsIntel[] = {
     CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE,
     CL_MEM_48BIT_RESOURCE_INTEL};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateBufferCheckFlagsIntel,
     clCreateBufferValidFlagsIntelTests,
     testing::ValuesIn(validFlagsIntel));
@@ -141,7 +141,7 @@ cl_mem_flags invalidFlagsIntel[] = {
     0xffcc,
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateBufferCheckFlagsIntel,
     clCreateBufferInvalidFlagsIntelTests,
     testing::ValuesIn(invalidFlagsIntel));
@@ -576,7 +576,7 @@ static cl_mem_flags validFlagsForMultiDeviceContextBuffer[] = {
     CL_MEM_USE_HOST_PTR,
     CL_MEM_COPY_HOST_PTR, 0};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateBufferWithMultiDeviceContextCheckFlags,
     clCreateBufferWithMultiDeviceContextTests,
     testing::ValuesIn(validFlagsForMultiDeviceContextBuffer));

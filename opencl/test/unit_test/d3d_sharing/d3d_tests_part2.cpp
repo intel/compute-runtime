@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
-TYPED_TEST_CASE_P(D3DTests);
+TYPED_TEST_SUITE_P(D3DTests);
 
 TYPED_TEST_P(D3DTests, givenSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDontDoExplicitFinish) {
     this->context->setInteropUserSyncEnabled(true);
@@ -705,37 +705,37 @@ TYPED_TEST_P(D3DTests, givenUnsupportedFormatWhenCreatingTexture3dThenInvalidIma
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
-REGISTER_TYPED_TEST_CASE_P(D3DTests,
-                           givenSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDontDoExplicitFinish,
-                           givenNonSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishTwice,
-                           givenSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishOnce,
-                           givenNonSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDoExplicitFinishOnce,
-                           givenSharedResourceFlagWhenCreate2dTextureThenStagingTextureEqualsPassedTexture,
-                           givenNonSharedResourceFlagWhenCreate2dTextureThenCreateStagingTexture,
-                           givenSharedResourceFlagWhenCreate3dTextureThenStagingTextureEqualsPassedTexture,
-                           givenNonSharedResourceFlagWhenCreate3dTextureThenCreateStagingTexture,
-                           givenD3DDeviceParamWhenContextCreationThenSetProperValues,
-                           givenSharedNtHandleFlagWhenCreate2dTextureThenGetNtHandle,
-                           givenSharedNtHandleFlagWhenCreate3dTextureThenGetNtHandle,
-                           WhenFillingBufferDescThenBufferContentIsCorrect,
-                           WhenFillingTexture2dDescThenImageContentIsCorrect,
-                           WhenFillingTexture3dDescThenImageContentIsCorrect,
-                           givenPlaneWhenFindYuvSurfaceCalledThenReturnValidImgFormat,
-                           GivenForced32BitAddressingWhenCreatingBufferThenBufferHas32BitAllocation,
-                           givenD3DTexture2dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
-                           givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
-                           givenSharedObjectFromInvalidContextWhen3dCreatedThenReturnCorrectCode,
-                           givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreatedThenReturnCorrectCode,
-                           givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode,
-                           givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCreatedThenReturnCorrectCode,
-                           givenFormatNotSupportedByDxWhenGettingSupportedFormatsThenOnlySupportedFormatsAreReturned,
-                           givenUnsupportedFormatWhenCreatingTexture2dThenInvalidImageFormatDescriptorIsReturned,
-                           givenUnsupportedFormatWhenCreatingTexture3dThenInvalidImageFormatDescriptorIsReturned,
-                           givenTextureDescWhenUnorderedAccessViewEnabledThenIsUavOrRtvIsSet,
-                           givenTextureDescWhenRenderTargetViewEnabledThenIsUavOrRtvIsSet,
-                           givenTextureDescWhenBindFlagsEqZeroThenIsUavOrRtvIsNotSet);
+REGISTER_TYPED_TEST_SUITE_P(D3DTests,
+                            givenSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDontDoExplicitFinish,
+                            givenNonSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishTwice,
+                            givenSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishOnce,
+                            givenNonSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDoExplicitFinishOnce,
+                            givenSharedResourceFlagWhenCreate2dTextureThenStagingTextureEqualsPassedTexture,
+                            givenNonSharedResourceFlagWhenCreate2dTextureThenCreateStagingTexture,
+                            givenSharedResourceFlagWhenCreate3dTextureThenStagingTextureEqualsPassedTexture,
+                            givenNonSharedResourceFlagWhenCreate3dTextureThenCreateStagingTexture,
+                            givenD3DDeviceParamWhenContextCreationThenSetProperValues,
+                            givenSharedNtHandleFlagWhenCreate2dTextureThenGetNtHandle,
+                            givenSharedNtHandleFlagWhenCreate3dTextureThenGetNtHandle,
+                            WhenFillingBufferDescThenBufferContentIsCorrect,
+                            WhenFillingTexture2dDescThenImageContentIsCorrect,
+                            WhenFillingTexture3dDescThenImageContentIsCorrect,
+                            givenPlaneWhenFindYuvSurfaceCalledThenReturnValidImgFormat,
+                            GivenForced32BitAddressingWhenCreatingBufferThenBufferHas32BitAllocation,
+                            givenD3DTexture2dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
+                            givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
+                            givenSharedObjectFromInvalidContextWhen3dCreatedThenReturnCorrectCode,
+                            givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreatedThenReturnCorrectCode,
+                            givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode,
+                            givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCreatedThenReturnCorrectCode,
+                            givenFormatNotSupportedByDxWhenGettingSupportedFormatsThenOnlySupportedFormatsAreReturned,
+                            givenUnsupportedFormatWhenCreatingTexture2dThenInvalidImageFormatDescriptorIsReturned,
+                            givenUnsupportedFormatWhenCreatingTexture3dThenInvalidImageFormatDescriptorIsReturned,
+                            givenTextureDescWhenUnorderedAccessViewEnabledThenIsUavOrRtvIsSet,
+                            givenTextureDescWhenRenderTargetViewEnabledThenIsUavOrRtvIsSet,
+                            givenTextureDescWhenBindFlagsEqZeroThenIsUavOrRtvIsNotSet);
 
-INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DTests, D3DTypes);
+INSTANTIATE_TYPED_TEST_SUITE_P(D3DSharingTests, D3DTests, D3DTypes);
 
 using D3D10Test = D3DTests<D3DTypesHelper::D3D10>;
 

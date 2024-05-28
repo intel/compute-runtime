@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -375,7 +375,7 @@ HWTEST_P(PreemptionHwTest, WhenProgrammingCmdStreamThenProperMiLoadRegisterImmCo
     EXPECT_EQ(expectedRegValue, cmd->getDataDword());
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateParametrizedPreemptionHwTest,
     PreemptionHwTest,
     ::testing::Values(PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread));
@@ -427,7 +427,7 @@ HWTEST_P(PreemptionTest, whenInNonMidThreadModeThenCsrBaseAddressIsNotProgrammed
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     NonMidThread,
     PreemptionTest,
     ::testing::Values(PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup));

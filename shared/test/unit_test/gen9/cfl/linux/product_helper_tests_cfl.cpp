@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,7 +104,7 @@ template <typename T>
 class CflHwInfoTests : public ::testing::Test {
 };
 typedef ::testing::Types<CflHw1x2x6, CflHw1x3x6, CflHw1x3x8, CflHw2x3x8, CflHw3x3x8> cflTestTypes;
-TYPED_TEST_CASE(CflHwInfoTests, cflTestTypes);
+TYPED_TEST_SUITE(CflHwInfoTests, cflTestTypes);
 TYPED_TEST(CflHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

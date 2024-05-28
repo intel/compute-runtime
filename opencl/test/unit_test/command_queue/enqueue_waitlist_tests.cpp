@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -233,12 +233,12 @@ ExecuteEnqueue twoEnqueueMap[] =
         &EnqueueWaitlistTest::twoEnqueueMapBuffer,
         &EnqueueWaitlistTest::twoEnqueueMapImage};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     UnblockedEvent,
     EnqueueWaitlistTest,
     ::testing::ValuesIn(enqueues));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     TwoEnqueueMap,
     EnqueueWaitlistTestTwoMapEnqueues,
     ::testing::ValuesIn(twoEnqueueMap));

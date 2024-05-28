@@ -182,8 +182,8 @@ TEST_P(MipMapMapImageParamsTest, givenAllocatedMapPtrWhenMapsWithDifferentMipMap
     EXPECT_EQ(ptr2, ptrOffset(ptr1, mapOffset));
 }
 
-INSTANTIATE_TEST_CASE_P(MipMapMapImageParamsTest_givenAllocatedMapPtrAndMapWithDifferentMipMapsIsCalledThenReturnDifferentPointers,
-                        MipMapMapImageParamsTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
+INSTANTIATE_TEST_SUITE_P(MipMapMapImageParamsTest_givenAllocatedMapPtrAndMapWithDifferentMipMapsIsCalledThenReturnDifferentPointers,
+                         MipMapMapImageParamsTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
 
 template <typename GfxFamily>
 struct MockedImage : public ImageHw<GfxFamily> {

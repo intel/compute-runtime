@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ TGLLPTEST_F(TgllpProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoTh
 template <typename T>
 class TgllpHwInfoLinux : public ::testing::Test {};
 typedef ::testing::Types<TgllpHw1x6x16> tgllpTestTypes;
-TYPED_TEST_CASE(TgllpHwInfoLinux, tgllpTestTypes);
+TYPED_TEST_SUITE(TgllpHwInfoLinux, tgllpTestTypes);
 TYPED_TEST(TgllpHwInfoLinux, gtSetupIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

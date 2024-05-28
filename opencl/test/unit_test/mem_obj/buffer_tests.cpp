@@ -231,7 +231,7 @@ static cl_mem_flags nonReadOnlyFlags[] = {
     CL_MEM_HOST_WRITE_ONLY | CL_MEM_WRITE_ONLY,
     0};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     nonReadOnlyFlags,
     BufferReadOnlyTest,
     testing::ValuesIn(nonReadOnlyFlags));
@@ -990,7 +990,7 @@ cl_mem_flags noHostPtrFlags[] = {
     CL_MEM_HOST_WRITE_ONLY,
     CL_MEM_HOST_NO_ACCESS};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BufferTest_Create,
     NoHostPtr,
     testing::ValuesIn(noHostPtrFlags));
@@ -1251,7 +1251,7 @@ cl_mem_flags validHostPtrFlags[] = {
     CL_MEM_HOST_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
     CL_MEM_HOST_NO_ACCESS | CL_MEM_COPY_HOST_PTR};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BufferTest_Create,
     ValidHostPtr,
     testing::ValuesIn(validHostPtrFlags));
@@ -1294,7 +1294,7 @@ TEST_P(BufferCalculateHostPtrSize, WhenCalculatingHostPtrSizeThenItIsCorrect) {
     EXPECT_EQ(hostPtrSize, calculatedSize);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     BufferCalculateHostPtrSizes,
     BufferCalculateHostPtrSize,
     testing::ValuesIn(inputs));
@@ -2058,7 +2058,7 @@ static uint64_t pointers[] = {
     0x1005,
     0x2000};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     pointers,
     BufferL3CacheTests,
     testing::ValuesIn(pointers));

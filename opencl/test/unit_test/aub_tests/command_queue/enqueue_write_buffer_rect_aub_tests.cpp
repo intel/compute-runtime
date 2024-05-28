@@ -105,11 +105,11 @@ HWTEST_P(AUBWriteBufferRect, Given3dWhenWritingBufferThenExpectationsAreMet) {
     ::alignedFree(srcMemory);
     ::alignedFree(destMemory);
 }
-INSTANTIATE_TEST_CASE_P(AUBWriteBufferRect_simple,
-                        AUBWriteBufferRect,
-                        ::testing::Combine(
-                            ::testing::Values(0u, 1u, 2u, 3u, 4u),
-                            ::testing::Values(0u, 1u, 2u, 3u, 4u)));
+INSTANTIATE_TEST_SUITE_P(AUBWriteBufferRect_simple,
+                         AUBWriteBufferRect,
+                         ::testing::Combine(
+                             ::testing::Values(0u, 1u, 2u, 3u, 4u),
+                             ::testing::Values(0u, 1u, 2u, 3u, 4u)));
 
 struct AUBWriteBufferRectUnaligned
     : public CommandEnqueueAUBFixture,

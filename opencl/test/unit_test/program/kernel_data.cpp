@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -413,9 +413,9 @@ TEST_P(DataParameterTest, GivenTokenTypeWhenBuildingThenProgramIsCorrect) {
 }
 
 // note that we start at '2' because we test kernel arg tokens elsewhere
-INSTANTIATE_TEST_CASE_P(DataParameterTests,
-                        DataParameterTest,
-                        testing::Range(2u, static_cast<uint32_t>(NUM_DATA_PARAMETER_TOKENS)));
+INSTANTIATE_TEST_SUITE_P(DataParameterTests,
+                         DataParameterTest,
+                         testing::Range(2u, static_cast<uint32_t>(NUM_DATA_PARAMETER_TOKENS)));
 
 class KernelDataParameterTest : public KernelDataTest {};
 TEST_F(KernelDataParameterTest, GivenDataParameterBufferOffsetWhenBuildingThenProgramIsCorrect) {

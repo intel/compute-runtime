@@ -413,7 +413,7 @@ static cl_device_info deviceInfoStrParams[] =
         CL_DEVICE_VERSION,
         CL_DRIVER_VERSION};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     api,
     GetDeviceInfoStr,
     testing::ValuesIn(deviceInfoStrParams));
@@ -451,7 +451,7 @@ cl_device_info devicePreferredVector[] = {
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG,
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     api,
     GetDeviceInfoVectorWidth,
     testing::ValuesIn(devicePreferredVector));

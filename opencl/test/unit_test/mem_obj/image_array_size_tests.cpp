@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,7 +104,7 @@ static cl_mem_object_type arrayImageTypes[] = {
     CL_MEM_OBJECT_IMAGE1D_ARRAY,
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageArraySizeTestCreate,
     CreateImageArraySize,
     testing::ValuesIn(arrayImageTypes));
@@ -145,7 +145,7 @@ static cl_mem_object_type nonArrayImageTypes[] = {
     CL_MEM_OBJECT_IMAGE2D,
     CL_MEM_OBJECT_IMAGE3D};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageArraySizeTest_Create,
     CreateImageNonArraySize,
     testing::ValuesIn(nonArrayImageTypes));
@@ -241,7 +241,7 @@ static cl_mem_object_type allImageTypes[] = {
     CL_MEM_OBJECT_IMAGE3D,
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageArraySizeTest_Create,
     CreateImageSize,
     testing::ValuesIn(allImageTypes));
@@ -256,7 +256,7 @@ static cl_mem_object_type allImageTypesWithBadOne[] = {
     CL_MEM_OBJECT_IMAGE3D,
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageArraySizeTest_Create,
     CreateImageOffset,
     testing::ValuesIn(allImageTypesWithBadOne));

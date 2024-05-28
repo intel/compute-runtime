@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ DG1TEST_F(Dg1ProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenEr
 template <typename T>
 class Dg1HwInfoLinux : public ::testing::Test {};
 using dg1TestTypes = ::testing::Types<Dg1HwConfig>;
-TYPED_TEST_CASE(Dg1HwInfoLinux, dg1TestTypes);
+TYPED_TEST_SUITE(Dg1HwInfoLinux, dg1TestTypes);
 TYPED_TEST(Dg1HwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

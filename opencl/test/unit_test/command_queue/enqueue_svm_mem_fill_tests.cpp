@@ -215,9 +215,9 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 }
 
-INSTANTIATE_TEST_CASE_P(size_t,
-                        EnqueueSvmMemFillTest,
-                        ::testing::Values(1, 2, 4, 8, 16, 32, 64, 128));
+INSTANTIATE_TEST_SUITE_P(size_t,
+                         EnqueueSvmMemFillTest,
+                         ::testing::Values(1, 2, 4, 8, 16, 32, 64, 128));
 
 struct EnqueueSvmMemFillHw : public ::testing::Test {
 

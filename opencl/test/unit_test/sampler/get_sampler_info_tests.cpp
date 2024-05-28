@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ cl_sampler_info samplerInfoParams[] = {
     CL_SAMPLER_LOD_MIN,
     CL_SAMPLER_LOD_MAX};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Sampler_,
     GetSamplerInfo,
     testing::ValuesIn(samplerInfoParams));

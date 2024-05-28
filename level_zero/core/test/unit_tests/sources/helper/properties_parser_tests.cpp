@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,7 @@ std::pair<ze_image_type_t, NEO::ImageType> validTypes[] = {
     {ZE_IMAGE_TYPE_1DARRAY, NEO::ImageType::image1DArray},
     {ZE_IMAGE_TYPE_BUFFER, NEO::ImageType::image1DBuffer}};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     imageTypeFlags,
     ImageStaticFunctionConvertTypeTest,
     testing::ValuesIn(validTypes));

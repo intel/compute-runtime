@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
-TYPED_TEST_CASE_P(D3DTests);
+TYPED_TEST_SUITE_P(D3DTests);
 
 TYPED_TEST_P(D3DTests, GivenSpecificDeviceSetWhenGettingDeviceIDsFromD3DThenOnlySelectedDevicesAreReturned) {
     cl_device_id expectedDevice = *this->devices;
@@ -774,42 +774,42 @@ TYPED_TEST_P(D3DTests, givenReadWriteFormatWhenLookingForSurfaceFormatThenReturn
     }
 }
 
-REGISTER_TYPED_TEST_CASE_P(D3DTests,
-                           GivenSpecificDeviceSetWhenGettingDeviceIDsFromD3DThenOnlySelectedDevicesAreReturned,
-                           GivenSpecificDeviceSourceWhenGettingDeviceIDsFromD3DThenOnlySelectedDevicesAreReturned,
-                           givenNonIntelVendorWhenGetDeviceIdIsCalledThenReturnError,
-                           WhenCreatingFromD3DBufferKhrApiThenValidBufferIsReturned,
-                           WhenCreatingFromD3D2dTextureKhrApiThenValidImageIsReturned,
-                           WhenCreatingFromD3D3dTextureKhrApiThenValidImageIsReturned,
-                           givenSharedResourceFlagWhenCreateBufferThenStagingBufferEqualsPassedBuffer,
-                           givenNonSharedResourceFlagWhenCreateBufferThenCreateNewStagingBuffer,
-                           givenNonSharedResourceBufferWhenAcquiredThenCopySubregion,
-                           givenSharedResourceBufferWhenAcquiredThenDontCopySubregion,
-                           givenSharedResourceBufferAndInteropUserSyncDisabledWhenAcquiredThenFlushOnAcquire,
-                           WhenGettingPreferD3DSharedResourcesThenCorrectValueIsReturned,
-                           WhenGettingD3DResourceInfoFromMemObjThenCorrectInfoIsReturned,
-                           WhenGettingD3DSubresourceInfoFromMemObjThenCorrectInfoIsReturned,
-                           givenTheSameD3DBufferWhenNextCreateIsCalledThenFail,
-                           givenD3DTextureWithTheSameSubresourceWhenNextCreateIsCalledThenFail,
-                           givenInvalidSubresourceWhenCreateTexture2dIsCalledThenFail,
-                           givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFail,
-                           givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
-                           givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
-                           givenReadWriteFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
-                           givenNV12FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
-                           givenSharedObjectFromInvalidContextWhen2dCreatedThenReturnCorrectCode,
-                           givenSharedObjectFromInvalidContextAndNTHandleWhen2dCreatedThenReturnCorrectCode,
-                           givenSharedObjectAndAlocationFailedWhen2dCreatedThenReturnCorrectCode,
-                           givenSharedObjectAndNTHandleAndAllocationFailedWhen2dCreatedThenReturnCorrectCode,
-                           givenP010FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
-                           givenP016FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
-                           givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
-                           givenP010FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
-                           givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
-                           givenPackedFormatWhenLookingForSurfaceFormatWithPackedNotSupportedThenReturnNull,
-                           givenPackedFormatWhenLookingForSurfaceFormatWithPackedSupportedThenReturnValidFormat);
+REGISTER_TYPED_TEST_SUITE_P(D3DTests,
+                            GivenSpecificDeviceSetWhenGettingDeviceIDsFromD3DThenOnlySelectedDevicesAreReturned,
+                            GivenSpecificDeviceSourceWhenGettingDeviceIDsFromD3DThenOnlySelectedDevicesAreReturned,
+                            givenNonIntelVendorWhenGetDeviceIdIsCalledThenReturnError,
+                            WhenCreatingFromD3DBufferKhrApiThenValidBufferIsReturned,
+                            WhenCreatingFromD3D2dTextureKhrApiThenValidImageIsReturned,
+                            WhenCreatingFromD3D3dTextureKhrApiThenValidImageIsReturned,
+                            givenSharedResourceFlagWhenCreateBufferThenStagingBufferEqualsPassedBuffer,
+                            givenNonSharedResourceFlagWhenCreateBufferThenCreateNewStagingBuffer,
+                            givenNonSharedResourceBufferWhenAcquiredThenCopySubregion,
+                            givenSharedResourceBufferWhenAcquiredThenDontCopySubregion,
+                            givenSharedResourceBufferAndInteropUserSyncDisabledWhenAcquiredThenFlushOnAcquire,
+                            WhenGettingPreferD3DSharedResourcesThenCorrectValueIsReturned,
+                            WhenGettingD3DResourceInfoFromMemObjThenCorrectInfoIsReturned,
+                            WhenGettingD3DSubresourceInfoFromMemObjThenCorrectInfoIsReturned,
+                            givenTheSameD3DBufferWhenNextCreateIsCalledThenFail,
+                            givenD3DTextureWithTheSameSubresourceWhenNextCreateIsCalledThenFail,
+                            givenInvalidSubresourceWhenCreateTexture2dIsCalledThenFail,
+                            givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFail,
+                            givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
+                            givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
+                            givenReadWriteFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
+                            givenNV12FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
+                            givenSharedObjectFromInvalidContextWhen2dCreatedThenReturnCorrectCode,
+                            givenSharedObjectFromInvalidContextAndNTHandleWhen2dCreatedThenReturnCorrectCode,
+                            givenSharedObjectAndAlocationFailedWhen2dCreatedThenReturnCorrectCode,
+                            givenSharedObjectAndNTHandleAndAllocationFailedWhen2dCreatedThenReturnCorrectCode,
+                            givenP010FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
+                            givenP016FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
+                            givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
+                            givenP010FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
+                            givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
+                            givenPackedFormatWhenLookingForSurfaceFormatWithPackedNotSupportedThenReturnNull,
+                            givenPackedFormatWhenLookingForSurfaceFormatWithPackedSupportedThenReturnValidFormat);
 
-INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DTests, D3DTypes);
+INSTANTIATE_TYPED_TEST_SUITE_P(D3DSharingTests, D3DTests, D3DTypes);
 
 TEST(D3DSurfaceTest, givenD3DSurfaceWhenInvalidMemObjectIsPassedToValidateUpdateDataThenInvalidMemObjectErrorIsReturned) {
     class MockD3DSurface : public D3DSurface {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,14 +15,14 @@
 #include "opencl/test/unit_test/offline_compiler/ocloc_product_config_tests.h"
 
 namespace NEO {
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     OclocProductConfigPvcTestsValues,
     OclocProductConfigTests,
     ::testing::Combine(
         ::testing::ValuesIn(AOT_PVC::productConfigs),
         ::testing::Values(IGFX_PVC)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     OclocFatbinaryPvcTests,
     OclocFatbinaryPerProductTests,
     ::testing::Combine(

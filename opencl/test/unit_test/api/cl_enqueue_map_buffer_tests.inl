@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -194,7 +194,7 @@ static cl_mem_flags noReadAccessFlags[] = {
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_WRITE_ONLY,
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     EnqueueMapBufferFlagsTests_Create,
     EnqueueMapReadBufferTests,
     testing::ValuesIn(noReadAccessFlags));
@@ -223,7 +223,7 @@ static cl_mem_flags noWriteAccessFlags[] = {
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_READ_ONLY,
     CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     EnqueueMapBufferFlagsTests_Create,
     EnqueueMapWriteBufferTests,
     testing::ValuesIn(noWriteAccessFlags));

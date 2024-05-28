@@ -1024,8 +1024,8 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
     EXPECT_NE(nullptr, newBuilder);
 }
 
-INSTANTIATE_TEST_CASE_P(MipMapReadImageTest_GivenImageWithMipLevelNonZeroWhenWriteImageIsCalledThenProperMipLevelIsSet,
-                        MipMapReadImageTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
+INSTANTIATE_TEST_SUITE_P(MipMapReadImageTest_GivenImageWithMipLevelNonZeroWhenWriteImageIsCalledThenProperMipLevelIsSet,
+                         MipMapReadImageTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
 
 using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
 

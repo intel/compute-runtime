@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,16 +25,16 @@ TEST_P(MipLevelTest, givenMemObjectTypeThenProperMipLevelIsReturned) {
     EXPECT_EQ(static_cast<uint32_t>(pair.second), findMipLevel(pair.first, testOrigin));
 }
 
-INSTANTIATE_TEST_CASE_P(MipLevel,
-                        MipLevelTest,
-                        ::testing::Values(std::make_pair(CL_MEM_OBJECT_IMAGE1D, testOrigin[1]),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE1D_ARRAY, testOrigin[2]),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE2D, testOrigin[2]),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, testOrigin[3]),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE3D, testOrigin[3]),
-                                          std::make_pair(CL_MEM_OBJECT_BUFFER, 0U),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE1D_BUFFER, 0U),
-                                          std::make_pair(CL_MEM_OBJECT_PIPE, 0U)));
+INSTANTIATE_TEST_SUITE_P(MipLevel,
+                         MipLevelTest,
+                         ::testing::Values(std::make_pair(CL_MEM_OBJECT_IMAGE1D, testOrigin[1]),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE1D_ARRAY, testOrigin[2]),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D, testOrigin[2]),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, testOrigin[3]),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE3D, testOrigin[3]),
+                                           std::make_pair(CL_MEM_OBJECT_BUFFER, 0U),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE1D_BUFFER, 0U),
+                                           std::make_pair(CL_MEM_OBJECT_PIPE, 0U)));
 
 typedef ::testing::TestWithParam<std::pair<uint32_t, uint32_t>> MipLevelOriginIdxTest;
 
@@ -43,16 +43,16 @@ TEST_P(MipLevelOriginIdxTest, givenMemObjectTypeWhenGettingMipLevelOriginIdxThen
     EXPECT_EQ(static_cast<uint32_t>(pair.second), getMipLevelOriginIdx(pair.first));
 }
 
-INSTANTIATE_TEST_CASE_P(MipLevelOriginIdx,
-                        MipLevelOriginIdxTest,
-                        ::testing::Values(std::make_pair(CL_MEM_OBJECT_IMAGE1D, 1U),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE1D_ARRAY, 2U),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE2D, 2U),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, 3U),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE3D, 3U),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE1D_BUFFER, 0U),
-                                          std::make_pair(CL_MEM_OBJECT_BUFFER, static_cast<uint32_t>(-1)),
-                                          std::make_pair(CL_MEM_OBJECT_PIPE, static_cast<uint32_t>(-1))));
+INSTANTIATE_TEST_SUITE_P(MipLevelOriginIdx,
+                         MipLevelOriginIdxTest,
+                         ::testing::Values(std::make_pair(CL_MEM_OBJECT_IMAGE1D, 1U),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE1D_ARRAY, 2U),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D, 2U),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, 3U),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE3D, 3U),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE1D_BUFFER, 0U),
+                                           std::make_pair(CL_MEM_OBJECT_BUFFER, static_cast<uint32_t>(-1)),
+                                           std::make_pair(CL_MEM_OBJECT_PIPE, static_cast<uint32_t>(-1))));
 
 TEST(MipmapHelper, givenClImageDescWithoutMipLevelsWhenIsMipMappedIsCalledThenFalseIsReturned) {
     cl_image_desc desc = {};
@@ -165,6 +165,6 @@ constexpr myTuple testOrigins[]{myTuple({{2, 3, 5, 7}},
                                 myTuple({{2, 0, 0, 0}},
                                         0u, CL_MEM_OBJECT_IMAGE1D)};
 
-INSTANTIATE_TEST_CASE_P(MipMapOffset,
-                        MipOffsetTest,
-                        ::testing::ValuesIn(testOrigins));
+INSTANTIATE_TEST_SUITE_P(MipMapOffset,
+                         MipOffsetTest,
+                         ::testing::ValuesIn(testOrigins));

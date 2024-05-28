@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"
 
 using namespace NEO;
-INSTANTIATE_TEST_CASE_P(ProductConfigHwInfoArlTests,
-                        ProductConfigHwInfoTests,
-                        ::testing::Combine(::testing::ValuesIn(AOT_ARL::productConfigs),
-                                           ::testing::Values(IGFX_ARROWLAKE)));
+INSTANTIATE_TEST_SUITE_P(ProductConfigHwInfoArlTests,
+                         ProductConfigHwInfoTests,
+                         ::testing::Combine(::testing::ValuesIn(AOT_ARL::productConfigs),
+                                            ::testing::Values(IGFX_ARROWLAKE)));

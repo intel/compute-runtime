@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -310,7 +310,7 @@ HWTEST2_P(AUBReadImageCCS, GivenUnalignedMemoryWhenReadingImageThenExpectationsA
     testReadImageUnaligned<FamilyType>();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AUBReadImage_simple, AUBReadImageCCS,
     ::testing::Combine(::testing::Values( // formats
                            CL_UNORM_INT8, CL_SIGNED_INT16, CL_UNSIGNED_INT32,
@@ -348,7 +348,7 @@ HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnable
     ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AUBReadImage_simple, AUBReadImageBCS,
     ::testing::Combine(::testing::Values( // formats
                            CL_UNORM_INT8, CL_SIGNED_INT16, CL_UNSIGNED_INT32,

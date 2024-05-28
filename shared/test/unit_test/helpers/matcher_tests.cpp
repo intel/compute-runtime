@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,6 @@ class TestMacrosWithParamIfNotMatchTearDownCall : public TestMacrosIfNotMatchTea
 HWTEST2_P(TestMacrosWithParamIfNotMatchTearDownCall, givenNotMatchPlatformWhenUseHwTest2PThenSetUpAndTearDownAreNotCalled, IsSKL) {
     expectCorrectPlatform();
 }
-INSTANTIATE_TEST_CASE_P(givenNotMatchPlatformWhenUseHwTest2PThenSetUpAndTearDownAreNotCalled,
-                        TestMacrosWithParamIfNotMatchTearDownCall,
-                        ::testing::Values(0));
+INSTANTIATE_TEST_SUITE_P(givenNotMatchPlatformWhenUseHwTest2PThenSetUpAndTearDownAreNotCalled,
+                         TestMacrosWithParamIfNotMatchTearDownCall,
+                         ::testing::Values(0));

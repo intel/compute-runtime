@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ template <typename TypeParam>
 struct ValidatorFixture : public ::testing::Test {
 };
 
-TYPED_TEST_CASE_P(ValidatorFixture);
+TYPED_TEST_SUITE_P(ValidatorFixture);
 
 TYPED_TEST_P(ValidatorFixture, GivenNullPtrWhenValidatingThenSuccessIsReturned) {
     TypeParam object = nullptr;
@@ -47,7 +47,7 @@ TYPED_TEST_P(ValidatorFixture, GivenRandomMemoryWhenValidatingThenSuccessIsRetur
     EXPECT_EQ(rv, validateObjects(object));
 }
 
-REGISTER_TYPED_TEST_CASE_P(
+REGISTER_TYPED_TEST_SUITE_P(
     ValidatorFixture,
     GivenNullPtrWhenValidatingThenSuccessIsReturned,
     GivenRandomMemoryWhenValidatingThenSuccessIsReturned);
@@ -66,7 +66,7 @@ typedef ::testing::Types<
     cl_sampler>
     ValidatorParams;
 
-INSTANTIATE_TYPED_TEST_CASE_P(Validator, ValidatorFixture, ValidatorParams);
+INSTANTIATE_TYPED_TEST_SUITE_P(Validator, ValidatorFixture, ValidatorParams);
 
 TEST(GenericValidator, GivenNullCtxAndNullCqWhenValidatingThenInvalidContextIsReturned) {
     cl_context context = nullptr;
@@ -181,9 +181,9 @@ TEST_P(PatternSizeValid, GivenValidPatternSizeWhenValidatingThenSuccessIsReturne
     EXPECT_EQ(CL_SUCCESS, validateObjects(psv));
 }
 
-INSTANTIATE_TEST_CASE_P(PatternSize,
-                        PatternSizeValid,
-                        ::testing::Values(1, 2, 4, 8, 16, 32, 64, 128));
+INSTANTIATE_TEST_SUITE_P(PatternSize,
+                         PatternSizeValid,
+                         ::testing::Values(1, 2, 4, 8, 16, 32, 64, 128));
 
 typedef ::testing::TestWithParam<size_t> PatternSizeInvalid;
 
@@ -192,9 +192,9 @@ TEST_P(PatternSizeInvalid, GivenInvalidPatternSizeWhenValidatingThenInvalidValue
     EXPECT_EQ(CL_INVALID_VALUE, validateObjects(psv));
 }
 
-INSTANTIATE_TEST_CASE_P(PatternSize,
-                        PatternSizeInvalid,
-                        ::testing::Values(0, 3, 5, 256, 512, 1024));
+INSTANTIATE_TEST_SUITE_P(PatternSize,
+                         PatternSizeInvalid,
+                         ::testing::Values(0, 3, 5, 256, 512, 1024));
 
 TEST(withCastToInternal, GivenNullPtrWhenCastingThenNullPtrIsReturned) {
     Context *pContext = nullptr;

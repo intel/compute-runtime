@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1284,7 +1284,7 @@ struct D3D9ImageFormatTests
       public ::testing::Test {
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     D3D9ImageFormatTests,
     D3D9ImageFormatTests,
     testing::ValuesIn(D3D9Formats::allImageFormats));

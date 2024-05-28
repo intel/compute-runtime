@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
     }
 }
 
-INSTANTIATE_TEST_CASE_P(MemoryManagerType, MemoryManagerMultiDeviceTest, ::testing::Bool());
+INSTANTIATE_TEST_SUITE_P(MemoryManagerType, MemoryManagerMultiDeviceTest, ::testing::Bool());
 
 TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGraphicsMemoryIsCalledThenGraphicsAllocationHasProperGpuAddress) {
     RootDeviceIndicesContainer rootDeviceIndices;

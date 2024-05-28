@@ -98,16 +98,16 @@ HWTEST_P(AUBCopyBuffer, WhenCopyingThenExpectationsMet) {
     delete dstBuffer;
 }
 
-INSTANTIATE_TEST_CASE_P(AUBCopyBuffer_simple,
-                        AUBCopyBuffer,
-                        ::testing::Combine(
-                            ::testing::Values( // srcOffset
-                                0 * sizeof(cl_float),
-                                1 * sizeof(cl_float),
-                                2 * sizeof(cl_float),
-                                3 * sizeof(cl_float)),
-                            ::testing::Values( // dstOffset
-                                0 * sizeof(cl_float),
-                                1 * sizeof(cl_float),
-                                2 * sizeof(cl_float),
-                                3 * sizeof(cl_float))));
+INSTANTIATE_TEST_SUITE_P(AUBCopyBuffer_simple,
+                         AUBCopyBuffer,
+                         ::testing::Combine(
+                             ::testing::Values( // srcOffset
+                                 0 * sizeof(cl_float),
+                                 1 * sizeof(cl_float),
+                                 2 * sizeof(cl_float),
+                                 3 * sizeof(cl_float)),
+                             ::testing::Values( // dstOffset
+                                 0 * sizeof(cl_float),
+                                 1 * sizeof(cl_float),
+                                 2 * sizeof(cl_float),
+                                 3 * sizeof(cl_float))));

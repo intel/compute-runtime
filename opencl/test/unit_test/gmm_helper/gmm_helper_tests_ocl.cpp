@@ -143,7 +143,7 @@ TEST_F(GmmTests, WhenConvertingPlanesThenCorrectPlaneIsReturned) {
 class GmmImgTest : public GmmTests,
                    public ::testing::WithParamInterface<uint32_t /*cl_mem_object_type*/> {};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     GmmImgTests,
     GmmImgTest,
     testing::ValuesIn(GmmTestConst::imgTypes));

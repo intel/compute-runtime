@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,7 +95,7 @@ class CreateFromGlTextureTestsWithParams : public CreateFromGlTexture,
 class CreateFromGlTextureTests : public CreateFromGlTexture {
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateFromGlTextureTestsWithParams,
     CreateFromGlTextureTestsWithParams,
     testing::ValuesIn(glTextureTargets::supportedTargets));

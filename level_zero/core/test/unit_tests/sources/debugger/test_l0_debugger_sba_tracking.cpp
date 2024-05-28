@@ -395,7 +395,7 @@ HWTEST2_F(L0DebuggerTest, givenDebugerEnabledWhenPrepareAndSubmitBatchBufferThen
     EXPECT_TRUE(isLeftoverZeroed);
 }
 
-INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
+INSTANTIATE_TEST_SUITE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
 
 struct L0DebuggerSingleAddressSpace : public Test<L0DebuggerHwFixture> {
     void SetUp() override {

@@ -928,12 +928,12 @@ TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThen
     }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DriverDiagnosticsTests,
     VerboseLevelTest,
     testing::ValuesIn(diagnosticsVerboseLevels));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DriverDiagnosticsTests,
     PerformanceHintBufferTest,
     testing::Combine(
@@ -941,14 +941,14 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Bool(),
         ::testing::Bool()));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DriverDiagnosticsTests,
     PerformanceHintCommandQueueTest,
     testing::Combine(
         ::testing::Bool(),
         ::testing::Bool()));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DriverDiagnosticsTests,
     PerformanceHintKernelTest,
     testing::Bool());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -740,7 +740,7 @@ HWTEST2_P(CommandQueueGroupTestXeHpc, givenVaryingBlitterSupportAndCCSThenBCSGro
     }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CommandQueueGroupTestXeHpcValues,
     CommandQueueGroupTestXeHpc,
     testing::Values(0, 1, 2, 3));

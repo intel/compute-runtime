@@ -653,7 +653,7 @@ static cl_mem_flags noHostPtrFlags[] = {
     CL_MEM_HOST_WRITE_ONLY,
     CL_MEM_HOST_NO_ACCESS};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateImageTest_Create,
     CreateImageNoHostPtr,
     testing::ValuesIn(noHostPtrFlags));
@@ -1084,7 +1084,7 @@ static cl_mem_flags validHostPtrFlags[] = {
     CL_MEM_HOST_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
     CL_MEM_HOST_NO_ACCESS | CL_MEM_COPY_HOST_PTR};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateImageTest_Create,
     CreateImageHostPtr,
     testing::ValuesIn(validHostPtrFlags));
@@ -1594,10 +1594,10 @@ TEST_P(MipLevelCoordinateTest, givenMipmappedImageWhenValidateRegionAndOriginIsC
     EXPECT_EQ(CL_INVALID_MIP_LEVEL, Image::validateRegionAndOrigin(origin, region, desc));
 }
 
-INSTANTIATE_TEST_CASE_P(MipLevelCoordinate,
-                        MipLevelCoordinateTest,
-                        ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D,
-                                          CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
+INSTANTIATE_TEST_SUITE_P(MipLevelCoordinate,
+                         MipLevelCoordinateTest,
+                         ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D,
+                                           CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
 
 typedef ::testing::TestWithParam<std::pair<uint32_t, bool>> HasSlicesTest;
 
@@ -1606,15 +1606,15 @@ TEST_P(HasSlicesTest, givenMemObjectTypeWhenHasSlicesIsCalledThenReturnsTrueIfTy
     EXPECT_EQ(pair.second, Image::hasSlices(pair.first));
 }
 
-INSTANTIATE_TEST_CASE_P(HasSlices,
-                        HasSlicesTest,
-                        ::testing::Values(std::make_pair(CL_MEM_OBJECT_IMAGE1D, false),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE1D_ARRAY, true),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE2D, false),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, true),
-                                          std::make_pair(CL_MEM_OBJECT_IMAGE3D, true),
-                                          std::make_pair(CL_MEM_OBJECT_BUFFER, false),
-                                          std::make_pair(CL_MEM_OBJECT_PIPE, false)));
+INSTANTIATE_TEST_SUITE_P(HasSlices,
+                         HasSlicesTest,
+                         ::testing::Values(std::make_pair(CL_MEM_OBJECT_IMAGE1D, false),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE1D_ARRAY, true),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D, false),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, true),
+                                           std::make_pair(CL_MEM_OBJECT_IMAGE3D, true),
+                                           std::make_pair(CL_MEM_OBJECT_BUFFER, false),
+                                           std::make_pair(CL_MEM_OBJECT_PIPE, false)));
 
 typedef ::testing::Test ImageTransformTest;
 HWTEST_F(ImageTransformTest, givenSurfaceStateWhenTransformImage3dTo2dArrayIsCalledThenSurface2dArrayIsSet) {

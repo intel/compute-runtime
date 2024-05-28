@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ LKFTEST_F(LkfProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenNe
 template <typename T>
 class LkfHwInfoTests : public ::testing::Test {};
 using lkfTestTypes = ::testing::Types<LkfHw1x8x8>;
-TYPED_TEST_CASE(LkfHwInfoTests, lkfTestTypes);
+TYPED_TEST_SUITE(LkfHwInfoTests, lkfTestTypes);
 TYPED_TEST(LkfHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();

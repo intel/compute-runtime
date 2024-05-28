@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,9 +120,9 @@ TEST_P(Float2HalfTest, WhenConvertingFloatToHalfThenValueIsPreserved) {
     EXPECT_EQ(uintOutput, uint16ofHalf);
 }
 
-INSTANTIATE_TEST_CASE_P(Float2Half,
-                        Float2HalfTest,
-                        ::testing::ValuesIn(float2HalfParams));
+INSTANTIATE_TEST_SUITE_P(Float2Half,
+                         Float2HalfTest,
+                         ::testing::ValuesIn(float2HalfParams));
 
 struct L3Config {
     union {

@@ -841,7 +841,7 @@ std::pair<uint32_t, size_t> kernelIsaCopyingPairs[] = {
     {1, 1},
     {static_cast<uint32_t>(MemoryConstants::pageSize64k + 1), 0}}; // pageSize64 is a common upper-bound for both system and local memory
 
-INSTANTIATE_TEST_CASE_P(, KernelIsaCopyingMomentTest, testing::ValuesIn(kernelIsaCopyingPairs));
+INSTANTIATE_TEST_SUITE_P(, KernelIsaCopyingMomentTest, testing::ValuesIn(kernelIsaCopyingPairs));
 
 TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsaCopiedDuringLinkingOnlyIfCanFitInACommonParentPage) {
     auto [testKernelHeapSize, numberOfCopiesToAllocationAtModuleInitialization] = GetParam();

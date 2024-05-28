@@ -305,10 +305,10 @@ HWTEST2_P(CompressionLocalXeHPAndLater, givenCompressedImageWhenReadingThenResul
     givenCompressedImageWhenReadingThenResultsAreCorrect<FamilyType>();
 }
 
-INSTANTIATE_TEST_CASE_P(,
-                        CompressionLocalXeHPAndLater,
-                        ::testing::Values(aub_stream::ENGINE_RCS,
-                                          aub_stream::ENGINE_CCS));
+INSTANTIATE_TEST_SUITE_P(,
+                         CompressionLocalXeHPAndLater,
+                         ::testing::Values(aub_stream::ENGINE_RCS,
+                                           aub_stream::ENGINE_CCS));
 
 using CompressionSystemXeHPAndLater = CompressionXeHPAndLater<false>;
 HWTEST2_P(CompressionSystemXeHPAndLater, GENERATEONLY_givenCompressedBuffersWhenWritingAndCopyingThenResultsAreCorrect, CompressionSystemAubsSupportedMatcher) {
@@ -321,7 +321,7 @@ HWTEST2_P(CompressionSystemXeHPAndLater, givenCompressedImageWhenReadingThenResu
     givenCompressedImageWhenReadingThenResultsAreCorrect<FamilyType>();
 }
 
-INSTANTIATE_TEST_CASE_P(,
-                        CompressionSystemXeHPAndLater,
-                        ::testing::Values(aub_stream::ENGINE_RCS,
-                                          aub_stream::ENGINE_CCS));
+INSTANTIATE_TEST_SUITE_P(,
+                         CompressionSystemXeHPAndLater,
+                         ::testing::Values(aub_stream::ENGINE_RCS,
+                                           aub_stream::ENGINE_CCS));

@@ -789,7 +789,7 @@ std::pair<ze_image_format_layout_t, ze_image_format_type_t> validFormats[] = {
     {ZE_IMAGE_FORMAT_LAYOUT_RGBP, ZE_IMAGE_FORMAT_TYPE_UNORM},
     {ZE_IMAGE_FORMAT_LAYOUT_BRGP, ZE_IMAGE_FORMAT_TYPE_UNORM}};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     validImageFormats,
     TestImageFormats,
     testing::ValuesIn(validFormats));

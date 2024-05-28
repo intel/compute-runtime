@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,6 +87,6 @@ static cl_device_info deviceInfoStrParams[] = {
     CL_DEVICE_BUILT_IN_KERNELS, CL_DEVICE_EXTENSIONS, CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED, CL_DEVICE_NAME,
     CL_DEVICE_OPENCL_C_VERSION, CL_DEVICE_PROFILE, CL_DEVICE_VENDOR, CL_DEVICE_VERSION, CL_DRIVER_VERSION};
 
-INSTANTIATE_TEST_CASE_P(api, GetDeviceGlInfoStr, testing::ValuesIn(deviceInfoStrParams));
+INSTANTIATE_TEST_SUITE_P(api, GetDeviceGlInfoStr, testing::ValuesIn(deviceInfoStrParams));
 
 } // namespace ULT

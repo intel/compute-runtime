@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -339,11 +339,11 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
 
 uint32_t types[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
 
-INSTANTIATE_TEST_CASE_P(MipMapCopyImageTest_GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet,
-                        MipMapCopyImageTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(types),
-                            ::testing::ValuesIn(types)));
+INSTANTIATE_TEST_SUITE_P(MipMapCopyImageTest_GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet,
+                         MipMapCopyImageTest,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(types),
+                             ::testing::ValuesIn(types)));
 
 using OneMipLevelCopyImageImageTests = Test<OneMipLevelImageFixture>;
 

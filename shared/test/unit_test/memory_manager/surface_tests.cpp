@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ class SurfaceTest : public ::testing::Test {
     MockGraphicsAllocation gfxAllocation;
 };
 
-TYPED_TEST_CASE(SurfaceTest, SurfaceTypes);
+TYPED_TEST_SUITE(SurfaceTest, SurfaceTypes);
 
 HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehavesCorrectly) {
     int32_t execStamp;

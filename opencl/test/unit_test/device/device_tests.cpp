@@ -779,7 +779,7 @@ TEST_P(MultipleDeviceTest, givenMultipleDevicesWhenGetNumTilesThenReturnNumberOf
     platformsImpl->clear();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     MultiDeviceTests,
     MultipleDeviceTest,
     testing::Range<uint32_t>(1u, 5u));

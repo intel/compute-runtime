@@ -1181,7 +1181,7 @@ HWCMDTEST_P(IGFX_XE_HP_CORE, AubWalkerPartitionTest, whenPartitionsAreUsedWithVa
     clReleaseEvent(event);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AUBWPARID,
     AubWalkerPartitionTest,
     ::testing::Combine(

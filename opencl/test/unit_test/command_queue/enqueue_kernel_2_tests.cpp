@@ -294,13 +294,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnquein
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
-INSTANTIATE_TEST_CASE_P(EnqueueKernel,
-                        EnqueueWorkItemTests,
-                        ::testing::ValuesIn(testParamTable));
+INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
+                         EnqueueWorkItemTests,
+                         ::testing::ValuesIn(testParamTable));
 
-INSTANTIATE_TEST_CASE_P(EnqueueKernel,
-                        EnqueueWorkItemTestsWithLimitedParamSet,
-                        ::testing::ValuesIn(oneEntryTestParamTable));
+INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
+                         EnqueueWorkItemTestsWithLimitedParamSet,
+                         ::testing::ValuesIn(oneEntryTestParamTable));
 
 typedef EnqueueKernelTypeTest<TestParam2> EnqueueScratchSpaceTests;
 
@@ -437,9 +437,9 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
 }
 
-INSTANTIATE_TEST_CASE_P(EnqueueKernel,
-                        EnqueueScratchSpaceTests,
-                        ::testing::ValuesIn(testParamTable2));
+INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
+                         EnqueueScratchSpaceTests,
+                         ::testing::ValuesIn(testParamTable2));
 
 typedef EnqueueKernelTypeTest<int> EnqueueKernelWithScratch;
 
@@ -528,8 +528,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAll
     }
 }
 
-INSTANTIATE_TEST_CASE_P(EnqueueKernel,
-                        EnqueueKernelWithScratch, testing::Values(1));
+INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
+                         EnqueueKernelWithScratch, testing::Values(1));
 
 TestParam testParamPrintf[] = {
     {1, 1, 1, 1, 1, 1}};
@@ -719,9 +719,9 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndI
     EXPECT_STREQ("", output.c_str());
 }
 
-INSTANTIATE_TEST_CASE_P(EnqueueKernel,
-                        EnqueueKernelPrintfTest,
-                        ::testing::ValuesIn(testParamPrintf));
+INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
+                         EnqueueKernelPrintfTest,
+                         ::testing::ValuesIn(testParamPrintf));
 
 using EnqueueKernelTests = ::testing::Test;
 

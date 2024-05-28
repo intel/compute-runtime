@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -200,7 +200,7 @@ ImageEnqueueCall enqueueFunctions[8] = {
     &ValidateRegionAndOriginTests::mapImage,
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ValidateRegionAndOriginTests,
     ValidateRegionAndOriginTests,
     ::testing::ValuesIn(enqueueFunctions));

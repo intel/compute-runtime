@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -642,9 +642,9 @@ static cl_mem_flags validFlags[] = {
     CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL,
 };
 
-INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
-                        clCreateImageValidFlags,
-                        ::testing::ValuesIn(validFlags));
+INSTANTIATE_TEST_SUITE_P(CreateImageWithFlags,
+                         clCreateImageValidFlags,
+                         ::testing::ValuesIn(validFlags));
 
 TEST_P(clCreateImageValidFlags, GivenValidFlagsWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
     REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
@@ -688,9 +688,9 @@ static cl_mem_flags invalidFlagsCombinations[] = {
     CL_MEM_NO_ACCESS_INTEL | CL_MEM_WRITE_ONLY,
     CL_MEM_NO_ACCESS_INTEL | CL_MEM_READ_ONLY};
 
-INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
-                        clCreateImageInvalidFlags,
-                        ::testing::ValuesIn(invalidFlagsCombinations));
+INSTANTIATE_TEST_SUITE_P(CreateImageWithFlags,
+                         clCreateImageInvalidFlags,
+                         ::testing::ValuesIn(invalidFlagsCombinations));
 
 TEST_P(clCreateImageInvalidFlags, GivenInvalidFlagsCombinationsWhenCreatingImageThenInvalidValueErrorIsReturned) {
     REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
@@ -753,9 +753,9 @@ static ImageFlags flagsWithUnrestrictedIntel[] = {
 
 typedef ClCreateImageTests<::testing::TestWithParam<ImageFlags>> clCreateImageFlagsUnrestrictedIntel;
 
-INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
-                        clCreateImageFlagsUnrestrictedIntel,
-                        ::testing::ValuesIn(flagsWithUnrestrictedIntel));
+INSTANTIATE_TEST_SUITE_P(CreateImageWithFlags,
+                         clCreateImageFlagsUnrestrictedIntel,
+                         ::testing::ValuesIn(flagsWithUnrestrictedIntel));
 
 TEST_P(clCreateImageFlagsUnrestrictedIntel, GivenFlagsIncludingUnrestrictedIntelWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
     REQUIRE_IMAGES_OR_SKIP(pContext);
@@ -804,9 +804,9 @@ static ImageFlags validFlagsAndParentFlags[] = {
 
 typedef ClCreateImageTests<::testing::TestWithParam<ImageFlags>> clCreateImageValidFlagsAndParentFlagsCombinations;
 
-INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
-                        clCreateImageValidFlagsAndParentFlagsCombinations,
-                        ::testing::ValuesIn(validFlagsAndParentFlags));
+INSTANTIATE_TEST_SUITE_P(CreateImageWithFlags,
+                         clCreateImageValidFlagsAndParentFlagsCombinations,
+                         ::testing::ValuesIn(validFlagsAndParentFlags));
 
 TEST_P(clCreateImageValidFlagsAndParentFlagsCombinations, GivenValidFlagsAndParentFlagsWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
     REQUIRE_IMAGES_OR_SKIP(pContext);
@@ -860,9 +860,9 @@ static ImageFlags invalidFlagsAndParentFlags[] = {
 
 typedef ClCreateImageTests<::testing::TestWithParam<ImageFlags>> clCreateImageInvalidFlagsAndParentFlagsCombinations;
 
-INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
-                        clCreateImageInvalidFlagsAndParentFlagsCombinations,
-                        ::testing::ValuesIn(invalidFlagsAndParentFlags));
+INSTANTIATE_TEST_SUITE_P(CreateImageWithFlags,
+                         clCreateImageInvalidFlagsAndParentFlagsCombinations,
+                         ::testing::ValuesIn(invalidFlagsAndParentFlags));
 
 TEST_P(clCreateImageInvalidFlagsAndParentFlagsCombinations, GivenInvalidFlagsAndParentFlagsWhenCreatingImageThenInvalidMemObjectErrorIsReturned) {
     REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
@@ -912,9 +912,9 @@ ImageSizes validImage2DSizes[] = {{64, 64, 1}, {3, 3, 1}, {8192, 1, 1}, {117, 39
 
 typedef ClCreateImageTests<::testing::TestWithParam<ImageSizes>> clCreateImageValidSizesTest;
 
-INSTANTIATE_TEST_CASE_P(validImage2DSizes,
-                        clCreateImageValidSizesTest,
-                        ::testing::ValuesIn(validImage2DSizes));
+INSTANTIATE_TEST_SUITE_P(validImage2DSizes,
+                         clCreateImageValidSizesTest,
+                         ::testing::ValuesIn(validImage2DSizes));
 
 TEST_P(clCreateImageValidSizesTest, GivenValidSizesWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
     REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
@@ -1358,9 +1358,9 @@ TEST_P(ClCreateNon2dImageFromImageTest, GivenImage2dWhenCreatingImageFromNon2dIm
     EXPECT_EQ(nullptr, imageFromImageObject);
 }
 
-INSTANTIATE_TEST_CASE_P(clCreateNon2dImageFromImageTests,
-                        ClCreateNon2dImageFromImageTest,
-                        ::testing::ValuesIn(non2dImageTypes));
+INSTANTIATE_TEST_SUITE_P(clCreateNon2dImageFromImageTests,
+                         ClCreateNon2dImageFromImageTest,
+                         ::testing::ValuesIn(non2dImageTypes));
 
 using clCreateImageWithMultiDeviceContextTests = MultiRootDeviceFixture;
 

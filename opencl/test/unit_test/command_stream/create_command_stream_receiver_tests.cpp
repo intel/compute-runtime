@@ -55,7 +55,7 @@ static CommandStreamReceiverType commandStreamReceiverTypes[] = {
     CommandStreamReceiverType::nullAub,
     CommandStreamReceiverType::typesNum};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateCommandStreamReceiverTest_Create,
     CreateCommandStreamReceiverTest,
     testing::ValuesIn(commandStreamReceiverTypes));

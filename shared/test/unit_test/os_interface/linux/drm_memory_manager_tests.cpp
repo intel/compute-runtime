@@ -4129,9 +4129,9 @@ TEST_P(DrmMemoryManagerWithHostIpcAllocationParamTest,
     memoryManager->freeGraphicsMemory(gfxAllocation1);
 }
 
-INSTANTIATE_TEST_CASE_P(HostIpcAllocationFlag,
-                        DrmMemoryManagerWithHostIpcAllocationParamTest,
-                        ::testing::Values(false, true));
+INSTANTIATE_TEST_SUITE_P(HostIpcAllocationFlag,
+                         DrmMemoryManagerWithHostIpcAllocationParamTest,
+                         ::testing::Values(false, true));
 
 TEST(DrmMemoryManagerFreeGraphicsMemoryUnreferenceTest,
      givenCallToCreateSharedAllocationWithReuseSharedAllocationThenAllocationsSuccedAndAddressesAreTheSame) {

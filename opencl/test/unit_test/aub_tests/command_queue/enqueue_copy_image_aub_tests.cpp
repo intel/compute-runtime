@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,13 +172,13 @@ HWTEST2_P(AUBCopyImageCCS, WhenCopyingThenExpectationsMet, ImagesSupportedMatche
     runAubTest<FamilyType>();
 }
 
-INSTANTIATE_TEST_CASE_P(AUBCopyImage_simple,
-                        AUBCopyImageCCS,
-                        ::testing::Combine(
-                            ::testing::Values( // srcOffset
-                                0u, 1u, 2u),
-                            ::testing::Values( // dstOffset
-                                0u, 1u, 2u)));
+INSTANTIATE_TEST_SUITE_P(AUBCopyImage_simple,
+                         AUBCopyImageCCS,
+                         ::testing::Combine(
+                             ::testing::Values( // srcOffset
+                                 0u, 1u, 2u),
+                             ::testing::Values( // dstOffset
+                                 0u, 1u, 2u)));
 
 using AUBCopyImageBCS = AUBCopyImage<true>;
 
@@ -187,10 +187,10 @@ HWTEST2_P(AUBCopyImageBCS, WhenCopyingWithBlitterEnabledThenExpectationsMet, Ima
     ASSERT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::blit);
 }
 
-INSTANTIATE_TEST_CASE_P(AUBCopyImage_simple,
-                        AUBCopyImageBCS,
-                        ::testing::Combine(
-                            ::testing::Values( // srcOffset
-                                0u, 1u, 2u),
-                            ::testing::Values( // dstOffset
-                                0u, 1u, 2u)));
+INSTANTIATE_TEST_SUITE_P(AUBCopyImage_simple,
+                         AUBCopyImageBCS,
+                         ::testing::Combine(
+                             ::testing::Values( // srcOffset
+                                 0u, 1u, 2u),
+                             ::testing::Values( // dstOffset
+                                 0u, 1u, 2u)));

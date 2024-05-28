@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,7 +84,7 @@ typedef ::testing::Types<
     unsigned long>
     KernelArgImmediateTypes;
 
-TYPED_TEST_CASE(KernelArgImmediateTest, KernelArgImmediateTypes);
+TYPED_TEST_SUITE(KernelArgImmediateTest, KernelArgImmediateTypes);
 
 TYPED_TEST(KernelArgImmediateTest, WhenSettingKernelArgThenArgIsSetCorrectly) {
     auto val = (TypeParam)0xaaaaaaaaULL;

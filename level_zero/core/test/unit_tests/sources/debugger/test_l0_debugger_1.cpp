@@ -645,7 +645,7 @@ HWTEST2_F(L0DebuggerTest, givenDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, 
     EXPECT_EQ(disableL3CacheForDebug, static_cast<MockGmmHelper *>(neoDevice->getGmmHelper())->allResourcesUncached);
 }
 
-INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
+INSTANTIATE_TEST_SUITE_P(SBAModesForDebugger, L0DebuggerParameterizedTests, ::testing::Values(0, 1));
 
 struct MockKernelImmutableData : public KernelImmutableData {
     using KernelImmutableData::isaGraphicsAllocation;

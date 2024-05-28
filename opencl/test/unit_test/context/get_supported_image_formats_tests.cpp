@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -455,14 +455,14 @@ cl_mem_object_type getSupportedImageFormats[] = {
     CL_MEM_OBJECT_IMAGE2D_ARRAY,
     CL_MEM_OBJECT_IMAGE3D};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Context,
     GetSupportedImageFormatsTest,
     ::testing::Combine(
         ::testing::ValuesIn(getSupportedImageFormatsFlags),
         ::testing::ValuesIn(getSupportedImageFormats)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Context,
     PackedYuvExtensionSupportedImageFormatsTest,
     ::testing::Combine(
@@ -481,14 +481,14 @@ cl_mem_object_type nv12ExtensionSupportedImageFormats[] = {
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE2D};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Context,
     NV12ExtensionSupportedImageFormatsTest,
     ::testing::Combine(
         ::testing::ValuesIn(nv12ExtensionSupportedImageFormatsFlags),
         ::testing::ValuesIn(nv12ExtensionSupportedImageFormats)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Context,
     NV12ExtensionUnsupportedImageFormatsTest,
     ::testing::Combine(

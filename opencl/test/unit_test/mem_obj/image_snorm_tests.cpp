@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,12 +67,12 @@ TEST_P(SnormSurfaceFormatTests, givenSnormOclFormatWhenCheckingrReadOnlySurfaceF
     EXPECT_EQ(6u, snormFormatsFound);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageSnormTests,
     SnormSurfaceFormatAccessFlagsTests,
     ::testing::ValuesIn(flagsForTests));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ImageSnormTests,
     SnormSurfaceFormatTests,
     ::testing::ValuesIn(paramsForSnormTests));

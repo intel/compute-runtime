@@ -348,9 +348,9 @@ TEST_P(ContextWithAsyncDeleterTest, givenContextWithMemoryManagerWhenAsyncDelete
     EXPECT_EQ(0, deleter->getClientsNum());
 }
 
-INSTANTIATE_TEST_CASE_P(ContextTests,
-                        ContextWithAsyncDeleterTest,
-                        ::testing::Bool());
+INSTANTIATE_TEST_SUITE_P(ContextTests,
+                         ContextWithAsyncDeleterTest,
+                         ::testing::Bool());
 
 TEST(DefaultContext, givenDefaultContextWhenItIsQueriedForTypeThenDefaultTypeIsReturned) {
     MockContext context;

@@ -2325,7 +2325,7 @@ std::pair<bool, bool> aubSubCaptureStatus[] = {
     {true, true},
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CommandStreamReceiverWithAubSubCaptureTest_program,
     CommandStreamReceiverWithAubSubCaptureTest,
     testing::ValuesIn(aubSubCaptureStatus));

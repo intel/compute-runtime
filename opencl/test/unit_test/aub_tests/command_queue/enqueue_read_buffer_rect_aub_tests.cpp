@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,11 +107,11 @@ HWTEST_P(AUBReadBufferRect, Given3dWhenReadingBufferThenExpectationsAreMet) {
     ::alignedFree(srcMemory);
     ::alignedFree(destMemory);
 }
-INSTANTIATE_TEST_CASE_P(AUBReadBufferRect_simple,
-                        AUBReadBufferRect,
-                        ::testing::Combine(
-                            ::testing::Values(0, 1, 2, 3, 4),
-                            ::testing::Values(0, 1, 2, 3, 4)));
+INSTANTIATE_TEST_SUITE_P(AUBReadBufferRect_simple,
+                         AUBReadBufferRect,
+                         ::testing::Combine(
+                             ::testing::Values(0, 1, 2, 3, 4),
+                             ::testing::Values(0, 1, 2, 3, 4)));
 
 struct AUBReadBufferRectUnaligned
     : public CommandEnqueueAUBFixture,

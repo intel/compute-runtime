@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -433,9 +433,9 @@ cl_bool normalizedCoordinatesCases[] = {
     CL_FALSE,
     CL_TRUE};
 
-INSTANTIATE_TEST_CASE_P(SamplerSetArg,
-                        NormalizedTest,
-                        ::testing::ValuesIn(normalizedCoordinatesCases));
+INSTANTIATE_TEST_SUITE_P(SamplerSetArg,
+                         NormalizedTest,
+                         ::testing::ValuesIn(normalizedCoordinatesCases));
 
 ////////////////////////////////////////////////////////////////////////////////
 struct AddressingModeTest
@@ -520,9 +520,9 @@ cl_addressing_mode addressingModeCases[] = {
     CL_ADDRESS_REPEAT,
     CL_ADDRESS_MIRRORED_REPEAT};
 
-INSTANTIATE_TEST_CASE_P(SamplerSetArg,
-                        AddressingModeTest,
-                        ::testing::ValuesIn(addressingModeCases));
+INSTANTIATE_TEST_SUITE_P(SamplerSetArg,
+                         AddressingModeTest,
+                         ::testing::ValuesIn(addressingModeCases));
 
 HWTEST_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
@@ -611,6 +611,6 @@ cl_filter_mode filterModeCase[] = {
     CL_FILTER_NEAREST,
     CL_FILTER_LINEAR};
 
-INSTANTIATE_TEST_CASE_P(SamplerSetArg,
-                        FilterModeTest,
-                        ::testing::ValuesIn(filterModeCase));
+INSTANTIATE_TEST_SUITE_P(SamplerSetArg,
+                         FilterModeTest,
+                         ::testing::ValuesIn(filterModeCase));

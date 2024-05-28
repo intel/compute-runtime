@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ constexpr uint32_t allSupportedCopyEngines[] = {
 
 using OneTileXeHpcTests = CopyEnginesXeHpcFixture<1, XeHpcCoreFamily>;
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     MemCopyBcsCmd,
     OneTileXeHpcTests,
     testing::ValuesIn(allSupportedCopyEngines));
@@ -86,7 +86,7 @@ XE_HPC_CORETEST_P(OneTileXeHpcTests, givenCopyBufferRectWithBigSizesWhenHostPtrB
 
 using OneTileSystemMemoryXeHpcTests = CopyEnginesXeHpcFixture<1, XeHpcCoreFamily, false>;
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     MemCopyBcsCmd,
     OneTileSystemMemoryXeHpcTests,
     testing::ValuesIn(allSupportedCopyEngines));

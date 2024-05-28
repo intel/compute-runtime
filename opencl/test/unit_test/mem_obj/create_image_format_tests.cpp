@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,7 +80,7 @@ TEST_P(ReadWriteFormatTest, GivenValidFormatWhenCreatingImageThenImageIsCreated)
 
 static const size_t zero = 0;
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateImage,
     ReadWriteFormatTest,
     testing::Range(zero, SurfaceFormats::readWrite().size()));
@@ -103,7 +103,7 @@ TEST_P(ReadOnlyFormatTest, GivenValidReadOnlyFormatWhenCreatingImageThenImageIsC
     delete image;
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateImage,
     ReadOnlyFormatTest,
     testing::Range(zero, SurfaceFormats::readOnly12().size()));
@@ -126,7 +126,7 @@ TEST_P(WriteOnlyFormatTest, GivenValidWriteOnlyFormatWhenCreatingImageThenImageI
     delete image;
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateImage,
     WriteOnlyFormatTest,
     testing::Range(zero, SurfaceFormats::writeOnly().size()));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ typedef ::testing::Types<
     MockCommandQueue>
     BaseObjectTypes;
 
-TYPED_TEST_CASE(VABaseObjectTests, BaseObjectTypes);
+TYPED_TEST_SUITE(VABaseObjectTests, BaseObjectTypes);
 
 TYPED_TEST(VABaseObjectTests, GivenCommonRuntimeThenDispatchTableAtFirstPointerInObject) {
     TypeParam objectDrv;

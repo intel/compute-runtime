@@ -1065,7 +1065,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDon
     }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     WddmCsrCompressionParameterizedTestCreate,
     WddmCsrCompressionParameterizedTest,
     ::testing::Bool());

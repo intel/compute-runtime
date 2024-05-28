@@ -264,12 +264,12 @@ HWTEST2_P(BlitTestsTestXeHpc, givenCommandStreamWhenCallToDispatchMemoryFillThen
     test.testBodyImpl(patternSize, expecttedDepth);
 }
 
-INSTANTIATE_TEST_CASE_P(size_t,
-                        BlitTestsTestXeHpc,
-                        testing::Values(2,
-                                        4,
-                                        8,
-                                        16));
+INSTANTIATE_TEST_SUITE_P(size_t,
+                         BlitTestsTestXeHpc,
+                         testing::Values(2,
+                                         4,
+                                         8,
+                                         16));
 
 HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAddedToStream, IsPVC) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;

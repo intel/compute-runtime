@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,11 +87,11 @@ static struct WorkSizeParam {
 
 typedef KernelSubGroupInfoParamFixture<std::tuple<WorkSizeParam, size_t>> KernelSubGroupInfoReturnSizeTest;
 
-INSTANTIATE_TEST_CASE_P(wgs,
-                        KernelSubGroupInfoReturnSizeTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(kernelSubGroupInfoWGS),
-                            ::testing::ValuesIn(workDimensions)));
+INSTANTIATE_TEST_SUITE_P(wgs,
+                         KernelSubGroupInfoReturnSizeTest,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(kernelSubGroupInfoWGS),
+                             ::testing::ValuesIn(workDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnSizeTest, GivenWorkGroupSizeWhenGettingMaxSubGroupSizeThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
@@ -129,11 +129,11 @@ TEST_P(KernelSubGroupInfoReturnSizeTest, GivenWorkGroupSizeWhenGettingMaxSubGrou
 
 typedef KernelSubGroupInfoParamFixture<std::tuple<WorkSizeParam, size_t>> KernelSubGroupInfoReturnCountTest;
 
-INSTANTIATE_TEST_CASE_P(wgs,
-                        KernelSubGroupInfoReturnCountTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(kernelSubGroupInfoWGS),
-                            ::testing::ValuesIn(workDimensions)));
+INSTANTIATE_TEST_SUITE_P(wgs,
+                         KernelSubGroupInfoReturnCountTest,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(kernelSubGroupInfoWGS),
+                             ::testing::ValuesIn(workDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnCountTest, GivenWorkGroupSizeWhenGettingSubGroupCountThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
@@ -185,11 +185,11 @@ static size_t subGroupsNumbers[] = {0, 1, 10, 12, 21, 33, 67, 99};
 
 typedef KernelSubGroupInfoParamFixture<std::tuple<size_t, size_t>> KernelSubGroupInfoReturnLocalSizeTest;
 
-INSTANTIATE_TEST_CASE_P(sgn,
-                        KernelSubGroupInfoReturnLocalSizeTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(subGroupsNumbers),
-                            ::testing::ValuesIn(workDimensions)));
+INSTANTIATE_TEST_SUITE_P(sgn,
+                         KernelSubGroupInfoReturnLocalSizeTest,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(subGroupsNumbers),
+                             ::testing::ValuesIn(workDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnLocalSizeTest, GivenWorkGroupSizeWhenGettingLocalSizeThenReturnIsCalculatedCorrectly) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
@@ -382,9 +382,9 @@ uint32_t /*cl_kernel_sub_group_info*/ kernelSubGroupInfoInputParams[] = {
 
 typedef KernelSubGroupInfoParamFixture<uint32_t /*cl_kernel_sub_group_info*/> KernelSubGroupInfoInputParamsTest;
 
-INSTANTIATE_TEST_CASE_P(KernelSubGroupInfoInputParams,
-                        KernelSubGroupInfoInputParamsTest,
-                        ::testing::ValuesIn(kernelSubGroupInfoInputParams));
+INSTANTIATE_TEST_SUITE_P(KernelSubGroupInfoInputParams,
+                         KernelSubGroupInfoInputParamsTest,
+                         ::testing::ValuesIn(kernelSubGroupInfoInputParams));
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGettingKenrelSubGroupInfoThenInvalidOperationErrorIsReturned) {
     bool requireOpenCL21 = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ||

@@ -463,13 +463,13 @@ HWTEST2_P(BlitFastColorTest, givenCommandStreamWhenCallToDispatchMemoryFillThenC
     test.testBodyImpl(patternSize, expecttedDepth);
 }
 
-INSTANTIATE_TEST_CASE_P(size_t,
-                        BlitFastColorTest,
-                        testing::Values(1,
-                                        2,
-                                        4,
-                                        8,
-                                        16));
+INSTANTIATE_TEST_SUITE_P(size_t,
+                         BlitFastColorTest,
+                         testing::Values(1,
+                                         2,
+                                         4,
+                                         8,
+                                         16));
 
 HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAddedToStream, BlitPlatforms) {
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
@@ -635,13 +635,13 @@ HWTEST2_P(BlitTestsParams, givenDstOriginNotAlignedWithin1and16BytesWhenGettingB
     EXPECT_EQ(bytesPerPixel, 1u);
 }
 
-INSTANTIATE_TEST_CASE_P(size_t,
-                        BlitTestsParams,
-                        testing::Values(1,
-                                        2,
-                                        4,
-                                        8,
-                                        16));
+INSTANTIATE_TEST_SUITE_P(size_t,
+                         BlitTestsParams,
+                         testing::Values(1,
+                                         2,
+                                         4,
+                                         8,
+                                         16));
 
 using WithoutGen12Lp = IsNotGfxCore<IGFX_GEN12LP_CORE>;
 

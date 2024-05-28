@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,8 +53,8 @@ InternalMemoryType memoryTypes[] = {InternalMemoryType::hostUnifiedMemory,
                                     InternalMemoryType::sharedUnifiedMemory,
                                     InternalMemoryType::notSpecified};
 
-INSTANTIATE_TEST_CASE_P(UnifiedMemoryCopyAubTest,
-                        UnifiedMemoryCopyAubTest,
-                        ::testing::Combine(::testing::ValuesIn(memoryTypes),
-                                           ::testing::ValuesIn(memoryTypes)));
+INSTANTIATE_TEST_SUITE_P(UnifiedMemoryCopyAubTest,
+                         UnifiedMemoryCopyAubTest,
+                         ::testing::Combine(::testing::ValuesIn(memoryTypes),
+                                            ::testing::ValuesIn(memoryTypes)));
 } // namespace NEO

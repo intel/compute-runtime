@@ -1664,11 +1664,11 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     }
 }
 
-INSTANTIATE_TEST_CASE_P(BcsDetaliedTest,
-                        BcsDetaliedTestsWithParams,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(blitterProperties),
-                            ::testing::Values(BlitterConstants::BlitDirection::hostPtrToBuffer, BlitterConstants::BlitDirection::bufferToHostPtr)));
+INSTANTIATE_TEST_SUITE_P(BcsDetaliedTest,
+                         BcsDetaliedTestsWithParams,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(blitterProperties),
+                             ::testing::Values(BlitterConstants::BlitDirection::hostPtrToBuffer, BlitterConstants::BlitDirection::bufferToHostPtr)));
 
 HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, WhenProgrammingActivePartitionsThenExpectNoAction) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();

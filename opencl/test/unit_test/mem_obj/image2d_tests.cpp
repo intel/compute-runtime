@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,7 +114,7 @@ static cl_mem_object_type image2DTypes[] = {
     CL_MEM_OBJECT_IMAGE2D,
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CreateImage2DTestCreate,
     CreateImage2DType,
     testing::ValuesIn(image2DTypes));

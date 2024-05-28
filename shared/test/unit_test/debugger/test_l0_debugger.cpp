@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -640,4 +640,4 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
     }
 }
 
-INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerSimpleParameterizedTest, ::testing::Values(0, 1));
+INSTANTIATE_TEST_SUITE_P(SBAModesForDebugger, L0DebuggerSimpleParameterizedTest, ::testing::Values(0, 1));

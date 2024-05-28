@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,9 +65,9 @@ TEST_P(ClearQueueTest, WhenQueueIsClearedThenAllElementsAreReleased) {
 
 int paramsForClearQueueTest[] = {1, 10, 20, 50, 100};
 
-INSTANTIATE_TEST_CASE_P(DeferredDeleterMtTests,
-                        ClearQueueTest,
-                        ::testing::ValuesIn(paramsForClearQueueTest));
+INSTANTIATE_TEST_SUITE_P(DeferredDeleterMtTests,
+                         ClearQueueTest,
+                         ::testing::ValuesIn(paramsForClearQueueTest));
 
 class MyDeferredDeleter : public DeferredDeleter {
   public:

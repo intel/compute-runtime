@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,9 +92,9 @@ TEST_P(ClGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPla
     EXPECT_EQ(expectedNumericPlatformVersion, platformNumericVersion);
 }
 
-INSTANTIATE_TEST_CASE_P(OCLVersions,
-                        ClGetPlatformInfoParameterizedTests,
-                        ::testing::Values(12, 21, 30));
+INSTANTIATE_TEST_SUITE_P(OCLVersions,
+                         ClGetPlatformInfoParameterizedTests,
+                         ::testing::Values(12, 21, 30));
 
 TEST_F(ClGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_NAME);
@@ -293,7 +293,7 @@ const cl_platform_info platformInfoTestValues[] =
         CL_PLATFORM_ICD_SUFFIX_KHR,
 };
 
-INSTANTIATE_TEST_CASE_P(api,
-                        GetPlatformInfoTests,
-                        ::testing::ValuesIn(platformInfoTestValues));
+INSTANTIATE_TEST_SUITE_P(api,
+                         GetPlatformInfoTests,
+                         ::testing::ValuesIn(platformInfoTestValues));
 } // namespace ULT

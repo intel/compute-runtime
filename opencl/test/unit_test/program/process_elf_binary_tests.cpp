@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,9 +181,9 @@ TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThe
     EXPECT_EQ(0, memcmp(irBinary.get(), decodedIr.begin(), irBinarySize));
 }
 
-INSTANTIATE_TEST_CASE_P(ResolveBinaryTests,
-                        ProcessElfBinaryTestsWithBinaryType,
-                        ::testing::ValuesIn(binaryTypeValues));
+INSTANTIATE_TEST_SUITE_P(ResolveBinaryTests,
+                         ProcessElfBinaryTestsWithBinaryType,
+                         ::testing::ValuesIn(binaryTypeValues));
 
 TEST_F(ProcessElfBinaryTests, GivenEmptyBuildOptionsWhenCreatingProgramFromBinaryThenSuccessIsReturned) {
     auto mockElf = std::make_unique<MockElfBinaryPatchtokens<>>(device->getHardwareInfo());

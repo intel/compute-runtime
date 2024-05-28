@@ -528,16 +528,16 @@ TEST_P(LocalIdsLayoutForImagesTest, givenLocalWorkgroupSizeCompatibleWithLayoutF
 
 #define GRFSizeParams ::testing::Values(32)
 
-INSTANTIATE_TEST_CASE_P(AllCombinations, LocalIDFixture, ::testing::Combine(SIMDParams, GRFSizeParams, LWSXParams, LWSYParams, LWSZParams));
-INSTANTIATE_TEST_CASE_P(LayoutTests, LocalIdsLayoutTest, SIMDParams);
-INSTANTIATE_TEST_CASE_P(LayoutForImagesTests, LocalIdsLayoutForImagesTest, ::testing::Combine(SIMDParams, GRFSizeParams, ::testing::Values(4, 8, 12, 20), ::testing::Values(4, 8, 12, 20)));
+INSTANTIATE_TEST_SUITE_P(AllCombinations, LocalIDFixture, ::testing::Combine(SIMDParams, GRFSizeParams, LWSXParams, LWSYParams, LWSZParams));
+INSTANTIATE_TEST_SUITE_P(LayoutTests, LocalIdsLayoutTest, SIMDParams);
+INSTANTIATE_TEST_SUITE_P(LayoutForImagesTests, LocalIdsLayoutForImagesTest, ::testing::Combine(SIMDParams, GRFSizeParams, ::testing::Values(4, 8, 12, 20), ::testing::Values(4, 8, 12, 20)));
 
 // To debug a specific configuration replace the list of Values with specific values.
 // NOTE: You'll need a unique test prefix
-INSTANTIATE_TEST_CASE_P(SingleTest, LocalIDFixture,
-                        ::testing::Combine(
-                            ::testing::Values(32),  // SIMD
-                            ::testing::Values(32),  // GRF
-                            ::testing::Values(5),   // LWSX
-                            ::testing::Values(6),   // LWSY
-                            ::testing::Values(7))); // LWSZ
+INSTANTIATE_TEST_SUITE_P(SingleTest, LocalIDFixture,
+                         ::testing::Combine(
+                             ::testing::Values(32),  // SIMD
+                             ::testing::Values(32),  // GRF
+                             ::testing::Values(5),   // LWSX
+                             ::testing::Values(6),   // LWSY
+                             ::testing::Values(7))); // LWSZ

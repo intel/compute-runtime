@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,8 +117,8 @@ HWTEST_P(VerifyMemoryBufferHw, givenDifferentBuffersWhenValidatingMemoryThenSucc
     clFinish(pCmdQ);
 }
 
-INSTANTIATE_TEST_CASE_P(VerifyMemoryBuffer,
-                        VerifyMemoryBufferHw,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(testDataSizeTable),
-                            ::testing::ValuesIn(testFlagsTable)));
+INSTANTIATE_TEST_SUITE_P(VerifyMemoryBuffer,
+                         VerifyMemoryBufferHw,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(testDataSizeTable),
+                             ::testing::ValuesIn(testFlagsTable)));

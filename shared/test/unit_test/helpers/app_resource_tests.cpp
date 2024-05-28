@@ -116,4 +116,4 @@ TEST_P(AllocationTypeTagString, givenGraphicsAllocationTypeWhenCopyTagToStorageI
     EXPECT_STREQ(storageInfo.resourceTag, input.str);
 }
 
-INSTANTIATE_TEST_CASE_P(AllAllocationTypesTag, AllocationTypeTagString, ::testing::ValuesIn(allocationTypeTagValues));
+INSTANTIATE_TEST_SUITE_P(AllAllocationTypesTag, AllocationTypeTagString, ::testing::ValuesIn(allocationTypeTagValues));

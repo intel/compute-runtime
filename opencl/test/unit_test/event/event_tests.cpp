@@ -786,9 +786,9 @@ TEST_P(InternalsEventProfilingTest, GivenProfilingWhenEventCreatedThenProfilingS
     EXPECT_TRUE(event->isProfilingEnabled());
 }
 
-INSTANTIATE_TEST_CASE_P(InternalsEventProfilingTest,
-                        InternalsEventProfilingTest,
-                        ::testing::ValuesIn(commands));
+INSTANTIATE_TEST_SUITE_P(InternalsEventProfilingTest,
+                         InternalsEventProfilingTest,
+                         ::testing::ValuesIn(commands));
 
 TEST_F(InternalsEventTest, GivenProfilingWhenUserEventCreatedThenProfilingNotSet) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};

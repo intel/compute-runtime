@@ -571,12 +571,12 @@ HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithMemUseHostP
     alignedFree(hostPtr);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     MemObjTests,
     MemObjAsyncDestructionTest,
     testing::Bool());
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     MemObjTests,
     MemObjSyncDestructionTest,
     testing::Bool());

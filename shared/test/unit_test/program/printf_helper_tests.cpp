@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,9 +160,9 @@ TEST_P(PrintfInt8Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted) 
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfInt8Test,
-                        PrintfInt8Test,
-                        ::testing::ValuesIn(byteValues));
+INSTANTIATE_TEST_SUITE_P(PrintfInt8Test,
+                         PrintfInt8Test,
+                         ::testing::ValuesIn(byteValues));
 
 Int32Params intValues[] = {
     {"%d", 0},
@@ -200,9 +200,9 @@ TEST_P(PrintfInt32Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted)
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfInt32Test,
-                        PrintfInt32Test,
-                        ::testing::ValuesIn(intValues));
+INSTANTIATE_TEST_SUITE_P(PrintfInt32Test,
+                         PrintfInt32Test,
+                         ::testing::ValuesIn(intValues));
 
 Uint32Params uintValues[] = {
     {"%u", 0},
@@ -256,9 +256,9 @@ TEST_P(PrintfUint32Test, GivenBufferSizeGreaterThanPrintBufferWhenPrintingThenBu
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfUint32Test,
-                        PrintfUint32Test,
-                        ::testing::ValuesIn(uintValues));
+INSTANTIATE_TEST_SUITE_P(PrintfUint32Test,
+                         PrintfUint32Test,
+                         ::testing::ValuesIn(uintValues));
 
 Int64Params longValues[] = {
     {"%lld", "%lld", INT64_MAX},
@@ -292,9 +292,9 @@ TEST_P(PrintfInt64Test, GivenFormatContainingLongWhenPrintingThenValueIsInserted
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfInt64Test,
-                        PrintfInt64Test,
-                        ::testing::ValuesIn(longValues));
+INSTANTIATE_TEST_SUITE_P(PrintfInt64Test,
+                         PrintfInt64Test,
+                         ::testing::ValuesIn(longValues));
 
 Uint64Params ulongValues[] = {
     {"%llu", "%llu", UINT64_MAX},
@@ -322,9 +322,9 @@ TEST_P(PrintfUint64Test, GivenFormatContainingUlongWhenPrintingThenValueIsInsert
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfUint64Test,
-                        PrintfUint64Test,
-                        ::testing::ValuesIn(ulongValues));
+INSTANTIATE_TEST_SUITE_P(PrintfUint64Test,
+                         PrintfUint64Test,
+                         ::testing::ValuesIn(ulongValues));
 
 FloatParams floatValues[] = {
     {"%f", 10.3456f},
@@ -359,9 +359,9 @@ TEST_P(PrintfFloatTest, GivenFormatContainingFloatWhenPrintingThenValueIsInserte
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfFloatTest,
-                        PrintfFloatTest,
-                        ::testing::ValuesIn(floatValues));
+INSTANTIATE_TEST_SUITE_P(PrintfFloatTest,
+                         PrintfFloatTest,
+                         ::testing::ValuesIn(floatValues));
 
 class PrintfDoubleToFloatTest : public PrintFormatterTest,
                                 public ::testing::WithParamInterface<DoubleParams> {};
@@ -402,9 +402,9 @@ TEST_P(PrintfDoubleToFloatTest, GivenFormatContainingFloatAndDoubleWhenPrintingT
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfDoubleToFloatTest,
-                        PrintfDoubleToFloatTest,
-                        ::testing::ValuesIn(doubleToFloatValues));
+INSTANTIATE_TEST_SUITE_P(PrintfDoubleToFloatTest,
+                         PrintfDoubleToFloatTest,
+                         ::testing::ValuesIn(doubleToFloatValues));
 
 DoubleParams doubleValues[] = {
     {"%f", 302230.12156260},
@@ -450,9 +450,9 @@ TEST_P(PrintfDoubleTest, GivenFormatContainingDoubleWhenPrintingThenValueIsInser
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfDoubleTest,
-                        PrintfDoubleTest,
-                        ::testing::ValuesIn(doubleValues));
+INSTANTIATE_TEST_SUITE_P(PrintfDoubleTest,
+                         PrintfDoubleTest,
+                         ::testing::ValuesIn(doubleValues));
 
 std::pair<std::string, std::string> specialValues[] = {
     {"%%", "%"},
@@ -476,9 +476,9 @@ TEST_P(PrintfSpecialTest, GivenFormatContainingDoublePercentageWhenPrintingThenV
     EXPECT_STREQ(input.second.c_str(), actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfSpecialTest,
-                        PrintfSpecialTest,
-                        ::testing::ValuesIn(specialValues));
+INSTANTIATE_TEST_SUITE_P(PrintfSpecialTest,
+                         PrintfSpecialTest,
+                         ::testing::ValuesIn(specialValues));
 
 // ------------------------- Testing Strings only with no Formatting ------------------------
 
@@ -506,9 +506,9 @@ TEST_P(PrintfNoArgumentsTest, GivenNoArgumentsWhenPrintingThenCharsAreEscaped) {
     EXPECT_STREQ(input.second.c_str(), actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfNoArgumentsTest,
-                        PrintfNoArgumentsTest,
-                        ::testing::ValuesIn(stringValues));
+INSTANTIATE_TEST_SUITE_P(PrintfNoArgumentsTest,
+                         PrintfNoArgumentsTest,
+                         ::testing::ValuesIn(stringValues));
 
 StringParams stringValues2[] = {
     {"%s", "foo"},
@@ -536,9 +536,9 @@ TEST_P(PrintfStringTest, GivenFormatContainingStringWhenPrintingThenValueIsInser
     EXPECT_STREQ(input.value.c_str(), actualOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(PrintfStringTest,
-                        PrintfStringTest,
-                        ::testing::ValuesIn(stringValues2));
+INSTANTIATE_TEST_SUITE_P(PrintfStringTest,
+                         PrintfStringTest,
+                         ::testing::ValuesIn(stringValues2));
 
 TEST_F(PrintFormatterTest, GivenLongStringValueWhenPrintedThenFullStringIsPrinted) {
     char testedLongString[maxPrintfOutputLength];

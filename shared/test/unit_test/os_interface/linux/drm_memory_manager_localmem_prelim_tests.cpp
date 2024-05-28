@@ -3038,9 +3038,9 @@ static const AllocationType allocation57Bit[] = {
     AllocationType::sharedBuffer,
 };
 
-INSTANTIATE_TEST_CASE_P(Drm57Bit,
-                        DrmMemoryManagerAllocation57BitTest,
-                        ::testing::ValuesIn(allocation57Bit));
+INSTANTIATE_TEST_SUITE_P(Drm57Bit,
+                         DrmMemoryManagerAllocation57BitTest,
+                         ::testing::ValuesIn(allocation57Bit));
 
 struct DrmCommandStreamEnhancedPrelimTest : public DrmCommandStreamEnhancedTemplate<DrmMockCustomPrelim> {
     void SetUp() override {

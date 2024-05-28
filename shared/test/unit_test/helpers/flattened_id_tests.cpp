@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -245,13 +245,13 @@ TEST_P(FlattenedIDFixture, WhenGeneratingFlattenedIdsThenLocalIdsAreCorrect) {
 #define LWSZParams ::testing::Values(1)
 #endif
 
-INSTANTIATE_TEST_CASE_P(AllCombinations, FlattenedIDFixture, ::testing::Combine(SIMDParams, LWSXParams, LWSYParams, LWSZParams));
+INSTANTIATE_TEST_SUITE_P(AllCombinations, FlattenedIDFixture, ::testing::Combine(SIMDParams, LWSXParams, LWSYParams, LWSZParams));
 
 // To debug a specific configuration replace the list of Values with specific values.
 // NOTE: You'll need a unique test prefix
-INSTANTIATE_TEST_CASE_P(SingleTest, FlattenedIDFixture,
-                        ::testing::Combine(
-                            ::testing::Values(32),  // SIMD
-                            ::testing::Values(5),   // LWSX
-                            ::testing::Values(6),   // LWSY
-                            ::testing::Values(7))); // LWSZ
+INSTANTIATE_TEST_SUITE_P(SingleTest, FlattenedIDFixture,
+                         ::testing::Combine(
+                             ::testing::Values(32),  // SIMD
+                             ::testing::Values(5),   // LWSX
+                             ::testing::Values(6),   // LWSY
+                             ::testing::Values(7))); // LWSZ

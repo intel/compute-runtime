@@ -338,7 +338,7 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenPro
     pDevice->getMemoryManager()->freeGraphicsMemory(streamAllocation);
 }
 
-INSTANTIATE_TEST_CASE_P(BBLevelForSbaTracking, L0DebuggerBBlevelParameterizedTest, ::testing::Values(false, true));
+INSTANTIATE_TEST_SUITE_P(BBLevelForSbaTracking, L0DebuggerBBlevelParameterizedTest, ::testing::Values(false, true));
 
 HWTEST2_F(SingleAddressSpaceFixture, GivenAllZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenNoCommandsAreAddedToStream, IsAtLeastGen12lp) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);

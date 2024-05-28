@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -146,10 +146,10 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
     sampler->destroy();
 }
 
-INSTANTIATE_TEST_CASE_P(SamplerDescCombinations, SamplerCreateTest,
-                        ::testing::Combine(samplerAddressMode,
-                                           samplerFilterMode,
-                                           samplerIsNormalized));
+INSTANTIATE_TEST_SUITE_P(SamplerDescCombinations, SamplerCreateTest,
+                         ::testing::Combine(samplerAddressMode,
+                                            samplerFilterMode,
+                                            samplerIsNormalized));
 
 using ContextCreateSamplerTest = Test<DeviceFixture>;
 

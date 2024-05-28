@@ -146,7 +146,7 @@ static cl_kernel_work_group_info paramNames[] = {
     CL_KERNEL_SPILL_MEM_SIZE_INTEL,
     CL_KERNEL_PRIVATE_MEM_SIZE};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     api,
     ClGetKernelWorkGroupInfoTests,
     testing::ValuesIn(paramNames));

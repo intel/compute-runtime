@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1328,7 +1328,7 @@ HWTEST_P(CommandStreamReceiverFlushTaskMemoryCompressionTests, givenCsrWithMemor
     }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CommandStreamReceiverFlushTaskMemoryCompressionTestsValues,
     CommandStreamReceiverFlushTaskMemoryCompressionTests,
     testing::Values(MemoryCompressionState::notApplicable, MemoryCompressionState::disabled, MemoryCompressionState::enabled));

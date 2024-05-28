@@ -1291,7 +1291,7 @@ static uint64_t metadataTypes[] =
         WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA,
         DRM_XE_DEBUG_METADATA_ELF_BINARY};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     MetadataOpEventUfenceTest,
     DebugApiLinuxTestXeMetadataOpEventTest,
     testing::ValuesIn(metadataTypes));

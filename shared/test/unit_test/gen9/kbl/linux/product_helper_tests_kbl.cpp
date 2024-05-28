@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -136,7 +136,7 @@ template <typename T>
 class KblHwInfoTests : public ::testing::Test {
 };
 typedef ::testing::Types<KblHw1x2x6, KblHw1x3x6, KblHw1x3x8, KblHw2x3x8, KblHw3x3x8> kblTestTypes;
-TYPED_TEST_CASE(KblHwInfoTests, kblTestTypes);
+TYPED_TEST_SUITE(KblHwInfoTests, kblTestTypes);
 TYPED_TEST(KblHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

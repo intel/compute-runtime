@@ -997,7 +997,7 @@ cl_device_info deviceInfoParams[] = {
     CL_DRIVER_VERSION,
     CL_DRIVER_UUID_KHR};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Device_,
     GetDeviceInfo,
     testing::ValuesIn(deviceInfoParams));
@@ -1218,7 +1218,7 @@ cl_device_info deviceAttributeQueryParams[] = {
     CL_DEVICE_NUM_THREADS_PER_EU_INTEL,
     CL_DEVICE_FEATURE_CAPABILITIES_INTEL};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Device_,
     DeviceAttributeQueryTest,
     testing::ValuesIn(deviceAttributeQueryParams));

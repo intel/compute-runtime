@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,7 +163,7 @@ TEST_P(InvalidPatternSize, GivenInvalidPatternSizeWhenFillingBufferThenInvalidVa
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-INSTANTIATE_TEST_CASE_P(EnqueueFillBuffer,
-                        InvalidPatternSize,
-                        ::testing::Values(0, 3, 5, 256, 512, 1024));
+INSTANTIATE_TEST_SUITE_P(EnqueueFillBuffer,
+                         InvalidPatternSize,
+                         ::testing::Values(0, 3, 5, 256, 512, 1024));
 } // namespace ULT

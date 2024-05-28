@@ -1746,9 +1746,9 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenDisabledHostPtrTrackingWhenAlloca
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-INSTANTIATE_TEST_CASE_P(OsAgnosticMemoryManagerWithParams,
-                        OsAgnosticMemoryManagerWithParams,
-                        ::testing::Values(false, true));
+INSTANTIATE_TEST_SUITE_P(OsAgnosticMemoryManagerWithParams,
+                         OsAgnosticMemoryManagerWithParams,
+                         ::testing::Values(false, true));
 
 TEST(OsAgnosticMemoryManager, givenFreeMemoryEnabledAndNonExternalHostPtrAllocationWhenGraphicsAllocationIsDestroyedThenFreeMemoryOnAubManagerShouldBeCalled) {
     DebugManagerStateRestore dbgRestore;

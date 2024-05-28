@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -815,26 +815,26 @@ TEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueK
 
 const int validDimensions[] = {0, 1, 2};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DriverDiagnosticsTests,
     PerformanceHintEnqueueReadBufferTest,
     testing::Combine(
         ::testing::Bool(),
         ::testing::Bool()));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DriverDiagnosticsTests,
     PerformanceHintEnqueueReadImageTest,
     testing::Combine(
         ::testing::Bool(),
         ::testing::Bool()));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DriverDiagnosticsTests,
     PerformanceHintEnqueueMapTest,
     testing::Bool());
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     DriverDiagnosticsTests,
     PerformanceHintEnqueueKernelBadSizeTest,
     testing::ValuesIn(validDimensions));

@@ -3980,7 +3980,7 @@ TEST_P(ProgramGenerateDefaultArgsMetadataImagesTest, whenGeneratingDefaultMetada
     buildInfo.unpackedDeviceBinary.release();
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     ProgramGenerateDefaultArgsMetadataImagesTestValues,
     ProgramGenerateDefaultArgsMetadataImagesTest,
     ::testing::ValuesIn(imgTypes));

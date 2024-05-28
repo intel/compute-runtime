@@ -570,7 +570,7 @@ class GetGlTextureInfoTests : public GlSharingTextureTests,
                               public ::testing::WithParamInterface<unsigned int /*cl_GLenum*/> {
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     GetGlTextureInfoTests,
     GetGlTextureInfoTests,
     testing::ValuesIn(glTextureTargets::supportedTargets));

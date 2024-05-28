@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,15 +144,15 @@ cl_int expectValidStatus[] = {CL_SUCCESS};
 cl_int invalidStatus[] = {CL_QUEUED, CL_SUBMITTED, 12};
 cl_int expectInvalidStatus[] = {CL_INVALID_VALUE};
 
-INSTANTIATE_TEST_CASE_P(SetValidStatus,
-                        clEventStatusTests,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(validStatus),
-                            ::testing::ValuesIn(expectValidStatus)));
+INSTANTIATE_TEST_SUITE_P(SetValidStatus,
+                         clEventStatusTests,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(validStatus),
+                             ::testing::ValuesIn(expectValidStatus)));
 
-INSTANTIATE_TEST_CASE_P(SetInvalidStatus,
-                        clEventStatusTests,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(invalidStatus),
-                            ::testing::ValuesIn(expectInvalidStatus)));
+INSTANTIATE_TEST_SUITE_P(SetInvalidStatus,
+                         clEventStatusTests,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(invalidStatus),
+                             ::testing::ValuesIn(expectInvalidStatus)));
 } // namespace ClReleaseEventTests

@@ -248,10 +248,10 @@ XE_HPG_CORETEST_P(XeHpgCoreStatelessCompressionInSBA, givenUncompressibleHostMem
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-INSTANTIATE_TEST_CASE_P(,
-                        XeHpgCoreStatelessCompressionInSBA,
-                        ::testing::Values(aub_stream::ENGINE_RCS,
-                                          aub_stream::ENGINE_CCS));
+INSTANTIATE_TEST_SUITE_P(,
+                         XeHpgCoreStatelessCompressionInSBA,
+                         ::testing::Values(aub_stream::ENGINE_RCS,
+                                           aub_stream::ENGINE_CCS));
 
 struct XeHpgCoreUmStatelessCompressionInSBA : public KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>,
                                               public ::testing::Test,
@@ -475,10 +475,10 @@ XE_HPG_CORETEST_P(XeHpgCoreUmStatelessCompressionInSBA, givenKernelExecInfoWhenI
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-INSTANTIATE_TEST_CASE_P(,
-                        XeHpgCoreUmStatelessCompressionInSBA,
-                        ::testing::Values(aub_stream::ENGINE_RCS,
-                                          aub_stream::ENGINE_CCS));
+INSTANTIATE_TEST_SUITE_P(,
+                         XeHpgCoreUmStatelessCompressionInSBA,
+                         ::testing::Values(aub_stream::ENGINE_RCS,
+                                           aub_stream::ENGINE_CCS));
 
 struct XeHpgCoreStatelessCompressionInSBAWithBCS : public MulticontextOclAubFixture,
                                                    public StatelessCopyKernelFixture,

@@ -588,7 +588,7 @@ struct SetArgHandlerSetArgBuffer {
 
 using SetArgHandlers = ::testing::Types<SetArgHandlerSetArgSvm, SetArgHandlerSetArgSvmAlloc, SetArgHandlerSetArgBuffer>;
 
-TYPED_TEST_CASE(KernelArgSvmTestTyped, SetArgHandlers);
+TYPED_TEST_SUITE(KernelArgSvmTestTyped, SetArgHandlers);
 HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsNeededThenSetArgSetsIt) {
     const ClDeviceInfo &devInfo = KernelArgSvmFixture::pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {

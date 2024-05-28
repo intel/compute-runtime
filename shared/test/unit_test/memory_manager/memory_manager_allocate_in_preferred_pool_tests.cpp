@@ -238,9 +238,9 @@ static const AllocationType allocationTypesWith32BitAnd64KbPagesAllowed[] = {All
                                                                              AllocationType::writeCombined,
                                                                              AllocationType::assertBuffer};
 
-INSTANTIATE_TEST_CASE_P(Allow32BitAnd64kbPagesTypes,
-                        MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest,
-                        ::testing::ValuesIn(allocationTypesWith32BitAnd64KbPagesAllowed));
+INSTANTIATE_TEST_SUITE_P(Allow32BitAnd64kbPagesTypes,
+                         MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest,
+                         ::testing::ValuesIn(allocationTypesWith32BitAnd64KbPagesAllowed));
 
 static const AllocationType allocationTypesWith32BitAnd64KbPagesNotAllowed[] = {AllocationType::commandBuffer,
                                                                                 AllocationType::timestampPacketTagBuffer,
@@ -249,9 +249,9 @@ static const AllocationType allocationTypesWith32BitAnd64KbPagesNotAllowed[] = {
                                                                                 AllocationType::instructionHeap,
                                                                                 AllocationType::sharedResourceCopy};
 
-INSTANTIATE_TEST_CASE_P(Disallow32BitAnd64kbPagesTypes,
-                        MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest,
-                        ::testing::ValuesIn(allocationTypesWith32BitAnd64KbPagesNotAllowed));
+INSTANTIATE_TEST_SUITE_P(Disallow32BitAnd64kbPagesTypes,
+                         MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest,
+                         ::testing::ValuesIn(allocationTypesWith32BitAnd64KbPagesNotAllowed));
 
 TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedTypeIsAllocatedThen32BitAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
@@ -1314,20 +1314,20 @@ static const AllocationType allocationHaveNotToBeForcedTo48Bit[] = {
     AllocationType::debugContextSaveArea,
 };
 
-INSTANTIATE_TEST_CASE_P(ForceTo48Bit,
-                        MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(allocationHaveToBeForcedTo48Bit),
-                            ::testing::Bool()));
+INSTANTIATE_TEST_SUITE_P(ForceTo48Bit,
+                         MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(allocationHaveToBeForcedTo48Bit),
+                             ::testing::Bool()));
 
-INSTANTIATE_TEST_CASE_P(NotForceTo48Bit,
-                        MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(allocationHaveNotToBeForcedTo48Bit),
-                            ::testing::Bool()));
+INSTANTIATE_TEST_SUITE_P(NotForceTo48Bit,
+                         MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(allocationHaveNotToBeForcedTo48Bit),
+                             ::testing::Bool()));
 
-INSTANTIATE_TEST_CASE_P(OptionallyForceTo48Bit,
-                        MemoryManagerGetAlloctionDataOptionallyForcedTo48BitTest,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(allocationsOptionallyForcedTo48Bit),
-                            ::testing::Bool()));
+INSTANTIATE_TEST_SUITE_P(OptionallyForceTo48Bit,
+                         MemoryManagerGetAlloctionDataOptionallyForcedTo48BitTest,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(allocationsOptionallyForcedTo48Bit),
+                             ::testing::Bool()));

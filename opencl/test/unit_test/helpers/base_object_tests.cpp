@@ -116,12 +116,12 @@ typedef ::testing::Types<
     MockCommandQueue>
     BaseObjectTypesForCastInvalidMagicTest;
 
-TYPED_TEST_CASE(BaseObjectTests, BaseObjectTypes);
+TYPED_TEST_SUITE(BaseObjectTests, BaseObjectTypes);
 
 // "typedef" BaseObjectTests template to use with different TypeParams for testing
 template <typename T>
 using BaseObjectWithDefaultCtorTests = BaseObjectTests<T>;
-TYPED_TEST_CASE(BaseObjectWithDefaultCtorTests, BaseObjectTypesForCastInvalidMagicTest);
+TYPED_TEST_SUITE(BaseObjectWithDefaultCtorTests, BaseObjectTypesForCastInvalidMagicTest);
 
 TYPED_TEST(BaseObjectWithDefaultCtorTests, GivenInvalidMagicWhenCastingToObjectThenNullptrIsReturned) {
     MockObject<TypeParam> *object = new MockObject<TypeParam>;

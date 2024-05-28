@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ ADLPTEST_F(AdlpProductHelperLinux, givenAdlpConfigWhenSetupHardwareInfoBaseThenG
 template <typename T>
 using AdlpHwInfoLinux = ::testing::Test;
 using adlpConfigTestTypes = ::testing::Types<AdlpHwConfig>;
-TYPED_TEST_CASE(AdlpHwInfoLinux, adlpConfigTestTypes);
+TYPED_TEST_SUITE(AdlpHwInfoLinux, adlpConfigTestTypes);
 
 TYPED_TEST(AdlpHwInfoLinux, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {
     HardwareInfo hwInfo = *defaultHwInfo;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ static unsigned int commandWithoutKernelTypes[] = {
     CL_COMMAND_SVM_UNMAP,
     CL_COMMAND_SVM_FREE};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     commandWithoutKernelTypes,
     CommandWithoutKernelTypesTests,
     testing::ValuesIn(commandWithoutKernelTypes));

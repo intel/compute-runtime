@@ -353,13 +353,13 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
     }
 }
 
-INSTANTIATE_TEST_CASE_P(GetDumpSurfaceTest,
-                        AubSurfaceDumpTests,
-                        ::testing::Combine(
-                            ::testing::Bool(), // isCompressed
-                            ::testing::Values( // dumpFormat
-                                AubAllocDump::DumpFormat::NONE,
-                                AubAllocDump::DumpFormat::BUFFER_BIN,
-                                AubAllocDump::DumpFormat::BUFFER_TRE,
-                                AubAllocDump::DumpFormat::IMAGE_BMP,
-                                AubAllocDump::DumpFormat::IMAGE_TRE)));
+INSTANTIATE_TEST_SUITE_P(GetDumpSurfaceTest,
+                         AubSurfaceDumpTests,
+                         ::testing::Combine(
+                             ::testing::Bool(), // isCompressed
+                             ::testing::Values( // dumpFormat
+                                 AubAllocDump::DumpFormat::NONE,
+                                 AubAllocDump::DumpFormat::BUFFER_BIN,
+                                 AubAllocDump::DumpFormat::BUFFER_TRE,
+                                 AubAllocDump::DumpFormat::IMAGE_BMP,
+                                 AubAllocDump::DumpFormat::IMAGE_TRE)));

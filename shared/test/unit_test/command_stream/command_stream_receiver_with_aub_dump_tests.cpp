@@ -671,7 +671,7 @@ static bool createAubCSR[] = {
     false,
     true};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     CommandStreamReceiverWithAubDumpTest_Create,
     CommandStreamReceiverWithAubDumpTest,
     testing::ValuesIn(createAubCSR));

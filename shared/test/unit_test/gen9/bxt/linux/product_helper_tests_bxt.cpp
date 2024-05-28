@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,7 +144,7 @@ template <typename T>
 class BxtHwInfoTests : public ::testing::Test {
 };
 typedef ::testing::Types<BxtHw1x2x6, BxtHw1x3x6> bxtTestTypes;
-TYPED_TEST_CASE(BxtHwInfoTests, bxtTestTypes);
+TYPED_TEST_SUITE(BxtHwInfoTests, bxtTestTypes);
 TYPED_TEST(BxtHwInfoTests, WhenConfiguringHwInfoThenConfigIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

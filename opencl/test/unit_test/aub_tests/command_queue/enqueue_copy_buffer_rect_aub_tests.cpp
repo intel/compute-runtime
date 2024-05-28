@@ -134,13 +134,13 @@ HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
 
 static size_t zero[] = {0};
 
-INSTANTIATE_TEST_CASE_P(AUBCopyBufferRect,
-                        AUBCopyBufferRect,
-                        ::testing::Combine(
-                            ::testing::Values(0, 3), // srcOrigin
-                            ::testing::ValuesIn(zero),
-                            ::testing::Values(0, 7),
-                            ::testing::Values(0, 3), // dstPrigin
-                            ::testing::ValuesIn(zero),
-                            ::testing::Values(0, 7),
-                            ::testing::Values(true, false)));
+INSTANTIATE_TEST_SUITE_P(AUBCopyBufferRect,
+                         AUBCopyBufferRect,
+                         ::testing::Combine(
+                             ::testing::Values(0, 3), // srcOrigin
+                             ::testing::ValuesIn(zero),
+                             ::testing::Values(0, 7),
+                             ::testing::Values(0, 3), // dstPrigin
+                             ::testing::ValuesIn(zero),
+                             ::testing::Values(0, 7),
+                             ::testing::Values(true, false)));

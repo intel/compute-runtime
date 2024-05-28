@@ -646,7 +646,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
 
     commandQueue->destroy();
 }
-INSTANTIATE_TEST_CASE_P(SBAModesForDebugger, L0DebuggerWithBlitterTest, ::testing::Values(0, 1));
+INSTANTIATE_TEST_SUITE_P(SBAModesForDebugger, L0DebuggerWithBlitterTest, ::testing::Values(0, 1));
 
 } // namespace ult
 } // namespace L0

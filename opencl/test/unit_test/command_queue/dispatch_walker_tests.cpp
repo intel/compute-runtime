@@ -103,9 +103,9 @@ struct DispatchWalkerTestForAuxTranslation : DispatchWalkerTest, public ::testin
     KernelObjForAuxTranslation::Type kernelObjType;
 };
 
-INSTANTIATE_TEST_CASE_P(,
-                        DispatchWalkerTestForAuxTranslation,
-                        testing::ValuesIn({KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}));
+INSTANTIATE_TEST_SUITE_P(,
+                         DispatchWalkerTestForAuxTranslation,
+                         testing::ValuesIn({KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}));
 
 HWTEST_F(DispatchWalkerTest, WhenGettingComputeDimensionsThenCorrectNumberOfDimensionsIsReturned) {
     const size_t workItems1D[] = {100, 1, 1};

@@ -69,9 +69,9 @@ XE_HPC_CORETEST_P(UmStatelessCompression, givenDeviceMemAllocWhenStatelessCompre
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-INSTANTIATE_TEST_CASE_P(,
-                        UmStatelessCompression,
-                        ::testing::Bool());
+INSTANTIATE_TEST_SUITE_P(,
+                         UmStatelessCompression,
+                         ::testing::Bool());
 
 class UmStatelessCompressionWithBlitter : public MulticontextOclAubFixture,
                                           public ::testing::Test,
@@ -127,9 +127,9 @@ XE_HPC_CORETEST_P(UmStatelessCompressionWithBlitter, givenDeviceMemAllocWhenItIs
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-INSTANTIATE_TEST_CASE_P(,
-                        UmStatelessCompressionWithBlitter,
-                        ::testing::Bool());
+INSTANTIATE_TEST_SUITE_P(,
+                         UmStatelessCompressionWithBlitter,
+                         ::testing::Bool());
 
 class UmStatelessCompressionWithStatefulAccess : public ProgramFixture,
                                                  public MulticontextOclAubFixture,
@@ -210,6 +210,6 @@ XE_HPC_CORETEST_P(UmStatelessCompressionWithStatefulAccess, givenDeviceMemAllocW
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-INSTANTIATE_TEST_CASE_P(,
-                        UmStatelessCompressionWithStatefulAccess,
-                        ::testing::Bool());
+INSTANTIATE_TEST_SUITE_P(,
+                         UmStatelessCompressionWithStatefulAccess,
+                         ::testing::Bool());

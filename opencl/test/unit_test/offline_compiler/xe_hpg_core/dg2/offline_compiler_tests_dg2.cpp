@@ -24,14 +24,14 @@ inline constexpr AOT::PRODUCT_CONFIG productConfigs[] = {
     AOT::DG2_G11_B0,
     AOT::DG2_G11_B1,
     AOT::DG2_G12_A0};
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     OclocProductConfigDg2TestsValues,
     OclocProductConfigTests,
     ::testing::Combine(
         ::testing::ValuesIn(productConfigs),
         ::testing::Values(IGFX_DG2)));
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     OclocFatbinaryDg2Tests,
     OclocFatbinaryPerProductTests,
     ::testing::Combine(

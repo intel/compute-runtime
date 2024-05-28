@@ -224,7 +224,7 @@ struct SoftwareTagsParametrizedTests : public ::testing::TestWithParam<SWTags::O
     std::map<OpCode, std::unique_ptr<BaseTag>> tagMap;
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SoftwareTags,
     SoftwareTagsParametrizedTests,
     testing::Values(

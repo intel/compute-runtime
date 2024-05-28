@@ -228,8 +228,8 @@ class KernelImpSuggestGroupSize : public DeviceFixture, public ::testing::TestWi
     }
 };
 
-INSTANTIATE_TEST_CASE_P(, KernelImpSuggestGroupSize,
-                        ::testing::Values(4, 7, 8, 16, 32, 192, 1024, 4097, 16000));
+INSTANTIATE_TEST_SUITE_P(, KernelImpSuggestGroupSize,
+                         ::testing::Values(4, 7, 8, 16, 32, 192, 1024, 4097, 16000));
 
 TEST_P(KernelImpSuggestGroupSize, WhenSuggestingGroupThenProperGroupSizeChosen) {
     DebugManagerStateRestore restorer;

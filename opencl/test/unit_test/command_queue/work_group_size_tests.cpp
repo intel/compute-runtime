@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -300,11 +300,11 @@ static size_t workItemCases1D[] = {
     1023, 1024, 1025,
     1400, 1401, 1402};
 
-INSTANTIATE_TEST_CASE_P(wgs,
-                        WorkGroupSizeChannels,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(simdSizes),
-                            ::testing::ValuesIn(workItemCases1D)));
+INSTANTIATE_TEST_SUITE_P(wgs,
+                         WorkGroupSizeChannels,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(simdSizes),
+                             ::testing::ValuesIn(workItemCases1D)));
 
 // ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 // ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
@@ -322,12 +322,12 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSize2D, GivenUsingXandYWorkGroupDimensionsW
 
 static size_t workItemCases2D[] = {1, 2, 3, 7, 15, 31, 63, 127, 255, 511, 1007, 1023, 2047};
 
-INSTANTIATE_TEST_CASE_P(wgs,
-                        WorkGroupSize2D,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(simdSizes),
-                            ::testing::ValuesIn(workItemCases2D),
-                            ::testing::ValuesIn(workItemCases2D)));
+INSTANTIATE_TEST_SUITE_P(wgs,
+                         WorkGroupSize2D,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(simdSizes),
+                             ::testing::ValuesIn(workItemCases2D),
+                             ::testing::ValuesIn(workItemCases2D)));
 // ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 // ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 struct Region {
@@ -351,8 +351,8 @@ Region regionCases[] = {
     {{9, 9, 10}} // This test case was hit by some AUBCopyBufferRect regressions
 };
 
-INSTANTIATE_TEST_CASE_P(wgs,
-                        WorkGroupSizeRegion,
-                        ::testing::Combine(
-                            ::testing::ValuesIn(simdSizes),
-                            ::testing::ValuesIn(regionCases)));
+INSTANTIATE_TEST_SUITE_P(wgs,
+                         WorkGroupSizeRegion,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(simdSizes),
+                             ::testing::ValuesIn(regionCases)));

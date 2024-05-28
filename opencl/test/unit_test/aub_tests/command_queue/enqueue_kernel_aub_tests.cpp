@@ -251,7 +251,7 @@ HWTEST_P(AUBHelloWorldIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AUB,
     AUBHelloWorldIntegrateTest,
     ::testing::Combine(
@@ -419,7 +419,7 @@ HWTEST_P(AUBSimpleArgIntegrateTest, WhenEnqueingKernelThenExpectationsAreMet) {
     }
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     AUB,
     AUBSimpleArgIntegrateTest,
     ::testing::Combine(

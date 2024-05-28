@@ -173,9 +173,9 @@ class MockAuxBuilInOp : public BuiltInOp<EBuiltInOps::auxTranslation> {
     using BaseClass::BuiltInOp;
 };
 
-INSTANTIATE_TEST_CASE_P(,
-                        AuxBuiltInTests,
-                        testing::ValuesIn({KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}));
+INSTANTIATE_TEST_SUITE_P(,
+                         AuxBuiltInTests,
+                         testing::ValuesIn({KernelObjForAuxTranslation::Type::memObj, KernelObjForAuxTranslation::Type::gfxAlloc}));
 
 HWCMDTEST_P(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
 

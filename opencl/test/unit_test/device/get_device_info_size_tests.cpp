@@ -137,7 +137,7 @@ std::pair<uint32_t, size_t> deviceInfoParams2[] = {
     //    {CL_DRIVER_VERSION, sizeof(char[])},
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Device_,
     GetDeviceInfoSize,
     testing::ValuesIn(deviceInfoParams2));
@@ -226,7 +226,7 @@ std::pair<uint32_t, size_t> deviceInfoImageParams[] = {
     {CL_DEVICE_MAX_WRITE_IMAGE_ARGS, sizeof(cl_uint)},
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     Device_,
     GetDeviceInfoForImage,
     testing::ValuesIn(deviceInfoImageParams));

@@ -142,10 +142,10 @@ HWTEST_F(AUBFillBuffer, givenFillBufferWhenSeveralSubmissionsWithoutPollForCompl
     }
 }
 
-INSTANTIATE_TEST_CASE_P(AUBFillBuffer_simple,
-                        AUBFillBuffer,
-                        ::testing::Values(
-                            0 * sizeof(cl_float),
-                            1 * sizeof(cl_float),
-                            2 * sizeof(cl_float),
-                            3 * sizeof(cl_float)));
+INSTANTIATE_TEST_SUITE_P(AUBFillBuffer_simple,
+                         AUBFillBuffer,
+                         ::testing::Values(
+                             0 * sizeof(cl_float),
+                             1 * sizeof(cl_float),
+                             2 * sizeof(cl_float),
+                             3 * sizeof(cl_float)));

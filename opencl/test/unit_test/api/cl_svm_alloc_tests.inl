@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,14 +107,14 @@ static cl_mem_flags svmAllocValidFlags[] = {
     CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER,
     CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SVMAllocCheckFlags,
     ClSVMAllocValidFlagsTests,
     testing::ValuesIn(svmAllocValidFlags));
 
 using ClSVMAllocFtrFlagsTests = ClSvmAllocTemplateTests;
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SVMAllocCheckFlagsFtrFlags,
     ClSVMAllocFtrFlagsTests,
     testing::ValuesIn(svmAllocValidFlags));
@@ -167,7 +167,7 @@ cl_mem_flags svmAllocInvalidFlags[] = {
     CL_MEM_SVM_ATOMICS,
     0xffcc};
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     SVMAllocCheckFlags,
     ClSVMAllocInvalidFlagsTests,
     testing::ValuesIn(svmAllocInvalidFlags));
