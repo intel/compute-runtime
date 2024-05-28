@@ -289,6 +289,32 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMoveToGpuDomainTwiceThen
     EXPECT_TRUE(pageFaultManager->checkFaultHandlerFromPageFaultManager());
 }
 
+TEST_F(PageFaultManagerTest, givenRegisterPageFaultHandlerOnMigrationDisabledWhenMoveToGpuDomainThenDoNotRegisterHandler) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.RegisterPageFaultHandlerOnMigration.set(false);
+
+    void *cmdQ = reinterpret_cast<void *>(0xFFFF);
+    void *alloc1 = reinterpret_cast<void *>(0x1);
+
+    pageFaultManager->insertAllocation(alloc1, 10u, unifiedMemoryManager.get(), cmdQ, {});
+    EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
+    EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
+
+    EXPECT_FALSE(pageFaultManager->checkFaultHandlerFromPageFaultManager());
+
+    pageFaultManager->moveAllocationToGpuDomain(alloc1);
+    EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 0);
+    EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
+    EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
+    EXPECT_EQ(pageFaultManager->transferToGpuCalled, 1);
+    EXPECT_EQ(pageFaultManager->registerFaultHandlerCalled, 0);
+    EXPECT_EQ(pageFaultManager->protectedMemoryAccessAddress, alloc1);
+    EXPECT_EQ(pageFaultManager->protectedSize, 10u);
+    EXPECT_EQ(pageFaultManager->transferToGpuAddress, alloc1);
+
+    EXPECT_FALSE(pageFaultManager->checkFaultHandlerFromPageFaultManager());
+}
+
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMovingToGpuDomainThenUpdateNonGpuAllocsContainer) {
     void *alloc1 = reinterpret_cast<void *>(0x1);
     void *alloc2 = reinterpret_cast<void *>(0x2);
