@@ -291,8 +291,11 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationsWithDifferentSizesWhenAlloc
     auto testDataset = std::vector<SvmDeviceAllocationCacheSimpleTestDataType>(
         {
             {(allocationSizeBasis << 0), nullptr},
+            {(allocationSizeBasis << 0) + 1, nullptr},
             {(allocationSizeBasis << 1), nullptr},
+            {(allocationSizeBasis << 1) + 1, nullptr},
             {(allocationSizeBasis << 2), nullptr},
+            {(allocationSizeBasis << 2) + 1, nullptr},
         });
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
@@ -516,7 +519,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenDeviceOutOfMemoryWhenAllocatingThenCac
     ASSERT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
 }
 
-TEST_F(SvmDeviceAllocationCacheTest, givenAllocationWithIsInternalAllocationSetWhenAllocatingAfterFreeThenDoNotReuseAllocation) {
+TEST_F(SvmDeviceAllocationCacheTest, givenAllocationWithNeedZeroedOutAllocationWhenAllocatingAfterFreeThenDoNotReuseAllocation) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -535,15 +538,13 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationWithIsInternalAllocationSetW
     svmManager->freeSVMAlloc(allocation);
     EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 1u);
 
-    unifiedMemoryProperties.isInternalAllocation = true;
+    unifiedMemoryProperties.needZeroedOutAllocation = true;
     auto testedAllocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
     EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 1u);
     auto svmData = svmManager->getSVMAlloc(testedAllocation);
     EXPECT_NE(nullptr, svmData);
-    EXPECT_TRUE(svmData->isInternalAllocation);
 
     svmManager->freeSVMAlloc(testedAllocation);
-    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 1u);
 
     svmManager->trimUSMDeviceAllocCache();
 }

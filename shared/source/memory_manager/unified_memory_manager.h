@@ -41,7 +41,6 @@ struct SvmAllocationData {
         this->allocId = svmAllocData.allocId;
         this->pageSizeForAlignment = svmAllocData.pageSizeForAlignment;
         this->isImportedAllocation = svmAllocData.isImportedAllocation;
-        this->isInternalAllocation = svmAllocData.isInternalAllocation;
         for (auto allocation : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
             if (allocation) {
                 this->gpuAllocations.addAllocation(allocation);
@@ -64,7 +63,6 @@ struct SvmAllocationData {
         allocId = id;
     }
     bool mappedAllocData = false;
-    bool isInternalAllocation = false;
 
     uint32_t getAllocId() const {
         return allocId;
@@ -140,7 +138,7 @@ class SVMAllocsManager {
         const RootDeviceIndicesContainer &rootDeviceIndices;
         const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields;
         AllocationType requestedAllocationType = AllocationType::unknown;
-        bool isInternalAllocation = false;
+        bool needZeroedOutAllocation = false;
     };
 
     struct SvmCacheAllocationInfo {
