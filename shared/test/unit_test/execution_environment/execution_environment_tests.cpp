@@ -86,6 +86,7 @@ TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCa
 }
 
 TEST(RootDeviceEnvironment, whenCreatingRootDeviceEnvironmentThenCreateOsAgnosticOsTime) {
+    DebugManagerStateRestore dbgRestore;
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     auto profilingTimerResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
@@ -109,6 +110,14 @@ TEST(RootDeviceEnvironment, whenCreatingRootDeviceEnvironmentThenCreateOsAgnosti
 
     EXPECT_EQ(profilingTimerResolution, rootDeviceEnvironment->osTime->getDynamicDeviceTimerResolution(*defaultHwInfo));
     EXPECT_EQ(static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(*defaultHwInfo)), rootDeviceEnvironment->osTime->getDynamicDeviceTimerClock(*defaultHwInfo));
+
+    struct MockOSTime : public OSTime {
+        using OSTime::deviceTime;
+    };
+    auto deviceTime = static_cast<MockOSTime *>(rootDeviceEnvironment->osTime.get())->deviceTime.get();
+    EXPECT_TRUE(deviceTime->isTimestampsRefreshEnabled());
+    debugManager.flags.EnableReusingGpuTimestamps.set(0);
+    EXPECT_FALSE(deviceTime->isTimestampsRefreshEnabled());
 }
 
 TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenReturnNull) {
