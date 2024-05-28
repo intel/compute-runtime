@@ -28,6 +28,7 @@ HWTEST2_P(ProductConfigHwInfoTests, givenAotConfigWhenSetHwInfoGmdIdThenCorrectV
 HWTEST2_P(ProductConfigHwInfoTests, givenUnknownAotConfigWhenGetProductConfigThenDefaultConfigIsReturned, IsAtLeastMtl) {
     hwInfo.ipVersion = {};
     hwInfo.platform.usDeviceID = 0;
+    hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
     auto ret = compilerProductHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(ret, compilerProductHelper->getDefaultHwIpVersion());
 }

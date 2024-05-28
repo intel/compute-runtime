@@ -347,9 +347,15 @@ HWTEST2_F(CompilerProductHelperFixture, givenConfigWhenMatchConfigWithRevIdThenP
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto config = hwInfo.ipVersion.value;
-    EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x0), config);
-    EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x1), config);
-    EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x4), config);
+    for (uint32_t rev : {0x0, 0x1, 0x4}) {
+        NEO::HardwareIpVersion matchedIpVersion;
+        matchedIpVersion.value = compilerProductHelper.matchRevisionIdWithProductConfig(config, rev);
+        EXPECT_EQ(hwInfo.ipVersion.architecture, matchedIpVersion.architecture) << rev;
+        EXPECT_EQ(hwInfo.ipVersion.release, matchedIpVersion.release) << rev;
+        bool gotSameRevision = (matchedIpVersion.revision == hwInfo.ipVersion.revision);
+        bool gotRequestedRevision = (matchedIpVersion.revision == rev);
+        EXPECT_TRUE(gotSameRevision || gotRequestedRevision) << rev;
+    }
 }
 
 HWTEST_F(CompilerProductHelperFixture, givenProductHelperWhenGetAndOverrideHwIpVersionThenCorrectMatchIsFound) {
