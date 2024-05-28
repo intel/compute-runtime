@@ -246,6 +246,11 @@ INSTANTIATE_TEST_SUITE_P(
     CreateImageSize,
     testing::ValuesIn(allImageTypes));
 
+INSTANTIATE_TEST_SUITE_P(
+    ,
+    CheckImageType,
+    testing::ValuesIn(allImageTypes));
+
 static cl_mem_object_type allImageTypesWithBadOne[] = {
     0, // negative scenario
     CL_MEM_OBJECT_BUFFER,

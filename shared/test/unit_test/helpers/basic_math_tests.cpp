@@ -180,6 +180,9 @@ TEST_P(ComputeTotalElementsCount, givenVariousInputVectorsWhenComputeTotalElemen
     Vec3<size_t> inputData(GetParam().x, GetParam().y, GetParam().z);
     EXPECT_EQ(GetParam().result, computeTotalElementsCount(inputData));
 }
+INSTANTIATE_TEST_SUITE_P(,
+                         ComputeTotalElementsCount,
+                         ::testing::ValuesIn(elementCountInputData));
 
 TEST(isPow2Test, WhenArgZeroThenReturnFalse) {
     EXPECT_FALSE(isPow2(0u));

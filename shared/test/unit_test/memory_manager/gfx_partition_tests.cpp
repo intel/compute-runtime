@@ -479,7 +479,7 @@ INSTANTIATE_TEST_SUITE_P(
                       HeapIndex::heapStandard2MB,
                       HeapIndex::heapExtended));
 
-struct GfxPartitionOn57bTest : public ::testing::TestWithParam<uint32_t> {
+struct GfxPartitionOn57bTest : public ::testing::Test {
   public:
     class MockOsMemory : public OSMemory {
       public:
@@ -599,12 +599,12 @@ struct GfxPartitionOn57bTest : public ::testing::TestWithParam<uint32_t> {
 
 uint32_t GfxPartitionOn57bTest::MockOsMemory::reserveCount = 0;
 
-TEST_P(GfxPartitionOn57bTest, given48bitCpuAddressWidthWhenInitializingGfxPartitionThenDoNotReserve48bitSpaceForDriverAllocations) {
+TEST_F(GfxPartitionOn57bTest, given48bitCpuAddressWidthWhenInitializingGfxPartitionThenDoNotReserve48bitSpaceForDriverAllocations) {
     if (is32bit) {
         GTEST_SKIP();
     }
 
-    auto gpuAddressSpace = GetParam();
+    auto gpuAddressSpace = 48;
 
     // 48 bit CPU VA - do not reserve CPU address range, use [0x800000000000-0xFFFFFFFFFFFF]
     CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(48);
@@ -618,12 +618,12 @@ TEST_P(GfxPartitionOn57bTest, given48bitCpuAddressWidthWhenInitializingGfxPartit
     verifyHeaps(0x800000000000, 0x1000000000000, 0x7FFFFFFFFFFF, gpuAddressSpace == 57);
 }
 
-TEST_P(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsNotPresentWhenInitializingGfxPartitionThenDoNotReserve48bitSpaceForDriverAllocations) {
+TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsNotPresentWhenInitializingGfxPartitionThenDoNotReserve48bitSpaceForDriverAllocations) {
     if (is32bit) {
         GTEST_SKIP();
     }
 
-    auto gpuAddressSpace = GetParam();
+    auto gpuAddressSpace = 57;
 
     // 57 bit CPU VA, la57 is not present - do not reserve CPU address range, use [0x800000000000-0xFFFFFFFFFFFF]
     CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(57);

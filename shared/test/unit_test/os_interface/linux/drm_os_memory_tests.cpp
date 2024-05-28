@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/linux/os_inc.h"
@@ -115,7 +116,7 @@ TEST(OSMemoryLinux, GivenProcSelfMapsFileExistsWhenGetMemoryMapsIsQueriedThenVal
         {0x564fcd1fa000, 0x564fcd202000}, {0x564fcd401000, 0x564fcd402000}, {0x564fcd402000, 0x564fcd403000}, {0x564fcdf40000, 0x564fcdf61000}, {0x7fded3d79000, 0x7fded4879000}, {0x7fded4879000, 0x7fded4a60000}, {0x7fded4a60000, 0x7fded4c60000}, {0x7fded4c60000, 0x7fded4c64000}, {0x7fded4c64000, 0x7fded4c66000}, {0x7fded4c66000, 0x7fded4c6a000}, {0x7fded4c6a000, 0x7fded4c91000}, {0x7fded4e54000, 0x7fded4e78000}, {0x7fded4e91000, 0x7fded4e92000}, {0x7fded4e92000, 0x7fded4e93000}, {0x7fded4e93000, 0x7fded4e94000}, {0x7ffd6dfa2000, 0x7ffd6dfc3000}, {0x7ffd6dfe8000, 0x7ffd6dfeb000}, {0x7ffd6dfeb000, 0x7ffd6dfec000}, {0xffffffffff600000, 0xffffffffff601000}};
 
     EXPECT_FALSE(memoryMaps.empty());
-    EXPECT_EQ(memoryMaps.size(), GTEST_ARRAY_SIZE_(referenceMaps));
+    EXPECT_EQ(memoryMaps.size(), arrayCount(referenceMaps));
 
     for (size_t i = 0; i < memoryMaps.size(); ++i) {
         EXPECT_EQ(memoryMaps[i].start, referenceMaps[i].start);

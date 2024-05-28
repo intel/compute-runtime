@@ -288,8 +288,6 @@ TEST(CommandQueue, givenDeviceWhenCreatingCommandQueueThenPickCsrFromDefaultEngi
     EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
 }
 
-struct CommandQueueWithBlitOperationsTests : public ::testing::TestWithParam<uint32_t> {};
-
 TEST(CommandQueue, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenDontRegisterAnyBcsCsrs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
@@ -350,16 +348,6 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
         EXPECT_EQ(bcsEngine.commandStreamReceiver, cmdQ.getBcsCommandStreamReceiver(expectedEngineType));
     }
 }
-
-INSTANTIATE_TEST_SUITE_P(uint32_t,
-                         CommandQueueWithBlitOperationsTests,
-                         ::testing::Values(CL_COMMAND_WRITE_BUFFER,
-                                           CL_COMMAND_WRITE_BUFFER_RECT,
-                                           CL_COMMAND_READ_BUFFER,
-                                           CL_COMMAND_READ_BUFFER_RECT,
-                                           CL_COMMAND_COPY_BUFFER,
-                                           CL_COMMAND_COPY_BUFFER_RECT,
-                                           CL_COMMAND_SVM_MEMCPY));
 
 TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
