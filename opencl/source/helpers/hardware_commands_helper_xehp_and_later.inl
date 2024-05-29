@@ -119,8 +119,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
     if constexpr (heaplessModeEnabled) {
-        auto device = kernel.getContext().getDevice(0);
-        uint64_t indirectDataAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), indirectHeap.getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
+        uint64_t indirectDataAddress = indirectHeap.getHeapGpuBase();
         indirectDataAddress += indirectHeap.getHeapGpuStartOffset();
         indirectDataAddress += offsetCrossThreadData;
         HardwareCommandsHelper<GfxFamily>::programInlineData<WalkerType>(kernel, walkerCmd, indirectDataAddress, scratchAddress);
