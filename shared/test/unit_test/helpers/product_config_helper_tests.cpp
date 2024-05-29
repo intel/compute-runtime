@@ -299,7 +299,12 @@ TEST_F(AotDeviceInfoTests, givenProductOrAotConfigWhenParseMajorMinorRevisionVal
 }
 
 TEST_F(AotDeviceInfoTests, givenProductAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
+    uint32_t numSupportedAcronyms = 0;
     for (const auto &[acronym, value] : AOT::deviceAcronyms) {
+        if (!productConfigHelper->isSupportedProductConfig(value)) {
+            continue;
+        }
+        numSupportedAcronyms++;
         std::string acronymCopy = acronym;
 
         auto findDash = acronymCopy.find("-");
@@ -309,10 +314,30 @@ TEST_F(AotDeviceInfoTests, givenProductAcronymWhenRemoveDashesFromTheNameThenSti
 
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronymCopy), value);
     }
+    for (const auto &[acronym, value] : AOT::rtlIdAcronyms) {
+        if (!productConfigHelper->isSupportedProductConfig(value)) {
+            continue;
+        }
+        numSupportedAcronyms++;
+        std::string acronymCopy = acronym;
+
+        auto findDash = acronymCopy.find("-");
+        if (findDash != std::string::npos) {
+            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
+        }
+
+        EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronymCopy), value);
+    }
+    EXPECT_LT(0u, numSupportedAcronyms);
 }
 
 TEST_F(AotDeviceInfoTests, givenReleaseAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
+    uint32_t numSupportedAcronyms = 0;
     for (const auto &[acronym, value] : AOT::releaseAcronyms) {
+        if (!productConfigHelper->isSupportedRelease(value)) {
+            continue;
+        }
+        numSupportedAcronyms++;
         std::string acronymCopy = acronym;
 
         auto findDash = acronymCopy.find("-");
@@ -322,10 +347,16 @@ TEST_F(AotDeviceInfoTests, givenReleaseAcronymWhenRemoveDashesFromTheNameThenSti
 
         EXPECT_EQ(productConfigHelper->getReleaseFromDeviceName(acronymCopy), value);
     }
+    EXPECT_LT(0u, numSupportedAcronyms);
 }
 
 TEST_F(AotDeviceInfoTests, givenFamilyAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
+    uint32_t numSupportedAcronyms = 0;
     for (const auto &[acronym, value] : AOT::familyAcronyms) {
+        if (!productConfigHelper->isSupportedFamily(value)) {
+            continue;
+        }
+        numSupportedAcronyms++;
         std::string acronymCopy = acronym;
 
         auto findDash = acronymCopy.find("-");
@@ -335,6 +366,7 @@ TEST_F(AotDeviceInfoTests, givenFamilyAcronymWhenRemoveDashesFromTheNameThenStil
 
         EXPECT_EQ(productConfigHelper->getFamilyFromDeviceName(acronymCopy), value);
     }
+    EXPECT_LT(0u, numSupportedAcronyms);
 }
 
 TEST_F(AotDeviceInfoTests, givenProductConfigAcronymWhenCheckAllEnabledThenCorrectValuesAreReturned) {
