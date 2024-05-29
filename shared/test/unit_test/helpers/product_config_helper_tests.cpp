@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "platforms.h"
 
@@ -103,7 +103,7 @@ TEST_F(ProductConfigHelperTests, givenFamilyAcronymWhenAdjustDeviceNameThenNothi
     }
 }
 
-HWTEST2_F(AotDeviceInfoTests, givenGen12lpFamilyAcronymWhenAdjustClosedRangeDeviceNamesThenProperReleaseAcronymsAreAssigned, IsGen12LP) {
+TEST_F(AotDeviceInfoTests, givenGen12lpFamilyAcronymWhenAdjustClosedRangeDeviceNamesThenProperReleaseAcronymsAreAssigned) {
     bool isGen12lpFamilyEnabled = productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
     if (productConfigHelper->getReleasesAcronyms().size() < 2 || isGen12lpFamilyEnabled) {
         GTEST_SKIP();
@@ -111,7 +111,17 @@ HWTEST2_F(AotDeviceInfoTests, givenGen12lpFamilyAcronymWhenAdjustClosedRangeDevi
     std::map<AOT::FAMILY, AOT::RELEASE> familyToReleaseAcronyms = {{AOT::GEN8_FAMILY, AOT::GEN8_RELEASE},
                                                                    {AOT::GEN9_FAMILY, AOT::GEN9_RELEASE},
                                                                    {AOT::GEN11_FAMILY, AOT::GEN11_RELEASE},
-                                                                   {AOT::XE_FAMILY, AOT::XE_LPGPLUS_RELEASE}};
+                                                                   {AOT::XE_FAMILY, AOT::XE_LP_RELEASE}};
+
+    if (productConfigHelper->isSupportedRelease(AOT::XE_LPGPLUS_RELEASE)) {
+        familyToReleaseAcronyms[AOT::XE_FAMILY] = AOT::XE_LPGPLUS_RELEASE;
+    } else if (productConfigHelper->isSupportedRelease(AOT::XE_LPG_RELEASE)) {
+        familyToReleaseAcronyms[AOT::XE_FAMILY] = AOT::XE_LPG_RELEASE;
+    } else if (productConfigHelper->isSupportedRelease(AOT::XE_HPC_VG_RELEASE)) {
+        familyToReleaseAcronyms[AOT::XE_FAMILY] = AOT::XE_HPC_VG_RELEASE;
+    } else if (productConfigHelper->isSupportedRelease(AOT::XE_HPG_RELEASE)) {
+        familyToReleaseAcronyms[AOT::XE_FAMILY] = AOT::XE_HPG_RELEASE;
+    }
 
     EXPECT_EQ(productConfigHelper->getFamilyFromDeviceName("gen12lp"), AOT::UNKNOWN_FAMILY);
     for (const auto &[family, release] : familyToReleaseAcronyms) {
