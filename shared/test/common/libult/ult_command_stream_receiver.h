@@ -40,7 +40,8 @@ struct WriteMemoryParams {
     GraphicsAllocation *latestGfxAllocation = nullptr;
     uint64_t latestGpuVaChunkOffset = 0;
     size_t latestChunkSize = 0;
-    uint32_t callCount = 0;
+    uint32_t totalCallCount = 0;
+    uint32_t chunkWriteCallCount = 0;
     bool latestChunkedMode = false;
 };
 
@@ -228,7 +229,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
 
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
-        writeMemoryParams.callCount++;
+        writeMemoryParams.totalCallCount++;
+        if (isChunkCopy) {
+            writeMemoryParams.chunkWriteCallCount++;
+        }
 
         writeMemoryParams.latestGfxAllocation = &gfxAllocation;
         writeMemoryParams.latestChunkedMode = isChunkCopy;

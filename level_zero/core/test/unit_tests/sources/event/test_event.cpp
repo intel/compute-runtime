@@ -3556,7 +3556,8 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     ze_result_t result = ZE_RESULT_SUCCESS;
     eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
 
-    EXPECT_EQ(0u, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(0u, ultCsr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(0u, ultCsr.writeMemoryParams.chunkWriteCallCount);
 
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
     auto eventAllocation = event->getPoolAllocation(device);
@@ -3570,7 +3571,8 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
 
     uint32_t expectedCallCount = std::min(static_cast<uint32_t>(eventPool->getEventSize() / sizeof(uint64_t)), uint32_t(16));
 
-    EXPECT_EQ(1u, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(2u, ultCsr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u, ultCsr.writeMemoryParams.chunkWriteCallCount);
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(sizeof(uint64_t) * expectedCallCount, ultCsr.writeMemoryParams.latestChunkSize);
@@ -3580,7 +3582,8 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     auto status = event->hostSignal(false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
 
-    EXPECT_EQ(2u, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(3u, ultCsr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(2u, ultCsr.writeMemoryParams.chunkWriteCallCount);
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(event->getSinglePacketSize(), ultCsr.writeMemoryParams.latestChunkSize);
@@ -3599,7 +3602,8 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     event->reset();
     EXPECT_EQ(0, mockMemIface->makeResidentCalledCount);
 
-    EXPECT_EQ(3u, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(4u, ultCsr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(3u, ultCsr.writeMemoryParams.chunkWriteCallCount);
     EXPECT_EQ(eventAllocation, ultCsr.writeMemoryParams.latestGfxAllocation);
     EXPECT_TRUE(ultCsr.writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(event->getSinglePacketSize(), ultCsr.writeMemoryParams.latestChunkSize);

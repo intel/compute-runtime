@@ -434,6 +434,12 @@ void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpu
         }
 
         constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+
+        if (alloc->isTbxWritable(allBanks)) {
+            // initialize full page tables for the first time
+            csrs[0]->writeMemory(*alloc, false, 0, 0);
+        }
+
         alloc->setTbxWritable(true, allBanks);
 
         auto offset = ptrDiff(dstGpuVa, alloc->getGpuAddress());

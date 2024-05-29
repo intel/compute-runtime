@@ -709,11 +709,11 @@ HWTEST_F(ModuleTest, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
     std::vector<std::unique_ptr<L0::ModuleImp>> modules;
     constexpr size_t numModules = 10;
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto initialWriteMemoryCount = ultCsr.writeMemoryParams.callCount;
+    auto initialWriteMemoryCount = ultCsr.writeMemoryParams.totalCallCount;
     for (auto i = 0u; i < numModules; i++) {
         modules.emplace_back(new L0::ModuleImp(device, moduleBuildLog, ModuleType::user));
         modules[i]->initialize(&moduleDesc, device->getNEODevice());
-        EXPECT_EQ(initialWriteMemoryCount, ultCsr.writeMemoryParams.callCount);
+        EXPECT_EQ(initialWriteMemoryCount, ultCsr.writeMemoryParams.totalCallCount);
 
         if (i == 0) {
             allocation = modules[i]->getKernelsIsaParentAllocation();
@@ -736,7 +736,7 @@ HWTEST_F(ModuleTest, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
     for (auto i = 0u; i < 5; i++) {
         modules.emplace_back(new L0::ModuleImp(device, moduleBuildLog, ModuleType::user));
         modules[i]->initialize(&moduleDesc, device->getNEODevice());
-        EXPECT_EQ(initialWriteMemoryCount + i + 1, ultCsr.writeMemoryParams.callCount);
+        EXPECT_EQ(initialWriteMemoryCount + i + 1, ultCsr.writeMemoryParams.totalCallCount);
 
         if (i == 0) {
             allocation = modules[i]->getKernelsIsaParentAllocation();
@@ -755,11 +755,11 @@ HWTEST_F(ModuleTest, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
     modules.clear();
 
     ultCsr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
-    initialWriteMemoryCount = ultCsr.writeMemoryParams.callCount;
+    initialWriteMemoryCount = ultCsr.writeMemoryParams.totalCallCount;
 
     auto module = std::make_unique<L0::ModuleImp>(device, moduleBuildLog, ModuleType::user);
     module->initialize(&moduleDesc, device->getNEODevice());
-    EXPECT_EQ(initialWriteMemoryCount + 1, ultCsr.writeMemoryParams.callCount);
+    EXPECT_EQ(initialWriteMemoryCount + 1, ultCsr.writeMemoryParams.totalCallCount);
 };
 
 template <typename T1, typename T2>

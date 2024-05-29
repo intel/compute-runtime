@@ -308,33 +308,33 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenWriteMemoryIsCalledThenBothCommandStreamReceiversAreCalled) {
     MockGraphicsAllocation mockAllocation;
 
-    EXPECT_EQ(0u, csrWithAubDump->writeMemoryParams.callCount);
+    EXPECT_EQ(0u, csrWithAubDump->writeMemoryParams.totalCallCount);
     if (createAubCSR) {
-        EXPECT_EQ(0u, csrWithAubDump->getAubMockCsr().writeMemoryParams.callCount);
+        EXPECT_EQ(0u, csrWithAubDump->getAubMockCsr().writeMemoryParams.totalCallCount);
     }
 
     csrWithAubDump->writeMemory(mockAllocation, false, 0, 0);
 
-    EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.callCount);
+    EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.totalCallCount);
     EXPECT_EQ(&mockAllocation, csrWithAubDump->writeMemoryParams.latestGfxAllocation);
     EXPECT_FALSE(csrWithAubDump->writeMemoryParams.latestChunkedMode);
 
     if (createAubCSR) {
-        EXPECT_EQ(1u, csrWithAubDump->getAubMockCsr().writeMemoryParams.callCount);
+        EXPECT_EQ(1u, csrWithAubDump->getAubMockCsr().writeMemoryParams.totalCallCount);
         EXPECT_EQ(&mockAllocation, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestGfxAllocation);
         EXPECT_FALSE(csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkedMode);
     }
 
     csrWithAubDump->writeMemory(mockAllocation, true, 1, 2);
 
-    EXPECT_EQ(2u, csrWithAubDump->writeMemoryParams.callCount);
+    EXPECT_EQ(2u, csrWithAubDump->writeMemoryParams.totalCallCount);
     EXPECT_TRUE(csrWithAubDump->writeMemoryParams.latestChunkedMode);
     EXPECT_EQ(&mockAllocation, csrWithAubDump->writeMemoryParams.latestGfxAllocation);
     EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.latestGpuVaChunkOffset);
     EXPECT_EQ(2u, csrWithAubDump->writeMemoryParams.latestChunkSize);
 
     if (createAubCSR) {
-        EXPECT_EQ(2u, csrWithAubDump->getAubMockCsr().writeMemoryParams.callCount);
+        EXPECT_EQ(2u, csrWithAubDump->getAubMockCsr().writeMemoryParams.totalCallCount);
         EXPECT_TRUE(csrWithAubDump->getAubMockCsr().writeMemoryParams.latestChunkedMode);
         EXPECT_EQ(&mockAllocation, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestGfxAllocation);
         EXPECT_EQ(1u, csrWithAubDump->getAubMockCsr().writeMemoryParams.latestGpuVaChunkOffset);
