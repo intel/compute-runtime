@@ -1097,19 +1097,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     if (isCopyOnly()) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->imageElementSizeInBytes);
 
-        Vec3<size_t> srcImgSize = {srcImage->getImageInfo().imgDesc.imageWidth,
-                                   srcImage->getImageInfo().imgDesc.imageHeight,
-                                   srcImage->getImageInfo().imgDesc.imageDepth};
+        ze_image_region_t region = getRegionFromImageDesc(srcImage->getImageDesc());
+        Vec3<size_t> srcImgSize = {region.width, region.height, region.depth};
 
-        Vec3<size_t> dstImgSize = {dstImage->getImageInfo().imgDesc.imageWidth,
-                                   dstImage->getImageInfo().imgDesc.imageHeight,
-                                   dstImage->getImageInfo().imgDesc.imageDepth};
+        region = getRegionFromImageDesc(dstImage->getImageDesc());
+        Vec3<size_t> dstImgSize = {region.width, region.height, region.depth};
 
-        auto srcRowPitch = srcRegion.width * bytesPerPixel;
+        auto srcRowPitch = srcImage->getImageInfo().rowPitch;
         auto srcSlicePitch =
             (srcImage->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : srcRegion.height) * srcRowPitch;
 
-        auto dstRowPitch = dstRegion.width * bytesPerPixel;
+        auto dstRowPitch = dstImage->getImageInfo().rowPitch;
         auto dstSlicePitch =
             (dstImage->getImageInfo().imgDesc.imageType == NEO::ImageType::image1DArray ? 1 : dstRegion.height) * dstRowPitch;
 

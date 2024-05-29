@@ -142,9 +142,15 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                     const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                     L0::Event *signalEvent) override {
         appendCopyImageBlitCalledTimes++;
+        appendCopyImageSrcRowPitch = srcRowPitch;
+        appendCopyImageSrcSlicePitch = srcSlicePitch;
+        appendCopyImageDstRowPitch = dstRowPitch;
+        appendCopyImageDstSlicePitch = dstSlicePitch;
         appendImageRegionCopySize = copySize;
         appendImageRegionSrcOrigin = srcOffsets;
         appendImageRegionDstOrigin = dstOffsets;
+        appendCopyImageSrcSize = srcSize;
+        appendCopyImageDstSize = dstSize;
         if (signalEvent) {
             useEvents = true;
         } else {
@@ -154,9 +160,15 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     }
     uint8_t mockAlignedAllocData[2 * MemoryConstants::pageSize]{};
 
+    size_t appendCopyImageSrcRowPitch = 0;
+    size_t appendCopyImageSrcSlicePitch = 0;
+    size_t appendCopyImageDstRowPitch = 0;
+    size_t appendCopyImageDstSlicePitch = 0;
     Vec3<size_t> appendImageRegionCopySize = {0, 0, 0};
     Vec3<size_t> appendImageRegionSrcOrigin = {9, 9, 9};
     Vec3<size_t> appendImageRegionDstOrigin = {9, 9, 9};
+    Vec3<size_t> appendCopyImageSrcSize{0, 0, 0};
+    Vec3<size_t> appendCopyImageDstSize{0, 0, 0};
 
     void *alignedDataPtr = alignUp(mockAlignedAllocData, MemoryConstants::pageSize);
 
@@ -1087,6 +1099,89 @@ HWTEST2_F(CommandListAppend, givenCopyCommandListAndNullDestinationRegionWhen3DI
     cmdList.appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
     EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
     EXPECT_EQ(cmdList.appendImageRegionDstOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListAppend, givenCopyCommandListWhen1DArrayImageCopyRegionThenAppendCopyImageBlitCalledWithCorrectSizes, IsAtLeastSkl) {
+    MockCommandListHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_1DARRAY,
+                              {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                               ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                              20,
+                              1,
+                              1,
+                              4,
+                              0};
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHWSrc->initialize(device, &zeDesc);
+    imageHWDst->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {4, 0, 0, 4, 1, 1};
+    ze_image_region_t dstRegion = srcRegion;
+    srcRegion.originX = 8;
+    cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, false);
+
+    EXPECT_EQ(cmdList.appendCopyImageSrcRowPitch, imageHWSrc->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, srcRegion.height * imageHWSrc->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageDstRowPitch, imageHWDst->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, dstRegion.height * imageHWDst->getImageInfo().rowPitch);
+    Vec3<size_t> expectedRegionCopySize = {srcRegion.width, srcRegion.height, srcRegion.depth};
+    Vec3<size_t> expectedRegionSrcOrigin = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
+    Vec3<size_t> expectedRegionDstOrigin = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
+    Vec3<size_t> expectedCopyImageSrcSize = {zeDesc.width, zeDesc.arraylevels, zeDesc.depth};
+    Vec3<size_t> expectedCopyImageDstSize = {zeDesc.width, zeDesc.arraylevels, zeDesc.depth};
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionSrcOrigin, expectedRegionSrcOrigin);
+    EXPECT_EQ(cmdList.appendImageRegionDstOrigin, expectedRegionDstOrigin);
+    EXPECT_EQ(cmdList.appendCopyImageSrcSize, expectedCopyImageSrcSize);
+    EXPECT_EQ(cmdList.appendCopyImageDstSize, expectedCopyImageDstSize);
+}
+
+HWTEST2_F(CommandListAppend, givenCopyCommandListWhen2DArrayImageCopyRegionThenAppendCopyImageBlitCalledWithCorrectSizes, IsAtLeastSkl) {
+    MockCommandListHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_2DARRAY,
+                              {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                               ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                              20,
+                              30,
+                              1,
+                              2,
+                              0};
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHWSrc->initialize(device, &zeDesc);
+    imageHWDst->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+    ze_image_region_t dstRegion = srcRegion;
+    srcRegion.originX = 8;
+    srcRegion.originY = 8;
+    cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, false);
+
+    EXPECT_EQ(cmdList.appendCopyImageSrcRowPitch, imageHWSrc->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageSrcSlicePitch, srcRegion.height * imageHWSrc->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageDstRowPitch, imageHWDst->getImageInfo().rowPitch);
+    EXPECT_EQ(cmdList.appendCopyImageDstSlicePitch, dstRegion.height * imageHWDst->getImageInfo().rowPitch);
+    Vec3<size_t> expectedRegionCopySize = {srcRegion.width, srcRegion.height, srcRegion.depth};
+    Vec3<size_t> expectedRegionSrcOrigin = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
+    Vec3<size_t> expectedRegionDstOrigin = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
+    Vec3<size_t> expectedCopyImageSrcSize = {zeDesc.width, zeDesc.height, zeDesc.arraylevels};
+    Vec3<size_t> expectedCopyImageDstSize = {zeDesc.width, zeDesc.height, zeDesc.arraylevels};
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionSrcOrigin, expectedRegionSrcOrigin);
+    EXPECT_EQ(cmdList.appendImageRegionDstOrigin, expectedRegionDstOrigin);
+    EXPECT_EQ(cmdList.appendCopyImageSrcSize, expectedCopyImageSrcSize);
+    EXPECT_EQ(cmdList.appendCopyImageDstSize, expectedCopyImageDstSize);
 }
 
 HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromImageToMemoryThenBlitImageCopyCalled, ImageSupport) {

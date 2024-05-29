@@ -225,7 +225,7 @@ bool testAppendImageCopyExt(ze_context_handle_t &context, ze_device_handle_t &de
     return validRet;
 }
 
-bool testAppendImageCopyExtArray(ze_context_handle_t &context, ze_device_handle_t &device, bool useCopyEngine, const ze_image_type_t type, const uint32_t width, const uint32_t height, const uint32_t arraylevels) {
+bool testAppendImageCopyArray(ze_context_handle_t &context, ze_device_handle_t &device, bool useCopyEngine, const ze_image_type_t type, const uint32_t width, const uint32_t height, const uint32_t arraylevels, bool testImageCopyRegion) {
     constexpr uint32_t depth = 1;
     constexpr size_t bytesPerPixel = 4;
 
@@ -280,6 +280,19 @@ bool testAppendImageCopyExtArray(ze_context_handle_t &context, ze_device_handle_
         region.depth = arraylevels;
     }
 
+    ze_image_handle_t img2;
+    ze_image_region_t region2 = region;
+    constexpr uint32_t offset = 4;
+    if (testImageCopyRegion) {
+        region2.originX += offset;
+        imgDesc.width += 2 * offset;
+        if (type == ZE_IMAGE_TYPE_2DARRAY) {
+            region2.originY += offset;
+            imgDesc.height += 2 * offset;
+        }
+        SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &imgDesc, &img2));
+    }
+
     const uint32_t rowPitch = bytesPerPixel * width;
     const size_t imgSize = rowPitch * height * arraylevels;
     uint8_t *srcBuffer = new uint8_t[imgSize];
@@ -290,13 +303,20 @@ bool testAppendImageCopyExtArray(ze_context_handle_t &context, ze_device_handle_
         dstBuffer[i] = 0xff;
     }
 
-    // Copy from srcBuffer->img->dstBuffer, so at the end dstBuffer = srcBuffer
+    // Copy from srcBuffer->img[->img2]->dstBuffer, so at the end dstBuffer = srcBuffer
     SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyFromMemoryExt(cmdList, img, srcBuffer,
                                                                    &region, 0u, 0u, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyToMemoryExt(cmdList, dstBuffer, img,
-                                                                 &region, 0u, 0u, nullptr, 0, nullptr));
-
+    if (testImageCopyRegion) {
+        SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyRegion(cmdList, img2, img,
+                                                                &region2, &region, nullptr, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyToMemoryExt(cmdList, dstBuffer, img2,
+                                                                     &region2, 0u, 0u, nullptr, 0, nullptr));
+    } else {
+        SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyToMemoryExt(cmdList, dstBuffer, img,
+                                                                     &region, 0u, 0u, nullptr, 0, nullptr));
+    }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
@@ -306,6 +326,9 @@ bool testAppendImageCopyExtArray(ze_context_handle_t &context, ze_device_handle_
     delete[] srcBuffer;
     delete[] dstBuffer;
     SUCCESS_OR_TERMINATE(zeImageDestroy(img));
+    if (testImageCopyRegion) {
+        SUCCESS_OR_TERMINATE(zeImageDestroy(img2));
+    }
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 
@@ -340,8 +363,8 @@ int main(int argc, char *argv[]) {
     bool result1DArray = true;
     for (uint32_t width = 1; width <= 128; width <<= 1) {
         for (uint32_t arraylevels = 1; arraylevels <= 5; ++arraylevels) {
-            outputValidationSuccessful = testAppendImageCopyExtArray(context, device, true, ZE_IMAGE_TYPE_1DARRAY, width, 1u, arraylevels);
-            result1DArray &= outputValidationSuccessful;
+            result1DArray &= testAppendImageCopyArray(context, device, true, ZE_IMAGE_TYPE_1DARRAY, width, 1u, arraylevels, false);
+            result1DArray &= testAppendImageCopyArray(context, device, true, ZE_IMAGE_TYPE_1DARRAY, width, 1u, arraylevels, true);
         }
     }
     result &= result1DArray;
@@ -351,8 +374,8 @@ int main(int argc, char *argv[]) {
     for (uint32_t width = 1; width <= 128; width <<= 1) {
         for (uint32_t height = 1; height < 9; ++height) {
             for (uint32_t arraylevels = 1; arraylevels <= 5; ++arraylevels) {
-                outputValidationSuccessful = testAppendImageCopyExtArray(context, device, true, ZE_IMAGE_TYPE_2DARRAY, width, height, arraylevels);
-                result2DArray &= outputValidationSuccessful;
+                result2DArray &= testAppendImageCopyArray(context, device, true, ZE_IMAGE_TYPE_2DARRAY, width, height, arraylevels, false);
+                result2DArray &= testAppendImageCopyArray(context, device, true, ZE_IMAGE_TYPE_2DARRAY, width, height, arraylevels, true);
             }
         }
     }
