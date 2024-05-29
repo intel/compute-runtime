@@ -359,6 +359,11 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallIsNewCoherencyModel
     EXPECT_TRUE(productHelper->isNewCoherencyModelSupported());
 }
 
+HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallDeferMOCSToPatThenFalseIsReturned, IsXeLpg) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.deferMOCSToPatIndex());
+}
+
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue, IsXeLpg) {
     EXPECT_TRUE(productHelper->isDummyBlitWaRequired());
 }

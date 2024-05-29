@@ -11,6 +11,6 @@
 
 namespace NEO {
 bool GmmHelper::deferMOCSToPatIndex() const {
-    return this->rootDeviceEnvironment.getProductHelper().isNewCoherencyModelSupported();
+    return this->rootDeviceEnvironment.getProductHelper().deferMOCSToPatIndex();
 }
 } // namespace NEO

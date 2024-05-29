@@ -198,6 +198,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::deferMOCSToPatIndex() const {
+    return false;
+}
+
+template <>
 std::pair<bool, bool> ProductHelperHw<IGFX_UNKNOWN>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     return {false, false};
 }
