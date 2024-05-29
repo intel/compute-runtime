@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -35,7 +35,6 @@ set(IGDRCL_SRCS_tests_mocks
     ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr_impl.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_client_context.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_experimental_command_buffer.h
     ${NEO_CORE_tests_compiler_mocks}
 )
 

@@ -530,7 +530,6 @@ class CommandStreamReceiver {
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
     std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
-    std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
     std::unique_ptr<InternalAllocationStorage> internalAllocationStorage;
     std::atomic<uint32_t> preallocatedAmount{0};
     std::atomic<uint32_t> requestedPreallocationsAmount{0};

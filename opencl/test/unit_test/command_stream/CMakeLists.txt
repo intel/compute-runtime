@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -23,7 +23,6 @@ set(IGDRCL_SRCS_tests_command_stream
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_flush_task_gmock_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_receiver_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/get_devices_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling_ocl_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy_helper.cpp

@@ -10,7 +10,6 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/aub_subcapture_status.h"
-#include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/submission_status.h"
@@ -738,10 +737,6 @@ void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
         heap->replaceBuffer(nullptr, 0);
         heap->replaceGraphicsAllocation(nullptr);
     }
-}
-
-void CommandStreamReceiver::setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer) {
-    experimentalCmdBuffer = std::move(cmdBuffer);
 }
 
 void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {

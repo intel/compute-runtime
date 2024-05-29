@@ -8,7 +8,6 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
-#include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller_base.h"
@@ -524,11 +523,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         programSamplerCacheFlushBetweenRedescribedSurfaceReads(commandStreamCSR);
     }
 
-    if (experimentalCmdBuffer.get() != nullptr) {
-        size_t startingOffset = experimentalCmdBuffer->programExperimentalCommandBuffer<GfxFamily>();
-        experimentalCmdBuffer->injectBufferStart<GfxFamily>(commandStreamCSR, startingOffset);
-    }
-
     if (stateCacheFlushRequired) {
         device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
         MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStreamCSR, device.getRootDeviceEnvironment());
@@ -556,10 +550,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (debuggingEnabled && debugSurface) {
         makeResident(*debugSurface);
-    }
-
-    if (experimentalCmdBuffer.get() != nullptr) {
-        experimentalCmdBuffer->makeResidentAllocations();
     }
 
     if (workPartitionAllocation) {
@@ -798,9 +788,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
         }
-    }
-    if (experimentalCmdBuffer.get() != nullptr) {
-        size += experimentalCmdBuffer->getRequiredInjectionSize<GfxFamily>();
     }
 
     size += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.csrDependencies, false);

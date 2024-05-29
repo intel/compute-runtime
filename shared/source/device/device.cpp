@@ -8,7 +8,6 @@
 #include "shared/source/device/device.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -259,13 +258,6 @@ bool Device::createDeviceImpl() {
     }
 
     executionEnvironment->memoryManager->setForce32BitAllocations(getDeviceInfo().force32BitAddressess);
-
-    if (debugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
-        for (auto &engine : allEngines) {
-            auto csr = engine.commandStreamReceiver;
-            csr->setExperimentalCmdBuffer(std::make_unique<ExperimentalCommandBuffer>(csr, getDeviceInfo().profilingTimerResolution));
-        }
-    }
 
     if (debugManager.flags.EnableSWTags.get() && !getRootDeviceEnvironment().tagsManager->isInitialized()) {
         getRootDeviceEnvironment().tagsManager->initialize(*this);
