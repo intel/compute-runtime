@@ -234,11 +234,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
         tlbFlushArgs.commandWithPostSync = true;
         tlbFlushArgs.tlbFlush = true;
 
-        EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, this->globalFenceAllocation->getGpuAddress(), 0, tlbFlushArgs);
+        EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, this->getGlobalFenceAllocation()->getGpuAddress(), 0, tlbFlushArgs);
     }
 
-    if (globalFenceAllocation) {
-        makeResident(*globalFenceAllocation);
+    if (getGlobalFenceAllocation()) {
+        makeResident(*getGlobalFenceAllocation());
     }
 
     if (dispatchBcsFlags.flushTaskCount) {
@@ -1046,7 +1046,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
             tlbFlushArgs.commandWithPostSync = true;
             tlbFlushArgs.tlbFlush = true;
 
-            EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, this->globalFenceAllocation->getGpuAddress(), 0, tlbFlushArgs);
+            EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, this->getGlobalFenceAllocation()->getGpuAddress(), 0, tlbFlushArgs);
         }
 
         BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(blitProperties, commandStream, *waArgs.rootDeviceEnvironment);
@@ -1117,8 +1117,8 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStream);
 
     makeResident(*tagAllocation);
-    if (globalFenceAllocation) {
-        makeResident(*globalFenceAllocation);
+    if (getGlobalFenceAllocation()) {
+        makeResident(*getGlobalFenceAllocation());
     }
 
     uint64_t taskStartAddress = commandStream.getGpuBase() + commandStreamStart;
@@ -1160,7 +1160,7 @@ template <typename GfxFamily>
 inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
     if (this->osContext != nullptr) {
         if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
-            return this->flushMiFlushDW();
+            return this->flushMiFlushDW(false);
         } else {
             return this->flushPipeControl(false);
         }
@@ -1169,7 +1169,7 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
 }
 
 template <typename GfxFamily>
-inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
+inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(bool initializeProlog) {
     auto lock = obtainUniqueOwnership();
 
     NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&peekRootDeviceEnvironment())};
@@ -1177,11 +1177,19 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
     args.commandWithPostSync = true;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
 
-    const size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(peekRootDeviceEnvironment()) +
-                                EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(peekRootDeviceEnvironment()) +
+                          EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+
+    if (initializeProlog) {
+        requiredSize += getCmdsSizeForHardwareContext();
+    }
 
     auto &commandStream = getCS(requiredSize);
     auto commandStreamStart = commandStream.getUsed();
+
+    if (initializeProlog) {
+        programHardwareContext(commandStream);
+    }
 
     NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, 0, false, peekRootDeviceEnvironment());
 
@@ -1234,9 +1242,6 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
 
 template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream &commandStreamTask, size_t commandStreamStartTask) {
-    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
-    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
-
     void *endingCmdPtr = nullptr;
     programEndingCmd(commandStreamTask, &endingCmdPtr, isAnyDirectSubmissionEnabled(), false);
 
@@ -1245,8 +1250,8 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
     EncodeNoop<GfxFamily>::emitNoop(commandStreamTask, bytesToPad);
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
 
-    if (globalFenceAllocation) {
-        makeResident(*globalFenceAllocation);
+    if (getGlobalFenceAllocation()) {
+        makeResident(*getGlobalFenceAllocation());
     }
 
     uint64_t taskStartAddress = commandStreamTask.getGpuBase() + commandStreamStartTask;

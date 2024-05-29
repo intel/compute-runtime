@@ -133,7 +133,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override;
 
     SubmissionStatus flushTagUpdate() override;
-    SubmissionStatus flushMiFlushDW();
+    SubmissionStatus flushMiFlushDW(bool initializeProlog);
     SubmissionStatus flushPipeControl(bool stateCacheFlush);
     SubmissionStatus flushSmallTask(LinearStream &commandStreamTask,
                                     size_t commandStreamStartTask);
