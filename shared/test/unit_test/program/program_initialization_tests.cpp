@@ -90,7 +90,9 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     ASSERT_NE(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
     EXPECT_TRUE(alloc->isMemObjectsAllocationWithWritableFlags());
-    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()))->memoryType);
+    auto svmData = svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()));
+    EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, svmData->memoryType);
+    EXPECT_TRUE(svmData->isInternalAllocation);
     EXPECT_EQ(AllocationType::constantSurface, alloc->getAllocationType());
     EXPECT_FALSE(alloc->getDefaultGmm()->resourceParams.Flags.Info.NotLockable);
     EXPECT_TRUE(svmAllocsManager.requestedZeroedOutAllocation);

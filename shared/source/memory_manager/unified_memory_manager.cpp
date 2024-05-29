@@ -298,7 +298,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     if (memoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {
         unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
         if (this->usmDeviceAllocationsCacheEnabled &&
-            false == memoryProperties.needZeroedOutAllocation) {
+            false == memoryProperties.isInternalAllocation) {
             void *allocationFromCache = this->usmDeviceAllocationsCache.get(size, memoryProperties, this);
             if (allocationFromCache) {
                 return allocationFromCache;
@@ -332,6 +332,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
     allocData.device = memoryProperties.device;
     allocData.setAllocId(++this->allocationsCounter);
+    allocData.isInternalAllocation = memoryProperties.isInternalAllocation;
 
     auto retPtr = reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
     insertSVMAlloc(retPtr, allocData);
@@ -445,8 +446,9 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
+            false == svmData->isInternalAllocation &&
             this->usmDeviceAllocationsCacheEnabled) {
-            if (this->usmDeviceAllocationsCache.insert(svmData->size, ptr)) {
+            if (this->usmDeviceAllocationsCache.insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr)) {
                 return true;
             }
         }
