@@ -36,7 +36,7 @@ class IoctlHelperXe : public IoctlHelper {
     IoctlHelperXe(Drm &drmArg);
     ~IoctlHelperXe() override;
     int ioctl(DrmIoctl request, void *arg) override;
-
+    int ioctl(int fd, DrmIoctl request, void *arg) override;
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isChunkingAvailable() override;
@@ -84,6 +84,8 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t getEuStallFdParameter() override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) override;
     bool perfDisableEuStallStream(int32_t *stream) override;
+    MOCKABLE_VIRTUAL int perfOpenIoctl(DrmIoctl request, void *arg);
+    unsigned int getIoctlRequestValuePerf(DrmIoctl ioctlRequest) const;
     UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
     UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) override;
     int unregisterUuid(uint32_t handle) override;

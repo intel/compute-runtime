@@ -33,6 +33,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::defaultEngine;
     using IoctlHelperXe::getDefaultEngineClass;
     using IoctlHelperXe::getFdFromVmExport;
+    using IoctlHelperXe::ioctl;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;
@@ -46,6 +47,30 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::xeGetengineClassName;
     using IoctlHelperXe::xeGtListData;
     using IoctlHelperXe::xeShowBindTable;
+
+    int perfOpenIoctl(DrmIoctl request, void *arg) override {
+        if (failPerfOpen) {
+            return -1;
+        }
+        return IoctlHelperXe::perfOpenIoctl(request, arg);
+    }
+
+    int ioctl(int fd, DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::perfDisable) {
+            if (failPerfDisable) {
+                return -1;
+            }
+        }
+        if (request == DrmIoctl::perfEnable) {
+            if (failPerfEnable) {
+                return -1;
+            }
+        }
+        return IoctlHelperXe::ioctl(fd, request, arg);
+    }
+    bool failPerfDisable = false;
+    bool failPerfEnable = false;
+    bool failPerfOpen = false;
 };
 
 inline constexpr int testValueVmId = 0x5764;
@@ -294,6 +319,9 @@ class DrmMockXe : public DrmMockCustom {
             if (queueDestroy->exec_queue_id == mockExecQueueId) {
                 ret = 0;
             }
+        } break;
+        case DrmIoctl::perfOpen: {
+            ret = 0;
         } break;
         case DrmIoctl::gemContextSetparam:
         case DrmIoctl::gemContextGetparam:

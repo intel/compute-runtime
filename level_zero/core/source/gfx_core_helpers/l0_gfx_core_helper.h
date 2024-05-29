@@ -37,6 +37,15 @@ enum class RTASDeviceFormatInternal {
     version2 = 2,
 };
 
+// Offset to read the first Stall Sampling report after IP Address.
+constexpr int ipStallSamplingOffset = 3;
+// Shift in bits required to read the stall sampling report data due to the IP address [0-28] bits to access the next report category data.
+constexpr int ipStallSamplingReportShift = 5;
+// Mask for Stall Sampling Report Category.
+constexpr int stallSamplingReportCategoryMask = 0xff;
+// Offset to access Stall Sampling Report Sub Slice and flags.
+constexpr int stallSamplingReportSubSliceAndFlagsOffset = 48;
+
 struct Event;
 struct Device;
 struct EventPool;
@@ -97,6 +106,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) = 0;
     virtual bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) = 0;
     virtual void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) = 0;
+    virtual uint32_t getIpSamplingMetricCount() = 0;
     virtual bool synchronizedDispatchSupported() const = 0;
     virtual bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const = 0;
 
@@ -145,6 +155,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) override;
     bool stallIpDataMapUpdate(std::map<uint64_t, void *> &stallSumIpDataMap, const uint8_t *pRawIpData) override;
     void stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) override;
+    uint32_t getIpSamplingMetricCount() override;
     bool synchronizedDispatchSupported() const override;
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const override;
 

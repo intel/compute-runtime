@@ -7,6 +7,7 @@
 set(NEO_CORE_OS_INTERFACE_TESTS_LINUX_XE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/ioctl_helper_xe_perf_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_tests.h
 )
 if(NEO_ENABLE_XE_EU_DEBUG_SUPPORT)

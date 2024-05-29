@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,7 +7,7 @@
 set(L0_TOOLS_METRICS_LINUX_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_oa_query_pool_linux.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_ip_sampling_linux.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/test_metric_ip_sampling_linux.cpp
 )
 
 if(TESTS_PVC)

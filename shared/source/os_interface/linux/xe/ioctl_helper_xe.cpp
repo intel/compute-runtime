@@ -1138,6 +1138,9 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::metadataDestroy: {
         ret = debuggerMetadataDestroyIoctl(request, arg);
     } break;
+    case DrmIoctl::perfOpen: {
+        ret = perfOpenIoctl(request, arg);
+    } break;
 
     default:
         xeLog("Not handled 0x%x\n", request);
@@ -1500,18 +1503,6 @@ void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, void *
     }
 }
 
-bool IoctlHelperXe::perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) {
-    return false;
-}
-
-bool IoctlHelperXe::perfDisableEuStallStream(int32_t *stream) {
-    return false;
-}
-bool IoctlHelperXe::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
-                                         uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) {
-    return false;
-}
-
 unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     xeLog(" -> IoctlHelperXe::%s 0x%x\n", __FUNCTION__, ioctlRequest);
     switch (ioctlRequest) {
@@ -1547,10 +1538,18 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     case DrmIoctl::metadataCreate:
     case DrmIoctl::metadataDestroy:
         return getIoctlRequestValueDebugger(ioctlRequest);
+    case DrmIoctl::perfOpen:
+    case DrmIoctl::perfEnable:
+    case DrmIoctl::perfDisable:
+        return getIoctlRequestValuePerf(ioctlRequest);
     default:
         UNRECOVERABLE_IF(true);
         return 0;
     }
+}
+
+int IoctlHelperXe::ioctl(int fd, DrmIoctl request, void *arg) {
+    return NEO::SysCalls::ioctl(fd, getIoctlRequestValue(request), arg);
 }
 
 std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/test/common/test_macros/hw_test.h"
+
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include <level_zero/zet_api.h>
@@ -15,6 +17,9 @@
 namespace L0 {
 namespace ult {
 class MockMetricIpSamplingOsInterface;
+
+using EustallSupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_PVC>;
+using IsGen9ToPVC = IsWithinProducts<IGFX_SKYLAKE, IGFX_PVC>;
 
 class MockStallRawIpData {
   public:

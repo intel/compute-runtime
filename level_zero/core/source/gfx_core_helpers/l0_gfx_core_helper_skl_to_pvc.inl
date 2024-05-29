@@ -13,6 +13,7 @@
 #include <map>
 
 namespace L0 {
+constexpr uint32_t ipSamplingMetricCount = 10u;
 
 template <typename Family>
 bool L0GfxCoreHelperHw<Family>::imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
@@ -52,11 +53,13 @@ bool L0GfxCoreHelperHw<Family>::forceDefaultUsmCompressionSupport() const {
  * 85 to 92	sync count
  * 93 to 100	inst_fetch count
  *
- * bytes 49 and 50, subSlice
- * bytes 51 and 52, flags
+ * bytes at index 48 and 49, subSlice
+ * bytes at index 50 and 51, flags
  *
  * total size 64 bytes
  */
+
+#pragma pack(1)
 typedef struct StallSumIpData {
     uint64_t activeCount;
     uint64_t otherCount;
@@ -68,6 +71,14 @@ typedef struct StallSumIpData {
     uint64_t syncCount;
     uint64_t instFetchCount;
 } StallSumIpData_t;
+#pragma pack()
+
+constexpr uint32_t ipSamplingMetricCountXe = 10u;
+
+template <typename Family>
+uint32_t L0GfxCoreHelperHw<Family>::getIpSamplingMetricCount() {
+    return ipSamplingMetricCountXe;
+}
 
 template <typename Family>
 void L0GfxCoreHelperHw<Family>::stallIpDataMapDelete(std::map<uint64_t, void *> &stallSumIpDataMap) {
@@ -75,6 +86,7 @@ void L0GfxCoreHelperHw<Family>::stallIpDataMapDelete(std::map<uint64_t, void *> 
         StallSumIpData_t *stallSumData = reinterpret_cast<StallSumIpData_t *>(i->second);
         if (stallSumData) {
             delete stallSumData;
+            i->second = nullptr;
         }
     }
 }
@@ -88,16 +100,25 @@ bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> 
     StallSumIpData_t *stallSumData = nullptr;
     if (stallSumIpDataMap.count(ip) == 0) {
         stallSumData = new StallSumIpData_t{};
+        stallSumData->activeCount = 0;
+        stallSumData->otherCount = 0;
+        stallSumData->controlCount = 0;
+        stallSumData->pipeStallCount = 0;
+        stallSumData->sendCount = 0;
+        stallSumData->distAccCount = 0;
+        stallSumData->sbidCount = 0;
+        stallSumData->syncCount = 0;
+        stallSumData->instFetchCount = 0;
         stallSumIpDataMap[ip] = stallSumData;
     } else {
         stallSumData = reinterpret_cast<StallSumIpData_t *>(stallSumIpDataMap[ip]);
     }
-    tempAddr += 3;
+    tempAddr += ipStallSamplingOffset;
 
     auto getCount = [&tempAddr]() {
         uint16_t tempCount = 0;
         memcpy_s(reinterpret_cast<uint8_t *>(&tempCount), sizeof(tempCount), tempAddr, sizeof(tempCount));
-        tempCount = (tempCount >> 5) & 0xff;
+        tempCount = (tempCount >> ipStallSamplingReportShift) & stallSamplingReportCategoryMask;
         tempAddr += 1;
         return static_cast<uint8_t>(tempCount);
     };
@@ -112,19 +133,21 @@ bool L0GfxCoreHelperHw<Family>::stallIpDataMapUpdate(std::map<uint64_t, void *> 
     stallSumData->syncCount += getCount();
     stallSumData->instFetchCount += getCount();
 
+#pragma pack(1)
     struct StallCntrInfo {
         uint16_t subslice;
         uint16_t flags;
     } stallCntrInfo = {};
+#pragma pack()
 
-    tempAddr = pRawIpData + 48;
+    tempAddr = pRawIpData + stallSamplingReportSubSliceAndFlagsOffset;
     memcpy_s(reinterpret_cast<uint8_t *>(&stallCntrInfo), sizeof(stallCntrInfo), tempAddr, sizeof(stallCntrInfo));
 
-    constexpr int overflowDropFlag = (1 << 8);
+    constexpr int32_t overflowDropFlag = (1 << 8);
     return stallCntrInfo.flags & overflowDropFlag;
 }
 
-// The order of push_back calls must match the order of stallSamplingReportList.
+// Order of ipDataValues must match stallSamplingReportList
 template <typename Family>
 void L0GfxCoreHelperHw<Family>::stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) {
     StallSumIpData_t *stallSumData = reinterpret_cast<StallSumIpData_t *>(sumIpData);

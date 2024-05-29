@@ -24,7 +24,6 @@
 #include <cstring>
 
 namespace L0 {
-constexpr uint32_t ipSamplinMetricCount = 10u;
 constexpr uint32_t ipSamplinDomainId = 100u;
 
 std::unique_ptr<IpSamplingMetricSourceImp> IpSamplingMetricSourceImp::create(const MetricDeviceContext &metricDeviceContext) {
@@ -80,7 +79,9 @@ void IpSamplingMetricSourceImp::cacheMetricGroup() {
     }
 
     std::vector<IpSamplingMetricImp> metrics = {};
-    metrics.reserve(ipSamplinMetricCount);
+    auto &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    metrics.reserve(l0GfxCoreHelper.getIpSamplingMetricCount());
+    metricSourceCount = l0GfxCoreHelper.getIpSamplingMetricCount();
 
     zet_metric_properties_t metricProperties = {};
 
@@ -97,7 +98,6 @@ void IpSamplingMetricSourceImp::cacheMetricGroup() {
     strcpy_s(metricProperties.resultUnits, ZET_MAX_METRIC_RESULT_UNITS, "Address");
     metrics.push_back(IpSamplingMetricImp(*this, metricProperties));
 
-    auto &l0GfxCoreHelper = deviceImp->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     std::vector<std::pair<const char *, const char *>> stallSamplingReportList = l0GfxCoreHelper.getStallSamplingReportMetrics();
 
     // Preparing properties for others because of common values
@@ -219,7 +219,7 @@ IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &me
     strcpy_s(properties.description, ZET_MAX_METRIC_GROUP_DESCRIPTION, "EU stall sampling");
     properties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
     properties.domain = ipSamplinDomainId;
-    properties.metricCount = ipSamplinMetricCount;
+    properties.metricCount = this->getMetricSource().metricSourceCount;
 }
 
 ze_result_t IpSamplingMetricGroupImp::getProperties(zet_metric_group_properties_t *pProperties) {
@@ -461,6 +461,7 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricValues(const zet_metric
         ipDataValues.clear();
     }
     l0GfxCoreHelper.stallIpDataMapDelete(stallReportDataMap);
+    stallReportDataMap.clear();
 
     return dataOverflow ? ZE_RESULT_WARNING_DROPPED_DATA : ZE_RESULT_SUCCESS;
 }

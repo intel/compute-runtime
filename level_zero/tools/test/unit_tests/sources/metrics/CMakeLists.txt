@@ -7,7 +7,7 @@
 target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_fixture.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_fixture.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/metric_ip_sampling_fixture.h
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_query_pool_fixture.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_query_pool_fixture.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_metric_oa.h
