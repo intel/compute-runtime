@@ -76,6 +76,7 @@ class ProductHelperHw : public ProductHelper {
     bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
     bool isDcFlushAllowed() const override;
     bool isDcFlushMitigated() const override;
+    bool mitigateDcFlush() const override;
     bool overridePatAndUsageForDcFlushMitigation(AllocationType allocationType) const override;
     bool overrideCacheableForDcFlushMitigation(AllocationType allocationType) const override;
     uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const override;
