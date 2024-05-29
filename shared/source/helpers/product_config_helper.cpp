@@ -56,10 +56,8 @@ void ProductConfigHelper::adjustDeviceName(std::string &device) {
 void ProductConfigHelper::adjustClosedRangeDeviceLegacyAcronyms(std::string &rangeFromStr, std::string &rangeToStr) {
     // gen12lp is allowed for backwards compatibilty, but it only functions as a release.
     // When gen12lp is used in a range with a family this function translates the family to a matching release
-    std::string gen12lpAcronym = "gen12lp";
-    bool isGen12lpAcronymPresent = (rangeFromStr == gen12lpAcronym || rangeToStr == gen12lpAcronym);
-    bool isGen12lpFamilyEnabled = getFamilyFromDeviceName(gen12lpAcronym) != AOT::UNKNOWN_FAMILY;
-    if (isGen12lpAcronymPresent && !isGen12lpFamilyEnabled) {
+    bool isGen12lpAcronymPresent = (rangeFromStr == "gen12lp" || rangeToStr == "gen12lp");
+    if (isGen12lpAcronymPresent) {
         auto &allSuppportedProducts = getDeviceAotInfo();
 
         auto adjustFamilyAcronymToRelease = [&](std::string &device) {

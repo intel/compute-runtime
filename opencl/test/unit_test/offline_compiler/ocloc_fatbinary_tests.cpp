@@ -853,8 +853,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWithoutDashes
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeWithOneFamilyBeingGen12lpLegacyAliasWhenGetProductsForFatBinaryThenCorrectAcronymsAreReturned) {
-    bool isGen12lpFamilyEnabled = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
-    if (enabledFamiliesAcronyms.size() < 2 || isGen12lpFamilyEnabled) {
+    if (enabledFamiliesAcronyms.size() < 2) {
         GTEST_SKIP();
     }
 

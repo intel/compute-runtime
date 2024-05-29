@@ -104,8 +104,7 @@ TEST_F(ProductConfigHelperTests, givenFamilyAcronymWhenAdjustDeviceNameThenNothi
 }
 
 TEST_F(AotDeviceInfoTests, givenGen12lpFamilyAcronymWhenAdjustClosedRangeDeviceNamesThenProperReleaseAcronymsAreAssigned) {
-    bool isGen12lpFamilyEnabled = productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
-    if (productConfigHelper->getReleasesAcronyms().size() < 2 || isGen12lpFamilyEnabled) {
+    if (productConfigHelper->getReleasesAcronyms().size() < 2) {
         GTEST_SKIP();
     }
     std::map<AOT::FAMILY, AOT::RELEASE> familyToReleaseAcronyms = {{AOT::GEN8_FAMILY, AOT::GEN8_RELEASE},
@@ -138,10 +137,6 @@ TEST_F(AotDeviceInfoTests, givenGen12lpFamilyAcronymWhenAdjustClosedRangeDeviceN
 }
 
 TEST_F(AotDeviceInfoTests, givenFamilyAcronymsWithoutGen12lpWhenAdjustClosedRangeDeviceNamesThenNothingIsChanged) {
-    bool isGen12lpFamilyEnabled = productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
-    if (isGen12lpFamilyEnabled) {
-        GTEST_SKIP();
-    }
     for (const auto &[acronymFrom, value] : AOT::familyAcronyms) {
         std::ignore = value;
         for (const auto &[acronymTo, value] : AOT::familyAcronyms) {
@@ -156,10 +151,6 @@ TEST_F(AotDeviceInfoTests, givenFamilyAcronymsWithoutGen12lpWhenAdjustClosedRang
 }
 
 TEST_F(AotDeviceInfoTests, givenReleaseAcronymsWhenAdjustClosedRangeDeviceNamesThenNothingIsChanged) {
-    bool isGen12lpFamilyEnabled = productConfigHelper->getFamilyFromDeviceName("gen12lp") != AOT::UNKNOWN_FAMILY;
-    if (isGen12lpFamilyEnabled) {
-        GTEST_SKIP();
-    }
     for (const auto &[acronymFrom, value] : AOT::releaseAcronyms) {
         std::ignore = value;
         for (const auto &[acronymTo, value] : AOT::releaseAcronyms) {
