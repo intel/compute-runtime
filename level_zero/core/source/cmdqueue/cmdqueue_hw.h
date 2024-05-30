@@ -15,7 +15,6 @@
 
 namespace NEO {
 class ScratchSpaceController;
-class LinearStream;
 } // namespace NEO
 
 namespace L0 {

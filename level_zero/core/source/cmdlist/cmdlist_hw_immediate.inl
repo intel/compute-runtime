@@ -757,13 +757,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
     if (allSignaled) {
         return ZE_RESULT_SUCCESS;
     }
-    checkAvailableSpace(numEvents, false, commonImmediateCommandSize);
+
+    if (!skipFlush) {
+        checkAvailableSpace(numEvents, false, commonImmediateCommandSize);
+    }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents, outWaitCmds, relaxedOrderingAllowed, trackDependencies, apiRequest, skipAddingWaitEventsToResidency, false);
     this->dependenciesPresent = true;
 
     if (skipFlush) {
-        return ZE_RESULT_SUCCESS;
+        return ret;
     }
 
     return flushImmediate(ret, true, true, false, false, nullptr);
@@ -1443,8 +1446,13 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
                                                                               ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
+    auto ret = ZE_RESULT_SUCCESS;
     if (numWaitEvents) {
-        this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, true, true, true, true);
+        checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize);
+        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, true, true, true, true);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
     }
 
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
