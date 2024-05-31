@@ -751,15 +751,16 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
             case AllocationType::tagBuffer:
                 expectedUsage = uncachedGmmUsageType;
                 break;
+
+            case AllocationType::linearStream:
+            case AllocationType::internalHeap:
+                expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
+                break;
             case AllocationType::constantSurface:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
                 break;
             case AllocationType::image:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_IMAGE;
-                break;
-            case AllocationType::internalHeap:
-            case AllocationType::linearStream:
-                expectedUsage = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
                 break;
             case AllocationType::fillPattern:
                 expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;

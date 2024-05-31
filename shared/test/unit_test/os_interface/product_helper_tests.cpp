@@ -326,7 +326,9 @@ HWTEST_F(ProductHelperTest, givenDcFlushMitigationWhenOverridePatAndUsageForDcFl
             allocationType == AllocationType::internalHostMemory ||
             allocationType == AllocationType::timestampPacketTagBuffer ||
             allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::gpuTimestampDeviceBuffer) {
+            allocationType == AllocationType::gpuTimestampDeviceBuffer ||
+            allocationType == AllocationType::linearStream ||
+            allocationType == AllocationType::internalHeap) {
             EXPECT_EQ(productHelper->overridePatAndUsageForDcFlushMitigation(allocationType), productHelper->isDcFlushMitigated());
         } else {
             EXPECT_FALSE(productHelper->overridePatAndUsageForDcFlushMitigation(allocationType));

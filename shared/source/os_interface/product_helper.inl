@@ -422,7 +422,9 @@ bool ProductHelperHw<gfxProduct>::overrideCacheableForDcFlushMitigation(Allocati
             allocationType == AllocationType::mapAllocation ||
             allocationType == AllocationType::svmCpu ||
             allocationType == AllocationType::svmZeroCopy ||
-            allocationType == AllocationType::internalHostMemory);
+            allocationType == AllocationType::internalHostMemory ||
+            allocationType == AllocationType::internalHeap ||
+            allocationType == AllocationType::linearStream);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
