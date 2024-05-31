@@ -1981,5 +1981,68 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListThenEa
     commandList2->destroy();
 }
 
+TEST(CommandList, givenCopyContextGroupEnabledWhenCreatingImmediateCommandListThenEachCmdListHasDifferentCsr) {
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.ftrBcsInfo = 0b111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = static_cast<DeviceImp *>(driverHandle->devices[0]);
+
+    auto &regularEngines = device->getNEODevice()->getRegularEngineGroups();
+
+    auto iter = std::find_if(regularEngines.begin(), regularEngines.end(), [](const auto &engine) {
+        return (engine.engineGroupType == EngineGroupType::copy || engine.engineGroupType == EngineGroupType::linkedCopy);
+    });
+
+    if (iter == regularEngines.end()) {
+        GTEST_SKIP();
+    }
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = device->getCopyEngineOrdinal();
+    desc.index = 0;
+    ze_command_list_handle_t commandListHandle1, commandListHandle2;
+
+    auto result = device->createCommandListImmediate(&desc, &commandListHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandListImmediate(&desc, &commandListHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
+    auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+
+    EXPECT_NE(commandList1->getCsr(), commandList2->getCsr());
+
+    commandList1->destroy();
+    commandList2->destroy();
+
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH;
+
+    result = device->createCommandListImmediate(&desc, &commandListHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandListImmediate(&desc, &commandListHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
+    commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+
+    EXPECT_NE(commandList1->getCsr(), commandList2->getCsr());
+
+    commandList1->destroy();
+    commandList2->destroy();
+}
+
 } // namespace ult
 } // namespace L0

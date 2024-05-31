@@ -177,6 +177,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;
     void getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,
                                                 ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
+    bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, NEO::CommandStreamReceiver **csr);
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
     NEO::GraphicsAllocation *debugSurface = nullptr;

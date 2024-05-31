@@ -1694,6 +1694,9 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         }
     }
 
+    const NEO::GfxCoreHelper &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
+
     if (ordinal < numEngineGroups) {
         auto &engines = engineGroups[ordinal].engines;
         if (index >= engines.size()) {
@@ -1703,19 +1706,10 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
 
         auto &osContext = (*csr)->getOsContext();
 
-        const NEO::GfxCoreHelper &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-        bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
-
         if (neoDevice->isMultiRegularContextSelectionAllowed(osContext.getEngineType(), osContext.getEngineUsage())) {
             *csr = neoDevice->getNextEngineForMultiRegularContextMode(osContext.getEngineType()).commandStreamReceiver;
-        } else if (secondaryContextsEnabled && neoDevice->isSecondaryContextEngineType(osContext.getEngineType())) {
-            NEO::EngineTypeUsage engineTypeUsage;
-            engineTypeUsage.first = osContext.getEngineType();
-            engineTypeUsage.second = NEO::EngineUsage::regular;
-            auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage);
-            if (engine) {
-                *csr = engine->commandStreamReceiver;
-            }
+        } else if (secondaryContextsEnabled) {
+            tryAssignSecondaryContext(osContext.getEngineType(), NEO::EngineUsage::regular, csr);
         }
     } else {
         auto subDeviceOrdinal = ordinal - numEngineGroups;
@@ -1723,9 +1717,28 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         *csr = this->subDeviceCopyEngineGroups[subDeviceOrdinal].engines[index].commandStreamReceiver;
+
+        if (secondaryContextsEnabled) {
+            tryAssignSecondaryContext((*csr)->getOsContext().getEngineType(), NEO::EngineUsage::regular, csr);
+        }
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+bool DeviceImp::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, NEO::CommandStreamReceiver **csr) {
+    if (neoDevice->isSecondaryContextEngineType(engineType)) {
+        NEO::EngineTypeUsage engineTypeUsage;
+        engineTypeUsage.first = engineType;
+        engineTypeUsage.second = engineUsage;
+        auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage);
+        if (engine) {
+            *csr = engine->commandStreamReceiver;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 ze_result_t DeviceImp::getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority) {
@@ -1750,15 +1763,8 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamRe
             *csr = engines[index].commandStreamReceiver;
             auto &osContext = (*csr)->getOsContext();
 
-            if (neoDevice->isSecondaryContextEngineType(osContext.getEngineType())) {
-                NEO::EngineTypeUsage engineTypeUsage;
-                engineTypeUsage.first = osContext.getEngineType();
-                engineTypeUsage.second = NEO::EngineUsage::highPriority;
-                auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage);
-                if (engine) {
-                    *csr = engine->commandStreamReceiver;
-                    return ZE_RESULT_SUCCESS;
-                }
+            if (tryAssignSecondaryContext(osContext.getEngineType(), NEO::EngineUsage::highPriority, csr)) {
+                return ZE_RESULT_SUCCESS;
             }
         }
     } else if (isSuitableForLowPriority(priority, NEO::EngineHelper::isCopyOnlyEngineType(

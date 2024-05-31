@@ -195,7 +195,7 @@ class Device : public ReferenceTrackedObject<Device> {
 
     MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage);
     bool isSecondaryContextEngineType(aub_stream::EngineType type) {
-        return EngineHelpers::isCcs(type);
+        return EngineHelpers::isCcs(type) || EngineHelpers::isBcs(type);
     }
 
     std::atomic<uint32_t> debugExecutionCounter = 0;

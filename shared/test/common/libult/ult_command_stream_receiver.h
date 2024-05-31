@@ -78,6 +78,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::pageTableManagerInitialized;
     using BaseClass::perDssBackedBuffer;
     using BaseClass::postInitFlagsSetup;
+    using BaseClass::primaryCsr;
     using BaseClass::programActivePartitionConfig;
     using BaseClass::programEnginePrologue;
     using BaseClass::programPerDssBackedBuffer;

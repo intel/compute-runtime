@@ -1107,17 +1107,18 @@ TEST_F(DeviceTests, whenCheckingPreferredPlatformNameThenNullIsReturned) {
     EXPECT_EQ(nullptr, defaultHwInfo->capabilityTable.preferredPlatformName);
 }
 
-TEST(Device, givenDifferentEngineTypesWhenIsSecondaryContextEngineTypeCalledThenTrueReturnedForCCS) {
+TEST(Device, givenDifferentEngineTypesWhenIsSecondaryContextEngineTypeCalledThenTrueReturnedForCcsOrBcs) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
-    EXPECT_TRUE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCS));
-    EXPECT_TRUE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCS1));
-    EXPECT_TRUE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCS2));
-    EXPECT_TRUE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCS3));
+    for (uint32_t i = 0; i < static_cast<uint32_t>(aub_stream::EngineType::NUM_ENGINES); i++) {
+        auto type = static_cast<aub_stream::EngineType>(i);
 
-    EXPECT_FALSE(device->isSecondaryContextEngineType(aub_stream::ENGINE_RCS));
-    EXPECT_FALSE(device->isSecondaryContextEngineType(aub_stream::ENGINE_CCCS));
-    EXPECT_FALSE(device->isSecondaryContextEngineType(aub_stream::ENGINE_BCS));
+        if (EngineHelpers::isBcs(type) || EngineHelpers::isCcs(type)) {
+            EXPECT_TRUE(device->isSecondaryContextEngineType(type));
+        } else {
+            EXPECT_FALSE(device->isSecondaryContextEngineType(type));
+        }
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenCCSEngineAndContextGroupSizeEnabledWhenCreatingEngineThenItsContextHasContextGroupFlagSet) {

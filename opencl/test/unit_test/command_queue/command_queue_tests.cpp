@@ -2718,6 +2718,41 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
     EXPECT_NE(nullptr, queueBcs.getTimestampPacketContainer());
 }
 
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenContextGroupWhenCreatingQueuesThenAssignDifferentCsr) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ContextGroupSize.set(8);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    MockContext context{&clDevice};
+    cl_command_queue_properties properties[5] = {};
+
+    fillProperties(properties, 1, 0);
+
+    MockCommandQueue queueBcs0(&context, context.getDevice(0), properties, false);
+    MockCommandQueue queueBcs1(&context, context.getDevice(0), properties, false);
+    MockCommandQueue queueBcs2(&context, context.getDevice(0), properties, false);
+
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, queueBcs1.bcsEngines[0]->osContext->getEngineType());
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, queueBcs2.bcsEngines[0]->osContext->getEngineType());
+
+    auto csr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(queueBcs1.bcsEngines[0]->commandStreamReceiver);
+    auto csr2 = static_cast<UltCommandStreamReceiver<FamilyType> *>(queueBcs2.bcsEngines[0]->commandStreamReceiver);
+
+    EXPECT_NE(csr1, csr2);
+
+    EXPECT_NE(nullptr, csr1->primaryCsr);
+    EXPECT_NE(nullptr, csr2->primaryCsr);
+
+    EXPECT_EQ(csr1->primaryCsr, csr2->primaryCsr);
+}
+
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;

@@ -356,6 +356,11 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
 
         if (bcsEngines[bcsIndex]) {
             bcsQueueEngineType = bcsEngineType;
+
+            if (gfxCoreHelper.areSecondaryContextsSupported() && !internalUsage) {
+                bcsEngines[bcsIndex] = device->getDevice().getSecondaryEngineCsr({bcsEngineType, engineUsage});
+            }
+
             bcsEngines[bcsIndex]->osContext->ensureContextInitialized();
             bcsEngines[bcsIndex]->commandStreamReceiver->initDirectSubmission();
         }
@@ -1218,6 +1223,10 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
         }
         if (bcsEngines[engineIndex]) {
             bcsQueueEngineType = engineType;
+
+            if (secondaryContextsEnabled) {
+                bcsEngines[engineIndex] = device->getDevice().getSecondaryEngineCsr({engineType, engineUsage});
+            }
         }
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
