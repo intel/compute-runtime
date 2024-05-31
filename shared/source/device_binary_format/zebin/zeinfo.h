@@ -128,6 +128,7 @@ inline constexpr ConstStringRef scratchPointer("scratch_pointer");
 inline constexpr ConstStringRef regionGroupSize("region_group_size");
 inline constexpr ConstStringRef regionGroupDimension("region_group_dimension");
 inline constexpr ConstStringRef regionGroupWgCount("region_group_wg_count");
+inline constexpr ConstStringRef regionGroupBarrierBuffer("region_group_barrier_buffer");
 
 namespace Image {
 inline constexpr ConstStringRef width("image_width");
@@ -506,6 +507,7 @@ enum ArgType : uint8_t {
     argTypeRegionGroupSize,
     argTypeRegionGroupDimension,
     argTypeRegionGroupWgCount,
+    argTypeRegionGroupBarrierBuffer,
     argTypeMax
 };
 

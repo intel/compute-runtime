@@ -5104,6 +5104,23 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
     EXPECT_TRUE(warnings.empty()) << warnings;
 
     EXPECT_EQ(16, kernelDescriptor->payloadMappings.dispatchTraits.regionGroupWgCount);
+
+    ConstStringRef zeInfoRegionGroupBarrier = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:   
+                simd_size: 32
+              payload_arguments: 
+                - arg_type : region_group_barrier_buffer
+                  offset : 16
+                  size : 8
+)===";
+    err = decodeZeInfoKernelEntry(zeInfoRegionGroupBarrier);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    EXPECT_EQ(16, kernelDescriptor->payloadMappings.dispatchTraits.regionGroupBarrierBuffer);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {

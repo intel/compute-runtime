@@ -158,6 +158,7 @@ struct KernelDescriptor {
             CrossThreadDataOffset regionGroupSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
             CrossThreadDataOffset regionGroupDimension = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset regionGroupWgCount = undefined<CrossThreadDataOffset>;
+            CrossThreadDataOffset regionGroupBarrierBuffer = undefined<CrossThreadDataOffset>;
         } dispatchTraits;
 
         struct {
