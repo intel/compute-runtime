@@ -50,6 +50,7 @@ class ISAPool : public AbstractBuffersPool<ISAPool, GraphicsAllocation> {
 
   public:
     ISAPool(ISAPool &&pool);
+    ISAPool &operator=(ISAPool &&other) = delete;
     ISAPool(Device *device, bool isBuiltin, size_t storageSize);
     ~ISAPool() override;
 
