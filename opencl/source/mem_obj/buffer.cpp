@@ -513,7 +513,7 @@ Buffer *Buffer::create(Context *context,
 
     DBG_LOG(LogMemoryObject, __FUNCTION__, "Created Buffer: Handle: ", pBuffer, ", hostPtr: ", hostPtr, ", size: ", size,
             ", memoryStorage: ", allocationInfo.memory->getUnderlyingBuffer(),
-            ", GPU address: ", allocationInfo.memory->getGpuAddress(),
+            ", GPU address: ", std::hex, allocationInfo.memory->getGpuAddress(),
             ", memoryPool: ", getMemoryPoolString(allocationInfo.memory));
 
     for (auto &rootDeviceIndex : *pRootDeviceIndices) {
