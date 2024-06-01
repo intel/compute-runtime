@@ -332,11 +332,6 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionConstantCacheInvalidationNee
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::restartDirectSubmissionForHostptrFree() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled() const {
     return false;
 }

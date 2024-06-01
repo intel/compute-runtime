@@ -109,7 +109,6 @@ class ProductHelper {
     virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const = 0;
     virtual bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const = 0;
-    virtual bool restartDirectSubmissionForHostptrFree() const = 0;
     virtual bool isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled() const = 0;
     virtual TimeoutParams getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const = 0;
     virtual std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const = 0;

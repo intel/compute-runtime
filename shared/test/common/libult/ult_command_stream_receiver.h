@@ -465,9 +465,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     void stopDirectSubmission(bool blocking) override {
         stopDirectSubmissionCalled = true;
         stopDirectSubmissionCalledBlocking = blocking;
-        if (this->callBaseStopDirectSubmission) {
-            BaseClass::stopDirectSubmission(blocking);
-        }
+        BaseClass::stopDirectSubmission(blocking);
     }
 
     bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
@@ -532,7 +530,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool flushBatchedSubmissionsCalled = false;
     bool flushTagUpdateCalled = false;
     bool callFlushTagUpdate = true;
-    bool callBaseStopDirectSubmission = true;
     bool initProgrammingFlagsCalled = false;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
