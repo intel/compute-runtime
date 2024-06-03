@@ -140,7 +140,6 @@ endif()
 if(TESTS_XE_HPG_CORE OR TESTS_XE_HPC_CORE)
   list(APPEND neo_libult_common_SRCS_LIB_ULT
        ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_xe_hpg_and_xe_hpc.inl
-       ${NEO_SHARED_DIRECTORY}/release_helper/enable_release_helper_xe.cpp
   )
 endif()
 
@@ -149,6 +148,8 @@ if(TESTS_PVC_AND_LATER)
        ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_xe_hpc_and_later.inl
   )
 endif()
+
+append_sources_from_properties(neo_libult_common_SRCS_LIB_ULT NEO_CORE_ENABLE_RELEASE_HELPER)
 
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT ${neo_libult_common_SRCS_LIB_ULT})
 

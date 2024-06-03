@@ -9,7 +9,13 @@ project(${OCLOC_NAME}_lib)
 set(OCLOC_NAME "ocloc")
 set(OCLOC_FOLDER_NAME "offline_compiler")
 
+append_sources_from_properties(RELEASE_HELPER_SOURCES
+                               NEO_CORE_RELEASE_HELPER
+                               NEO_CORE_ENABLE_RELEASE_HELPER
+)
+
 set(CLOC_LIB_SRCS_LIB
+    ${RELEASE_HELPER_SOURCES}
     ${NEO_SHARED_DIRECTORY}/ail/ail_configuration.h
     ${NEO_SHARED_DIRECTORY}/ail/ail_configuration.cpp
     ${NEO_SHARED_DIRECTORY}/ail${BRANCH_DIR_SUFFIX}ail_configuration_extra.cpp
@@ -69,20 +75,6 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.h
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper.h
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_base.inl
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1255.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1256.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1257.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1260.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1261.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1270.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1271.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1274.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/enable_release_helper_xe.cpp
-    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_common_xe_lpg.inl
-    ${NEO_SHARED_DIRECTORY}/release_helper/definitions${BRANCH_DIR_SUFFIX}release_definitions.h
     ${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX}sku_info.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/directory.h
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
