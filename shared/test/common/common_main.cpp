@@ -327,8 +327,6 @@ int main(int argc, char **argv) {
 
         if (testDevId != -1) {
             platform.usDeviceID = testDevId;
-        } else {
-            testDevId = platform.usDeviceID;
         }
 
         adjustHwInfoForTests(hwInfoForTests, euPerSubSlice, sliceCount, subSlicePerSliceCount, dieRecovery);
