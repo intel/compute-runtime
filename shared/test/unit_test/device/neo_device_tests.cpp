@@ -95,6 +95,22 @@ TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, device->getL0Debugger());
 }
 
+struct DeviceWithDisabledL0DebuggerTests : public DeviceFixture, public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.DisableSupportForL0Debugger.set(true);
+        DeviceFixture::setUp();
+    }
+
+    void TearDown() override {
+        DeviceFixture::tearDown();
+    }
+    DebugManagerStateRestore dbgRestorer;
+};
+
+TEST_F(DeviceWithDisabledL0DebuggerTests, givenSetFlagDisableSupportForL0DebuggerWhenCreateDeviceThenCapabilityLDebuggerSupportedIsDisabled) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.l0DebuggerSupported);
+}
+
 TEST(Device, givenDeviceWithBrandingStringNameWhenGettingDeviceNameThenBrandingStringIsReturned) {
     auto hwInfo = *defaultHwInfo;
 

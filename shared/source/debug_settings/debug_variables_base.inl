@@ -141,6 +141,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, GpuScratchRegWriteRegisterData, 0, "register dat
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideSlmAllocationSize, -1, "-1: default, >=0: program value for shared local memory size")
 DECLARE_DEBUG_VARIABLE(int32_t, DebuggerLogBitmask, 0, "0: logs disabled, 1 - INFO, 2 - ERROR, 1<<10 - Dump elf, see DebugVariables::DEBUGGER_LOG_BITMASK")
 DECLARE_DEBUG_VARIABLE(int32_t, DebuggerForceSbaTrackingMode, -1, "-1: default, 0: per context address spaces, 1: single address space")
+DECLARE_DEBUG_VARIABLE(bool, DisableSupportForL0Debugger, 0, "0: default setting for product, 1: disable l0 debugger")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugApiUsed, 0, "0: default L0 Debug API not used, 1: L0 Debug API used")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCsrAllocationSize, -1, "-1: default, >0: use value for size of CSR allocation")
 DECLARE_DEBUG_VARIABLE(int32_t, CFEComputeOverdispatchDisable, -1, "Set Compute Overdispatch Disable field in CFE_STATE, -1: do not set.")

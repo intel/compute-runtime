@@ -75,12 +75,15 @@ HardwareInfo *RootDeviceEnvironment::getMutableHardwareInfo() const {
 }
 
 void RootDeviceEnvironment::setHwInfoAndInitHelpers(const HardwareInfo *hwInfo) {
-    *this->hwInfo = *hwInfo;
+    setHwInfo(hwInfo);
     initHelpers();
 }
 
 void RootDeviceEnvironment::setHwInfo(const HardwareInfo *hwInfo) {
     *this->hwInfo = *hwInfo;
+    if (debugManager.flags.DisableSupportForL0Debugger.get() == 1) {
+        this->hwInfo->capabilityTable.l0DebuggerSupported = false;
+    }
 }
 
 bool RootDeviceEnvironment::isFullRangeSvm() const {
