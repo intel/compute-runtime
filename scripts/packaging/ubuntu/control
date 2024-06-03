@@ -1,0 +1,87 @@
+Source: intel-compute-runtime
+Section: libs
+Priority: optional
+Maintainer: Intel Graphics Team <linux-graphics@intel.com>
+XSBC-Original-Maintainer: Debian OpenCL Maintainers <pkg-opencl-devel@lists.alioth.debian.org>
+Build-Depends: debhelper (>= 11),
+ cmake,
+ level-zero-devel,
+ intel-igc-opencl-devel,
+ libigdgmm-dev,
+# libva-dev,
+ pkg-config
+Standards-Version: 4.3.0
+Homepage: https://github.com/intel/compute-runtime
+
+Package: intel-opencl-icd
+Architecture: amd64 arm64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ intel-igc-opencl,
+ libigdgmm12,
+ ocl-icd-libopencl1
+Breaks:
+ intel-opencl
+Replaces:
+ intel-opencl
+Provides:
+ opencl-icd
+Description: Intel graphics compute runtime for OpenCL
+ The Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source
+ project to converge Intel's development efforts on OpenCL(TM) compute
+ stacks supporting the GEN graphics hardware architecture.
+
+Package: intel-ocloc
+Architecture: amd64 arm64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends}
+Breaks:
+ intel-opencl-icd (<< 23.26.26690.22-1)
+Replaces:
+ intel-opencl-icd (<< 23.26.26690.22-1)
+Description: Tool for managing Intel Compute GPU device binary format
+ ocloc is a tool for managing Intel Compute GPU device binary format.
+ It can be used for generation as well as manipulation of such binary files.
+
+Package: intel-ocloc-dev
+Architecture: amd64 arm64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends}
+Description: Tool for managing Intel Compute GPU device binary format -- devel files
+ ocloc is a tool for managing Intel Compute GPU device binary format.
+ It can be used for generation as well as manipulation of such binary files.
+ .
+ This package includes the development headers for intel-ocloc.
+
+Package: libze-intel-gpu1
+Architecture: amd64 arm64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ intel-igc-core,
+ libigdgmm12
+Breaks:
+ intel-level-zero-gpu,
+ intel-opencl-icd (<< 23.26.26690.22-1)
+Replaces:
+ intel-level-zero-gpu,
+ intel-opencl-icd (<< 23.26.26690.22-1)
+Description: Intel(R) Graphics Compute Runtime for oneAPI Level Zero.
+ Level Zero is the primary low-level interface for language and runtime
+ libraries. Level Zero offers fine-grain control over accelerators
+ capabilities, delivering a simplified and low-latency interface to
+ hardware, and efficiently exposing hardware capabilities to applications.
+
+Package: libze-intel-gpu-dev
+Architecture: amd64 arm64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends}
+Breaks:
+ intel-level-zero-gpu-devel
+Replaces:
+ intel-level-zero-gpu-devel
+Description: Intel(R) Graphics Compute Runtime for oneAPI Level Zero - development headers
