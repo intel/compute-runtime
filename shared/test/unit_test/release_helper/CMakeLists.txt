@@ -25,4 +25,10 @@ if(TESTS_XE_HPC_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_61_tests.cpp
   )
 endif()
+if(TESTS_XE2_HPG_CORE)
+  target_sources(neo_shared_tests PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_20_01_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_20_04_tests.cpp
+  )
+endif()
 add_subdirectories()
