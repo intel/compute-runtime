@@ -2790,6 +2790,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel) {
+    auto neoDevice = device->getNEODevice();
+
+    neoDevice->allocateSyncBufferHandler();
+    auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(MemoryConstants::cacheLineSize);
+
+    kernel.patchRegionGroupBarrier(patchData.first, patchData.second);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition, bool copyOperation) {
     constexpr uint32_t mask = 0xfffffffe;
 

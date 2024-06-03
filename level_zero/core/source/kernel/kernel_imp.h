@@ -111,7 +111,9 @@ struct KernelImp : Kernel {
     void printPrintfOutput(bool hangDetected) override;
 
     bool usesSyncBuffer() override;
+    bool usesRegionGroupBarrier() const override;
     void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
+    void patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
 
     const uint8_t *getSurfaceStateHeapData() const override { return surfaceStateHeapData.get(); }
     uint32_t getSurfaceStateHeapDataSize() const override;

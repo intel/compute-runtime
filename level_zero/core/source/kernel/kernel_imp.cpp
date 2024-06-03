@@ -1191,10 +1191,22 @@ bool KernelImp::usesSyncBuffer() {
     return this->kernelImmData->getDescriptor().kernelAttributes.flags.usesSyncBuffer;
 }
 
+bool KernelImp::usesRegionGroupBarrier() const {
+    return this->kernelImmData->getDescriptor().kernelAttributes.flags.usesRegionGroupBarrier;
+}
+
 void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
     this->residencyContainer.push_back(gfxAllocation);
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.syncBufferAddress,
+                      static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
+}
+
+void KernelImp::patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
+    this->residencyContainer.push_back(gfxAllocation);
+
+    NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
+                      this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.regionGroupBarrierBuffer,
                       static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
 }
 

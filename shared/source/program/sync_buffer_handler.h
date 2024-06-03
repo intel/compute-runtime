@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,8 @@ class SyncBufferHandler : NonCopyableOrMovableClass {
     template <typename KernelT>
     void prepareForEnqueue(size_t workGroupsCount, KernelT &kernel);
     void makeResident(CommandStreamReceiver &csr);
+
+    std::pair<GraphicsAllocation *, size_t> obtainAllocationAndOffset(size_t requiredSize);
 
   protected:
     void allocateNewBuffer();

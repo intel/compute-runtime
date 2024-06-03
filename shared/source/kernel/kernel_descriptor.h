@@ -124,7 +124,8 @@ struct KernelDescriptor {
                 bool hasSample : 1;
                 // 3
                 bool usesAssert : 1;
-                bool reserved : 7;
+                bool usesRegionGroupBarrier : 1;
+                bool reserved : 6;
             };
             std::array<bool, 4> packed;
         } flags = {};
@@ -158,7 +159,6 @@ struct KernelDescriptor {
             CrossThreadDataOffset regionGroupSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
             CrossThreadDataOffset regionGroupDimension = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset regionGroupWgCount = undefined<CrossThreadDataOffset>;
-            CrossThreadDataOffset regionGroupBarrierBuffer = undefined<CrossThreadDataOffset>;
         } dispatchTraits;
 
         struct {
@@ -185,6 +185,7 @@ struct KernelDescriptor {
             ArgDescPointer syncBufferAddress;
             ArgDescPointer rtDispatchGlobals;
             ArgDescPointer assertBufferAddress;
+            ArgDescPointer regionGroupBarrierBuffer;
             CrossThreadDataOffset privateMemorySize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset maxWorkGroupSize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset simdSize = undefined<CrossThreadDataOffset>;

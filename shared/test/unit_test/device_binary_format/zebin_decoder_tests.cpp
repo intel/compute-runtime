@@ -5070,6 +5070,7 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
     for (uint32_t i = 0; i < 3; ++i) {
         EXPECT_EQ(16 + sizeof(uint32_t) * i, kernelDescriptor->payloadMappings.dispatchTraits.regionGroupSize[i]);
     }
+    EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier);
 
     ConstStringRef zeInfoRegionGroupDim = R"===(
         kernels:
@@ -5087,6 +5088,7 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
     EXPECT_TRUE(warnings.empty()) << warnings;
 
     EXPECT_EQ(16, kernelDescriptor->payloadMappings.dispatchTraits.regionGroupDimension);
+    EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier);
 
     ConstStringRef zeInfoRegionGroupCount = R"===(
         kernels:
@@ -5104,6 +5106,7 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
     EXPECT_TRUE(warnings.empty()) << warnings;
 
     EXPECT_EQ(16, kernelDescriptor->payloadMappings.dispatchTraits.regionGroupWgCount);
+    EXPECT_FALSE(kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier);
 
     ConstStringRef zeInfoRegionGroupBarrier = R"===(
         kernels:
@@ -5120,7 +5123,8 @@ TEST_F(decodeZeInfoKernelEntryTest, givenRegionArgTypesWhenArgSizeIsCorrectThenR
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
 
-    EXPECT_EQ(16, kernelDescriptor->payloadMappings.dispatchTraits.regionGroupBarrierBuffer);
+    EXPECT_EQ(16, kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer.stateless);
+    EXPECT_TRUE(kernelDescriptor->kernelAttributes.flags.usesRegionGroupBarrier);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeGlobalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {

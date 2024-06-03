@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,16 +10,8 @@
 template <typename KernelT>
 void NEO::SyncBufferHandler::prepareForEnqueue(size_t workGroupsCount, KernelT &kernel) {
     auto requiredSize = alignUp(workGroupsCount, CommonConstants::maximalSizeOfAtomicType);
-    std::lock_guard<std::mutex> guard(this->mutex);
 
-    bool isCurrentBufferFull = (usedBufferSize + requiredSize > bufferSize);
-    if (isCurrentBufferFull) {
-        memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
-        allocateNewBuffer();
-        usedBufferSize = 0;
-    }
+    auto patchData = obtainAllocationAndOffset(requiredSize);
 
-    kernel.patchSyncBuffer(graphicsAllocation, usedBufferSize);
-
-    usedBufferSize += requiredSize;
+    kernel.patchSyncBuffer(patchData.first, patchData.second);
 }

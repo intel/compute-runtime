@@ -1396,7 +1396,8 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         return populateWithOffsetChecked(dst.payloadMappings.dispatchTraits.regionGroupWgCount, sizeof(int32_t), Tags::Kernel::PayloadArgument::ArgType::regionGroupWgCount);
 
     case Types::Kernel::argTypeRegionGroupBarrierBuffer:
-        return populateWithOffsetChecked(dst.payloadMappings.dispatchTraits.regionGroupBarrierBuffer, sizeof(int64_t), Tags::Kernel::PayloadArgument::ArgType::regionGroupBarrierBuffer);
+        dst.kernelAttributes.flags.usesRegionGroupBarrier = true;
+        return populateArgPointerStateless(dst.payloadMappings.implicitArgs.regionGroupBarrierBuffer);
     }
 
     UNREACHABLE();

@@ -15,6 +15,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -483,6 +484,50 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
         result = pCommandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelIsCalledThenPatchBuffer, IsAtLeastXeHpCore) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    Mock<::L0::KernelImp> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(64);
+    kernel.crossThreadDataSize = 64;
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
+    kernelAttributes.flags.usesRegionGroupBarrier = true;
+
+    auto &regionGroupBarrier = kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer;
+    regionGroupBarrier.stateless = 0x8;
+    regionGroupBarrier.pointerSize = 8;
+
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    std::unique_ptr<L0::CommandList> cmdList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, result));
+
+    CmdListKernelLaunchParams launchParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false));
+
+    auto patchPtr = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), regionGroupBarrier.stateless));
+    EXPECT_NE(0u, patchPtr);
+
+    auto allocIter = std::find_if(ultCsr->makeResidentAllocations.begin(), ultCsr->makeResidentAllocations.end(), [patchPtr](const std::pair<GraphicsAllocation *, uint32_t> &element) {
+        return element.first->getGpuAddressToPatch() == patchPtr;
+    });
+    ASSERT_NE(ultCsr->makeResidentAllocations.end(), allocIter);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false));
+
+    auto patchPtr2 = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), regionGroupBarrier.stateless));
+
+    EXPECT_EQ(patchPtr2, patchPtr + MemoryConstants::cacheLineSize);
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQueryKernelTimestampsToTheSameCmdlistThenFronEndStateIsNotChanged, IsAtLeastSkl) {
