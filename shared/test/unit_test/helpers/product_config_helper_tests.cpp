@@ -250,13 +250,37 @@ TEST_F(ProductConfigHelperTests, GivenDifferentHwInfoInDeviceAotInfosWhenCompari
 }
 
 TEST_F(AotDeviceInfoTests, givenProductAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
+    uint32_t numSupportedAcronyms = 0;
     for (const auto &[acronym, value] : AOT::deviceAcronyms) {
+        if (!productConfigHelper->isSupportedProductConfig(value)) {
+            continue;
+        }
+        numSupportedAcronyms++;
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronym), value);
     }
+    for (const auto &[acronym, value] : AOT::rtlIdAcronyms) {
+        if (!productConfigHelper->isSupportedProductConfig(value)) {
+            continue;
+        }
+        numSupportedAcronyms++;
+        EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronym), value);
+    }
+    EXPECT_LT(0u, numSupportedAcronyms);
 }
 
 TEST_F(AotDeviceInfoTests, givenProductIpVersionStringWhenHelperSearchForProductConfigThenCorrectValueIsReturned) {
     for (const auto &deviceConfig : AOT::deviceAcronyms) {
+        if (!productConfigHelper->isSupportedProductConfig(deviceConfig.second)) {
+            continue;
+        }
+        std::stringstream ipVersion;
+        ipVersion << deviceConfig.second;
+        EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(ipVersion.str()), deviceConfig.second);
+    }
+    for (const auto &deviceConfig : AOT::rtlIdAcronyms) {
+        if (!productConfigHelper->isSupportedProductConfig(deviceConfig.second)) {
+            continue;
+        }
         std::stringstream ipVersion;
         ipVersion << deviceConfig.second;
         EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(ipVersion.str()), deviceConfig.second);
