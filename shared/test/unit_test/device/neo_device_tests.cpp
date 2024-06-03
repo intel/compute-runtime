@@ -107,7 +107,7 @@ struct DeviceWithDisabledL0DebuggerTests : public DeviceFixture, public ::testin
     DebugManagerStateRestore dbgRestorer;
 };
 
-TEST_F(DeviceWithDisabledL0DebuggerTests, givenSetFlagDisableSupportForL0DebuggerWhenCreateDeviceThenCapabilityLDebuggerSupportedIsDisabled) {
+TEST_F(DeviceWithDisabledL0DebuggerTests, givenSetFlagDisableSupportForL0DebuggerWhenCreateDeviceThenCapabilityL0DebuggerSupportedIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.l0DebuggerSupported);
 }
 
