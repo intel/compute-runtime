@@ -201,6 +201,9 @@ class IoctlHelper {
     virtual void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) = 0;
     virtual bool isPreemptionSupported() = 0;
 
+    virtual bool allocateInterrupt(uint32_t &outHandle) { return false; }
+    virtual bool releaseInterrupt(uint32_t handle) { return false; }
+
   protected:
     Drm &drm;
 };

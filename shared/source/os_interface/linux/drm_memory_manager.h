@@ -100,6 +100,9 @@ class DrmMemoryManager : public MemoryManager {
 
     MOCKABLE_VIRTUAL void checkUnexpectedGpuPageFault();
 
+    bool allocateInterrupt(uint32_t &outHandle, uint32_t rootDeviceIndex) override;
+    bool releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceIndex) override;
+
   protected:
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
     BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle);

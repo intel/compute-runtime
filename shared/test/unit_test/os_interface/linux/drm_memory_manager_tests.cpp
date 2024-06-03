@@ -1700,6 +1700,30 @@ TEST_F(DrmMemoryManagerTest, givenRequiresStandard2MBHeapThenStandard2MBHeapIsAc
     EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapStandard2MB)), range);
 }
 
+TEST_F(DrmMemoryManagerTest, whenCallingAllocateAndReleaseInterruptThenCallIoctlHelper) {
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    uint32_t handle = 0;
+
+    EXPECT_EQ(0u, mockIoctlHelper->allocateInterruptCalled);
+    EXPECT_EQ(0u, mockIoctlHelper->releaseInterruptCalled);
+
+    memoryManager->allocateInterrupt(handle, rootDeviceIndex);
+    EXPECT_EQ(1u, mockIoctlHelper->allocateInterruptCalled);
+    EXPECT_EQ(0u, mockIoctlHelper->releaseInterruptCalled);
+
+    handle = 123;
+    EXPECT_EQ(InterruptId::notUsed, mockIoctlHelper->latestReleaseInterruptHandle);
+
+    memoryManager->releaseInterrupt(handle, rootDeviceIndex);
+    EXPECT_EQ(1u, mockIoctlHelper->allocateInterruptCalled);
+    EXPECT_EQ(1u, mockIoctlHelper->releaseInterruptCalled);
+    EXPECT_EQ(123u, mockIoctlHelper->latestReleaseInterruptHandle);
+}
+
 TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGraphicsAllocationThenValidAllocationIsReturnedAndStandard64KBHeapIsUsed) {
     mock->ioctlHelper.reset(new MockIoctlHelper(*mock));
     mock->queryMemoryInfo();

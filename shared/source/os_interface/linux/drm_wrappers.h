@@ -229,6 +229,7 @@ struct DrmDebuggerOpen {
 };
 
 enum class DrmIoctl {
+    allocateInterrupt,
     gemExecbuffer2,
     gemWait,
     gemUserptr,

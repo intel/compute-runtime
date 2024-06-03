@@ -3424,6 +3424,17 @@ HWTEST_F(EventTests, givenStandaloneCbEventAndTbxModeWhenSynchronizingThenHandle
     context->freeMem(hostAddress);
 }
 
+HWTEST_F(EventTests, givenOsAgnosticContextWhenAllocatingInterruptThenReturnError) {
+    uint32_t interruptId = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexIntelAllocateNetworkInterrupt(nullptr, interruptId));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zexIntelAllocateNetworkInterrupt(context, interruptId));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexIntelReleaseNetworkInterrupt(nullptr, interruptId));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexIntelReleaseNetworkInterrupt(context, interruptId));
+}
+
 HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledThenAllocationIsDonwloadedOnlyAfterEventWasUsedOnGpu) {
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(1);
 

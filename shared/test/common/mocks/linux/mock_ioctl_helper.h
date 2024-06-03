@@ -56,6 +56,17 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
             return IoctlHelperPrelim20::isWaitBeforeBindRequired(bind);
     }
 
+    bool allocateInterrupt(uint32_t &handle) override {
+        allocateInterruptCalled++;
+        return IoctlHelperPrelim20::allocateInterrupt(handle);
+    }
+
+    bool releaseInterrupt(uint32_t handle) override {
+        releaseInterruptCalled++;
+        latestReleaseInterruptHandle = handle;
+        return IoctlHelperPrelim20::releaseInterrupt(handle);
+    }
+
     std::unique_ptr<MemoryInfo> createMemoryInfo() override {
 
         std::vector<MemoryRegion> regionInfo(3);
@@ -77,5 +88,8 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     int drmParamValue = 1234;
     std::optional<bool> failBind{};
     std::optional<bool> waitBeforeBindRequired{};
+    uint32_t allocateInterruptCalled = 0;
+    uint32_t releaseInterruptCalled = 0;
+    uint32_t latestReleaseInterruptHandle = InterruptId::notUsed;
 };
 } // namespace NEO

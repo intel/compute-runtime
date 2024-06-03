@@ -2696,4 +2696,12 @@ bool DrmMemoryManager::allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) 
     return this->getDrm(rootDeviceIndex).isVmBindAvailable();
 }
 
+bool DrmMemoryManager::allocateInterrupt(uint32_t &outHandle, uint32_t rootDeviceIndex) {
+    return getDrm(rootDeviceIndex).getIoctlHelper()->allocateInterrupt(outHandle);
+}
+
+bool DrmMemoryManager::releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceIndex) {
+    return getDrm(rootDeviceIndex).getIoctlHelper()->releaseInterrupt(outHandle);
+}
+
 } // namespace NEO
