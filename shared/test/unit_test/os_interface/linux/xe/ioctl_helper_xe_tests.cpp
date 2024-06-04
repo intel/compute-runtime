@@ -279,7 +279,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_FALSE(xeIoctlHelper->completionFenceExtensionSupported(false));
 
-    EXPECT_EQ(std::nullopt, xeIoctlHelper->getHasPageFaultParamId());
+    EXPECT_EQ(false, xeIoctlHelper->isPageFaultSupported());
 
     EXPECT_EQ(nullptr, xeIoctlHelper->createVmControlExtRegion({}));
 

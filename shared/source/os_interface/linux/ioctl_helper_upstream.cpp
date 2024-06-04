@@ -191,8 +191,8 @@ bool IoctlHelperUpstream::completionFenceExtensionSupported(const bool isVmBindA
     return false;
 }
 
-std::optional<DrmParam> IoctlHelperUpstream::getHasPageFaultParamId() {
-    return std::nullopt;
+bool IoctlHelperUpstream::isPageFaultSupported() {
+    return false;
 };
 
 bool IoctlHelperUpstream::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize,

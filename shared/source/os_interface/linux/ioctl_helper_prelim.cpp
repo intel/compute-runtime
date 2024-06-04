@@ -557,8 +557,19 @@ int IoctlHelperPrelim20::queryDistances(std::vector<QueryItem> &queryItems, std:
     return ret;
 }
 
-std::optional<DrmParam> IoctlHelperPrelim20::getHasPageFaultParamId() {
-    return DrmParam::paramHasPageFault;
+bool IoctlHelperPrelim20::isPageFaultSupported() {
+    int pagefaultSupport{};
+    GetParam getParam{};
+    getParam.param = PRELIM_I915_PARAM_HAS_PAGE_FAULT;
+    getParam.value = &pagefaultSupport;
+
+    int retVal = ioctl(DrmIoctl::getparam, &getParam);
+    if (debugManager.flags.PrintIoctlEntries.get()) {
+        printf("DRM_IOCTL_I915_GETPARAM: param: PRELIM_I915_PARAM_HAS_PAGE_FAULT, output value: %d, retCode:% d\n",
+               *getParam.value,
+               retVal);
+    }
+    return (retVal == 0) && (pagefaultSupport > 0);
 };
 
 bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
