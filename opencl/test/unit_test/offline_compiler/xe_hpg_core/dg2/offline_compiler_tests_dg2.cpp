@@ -164,7 +164,7 @@ DG2TEST_F(Dg2OfflineCompilerTests, givenDg2DeprecatedAcronymAndInvalisRevisionId
     mockOfflineCompiler.initHardwareInfo(deprecatedAcronym);
 
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, CommonConstants::invalidRevisionID);
-    EXPECT_EQ(mockOfflineCompiler.hwInfo.ipVersion.value, AOT::DG2_G10_A0);
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.ipVersion.value, AOT::DG2_G10_C0);
 }
 
 } // namespace NEO
