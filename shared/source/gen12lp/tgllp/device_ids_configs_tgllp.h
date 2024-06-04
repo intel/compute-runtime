@@ -11,7 +11,6 @@
 
 namespace NEO {
 const std::vector<unsigned short> tgllpDeviceIds{
-    0xFF20,
     0x9A49,
     0x9A40,
     0x9A59,

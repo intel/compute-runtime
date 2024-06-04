@@ -10,11 +10,10 @@
 using namespace NEO;
 
 TEST_F(DeviceIdTests, GivenAdlpSupportedDeviceIdThenDeviceDescriptorTableExists) {
-    std::array<DeviceDescriptor, 28> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 25> expectedDescriptors = {{
         {0x46A0, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46B0, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46A1, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46A2, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46A3, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46A6, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46A8, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
@@ -23,11 +22,9 @@ TEST_F(DeviceIdTests, GivenAdlpSupportedDeviceIdThenDeviceDescriptorTableExists)
         {0x4626, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x4628, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46B1, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46B2, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46B3, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46C0, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46C1, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
-        {0x46C2, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0x46C3, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0xA7A0, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},
         {0xA720, &AdlpHwConfig::hwInfo, &AdlpHwConfig::setupHardwareInfo},

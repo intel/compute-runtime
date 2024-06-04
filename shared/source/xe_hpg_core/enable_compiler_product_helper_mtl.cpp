@@ -47,15 +47,6 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
         }
         break;
     }
-    case 0x7D60: {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return AOT::MTL_U_A0;
-        case 0x2:
-            return AOT::MTL_U_B0;
-        }
-        break;
-    }
     }
     return getDefaultHwIpVersion();
 }

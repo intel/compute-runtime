@@ -1224,7 +1224,7 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                             The hexadecimal value represents device ID.
                                             If such value is provided, ocloc will try to
                                             match it with corresponding device type.
-                                            For example, 0xFF20 device ID will be translated
+                                            For example, 0x9A49 device ID will be translated
                                             to tgllp.
                                             If multiple target devices are provided, ocloc
                                             will compile for each of these targets and will

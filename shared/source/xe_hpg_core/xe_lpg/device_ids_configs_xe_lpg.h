@@ -13,7 +13,6 @@ namespace NEO {
 const std::vector<unsigned short> mtlmDeviceIds{
     0x7D40,
     0x7D45,
-    0x7D60,
     0x7D67,
     0x7D41};
 const std::vector<unsigned short> mtlpDeviceIds{
