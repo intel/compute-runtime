@@ -42,6 +42,8 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
 
     this->preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, gmmHelper->getRootDeviceEnvironment());
     bool cacheable = !this->preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
+
+    gmmRequirements.overriderPreferNoCpuAccess.doOverride(this->preferNoCpuAccess);
     gmmRequirements.overriderCacheable.doOverride(cacheable);
     resourceParams.Flags.Info.Cacheable = cacheable;
 

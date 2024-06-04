@@ -122,6 +122,18 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
         EXPECT_TRUE(gmm->resourceParams.Flags.Info.Cacheable);
     }
+    {
+        gmmRequirements.overriderPreferNoCpuAccess.enableOverride = true;
+        gmmRequirements.overriderPreferNoCpuAccess.value = true;
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
+        EXPECT_TRUE(gmm->getPreferNoCpuAccess());
+    }
+    {
+        gmmRequirements.overriderPreferNoCpuAccess.enableOverride = true;
+        gmmRequirements.overriderPreferNoCpuAccess.value = false;
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
+        EXPECT_FALSE(gmm->getPreferNoCpuAccess());
+    }
 }
 
 } // namespace NEO

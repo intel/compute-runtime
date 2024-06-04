@@ -225,6 +225,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
         gmmRequirements.overriderCacheable.enableOverride = true;
         gmmRequirements.overriderCacheable.value = true;
     }
+    if (productHelper.overrideCacheableForDcFlushMitigation(allocationData.type)) {
+        gmmRequirements.overriderPreferNoCpuAccess.enableOverride = true;
+        gmmRequirements.overriderPreferNoCpuAccess.value = false;
+    }
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
                        sizeAligned, 0u,
@@ -450,6 +454,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     if (productHelper.overrideAllocationCacheable(allocationData)) {
         gmmRequirements.overriderCacheable.enableOverride = true;
         gmmRequirements.overriderCacheable.value = true;
+    }
+    if (productHelper.overrideCacheableForDcFlushMitigation(allocationData.type)) {
+        gmmRequirements.overriderPreferNoCpuAccess.enableOverride = true;
+        gmmRequirements.overriderPreferNoCpuAccess.value = false;
     }
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), alignedPtr, alignedSize, 0u,
