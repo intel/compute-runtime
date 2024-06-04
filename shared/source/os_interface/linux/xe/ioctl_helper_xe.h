@@ -65,7 +65,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
-    bool isPageFaultSupported() override;
+    std::optional<DrmParam> getHasPageFaultParamId() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
     uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;
     uint32_t createContextWithAccessCounters(GemContextCreateExt &gcc) override;
@@ -212,8 +212,7 @@ class IoctlHelperXe : public IoctlHelper {
             struct {
                 uint32_t vmBindReadOnly : 1;
                 uint32_t vmBindImmediate : 1;
-                uint32_t pageFault : 1;
-                uint32_t reserved : 29;
+                uint32_t reserved : 30;
             } flags;
             uint32_t allFlags = 0;
         };
