@@ -2924,6 +2924,63 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     otherCommandQueue->destroy();
 }
 
+HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
+          givenHeaplessModeAndContextGroupEnabledWhenExecutingImmCommandListThenScratchControllerAndHeapAllocationFromPrimaryCsrIsUsed,
+          IsAtLeastXeHpCore) {
+
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    constexpr bool heaplessModeEnabled = FamilyType::template isHeaplessMode<DefaultWalkerType>();
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (!heaplessModeEnabled || hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto neoDevice = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo));
+
+    MockDeviceImp l0Device(neoDevice.get(), neoDevice->getExecutionEnvironment());
+    l0Device.setDriverHandle(device->getDriverHandle());
+
+    auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    defaultCsr->createGlobalStatelessHeap();
+
+    NEO::EngineTypeUsage engineTypeUsage;
+    engineTypeUsage.first = hwInfo.capabilityTable.defaultEngineType;
+    engineTypeUsage.second = NEO::EngineUsage::regular;
+    auto primaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage)->commandStreamReceiver;
+    EXPECT_EQ(nullptr, primaryCsr->getOsContext().getPrimaryContext());
+    EXPECT_TRUE(primaryCsr->getOsContext().isPartOfContextGroup());
+
+    [[maybe_unused]] auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage)->commandStreamReceiver;
+
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.index = 0u;
+    queueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+
+    ze_result_t returnValue;
+    commandListImmediate.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, &l0Device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
+    commandListImmediate->isFlushTaskSubmissionEnabled = true;
+    commandListImmediate->heaplessModeEnabled = true;
+
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
+
+    EXPECT_EQ(nullptr, primaryCsr->getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+
+    returnValue = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_NE(nullptr, primaryCsr->getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+    EXPECT_NE(primaryCsr, commandListImmediate->getCsr());
+}
+
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessAndHeaplessModeWhenExecutingCommandListThenMakeAllocationResident, IsAtLeastXeHpCore) {
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandList->cmdListHeapAddressModel);
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandListImmediate->cmdListHeapAddressModel);

@@ -1663,16 +1663,17 @@ void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
 
     size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
 
-    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(true);
 
-    auto cmdListStream = commandList->commandContainer.getCommandStream();
+    auto cmdListStream = commandListImmediate->commandContainer.getCommandStream();
+    commandListImmediate->commandContainer.setImmediateCmdListCsr(csr);
 
     const ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
     auto result = ZE_RESULT_SUCCESS;
     size_t usedBefore = cmdListStream->getUsed();
-    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1686,9 +1687,6 @@ void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
     ASSERT_NE(cmdList.end(), walkerIterator);
     void *walkerPtrWithScratch = *walkerIterator;
 
-    result = commandList->close();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
     auto scratchAddress = scratchController->getScratchPatchAddress();
     auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
 
@@ -1699,10 +1697,6 @@ void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
     EXPECT_EQ(fullScratchAddress, scratchInlineValue);
 
     memset(scratchInlinePtr, 0, scratchInlinePointerSize);
-
-    auto commandListHandle = commandList->toHandle();
-    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
     EXPECT_EQ(0u, scratchInlineValue);

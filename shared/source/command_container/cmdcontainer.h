@@ -140,6 +140,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void setImmediateCmdListCsr(CommandStreamReceiver *newValue) {
         this->immediateCmdListCsr = newValue;
     }
+    CommandStreamReceiver *getImmediateCmdListCsr() {
+        return this->immediateCmdListCsr;
+    }
     void enableHeapSharing() { heapSharingEnabled = true; }
     bool immediateCmdListSharedHeap(HeapType heapType) {
         return (heapSharingEnabled && (heapType == HeapType::dynamicState || heapType == HeapType::surfaceState));
