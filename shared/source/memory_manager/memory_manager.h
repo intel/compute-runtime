@@ -329,6 +329,7 @@ class MemoryManager {
     bool isAllocationTypeToCapture(AllocationType type) const;
     void zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size);
     void updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex);
+    virtual DeviceBitfield computeStorageInfoMemoryBanks(const AllocationProperties &properties, DeviceBitfield preferredBank, DeviceBitfield allBanks);
 
     bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;
