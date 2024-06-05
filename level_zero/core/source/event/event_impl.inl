@@ -424,30 +424,35 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 }
 
 template <typename TagSizeT>
+void EventImp<TagSizeT>::copyTbxData(uint64_t dstGpuVa, size_t copySize) {
+    auto alloc = getPoolAllocation(device);
+    if (!alloc) {
+        DEBUG_BREAK_IF(true);
+        return;
+    }
+
+    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+
+    if (alloc->isTbxWritable(allBanks)) {
+        // initialize full page tables for the first time
+        csrs[0]->writeMemory(*alloc, false, 0, 0);
+    }
+
+    alloc->setTbxWritable(true, allBanks);
+
+    auto offset = ptrDiff(dstGpuVa, alloc->getGpuAddress());
+
+    csrs[0]->writeMemory(*alloc, true, offset, copySize);
+
+    alloc->setTbxWritable(false, allBanks);
+}
+
+template <typename TagSizeT>
 void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, const uint64_t &copyData) {
     memcpy_s(dstHostAddr, copySize, &copyData, copySize);
 
     if (this->tbxMode) {
-        auto alloc = getPoolAllocation(device);
-        if (!alloc) {
-            DEBUG_BREAK_IF(true);
-            return;
-        }
-
-        constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
-
-        if (alloc->isTbxWritable(allBanks)) {
-            // initialize full page tables for the first time
-            csrs[0]->writeMemory(*alloc, false, 0, 0);
-        }
-
-        alloc->setTbxWritable(true, allBanks);
-
-        auto offset = ptrDiff(dstGpuVa, alloc->getGpuAddress());
-
-        csrs[0]->writeMemory(*alloc, true, offset, copySize);
-
-        alloc->setTbxWritable(false, allBanks);
+        copyTbxData(dstGpuVa, copySize);
     }
 }
 
