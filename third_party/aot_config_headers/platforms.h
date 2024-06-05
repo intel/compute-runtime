@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <cstdint>
+#include <vector>
 
 #pragma once
 
@@ -152,92 +153,94 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 
 inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
 #ifdef SUPPORT_AOT_BDW
-  {"bdw", BDW},
+    {"bdw", BDW},
 #endif
 #ifdef SUPPORT_AOT_SKL
-  {"skl", SKL},
+    {"skl", SKL},
 #endif
 #ifdef SUPPORT_AOT_KBL
-  {"kbl", KBL},
+    {"kbl", KBL},
 #endif
 #ifdef SUPPORT_AOT_CFL
-  {"cfl", CFL},
+    {"cfl", CFL},
 #endif
 #ifdef SUPPORT_AOT_BXT
-  {"apl", APL},
-  {"bxt", APL},
+    {"apl", APL},
+    {"bxt", APL},
 #endif
 #ifdef SUPPORT_AOT_GLK
-  {"glk", GLK},
+    {"glk", GLK},
 #endif
 #ifdef SUPPORT_AOT_WHL
-  {"whl", WHL},
+    {"whl", WHL},
 #endif
 #ifdef SUPPORT_AOT_AML
-  {"aml", AML},
+    {"aml", AML},
 #endif
 #ifdef SUPPORT_AOT_CML
-  {"cml", CML},
+    {"cml", CML},
 #endif
 #ifdef SUPPORT_AOT_ICLLP
-  {"icllp", ICL},
-  {"icl", ICL},
+    {"icllp", ICL},
+    {"icl", ICL},
 #endif
 #ifdef SUPPORT_AOT_LKF1
-  {"lkf", LKF},
+    {"lkf", LKF},
 #endif
 #ifdef SUPPORT_AOT_JSL
-  {"ehl", EHL},
-  {"jsl", EHL},
+    {"ehl", EHL},
+    {"jsl", EHL},
 #endif
 #ifdef SUPPORT_AOT_TGLLP
-  {"tgllp", TGL},
-  {"tgl", TGL},
+    {"tgllp", TGL},
+    {"tgl", TGL},
 #endif
 #ifdef SUPPORT_AOT_RKLC
-  {"rkl", RKL},
+    {"rkl", RKL},
 #endif
 #ifdef SUPPORT_AOT_ADLS
-  {"adl-s", ADL_S},
-  {"rpl-s", ADL_S},
+    {"adl-s", ADL_S},
+    {"rpl-s", ADL_S},
 #endif
 #ifdef SUPPORT_AOT_ADL
-  {"adl-p", ADL_P},
-  {"rpl-p", ADL_P},
-  {"adl-n", ADL_N},
+    {"adl-p", ADL_P},
+    {"rpl-p", ADL_P},
+    {"adl-n", ADL_N},
 #endif
 #ifdef SUPPORT_AOT_DG1
-  {"dg1", DG1},
+    {"dg1", DG1},
 #endif
 #ifdef SUPPORT_AOT_DG2
-  {"acm-g10", DG2_G10_C0},
-  {"dg2-g10", DG2_G10_C0},
-  {"ats-m150", DG2_G10_C0},
-  {"acm-g11", DG2_G11_B1},
-  {"dg2-g11", DG2_G11_B1},
-  {"ats-m75", DG2_G11_B1},
-  {"acm-g12", DG2_G12_A0},
-  {"dg2-g12", DG2_G12_A0},
+    {"acm-g10", DG2_G10_C0},
+    {"dg2-g10", DG2_G10_C0},
+    {"ats-m150", DG2_G10_C0},
+    {"acm-g11", DG2_G11_B1},
+    {"dg2-g11", DG2_G11_B1},
+    {"ats-m75", DG2_G11_B1},
+    {"acm-g12", DG2_G12_A0},
+    {"dg2-g12", DG2_G12_A0},
 #endif
 #ifdef SUPPORT_AOT_PVC
-  {"pvc-sdv", PVC_XL_A0P},
-  {"pvc", PVC_XT_C0},
-  {"pvc-vg", PVC_XT_C0_VG},
+    {"pvc-sdv", PVC_XL_A0P},
+    {"pvc", PVC_XT_C0},
+    {"pvc-vg", PVC_XT_C0_VG},
 #endif
 #ifdef SUPPORT_AOT_MTL
-  {"mtl-u", MTL_U_B0},
-  {"arl-u", MTL_U_B0},
-  {"arl-s", MTL_U_B0},
-  {"mtl-h", MTL_H_B0},
+    {"mtl-u", MTL_U_B0},
+    {"mtl-s", MTL_U_B0},
+    {"arl-u", MTL_U_B0},
+    {"arl-s", MTL_U_B0},
+    {"mtl-h", MTL_H_B0},
+    {"mtl-p", MTL_H_B0},
 #endif
 #ifdef SUPPORT_AOT_ARL
-  {"arl-h", ARL_H_B0},
+    {"arl-h", ARL_H_B0},
 #endif
 #ifdef SUPPORT_AOT_BMG
-  {"bmg-g21", BMG_G21_B0},
+    {"bmg-g21", BMG_G21_B0},
 #endif
 #ifdef SUPPORT_AOT_LNL
-  {"lnl-m", LNL_B0},
+    {"lnl-m", LNL_B0},
 #endif
 };
 
@@ -281,5 +284,19 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"lnl-a1", LNL_A1},
     {"lnl-b0", LNL_B0},
 #endif
+};
+
+inline const std::map<std::string, PRODUCT_CONFIG> genericIdAcronyms = {
+#ifdef SUPPORT_AOT_DG2
+    {"dg2",  DG2_G10_C0},
+#endif
+#ifdef SUPPORT_AOT_MTL
+    {"mtl",  MTL_U_B0},
+#endif
+};
+
+inline const std::map<PRODUCT_CONFIG, std::vector<PRODUCT_CONFIG>> compatibilityMapping = {
+    {DG2_G10_C0, {DG2_G11_B1, DG2_G12_A0}},
+    {MTL_U_B0, {MTL_H_B0}},
 };
 } // namespace AOT
