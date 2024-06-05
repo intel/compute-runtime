@@ -109,13 +109,14 @@ class MockMetricGroup : public L0::MetricGroupImp {
 
 class MockMetric : public L0::MetricImp {
   public:
+    ze_result_t destroyReturn = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     ~MockMetric() override = default;
     MockMetric(MetricSource &metricSource) : L0::MetricImp(metricSource) {}
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t destroy() override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return destroyReturn;
     }
 
     void setPredefined(bool status) {
