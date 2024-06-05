@@ -18,4 +18,5 @@ This document provides the architectural design followed in the Intel(R) Graphic
 ### [Immediate Commandlist](IMMEDIATE_COMMANDLIST.md)
 ### [L0 Metrics](METRICS.md)
 ### [Module Symbols and Linking in Level Zero](MODULE_SYMBOL_SUPPORT.md)
+### [L0 Sysman](SYSMAN.md)
 ### [System Memory Allocations in Level Zero](SYSTEM_MEMORY_ALLOCATIONS.md)
