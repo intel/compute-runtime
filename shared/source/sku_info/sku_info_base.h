@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,8 @@ struct FeatureTableBase {
         uint32_t ftrUnified3DMediaCompressionFormats : 1;
         uint32_t ftr57bGPUAddressing : 1;
         uint32_t ftrTile64Optimization : 1;
-        uint32_t reserved : 22;
+        uint32_t ftrWalkerMTP : 1;
+        uint32_t reserved : 21;
     };
 
     BcsInfoMask ftrBcsInfo = 1;

@@ -1883,6 +1883,9 @@ struct Demarshaller<TOK_S_SKU_FEATURE_TABLE> {
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS91822__FTR_ASSIGNED_GPU_TILE: {
                     dst.FtrAssignedGpuTile = readTokValue<decltype(dst.FtrAssignedGpuTile)>(*tok);
                 } break;
+                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WALKER_MTP:
+                    dst.FtrWalkerMTP = readTokValue<decltype(dst.FtrWalkerMTP)>(*tok);
+                    break;
                 };
                 tok = tok + 1 + tok->valueDwordCount;
             } else {
@@ -3086,6 +3089,9 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS91822__FTR_ASSIGNED_GPU_TILE: {
                                 dst.SkuTable.FtrAssignedGpuTile = readTokValue<decltype(dst.SkuTable.FtrAssignedGpuTile)>(*tokSkuTable);
                             } break;
+                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_WALKER_MTP:
+                                dst.SkuTable.FtrWalkerMTP = readTokValue<decltype(dst.SkuTable.FtrWalkerMTP)>(*tokSkuTable);
+                                break;
                             };
                             tokSkuTable = tokSkuTable + 1 + tokSkuTable->valueDwordCount;
                         } else {

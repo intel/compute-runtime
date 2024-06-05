@@ -114,6 +114,7 @@ struct SkuInfoBaseReference {
         refFtrTable.flags.ftrTile64Optimization = true;
 
         refFtrTable.flags.ftrWddmHwQueues = true;
+        refFtrTable.flags.ftrWalkerMTP = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {

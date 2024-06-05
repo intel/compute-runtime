@@ -70,6 +70,7 @@ class SkuInfoReceiver {
         RECEIVE_FTR(Unified3DMediaCompressionFormats);
         RECEIVE_FTR(57bGPUAddressing);
         RECEIVE_FTR(Tile64Optimization);
+        RECEIVE_FTR(WalkerMTP);
 
 #undef RECEIVE_FTR
     }
