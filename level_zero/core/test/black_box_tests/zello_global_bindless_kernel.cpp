@@ -65,5 +65,14 @@ int main(int argc, char *argv[], char **envp) {
 
     execve(argv2[0], argv2, const_cast<char **>(allEnv.data()));
 
+    path = getRunPath(argv[0]);
+    path += fSeparator;
+    path += "zello_scratch";
+    argv2[0] = const_cast<char *>(path.c_str());
+
+    std::cout << "\nRunning " << argv2[0] << " with UseExternalAllocatorForSshAndDsh=1 UseBindlessMode=1..." << std::endl;
+
+    execve(argv2[0], argv2, const_cast<char **>(allEnv.data()));
+
     return -1;
 }
