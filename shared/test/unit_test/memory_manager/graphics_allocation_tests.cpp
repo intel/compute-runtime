@@ -138,44 +138,34 @@ TEST(GraphicsAllocationTest, givenResidentGraphicsAllocationWhenCheckIfResidency
     EXPECT_TRUE(graphicsAllocation.isResidencyTaskCountBelow(currentResidencyTaskCount + 1u, 0u));
 }
 
-TEST(GraphicsAllocationTest, whenAllocationTypeIsCommandBufferThenCpuAccessIsRequired) {
-    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(AllocationType::commandBuffer));
-}
+TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingCpuAccessRequiredThenReturnTrue) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
+        auto allocType = static_cast<AllocationType>(i);
 
-TEST(GraphicsAllocationTest, whenAllocationTypeIsConstantSurfaceThenCpuAccessIsRequired) {
-    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(AllocationType::constantSurface));
-}
-
-TEST(GraphicsAllocationTest, whenAllocationTypeIsGlobalSurfaceThenCpuAccessIsRequired) {
-    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(AllocationType::globalSurface));
-}
-
-TEST(GraphicsAllocationTest, whenAllocationTypeIsInternalHeapThenCpuAccessIsRequired) {
-    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(AllocationType::internalHeap));
-}
-
-TEST(GraphicsAllocationTest, whenAllocationTypeIsKernelIsaThenCpuAccessIsNotRequired) {
-    EXPECT_FALSE(GraphicsAllocation::isCpuAccessRequired(AllocationType::kernelIsa));
-}
-
-TEST(GraphicsAllocationTest, whenAllocationTypeIsKernelIsaInternalThenCpuAccessIsNotRequired) {
-    EXPECT_FALSE(GraphicsAllocation::isCpuAccessRequired(AllocationType::kernelIsaInternal));
-}
-
-TEST(GraphicsAllocationTest, whenAllocationTypeIsLinearStreamThenCpuAccessIsRequired) {
-    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(AllocationType::linearStream));
-}
-
-TEST(GraphicsAllocationTest, whenAllocationTypeIsPipeThenCpuAccessIsRequired) {
-    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(AllocationType::pipe));
-}
-
-TEST(GraphicsAllocationTest, whenAllocationTypeIsTimestampPacketThenCpuAccessIsRequired) {
-    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(AllocationType::timestampPacketTagBuffer));
-}
-
-TEST(GraphicsAllocationTest, whenAllocationTypeIsGpuTimestampDeviceBufferThenCpuAccessIsRequired) {
-    EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(AllocationType::gpuTimestampDeviceBuffer));
+        switch (allocType) {
+        case AllocationType::commandBuffer:
+        case AllocationType::constantSurface:
+        case AllocationType::globalSurface:
+        case AllocationType::internalHeap:
+        case AllocationType::linearStream:
+        case AllocationType::pipe:
+        case AllocationType::printfSurface:
+        case AllocationType::timestampPacketTagBuffer:
+        case AllocationType::ringBuffer:
+        case AllocationType::semaphoreBuffer:
+        case AllocationType::debugContextSaveArea:
+        case AllocationType::debugSbaTrackingBuffer:
+        case AllocationType::gpuTimestampDeviceBuffer:
+        case AllocationType::debugModuleArea:
+        case AllocationType::assertBuffer:
+        case AllocationType::syncDispatchToken:
+            EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(allocType));
+            break;
+        default:
+            EXPECT_FALSE(GraphicsAllocation::isCpuAccessRequired(allocType));
+            break;
+        }
+    }
 }
 
 TEST(GraphicsAllocationTest, whenAllocationRequiresCpuAccessThenAllocationIsLockable) {

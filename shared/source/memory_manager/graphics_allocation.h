@@ -227,7 +227,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::debugSbaTrackingBuffer ||
                allocationType == AllocationType::gpuTimestampDeviceBuffer ||
                allocationType == AllocationType::debugModuleArea ||
-               allocationType == AllocationType::assertBuffer;
+               allocationType == AllocationType::assertBuffer ||
+               allocationType == AllocationType::syncDispatchToken;
     }
     static bool isLockable(AllocationType allocationType) {
         return isCpuAccessRequired(allocationType) ||
