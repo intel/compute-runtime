@@ -103,8 +103,9 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
 
         interruptMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
         kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
+        bool externalInterrupt = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT);
 
-        if (kmdWaitMode) {
+        if (externalInterrupt) {
             event->setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
             UNRECOVERABLE_IF(eventSyncModeDesc->externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);
         }

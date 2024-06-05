@@ -126,7 +126,7 @@ HWTEST2_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThen
     EXPECT_EQ(NEO::InterruptId::notUsed, event4->externalInterruptId);
 
     eventDesc.index = 5;
-    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT;
     EXPECT_ANY_THROW(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 }
 
@@ -4055,7 +4055,7 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterrup
     auto event1 = createStandaloneCbEvent(reinterpret_cast<const ze_base_desc_t *>(&syncModeDesc));
     EXPECT_EQ(NEO::InterruptId::notUsed, event1->externalInterruptId);
 
-    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
+    syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT;
     auto event2 = createStandaloneCbEvent(reinterpret_cast<const ze_base_desc_t *>(&syncModeDesc));
     EXPECT_EQ(syncModeDesc.externalInterruptId, event2->externalInterruptId);
 }
