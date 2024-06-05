@@ -171,6 +171,13 @@ CommandQueue::~CommandQueue() {
     gtpinRemoveCommandQueue(this);
 }
 
+void tryAssignSecondaryEngine(Device &device, EngineControl *&engineControl, EngineTypeUsage engineTypeUsage) {
+    auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage);
+    if (newEngine) {
+        engineControl = newEngine;
+    }
+}
+
 void CommandQueue::initializeGpgpu() const {
     if (gpgpuEngine == nullptr) {
         static std::mutex mutex;
@@ -202,7 +209,7 @@ void CommandQueue::initializeGpgpu() const {
             } else {
 
                 if (secondaryContextsEnabled && EngineHelpers::isCcs(defaultEngineType)) {
-                    gpgpuEngine = device->getDevice().getSecondaryEngineCsr({defaultEngineType, EngineUsage::regular});
+                    tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {defaultEngineType, EngineUsage::regular});
                 }
 
                 if (gpgpuEngine == nullptr) {
@@ -358,7 +365,7 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
             bcsQueueEngineType = bcsEngineType;
 
             if (gfxCoreHelper.areSecondaryContextsSupported() && !internalUsage) {
-                bcsEngines[bcsIndex] = device->getDevice().getSecondaryEngineCsr({bcsEngineType, engineUsage});
+                tryAssignSecondaryEngine(device->getDevice(), bcsEngines[bcsIndex], {bcsEngineType, engineUsage});
             }
 
             bcsEngines[bcsIndex]->osContext->ensureContextInitialized();
@@ -1225,7 +1232,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
             bcsQueueEngineType = engineType;
 
             if (secondaryContextsEnabled) {
-                bcsEngines[engineIndex] = device->getDevice().getSecondaryEngineCsr({engineType, engineUsage});
+                tryAssignSecondaryEngine(device->getDevice(), bcsEngines[engineIndex], {engineType, engineUsage});
             }
         }
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
@@ -1236,7 +1243,7 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
         if (multiRegularContextAllowed) {
             gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(engineType);
         } else if (secondaryContextsEnabled && EngineHelpers::isCcs(engineType)) {
-            gpgpuEngine = device->getDevice().getSecondaryEngineCsr({engineType, engineUsage});
+            tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {engineType, engineUsage});
         } else {
             gpgpuEngine = &device->getEngine(engineType, engineUsage);
         }

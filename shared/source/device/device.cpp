@@ -398,7 +398,13 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     const bool isDefaultEngine = defaultEngineType == engineType && engineUsage == EngineUsage::regular;
     const bool createAsEngineInstanced = engineInstanced && EngineHelpers::isCcs(engineType);
 
-    const bool isPrimaryEngine = (EngineHelpers::isCcs(engineType) || EngineHelpers::isBcs(engineType)) && engineUsage == EngineUsage::regular;
+    bool primaryEngineTypeAllowed = (EngineHelpers::isCcs(engineType) || EngineHelpers::isBcs(engineType));
+
+    if (debugManager.flags.SecondaryContextEngineTypeMask.get() != -1) {
+        primaryEngineTypeAllowed &= (static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0;
+    }
+
+    const bool isPrimaryEngine = primaryEngineTypeAllowed && (engineUsage == EngineUsage::regular);
     const bool useContextGroup = isPrimaryEngine && gfxCoreHelper.areSecondaryContextsSupported();
 
     UNRECOVERABLE_IF(EngineHelpers::isBcs(engineType) && !hwInfo.capabilityTable.blitterOperationsSupported);
