@@ -64,3 +64,19 @@ ARLTEST_F(ArlProductHelper, givenArlWithoutHwIpVersionInHwInfoWhenGettingIpVersi
 
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), compilerProductHelper->getHwIpVersion(hwInfo));
 }
+
+ARLTEST_F(ArlProductHelper, givenPubliclyAvailableAcronymsForMtlDevicesWhenGetProductConfigThenCorrectValueIsReturned) {
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
+    std::vector<std::string> arlSAcronyms = {"arl-s", "arl-u"};
+    std::vector<std::string> arlHAcronyms = {"arl-h"};
+    for (auto &acronym : arlSAcronyms) {
+        ProductConfigHelper::adjustDeviceName(acronym);
+        auto ret = productConfigHelper->getProductConfigFromDeviceName(acronym);
+        EXPECT_EQ(ret, AOT::MTL_U_B0);
+    }
+    for (auto &acronym : arlHAcronyms) {
+        ProductConfigHelper::adjustDeviceName(acronym);
+        auto ret = productConfigHelper->getProductConfigFromDeviceName(acronym);
+        EXPECT_EQ(ret, AOT::ARL_H_B0);
+    }
+}

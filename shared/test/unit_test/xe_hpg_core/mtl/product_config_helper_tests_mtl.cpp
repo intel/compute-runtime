@@ -43,3 +43,19 @@ MTLTEST_F(ProductConfigHelperMtlTests, givenMtlConfigsWhenSearchForDeviceAcronym
         EXPECT_NE(std::find(deviceAcronyms.begin(), deviceAcronyms.end(), acronym), deviceAcronyms.end());
     }
 }
+
+MTLTEST_F(ProductConfigHelperMtlTests, givenPubliclyAvailableAcronymsForMtlDevicesWhenGetProductConfigThenCorrectValueIsReturned) {
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
+    std::vector<std::string> mtlUAcronyms = {"mtl-s", "mtl-u"};
+    std::vector<std::string> mtlHAcronyms = {"mtl-h", "mtl-p"};
+    for (auto &acronym : mtlUAcronyms) {
+        ProductConfigHelper::adjustDeviceName(acronym);
+        auto ret = productConfigHelper->getProductConfigFromDeviceName(acronym);
+        EXPECT_EQ(ret, AOT::MTL_U_B0);
+    }
+    for (auto &acronym : mtlHAcronyms) {
+        ProductConfigHelper::adjustDeviceName(acronym);
+        auto ret = productConfigHelper->getProductConfigFromDeviceName(acronym);
+        EXPECT_EQ(ret, AOT::MTL_H_B0);
+    }
+}
