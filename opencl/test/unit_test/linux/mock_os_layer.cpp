@@ -41,6 +41,7 @@ int failOnVirtualMemoryCreate = 0;
 int failOnSetPriority = 0;
 int failOnPreemption = 0;
 int failOnDrmVersion = 0;
+int captureVirtualMemoryCreate = 0;
 int accessCalledTimes = 0;
 int readLinkCalledTimes = 0;
 int fstatCalledTimes = 0;
@@ -49,6 +50,7 @@ char providedDrmVersion[5] = {'i', '9', '1', '5', '\0'};
 uint64_t gpuTimestamp = 0;
 int ioctlSeq[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 size_t ioctlCnt = 0;
+std::vector<NEO::GemVmControl> capturedVmCreate{};
 
 int fstat(int fd, struct stat *buf) {
     ++fstatCalledTimes;
@@ -233,6 +235,9 @@ int drmVirtualMemoryCreate(NEO::GemVmControl *control) {
     assert(control);
     if (!failOnVirtualMemoryCreate) {
         control->vmId = ++vmId;
+    }
+    if (captureVirtualMemoryCreate) {
+        capturedVmCreate.push_back(*control);
     }
     return failOnVirtualMemoryCreate;
 }
