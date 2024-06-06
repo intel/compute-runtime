@@ -98,6 +98,9 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     drm->isSetPairAvailable();
     drm->isChunkingAvailable();
 
+    drm->configureScratchPagePolicy();
+    drm->configureGpuFaultCheckThreshold();
+
     if (!drm->isPerContextVMRequired()) {
         if (!drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()))) {
             printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "INFO: Device doesn't support GEM Virtual Memory\n");
@@ -105,9 +108,6 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     }
 
     drm->queryAdapterBDF();
-
-    drm->configureScratchPagePolicy();
-    drm->configureGpuFaultCheckThreshold();
 
     return drm.release();
 }
