@@ -111,8 +111,8 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override;
     void setSysmanHandle(SysmanDevice *pSysman) override;
     SysmanDevice *getSysmanHandle() override;
-    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) override;
-    ze_result_t getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority) override;
+    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, bool allocateInterrupt) override;
+    ze_result_t getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, bool allocateInterrupt) override;
     ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) override;
     bool isSuitableForLowPriority(ze_command_queue_priority_t priority, bool copyOnly);
     NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::AllocationType type) override;
@@ -177,7 +177,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;
     void getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,
                                                 ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
-    bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, NEO::CommandStreamReceiver **csr);
+    bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, NEO::CommandStreamReceiver **csr, bool allocateInterrupt);
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
     NEO::GraphicsAllocation *debugSurface = nullptr;

@@ -997,7 +997,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
 
-    this->initializeResources();
+    this->initializeResources(false);
     this->initDirectSubmission();
 
     if (PauseOnGpuProperties::pauseModeAllowed(debugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::BeforeWorkload)) {

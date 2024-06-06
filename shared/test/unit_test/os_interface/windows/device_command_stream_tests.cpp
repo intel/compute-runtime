@@ -60,7 +60,7 @@ class WddmCommandStreamFixture {
 
         csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment, 0, device->getDeviceBitfield());
         device->resetCommandStreamReceiver(csr);
-        csr->getOsContext().ensureContextInitialized();
+        csr->getOsContext().ensureContextInitialized(false);
     }
 
     void tearDown() {

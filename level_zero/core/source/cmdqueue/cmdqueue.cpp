@@ -248,7 +248,7 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
         osContext.reInitializeContext();
     }
 
-    csr->initializeResources();
+    csr->initializeResources(false);
     csr->initDirectSubmission();
     if (commandQueue->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
         csr->createGlobalStatelessHeap();
@@ -359,6 +359,16 @@ ze_result_t CommandQueueImp::getOrdinal(uint32_t *pOrdinal) {
 ze_result_t CommandQueueImp::getIndex(uint32_t *pIndex) {
     *pIndex = desc.index;
     return ZE_RESULT_SUCCESS;
+}
+
+bool CommandQueue::uniqueInterruptRequired(const ze_command_queue_desc_t &desc) {
+    auto properties = static_cast<const ze_base_properties_t *>(desc.pNext);
+
+    if (properties && (properties->stype == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES)) {
+        return static_cast<const zex_intel_queue_allocate_msix_hint_exp_desc_t *>(desc.pNext)->uniqueMsix;
+    }
+
+    return false;
 }
 
 } // namespace L0

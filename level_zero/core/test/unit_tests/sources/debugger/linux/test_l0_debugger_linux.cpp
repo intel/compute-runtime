@@ -369,7 +369,7 @@ TEST_F(L0DebuggerLinuxTest, givenModuleHandleZeroWhenRemoveZebinModuleIsCalledTh
 HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenCommandQueuesAreCreatedAndDestroyedThenDebuggerL0IsNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
 
-    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized(false);
     drmMock->ioctlCallsCount = 0;
 
     ze_command_queue_desc_t queueDesc = {};
@@ -452,7 +452,7 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachNotAvailableWhe
 HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenImmCommandListsCreatedAndDestroyedThenDebuggerL0IsNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
 
-    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized(false);
     drmMock->ioctlCallsCount = 0;
 
     ze_command_queue_desc_t queueDesc = {};
@@ -484,7 +484,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenDebuggingEnabledWhenCommandQueuesCre
 
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
     drmMock->ioctlCallsCount = 0;
-    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized(false);
 
     EXPECT_EQ(2u, debuggerL0Hw->uuidL0CommandQueueHandle.size());
 
@@ -519,7 +519,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenDebuggingEnabledWhenCommandQueuesCre
 HWTEST_F(L0DebuggerLinuxMultitileTest, givenDebuggingEnabledWhenCommandQueueCreatedOnRootDeviceThenDebuggerIsNotifiedForAllSubdevices) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
     drmMock->ioctlCallsCount = 0;
-    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized(false);
 
     EXPECT_EQ(2u, debuggerL0Hw->uuidL0CommandQueueHandle.size());
 
@@ -578,7 +578,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenSubDeviceFilteredByAffinityMaskWhenC
 
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
     drmMock->ioctlCallsCount = 0;
-    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized();
+    neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized(false);
 
     EXPECT_EQ(1u, debuggerL0Hw->uuidL0CommandQueueHandle.size());
 

@@ -25,7 +25,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
 
     bool isImmediateContextInitializationEnabled(bool isDefaultEngine) const;
     bool isInitialized() const { return contextInitialized; }
-    bool ensureContextInitialized();
+    bool ensureContextInitialized(bool allocateInterrupt);
 
     uint32_t getContextId() const { return contextId; }
     virtual uint64_t getOfflineDumpContextId(uint32_t deviceIndex) const { return 0; };

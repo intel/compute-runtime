@@ -53,7 +53,7 @@ struct DrmDirectSubmissionTest : public DrmMemoryManagerBasic {
         osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(), device->getRootDeviceIndex(), 0u,
                                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                                   PreemptionMode::ThreadGroup, device->getDeviceBitfield()));
-        osContext->ensureContextInitialized();
+        osContext->ensureContextInitialized(false);
         device->getDefaultEngine().commandStreamReceiver->setupContext(*osContext);
     }
 
@@ -371,7 +371,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
         OsContextLinux osContext(*drm, 0, 0u,
                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                               PreemptionMode::ThreadGroup, firstTileBitfield));
-        osContext.ensureContextInitialized();
+        osContext.ensureContextInitialized(false);
         commandStreamReceiver.setupContext(osContext);
         drm->waitUserFenceParams.clear();
         {
@@ -387,7 +387,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
         OsContextLinux osContext(*drm, 0, 0u,
                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                               PreemptionMode::ThreadGroup, secondTileBitfield));
-        osContext.ensureContextInitialized();
+        osContext.ensureContextInitialized(false);
         commandStreamReceiver.setupContext(osContext);
         drm->waitUserFenceParams.clear();
         {
@@ -404,7 +404,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndFenceIsNotComple
         OsContextLinux osContext(*drm, 0, 0u,
                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                               PreemptionMode::ThreadGroup, twoTilesBitfield));
-        osContext.ensureContextInitialized();
+        osContext.ensureContextInitialized(false);
         commandStreamReceiver.setupContext(osContext);
         drm->waitUserFenceParams.clear();
         MockGraphicsAllocation workPartitionAllocation{};
@@ -516,7 +516,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
     OsContextLinux osContextTile0(*drm, 0, 0u,
                                   EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                PreemptionMode::ThreadGroup, firstTileBitfield));
-    osContextTile0.ensureContextInitialized();
+    osContextTile0.ensureContextInitialized(false);
     commandStreamReceiver.setupContext(osContextTile0);
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(commandStreamReceiver);
@@ -555,7 +555,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
     OsContextLinux osContextTile1(*drm, 0, 0u,
                                   EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                PreemptionMode::ThreadGroup, secondTileBitfield));
-    osContextTile1.ensureContextInitialized();
+    osContextTile1.ensureContextInitialized(false);
     commandStreamReceiver.setupContext(osContextTile1);
 
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(commandStreamReceiver);
@@ -594,7 +594,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
     OsContextLinux osContextBothTiles(*drm, 0, 0u,
                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                    PreemptionMode::ThreadGroup, twoTilesBitfield));
-    osContextBothTiles.ensureContextInitialized();
+    osContextBothTiles.ensureContextInitialized(false);
     commandStreamReceiver.setupContext(osContextBothTiles);
 
     MockGraphicsAllocation workPartitionAllocation{};
@@ -828,7 +828,7 @@ HWTEST_F(DrmDirectSubmissionTest,
     osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(), device->getRootDeviceIndex(), 0u,
                                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                               PreemptionMode::ThreadGroup, device->getDeviceBitfield()));
-    osContext->ensureContextInitialized();
+    osContext->ensureContextInitialized(false);
     EXPECT_EQ(2u, osContext->getDeviceBitfield().count());
 
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(device->getDefaultEngine().commandStreamReceiver);
@@ -879,7 +879,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenBlitterDispatcherAndMultiTileDeviceWhenCr
     osContext = std::make_unique<OsContextLinux>(*executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>(), device->getRootDeviceIndex(), 0u,
                                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
                                                                                               PreemptionMode::ThreadGroup, device->getDeviceBitfield()));
-    osContext->ensureContextInitialized();
+    osContext->ensureContextInitialized(false);
     EXPECT_EQ(2u, osContext->getDeviceBitfield().count());
 
     device->getDefaultEngine().commandStreamReceiver->setupContext(*osContext);

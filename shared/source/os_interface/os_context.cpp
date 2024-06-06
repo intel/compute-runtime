@@ -45,8 +45,8 @@ bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) co
     return false;
 }
 
-bool OsContext::ensureContextInitialized() {
-    std::call_once(contextInitializedFlag, [this] {
+bool OsContext::ensureContextInitialized(bool allocateInterrupt) {
+    std::call_once(contextInitializedFlag, [this, allocateInterrupt] {
         if (debugManager.flags.PrintOsContextInitializations.get()) {
             printf("OsContext initialization: contextId=%d usage=%s type=%s isRootDevice=%d\n",
                    contextId,
@@ -55,7 +55,7 @@ bool OsContext::ensureContextInitialized() {
                    static_cast<int>(rootDevice));
         }
 
-        if (!initializeContext(false)) {
+        if (!initializeContext(allocateInterrupt)) {
             contextInitialized = false;
         } else {
             contextInitialized = true;

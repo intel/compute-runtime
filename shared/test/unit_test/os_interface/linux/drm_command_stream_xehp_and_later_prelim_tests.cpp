@@ -185,7 +185,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
                                                       EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootExecEnvironment)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(3)));
 
-    osContext->ensureContextInitialized();
+    osContext->ensureContextInitialized(false);
     osContext->incRefInternal();
 
     device->getMemoryManager()->unregisterEngineForCsr(testDrmCsr);
@@ -242,7 +242,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenExternalInterrupt
                                                       EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootExecEnvironment)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(3)));
 
-    osContext->ensureContextInitialized();
+    osContext->ensureContextInitialized(false);
     osContext->incRefInternal();
 
     device->getMemoryManager()->unregisterEngineForCsr(testDrmCsr);
@@ -285,7 +285,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenFailingIoctlWhenW
                                                       EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*rootExecEnvironment)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(7)));
 
-    osContext->ensureContextInitialized();
+    osContext->ensureContextInitialized(false);
     osContext->incRefInternal();
 
     device->getMemoryManager()->unregisterEngineForCsr(testDrmCsr);
@@ -387,7 +387,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0,
                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(3)));
-        osContext->ensureContextInitialized();
+        osContext->ensureContextInitialized(false);
 
         csr = new MockDrmCommandStreamReceiver<GfxFamily>(executionEnvironment,
                                                           rootDeviceIndex,
@@ -498,7 +498,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
         osContext = std::make_unique<OsContextLinux>(*drm, 0, 0u,
                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), DeviceBitfield(0b11)));
-        osContext->ensureContextInitialized();
+        osContext->ensureContextInitialized(false);
 
         memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive, debugManager.flags.EnableForcePin.get(), true, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
@@ -596,7 +596,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
     auto osContext = std::make_unique<OsContextLinux>(*drm, 0, 0u,
                                                       EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-    osContext->ensureContextInitialized();
+    osContext->ensureContextInitialized(false);
     auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
                                          GemCloseWorkerMode::gemCloseWorkerActive);
     csr->setupContext(*osContext);

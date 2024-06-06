@@ -427,7 +427,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     commandStreamReceiver->setupContext(*osContext);
 
     if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
-        if (!commandStreamReceiver->initializeResources()) {
+        if (!commandStreamReceiver->initializeResources(false)) {
             return false;
         }
     }
@@ -509,7 +509,7 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
     return true;
 }
 
-EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage) {
+EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt) {
     if (secondaryEngines.find(engineTypeUsage.first) == secondaryEngines.end()) {
         return nullptr;
     }
@@ -539,7 +539,7 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage) {
 
             EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, false);
 
-            if (!commandStreamReceiver->initializeResources()) {
+            if (!commandStreamReceiver->initializeResources(allocateInterrupt)) {
                 return nullptr;
             }
 

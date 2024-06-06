@@ -4098,7 +4098,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         ASSERT_TRUE(engineGroups[ordinal].engineGroupType == NEO::EngineGroupType::compute);
 
         uint32_t index = 1;
-        auto result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+        auto result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, highPriorityCsr);
 
@@ -4115,7 +4115,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         EXPECT_TRUE(highPriorityCsr->getOsContext().isPartOfContextGroup());
         EXPECT_NE(nullptr, highPriorityCsr->getOsContext().getPrimaryContext());
 
-        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr2, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr2, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, highPriorityCsr2);
         EXPECT_NE(highPriorityCsr, highPriorityCsr2);
@@ -4124,12 +4124,12 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         EXPECT_TRUE(highPriorityCsr2->getOsContext().isPartOfContextGroup());
 
         index = 100;
-        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         index = 0;
         ordinal = 100;
-        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH);
+        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }
 }

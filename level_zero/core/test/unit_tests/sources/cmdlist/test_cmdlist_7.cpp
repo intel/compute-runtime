@@ -1981,6 +1981,82 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListThenEa
     commandList2->destroy();
 }
 
+TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithInterruptFlagThenPassInterruptFlagToContext) {
+    class MockOsContext : public OsContext {
+      public:
+        using OsContext::OsContext;
+
+        bool initializeContext(bool allocateInterrupt) override {
+            allocateInterruptPassed = allocateInterrupt;
+            return OsContext::initializeContext(allocateInterrupt);
+        }
+
+        bool allocateInterruptPassed = false;
+    };
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    std::vector<MockOsContext *> mockOsContexts;
+
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    {
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+        auto device = driverHandle->devices[0];
+
+        for (auto &engine : neoDevice->secondaryEngines[aub_stream::ENGINE_CCS].engines) {
+            EngineDescriptor descriptor({aub_stream::ENGINE_CCS, engine.osContext->getEngineUsage()}, engine.osContext->getDeviceBitfield(), PreemptionMode::Disabled, false, false);
+            auto newOsContext = new MockOsContext(0, 0, descriptor);
+            mockOsContexts.push_back(newOsContext);
+            newOsContext->incRefInternal();
+
+            engine.osContext = newOsContext;
+            engine.commandStreamReceiver->setupContext(*newOsContext);
+        }
+
+        zex_intel_queue_allocate_msix_hint_exp_desc_t allocateMsix = {};
+        allocateMsix.stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES;
+        allocateMsix.uniqueMsix = false;
+
+        ze_command_queue_desc_t desc = {};
+        desc.pNext = &allocateMsix;
+
+        ze_command_list_handle_t commandListHandle1, commandListHandle2;
+
+        auto result = device->createCommandListImmediate(&desc, &commandListHandle1);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        allocateMsix.uniqueMsix = true;
+        result = device->createCommandListImmediate(&desc, &commandListHandle2);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
+        auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandList1->getCsr()->getOsContext()).allocateInterruptPassed);
+        EXPECT_TRUE(static_cast<MockOsContext &>(commandList2->getCsr()->getOsContext()).allocateInterruptPassed);
+
+        commandList1->destroy();
+        commandList2->destroy();
+    }
+
+    for (auto &context : mockOsContexts) {
+        context->decRefInternal();
+    }
+}
+
 TEST(CommandList, givenCopyContextGroupEnabledWhenCreatingImmediateCommandListThenEachCmdListHasDifferentCsr) {
 
     HardwareInfo hwInfo = *defaultHwInfo;

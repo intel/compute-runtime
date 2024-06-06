@@ -701,7 +701,7 @@ struct WddmContextSchedulingPriorityTests : public Wddm20WithMockGdiDllTestsWith
         auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode);
         engineDescriptor.engineTypeUsage.second = lowPriority ? EngineUsage::lowPriority : EngineUsage::regular;
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, engineDescriptor);
-        osContext->ensureContextInitialized();
+        osContext->ensureContextInitialized(false);
     }
 };
 

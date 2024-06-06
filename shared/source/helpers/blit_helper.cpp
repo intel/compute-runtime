@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
             return BlitOperationResult::unsupported;
         }
 
-        bcsEngine->commandStreamReceiver->initializeResources();
+        bcsEngine->commandStreamReceiver->initializeResources(false);
         bcsEngine->commandStreamReceiver->initDirectSubmission();
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(

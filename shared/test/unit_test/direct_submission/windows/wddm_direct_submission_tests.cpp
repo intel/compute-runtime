@@ -63,7 +63,7 @@ struct WddmDirectSubmissionWithMockGdiDllFixture : public WddmFixtureWithMockGdi
         init();
         device.reset(MockDevice::create<MockDevice>(executionEnvironment.get(), 0u));
         osContextWin = static_cast<NEO::OsContextWin *>(device->getDefaultEngine().osContext);
-        osContextWin->ensureContextInitialized();
+        osContextWin->ensureContextInitialized(false);
     }
 
     DebugManagerStateRestore restorer;

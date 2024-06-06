@@ -172,7 +172,7 @@ CommandQueue::~CommandQueue() {
 }
 
 void tryAssignSecondaryEngine(Device &device, EngineControl *&engineControl, EngineTypeUsage engineTypeUsage) {
-    auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage);
+    auto newEngine = device.getSecondaryEngineCsr(engineTypeUsage, false);
     if (newEngine) {
         engineControl = newEngine;
     }
@@ -236,7 +236,7 @@ void CommandQueue::initializeGpgpuInternals() const {
         }
     }
 
-    gpgpuEngine->commandStreamReceiver->initializeResources();
+    gpgpuEngine->commandStreamReceiver->initializeResources(false);
     gpgpuEngine->commandStreamReceiver->requestPreallocation();
     gpgpuEngine->commandStreamReceiver->initDirectSubmission();
 
@@ -361,7 +361,7 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
                 tryAssignSecondaryEngine(device->getDevice(), bcsEngines[bcsIndex], {bcsEngineType, engineUsage});
             }
 
-            bcsEngines[bcsIndex]->osContext->ensureContextInitialized();
+            bcsEngines[bcsIndex]->osContext->ensureContextInitialized(false);
             bcsEngines[bcsIndex]->commandStreamReceiver->initDirectSubmission();
         }
         bcsInitialized = true;
@@ -389,7 +389,7 @@ void CommandQueue::constructBcsEnginesForSplit() {
 
             if (bcsEngines[i]) {
                 bcsQueueEngineType = engineType;
-                bcsEngines[i]->commandStreamReceiver->initializeResources();
+                bcsEngines[i]->commandStreamReceiver->initializeResources(false);
                 bcsEngines[i]->commandStreamReceiver->initDirectSubmission();
             }
         }

@@ -65,7 +65,7 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), engineDescriptor);
 
     rootCommandStreamReceiver->setupContext(*osContext);
-    rootCommandStreamReceiver->initializeResources();
+    rootCommandStreamReceiver->initializeResources(false);
     rootCsrCreated = true;
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();

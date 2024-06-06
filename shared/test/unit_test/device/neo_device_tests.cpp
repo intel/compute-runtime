@@ -1198,7 +1198,7 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
         EXPECT_EQ(contextGroupSize - regularContextCount, secondaryEngines.highPriorityEnginesTotal);
 
         for (size_t contextId = 0; contextId < regularContextCount + 1; contextId++) {
-            auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
+            auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, false);
             ASSERT_NE(nullptr, engine);
 
             EXPECT_EQ(contextId + 1, secondaryEngines.regularCounter.load());
@@ -1208,7 +1208,7 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
         }
 
         for (size_t contextId = 0; contextId < contextGroupSize - regularContextCount + 1; contextId++) {
-            auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
+            auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, false);
             ASSERT_NE(nullptr, engine);
 
             EXPECT_EQ(contextId + 1, secondaryEngines.highPriorityCounter.load());
@@ -1219,7 +1219,7 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
     }
 
     auto internalEngine = device->getInternalEngine();
-    EXPECT_NE(internalEngine.commandStreamReceiver, device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::internal})->commandStreamReceiver);
+    EXPECT_NE(internalEngine.commandStreamReceiver, device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::internal}, false)->commandStreamReceiver);
 }
 
 HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenResourcesAndContextAreInitialized) {
@@ -1262,11 +1262,11 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenReso
             EXPECT_EQ(primaryCsr->getPreemptionAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
         }
 
-        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular});
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, false);
     }
 
     for (uint32_t i = 0; i < secondaryEngines.highPriorityEnginesTotal; i++) {
-        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority});
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, false);
     }
 
     for (uint32_t secondaryIndex = 0; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
@@ -1341,10 +1341,10 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledAndAllocationUsedBySeconadryContex
     auto secondaryEnginesCount = secondaryEngines.engines.size();
     ASSERT_EQ(5u, secondaryEnginesCount);
 
-    auto engine = device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::regular});
+    auto engine = device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::regular}, false);
     ASSERT_NE(nullptr, engine);
     auto csr = engine->commandStreamReceiver;
-    auto engine2 = device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::regular});
+    auto engine2 = device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::regular}, false);
     ASSERT_NE(nullptr, engine2);
     auto csr2 = engine2->commandStreamReceiver;
     ASSERT_NE(csr, csr2);
@@ -1402,11 +1402,11 @@ HWTEST_F(DeviceTests, givenCopyEnginesWhenCreatingSecondaryContextsThenUseCopyTy
             EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(engineType));
             EXPECT_EQ(5u, device->secondaryEngines[engineType].engines.size());
 
-            auto engine = device->getSecondaryEngineCsr({engineType, EngineUsage::regular});
+            auto engine = device->getSecondaryEngineCsr({engineType, EngineUsage::regular}, false);
             ASSERT_NE(nullptr, engine);
 
             auto csr = engine->commandStreamReceiver;
-            auto engine2 = device->getSecondaryEngineCsr({engineType, EngineUsage::regular});
+            auto engine2 = device->getSecondaryEngineCsr({engineType, EngineUsage::regular}, false);
             ASSERT_NE(nullptr, engine2);
 
             auto csr2 = engine2->commandStreamReceiver;

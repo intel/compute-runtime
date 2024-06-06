@@ -92,7 +92,7 @@ class CommandQueueHw : public CommandQueue {
 
         for (const EngineControl *engine : bcsEngines) {
             if (engine != nullptr) {
-                engine->osContext->ensureContextInitialized();
+                engine->osContext->ensureContextInitialized(false);
                 engine->commandStreamReceiver->initDirectSubmission();
             }
         }

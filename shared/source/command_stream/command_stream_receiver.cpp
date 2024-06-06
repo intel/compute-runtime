@@ -323,11 +323,11 @@ void CommandStreamReceiver::releasePreallocationRequest() {
     requestedPreallocationsAmount -= preallocationsPerQueue;
 }
 
-bool CommandStreamReceiver::initializeResources() {
+bool CommandStreamReceiver::initializeResources(bool allocateInterrupt) {
     if (!resourcesInitialized) {
         auto lock = obtainUniqueOwnership();
         if (!resourcesInitialized) {
-            if (!osContext->ensureContextInitialized()) {
+            if (!osContext->ensureContextInitialized(allocateInterrupt)) {
                 return false;
             }
             this->fillReusableAllocationsList();

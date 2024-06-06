@@ -28,7 +28,7 @@ TEST(DrmVmBindTest, givenBoRequiringImmediateBindWhenBindingThenImmediateFlagIsP
     bo.requireImmediateBinding(true);
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized();
+    osContext.ensureContextInitialized(false);
     bo.bind(&osContext, 0);
 
     EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
@@ -46,7 +46,7 @@ TEST(DrmVmBindTest, givenBoRequiringExplicitResidencyWhenBindingThenMakeResident
         bo.requireExplicitResidency(requireResidency);
 
         OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-        osContext.ensureContextInitialized();
+        osContext.ensureContextInitialized(false);
         uint32_t vmHandleId = 0;
         bo.bind(&osContext, vmHandleId);
 
@@ -75,7 +75,7 @@ TEST(DrmVmBindTest,
         bo.requireExplicitResidency(requireResidency);
 
         OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-        osContext.ensureContextInitialized();
+        osContext.ensureContextInitialized(false);
         uint32_t vmHandleId = 0;
         bo.bind(&osContext, vmHandleId);
 
@@ -103,7 +103,7 @@ TEST(DrmVmBindTest, givenPerContextVmsAndBoRequiringExplicitResidencyWhenBinding
         bo.requireExplicitResidency(requireResidency);
 
         MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-        osContext.ensureContextInitialized();
+        osContext.ensureContextInitialized(false);
         uint32_t vmHandleId = 0;
         bo.bind(&osContext, vmHandleId);
 
@@ -142,7 +142,7 @@ TEST(DrmVmBindTest, givenBoNotRequiringExplicitResidencyWhenCallingWaitForBindTh
         bo.requireExplicitResidency(requireResidency);
 
         OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-        osContext.ensureContextInitialized();
+        osContext.ensureContextInitialized(false);
         uint32_t vmHandleId = 0;
         bo.bind(&osContext, vmHandleId);
 
@@ -168,7 +168,7 @@ TEST(DrmVmBindTest, givenUseKmdMigrationWhenCallingBindBoOnUnifiedSharedMemoryTh
     drm.pageFaultSupported = true;
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized();
+    osContext.ensureContextInitialized(false);
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(0u, &drm, 3, 0, 0, 1);
@@ -191,7 +191,7 @@ TEST(DrmVmBindTest, givenDrmWithPageFaultSupportWhenCallingBindBoOnUnifiedShared
     drm.pageFaultSupported = true;
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized();
+    osContext.ensureContextInitialized(false);
     uint32_t vmHandleId = 0;
 
     MockBufferObject bo(0u, &drm, 3, 0, 0, 1);

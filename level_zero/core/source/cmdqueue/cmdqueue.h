@@ -60,6 +60,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
         return static_cast<CommandQueue *>(handle);
     }
 
+    static bool uniqueInterruptRequired(const ze_command_queue_desc_t &desc);
+
     virtual void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) = 0;
     virtual void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) = 0;
 

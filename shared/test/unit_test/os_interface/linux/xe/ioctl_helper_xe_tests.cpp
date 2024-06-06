@@ -2035,7 +2035,7 @@ TEST(IoctlHelperXeTest, givenLowPriorityContextWhenCreatingDrmContextThenExtProp
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
     OsContextLinux osContext(drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}));
-    osContext.ensureContextInitialized();
+    osContext.ensureContextInitialized(false);
 
     ASSERT_LE(1u, drm.execQueueProperties.size());
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_SET_PROPERTY_PRIORITY), drm.execQueueProperties[0].property);

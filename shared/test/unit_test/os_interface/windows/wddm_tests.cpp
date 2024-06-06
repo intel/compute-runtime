@@ -107,7 +107,7 @@ TEST_F(WddmTests, whenProgramDebugIsEnabledAndCreatingContextWithInternalEngineT
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     wddm->init();
     OsContextWin osContext(*wddm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}));
-    osContext.ensureContextInitialized();
+    osContext.ensureContextInitialized(false);
     EXPECT_FALSE(osContext.isDebuggableContext());
 }
 
@@ -116,7 +116,7 @@ TEST_F(WddmTests, WhenCallingInitializeContextWithContextCreateDisabledFlagEnabl
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     init();
     auto newContext = osContext.get();
-    EXPECT_TRUE(newContext->ensureContextInitialized());
+    EXPECT_TRUE(newContext->ensureContextInitialized(false));
     EXPECT_EQ(0u, newContext->getWddmContextHandle());
 }
 
@@ -878,7 +878,7 @@ struct WddmSkipResourceCleanupFixtureWithMockGdiDll : public GdiDllFixture, publ
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
         auto engine = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0];
         osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
-        osContext->ensureContextInitialized();
+        osContext->ensureContextInitialized(false);
     }
 
     void tearDown() {

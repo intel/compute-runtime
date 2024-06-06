@@ -190,7 +190,7 @@ class Device : public ReferenceTrackedObject<Device> {
         return getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr;
     }
 
-    MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage);
+    MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt);
     bool isSecondaryContextEngineType(aub_stream::EngineType type) {
         return EngineHelpers::isCcs(type) || EngineHelpers::isBcs(type);
     }

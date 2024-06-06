@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ TEST(DrmBindTest, givenBindAlreadyCompleteWhenWaitForBindThenWaitUserFenceIoctlI
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized();
+    osContext.ensureContextInitialized(false);
 
     drm.pagingFence[0] = 31u;
     drm.fenceVal[0] = 31u;
@@ -40,7 +40,7 @@ TEST(DrmBindTest, givenBindNotCompleteWhenWaitForBindThenWaitUserFenceIoctlIsCal
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized();
+    osContext.ensureContextInitialized(false);
 
     drm.pagingFence[0] = 26u;
     drm.fenceVal[0] = 31u;
