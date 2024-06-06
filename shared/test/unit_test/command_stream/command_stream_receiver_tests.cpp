@@ -5376,6 +5376,41 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrWhenGettingInte
     }
 }
 
+HWTEST_F(CommandStreamReceiverContextGroupTest, givenContextGroupWhenCreatingEnginesThenSetCorrectMaxOsContextCount) {
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b110;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    device->getExecutionEnvironment()->calculateMaxOsContextCount();
+
+    auto &engineInstances = device->getGfxCoreHelper().getGpgpuEngineInstances(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    uint32_t numRegularEngines = 0;
+
+    for (const auto &engine : engineInstances) {
+        if (engine.second == EngineUsage::regular) {
+            numRegularEngines++;
+        }
+    }
+
+    auto osContextCount = static_cast<uint32_t>(engineInstances.size()) + (numRegularEngines * debugManager.flags.ContextGroupSize.get());
+
+    EXPECT_EQ(osContextCount, MemoryManager::maxOsContextCount);
+}
+
 HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
 
     HardwareInfo hwInfo = *defaultHwInfo;

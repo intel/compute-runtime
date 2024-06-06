@@ -91,13 +91,21 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
     for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
-        auto osContextCount = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment).size());
+        auto &engineInstances = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment);
+        auto osContextCount = static_cast<uint32_t>(engineInstances.size());
         auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
         bool hasRootCsr = subDevicesCount > 1;
 
+        uint32_t numRegularEngines = 0;
+        for (const auto &engine : engineInstances) {
+            if (engine.second == EngineUsage::regular) {
+                numRegularEngines++;
+            }
+        }
+
         if (debugManager.flags.ContextGroupSize.get() >= 1) {
-            MemoryManager::maxOsContextCount += debugManager.flags.ContextGroupSize.get();
+            MemoryManager::maxOsContextCount += numRegularEngines * debugManager.flags.ContextGroupSize.get();
         }
 
         MemoryManager::maxOsContextCount += osContextCount * subDevicesCount + hasRootCsr;
