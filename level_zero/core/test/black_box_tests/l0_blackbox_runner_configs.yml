@@ -29,3 +29,7 @@ zello_metrics:
 zello_function_pointers_cl:
   exclude:
     - skl
+
+zello_image_view:
+  exclude:
+    - dg2
