@@ -47,7 +47,7 @@ class OsContextLinux : public OsContext {
     void waitForBind(uint32_t drmIterator);
 
   protected:
-    bool initializeContext() override;
+    bool initializeContext(bool allocateInterrupt) override;
 
     unsigned int engineFlag = 0;
     std::vector<uint32_t> drmContextIds;

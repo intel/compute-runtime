@@ -154,7 +154,7 @@ class IoctlHelper {
     virtual std::string getIoctlString(DrmIoctl ioctlRequest) const = 0;
 
     virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
-    virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) = 0;
+    virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) = 0;
 
     virtual void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) = 0;
     virtual void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) = 0;
@@ -224,7 +224,7 @@ class IoctlHelperI915 : public IoctlHelper {
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     std::string getDrmParamString(DrmParam param) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
-    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override;
+    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) override;
     std::string getFileForMaxGpuFrequency() const override;
     std::string getFileForMaxGpuFrequencyOfSubDevice(int tileId) const override;
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const override;

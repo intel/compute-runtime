@@ -98,7 +98,7 @@ class IoctlHelperXe : public IoctlHelper {
     int getDrmParamValue(DrmParam drmParam) const override;
     int getDrmParamValueBase(DrmParam drmParam) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
-    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override;
+    int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) override;
     std::string getDrmParamString(DrmParam param) const override;
     bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;
     std::string getFileForMaxGpuFrequency() const override;
@@ -164,6 +164,7 @@ class IoctlHelperXe : public IoctlHelper {
 
     uint16_t getDefaultEngineClass(const aub_stream::EngineType &defaultEngineType);
     virtual void setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut);
+    virtual void applyContextFlags(void *execQueueCreate, bool allocateInterrupt){};
 
     struct GtIpVersion {
         uint16_t major;

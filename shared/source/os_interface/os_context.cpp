@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ bool OsContext::ensureContextInitialized() {
                    static_cast<int>(rootDevice));
         }
 
-        if (!initializeContext()) {
+        if (!initializeContext(false)) {
             contextInitialized = false;
         } else {
             contextInitialized = true;

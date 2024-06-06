@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ class OsContextWin : public OsContext {
     uint64_t getOfflineDumpContextId(uint32_t deviceIndex) const override;
 
   protected:
-    bool initializeContext() override;
+    bool initializeContext(bool allocateInterrupt) override;
 
     WddmResidencyController residencyController;
     HardwareQueue hardwareQueue;

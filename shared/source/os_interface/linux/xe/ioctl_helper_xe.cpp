@@ -1164,7 +1164,7 @@ void IoctlHelperXe::xeShowBindTable() {
     }
 }
 
-int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) {
+int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) {
     drm_xe_exec_queue_create create = {};
     uint32_t drmContextId = 0;
 
@@ -1192,6 +1192,7 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
         }
     }
     setContextProperties(osContext, &extProperties, extPropertyIndex);
+    applyContextFlags(&create, allocateInterrupt);
 
     if (extPropertyIndex > 0) {
         create.extensions = castToUint64(&extProperties[0]);

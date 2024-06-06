@@ -301,6 +301,7 @@ class DrmMockXe : public DrmMockCustom {
 
         case DrmIoctl::gemContextCreateExt: {
             auto queueCreate = static_cast<drm_xe_exec_queue_create *>(arg);
+            latestExecQueueCreate = *queueCreate;
 
             auto extension = queueCreate->extensions;
             while (extension) {
@@ -379,6 +380,7 @@ class DrmMockXe : public DrmMockCustom {
     StackVec<drm_xe_vm_bind, 1> vmBindInputs;
     StackVec<drm_xe_sync, 1> syncInputs;
     StackVec<drm_xe_ext_set_property, 1> execQueueProperties;
+    drm_xe_exec_queue_create latestExecQueueCreate = {};
 
     int waitUserFenceReturn = 0;
     int execQueueBanPropertyReturn = 0;

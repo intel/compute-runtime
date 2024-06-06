@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -194,7 +194,7 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledAndRetu
         MyOsContext(uint32_t contextId,
                     const EngineDescriptor &engineDescriptor) : OsContext(0, contextId, engineDescriptor) {}
 
-        bool initializeContext() override {
+        bool initializeContext(bool allocateInterrupt) override {
             initializeContextCalled++;
             return false;
         }
@@ -215,7 +215,7 @@ TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipl
         MyOsContext(uint32_t contextId,
                     const EngineDescriptor &engineDescriptor) : OsContext(0, contextId, engineDescriptor) {}
 
-        bool initializeContext() override {
+        bool initializeContext(bool allocateInterrupt) override {
             initializeContextCalled++;
             return true;
         }

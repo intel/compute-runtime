@@ -137,7 +137,7 @@ HWTEST_F(CommandStreamReceiverTest, whenContextCreateReturnsFalseThenExpectCSRIn
         MyOsContext(uint32_t contextId,
                     const EngineDescriptor &engineDescriptor) : OsContext(0, contextId, engineDescriptor) {}
 
-        bool initializeContext() override {
+        bool initializeContext(bool allocateInterrupt) override {
             initializeContextCalled++;
             return false;
         }

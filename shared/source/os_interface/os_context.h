@@ -87,7 +87,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     }
 
   protected:
-    virtual bool initializeContext() { return true; }
+    virtual bool initializeContext(bool allocateInterrupt) { return true; }
 
     std::atomic<uint32_t> tlbFlushCounter{0};
     std::atomic<uint32_t> lastFlushedTlbFlushCounter{0};
