@@ -268,6 +268,12 @@ TEST_F(AotDeviceInfoTests, givenProductAcronymWhenHelperSearchForAMatchThenCorre
     EXPECT_LT(0u, numSupportedAcronyms);
 }
 
+TEST_F(AotDeviceInfoTests, givenGenericAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
+    for (const auto &[acronym, value] : AOT::genericIdAcronyms) {
+        EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronym), value);
+    }
+}
+
 TEST_F(AotDeviceInfoTests, givenProductIpVersionStringWhenHelperSearchForProductConfigThenCorrectValueIsReturned) {
     for (const auto &deviceConfig : AOT::deviceAcronyms) {
         if (!productConfigHelper->isSupportedProductConfig(deviceConfig.second)) {

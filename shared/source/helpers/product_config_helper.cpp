@@ -309,6 +309,12 @@ void ProductConfigHelper::initialize() {
                 device.rtlIdAcronyms.push_back(NEO::ConstStringRef(acronym));
             }
         }
+
+        for (const auto &[acronym, value] : AOT::genericIdAcronyms) {
+            if (value == device.aotConfig.value) {
+                device.deviceAcronyms.push_back(NEO::ConstStringRef(acronym));
+            }
+        }
     }
 }
 
@@ -321,6 +327,11 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromAcronym(const std::
     auto rtlIdAcronymIt = std::find_if(AOT::rtlIdAcronyms.begin(), AOT::rtlIdAcronyms.end(), findMapAcronymWithoutDash(device));
     if (rtlIdAcronymIt != AOT::rtlIdAcronyms.end()) {
         return rtlIdAcronymIt->second;
+    }
+
+    auto genericIdAcronymIt = std::find_if(AOT::genericIdAcronyms.begin(), AOT::genericIdAcronyms.end(), findMapAcronymWithoutDash(device));
+    if (genericIdAcronymIt != AOT::genericIdAcronyms.end()) {
+        return genericIdAcronymIt->second;
     }
     return AOT::UNKNOWN_ISA;
 }
