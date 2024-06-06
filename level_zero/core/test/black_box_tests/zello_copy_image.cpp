@@ -280,7 +280,7 @@ bool testAppendImageCopyArray(ze_context_handle_t &context, ze_device_handle_t &
         region.depth = arraylevels;
     }
 
-    ze_image_handle_t img2;
+    ze_image_handle_t img2 = nullptr;
     ze_image_region_t region2 = region;
     constexpr uint32_t offset = 4;
     if (testImageCopyRegion) {
