@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ class CCustomEventListener : public ::testing::TestEventListener {
     void OnEnvironmentsSetUpEnd(const ::testing::UnitTest &unitTest) override {
     }
 
-    void OnTestCaseStart(const ::testing::TestCase &testCase) override {
+    void OnTestSuiteStart(const ::testing::TestSuite &testSuite) override {
     }
 
     void OnTestStart(const ::testing::TestInfo &testCase) override {
@@ -78,7 +78,9 @@ class CCustomEventListener : public ::testing::TestEventListener {
         if (testPartResult.failed()) {
             printf("\n");
         }
-        listener->OnTestPartResult(testPartResult);
+        if (!testPartResult.skipped()) {
+            listener->OnTestPartResult(testPartResult);
+        }
     }
 
     void OnTestEnd(const ::testing::TestInfo &testCase) override {
@@ -90,7 +92,7 @@ class CCustomEventListener : public ::testing::TestEventListener {
         }
     }
 
-    void OnTestCaseEnd(const ::testing::TestCase &testCase) override {
+    void OnTestSuiteEnd(const ::testing::TestSuite &testSuite) override {
     }
 
     void OnEnvironmentsTearDownStart(const ::testing::UnitTest &testCase) override {

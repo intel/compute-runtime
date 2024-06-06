@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -397,6 +397,10 @@ void *operator new[](size_t size, const std::nothrow_t &t) noexcept {
 }
 
 void operator delete(void *p) noexcept {
+    deallocate<AllocationEvent::EVENT_DELETE>(p);
+}
+
+void operator delete(void *p, const std::nothrow_t &) noexcept {
     deallocate<AllocationEvent::EVENT_DELETE>(p);
 }
 

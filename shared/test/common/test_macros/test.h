@@ -71,7 +71,8 @@ struct Test
                     #test_suite_name,                                                                                                                     \
                     #test_name,                                                                                                                           \
                     new ::testing::internal::TestMetaFactory<                                                                                             \
-                        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)>());                                                                           \
+                        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)>(),                                                                            \
+                    ::testing::internal::CodeLocation(__FILE__, __LINE__));                                                                               \
             return 0;                                                                                                                                     \
         }                                                                                                                                                 \
         static int gtest_registering_dummy_;                                                                                                              \

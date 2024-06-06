@@ -466,7 +466,7 @@ if(NOT DISABLE_LIBVA)
   endif()
 endif()
 
-add_subdirectory_unique(third_party/gtest)
+include(cmake/find_gtest.cmake)
 
 message(STATUS "AUB_STREAM_DIR = ${AUB_STREAM_DIR}")
 if(DEFINED AUB_STREAM_DIR)

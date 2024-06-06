@@ -42,6 +42,7 @@ HWTEST2_P(ProductConfigHwInfoTests, givenAotConfigWhenGetProductConfigThenCorrec
     auto ret = compilerProductHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(ret, productConfig);
 }
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(ProductConfigHwInfoTests);
 
 TEST(ProductConfigHwInfoTest, givenDefaultAotConfigWhenGetProductConfigThenSameValueIsReturned) {
     MockExecutionEnvironment mockExecutionEnvironment{};

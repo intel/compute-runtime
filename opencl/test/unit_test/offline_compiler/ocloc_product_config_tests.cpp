@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,5 +43,5 @@ TEST_P(OclocProductConfigTests, givenProductConfigAsDeviceNameWhenInitHwInfoThen
     EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName));
     EXPECT_EQ(aotConfig.value, mockOfflineCompiler.deviceConfig);
 }
-
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OclocProductConfigTests);
 } // namespace NEO

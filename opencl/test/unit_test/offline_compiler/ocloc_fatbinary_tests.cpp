@@ -2156,5 +2156,5 @@ TEST_P(OclocFatbinaryPerProductTests, givenReleaseWhenGetTargetProductsForFarbin
     auto got = NEO::getTargetProductsForFatbinary(release, argHelper.get());
     EXPECT_EQ(got, expected);
 }
-
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(OclocFatbinaryPerProductTests);
 } // namespace NEO

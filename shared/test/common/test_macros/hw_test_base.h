@@ -80,9 +80,9 @@
             #test_suite_name, #test_name, nullptr, nullptr,                                                                                 \
             ::testing::internal::CodeLocation(__FILE__, __LINE__), (parent_id),                                                             \
             ::testing::internal::SuiteApiResolver<                                                                                          \
-                parent_class>::GetSetUpCaseOrSuite(),                                                                                       \
+                parent_class>::GetSetUpCaseOrSuite(__FILE__, __LINE__),                                                                     \
             ::testing::internal::SuiteApiResolver<                                                                                          \
-                parent_class>::GetTearDownCaseOrSuite(),                                                                                    \
+                parent_class>::GetTearDownCaseOrSuite(__FILE__, __LINE__),                                                                  \
             new ::testing::internal::TestFactoryImpl<GTEST_TEST_CLASS_NAME_(                                                                \
                 test_suite_name, test_name)>);                                                                                              \
     template <typename FamilyType>                                                                                                          \
@@ -129,7 +129,8 @@
                     #test_suite_name,                                                                                                                     \
                     #test_name,                                                                                                                           \
                     new ::testing::internal::TestMetaFactory<                                                                                             \
-                        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)>());                                                                           \
+                        GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)>(),                                                                            \
+                    ::testing::internal::CodeLocation(__FILE__, __LINE__));                                                                               \
             return 0;                                                                                                                                     \
         }                                                                                                                                                 \
         static int gtest_registering_dummy_;                                                                                                              \
