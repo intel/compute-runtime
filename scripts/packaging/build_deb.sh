@@ -15,6 +15,7 @@ BUILD_DIR="${REPO_DIR}/../build_neo"
 NEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS:-FALSE}
 NEO_SKIP_AUB_TESTS_RUN=${NEO_SKIP_AUB_TESTS_RUN:-TRUE}
 NEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION:-FALSE}
+NEO_BUILD_WITH_L0=${NEO_BUILD_WITH_L0:-TRUE}
 
 BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
 
@@ -64,6 +65,11 @@ cp $COPYRIGHT $BUILD_DIR/debian/
 cp $CONTROL $BUILD_DIR/debian/
 if [ -f "${SHLIBS}" ]; then
     cp $SHLIBS $BUILD_DIR/debian/
+fi
+
+if [ "${NEO_BUILD_WITH_L0}" != "TRUE" ]; then
+    rm $BUILD_DIR/debian/libze-intel-gpu1.install
+    rm $BUILD_DIR/debian/libze-intel-gpu-dev.install
 fi
 
 LEVEL_ZERO_DEVEL_NAME=${LEVEL_ZERO_DEVEL_NAME:-level-zero-devel}
@@ -128,6 +134,13 @@ EOF
     dch -v ${PKG_VERSION} -m "build $PKG_VERSION"
     ulimit -n 65535 || true
     dpkg-buildpackage -j`nproc --all` -us -uc -b -rfakeroot
+
+    if [ "${NEO_BUILD_WITH_L0}" != "TRUE" ]; then
+        rm -f ${REPO_DIR}/../libze-intel-gpu1_*.deb
+        rm -f ${REPO_DIR}/../libze-intel-gpu1-dbgsym_*.ddeb
+        rm -f ${REPO_DIR}/../libze-intel-gpu-dev_*.deb
+    fi
+
     sudo dpkg -i --force-depends ../*.deb
     if [ "${LOG_CCACHE_STATS}" == "1" ]; then
         ccache -s
