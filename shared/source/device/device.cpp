@@ -40,10 +40,6 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex), isaPoolAllocator(this) {
     this->executionEnvironment->incRefInternal();
     this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
-
-    if (debugManager.flags.NumberOfRegularContextsPerEngine.get() > 1) {
-        this->numberOfRegularContextsPerEngine = static_cast<uint32_t>(debugManager.flags.NumberOfRegularContextsPerEngine.get());
-    }
 }
 
 Device::~Device() {
@@ -473,10 +469,6 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
 
     if (initializeDevice) {
         commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
-    }
-
-    if (EngineHelpers::isBcs(engineType) && (defaultBcsEngineIndex == std::numeric_limits<uint32_t>::max()) && (engineUsage == EngineUsage::regular)) {
-        defaultBcsEngineIndex = deviceCsrIndex;
     }
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
@@ -1117,39 +1109,6 @@ CompilerInterface *Device::getCompilerInterface() const {
 
 BuiltIns *Device::getBuiltIns() const {
     return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getBuiltIns();
-}
-
-EngineControl &Device::getNextEngineForMultiRegularContextMode(aub_stream::EngineType engineType) {
-    UNRECOVERABLE_IF(defaultEngineIndex != 0);
-    UNRECOVERABLE_IF((engineType != aub_stream::EngineType::ENGINE_BCS) && (engineType != aub_stream::EngineType::ENGINE_CCS));
-
-    const auto maxIndex = numberOfRegularContextsPerEngine - 1; // 1 for internal engine
-    uint32_t atomicOutValue = 0;
-    uint32_t indexOffset = 0;
-
-    if (engineType == aub_stream::EngineType::ENGINE_CCS) {
-        atomicOutValue = regularContextPerCcsEngineAssignmentHelper.fetch_add(1);
-        indexOffset = defaultEngineIndex;
-    } else {
-        atomicOutValue = regularContextPerBcsEngineAssignmentHelper.fetch_add(1);
-        indexOffset = defaultBcsEngineIndex;
-    }
-
-    auto indexToAssign = (atomicOutValue % maxIndex) + indexOffset;
-
-    return allEngines[indexToAssign];
-}
-
-bool Device::isMultiRegularContextSelectionAllowed(aub_stream::EngineType engineType, EngineUsage engineUsage) const {
-    if (this->numberOfRegularContextsPerEngine <= 1 || getNumGenericSubDevices() > 1 || engineUsage != EngineUsage::regular) {
-        return false;
-    }
-
-    if (engineType == aub_stream::EngineType::ENGINE_BCS && debugManager.flags.EnableMultipleRegularContextForBcs.get() == 1) {
-        return true;
-    }
-
-    return EngineHelpers::isCcs(engineType);
 }
 
 const EngineGroupT *Device::tryGetRegularEngineGroup(EngineGroupType engineGroupType) const {

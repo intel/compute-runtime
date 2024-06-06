@@ -1706,9 +1706,7 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
 
         auto &osContext = (*csr)->getOsContext();
 
-        if (neoDevice->isMultiRegularContextSelectionAllowed(osContext.getEngineType(), osContext.getEngineUsage())) {
-            *csr = neoDevice->getNextEngineForMultiRegularContextMode(osContext.getEngineType()).commandStreamReceiver;
-        } else if (secondaryContextsEnabled) {
+        if (secondaryContextsEnabled) {
             tryAssignSecondaryContext(osContext.getEngineType(), NEO::EngineUsage::regular, csr);
         }
     } else {

@@ -53,7 +53,6 @@ class MockDevice : public RootDevice {
     using Device::createDeviceInternals;
     using Device::createEngine;
     using Device::createSubDevices;
-    using Device::defaultBcsEngineIndex;
     using Device::deviceBitfield;
     using Device::deviceInfo;
     using Device::engineInstanced;
@@ -63,8 +62,6 @@ class MockDevice : public RootDevice {
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
     using Device::preemptionMode;
-    using Device::regularContextPerBcsEngineAssignmentHelper;
-    using Device::regularContextPerCcsEngineAssignmentHelper;
     using Device::regularEngineGroups;
     using Device::rootCsrCreated;
     using Device::rtMemoryBackedBuffer;

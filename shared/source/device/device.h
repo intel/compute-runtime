@@ -107,7 +107,6 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getNextEngineForCommandQueue();
-    EngineControl &getNextEngineForMultiRegularContextMode(aub_stream::EngineType engineType);
     EngineControl &getInternalEngine();
     EngineControl *getInternalCopyEngine();
     SelectorCopyEngine &getSelectorCopyEngine();
@@ -185,8 +184,6 @@ class Device : public ReferenceTrackedObject<Device> {
     ISAPoolAllocator &getIsaPoolAllocator() {
         return isaPoolAllocator;
     }
-    uint32_t getNumberOfRegularContextsPerEngine() const { return numberOfRegularContextsPerEngine; }
-    bool isMultiRegularContextSelectionAllowed(aub_stream::EngineType engineType, EngineUsage engineUsage) const;
     MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
     bool isAnyDirectSubmissionEnabled();
     bool isStateSipRequired() const {
@@ -252,14 +249,10 @@ class Device : public ReferenceTrackedObject<Device> {
     ExecutionEnvironment *executionEnvironment = nullptr;
     aub_stream::EngineType engineInstancedType = aub_stream::EngineType::NUM_ENGINES;
     uint32_t defaultEngineIndex = 0;
-    uint32_t defaultBcsEngineIndex = std::numeric_limits<uint32_t>::max();
     uint32_t numSubDevices = 0;
     std::atomic_uint32_t regularCommandQueuesCreatedWithinDeviceCount{0};
-    std::atomic<uint8_t> regularContextPerCcsEngineAssignmentHelper = 0;
-    std::atomic<uint8_t> regularContextPerBcsEngineAssignmentHelper = 0;
     std::bitset<8> availableEnginesForCommandQueueusRoundRobin = 0;
     uint32_t queuesPerEngineCount = 1;
-    uint32_t numberOfRegularContextsPerEngine = 1;
     void initializeEngineRoundRobinControls();
     bool hasGenericSubDevices = false;
     bool engineInstanced = false;

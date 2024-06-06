@@ -202,12 +202,9 @@ void CommandQueue::initializeGpgpu() const {
             const GfxCoreHelper &gfxCoreHelper = getDevice().getGfxCoreHelper();
             bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
 
-            if (device->getDevice().isMultiRegularContextSelectionAllowed(defaultEngineType, EngineUsage::regular)) {
-                this->gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(defaultEngineType);
-            } else if (assignEngineRoundRobin) {
+            if (assignEngineRoundRobin) {
                 this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
             } else {
-
                 if (secondaryContextsEnabled && EngineHelpers::isCcs(defaultEngineType)) {
                     tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {defaultEngineType, EngineUsage::regular});
                 }
@@ -355,11 +352,7 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
         auto bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
         auto engineUsage = (internalUsage && gfxCoreHelper.preferInternalBcsEngine()) ? EngineUsage::internal : EngineUsage::regular;
 
-        if (neoDevice.isMultiRegularContextSelectionAllowed(bcsEngineType, engineUsage)) {
-            bcsEngines[bcsIndex] = &neoDevice.getNextEngineForMultiRegularContextMode(bcsEngineType);
-        } else {
-            bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
-        }
+        bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
 
         if (bcsEngines[bcsIndex]) {
             bcsQueueEngineType = bcsEngineType;
@@ -1216,18 +1209,14 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
     const EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engineType, engineUsage, hwInfo);
     const bool isEngineCopyOnly = EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
-    bool multiRegularContextAllowed = device->getDevice().isMultiRegularContextSelectionAllowed(engineType, engineUsage);
     bool secondaryContextsEnabled = gfxCoreHelper.areSecondaryContextsSupported();
 
     if (isEngineCopyOnly) {
         std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
         auto engineIndex = EngineHelpers::getBcsIndex(engineType);
 
-        if (multiRegularContextAllowed) {
-            bcsEngines[engineIndex] = &device->getDevice().getNextEngineForMultiRegularContextMode(engineType);
-        } else {
-            bcsEngines[engineIndex] = &device->getEngine(engineType, EngineUsage::regular);
-        }
+        bcsEngines[engineIndex] = &device->getEngine(engineType, EngineUsage::regular);
+
         if (bcsEngines[engineIndex]) {
             bcsQueueEngineType = engineType;
 
@@ -1240,11 +1229,11 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
         isCopyOnly = true;
         bcsInitialized = true;
     } else {
-        if (multiRegularContextAllowed) {
-            gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(engineType);
-        } else if (secondaryContextsEnabled && EngineHelpers::isCcs(engineType)) {
+        if (secondaryContextsEnabled && EngineHelpers::isCcs(engineType)) {
             tryAssignSecondaryEngine(device->getDevice(), gpgpuEngine, {engineType, engineUsage});
-        } else {
+        }
+
+        if (!gpgpuEngine) {
             gpgpuEngine = &device->getEngine(engineType, engineUsage);
         }
     }

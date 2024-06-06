@@ -1014,23 +1014,6 @@ TEST(FailDeviceTest, GivenMidThreadPreemptionAndFailedDeviceWhenCreatingDeviceTh
     EXPECT_EQ(nullptr, pDevice);
 }
 
-TEST_F(DeviceTests, whenInitializingDeviceThenSetCorrectDefaultBcsEngineIndex) {
-    if (!defaultHwInfo->capabilityTable.blitterOperationsSupported) {
-        GTEST_SKIP();
-    }
-
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.incRefInternal();
-
-    UltDeviceFactory deviceFactory{1, 0, executionEnvironment};
-
-    auto device = deviceFactory.rootDevices[0];
-    auto &engine = device->allEngines[device->defaultBcsEngineIndex];
-
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engine.getEngineType());
-    EXPECT_EQ(EngineUsage::regular, engine.getEngineUsage());
-}
-
 TEST_F(DeviceTests, givenDeviceMidThreadPreemptionWhenDebuggerDisabledThenStateSipRequired) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
