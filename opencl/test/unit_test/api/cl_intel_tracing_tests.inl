@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -700,6 +700,166 @@ struct IntelAllTracingTest : public IntelTracingTest {
         ++count;
         functionId = CL_FUNCTION_clWaitForEvents;
         clWaitForEvents(0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clMemFreeINTEL;
+        clMemFreeINTEL(0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clIcdGetPlatformIDsKHR;
+        clIcdGetPlatformIDsKHR(0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clCreateBufferWithProperties;
+        clCreateBufferWithProperties(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clCreateBufferWithPropertiesINTEL;
+        clCreateBufferWithPropertiesINTEL(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clCreateImageWithProperties;
+        clCreateImageWithProperties(0, 0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clCreateImageWithPropertiesINTEL;
+        clCreateImageWithPropertiesINTEL(0, 0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clGetImageParamsINTEL;
+        clGetImageParamsINTEL(0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clCreatePerfCountersCommandQueueINTEL;
+        clCreatePerfCountersCommandQueueINTEL(0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clHostMemAllocINTEL;
+        clHostMemAllocINTEL(0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clDeviceMemAllocINTEL;
+        clDeviceMemAllocINTEL(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clSharedMemAllocINTEL;
+        clSharedMemAllocINTEL(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clMemBlockingFreeINTEL;
+        clMemBlockingFreeINTEL(0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clGetMemAllocInfoINTEL;
+        clGetMemAllocInfoINTEL(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clSetKernelArgMemPointerINTEL;
+        clSetKernelArgMemPointerINTEL(0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueMemsetINTEL;
+        clEnqueueMemsetINTEL(0, 0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueMemFillINTEL;
+        clEnqueueMemFillINTEL(0, 0, 0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueMemcpyINTEL;
+        clEnqueueMemcpyINTEL(0, 0, 0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueMigrateMemINTEL;
+        clEnqueueMigrateMemINTEL(0, 0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueMemAdviseINTEL;
+        clEnqueueMemAdviseINTEL(0, 0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clCreateCommandQueueWithPropertiesKHR;
+        clCreateCommandQueueWithPropertiesKHR(0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clCreateAcceleratorINTEL;
+        clCreateAcceleratorINTEL(0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clRetainAcceleratorINTEL;
+        clRetainAcceleratorINTEL(0);
+
+        ++count;
+        functionId = CL_FUNCTION_clGetAcceleratorInfoINTEL;
+        clGetAcceleratorInfoINTEL(0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clReleaseAcceleratorINTEL;
+        clReleaseAcceleratorINTEL(0);
+
+        ++count;
+        functionId = CL_FUNCTION_clCreateProgramWithILKHR;
+        clCreateProgramWithILKHR(0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeKHR;
+        clGetKernelSuggestedLocalWorkSizeKHR(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clGetKernelSubGroupInfoKHR;
+        clGetKernelSubGroupInfoKHR(0, 0, 0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueVerifyMemoryINTEL;
+        clEnqueueVerifyMemoryINTEL(0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clAddCommentINTEL;
+        clAddCommentINTEL(0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clGetDeviceGlobalVariablePointerINTEL;
+        clGetDeviceGlobalVariablePointerINTEL(0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clGetDeviceFunctionPointerINTEL;
+        clGetDeviceFunctionPointerINTEL(0, 0, "test", 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clSetProgramReleaseCallback;
+        clSetProgramReleaseCallback(0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clSetProgramSpecializationConstant;
+        clSetProgramSpecializationConstant(0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeINTEL;
+        clGetKernelSuggestedLocalWorkSizeINTEL(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clGetKernelMaxConcurrentWorkGroupCountINTEL;
+        clGetKernelMaxConcurrentWorkGroupCountINTEL(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueNDCountKernelINTEL;
+        clEnqueueNDCountKernelINTEL(0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clSetContextDestructorCallback;
+        clSetContextDestructorCallback(0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueExternalMemObjectsKHR;
+        clEnqueueExternalMemObjectsKHR(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueAcquireExternalMemObjectsKHR;
+        clEnqueueAcquireExternalMemObjectsKHR(0, 0, 0, 0, 0, 0);
+
+        ++count;
+        functionId = CL_FUNCTION_clEnqueueReleaseExternalMemObjectsKHR;
+        clEnqueueReleaseExternalMemObjectsKHR(0, 0, 0, 0, 0, 0);
 
         return count;
     }

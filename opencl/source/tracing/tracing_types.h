@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "CL/cl.h"
 #include "CL/cl_gl.h"
+#include <CL/cl_ext.h>
 
 struct _cl_tracing_handle;
 typedef _cl_tracing_handle *cl_tracing_handle;
@@ -164,7 +165,47 @@ enum ClFunctionId {
     CL_FUNCTION_clUnloadCompiler = 115,
     CL_FUNCTION_clUnloadPlatformCompiler = 116,
     CL_FUNCTION_clWaitForEvents = 117,
-    CL_FUNCTION_COUNT = 118,
+    CL_FUNCTION_clMemFreeINTEL = 118,
+    CL_FUNCTION_clIcdGetPlatformIDsKHR = 119,
+    CL_FUNCTION_clCreateBufferWithProperties = 120,
+    CL_FUNCTION_clCreateBufferWithPropertiesINTEL = 121,
+    CL_FUNCTION_clCreateImageWithProperties = 122,
+    CL_FUNCTION_clCreateImageWithPropertiesINTEL = 123,
+    CL_FUNCTION_clGetImageParamsINTEL = 124,
+    CL_FUNCTION_clCreatePerfCountersCommandQueueINTEL = 125,
+    CL_FUNCTION_clHostMemAllocINTEL = 126,
+    CL_FUNCTION_clDeviceMemAllocINTEL = 127,
+    CL_FUNCTION_clSharedMemAllocINTEL = 128,
+    CL_FUNCTION_clMemBlockingFreeINTEL = 129,
+    CL_FUNCTION_clGetMemAllocInfoINTEL = 130,
+    CL_FUNCTION_clSetKernelArgMemPointerINTEL = 131,
+    CL_FUNCTION_clEnqueueMemsetINTEL = 132,
+    CL_FUNCTION_clEnqueueMemFillINTEL = 133,
+    CL_FUNCTION_clEnqueueMemcpyINTEL = 134,
+    CL_FUNCTION_clEnqueueMigrateMemINTEL = 135,
+    CL_FUNCTION_clEnqueueMemAdviseINTEL = 136,
+    CL_FUNCTION_clCreateCommandQueueWithPropertiesKHR = 137,
+    CL_FUNCTION_clCreateAcceleratorINTEL = 138,
+    CL_FUNCTION_clRetainAcceleratorINTEL = 149,
+    CL_FUNCTION_clGetAcceleratorInfoINTEL = 140,
+    CL_FUNCTION_clReleaseAcceleratorINTEL = 141,
+    CL_FUNCTION_clCreateProgramWithILKHR = 142,
+    CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeKHR = 143,
+    CL_FUNCTION_clGetKernelSubGroupInfoKHR = 144,
+    CL_FUNCTION_clEnqueueVerifyMemoryINTEL = 145,
+    CL_FUNCTION_clAddCommentINTEL = 146,
+    CL_FUNCTION_clGetDeviceGlobalVariablePointerINTEL = 147,
+    CL_FUNCTION_clGetDeviceFunctionPointerINTEL = 148,
+    CL_FUNCTION_clSetProgramReleaseCallback = 149,
+    CL_FUNCTION_clSetProgramSpecializationConstant = 150,
+    CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeINTEL = 151,
+    CL_FUNCTION_clGetKernelMaxConcurrentWorkGroupCountINTEL = 152,
+    CL_FUNCTION_clEnqueueNDCountKernelINTEL = 153,
+    CL_FUNCTION_clSetContextDestructorCallback = 154,
+    CL_FUNCTION_clEnqueueExternalMemObjectsKHR = 155,
+    CL_FUNCTION_clEnqueueAcquireExternalMemObjectsKHR = 156,
+    CL_FUNCTION_clEnqueueReleaseExternalMemObjectsKHR = 157,
+    CL_FUNCTION_COUNT = 158
 };
 
 /*!
@@ -243,6 +284,331 @@ typedef struct _cl_params_clCreateContextFromType {
     void **userData;
     cl_int **errcodeRet;
 } cl_params_clCreateContextFromType;
+
+typedef struct _cl_params_clMemFreeINTEL {
+    cl_context *context;
+    void **ptr;
+} cl_params_clMemFreeINTEL;
+
+typedef struct _clIcdGetPlatformIDsKHR {
+    cl_uint *numEntries;
+    cl_platform_id **platforms;
+    cl_uint **numPlatforms;
+} cl_params_clIcdGetPlatformIDsKHR;
+
+typedef struct _clCreateBufferWithPropertiesINTEL {
+    cl_context *context;
+    const cl_mem_properties_intel **properties;
+    cl_mem_flags *flags;
+    size_t *size;
+    void **hostPtr;
+    cl_int **errcodeRet;
+} cl_params_clCreateBufferWithPropertiesINTEL;
+
+typedef struct _clCreateImageWithProperties {
+    cl_context *context;
+    const cl_mem_properties **properties;
+    cl_mem_flags *flags;
+    const cl_image_format **imageFormat;
+    const cl_image_desc **imageDesc;
+    void **hostPtr;
+    cl_int **errcodeRet;
+} cl_params_clCreateImageWithProperties;
+
+typedef struct _clCreateImageWithPropertiesINTEL {
+    cl_context *context;
+    const cl_mem_properties_intel **properties;
+    cl_mem_flags *flags;
+    const cl_image_format **imageFormat;
+    const cl_image_desc **imageDesc;
+    void **hostPtr;
+    cl_int **errcodeRet;
+} cl_params_clCreateImageWithPropertiesINTEL;
+
+typedef struct _clGetImageParamsINTEL {
+    cl_context *context;
+    const cl_image_format **imageFormat;
+    const cl_image_desc **imageDesc;
+    size_t **imageRowPitch;
+    size_t **imageSlicePitch;
+} cl_params_clGetImageParamsINTEL;
+
+typedef struct _clCreatePerfCountersCommandQueueINTEL {
+    cl_context *context;
+    cl_device_id *device;
+    cl_command_queue_properties *properties;
+    cl_uint *configuration;
+    cl_int **errcodeRet;
+} cl_params_clCreatePerfCountersCommandQueueINTEL;
+
+typedef struct _clHostMemAllocINTEL {
+    cl_context *context;
+    const cl_mem_properties_intel **properties;
+    size_t *size;
+    cl_uint *alignment;
+    cl_int **errcodeRet;
+} cl_params_clHostMemAllocINTEL;
+
+typedef struct _clDeviceMemAllocINTEL {
+    cl_context *context;
+    cl_device_id *device;
+    const cl_mem_properties_intel **properties;
+    size_t *size;
+    cl_uint *alignment;
+    cl_int **errcodeRet;
+} cl_params_clDeviceMemAllocINTEL;
+
+typedef struct _clSharedMemAllocINTEL {
+    cl_context *context;
+    cl_device_id *device;
+    const cl_mem_properties_intel **properties;
+    size_t *size;
+    cl_uint *alignment;
+    cl_int **errcodeRet;
+} cl_params_clSharedMemAllocINTEL;
+
+typedef struct _clMemBlockingFreeINTEL {
+    cl_context *context;
+    void **ptr;
+} cl_params_clMemBlockingFreeINTEL;
+
+typedef struct _clGetMemAllocInfoINTEL {
+    cl_context *context;
+    const void **ptr;
+    cl_mem_info_intel *paramName;
+    size_t *paramValueSize;
+    void **paramValue;
+    size_t **paramValueSizeRet;
+} cl_params_clGetMemAllocInfoINTEL;
+
+typedef struct _clSetKernelArgMemPointerINTEL {
+    cl_kernel *kernel;
+    cl_uint *argIndex;
+    const void **argValue;
+} cl_params_clSetKernelArgMemPointerINTEL;
+
+typedef struct _clEnqueueMemsetINTEL {
+    cl_command_queue *commandQueue;
+    void **dstPtr;
+    cl_int *value;
+    size_t *size;
+    cl_uint *numEventsInWaitList;
+    const cl_event **eventWaitList;
+    cl_event **event;
+} cl_params_clEnqueueMemsetINTEL;
+
+typedef struct _clEnqueueMemFillINTEL {
+    cl_command_queue *commandQueue;
+    void **dstPtr;
+    const void **pattern;
+    size_t *patternSize;
+    size_t *size;
+    cl_uint *numEventsInWaitList;
+    const cl_event **eventWaitList;
+    cl_event **event;
+} cl_params_clEnqueueMemFillINTEL;
+
+typedef struct _clEnqueueMemcpyINTEL {
+    cl_command_queue *commandQueue;
+    cl_bool *blocking;
+    void **dstPtr;
+    const void **srcPtr;
+    size_t *size;
+    cl_uint *numEventsInWaitList;
+    const cl_event **eventWaitList;
+    cl_event **event;
+} cl_params_clEnqueueMemcpyINTEL;
+
+typedef struct _clEnqueueMigrateMemINTEL {
+    cl_command_queue *commandQueue;
+    const void **ptr;
+    size_t *size;
+    cl_mem_migration_flags *flags;
+    cl_uint *numEventsInWaitList;
+    const cl_event **eventWaitList;
+    cl_event **event;
+} cl_params_clEnqueueMigrateMemINTEL;
+
+typedef struct _clEnqueueMemAdviseINTEL {
+    cl_command_queue *commandQueue;
+    const void **ptr;
+    size_t *size;
+    cl_mem_advice_intel *advice;
+    cl_uint *numEventsInWaitList;
+    const cl_event **eventWaitList;
+    cl_event **event;
+} cl_params_clEnqueueMemAdviseINTEL;
+
+typedef struct _clCreateCommandQueueWithPropertiesKHR {
+    cl_context *context;
+    cl_device_id *device;
+    const cl_queue_properties_khr **properties;
+    cl_int **errcodeRet;
+} cl_params_clCreateCommandQueueWithPropertiesKHR;
+
+typedef struct _clCreateAcceleratorINTEL {
+    cl_context *context;
+    cl_accelerator_type_intel *acceleratorType;
+    size_t *descriptorSize;
+    const void **descriptor;
+    cl_int **errcodeRet;
+} cl_params_clCreateAcceleratorINTEL;
+
+typedef struct _clRetainAcceleratorINTEL {
+    cl_accelerator_intel *accelerator;
+} cl_params_clRetainAcceleratorINTEL;
+
+typedef struct _clGetAcceleratorInfoINTEL {
+    cl_accelerator_intel *accelerator;
+    cl_accelerator_info_intel *paramName;
+    size_t *paramValueSize;
+    void **paramValue;
+    size_t **paramValueSizeRet;
+} cl_params_clGetAcceleratorInfoINTEL;
+
+typedef struct _clReleaseAcceleratorINTEL {
+    cl_accelerator_intel *accelerator;
+} cl_params_clReleaseAcceleratorINTEL;
+
+typedef struct _clCreateProgramWithILKHR {
+    cl_context *context;
+    const void *il;
+    size_t *length;
+    cl_int **errcodeRet;
+} cl_params_clCreateProgramWithILKHR;
+
+typedef struct _clGetKernelSuggestedLocalWorkSizeKHR {
+    cl_command_queue *commandQueue;
+    cl_kernel *kernel;
+    cl_uint *workDim;
+    const size_t **globalWorkOffset;
+    const size_t **globalWorkSize;
+    size_t **suggestedLocalWorkSize;
+} cl_params_clGetKernelSuggestedLocalWorkSizeKHR;
+
+typedef struct _clGetKernelSubGroupInfoKHR {
+    cl_kernel *kernel;
+    cl_device_id *device;
+    cl_kernel_sub_group_info *paramName;
+    size_t *inputValueSize;
+    const void **inputValue;
+    size_t *paramValueSize;
+    void **paramValue;
+    size_t **paramValueSizeRet;
+} cl_params_clGetKernelSubGroupInfoKHR;
+
+typedef struct _clEnqueueVerifyMemoryINTEL {
+    cl_command_queue *commandQueue;
+    const void **allocationPtr;
+    const void **expectedData;
+    size_t *sizeOfComparison;
+    cl_uint *comparisonMode;
+} cl_params_clEnqueueVerifyMemoryINTEL;
+
+typedef struct _clAddCommentINTEL {
+    cl_device_id *device;
+    const char **comment;
+} cl_params_clAddCommentINTEL;
+
+typedef struct _clGetDeviceGlobalVariablePointerINTEL {
+    cl_device_id *device;
+    cl_program *program;
+    const char **globalVariableName;
+    size_t **globalVariableSizeRet;
+    void ***globalVariablePointerRet;
+} cl_params_clGetDeviceGlobalVariablePointerINTEL;
+
+typedef struct _clGetDeviceFunctionPointerINTEL {
+    cl_device_id *device;
+    cl_program *program;
+    const char **functionName;
+    cl_ulong **functionPointerRet;
+} cl_params_clGetDeviceFunctionPointerINTEL;
+
+typedef struct _clSetProgramReleaseCallback {
+    cl_program *program;
+    void(CL_CALLBACK **pfnNotify)(cl_program, void *);
+    void **userData;
+} cl_params_clSetProgramReleaseCallback;
+
+typedef struct _clSetProgramSpecializationConstant {
+    cl_program *program;
+    cl_uint *specId;
+    size_t *specSize;
+    const void **specValue;
+} cl_params_clSetProgramSpecializationConstant;
+
+typedef struct _clGetKernelSuggestedLocalWorkSizeINTEL {
+    cl_command_queue *commandQueue;
+    cl_kernel *kernel;
+    cl_uint *workDim;
+    const size_t **globalWorkOffset;
+    const size_t **globalWorkSize;
+    size_t **suggestedLocalWorkSize;
+} cl_params_clGetKernelSuggestedLocalWorkSizeINTEL;
+
+typedef struct _clGetKernelMaxConcurrentWorkGroupCountINTEL {
+    cl_command_queue *commandQueue;
+    cl_kernel *kernel;
+    cl_uint *workDim;
+    const size_t **globalWorkOffset;
+    const size_t **localWorkSize;
+    size_t **suggestedWorkGroupCount;
+} cl_params_clGetKernelMaxConcurrentWorkGroupCountINTEL;
+
+typedef struct _clEnqueueNDCountKernelINTEL {
+    cl_command_queue *commandQueue;
+    cl_kernel *kernel;
+    cl_uint *workDim;
+    const size_t **globalWorkOffset;
+    const size_t **workgroupCount;
+    const size_t **localWorkSize;
+    cl_uint *numEventsInWaitList;
+    const cl_event **eventWaitList;
+    cl_event **event;
+} cl_params_clEnqueueNDCountKernelINTEL;
+
+typedef struct _clSetContextDestructorCallback {
+    cl_context *context;
+    void(CL_CALLBACK **pfnNotify)(cl_context, void *);
+    void **userData;
+} cl_params_clSetContextDestructorCallback;
+
+typedef struct _clEnqueueExternalMemObjectsKHR {
+    cl_command_queue *commandQueue;
+    cl_uint *numMemObjects;
+    const cl_mem **memObjects;
+    cl_uint *numEventsInWaitList;
+    const cl_event **eventWaitList;
+    cl_event **event;
+} cl_params_clEnqueueExternalMemObjectsKHR;
+
+typedef struct _clEnqueueAcquireExternalMemObjectsKHR {
+    cl_command_queue *commandQueue;
+    cl_uint *numMemObjects;
+    const cl_mem **memObjects;
+    cl_uint *numEventsInWaitList;
+    const cl_event **eventWaitList;
+    cl_event **event;
+} cl_params_clEnqueueAcquireExternalMemObjectsKHR;
+
+typedef struct _clEnqueueReleaseExternalMemObjectsKHR {
+    cl_command_queue *commandQueue;
+    cl_uint *numMemObjects;
+    const cl_mem **memObjects;
+    cl_uint *numEventsInWaitList;
+    const cl_event **eventWaitList;
+    cl_event **event;
+} cl_params_clEnqueueReleaseExternalMemObjectsKHR;
+
+typedef struct _clCreateBufferWithProperties {
+    cl_context *context;
+    const cl_mem_properties **properties;
+    cl_mem_flags *flags;
+    size_t *size;
+    void **hostPtr;
+    cl_int **errcodeRet;
+} cl_params_clCreateBufferWithProperties;
 
 typedef struct _cl_params_clCreateFromGLBuffer {
     cl_context *context;

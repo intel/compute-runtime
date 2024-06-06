@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -639,6 +639,2776 @@ class ClCreateContextFromTypeTracer {
 
   private:
     cl_params_clCreateContextFromType params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClMemFreeINTELTracer {
+  public:
+    ClMemFreeINTELTracer() {}
+
+    void enter(cl_context *context,
+               void **ptr) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.ptr = ptr;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clMemFreeINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clMemFreeINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clMemFreeINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clMemFreeINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clMemFreeINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClMemFreeINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clMemFreeINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClIcdGetPlatformIDsKHRTracer {
+  public:
+    ClIcdGetPlatformIDsKHRTracer() {}
+
+    void enter(cl_uint *numEntries,
+               cl_platform_id **platforms,
+               cl_uint **numPlatforms) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.numEntries = numEntries;
+        params.platforms = platforms;
+        params.numPlatforms = numPlatforms;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clIcdGetPlatformIDsKHR";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clIcdGetPlatformIDsKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clIcdGetPlatformIDsKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clIcdGetPlatformIDsKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clIcdGetPlatformIDsKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClIcdGetPlatformIDsKHRTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clIcdGetPlatformIDsKHR params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClCreateBufferWithPropertiesINTELTracer {
+  public:
+    ClCreateBufferWithPropertiesINTELTracer() {}
+
+    void enter(cl_context *context,
+               const cl_mem_properties **properties,
+               cl_mem_flags *flags,
+               size_t *size,
+               void **hostPtr,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.properties = properties;
+        params.flags = flags;
+        params.size = size;
+        params.hostPtr = hostPtr;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clCreateBufferWithPropertiesINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateBufferWithPropertiesINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateBufferWithPropertiesINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_mem *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateBufferWithPropertiesINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateBufferWithPropertiesINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClCreateBufferWithPropertiesINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clCreateBufferWithPropertiesINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClCreateBufferWithPropertiesTracer {
+  public:
+    ClCreateBufferWithPropertiesTracer() {}
+
+    void enter(cl_context *context,
+               const cl_mem_properties **properties,
+               cl_mem_flags *flags,
+               size_t *size,
+               void **hostPtr,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.properties = properties;
+        params.flags = flags;
+        params.size = size;
+        params.hostPtr = hostPtr;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clCreateBufferWithProperties";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateBufferWithProperties)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateBufferWithProperties, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_mem *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateBufferWithProperties)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateBufferWithProperties, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClCreateBufferWithPropertiesTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clCreateBufferWithProperties params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClCreateImageWithPropertiesTracer {
+  public:
+    ClCreateImageWithPropertiesTracer() {}
+
+    void enter(cl_context *context,
+               const cl_mem_properties_intel **properties,
+               cl_mem_flags *flags,
+               const cl_image_format **imageFormat,
+               const cl_image_desc **imageDesc,
+               void **hostPtr,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.properties = properties;
+        params.flags = flags;
+        params.imageFormat = imageFormat;
+        params.imageDesc = imageDesc;
+        params.hostPtr = hostPtr;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clCreateImageWithProperties";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateImageWithProperties)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateImageWithProperties, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_mem *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateImageWithProperties)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateImageWithProperties, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClCreateImageWithPropertiesTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clCreateImageWithProperties params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClCreateImageWithPropertiesINTELTracer {
+  public:
+    ClCreateImageWithPropertiesINTELTracer() {}
+
+    void enter(cl_context *context,
+               const cl_mem_properties_intel **properties,
+               cl_mem_flags *flags,
+               const cl_image_format **imageFormat,
+               const cl_image_desc **imageDesc,
+               void **hostPtr,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.properties = properties;
+        params.flags = flags;
+        params.imageFormat = imageFormat;
+        params.imageDesc = imageDesc;
+        params.hostPtr = hostPtr;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clCreateImageWithPropertiesINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateImageWithPropertiesINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateImageWithPropertiesINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_mem *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateImageWithPropertiesINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateImageWithPropertiesINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClCreateImageWithPropertiesINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clCreateImageWithPropertiesINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetImageParamsINTELTracer {
+  public:
+    ClGetImageParamsINTELTracer() {}
+
+    void enter(cl_context *context,
+               const cl_image_format **imageFormat,
+               const cl_image_desc **imageDesc,
+               size_t **imageRowPitch,
+               size_t **imageSlicePitch) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.imageFormat = imageFormat;
+        params.imageDesc = imageDesc;
+        params.imageRowPitch = imageRowPitch;
+        params.imageSlicePitch = imageSlicePitch;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetImageParamsINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetImageParamsINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetImageParamsINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetImageParamsINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetImageParamsINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetImageParamsINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetImageParamsINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClCreatePerfCountersCommandQueueINTELTracer {
+  public:
+    ClCreatePerfCountersCommandQueueINTELTracer() {}
+
+    void enter(cl_context *context,
+               cl_device_id *device,
+               cl_command_queue_properties *properties,
+               cl_uint *configuration,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.device = device;
+        params.properties = properties;
+        params.configuration = configuration;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clCreatePerfCountersCommandQueueINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreatePerfCountersCommandQueueINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreatePerfCountersCommandQueueINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_command_queue *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreatePerfCountersCommandQueueINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreatePerfCountersCommandQueueINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClCreatePerfCountersCommandQueueINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clCreatePerfCountersCommandQueueINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClHostMemAllocINTELTracer {
+  public:
+    ClHostMemAllocINTELTracer() {}
+
+    void enter(cl_context *context,
+               const cl_mem_properties_intel **properties,
+               size_t *size,
+               cl_uint *alignment,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.properties = properties;
+        params.size = size;
+        params.alignment = alignment;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clHostMemAllocINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clHostMemAllocINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clHostMemAllocINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(void **retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clHostMemAllocINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clHostMemAllocINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClHostMemAllocINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clHostMemAllocINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClDeviceMemAllocINTELTracer {
+  public:
+    ClDeviceMemAllocINTELTracer() {}
+
+    void enter(cl_context *context,
+               cl_device_id *device,
+               const cl_mem_properties_intel **properties,
+               size_t *size,
+               cl_uint *alignment,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.device = device;
+        params.properties = properties;
+        params.size = size;
+        params.alignment = alignment;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clDeviceMemAllocINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clDeviceMemAllocINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clDeviceMemAllocINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(void **retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clDeviceMemAllocINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clDeviceMemAllocINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClDeviceMemAllocINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clDeviceMemAllocINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClSharedMemAllocINTELTracer {
+  public:
+    ClSharedMemAllocINTELTracer() {}
+
+    void enter(cl_context *context,
+               cl_device_id *device,
+               const cl_mem_properties_intel **properties,
+               size_t *size,
+               cl_uint *alignment,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.device = device;
+        params.properties = properties;
+        params.size = size;
+        params.alignment = alignment;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clSharedMemAllocINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSharedMemAllocINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSharedMemAllocINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(void **retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSharedMemAllocINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSharedMemAllocINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClSharedMemAllocINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clSharedMemAllocINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClMemBlockingFreeINTELTracer {
+  public:
+    ClMemBlockingFreeINTELTracer() {}
+
+    void enter(cl_context *context,
+               void **ptr) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.ptr = ptr;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clMemBlockingFreeINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clMemBlockingFreeINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clMemBlockingFreeINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clMemBlockingFreeINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clMemBlockingFreeINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClMemBlockingFreeINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clMemBlockingFreeINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetMemAllocInfoINTELTracer {
+  public:
+    ClGetMemAllocInfoINTELTracer() {}
+
+    void enter(cl_context *context,
+               const void **ptr,
+               cl_mem_info_intel *paramName,
+               size_t *paramValueSize,
+               void **paramValue,
+               size_t **paramValueSizeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.ptr = ptr;
+        params.paramName = paramName;
+        params.paramValueSize = paramValueSize;
+        params.paramValue = paramValue;
+        params.paramValueSizeRet = paramValueSizeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetMemAllocInfoINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetMemAllocInfoINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetMemAllocInfoINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetMemAllocInfoINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetMemAllocInfoINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetMemAllocInfoINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetMemAllocInfoINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClSetKernelArgMemPointerINTELTracer {
+  public:
+    ClSetKernelArgMemPointerINTELTracer() {}
+
+    void enter(cl_kernel *kernel,
+               cl_uint *argIndex,
+               const void **argValue) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.kernel = kernel;
+        params.argIndex = argIndex;
+        params.argValue = argValue;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clSetKernelArgMemPointerINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArgMemPointerINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSetKernelArgMemPointerINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSetKernelArgMemPointerINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSetKernelArgMemPointerINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClSetKernelArgMemPointerINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clSetKernelArgMemPointerINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueMemsetINTELTracer {
+  public:
+    ClEnqueueMemsetINTELTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               void **dstPtr,
+               cl_int *value,
+               size_t *size,
+               cl_uint *numEventsInWaitList,
+               const cl_event **eventWaitList,
+               cl_event **event) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.dstPtr = dstPtr;
+        params.value = value;
+        params.size = size;
+        params.numEventsInWaitList = numEventsInWaitList;
+        params.eventWaitList = eventWaitList;
+        params.event = event;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueMemsetINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMemsetINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMemsetINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMemsetINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMemsetINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueMemsetINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueMemsetINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueMemFillINTELTracer {
+  public:
+    ClEnqueueMemFillINTELTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               void **dstPtr,
+               const void **pattern,
+               size_t *patternSize,
+               size_t *size,
+               cl_uint *numEventsInWaitList,
+               const cl_event **eventWaitList,
+               cl_event **event) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.dstPtr = dstPtr;
+        params.pattern = pattern;
+        params.patternSize = patternSize;
+        params.size = size;
+        params.numEventsInWaitList = numEventsInWaitList;
+        params.eventWaitList = eventWaitList;
+        params.event = event;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueMemFillINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMemFillINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMemFillINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMemFillINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMemFillINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueMemFillINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueMemFillINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueMemcpyINTELTracer {
+  public:
+    ClEnqueueMemcpyINTELTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               cl_bool *blocking,
+               void **dstPtr,
+               const void **srcPtr,
+               size_t *size,
+               cl_uint *numEventsInWaitList,
+               const cl_event **eventWaitList,
+               cl_event **event) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.blocking = blocking;
+        params.dstPtr = dstPtr;
+        params.srcPtr = srcPtr;
+        params.size = size;
+        params.numEventsInWaitList = numEventsInWaitList;
+        params.eventWaitList = eventWaitList;
+        params.event = event;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueMemcpyINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMemcpyINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMemcpyINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMemcpyINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMemcpyINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueMemcpyINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueMemcpyINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueMigrateMemINTELTracer {
+  public:
+    ClEnqueueMigrateMemINTELTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               const void **ptr,
+               size_t *size,
+               cl_mem_migration_flags *flags,
+               cl_uint *numEventsInWaitList,
+               const cl_event **eventWaitList,
+               cl_event **event) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.ptr = ptr;
+        params.size = size;
+        params.flags = flags;
+        params.numEventsInWaitList = numEventsInWaitList;
+        params.eventWaitList = eventWaitList;
+        params.event = event;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueMigrateMemINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMigrateMemINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMigrateMemINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMigrateMemINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMigrateMemINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueMigrateMemINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueMigrateMemINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueMemAdviseINTELTracer {
+  public:
+    ClEnqueueMemAdviseINTELTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               const void **ptr,
+               size_t *size,
+               cl_mem_advice_intel *advice,
+               cl_uint *numEventsInWaitList,
+               const cl_event **eventWaitList,
+               cl_event **event) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.ptr = ptr;
+        params.size = size;
+        params.advice = advice;
+        params.numEventsInWaitList = numEventsInWaitList;
+        params.eventWaitList = eventWaitList;
+        params.event = event;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueMemAdviseINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMemAdviseINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMemAdviseINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueMemAdviseINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueMemAdviseINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueMemAdviseINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueMemAdviseINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClCreateCommandQueueWithPropertiesKHRTracer {
+  public:
+    ClCreateCommandQueueWithPropertiesKHRTracer() {}
+
+    void enter(cl_context *context,
+               cl_device_id *device,
+               const cl_queue_properties_khr **properties,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.device = device;
+        params.properties = properties;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clCreateCommandQueueWithPropertiesKHR";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueueWithPropertiesKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateCommandQueueWithPropertiesKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_command_queue *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateCommandQueueWithPropertiesKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateCommandQueueWithPropertiesKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClCreateCommandQueueWithPropertiesKHRTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clCreateCommandQueueWithPropertiesKHR params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClCreateAcceleratorINTELTracer {
+  public:
+    ClCreateAcceleratorINTELTracer() {}
+
+    void enter(cl_context *context,
+               cl_accelerator_type_intel *acceleratorType,
+               size_t *descriptorSize,
+               const void **descriptor,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.acceleratorType = acceleratorType;
+        params.descriptorSize = descriptorSize;
+        params.descriptor = descriptor;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clCreateAcceleratorINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateAcceleratorINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateAcceleratorINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_accelerator_intel *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateAcceleratorINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateAcceleratorINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClCreateAcceleratorINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clCreateAcceleratorINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClRetainAcceleratorINTELTracer {
+  public:
+    ClRetainAcceleratorINTELTracer() {}
+
+    void enter(cl_accelerator_intel *accelerator) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.accelerator = accelerator;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clRetainAcceleratorINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clRetainAcceleratorINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clRetainAcceleratorINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clRetainAcceleratorINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clRetainAcceleratorINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClRetainAcceleratorINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clRetainAcceleratorINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetAcceleratorInfoINTELTracer {
+  public:
+    ClGetAcceleratorInfoINTELTracer() {}
+
+    void enter(cl_accelerator_intel *accelerator,
+               cl_accelerator_info_intel *paramName,
+               size_t *paramValueSize,
+               void **paramValue,
+               size_t **paramValueSizeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.accelerator = accelerator;
+        params.paramName = paramName;
+        params.paramValueSize = paramValueSize;
+        params.paramValue = paramValue;
+        params.paramValueSizeRet = paramValueSizeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetAcceleratorInfoINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetAcceleratorInfoINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetAcceleratorInfoINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetAcceleratorInfoINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetAcceleratorInfoINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetAcceleratorInfoINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetAcceleratorInfoINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClReleaseAcceleratorINTELTracer {
+  public:
+    ClReleaseAcceleratorINTELTracer() {}
+
+    void enter(cl_accelerator_intel *accelerator) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.accelerator = accelerator;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clReleaseAcceleratorINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clReleaseAcceleratorINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clReleaseAcceleratorINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clReleaseAcceleratorINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clReleaseAcceleratorINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClReleaseAcceleratorINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clReleaseAcceleratorINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClCreateProgramWithILKHRTracer {
+  public:
+    ClCreateProgramWithILKHRTracer() {}
+
+    void enter(cl_context *context,
+               const void **il,
+               size_t *length,
+               cl_int **errcodeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.il = il;
+        params.length = length;
+        params.errcodeRet = errcodeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clCreateProgramWithILKHR";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithILKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateProgramWithILKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_program *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clCreateProgramWithILKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clCreateProgramWithILKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClCreateProgramWithILKHRTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clCreateProgramWithILKHR params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetKernelSuggestedLocalWorkSizeKHRTracer {
+  public:
+    ClGetKernelSuggestedLocalWorkSizeKHRTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               cl_kernel *kernel,
+               cl_uint *workDim,
+               const size_t **globalWorkOffset,
+               const size_t **globalWorkSize,
+               size_t **suggestedLocalWorkSize) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.kernel = kernel;
+        params.workDim = workDim;
+        params.globalWorkOffset = globalWorkOffset;
+        params.globalWorkSize = globalWorkSize;
+        params.suggestedLocalWorkSize = suggestedLocalWorkSize;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetKernelSuggestedLocalWorkSizeKHR";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetKernelSuggestedLocalWorkSizeKHRTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetKernelSuggestedLocalWorkSizeKHR params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetKernelSubGroupInfoKHRTracer {
+  public:
+    ClGetKernelSubGroupInfoKHRTracer() {}
+
+    void enter(cl_kernel *kernel,
+               cl_device_id *device,
+               cl_kernel_sub_group_info *paramName,
+               size_t *inputValueSize,
+               const void **inputValue,
+               size_t *paramValueSize,
+               void **paramValue,
+               size_t **paramValueSizeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.kernel = kernel;
+        params.device = device;
+        params.paramName = paramName;
+        params.inputValueSize = inputValueSize;
+        params.inputValue = inputValue;
+        params.paramValueSize = paramValueSize;
+        params.paramValue = paramValue;
+        params.paramValueSizeRet = paramValueSizeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetKernelSubGroupInfoKHR";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSubGroupInfoKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelSubGroupInfoKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSubGroupInfoKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelSubGroupInfoKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetKernelSubGroupInfoKHRTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetKernelSubGroupInfoKHR params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueVerifyMemoryINTELTracer {
+  public:
+    ClEnqueueVerifyMemoryINTELTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               const void **allocationPtr,
+               const void **expectedData,
+               size_t *sizeOfComparison,
+               cl_uint *comparisonMode) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.allocationPtr = allocationPtr;
+        params.expectedData = expectedData;
+        params.sizeOfComparison = sizeOfComparison;
+        params.comparisonMode = comparisonMode;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueVerifyMemoryINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueVerifyMemoryINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueVerifyMemoryINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueVerifyMemoryINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueVerifyMemoryINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueVerifyMemoryINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueVerifyMemoryINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClAddCommentINTELTracer {
+  public:
+    ClAddCommentINTELTracer() {}
+
+    void enter(cl_device_id *device,
+               const char **comment) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.device = device;
+        params.comment = comment;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clAddCommentINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clAddCommentINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clAddCommentINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clAddCommentINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clAddCommentINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClAddCommentINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clAddCommentINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetDeviceGlobalVariablePointerINTELTracer {
+  public:
+    ClGetDeviceGlobalVariablePointerINTELTracer() {}
+
+    void enter(cl_device_id *device,
+               cl_program *program,
+               const char **globalVariableName,
+               size_t **globalVariableSizeRet,
+               void ***globalVariablePointerRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.device = device;
+        params.program = program;
+        params.globalVariableName = globalVariableName;
+        params.globalVariableSizeRet = globalVariableSizeRet;
+        params.globalVariablePointerRet = globalVariablePointerRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetDeviceGlobalVariablePointerINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceGlobalVariablePointerINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetDeviceGlobalVariablePointerINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceGlobalVariablePointerINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetDeviceGlobalVariablePointerINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetDeviceGlobalVariablePointerINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetDeviceGlobalVariablePointerINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetDeviceFunctionPointerINTELTracer {
+  public:
+    ClGetDeviceFunctionPointerINTELTracer() {}
+
+    void enter(cl_device_id *device,
+               cl_program *program,
+               const char **functionName,
+               cl_ulong **functionPointerRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.device = device;
+        params.program = program;
+        params.functionName = functionName;
+        params.functionPointerRet = functionPointerRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetDeviceFunctionPointerINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceFunctionPointerINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetDeviceFunctionPointerINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetDeviceFunctionPointerINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetDeviceFunctionPointerINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetDeviceFunctionPointerINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetDeviceFunctionPointerINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClSetProgramReleaseCallbackTracer {
+  public:
+    ClSetProgramReleaseCallbackTracer() {}
+
+    void enter(cl_program *program,
+               void(CL_CALLBACK **pfnNotify)(cl_program, void *),
+               void **userData) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.program = program;
+        params.pfnNotify = pfnNotify;
+        params.userData = userData;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clSetProgramReleaseCallback";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSetProgramReleaseCallback)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSetProgramReleaseCallback, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSetProgramReleaseCallback)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSetProgramReleaseCallback, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClSetProgramReleaseCallbackTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clSetProgramReleaseCallback params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClSetProgramSpecializationConstantTracer {
+  public:
+    ClSetProgramSpecializationConstantTracer() {}
+
+    void enter(cl_program *program,
+               cl_uint *specId,
+               size_t *specSize,
+               const void **specValue) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.program = program;
+        params.specId = specId;
+        params.specSize = specSize;
+        params.specValue = specValue;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clSetProgramSpecializationConstant";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSetProgramSpecializationConstant)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSetProgramSpecializationConstant, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSetProgramSpecializationConstant)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSetProgramSpecializationConstant, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClSetProgramSpecializationConstantTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clSetProgramSpecializationConstant params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetKernelSuggestedLocalWorkSizeINTELTracer {
+  public:
+    ClGetKernelSuggestedLocalWorkSizeINTELTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               cl_kernel *kernel,
+               cl_uint *workDim,
+               const size_t **globalWorkOffset,
+               const size_t **globalWorkSize,
+               size_t **suggestedLocalWorkSize) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.kernel = kernel;
+        params.workDim = workDim;
+        params.globalWorkOffset = globalWorkOffset;
+        params.globalWorkSize = globalWorkSize;
+        params.suggestedLocalWorkSize = suggestedLocalWorkSize;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetKernelSuggestedLocalWorkSizeINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelSuggestedLocalWorkSizeINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetKernelSuggestedLocalWorkSizeINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetKernelSuggestedLocalWorkSizeINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClGetKernelMaxConcurrentWorkGroupCountINTELTracer {
+  public:
+    ClGetKernelMaxConcurrentWorkGroupCountINTELTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               cl_kernel *kernel,
+               cl_uint *workDim,
+               const size_t **globalWorkOffset,
+               const size_t **localWorkSize,
+               size_t **suggestedWorkGroupCount) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.kernel = kernel;
+        params.workDim = workDim;
+        params.globalWorkOffset = globalWorkOffset;
+        params.localWorkSize = localWorkSize;
+        params.suggestedWorkGroupCount = suggestedWorkGroupCount;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetKernelMaxConcurrentWorkGroupCountINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelMaxConcurrentWorkGroupCountINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelMaxConcurrentWorkGroupCountINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetKernelMaxConcurrentWorkGroupCountINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetKernelMaxConcurrentWorkGroupCountINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetKernelMaxConcurrentWorkGroupCountINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetKernelMaxConcurrentWorkGroupCountINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueNDCountKernelINTELTracer {
+  public:
+    ClEnqueueNDCountKernelINTELTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               cl_kernel *kernel,
+               cl_uint *workDim,
+               const size_t **globalWorkOffset,
+               const size_t **workgroupCount,
+               const size_t **localWorkSize,
+               cl_uint *numEventsInWaitList,
+               const cl_event **eventWaitList,
+               cl_event **event) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.kernel = kernel;
+        params.workDim = workDim;
+        params.globalWorkOffset = globalWorkOffset;
+        params.workgroupCount = workgroupCount;
+        params.localWorkSize = localWorkSize;
+        params.numEventsInWaitList = numEventsInWaitList;
+        params.eventWaitList = eventWaitList;
+        params.event = event;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueNDCountKernelINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNDCountKernelINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueNDCountKernelINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueNDCountKernelINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueNDCountKernelINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueNDCountKernelINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueNDCountKernelINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClSetContextDestructorCallbackTracer {
+  public:
+    ClSetContextDestructorCallbackTracer() {}
+
+    void enter(cl_context *context,
+               void(CL_CALLBACK **pfnNotify)(cl_context, void *),
+               void **userData) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.context = context;
+        params.pfnNotify = pfnNotify;
+        params.userData = userData;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clSetContextDestructorCallback";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSetContextDestructorCallback)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSetContextDestructorCallback, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clSetContextDestructorCallback)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clSetContextDestructorCallback, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClSetContextDestructorCallbackTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clSetContextDestructorCallback params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueExternalMemObjectsKHRTracer {
+  public:
+    ClEnqueueExternalMemObjectsKHRTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               cl_uint *numMemObjects,
+               const cl_mem **memObjects,
+               cl_uint *numEventsInWaitList,
+               const cl_event **eventWaitList,
+               cl_event **event) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.numMemObjects = numMemObjects;
+        params.memObjects = memObjects;
+        params.numEventsInWaitList = numEventsInWaitList;
+        params.eventWaitList = eventWaitList;
+        params.event = event;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueExternalMemObjectsKHR";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueExternalMemObjectsKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueExternalMemObjectsKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueExternalMemObjectsKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueExternalMemObjectsKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueExternalMemObjectsKHRTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueExternalMemObjectsKHR params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueAcquireExternalMemObjectsKHRTracer {
+  public:
+    ClEnqueueAcquireExternalMemObjectsKHRTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               cl_uint *numMemObjects,
+               const cl_mem **memObjects,
+               cl_uint *numEventsInWaitList,
+               const cl_event **eventWaitList,
+               cl_event **event) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.numMemObjects = numMemObjects;
+        params.memObjects = memObjects;
+        params.numEventsInWaitList = numEventsInWaitList;
+        params.eventWaitList = eventWaitList;
+        params.event = event;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueAcquireExternalMemObjectsKHR";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueAcquireExternalMemObjectsKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueAcquireExternalMemObjectsKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueAcquireExternalMemObjectsKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueAcquireExternalMemObjectsKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueAcquireExternalMemObjectsKHRTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueAcquireExternalMemObjectsKHR params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
+class ClEnqueueReleaseExternalMemObjectsKHRTracer {
+  public:
+    ClEnqueueReleaseExternalMemObjectsKHRTracer() {}
+
+    void enter(cl_command_queue *commandQueue,
+               cl_uint *numMemObjects,
+               const cl_mem **memObjects,
+               cl_uint *numEventsInWaitList,
+               const cl_event **eventWaitList,
+               cl_event **event) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.commandQueue = commandQueue;
+        params.numMemObjects = numMemObjects;
+        params.memObjects = memObjects;
+        params.numEventsInWaitList = numEventsInWaitList;
+        params.eventWaitList = eventWaitList;
+        params.event = event;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clEnqueueReleaseExternalMemObjectsKHR";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReleaseExternalMemObjectsKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueReleaseExternalMemObjectsKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clEnqueueReleaseExternalMemObjectsKHR)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clEnqueueReleaseExternalMemObjectsKHR, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClEnqueueReleaseExternalMemObjectsKHRTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clEnqueueReleaseExternalMemObjectsKHR params{};
     cl_callback_data data{};
     uint64_t correlationData[tracingMaxHandleCount];
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
