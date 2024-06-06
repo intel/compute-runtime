@@ -599,11 +599,18 @@ bool WddmMemoryManager::isNTHandle(osHandle handle, uint32_t rootDeviceIndex) {
     return status;
 }
 
-GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex, void *mapPointer) {
-    auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, MemoryPool::systemCpuInaccessible, maxOsContextCount, 0llu);
+GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(const OsHandleData &osHandleData, bool requireSpecificBitness, bool ntHandle, AllocationType allocationType, uint32_t rootDeviceIndex, void *mapPointer) {
+    auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, osHandleData.handle, MemoryPool::systemCpuInaccessible, maxOsContextCount, 0llu);
 
-    bool status = ntHandle ? getWddm(rootDeviceIndex).openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)), allocation.get())
-                           : getWddm(rootDeviceIndex).openSharedHandle(handle, allocation.get());
+    bool status = false;
+    if (ntHandle) {
+        status = getWddm(rootDeviceIndex).openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle)), allocation.get());
+    } else if (allocationType == AllocationType::sharedImage) {
+        status = getWddm(rootDeviceIndex).openSharedHandle(static_cast<const ExtendedOsHandleData &>(osHandleData), allocation.get());
+    } else {
+        MemoryManager::ExtendedOsHandleData extendedOsHandleData{osHandleData.handle};
+        status = getWddm(rootDeviceIndex).openSharedHandle(extendedOsHandleData, allocation.get());
+    }
 
     if (!status) {
         return nullptr;
@@ -643,12 +650,13 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromMultipleShare
     return nullptr;
 }
 
-GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
-    return createAllocationFromHandle(handle, requireSpecificBitness, false, properties.allocationType, properties.rootDeviceIndex, mapPointer);
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
+    return createAllocationFromHandle(osHandleData, requireSpecificBitness, false, properties.allocationType, properties.rootDeviceIndex, mapPointer);
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
-    return createAllocationFromHandle(toOsHandle(handle), false, true, allocType, rootDeviceIndex, nullptr);
+    ExtendedOsHandleData osHandleData{handle};
+    return createAllocationFromHandle(osHandleData, false, true, allocType, rootDeviceIndex, nullptr);
 }
 
 void WddmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {

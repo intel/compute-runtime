@@ -221,13 +221,13 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromExistingStora
     return allocation;
 }
 
-GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
-    if (handle != invalidSharedHandle) {
-        auto allocation = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
-        this->capturedSharedHandle = handle;
+GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
+    if (osHandleData.handle != invalidSharedHandle) {
+        auto allocation = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandleData, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
+        this->capturedSharedHandle = osHandleData.handle;
         return allocation;
     } else {
-        this->capturedSharedHandle = handle;
+        this->capturedSharedHandle = osHandleData.handle;
         return nullptr;
     }
 }

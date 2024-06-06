@@ -1015,21 +1015,21 @@ void DrmMemoryManager::eraseSharedBoHandleWrapper(int boHandle) {
     }
 }
 
-GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle,
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData,
                                                                                const AllocationProperties &properties,
                                                                                bool requireSpecificBitness,
                                                                                bool isHostIpcAllocation,
                                                                                bool reuseSharedAllocation,
                                                                                void *mapPointer) {
     if (isHostIpcAllocation) {
-        return createUSMHostAllocationFromSharedHandle(handle, properties, nullptr, reuseSharedAllocation);
+        return createUSMHostAllocationFromSharedHandle(osHandleData.handle, properties, nullptr, reuseSharedAllocation);
     }
 
     std::unique_lock<std::mutex> lock(mtx);
 
     PrimeHandle openFd{};
     uint64_t gpuRange = 0;
-    openFd.fileDescriptor = handle;
+    openFd.fileDescriptor = osHandleData.handle;
 
     auto &drm = this->getDrm(properties.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
@@ -1052,7 +1052,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     const auto memoryPool = MemoryPool::systemCpuInaccessible;
 
     if (bo == nullptr) {
-        size_t size = SysCalls::lseek(handle, 0, SEEK_END);
+        size_t size = SysCalls::lseek(osHandleData.handle, 0, SEEK_END);
         UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
         auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
@@ -1112,7 +1112,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
-                                           handle, memoryPool, canonizedGpuAddress);
+                                           osHandleData.handle, memoryPool, canonizedGpuAddress);
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         drmAllocation->set32BitAllocation(true);

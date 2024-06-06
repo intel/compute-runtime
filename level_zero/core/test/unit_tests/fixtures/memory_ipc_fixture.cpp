@@ -341,7 +341,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::allocateGraphicsMemoryWithPro
     return alloc;
 }
 
-NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
+NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
     if (failOnCreateGraphicsAllocationFromSharedHandle) {
         return nullptr;
     }
@@ -513,7 +513,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
     alloc->setGpuBaseAddress(0xabcd);
     return alloc;
 }
-NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
+NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
     if (failOnCreateGraphicsAllocationFromSharedHandle) {
         return nullptr;
     }

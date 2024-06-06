@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(executionEnvironment);
 
-    osHandle handle = 3;
+    TestedDrmMemoryManager::OsHandleData osHandleData{3u};
     constexpr size_t maxThreads = 10;
 
     GraphicsAllocation *createdAllocations[maxThreads];
@@ -55,7 +55,7 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
     auto createFunction = [&]() {
         size_t indexFree = index++;
         AllocationProperties properties(0, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
-        createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
+        createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
         EXPECT_GE(1u, memoryManager->peekSharedBosSize());
         allocateCount++;
@@ -116,7 +116,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
 
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(executionEnvironment);
 
-    osHandle handle = 3;
+    TestedDrmMemoryManager::OsHandleData osHandleData{3u};
     constexpr size_t maxThreads = 10;
 
     GraphicsAllocation *createdAllocations[maxThreads];
@@ -126,7 +126,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
     auto createFunction = [&]() {
         size_t indexFree = index++;
         AllocationProperties properties(0, false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
-        createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true, nullptr);
+        createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
 
         std::this_thread::yield();

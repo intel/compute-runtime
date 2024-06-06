@@ -954,7 +954,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAl
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHandleIsCalledThenMemoryPoolIsSystemCpuInaccessible) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    auto osHandle = 1u;
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -969,7 +969,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
     VariableBackup<D3DDDI_OPENALLOCATIONINFO *> openResourceBackup(&gdi->getOpenResourceArgOut().pOpenAllocationInfo, &allocationInfo);
 
     AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
-    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::systemCpuInaccessible, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
@@ -999,7 +999,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSharedHandleWhenCreateGraphicsAllocatio
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationPropertiesWhenCreateAllocationFromHandleIsCalledThenCorrectAllocationTypeIsSet) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    auto osHandle = 1u;
+    MockMemoryManager::ExtendedOsHandleData osHandleData{1u};
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -1019,7 +1019,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationPropertiesWhenCreateAllocatio
     AllocationProperties *propertiesArray[2] = {&propertiesBuffer, &propertiesImage};
 
     for (auto properties : propertiesArray) {
-        auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, *properties, false, false, true, nullptr);
+        auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, *properties, false, false, true, nullptr);
         EXPECT_NE(nullptr, allocation);
         EXPECT_EQ(properties->allocationType, allocation->getAllocationType());
         memoryManager->freeGraphicsMemory(allocation);
@@ -1028,7 +1028,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationPropertiesWhenCreateAllocatio
 
 TEST_F(WddmMemoryManagerSimpleTest, whenCreateAllocationFromHandleAndMapCallFailsThenFreeGraphicsMemoryIsCalled) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    auto osHandle = 1u;
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -1047,7 +1047,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenCreateAllocationFromHandleAndMapCallFail
 
     AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
 
-    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     EXPECT_EQ(nullptr, allocation);
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryImplCalled);
 }
@@ -1344,8 +1344,9 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestr
     VariableBackup<D3DDDI_OPENALLOCATIONINFO *> openResourceBackup(&gdi->getOpenResourceArgOut().pOpenAllocationInfo, &allocationInfo);
 
     AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
 
-    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(1, properties, false, false, true, nullptr);
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     EXPECT_NE(nullptr, allocation);
 
     memoryManager->setDeferredDeleter(nullptr);
@@ -2629,7 +2630,7 @@ TEST_F(WddmMemoryManagerTest, givenDefaultMemoryManagerWhenAllocateWithSizeIsCal
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
-    auto osHandle = 1u;
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
     void *pSysMem = reinterpret_cast<void *>(0x1000);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -2639,7 +2640,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
 
     AllocationProperties properties(0, false, 4096u, AllocationType::sharedBuffer, false, false, mockDeviceBitfield);
 
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(RESOURCE_HANDLE, wddmAlloc->getResourceHandle());
@@ -2713,7 +2714,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThenRe
 }
 
 TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndRequireSpecificBitnessWhenCreatingAllocationFromSharedHandleThen32BitAllocationIsReturned) {
-    auto osHandle = 1u;
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
     void *pSysMem = reinterpret_cast<void *>(0x1000);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -2725,7 +2726,7 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndRequireSpecificBitness
 
     AllocationProperties properties(0, false, 4096u, AllocationType::sharedBuffer, false, false, 0);
 
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, true, false, true, nullptr);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, true, false, true, nullptr);
     ASSERT_NE(nullptr, gpuAllocation);
     if constexpr (is64bit) {
         EXPECT_TRUE(gpuAllocation->is32BitAllocation());
@@ -2740,7 +2741,7 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndRequireSpecificBitness
 }
 
 TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndNotRequiredSpecificBitnessWhenCreatingAllocationFromSharedHandleThenNon32BitAllocationIsReturned) {
-    auto osHandle = 1u;
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
     void *pSysMem = reinterpret_cast<void *>(0x1000);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -2751,7 +2752,7 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndNotRequiredSpecificBit
     memoryManager->setForce32BitAllocations(true);
 
     AllocationProperties properties(0, false, 4096u, AllocationType::sharedBuffer, false, false, 0);
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, gpuAllocation);
 
     EXPECT_FALSE(gpuAllocation->is32BitAllocation());
@@ -2764,7 +2765,7 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndNotRequiredSpecificBit
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandleIsCalledThenDestroyResourceHandle) {
-    auto osHandle = 1u;
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
     void *pSysMem = reinterpret_cast<void *>(0x1000);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -2773,7 +2774,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandl
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     AllocationProperties properties(0, false, 4096u, AllocationType::sharedBuffer, false, false, 0);
-    auto gpuAllocation = (WddmAllocation *)memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
+    auto gpuAllocation = (WddmAllocation *)memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     EXPECT_NE(nullptr, gpuAllocation);
     auto expectedDestroyHandle = gpuAllocation->getResourceHandle();
     EXPECT_NE(0u, expectedDestroyHandle);
@@ -2800,7 +2801,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocFromHostPtrIsCalled
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromSharedHandleIsCalledThenUpdateSize) {
-    auto osHandle = 1u;
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
     GmmRequirements gmmRequirements{};
@@ -2810,7 +2811,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShared
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     AllocationProperties properties(0, false, size, AllocationType::sharedBuffer, false, false, 0);
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(size, gpuAllocation->getUnderlyingBufferSize());
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -2909,7 +2910,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemory
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFailsThenReturnNull) {
-    auto osHandle = 1u;
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
     GmmRequirements gmmRequirements{};
@@ -2921,7 +2922,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFa
     wddm->failOpenSharedHandle = true;
 
     AllocationProperties properties(0, false, size, AllocationType::sharedBuffer, false, false, 0);
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, properties, false, false, true, nullptr);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     EXPECT_EQ(nullptr, gpuAllocation);
 }
 

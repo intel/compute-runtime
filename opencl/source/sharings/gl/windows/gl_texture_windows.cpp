@@ -59,7 +59,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
                                          AllocationType::sharedImage,
                                          false, // isMultiStorageAllocation
                                          context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex()));
-    auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, allocProperties, false, false, true, nullptr);
+    MemoryManager::ExtendedOsHandleData osHandleData{texInfo.globalShareHandle};
+    auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, allocProperties, false, false, true, nullptr);
 
     if (alloc == nullptr) {
         errorCode.set(CL_INVALID_GL_OBJECT);
@@ -128,7 +129,8 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     GraphicsAllocation *mcsAlloc = nullptr;
     if (texInfo.globalShareHandleMCS) {
         AllocationProperties allocProperties(context->getDevice(0)->getRootDeviceIndex(), 0, AllocationType::mcs, context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex()));
-        mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandleMCS, allocProperties, false, false, true, nullptr);
+        MemoryManager::OsHandleData osHandleData{texInfo.globalShareHandleMCS};
+        mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, allocProperties, false, false, true, nullptr);
         if (texInfo.pGmmResInfoMCS) {
             DEBUG_BREAK_IF(mcsAlloc->getDefaultGmm() != nullptr);
             mcsAlloc->setDefaultGmm(new Gmm(gmmHelper, texInfo.pGmmResInfoMCS));

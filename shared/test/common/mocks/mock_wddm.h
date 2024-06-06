@@ -77,7 +77,7 @@ class WddmMock : public Wddm {
     NTSTATUS createAllocation(WddmAllocation *wddmAllocation);
     bool createAllocation64k(WddmAllocation *wddmAllocation);
     bool destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext);
-    bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) override;
+    bool openSharedHandle(const MemoryManager::ExtendedOsHandleData &osHandleData, WddmAllocation *alloc) override;
     bool createContext(OsContextWin &osContext) override;
     void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext) override;
     bool destroyContext(D3DKMT_HANDLE context) override;

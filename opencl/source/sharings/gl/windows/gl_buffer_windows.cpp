@@ -153,8 +153,9 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
                                            false, // isMultiStorageAllocation
                                            context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
         // couldn't find allocation for reuse - create new
+        MemoryManager::OsHandleData osHandleData{bufferInfo.globalShareHandle};
         graphicsAllocation =
-            context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(bufferInfo.globalShareHandle, properties, true, false, true, nullptr);
+            context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, true, false, true, nullptr);
     }
 
     if (!graphicsAllocation) {

@@ -295,7 +295,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     UNRECOVERABLE_IF(numDevices == 0);
     auto device = Device::fromHandle(*deviceHandles);
     auto neoDevice = device->getNEODevice();
-    NEO::osHandle osHandle = static_cast<NEO::osHandle>(poolData.handle);
+    NEO::MemoryManager::OsHandleData osHandleData{poolData.handle};
 
     if (poolData.numDevices == 1) {
         for (uint32_t i = 0; i < numDevices; i++) {
@@ -331,7 +331,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     auto memoryManager = driver->getMemoryManager();
-    NEO::GraphicsAllocation *alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle,
+    NEO::GraphicsAllocation *alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData,
                                                                                              unifiedMemoryProperties,
                                                                                              false,
                                                                                              eventPool->isHostVisibleEventPoolAllocation,

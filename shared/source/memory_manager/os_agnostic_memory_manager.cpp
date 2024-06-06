@@ -275,15 +275,15 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromMultipl
     return nullptr;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
+GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
     void *gpuPtr = reinterpret_cast<void *>(1);
     if (mapPointer) {
         gpuPtr = mapPointer;
     }
     auto graphicsAllocation = createMemoryAllocation(properties.allocationType, nullptr, gpuPtr, 1,
-                                                     4096u, static_cast<uint64_t>(handle), MemoryPool::systemCpuInaccessible, properties.rootDeviceIndex,
+                                                     4096u, static_cast<uint64_t>(osHandleData.handle), MemoryPool::systemCpuInaccessible, properties.rootDeviceIndex,
                                                      false, false, requireSpecificBitness);
-    graphicsAllocation->setSharedHandle(handle);
+    graphicsAllocation->setSharedHandle(osHandleData.handle);
     graphicsAllocation->set32BitAllocation(requireSpecificBitness);
 
     if (properties.imgInfo) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,8 @@ GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, U
                                               imgInfo,
                                               allocationType,
                                               context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
-        return memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(description.handle), properties, false, false, true, nullptr);
+        MemoryManager::OsHandleData osHandleData{description.handle};
+        return memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     }
     default:
         return nullptr;

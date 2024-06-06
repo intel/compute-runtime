@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -169,9 +169,9 @@ struct UnifiedSharingCreateAllocationTests : UnifiedSharingTestsWithMemoryManage
             this->handle = toOsHandle(handle);
             return nullptr;
         }
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
             this->createFromSharedHandleCalled = true;
-            this->handle = handle;
+            this->handle = osHandleData.handle;
             this->properties = std::make_unique<AllocationProperties>(properties);
             return nullptr;
         }

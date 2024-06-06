@@ -229,15 +229,15 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndMemory
 using DrmMemoryManagerUsmSharedHandleTest = DrmMemoryManagerLocalMemoryTest;
 
 TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledWithBufferHostMemoryAllocationTypeThenGraphicsAllocationIsReturned) {
-    osHandle handle = 1u;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
     this->mock->outputHandle = 2u;
     size_t size = 4096u;
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::bufferHostMemory, false, {});
 
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, true, true, nullptr);
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, true, true, nullptr);
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_EQ(this->mock->inputFd, (int)handle);
+    EXPECT_EQ(this->mock->inputFd, (int)osHandleData.handle);
     EXPECT_EQ(this->mock->setTilingHandle, 0u);
 
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);

@@ -828,10 +828,10 @@ bool Wddm::verifySharedHandle(D3DKMT_HANDLE osHandle) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
+bool Wddm::openSharedHandle(const MemoryManager::ExtendedOsHandleData &osHandleData, WddmAllocation *alloc) {
     D3DKMT_QUERYRESOURCEINFO queryResourceInfo = {};
     queryResourceInfo.hDevice = device;
-    queryResourceInfo.hGlobalShare = handle;
+    queryResourceInfo.hGlobalShare = osHandleData.handle;
     [[maybe_unused]] auto status = getGdi()->queryResourceInfo(&queryResourceInfo);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
@@ -847,7 +847,7 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     D3DKMT_OPENRESOURCE openResource = {};
 
     openResource.hDevice = device;
-    openResource.hGlobalShare = handle;
+    openResource.hGlobalShare = osHandleData.handle;
     openResource.NumAllocations = queryResourceInfo.NumAllocations;
     openResource.pOpenAllocationInfo2 = allocationInfo.get();
     openResource.pTotalPrivateDriverDataBuffer = allocPrivateData.get();

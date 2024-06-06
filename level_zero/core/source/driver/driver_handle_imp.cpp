@@ -639,7 +639,7 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
                                       void *basePointer,
                                       NEO::GraphicsAllocation **pAlloc,
                                       NEO::SvmAllocationData &mappedPeerAllocData) {
-    NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
+    NEO::MemoryManager::OsHandleData osHandleData{handle};
     NEO::AllocationProperties unifiedMemoryProperties{neoDevice->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
                                                       allocationType,
@@ -647,7 +647,7 @@ void *DriverHandleImp::importFdHandle(NEO::Device *neoDevice,
     unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
     bool isHostIpcAllocation = (allocationType == NEO::AllocationType::bufferHostMemory) ? true : false;
     NEO::GraphicsAllocation *alloc =
-        this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandle,
+        this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData,
                                                                            unifiedMemoryProperties,
                                                                            false,
                                                                            isHostIpcAllocation,
