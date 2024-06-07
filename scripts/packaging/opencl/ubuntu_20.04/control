@@ -1,0 +1,32 @@
+Source: intel-compute-runtime
+Section: libs
+Priority: optional
+Maintainer: Intel Graphics Team <linux-graphics@intel.com>
+XSBC-Original-Maintainer: Debian OpenCL Maintainers <pkg-opencl-devel@lists.alioth.debian.org>
+Build-Depends: debhelper (>= 11),
+ cmake,
+ intel-igc-opencl-devel,
+ libigdgmm-dev,
+# libva-dev,
+ pkg-config
+Standards-Version: 4.3.0
+Homepage: https://github.com/intel/compute-runtime
+
+Package: intel-opencl-icd
+Architecture: amd64 arm64
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ intel-igc-opencl,
+ libigdgmm12,
+ ocl-icd-libopencl1,
+Breaks:
+ intel-opencl
+Replaces:
+ intel-opencl
+Provides:
+ opencl-icd
+Description: Intel graphics compute runtime for OpenCL
+ The Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source
+ project to converge Intel's development efforts on OpenCL(TM) compute
+ stacks supporting the GEN graphics hardware architecture.
