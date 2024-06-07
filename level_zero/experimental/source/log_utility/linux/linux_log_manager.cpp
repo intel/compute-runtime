@@ -9,11 +9,30 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "driver_version.h"
+
 #include <map>
+
+#define QTR(a) #a
+#define TOSTR(b) QTR(b)
+#define LOG_INFO_VERSION_SHA(logType, version, sha)                                              \
+    auto logger = NEO::LogManager::getInstance()->getLogger(logType);                            \
+    if (logger) {                                                                                \
+        char logBuffer[256];                                                                     \
+        snprintf(logBuffer, 256, "Level zero driver version and SHA : %s - %s\n", version, sha); \
+        logger->logInfo(logBuffer);                                                              \
+    }
 
 namespace NEO {
 std::unique_ptr<LogManager> LogManager::instancePtr = nullptr;
 uint32_t LogManager::logLevel = UINT32_MAX;
+
+void initLogger() {
+    if (NEO::LogManager::getLoggingLevel() != (uint32_t)NEO::LogLevel::logLevelOff) {
+        CREATE_LOGGER(NEO::LogManager::LogType::coreLogger, "coreLogger.log", NEO::LogManager::getLoggingLevel());
+        LOG_INFO_VERSION_SHA(NEO::LogManager::LogType::coreLogger, TOSTR(NEO_OCL_DRIVER_VERSION), NEO_REVISION);
+    }
+}
 
 LogManager *LogManager::getInstance() {
     if (instancePtr == nullptr) {

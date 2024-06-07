@@ -68,4 +68,5 @@ class LogManager {
         }                                                                             \
     }
 
+extern void initLogger();
 } // namespace NEO
