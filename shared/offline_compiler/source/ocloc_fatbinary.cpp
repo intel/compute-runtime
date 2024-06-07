@@ -295,7 +295,10 @@ int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy
         entryName = product;
     } else {
         auto productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(product);
-        if (AOT::UNKNOWN_ISA != productConfig) {
+        auto genericIdAcronymIt = std::find_if(AOT::genericIdAcronyms.begin(), AOT::genericIdAcronyms.end(), [product](const std::pair<std::string, AOT::PRODUCT_CONFIG> &genericIdAcronym) {
+            return product == genericIdAcronym.first;
+        });
+        if (AOT::UNKNOWN_ISA != productConfig && genericIdAcronymIt == AOT::genericIdAcronyms.end()) {
             entryName = ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
         } else {
             entryName = product;

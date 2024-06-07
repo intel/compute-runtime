@@ -2099,6 +2099,65 @@ TEST(OclocFatBinaryHelpersTest, givenListOfDeprecatedAcronymsThenUseThemAsIs) {
     }
 }
 
+TEST(OclocFatBinaryHelpersTest, givenListOfGenericAcronymsThenUseThemAsIs) {
+    ProductConfigHelper productConfigHelper;
+    std::vector<NEO::ConstStringRef> genericAcronyms{};
+
+    for (const auto &genericIdEntry : AOT::genericIdAcronyms) {
+        genericAcronyms.push_back(genericIdEntry.first);
+    }
+    if (genericAcronyms.empty()) {
+        GTEST_SKIP();
+    }
+
+    ::testing::internal::CaptureStdout();
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        genericAcronyms[0].str()};
+    int deviceArgIndex = 5;
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
+
+    mockOfflineCompiler.buildReturnValue = OCLOC_SUCCESS;
+
+    Ar::ArEncoder ar;
+    const std::string pointerSize{"64"};
+
+    const int previousReturnValue{OCLOC_SUCCESS};
+    for (const auto &product : genericAcronyms) {
+        argv[deviceArgIndex] = product.str();
+
+        auto retVal = buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, product.str());
+        EXPECT_EQ(0, retVal);
+    }
+    const auto output{::testing::internal::GetCapturedStdout()};
+    EXPECT_TRUE(output.empty()) << output;
+
+    auto encodedFatbin = ar.encode();
+    std::string arError, arWarning;
+    auto decodedAr = Ar::decodeAr(encodedFatbin, arError, arWarning);
+    EXPECT_TRUE(arError.empty()) << arError;
+    EXPECT_TRUE(arWarning.empty()) << arWarning;
+    std::unordered_set<std::string> entryNames;
+    for (const auto &entry : decodedAr.files) {
+        entryNames.insert(entry.fileName.str());
+    }
+
+    for (const auto &expectedAcronym : genericAcronyms) {
+        auto expectedName = (pointerSize + ".") + expectedAcronym.data();
+        EXPECT_EQ(1U, entryNames.count(expectedName)) << expectedAcronym.data() << "not found in [" << ConstStringRef(",").join(entryNames) << "]";
+    }
+}
+
 TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {
     using namespace std::string_literals;
 
