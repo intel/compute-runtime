@@ -230,6 +230,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenLowPriorityOsContextIsSet
 
     aubCsr->setupContext(osContext);
     EXPECT_NE(nullptr, aubCsr->hardwareContextController.get());
+    EXPECT_TRUE(aub_stream::hardwareContextFlags::lowPriority & mockManager->contextFlags);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenItIsCreatedThenFileIsNotCreated) {

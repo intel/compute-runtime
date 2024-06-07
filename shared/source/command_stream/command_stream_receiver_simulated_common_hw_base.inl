@@ -51,6 +51,8 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
 
     if (osContext.isHighPriority()) {
         flags |= aub_stream::hardwareContextFlags::highPriority;
+    } else if (osContext.isLowPriority()) {
+        flags |= aub_stream::hardwareContextFlags::lowPriority;
     }
 
     if (debugManager.flags.AppendAubStreamContextFlags.get() != -1) {
