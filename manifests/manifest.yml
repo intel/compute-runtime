@@ -3,7 +3,7 @@ components:
     branch: master
     dest_dir: aub_stream
     repository: https://github.com/intel/aubstream
-    revision: 7240f8d9837b926a5cd96fafecd22928e0113dd9
+    revision: 909f081bb7ddcf81da7dc48d4182f03af70eedfe
     type: git
   gmmlib:
     asset_name: gmmlib
@@ -42,7 +42,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 2474-1797
+    revision: 2479-1818
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
@@ -91,5 +91,5 @@ components:
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-2474
+converter: M-2479
 version: '1'
