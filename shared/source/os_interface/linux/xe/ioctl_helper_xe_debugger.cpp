@@ -137,7 +137,7 @@ void IoctlHelperXe::addDebugMetadata(DrmResourceClass type, uint64_t *offset, ui
 }
 
 int IoctlHelperXe::getRunaloneExtProperty() {
-    return DRM_XE_EXEC_QUEUE_SET_PROPERTY_EU_DEBUG;
+    return DRM_XE_EXEC_QUEUE_SET_PROPERTY_EUDEBUG;
 }
 
 int IoctlHelperXe::getEuDebugSysFsEnable() {
