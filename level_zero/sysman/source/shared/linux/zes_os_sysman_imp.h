@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     decltype(&NEO::SysCalls::pwrite) pwriteFunction = NEO::SysCalls::pwrite;
     ze_result_t createPmtHandles();
     SysmanDeviceImp *getParentSysmanDeviceImp() { return pParentSysmanDeviceImp; }
-    std::string &getPciRootPath();
+    std::string &getPciRootPath() { return rootPath; }
     std::string &getDeviceName();
     std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
@@ -79,6 +79,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     bool isMemoryDiagnostics = false;
     std::string gtDevicePath;
     SysmanKmdInterface *getSysmanKmdInterface() { return pSysmanKmdInterface.get(); }
+    static ze_result_t getResult(int err);
 
   protected:
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;

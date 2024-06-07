@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,8 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
     static void create(LinuxSysmanImp *pLinuxSysmanImp, std::string &gpuUpstreamPortPath,
                        std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject);
     static ze_result_t getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
+    static bool getTelemOffsetAndTelemDir(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &telemOffset, std::string &telemDir);
+    static bool getTelemOffsetForContainer(const std::string &telemDir, const std::string &key, uint64_t &telemOffset);
 
   protected:
     static uint32_t rootDeviceTelemNodeIndex;
