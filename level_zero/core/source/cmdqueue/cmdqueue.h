@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 
@@ -23,12 +24,18 @@ class CommandStreamReceiver;
 class GraphicsAllocation;
 class LinearStream;
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
+
 } // namespace NEO
 
 struct UnifiedMemoryControls;
 
 namespace L0 {
 struct Device;
+
+struct QueueProperties {
+    NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
+    bool interruptHint = false;
+};
 
 struct CommandQueue : _ze_command_queue_handle_t {
     template <typename Type>
@@ -60,7 +67,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
         return static_cast<CommandQueue *>(handle);
     }
 
-    static bool uniqueInterruptRequired(const ze_command_queue_desc_t &desc);
+    static QueueProperties extractQueueProperties(const ze_command_queue_desc_t &desc);
 
     virtual void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) = 0;
     virtual void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) = 0;

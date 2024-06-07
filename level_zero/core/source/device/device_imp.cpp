@@ -337,10 +337,12 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     bool isCopyOnly = NEO::EngineHelper::isCopyOnlyEngineType(
         getEngineGroupTypeForOrdinal(commandQueueDesc.ordinal));
 
+    auto queueProperties = CommandQueue::extractQueueProperties(*desc);
+
     if (isSuitableForLowPriority(commandQueueDesc.priority, isCopyOnly)) {
         getCsrForLowPriority(&csr);
     } else {
-        auto ret = getCsrForOrdinalAndIndexWithPriority(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, CommandQueue::uniqueInterruptRequired(*desc));
+        auto ret = getCsrForOrdinalAndIndexWithPriority(&csr, commandQueueDesc.ordinal, commandQueueDesc.index, commandQueueDesc.priority, queueProperties.interruptHint);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }

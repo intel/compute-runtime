@@ -173,6 +173,8 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     CommandListImp *commandList = nullptr;
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
 
+    auto queueProperties = CommandQueue::extractQueueProperties(cmdQdesc);
+
     if (allocator) {
         NEO::CommandStreamReceiver *csr = nullptr;
         auto deviceImp = static_cast<DeviceImp *>(device);
@@ -187,7 +189,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 engineGroupType = deviceImp->getInternalEngineGroupType();
             }
         } else {
-            returnValue = device->getCsrForOrdinalAndIndexWithPriority(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, CommandQueue::uniqueInterruptRequired(cmdQdesc));
+            returnValue = device->getCsrForOrdinalAndIndexWithPriority(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.interruptHint);
             if (returnValue != ZE_RESULT_SUCCESS) {
                 return commandList;
             }
@@ -244,15 +246,8 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
         commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, device->getProductHelper());
 
-        auto pNext = reinterpret_cast<const ze_base_desc_t *>(cmdQdesc.pNext);
-
-        while (pNext) {
-            auto syncDispatchMode = getSyncDispatchMode(pNext);
-            if (syncDispatchMode.has_value()) {
-                commandList->enableSynchronizedDispatch(syncDispatchMode.value());
-            }
-
-            pNext = reinterpret_cast<const ze_base_desc_t *>(pNext->pNext);
+        if (queueProperties.synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
+            commandList->enableSynchronizedDispatch(queueProperties.synchronizedDispatchMode);
         }
 
         if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1) && !commandList->isCopyOnly() && commandList->isInOrderExecutionEnabled()) {

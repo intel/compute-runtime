@@ -28,6 +28,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/kernel/kernel.h"
 
 #include "igfxfmid.h"
@@ -361,14 +362,24 @@ ze_result_t CommandQueueImp::getIndex(uint32_t *pIndex) {
     return ZE_RESULT_SUCCESS;
 }
 
-bool CommandQueue::uniqueInterruptRequired(const ze_command_queue_desc_t &desc) {
-    auto properties = static_cast<const ze_base_properties_t *>(desc.pNext);
+QueueProperties CommandQueue::extractQueueProperties(const ze_command_queue_desc_t &desc) {
+    QueueProperties queueProperties = {};
 
-    if (properties && (properties->stype == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES)) {
-        return static_cast<const zex_intel_queue_allocate_msix_hint_exp_desc_t *>(desc.pNext)->uniqueMsix;
+    auto baseProperties = static_cast<const ze_base_desc_t *>(desc.pNext);
+
+    while (baseProperties) {
+        if (baseProperties->stype == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES) {
+            queueProperties.interruptHint = static_cast<const zex_intel_queue_allocate_msix_hint_exp_desc_t *>(desc.pNext)->uniqueMsix;
+        } else if (auto syncDispatchMode = getSyncDispatchMode(baseProperties)) {
+            if (syncDispatchMode.has_value()) {
+                queueProperties.synchronizedDispatchMode = syncDispatchMode.value();
+            }
+        }
+
+        baseProperties = static_cast<const ze_base_desc_t *>(baseProperties->pNext);
     }
 
-    return false;
+    return queueProperties;
 }
 
 } // namespace L0
