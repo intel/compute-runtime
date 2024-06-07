@@ -148,10 +148,12 @@ struct MetricImp : public Metric {
     ~MetricImp() override = default;
     MetricImp(MetricSource &metricSource) : metricSource(metricSource) {}
     bool isImmutable() { return isPredefined; }
+    bool isRootDevice() { return isMultiDevice; }
 
   protected:
     MetricSource &metricSource;
     bool isPredefined = true;
+    bool isMultiDevice = false;
 };
 
 struct MetricGroup : _zet_metric_group_handle_t {

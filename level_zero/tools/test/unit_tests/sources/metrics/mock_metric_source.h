@@ -122,6 +122,10 @@ class MockMetric : public L0::MetricImp {
     void setPredefined(bool status) {
         isPredefined = status;
     }
+
+    void setMultiDevice(bool status) {
+        isMultiDevice = status;
+    }
 };
 
 } // namespace ult

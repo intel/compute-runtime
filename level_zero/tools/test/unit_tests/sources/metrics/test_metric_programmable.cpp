@@ -118,5 +118,11 @@ TEST_F(MetricEnumerationProgrammableTest, whenProgrammableApisAreCalledUnsupport
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetMetricCreateFromProgrammableExp(hMetricProgrammable, &parameterValues, parameterCount, metricName, metricDescription, &metricHandleCount, nullptr));
 }
 
+TEST_F(MetricEnumerationProgrammableTest, givenNonRootDeviceMetricwhenIsRootDeviceIsCalledThenReturnFalse) {
+    MockMetricSource metricSource{};
+    MockMetric metric(metricSource);
+    EXPECT_FALSE(metric.isRootDevice());
+}
+
 } // namespace ult
 } // namespace L0
