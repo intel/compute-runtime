@@ -2028,28 +2028,36 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithIn
 
         zex_intel_queue_allocate_msix_hint_exp_desc_t allocateMsix = {};
         allocateMsix.stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES;
-        allocateMsix.uniqueMsix = false;
+        allocateMsix.uniqueMsix = true;
 
         ze_command_queue_desc_t desc = {};
         desc.pNext = &allocateMsix;
 
-        ze_command_list_handle_t commandListHandle1, commandListHandle2;
+        ze_command_list_handle_t commandListHandle1, commandListHandle2, commandListHandle3;
 
         auto result = device->createCommandListImmediate(&desc, &commandListHandle1);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        allocateMsix.uniqueMsix = true;
         result = device->createCommandListImmediate(&desc, &commandListHandle2);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        allocateMsix.uniqueMsix = false;
+        result = device->createCommandListImmediate(&desc, &commandListHandle3);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
         auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+        auto commandList3 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle3));
 
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandList1->getCsr()->getOsContext()).allocateInterruptPassed);
+        EXPECT_TRUE(static_cast<MockOsContext &>(commandList1->getCsr()->getOsContext()).allocateInterruptPassed);
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandList1->getCsr()->getOsContext()).isPartOfContextGroup());
         EXPECT_TRUE(static_cast<MockOsContext &>(commandList2->getCsr()->getOsContext()).allocateInterruptPassed);
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandList2->getCsr()->getOsContext()).isPartOfContextGroup());
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandList3->getCsr()->getOsContext()).allocateInterruptPassed);
 
         commandList1->destroy();
         commandList2->destroy();
+        commandList3->destroy();
     }
 
     for (auto &context : mockOsContexts) {

@@ -522,6 +522,12 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bo
         secondaryEngineIndex += secondaryEnginesForType.regularEnginesTotal;
     } else if (engineTypeUsage.second == EngineUsage::regular) {
         secondaryEngineIndex = (secondaryEnginesForType.regularCounter.fetch_add(1)) % (secondaryEnginesForType.regularEnginesTotal);
+
+        if (secondaryEngineIndex == 0 && allocateInterrupt) {
+            // Context 0 is already pre-initialized. We need non-initialized context, to pass context creation flag.
+            // If all contexts are already initialized, just take next available. Interrupt request is only a hint.
+            secondaryEngineIndex = (secondaryEnginesForType.regularCounter.fetch_add(1)) % (secondaryEnginesForType.regularEnginesTotal);
+        }
     } else {
         DEBUG_BREAK_IF(true);
     }

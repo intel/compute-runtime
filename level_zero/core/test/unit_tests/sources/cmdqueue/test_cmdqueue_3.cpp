@@ -1410,28 +1410,36 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesWithInterrup
 
         zex_intel_queue_allocate_msix_hint_exp_desc_t allocateMsix = {};
         allocateMsix.stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES;
-        allocateMsix.uniqueMsix = false;
+        allocateMsix.uniqueMsix = true;
 
         ze_command_queue_desc_t desc = {};
         desc.pNext = &allocateMsix;
-        ze_command_queue_handle_t commandQueueHandle1, commandQueueHandle2;
+        ze_command_queue_handle_t commandQueueHandle1, commandQueueHandle2, commandQueueHandle3;
 
         auto result = device->createCommandQueue(&desc, &commandQueueHandle1);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        allocateMsix.uniqueMsix = true;
-
         result = device->createCommandQueue(&desc, &commandQueueHandle2);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        allocateMsix.uniqueMsix = false;
+
+        result = device->createCommandQueue(&desc, &commandQueueHandle3);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         auto commandQueue1 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle1));
         auto commandQueue2 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle2));
+        auto commandQueue3 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle3));
 
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandQueue1->getCsr()->getOsContext()).allocateInterruptPassed);
+        EXPECT_TRUE(static_cast<MockOsContext &>(commandQueue1->getCsr()->getOsContext()).allocateInterruptPassed);
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandQueue1->getCsr()->getOsContext()).isPartOfContextGroup());
         EXPECT_TRUE(static_cast<MockOsContext &>(commandQueue2->getCsr()->getOsContext()).allocateInterruptPassed);
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandQueue2->getCsr()->getOsContext()).isPartOfContextGroup());
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandQueue3->getCsr()->getOsContext()).allocateInterruptPassed);
 
         commandQueue1->destroy();
         commandQueue2->destroy();
+        commandQueue3->destroy();
     }
 
     for (auto &context : mockOsContexts) {
