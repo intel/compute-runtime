@@ -205,11 +205,6 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(c
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
     return true;
 }

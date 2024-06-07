@@ -38,5 +38,10 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     return 0;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return false;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

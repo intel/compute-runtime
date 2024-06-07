@@ -139,46 +139,6 @@ HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOr
     context->devices.pop_back();
 }
 
-HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrMultiDeviceContextWhenCheckIfEnabledThenReturnCorrectValue, IsXeHpgCore) {
-    DebugManagerStateRestore restore;
-    // Single device context
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
-        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
-        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
-        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    // Multi device context
-    context->devices.push_back(nullptr);
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
-        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    context->devices.pop_back();
-}
-
 HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrMultiDeviceContextWhenCheckIfEnabledThenReturnCorrectValue, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     // Single device context
