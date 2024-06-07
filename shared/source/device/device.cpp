@@ -468,6 +468,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     bool initializeDevice = (useContextGroup || isHeaplessStateInit) && !firstSubmissionDone;
 
     if (initializeDevice) {
+        commandStreamReceiver->initializeResources(false);
         commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
     }
 
