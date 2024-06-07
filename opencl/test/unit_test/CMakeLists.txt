@@ -119,6 +119,7 @@ set_property(TARGET igdrcl_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLA
 if(UNIX)
   set_property(TARGET igdrcl_tests APPEND_STRING PROPERTY COMPILE_FLAGS " -g")
 endif()
+set_property(TARGET igdrcl_tests PROPERTY ENABLE_EXPORTS TRUE)
 
 set_target_properties(unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_target_properties(prepare_test_kernels_for_ocl PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})

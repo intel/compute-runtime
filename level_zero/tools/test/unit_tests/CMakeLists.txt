@@ -46,6 +46,7 @@ target_sources(${TARGET_NAME} PRIVATE
 )
 
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
+set_property(TARGET ${TARGET_NAME} PROPERTY ENABLE_EXPORTS TRUE)
 
 add_subdirectoriesL0(${CMAKE_CURRENT_SOURCE_DIR} "*")
 

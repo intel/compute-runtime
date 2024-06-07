@@ -28,6 +28,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
   )
 
   set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
+  set_property(TARGET igdrcl_aub_tests PROPERTY ENABLE_EXPORTS TRUE)
 
   if(WIN32)
     set_target_properties(igdrcl_aub_tests PROPERTIES

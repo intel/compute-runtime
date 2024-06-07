@@ -35,6 +35,7 @@ add_dependencies(neo_shared_tests test_dynamic_lib)
 
 set_property(TARGET neo_shared_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 set_target_properties(neo_shared_tests PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}")
+set_property(TARGET neo_shared_tests PROPERTY ENABLE_EXPORTS TRUE)
 
 target_include_directories(neo_shared_tests PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests

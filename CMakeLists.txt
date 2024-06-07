@@ -5,10 +5,6 @@
 #
 
 cmake_minimum_required(VERSION 3.13.0 FATAL_ERROR)
-if(POLICY CMP0065)
-  cmake_policy(SET CMP0065 OLD)
-endif()
-
 include(ExternalProject)
 
 if(NEO_ENABLE_INTERPROCEDURAL_OPTIMIZATION)

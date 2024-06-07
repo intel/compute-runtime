@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -59,6 +59,7 @@ endif()
 
 get_property(CLOC_FOLDER TARGET ocloc PROPERTY FOLDER)
 set_property(TARGET ocloc_segfault_test PROPERTY FOLDER ${CLOC_FOLDER})
+set_property(TARGET ocloc_segfault_test PROPERTY ENABLE_EXPORTS TRUE)
 
 target_include_directories(ocloc_segfault_test BEFORE PRIVATE ${CLOC_SEGFAULT_TEST_INCLUDES})
 create_project_source_tree(ocloc_segfault_test)

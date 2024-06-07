@@ -45,6 +45,7 @@ add_dependencies(igdrcl_mt_tests
 create_project_source_tree(igdrcl_mt_tests)
 
 set_target_properties(igdrcl_mt_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
+set_property(TARGET igdrcl_mt_tests PROPERTY ENABLE_EXPORTS TRUE)
 set_property(TARGET igdrcl_mt_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${TSAN_FLAGS})
 if(NOT WIN32)
   set_property(TARGET igdrcl_mt_tests APPEND_STRING PROPERTY COMPILE_FLAGS " -g")
