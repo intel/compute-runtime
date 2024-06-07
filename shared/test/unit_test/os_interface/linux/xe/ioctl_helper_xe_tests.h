@@ -82,7 +82,7 @@ class DrmMockXe : public DrmMockCustom {
     DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
 
         auto xeQueryConfig = reinterpret_cast<drm_xe_query_config *>(queryConfig);
-        xeQueryConfig->num_params = 5;
+        xeQueryConfig->num_params = 6;
         xeQueryConfig->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] = (revId << 16) | devId;
         xeQueryConfig->info[DRM_XE_QUERY_CONFIG_VA_BITS] = 48;
         xeQueryConfig->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] = mockMaxExecQueuePriority;
@@ -363,9 +363,10 @@ class DrmMockXe : public DrmMockCustom {
     const uint16_t revId = 0x12;
     const uint16_t devId = 0xabc;
 
-    uint64_t queryConfig[6]{}; // 1 qword for num params and 1 qwords per param
+    uint64_t queryConfig[7]{}; // 1 qword for num params and 1 qwords per param
     static constexpr uint32_t mockExecQueueId = 1234;
     static constexpr int32_t mockMaxExecQueuePriority = 3;
+    static constexpr int32_t mockDefaultCxlType = 0;
     static constexpr uint32_t mockTimestampFrequency = 12500000;
     static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
     uint64_t queryEngines[52]{}; // 1 qword for num engines and 4 qwords per engine

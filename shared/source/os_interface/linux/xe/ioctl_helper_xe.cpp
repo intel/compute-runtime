@@ -153,6 +153,8 @@ bool IoctlHelperXe::initialize() {
     hwInfo->platform.usRevId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
     hwInfo->capabilityTable.gpuAddressSpace = (1ull << config->info[DRM_XE_QUERY_CONFIG_VA_BITS]) - 1;
 
+    hwInfo->capabilityTable.cxlType = getCxlType(config);
+
     queryGtListData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_GT_LIST);
 
     if (queryGtListData.empty()) {

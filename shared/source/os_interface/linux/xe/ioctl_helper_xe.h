@@ -17,6 +17,7 @@
 
 struct drm_xe_engine_class_instance;
 struct drm_xe_query_gt_list;
+struct drm_xe_query_config;
 
 namespace NEO {
 
@@ -154,6 +155,7 @@ class IoctlHelperXe : public IoctlHelper {
     void *freeDebugMetadata(void *metadata);
     int getRunaloneExtProperty();
     virtual bool isExtraEngineClassAllowed(uint16_t engineClass) const { return false; }
+    virtual uint32_t getCxlType(struct drm_xe_query_config *config) { return 0u; }
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;
