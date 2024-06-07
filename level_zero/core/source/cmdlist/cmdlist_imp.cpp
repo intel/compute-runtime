@@ -26,10 +26,10 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
-#include "level_zero/experimental/source/log_utility/log_manager.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "igfxfmid.h"
+#include "log_manager.h"
 
 #include <algorithm>
 

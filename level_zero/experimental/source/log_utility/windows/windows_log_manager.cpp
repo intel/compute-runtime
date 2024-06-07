@@ -37,4 +37,6 @@ uint32_t LogManager::getLoggingLevel() {
 void WinLogManager::destroyLogger(LogManager::LogType logType) {
 }
 
+void initLogger(){};
+
 } // namespace NEO

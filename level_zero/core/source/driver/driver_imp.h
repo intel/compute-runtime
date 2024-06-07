@@ -21,7 +21,6 @@ class DriverImp : public Driver {
     void initialize(ze_result_t *result) override;
 
   protected:
-    void initLogger();
     std::once_flag initDriverOnce;
     static ze_result_t initStatus;
 };

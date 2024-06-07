@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(UNIX)
+if(UNIX AND DEFINED NEO_SPDLOG_DIR)
   target_sources(
                  ${TARGET_NAME}
                  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
