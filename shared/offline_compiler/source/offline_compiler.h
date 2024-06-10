@@ -193,7 +193,7 @@ All supported acronyms: %s.
     bool inputFileSpirV = false;
     bool outputNoSuffix = false;
     bool forceStatelessToStatefulOptimization = false;
-    bool isSpirV = false;
+    bool isSpirV = true;
     bool showHelp = false;
     bool excludeIr = false;
 

@@ -3181,6 +3181,7 @@ TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTransl
     auto mockFclOclDeviceCtx = new NEO::MockFclOclDeviceCtx();
     mockOfflineCompiler.mockFclFacade->fclDeviceCtx = CIF::RAII::Pack<IGC::FclOclDeviceCtxTagOCL>(mockFclOclDeviceCtx);
 
+    mockOfflineCompiler.inputFileLlvm = true;
     mockOfflineCompiler.useLlvmBc = true;
     const auto buildResult = mockOfflineCompiler.buildIrBinary();
     EXPECT_EQ(CL_SUCCESS, buildResult);

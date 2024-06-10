@@ -22,7 +22,7 @@ inline void overwriteBuiltInBinaryName(
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".bc");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".spv");
     fclDebugVars.appendOptionsToFileName = appendOptionsToFileName;
 
     retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".bin");
