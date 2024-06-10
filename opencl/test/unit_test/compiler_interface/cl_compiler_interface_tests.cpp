@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ TEST_F(ClCompilerInterfaceTest, WhenCompileIsInvokedThenFclReceivesListOfExtensi
     std::string receivedInternalOptions;
 
     MockCompilerDebugVars fclDebugVars;
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBuffer_simd16_", ".bc");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBuffer_simd16_", ".spv");
     fclDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
     gEnvironment->fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};

@@ -224,7 +224,7 @@ TEST_F(CompilerInterfaceTest, GivenOptionsWhenCompilingToIsaThenSuccessIsReturne
 
 TEST_F(CompilerInterfaceTest, WhenCompilingToIrThenSuccessIsReturned) {
     MockCompilerDebugVars fclDebugVars;
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBuffer_simd32_", ".bc");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBuffer_simd32_", ".spv");
     gEnvironment->fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
@@ -305,7 +305,7 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenLinkingIrThenLinkFailure
 TEST_F(CompilerInterfaceTest, WhenLinkIsCalledThenOclGenBinIsTheTranslationTarget) {
     // link only from .ll to gen ISA
     MockCompilerDebugVars igcDebugVars;
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd32_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd32_", ".spv");
     gEnvironment->igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
@@ -372,7 +372,7 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenCreatingLibraryThenLinkF
 TEST_F(CompilerInterfaceTest, WhenCreateLibraryIsCalledThenLlvmBcIsUsedAsIntermediateRepresentation) {
     // create library from .ll to IR
     MockCompilerDebugVars igcDebugVars;
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd32_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd32_", ".spv");
     gEnvironment->igcPushDebugVars(igcDebugVars);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->createLibrary(*pDevice, inputArgs, translationOutput);
@@ -418,7 +418,7 @@ TEST_F(CompilerInterfaceTest, GivenForceBuildFailureWhenFclBuildingThenBuildFail
     fclDebugVars.forceCreateFailure = false;
     fclDebugVars.forceBuildFailure = true;
     fclDebugVars.forceRegisterFail = false;
-    fclDebugVars.fileName = "copybuffer_skl.bc";
+    fclDebugVars.fileName = "copybuffer_skl.spv";
 
     gEnvironment->fclPushDebugVars(fclDebugVars);
 
@@ -1039,7 +1039,7 @@ TEST_F(CompilerInterfaceTest, whenGetIgcDeviceCtxReturnsNullptrThenGetSipKernelB
 
 TEST_F(CompilerInterfaceTest, whenEverythingIsOkThenGetSipKernelReturnsIgcsOutputAsSipBinary) {
     MockCompilerDebugVars igcDebugVars;
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd32_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "CopyBuffer_simd32_", ".spv");
     gEnvironment->igcPushDebugVars(igcDebugVars);
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;

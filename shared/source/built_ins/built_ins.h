@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ struct BuiltinCode {
         case BuiltinCode::ECodeType::binary:
             return ".bin";
         case BuiltinCode::ECodeType::intermediate:
-            return ".bc";
+            return ".spv";
         case BuiltinCode::ECodeType::source:
             return ".cl";
         }

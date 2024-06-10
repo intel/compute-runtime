@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ inline void overwriteBuiltInBinaryName(
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".bc");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".spv");
     fclDebugVars.appendOptionsToFileName = appendOptionsToFileName;
 
     retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".bin");

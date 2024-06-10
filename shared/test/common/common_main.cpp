@@ -402,7 +402,7 @@ int main(int argc, char **argv) {
         } else {
             builtInsFileName = KernelBinaryHelper::BUILT_INS;
         }
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".bc");
+        retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv");
         retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
 
         gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);

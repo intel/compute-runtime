@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ KernelBinaryHelper::KernelBinaryHelper(const std::string &name, bool appendOptio
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, name + "_", ".bc");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, name + "_", ".spv");
     retrieveBinaryKernelFilename(igcDebugVars.fileName, name + "_", ".bin");
 
     appendBinaryNameSuffix(fclDebugVars.fileNameSuffix);

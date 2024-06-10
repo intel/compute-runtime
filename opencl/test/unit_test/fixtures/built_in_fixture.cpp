@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ void BuiltInFixture::setUp(Device *pDevice) {
     } else {
         builtInsFileName = KernelBinaryHelper::BUILT_INS;
     }
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".bc");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv");
     retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
 
     gEnvironment->fclPushDebugVars(fclDebugVars);
