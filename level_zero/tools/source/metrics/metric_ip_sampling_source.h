@@ -45,7 +45,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
     void setActivationTracker(MultiDomainDeferredActivationTracker *inputActivationTracker) {
         activationTracker.reset(inputActivationTracker);
     }
-    uint32_t metricSourceCount;
+    uint32_t metricSourceCount = 0;
 
   protected:
     void cacheMetricGroup();
