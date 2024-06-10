@@ -63,20 +63,12 @@ ze_result_t LinuxSysmanImp::init() {
     return createPmtHandles();
 }
 
-ze_result_t LinuxSysmanImp::getResult(int err) {
-    if ((EPERM == err) || (EACCES == err)) {
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    } else if (ENOENT == err) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    } else if (EBUSY == err) {
-        return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
-    } else {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-}
-
 std::string &LinuxSysmanImp::getDeviceName() {
     return deviceName;
+}
+
+std::string &LinuxSysmanImp::getPciRootPath() {
+    return rootPath;
 }
 
 SysmanHwDeviceIdDrm::SingleInstance LinuxSysmanImp::getSysmanHwDeviceIdInstance() {

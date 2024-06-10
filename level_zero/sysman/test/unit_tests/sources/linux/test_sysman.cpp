@@ -366,14 +366,6 @@ TEST(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysm
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxSysmanImp->init());
 }
 
-TEST(SysmanErrorCodeTest, GivenDifferentErrorCodesWhenCallingGetResultThenVerifyProperZeResultErrorIsReturned) {
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, LinuxSysmanImp::getResult(EPERM));
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, LinuxSysmanImp::getResult(EACCES));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, LinuxSysmanImp::getResult(ENOENT));
-    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, LinuxSysmanImp::getResult(EBUSY));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, LinuxSysmanImp::getResult(EEXIST));
-}
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

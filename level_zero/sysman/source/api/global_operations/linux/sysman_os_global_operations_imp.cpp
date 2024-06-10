@@ -54,20 +54,55 @@ static const std::map<int, zes_engine_type_flags_t> engineMap = {
     {3, ZES_ENGINE_TYPE_FLAG_MEDIA},
     {4, ZES_ENGINE_TYPE_FLAG_COMPUTE}};
 
+bool LinuxGlobalOperationsImp::getTelemOffsetAndTelemDir(uint64_t &telemOffset, const std::string &key, std::string &telemDir) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    if (rootPath.empty()) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Root path has no value \n", __FUNCTION__);
+        return false;
+    }
+
+    std::map<uint32_t, std::string> telemPciPath;
+    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemPciPath);
+    uint32_t subDeviceCount = pLinuxSysmanImp->getSubDeviceCount() + 1;
+    if (telemPciPath.size() < subDeviceCount) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Number of telemetry nodes:%d is lessthan %d \n", __FUNCTION__, telemPciPath.size(), subDeviceCount);
+        return false;
+    }
+
+    auto iterator = telemPciPath.begin();
+    telemDir = iterator->second;
+
+    std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+    if (!NEO::PmtUtil::readGuid(telemDir, guidString)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GUID from %s \n", __FUNCTION__, telemDir.c_str());
+        return false;
+    }
+
+    uint64_t offset = ULONG_MAX;
+    if (!NEO::PmtUtil::readOffset(telemDir, offset)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read offset from %s\n", __FUNCTION__, telemDir.c_str());
+        return false;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::getKeyOffsetMap(guidString.data(), keyOffsetMap)) {
+        auto keyOffset = keyOffsetMap.find(key.c_str());
+        if (keyOffset != keyOffsetMap.end()) {
+            telemOffset = keyOffset->second + offset;
+            return true;
+        }
+    }
+    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find keyOffset in keyOffsetMap \n", __FUNCTION__);
+    return false;
+}
+
 bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
     uint64_t offset = 0;
     std::string telemDir = {};
-
-    if (!PlatformMonitoringTech::getTelemOffsetAndTelemDir(pLinuxSysmanImp, offset, telemDir)) {
+    if (!LinuxGlobalOperationsImp::getTelemOffsetAndTelemDir(offset, "PPIN", telemDir)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get telemetry offset and directory for PPIN \n", __FUNCTION__);
         return false;
     }
-
-    uint64_t containerOffset = 0;
-    if (!PlatformMonitoringTech::getTelemOffsetForContainer(telemDir, "PPIN", containerOffset)) {
-        return false;
-    }
-
-    offset += containerOffset;
 
     uint64_t value;
     ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), offset, &value);
@@ -84,19 +119,11 @@ bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
 bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
     uint64_t offset = 0;
     std::string telemDir = {};
-
-    if (!PlatformMonitoringTech::getTelemOffsetAndTelemDir(pLinuxSysmanImp, offset, telemDir)) {
-        return false;
-    }
-
-    uint64_t containerOffset = 0;
-    if (!PlatformMonitoringTech::getTelemOffsetForContainer(telemDir, "BoardNumber", containerOffset)) {
-        return false;
-    }
-
-    offset += containerOffset;
-
     constexpr uint32_t boardNumberSize = 32;
+    if (!LinuxGlobalOperationsImp::getTelemOffsetAndTelemDir(offset, "BoardNumber", telemDir)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get telemetry offset and directory for BoardNumber \n", __FUNCTION__);
+        return false;
+    }
     std::array<uint8_t, boardNumberSize> value;
     ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), boardNumberSize, offset, value.data());
     if (bytesRead == boardNumberSize) {

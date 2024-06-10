@@ -7,8 +7,6 @@
 
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
-#include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
-
 #include <csignal>
 #include <fcntl.h>
 #include <fstream>
@@ -19,6 +17,18 @@ namespace L0 {
 namespace Sysman {
 
 FsAccessInterface::~FsAccessInterface() = default;
+
+static ze_result_t getResult(int err) {
+    if ((EPERM == err) || (EACCES == err)) {
+        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    } else if (ENOENT == err) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    } else if (EBUSY == err) {
+        return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+    } else {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+}
 
 void FdCacheInterface::eraseLeastUsedEntryFromCache() {
     auto it = fdMap.begin();
@@ -66,12 +76,12 @@ ze_result_t FsAccessInterface::readValue(const std::string file, T &val) {
     std::string readVal(64, '\0');
     int fd = pFdCacheInterface->getFd(file);
     if (fd < 0) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
 
     ssize_t bytesRead = NEO::SysCalls::pread(fd, readVal.data(), readVal.size(), 0);
     if (bytesRead < 0) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
 
     std::istringstream stream(readVal);
@@ -115,12 +125,12 @@ ze_result_t FsAccessInterface::read(const std::string file, std::string &val) {
 
     fs.open(file.c_str());
     if (fs.fail()) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
     fs >> val;
     if (fs.fail()) {
         fs.close();
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
     fs.close();
     // Strip trailing newline
@@ -138,12 +148,12 @@ ze_result_t FsAccessInterface::read(const std::string file, std::vector<std::str
 
     fs.open(file.c_str());
     if (fs.fail()) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
     while (std::getline(fs, line)) {
         if (fs.fail()) {
             fs.close();
-            return LinuxSysmanImp::getResult(errno);
+            return getResult(errno);
         }
         if (line.back() == '\n') {
             line.pop_back();
@@ -158,13 +168,13 @@ ze_result_t FsAccessInterface::read(const std::string file, std::vector<std::str
 ze_result_t FsAccessInterface::write(const std::string file, const std::string val) {
     int fd = NEO::SysCalls::open(file.c_str(), O_WRONLY);
     if (fd < 0) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
 
     ssize_t bytesWritten = NEO::SysCalls::pwrite(fd, val.data(), val.size(), 0);
     NEO::SysCalls::close(fd);
     if (bytesWritten < 0) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
 
     if (bytesWritten != static_cast<ssize_t>(val.size())) {
@@ -206,7 +216,7 @@ bool FsAccessInterface::fileExists(const std::string file) {
 ze_result_t FsAccessInterface::getFileMode(const std::string file, ::mode_t &mode) {
     struct stat sb;
     if (0 != NEO::SysCalls::stat(file.c_str(), &sb)) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
     mode = sb.st_mode;
     return ZE_RESULT_SUCCESS;
@@ -217,7 +227,7 @@ ze_result_t FsAccessInterface::readSymLink(const std::string path, std::string &
     char buf[PATH_MAX];
     ssize_t len = NEO::SysCalls::readlink(path.c_str(), buf, PATH_MAX - 1);
     if (len < 0) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
     buf[len] = '\0';
     val = std::string(buf);
@@ -229,7 +239,7 @@ ze_result_t FsAccessInterface::getRealPath(const std::string path, std::string &
     char buf[PATH_MAX];
     char *realPath = NEO::SysCalls::realpath(path.c_str(), buf);
     if (!realPath) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
     val = std::string(buf);
     return ZE_RESULT_SUCCESS;
@@ -239,7 +249,7 @@ ze_result_t FsAccessInterface::listDirectory(const std::string path, std::vector
     list.clear();
     ::DIR *procDir = NEO::SysCalls::opendir(path.c_str());
     if (!procDir) {
-        return LinuxSysmanImp::getResult(errno);
+        return getResult(errno);
     }
     struct ::dirent *ent;
     int err = 0;
@@ -260,7 +270,7 @@ ze_result_t FsAccessInterface::listDirectory(const std::string path, std::vector
     // Check if in above while loop, readdir encountered any error.
     if ((err != 0) && (err != ENOENT)) {
         list.clear();
-        return LinuxSysmanImp::getResult(err);
+        return getResult(err);
     }
     return ZE_RESULT_SUCCESS;
 }
