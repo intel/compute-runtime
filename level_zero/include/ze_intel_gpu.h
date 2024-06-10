@@ -156,6 +156,27 @@ typedef struct _zex_intel_queue_allocate_msix_hint_exp_desc_t {
 
 #define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES (ze_structure_type_t)0x00030018
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Command queue descriptor for enabling copy operations offload. This structure may be
+/// passed as pNext member of ::ze_command_queue_desc_t.
+
+typedef struct _zex_intel_queue_copy_operations_offload_hint_exp_desc_t {
+    ze_structure_type_t stype;    ///< [in] type of this structure
+    const void *pNext;            ///< [in][optional] must be null or a pointer to an extension-specific
+                                  ///< structure (i.e. contains stype and pNext).
+    ze_bool_t copyOffloadEnabled; ///< [in] If set, try to offload copy operations to different engines. Applicable only for compute queues.
+                                  ///< This is only a hint. Driver may ignore it per append call, based on platform capabilities or internal heuristics.
+                                  ///< If not set, driver will follow default behaviour. Copy operations will be submitted to same engine as compute operations.
+
+} zex_intel_queue_copy_operations_offload_hint_exp_desc_t;
+
+#ifndef ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME
+/// @brief Queue copy operations offload hint extension name
+#define ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME "ZEX_intel_experimental_queue_copy_operations_offload_hint"
+#endif // ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME
+
+#define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES (ze_structure_type_t)0x00030019
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
