@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ struct MockZebin {
         uint8_t spvData[] = {0x20, 0x21, 0x22, 0x23};
         encoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, {spvData, 4});
 
-        NEO::ConstStringRef buildOptions = "-ze-intel-allow-zebin";
+        NEO::ConstStringRef buildOptions = "";
         encoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::buildOptions,
                               {reinterpret_cast<const uint8_t *>(buildOptions.data()), buildOptions.size()});
 

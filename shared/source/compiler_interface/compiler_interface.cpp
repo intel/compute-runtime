@@ -558,18 +558,13 @@ bool CompilerInterface::verifyIcbeVersion() {
 
 bool CompilerInterface::addOptionDisableZebin(std::string &options, std::string &internalOptions) {
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
-    auto pos = options.find(NEO::CompilerOptions::enableZebin.str());
-    if (pos != std::string::npos || !verifyIcbeVersion()) {
+    if (!verifyIcbeVersion()) {
         return false;
     }
     return true;
 }
 
 bool CompilerInterface::disableZebin(std::string &options, std::string &internalOptions) {
-    auto pos = options.find(NEO::CompilerOptions::enableZebin.str());
-    if (pos != std::string::npos) {
-        options.erase(pos, pos + CompilerOptions::enableZebin.length());
-    }
     return addOptionDisableZebin(options, internalOptions);
 }
 

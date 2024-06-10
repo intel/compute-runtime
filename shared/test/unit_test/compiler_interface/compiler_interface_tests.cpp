@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1529,24 +1529,6 @@ TEST(TestCompilerInterface, givenInvalidIcbeVersionWhenAddOptionDisableZebinThen
     EXPECT_FALSE(mockCompilerInterface->addOptionDisableZebin(option, internalOption));
 }
 
-TEST(TestCompilerInterface, givenOptionsWhenCallAddOptionDisableZebinThenProperValueIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableDebugBreak.set(0);
-    debugManager.flags.PrintDebugMessages.set(0);
-
-    auto dummyValid = new MockCIFMain();
-    auto mockCompilerInterface = std::make_unique<MockCompilerInterface>();
-
-    mockCompilerInterface->igcMain.reset(dummyValid);
-
-    std::string options = NEO::CompilerOptions::enableZebin.str();
-    std::string internalOptions = "";
-    EXPECT_FALSE(mockCompilerInterface->addOptionDisableZebin(options, internalOptions));
-
-    options = "";
-    EXPECT_TRUE(mockCompilerInterface->addOptionDisableZebin(options, internalOptions));
-}
-
 TEST(TestCompilerInterface, givenOptionsWhenCallDisableZebinThenProperOptionsAreSet) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableDebugBreak.set(0);
@@ -1560,12 +1542,7 @@ TEST(TestCompilerInterface, givenOptionsWhenCallDisableZebinThenProperOptionsAre
     std::string options = "";
     std::string internalOptions = "";
     EXPECT_TRUE(mockCompilerInterface->disableZebin(options, internalOptions));
-    EXPECT_FALSE(CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin.str()));
-
-    options = NEO::CompilerOptions::enableZebin.str();
-    EXPECT_TRUE(mockCompilerInterface->disableZebin(options, internalOptions));
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::disableZebin.str()));
-    EXPECT_FALSE(CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin.str()));
 }
 
 TEST(TranslationOutput, givenNonEmptyPointerAndSizeWhenMakingCopyThenCloneInputData) {

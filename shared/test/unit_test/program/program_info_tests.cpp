@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,31 +67,31 @@ TEST(RequiresRebuildWithPatchtokens, givenNoLegacyDebuggerAttachedWhenCheckingFo
     ZebinTestData::ValidEmptyProgram<> zebin;
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(nullptr));
 
-    std::string options{NEO::CompilerOptions::enableZebin};
+    std::string options{NEO::CompilerOptions::disableZebin};
     bool isBuiltIn = false;
     device->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
     bool rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn, false);
     EXPECT_FALSE(rebuildRequired);
-    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin));
+    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::disableZebin));
 }
 
 TEST(RequiresRebuildWithPatchtokens, givenVmeUsedWhenIsRebuiltToPatchtokensRequiredThenReturnFalse) {
     ZebinTestData::ValidEmptyProgram<> zebin;
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(nullptr));
     device->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
-    std::string options{NEO::CompilerOptions::enableZebin};
+    std::string options = "";
     bool isBuiltIn = false;
 
     {
         bool isVmeUsed = false;
         bool rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn, isVmeUsed);
         EXPECT_FALSE(rebuildRequired);
-        EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin));
+        EXPECT_FALSE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::disableZebin));
     }
     {
         bool isVmeUsed = true;
         bool rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn, isVmeUsed);
         EXPECT_TRUE(rebuildRequired);
-        EXPECT_FALSE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin));
+        EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::disableZebin));
     }
 }

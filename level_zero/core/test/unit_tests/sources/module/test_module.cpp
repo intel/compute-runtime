@@ -3207,7 +3207,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPacked
     EXPECT_NE(moduleTuValid.packedDeviceBinarySize, arData.size());
 }
 
-HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions) {
+HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenDontAppendAllowZebinFlagToBuildOptions) {
     ZebinTestData::ValidEmptyProgram zebin;
 
     const auto &hwInfo = device->getNEODevice()->getHardwareInfo();
@@ -3218,8 +3218,8 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFla
     result = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    auto expectedOptions = " " + NEO::CompilerOptions::enableZebin.str();
-    EXPECT_STREQ(expectedOptions.c_str(), moduleTu.options.c_str());
+    auto expectedOptions = "";
+    EXPECT_STREQ(expectedOptions, moduleTu.options.c_str());
 }
 
 HWTEST2_F(ModuleTranslationUnitTest, givenLargeGrfAndSimd16WhenProcessingBinaryThenKernelGroupSizeReducedToFitWithinSubslice, IsWithinXeGfxFamily) {
@@ -3600,7 +3600,7 @@ HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingMod
     }
 }
 
-HWTEST_F(ModuleTranslationUnitTest, givenEnableZebinBuildOptionWhenBuildWithSpirvThenOptionsContainsAllowZebin) {
+HWTEST_F(ModuleTranslationUnitTest, givenZebinEnabledWhenBuildWithSpirvThenOptionsDontContainDisableZebin) {
     auto mockCompilerInterface = new MockCompilerInterface;
     auto &rootDeviceEnvironment = neoDevice->executionEnvironment->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(mockCompilerInterface);
@@ -3608,12 +3608,12 @@ HWTEST_F(ModuleTranslationUnitTest, givenEnableZebinBuildOptionWhenBuildWithSpir
     MockModuleTranslationUnit moduleTu(device);
     moduleTu.processUnpackedBinaryCallBase = false;
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-    auto buildOption = NEO::CompilerOptions::enableZebin.str();
+    auto buildOption = "";
 
-    result = moduleTu.buildFromSpirV("", 0U, buildOption.c_str(), "", nullptr);
+    result = moduleTu.buildFromSpirV("", 0U, buildOption, "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
-    EXPECT_NE(mockCompilerInterface->receivedApiOptions.find(NEO::CompilerOptions::enableZebin.str()), std::string::npos);
+    EXPECT_TRUE(mockCompilerInterface->receivedApiOptions.empty());
     EXPECT_EQ(mockCompilerInterface->inputInternalOptions.find(NEO::CompilerOptions::disableZebin.str()), std::string::npos);
 }
 
@@ -3773,19 +3773,6 @@ TEST_F(ModuleTest, givenInternalOptionsWhenBindlessDisabledThenBindlesOptionsNot
     module->createBuildOptions("", buildOptions, internalBuildOptions);
 
     EXPECT_FALSE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::bindlessMode));
-}
-
-TEST_F(ModuleTest, givenBuildFlagsWithEnableZebinThenInternalOptionsContainsAllowZebin) {
-    auto module = std::make_unique<Module>(device, nullptr, ModuleType::user);
-    ASSERT_NE(nullptr, module);
-
-    std::string buildOptions;
-    std::string internalBuildOptions;
-
-    module->createBuildOptions(NEO::CompilerOptions::enableZebin.str().c_str(), buildOptions, internalBuildOptions);
-
-    EXPECT_FALSE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::enableZebin));
-    EXPECT_TRUE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::allowZebin));
 }
 
 TEST_F(ModuleTest, givenSrcOptLevelInSrcNamesWhenMovingBuildOptionsThenOptionIsRemovedFromSrcNamesAndTranslatedOptionsStoredInDstNames) {

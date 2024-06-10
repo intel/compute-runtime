@@ -2130,7 +2130,7 @@ TEST_F(ProgramTests, GivenNullContextWhenCreatingProgramFromGenBinaryThenSuccess
     delete pProgram;
 }
 
-TEST_F(ProgramTests, whenCreatingFromZebinThenAppendEnableZebinFlagToBuildOptions) {
+TEST_F(ProgramTests, whenCreatingFromZebinThenDontAppendEnableZebinFlagToBuildOptions) {
     if (sizeof(void *) != 8U) {
         GTEST_SKIP();
     }
@@ -2143,8 +2143,8 @@ TEST_F(ProgramTests, whenCreatingFromZebinThenAppendEnableZebinFlagToBuildOption
     cl_int retVal = program->createProgramFromBinary(zebin.storage.data(), zebin.storage.size(), *device);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto expectedOptions = " " + NEO::CompilerOptions::enableZebin.str();
-    EXPECT_STREQ(expectedOptions.c_str(), program->options.c_str());
+    auto expectedOptions = "";
+    EXPECT_STREQ(expectedOptions, program->options.c_str());
 }
 
 TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimitThenPrintDebugMsgAndReturnError) {
@@ -3645,28 +3645,10 @@ TEST(ProgramVmeUsage, givenVmeOptionsWhenDisableZebinIfVmeEnabledIsCalledThenZeb
     MockProgram program(toClDeviceVector(device));
 
     {
-        std::string options = CompilerOptions::enableZebin.str();
+        std::string options = "";
         std::string internalOptions = "";
         program.disableZebinIfVmeEnabled(options, internalOptions, "");
-        EXPECT_TRUE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
-        EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
-    }
-
-    {
-        std::string options = CompilerOptions::enableZebin.str() + " cl_intel_device_side_vme_enable";
-        std::string internalOptions = "";
-        debugManager.flags.DontDisableZebinIfVmeUsed = false;
-        program.disableZebinIfVmeEnabled(options, internalOptions, "");
-        EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
-        EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
-    }
-    {
-
-        std::string options = CompilerOptions::enableZebin.str() + " cl_intel_device_side_vme_enable";
-        std::string internalOptions = "";
-        debugManager.flags.DontDisableZebinIfVmeUsed = true;
-        program.disableZebinIfVmeEnabled(options, internalOptions, "");
-        EXPECT_TRUE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
+        EXPECT_TRUE(options.empty());
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
     }
     {
@@ -3674,7 +3656,7 @@ TEST(ProgramVmeUsage, givenVmeOptionsWhenDisableZebinIfVmeEnabledIsCalledThenZeb
         std::string internalOptions = "";
         debugManager.flags.DontDisableZebinIfVmeUsed = false;
         program.disableZebinIfVmeEnabled(options, internalOptions, "");
-        EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
+        EXPECT_STREQ(options.c_str(), "cl_intel_device_side_vme_enable");
         EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
     }
     {
@@ -3682,7 +3664,7 @@ TEST(ProgramVmeUsage, givenVmeOptionsWhenDisableZebinIfVmeEnabledIsCalledThenZeb
         std::string internalOptions = "";
         debugManager.flags.DontDisableZebinIfVmeUsed = true;
         program.disableZebinIfVmeEnabled(options, internalOptions, "");
-        EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
+        EXPECT_STREQ(options.c_str(), "cl_intel_device_side_vme_enable");
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
     }
 }
@@ -3693,20 +3675,20 @@ TEST(ProgramVmeUsage, givenVmeExtensionsEnabledInSourceCodeWhenDisableZebinIfVme
     MockProgram program(toClDeviceVector(device));
 
     {
-        std::string options = CompilerOptions::enableZebin.str();
+        std::string options = "";
         std::string internalOptions = "";
         std::string sourceCode = "cl_intel_motion_estimation";
         program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
-        EXPECT_TRUE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
+        EXPECT_TRUE(options.empty());
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
     }
 
     {
-        std::string options = CompilerOptions::enableZebin.str();
+        std::string options = "";
         std::string internalOptions = "";
         std::string sourceCode = "cl_intel_motion_estimation : disable";
         program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
-        EXPECT_TRUE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
+        EXPECT_TRUE(options.empty());
         EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
     }
 
@@ -3719,20 +3701,20 @@ TEST(ProgramVmeUsage, givenVmeExtensionsEnabledInSourceCodeWhenDisableZebinIfVme
         std::string sourceCode = extension;
 
         {
-            std::string options = CompilerOptions::enableZebin.str();
+            std::string options = "";
             std::string internalOptions = "";
             debugManager.flags.DontDisableZebinIfVmeUsed = false;
             program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
-            EXPECT_FALSE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
+            EXPECT_TRUE(options.empty());
             EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
         }
 
         {
-            std::string options = CompilerOptions::enableZebin.str();
+            std::string options = "";
             std::string internalOptions = "";
             debugManager.flags.DontDisableZebinIfVmeUsed = true;
             program.disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
-            EXPECT_TRUE(CompilerOptions::contains(options, CompilerOptions::enableZebin));
+            EXPECT_TRUE(options.empty());
             EXPECT_FALSE(CompilerOptions::contains(internalOptions, CompilerOptions::disableZebin));
         }
     }

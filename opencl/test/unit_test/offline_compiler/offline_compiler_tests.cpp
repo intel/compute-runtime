@@ -1598,7 +1598,7 @@ TEST_F(OfflineCompilerTests, givenExcludeIrFromZebinInternalOptionWhenInitIsPerf
         "-file",
         clFiles + "copybuffer.cl",
         "-internal_options",
-        "-ze-allow-zebin -ze-exclude-ir-from-zebin",
+        "-ze-exclude-ir-from-zebin",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1669,8 +1669,6 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentWhenInitIsPerformedThenIrExcl
         "-file",
         clFiles + "copybuffer.cl",
         "-exclude_ir",
-        "-internal_options",
-        "-ze-allow-zebin",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -1689,7 +1687,7 @@ TEST_F(OfflineCompilerTests, givenExcludeIrArgumentAndExcludeIrFromZebinInternal
         clFiles + "copybuffer.cl",
         "-exclude_ir",
         "-internal_options",
-        "-ze-allow-zebin -ze-exclude-ir-from-zebin",
+        "-ze-exclude-ir-from-zebin",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -4366,7 +4364,7 @@ TEST(OclocCompile, givenFormatFlagWithKnownFormatPassedThenEnforceSpecifiedForma
 
     int retVal = ocloc.initialize(argvEnforcedFormatZebin.size(), argvEnforcedFormatZebin);
     ASSERT_EQ(0, retVal);
-    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::allowZebin}));
+    EXPECT_FALSE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::disableZebin}));
 
     ocloc.internalOptions.clear();
     retVal = ocloc.initialize(argvEnforcedFormatPatchtokens.size(), argvEnforcedFormatPatchtokens);
@@ -4388,7 +4386,6 @@ HWTEST2_F(MockOfflineCompilerTests, givenNoFormatFlagSpecifiedWhenOclocInitializ
 
     int retVal = ocloc.initialize(argvNoFormatFlag.size(), argvNoFormatFlag);
     ASSERT_EQ(0, retVal);
-    EXPECT_TRUE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::allowZebin}));
     EXPECT_FALSE(hasSubstr(ocloc.internalOptions, std::string{CompilerOptions::disableZebin}));
 }
 

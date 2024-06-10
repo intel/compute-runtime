@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -164,7 +164,7 @@ TEST_F(OfflineLinkerTest, GivenOptionsArgumentWhenParsingThenOptionsAreSet) {
 }
 
 TEST_F(OfflineLinkerTest, GivenInternalOptionsArgumentWhenParsingThenInternalOptionsAreSet) {
-    const std::string internalOptions{"-ze-allow-zebin"};
+    const std::string internalOptions{"-ze-disable-zebin"};
 
     const std::vector<std::string> argv = {
         "ocloc.exe",

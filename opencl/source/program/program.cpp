@@ -193,9 +193,6 @@ cl_int Program::createProgramFromBinary(
             this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
             this->isSpirV = NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize));
             this->options = singleDeviceBinary.buildOptions.str();
-            if (singleDeviceBinary.format == NEO::DeviceBinaryFormat::zebin) {
-                this->options += " " + NEO::CompilerOptions::enableZebin.str();
-            }
 
             auto deviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
             auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(deviceBinary.get()), singleDeviceBinary.deviceBinary.size());

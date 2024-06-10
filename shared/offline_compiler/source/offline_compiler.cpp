@@ -1590,7 +1590,7 @@ void OfflineCompiler::enforceFormat(std::string &format) {
     std::transform(format.begin(), format.end(), format.begin(),
                    [](auto c) { return std::tolower(c); });
     if (format == "zebin") {
-        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::allowZebin);
+        // zebin is enabled by default
     } else if (format == "patchtokens") {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
     } else {

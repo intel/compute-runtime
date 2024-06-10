@@ -276,8 +276,8 @@ ze_result_t ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t in
     if (isZebinAllowed == false) {
         const auto &rootDevice = neoDevice->getRootDevice();
         if (!rootDevice->getCompilerInterface()->addOptionDisableZebin(this->options, internalOptions)) {
-            driverHandle->setErrorDescription("Cannot build zebinary for this device with debugger enabled. Remove \"-ze-intel-enable-zebin\" build flag\n");
-            updateBuildLog("Cannot build zebinary for this device with debugger enabled. Remove \"-ze-intel-enable-zebin\" build flag");
+            driverHandle->setErrorDescription("Cannot build zebinary for this device with debugger enabled. Add \"-ze-intel-disable-zebin\" build flag\n");
+            updateBuildLog("Cannot build zebinary for this device with debugger enabled. Add \"-ze-intel-disable-zebin\" build flag");
             return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
         }
     }
@@ -312,9 +312,6 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         this->irBinary = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
         this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
         this->options = singleDeviceBinary.buildOptions.str();
-        if (singleDeviceBinary.format == NEO::DeviceBinaryFormat::zebin) {
-            this->options += " " + NEO::CompilerOptions::enableZebin.str();
-        }
 
         if (false == singleDeviceBinary.debugData.empty()) {
             this->debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
@@ -886,7 +883,6 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
 
         moveBuildOption(apiOptions, apiOptions, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired, BuildOptions::greaterThan4GbRequired);
-        moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::allowZebin, NEO::CompilerOptions::enableZebin);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::largeGrf, BuildOptions::optLargeRegisterFile);
         moveBuildOption(internalBuildOptions, apiOptions, NEO::CompilerOptions::autoGrf, BuildOptions::optAutoGrf);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ TEST(CompilerOptions, WhenConcatenateAppendIsCalledThenAddsSpaceAsSeparatorOnlyI
 }
 
 TEST(CompilerOptions, WhenTryingToExtractNonexistentOptionThenFalseIsReturnedAndStringIsNotModified) {
-    const std::string optionsInput{"-ze-allow-zebin -cl-intel-has-buffer-offset-arg"};
+    const std::string optionsInput{"-cl-intel-has-buffer-offset-arg"};
 
     std::string options{optionsInput};
     const bool wasExtracted{NEO::CompilerOptions::extract(NEO::CompilerOptions::noRecompiledFromIr, options)};
@@ -56,14 +56,14 @@ TEST(CompilerOptions, WhenTryingToExtractNonexistentOptionThenFalseIsReturnedAnd
 }
 
 TEST(CompilerOptions, WhenTryingToExtractOptionThatExistsThenTrueIsReturnedAndStringIsModified) {
-    const std::string optionsInput{"-ze-allow-zebin -Wno-recompiled-from-ir -cl-intel-has-buffer-offset-arg"};
+    const std::string optionsInput{"-Wno-recompiled-from-ir -cl-intel-has-buffer-offset-arg"};
 
     std::string options{optionsInput};
     const bool wasExtracted{NEO::CompilerOptions::extract(NEO::CompilerOptions::noRecompiledFromIr, options)};
 
     EXPECT_TRUE(wasExtracted);
 
-    const std::string expectedOptions{"-ze-allow-zebin  -cl-intel-has-buffer-offset-arg"};
+    const std::string expectedOptions{" -cl-intel-has-buffer-offset-arg"};
     EXPECT_EQ(expectedOptions, options);
 }
 
