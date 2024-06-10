@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/array_count.h"
@@ -29,6 +30,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
@@ -1905,6 +1907,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = true;
+    memoryManager->executionEnvironment.rootDeviceEnvironments[mockRootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
     AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::svmGpu, mockDeviceBitfield};
     properties.allFlags = 0;
     properties.size = MemoryConstants::pageSize;

@@ -69,3 +69,6 @@ TEST_F(ReleaseHelper1257Tests, whenGettingAdditionalFp16AtomicCapabilitiesThenRe
 TEST_F(ReleaseHelper1257Tests, whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities) {
     whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
 }
+TEST_F(ReleaseHelper1257Tests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
+    whenIsLocalOnlyAllowedCalledThenTrueReturned();
+}

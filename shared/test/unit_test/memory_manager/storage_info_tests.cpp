@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -346,28 +347,79 @@ TEST_F(MultiDeviceStorageInfoTest, givenNonMultiStorageResourceWhenCreatingStora
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferThenLocalOnlyFlagIsRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = true;
+    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCreatingStorageInfoForBufferThenLocalOnlyFlagIsNotRequired) {
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = false;
+    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_FALSE(storageInfo.localOnlyRequired);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForBufferCompressedThenLocalOnlyFlagIsRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
     properties.flags.preferCompressed = true;
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = true;
+    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
 }
 
+TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCreatingStorageInfoForBufferCompressedThenLocalOnlyFlagIsNotRequired) {
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
+    properties.flags.preferCompressed = true;
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = false;
+    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_FALSE(storageInfo.localOnlyRequired);
+}
+
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSvmGpuThenLocalOnlyFlagIsRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = true;
+    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCreatingStorageInfoForSvmGpuThenLocalOnlyFlagIsNotRequired) {
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = false;
+    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_FALSE(storageInfo.localOnlyRequired);
 }
 
 TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForShareableSvmGpuThenLocalOnlyFlagIsRequiredAndIsNotLocable) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
     properties.flags.shareable = 1u;
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = true;
+    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
     auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
     EXPECT_TRUE(storageInfo.localOnlyRequired);
+    EXPECT_FALSE(storageInfo.isLockable);
+}
+
+TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCreatingStorageInfoForShareableSvmGpuThenLocalOnlyFlagIsNotRequiredAndIsNotLocable) {
+    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
+    properties.flags.shareable = 1u;
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = false;
+    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+    EXPECT_FALSE(storageInfo.localOnlyRequired);
     EXPECT_FALSE(storageInfo.isLockable);
 }
 

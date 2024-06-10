@@ -37,6 +37,7 @@
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
@@ -3011,15 +3012,18 @@ TEST(MemoryManagerTest, givenStorageInfoWithParamsWhenGettingAllocDataForLocalMe
     EXPECT_FALSE(allocData.storageInfo.systemMemoryPlacement);
 }
 
-TEST(MemoryManagerTest, givenUseLocalPreferredForCacheableBuffersWhenGettingAllocDataForLocalMemoryThenLocalPreferredSetCorrectly) {
+HWTEST_F(MemoryAllocatorTest, givenUseLocalPreferredForCacheableBuffersAndCompressionNotPreferredWhenGettingAllocDataForLocalMemoryThenLocalPreferredSetCorrectly) {
     // localPreferred is implicit with gmm flags LocalOnly=0 and NonLocalOnly=0
     DebugManagerStateRestore restorer;
     debugManager.flags.UseLocalPreferredForCacheableBuffers.set(0);
     AllocationData allocData;
     allocData.flags.useSystemMemory = true;
+    allocData.flags.preferCompressed = false;
     AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
     MockMemoryManager mockMemoryManager;
-
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isLocalOnlyAllowedResult = true;
+    mockMemoryManager.executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
     AllocationType shouldUseLocalPreferredAllocationTypes[] = {
         AllocationType::buffer,
         AllocationType::svmGpu,
@@ -3040,7 +3044,6 @@ TEST(MemoryManagerTest, givenUseLocalPreferredForCacheableBuffersWhenGettingAllo
     for (auto allocationType : shouldUseLocalPreferredAllocationTypes) {
         properties.allocationType = allocationType;
         auto storageInfo = mockMemoryManager.createStorageInfoFromProperties(properties);
-
         mockMemoryManager.getAllocationData(allocData, properties, nullptr, storageInfo);
         EXPECT_EQ(false, allocData.storageInfo.localOnlyRequired);
         EXPECT_EQ(false, allocData.storageInfo.systemMemoryPlacement);

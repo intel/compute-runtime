@@ -373,7 +373,7 @@ void Gmm::applyMemoryFlags(const StorageInfo &storageInfo) {
             if (extraMemoryFlagsRequired()) {
                 applyExtraMemoryFlags(storageInfo);
             } else if (!storageInfo.isLockable) {
-                if (isCompressionEnabled() || storageInfo.localOnlyRequired) {
+                if (storageInfo.localOnlyRequired) {
                     resourceParams.Flags.Info.LocalOnly = 1;
                 }
             }

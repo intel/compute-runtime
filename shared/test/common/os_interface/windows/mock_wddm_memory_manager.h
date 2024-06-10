@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::supportsMultiStorageResources;
     using BaseClass::unMapPhysicalToVirtualMemory;
     using MemoryManagerCreate<WddmMemoryManager>::MemoryManagerCreate;
+    using BaseClass::executionEnvironment;
     using BaseClass::getHugeGfxMemoryChunkSize;
     using BaseClass::getPreferredAllocationMethod;
     using BaseClass::isStatelessAccessRequired;

@@ -32,6 +32,11 @@ int ReleaseHelperHw<release>::getProductMaxPreferredSlmSize(int preferredEnumVal
     using PREFERRED_SLM_ALLOCATION_SIZE = typename Xe2HpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
     return std::min(preferredEnumValue, static_cast<int>(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K));
 }
+
+template <>
+bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
+    return false;
+}
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe2_hpg.inl"

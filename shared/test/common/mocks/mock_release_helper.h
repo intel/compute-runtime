@@ -40,5 +40,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getL3CacheBankSizeInKb, uint64_t, {}, ());
     ADDMETHOD_CONST_NOBASE(getAdditionalFp16Caps, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(getAdditionalExtraCaps, uint32_t, {}, ());
+    ADDMETHOD_CONST_NOBASE(isLocalOnlyAllowed, bool, {}, ());
 };
 } // namespace NEO

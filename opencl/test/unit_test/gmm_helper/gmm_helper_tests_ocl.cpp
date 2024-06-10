@@ -451,6 +451,7 @@ TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhen
     StorageInfo storageInfo = {};
     storageInfo.memoryBanks.set(1);
     storageInfo.systemMemoryPlacement = false;
+    storageInfo.localOnlyRequired = true;
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, storageInfo, true);
     EXPECT_TRUE(gmm->isCompressionEnabled());

@@ -57,6 +57,7 @@ class ReleaseHelper {
     virtual uint64_t getL3CacheBankSizeInKb() const = 0;
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
+    virtual bool isLocalOnlyAllowed() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -96,6 +97,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     uint64_t getL3CacheBankSizeInKb() const override;
     uint32_t getAdditionalFp16Caps() const override;
     uint32_t getAdditionalExtraCaps() const override;
+    bool isLocalOnlyAllowed() const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

@@ -14,6 +14,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <bitset>
 
@@ -49,6 +50,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,
                                           sizeof(storageInfo.resourceTag));
 
+    auto releaseHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getReleaseHelper();
     switch (properties.allocationType) {
     case AllocationType::constantSurface:
     case AllocationType::kernelIsa:
@@ -130,7 +132,9 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.cloningOfPageTables = false;
             storageInfo.tileInstanced = true;
         }
-        storageInfo.localOnlyRequired = true;
+        if (!releaseHelper || releaseHelper->isLocalOnlyAllowed()) {
+            storageInfo.localOnlyRequired = true;
+        }
 
         if (properties.flags.shareable) {
             storageInfo.isLockable = false;
@@ -140,7 +144,9 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     default:
         break;
     }
-
+    if (properties.flags.preferCompressed && (!releaseHelper || releaseHelper->isLocalOnlyAllowed())) {
+        storageInfo.localOnlyRequired = true;
+    }
     if (debugManager.flags.ForceMultiTileAllocPlacement.get()) {
         UNRECOVERABLE_IF(properties.allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & debugManager.flags.ForceMultiTileAllocPlacement.get()) {

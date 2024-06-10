@@ -101,3 +101,23 @@ void ReleaseHelperTestsBase::whenGettingAdditionalExtraKernelCapabilitiesThenRet
         EXPECT_EQ(0u, releaseHelper->getAdditionalExtraCaps());
     }
 }
+
+void ReleaseHelperTestsBase::whenIsLocalOnlyAllowedCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        EXPECT_TRUE(releaseHelper->isLocalOnlyAllowed());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsLocalOnlyAllowedCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        EXPECT_FALSE(releaseHelper->isLocalOnlyAllowed());
+    }
+}

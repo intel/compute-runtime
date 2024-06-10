@@ -593,7 +593,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::svmGpu:
     case AllocationType::image:
         if (false == allocationData.flags.uncacheable && useLocalPreferredForCacheableBuffers) {
-            allocationData.storageInfo.localOnlyRequired = false;
+            if (!allocationData.flags.preferCompressed) {
+                allocationData.storageInfo.localOnlyRequired = false;
+            }
             allocationData.storageInfo.systemMemoryPlacement = false;
         }
     default:
