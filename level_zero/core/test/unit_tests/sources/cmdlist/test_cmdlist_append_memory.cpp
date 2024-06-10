@@ -407,6 +407,7 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
 
     auto cmdQueue = std::make_unique<Mock<CommandQueue>>();
     cmdQueue->csr = ultCsr;
+    cmdQueue->isCopyOnlyCommandQueue = true;
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
@@ -502,6 +503,8 @@ HWTEST2_F(AppendMemoryCopy, givenSyncImmediateCommandListWhenAppendingMemoryCopy
 
     auto cmdQueue = std::make_unique<Mock<CommandQueue>>();
     cmdQueue->csr = ultCsr;
+    cmdQueue->isCopyOnlyCommandQueue = true;
+
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
 
@@ -1020,28 +1023,36 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
     auto hostVisibleEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDescHostVisible, device));
     auto regularEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename GfxFamily::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    ze_command_queue_desc_t desc = {};
+
     MockCommandListCoreFamily<gfxCoreFamily> cmdListRegular;
     cmdListRegular.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdListRegular.isFlushTaskSubmissionEnabled = true;
-    cmdListRegular.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdListRegular.csr = csr;
 
     MockCommandListCoreFamily<gfxCoreFamily> cmdListRegularInOrder;
     cmdListRegularInOrder.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdListRegularInOrder.isFlushTaskSubmissionEnabled = true;
-    cmdListRegularInOrder.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdListRegularInOrder.csr = csr;
     cmdListRegularInOrder.enableInOrderExecution();
+
+    auto queue1 = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
+    auto queue2 = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
 
     MockCommandListImmediateHw<gfxCoreFamily> cmdListImmediate;
     cmdListImmediate.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdListImmediate.isFlushTaskSubmissionEnabled = true;
-    cmdListImmediate.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdListImmediate.csr = csr;
     cmdListImmediate.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdListImmediate.cmdQImmediate = queue1.get();
 
     MockCommandListImmediateHw<gfxCoreFamily> cmdListImmediateInOrder;
     cmdListImmediateInOrder.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdListImmediateInOrder.isFlushTaskSubmissionEnabled = true;
-    cmdListImmediateInOrder.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdListImmediateInOrder.csr = csr;
     cmdListImmediateInOrder.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdListImmediateInOrder.cmdQImmediate = queue2.get();
     cmdListImmediateInOrder.enableInOrderExecution();
 
     constexpr size_t allocSize = 1;

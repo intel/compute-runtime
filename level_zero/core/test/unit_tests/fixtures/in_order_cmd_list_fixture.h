@@ -33,6 +33,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         using EventImp<uint32_t>::signalScope;
         using EventImp<uint32_t>::unsetCmdQueue;
         using EventImp<uint32_t>::externalInterruptId;
+        using EventImp<uint32_t>::latestUsedCmdQueue;
 
         void makeCounterBasedInitiallyDisabled() {
             counterBasedMode = CounterBasedMode::initiallyDisabled;

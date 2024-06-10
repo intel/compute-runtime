@@ -875,7 +875,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForEventFromPreviousAp
     }
 }
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForRegularEventFromPreviousAppendThenSkip, IsAtLeastSkl) {
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenWaitingForRegularEventFromPreviousAppendThenSkip, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
@@ -2004,7 +2004,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
         using BaseClass::BaseClass;
 
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, ze_event_handle_t hSignalEvent) override {
+        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent) override {
             flushData.push_back(this->cmdListCurrentStartOffset);
 
             this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
@@ -2119,7 +2119,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
         using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
         using BaseClass::BaseClass;
 
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, ze_event_handle_t hSignalEvent) override {
+        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent) override {
             flushCount++;
 
             return ZE_RESULT_SUCCESS;
@@ -7133,6 +7133,67 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDeviceToHostCopyWhenProgrammingThenAddFe
 
     context->freeMem(hostBuffer);
     context->freeMem(deviceBuffer);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, whenDispatchingSelectCorrectQueueAndCsr, IsAtLeastXeHpcCore) {
+    auto regularEventsPool = createEvents<FamilyType>(1, false);
+
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+
+    auto regularCsr = static_cast<CommandQueueImp *>(immCmdList->cmdQImmediate)->getCsr();
+    auto copyCsr = static_cast<CommandQueueImp *>(immCmdList->cmdQImmediateCopyOffload)->getCsr();
+
+    EXPECT_EQ(0u, regularCsr->peekTaskCount());
+    EXPECT_EQ(0u, immCmdList->cmdQImmediate->getTaskCount());
+    EXPECT_EQ(0u, copyCsr->peekTaskCount());
+    EXPECT_EQ(0u, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0].get(), 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(1u, regularCsr->peekTaskCount());
+    EXPECT_EQ(1u, immCmdList->cmdQImmediate->getTaskCount());
+
+    EXPECT_EQ(0u, copyCsr->peekTaskCount());
+    EXPECT_EQ(0u, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+
+    EXPECT_EQ(regularCsr, events[0]->csrs[0]);
+    EXPECT_EQ(immCmdList->cmdQImmediate, events[0]->latestUsedCmdQueue);
+
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, events[0].get(), 0, nullptr, false, false);
+
+    EXPECT_EQ(1u, regularCsr->peekTaskCount());
+    EXPECT_EQ(1u, immCmdList->cmdQImmediate->getTaskCount());
+
+    EXPECT_EQ(1u, copyCsr->peekTaskCount());
+    EXPECT_EQ(1u, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+
+    EXPECT_EQ(copyCsr, events[0]->csrs[0]);
+    EXPECT_EQ(immCmdList->cmdQImmediateCopyOffload, events[0]->latestUsedCmdQueue);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyOperationWithHostVisibleEventThenMarkAsNotHostVisibleSubmission, IsAtLeastXeHpcCore) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDescHostVisible = {};
+    eventDescHostVisible.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
+    auto hostVisibleEvent = DestroyableZeUniquePtr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDescHostVisible, device));
+
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, hostVisibleEvent.get(), 0, nullptr, launchParams, false);
+
+    EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
+
+    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, hostVisibleEvent.get(), 0, nullptr, false, false);
+
+    EXPECT_EQ(!immCmdList->dcFlushSupport, immCmdList->latestFlushIsHostVisible);
 }
 
 } // namespace ult
