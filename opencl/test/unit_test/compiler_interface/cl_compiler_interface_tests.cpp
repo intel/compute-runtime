@@ -79,7 +79,7 @@ TEST_F(ClCompilerInterfaceTest, WhenCompileIsInvokedThenFclReceivesListOfExtensi
     std::string receivedInternalOptions;
 
     MockCompilerDebugVars fclDebugVars;
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBuffer_simd16_", ".spv");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, "CopyBuffer_simd16_", ".bc");
     fclDebugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
     gEnvironment->fclPushDebugVars(fclDebugVars);
     TranslationOutput translationOutput = {};

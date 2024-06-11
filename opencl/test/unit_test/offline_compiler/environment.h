@@ -22,7 +22,7 @@ class Environment : public ::testing::Environment {
         const std::string filename) {
 
         retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".bin");
-        retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".spv");
+        retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".bc");
 
         NEO::setIgcDebugVars(igcDebugVars);
         NEO::setFclDebugVars(fclDebugVars);

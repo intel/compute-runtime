@@ -1479,7 +1479,7 @@ TEST_F(VmeBuiltInTests, WhenGettingBuiltinAsStringThenCorrectStringIsReturned) {
 TEST_F(BuiltInTests, GivenEncodeTypeWhenGettingExtensionThenCorrectStringIsReturned) {
     EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::any)));
     EXPECT_EQ(0, strcmp(".bin", BuiltinCode::getExtension(BuiltinCode::ECodeType::binary)));
-    EXPECT_EQ(0, strcmp(".spv", BuiltinCode::getExtension(BuiltinCode::ECodeType::intermediate)));
+    EXPECT_EQ(0, strcmp(".bc", BuiltinCode::getExtension(BuiltinCode::ECodeType::intermediate)));
     EXPECT_EQ(0, strcmp(".cl", BuiltinCode::getExtension(BuiltinCode::ECodeType::source)));
     EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::count)));
     EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::invalid)));

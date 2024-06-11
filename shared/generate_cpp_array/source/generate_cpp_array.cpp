@@ -75,7 +75,7 @@ std::string parseToCharArray(std::unique_ptr<uint8_t[]> &binary, size_t size, st
     out << std::endl;
     out << "    \"";
     deviceIp != "" ? out << deviceIp << "_" << builtinName : out << builtinName;
-    isSpirV ? out << ".builtin_kernel.spv\"," : out << ".builtin_kernel.bin\",";
+    isSpirV ? out << ".builtin_kernel.bc\"," : out << ".builtin_kernel.bin\",";
     out << std::endl;
     out << "    (const char *)" << builtinName;
     if (deviceIpPresent) {

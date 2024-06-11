@@ -53,7 +53,7 @@ struct BuiltinCode {
         case BuiltinCode::ECodeType::binary:
             return ".bin";
         case BuiltinCode::ECodeType::intermediate:
-            return ".spv";
+            return ".bc";
         case BuiltinCode::ECodeType::source:
             return ".cl";
         }

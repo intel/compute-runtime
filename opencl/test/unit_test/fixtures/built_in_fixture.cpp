@@ -30,7 +30,7 @@ void BuiltInFixture::setUp(Device *pDevice) {
     } else {
         builtInsFileName = KernelBinaryHelper::BUILT_INS;
     }
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".spv");
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".bc");
     retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
 
     gEnvironment->fclPushDebugVars(fclDebugVars);

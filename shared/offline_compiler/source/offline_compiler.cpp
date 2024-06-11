@@ -454,11 +454,6 @@ struct OfflineCompiler::buildInfo {
 
 int OfflineCompiler::buildIrBinary() {
     int retVal = OCLOC_SUCCESS;
-    pBuildInfo->intermediateRepresentation = preferredIntermediateRepresentation;
-    if (inputFileLlvm) {
-        pBuildInfo->intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl : IGC::CodeType::llvmBc;
-    }
-    isSpirV = pBuildInfo->intermediateRepresentation == IGC::CodeType::spirV;
 
     if (allowCaching) {
         const std::string igcRevision = igcFacade->getIgcRevision();
@@ -475,6 +470,8 @@ int OfflineCompiler::buildIrBinary() {
     }
 
     UNRECOVERABLE_IF(!fclFacade->isInitialized());
+    pBuildInfo->intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl
+                                                         : (useLlvmBc ? IGC::CodeType::llvmBc : preferredIntermediateRepresentation);
 
     // sourceCode.size() returns the number of characters without null terminated char
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> fclSrc = nullptr;
@@ -536,6 +533,7 @@ int OfflineCompiler::buildIrBinary() {
     }
 
     storeBinary(irBinary, irBinarySize, pBuildInfo->fclOutput->GetOutput()->GetMemory<char>(), pBuildInfo->fclOutput->GetOutput()->GetSizeRaw());
+    isSpirV = pBuildInfo->intermediateRepresentation == IGC::CodeType::spirV;
 
     updateBuildLog(pBuildInfo->fclOutput->GetBuildLog()->GetMemory<char>(), pBuildInfo->fclOutput->GetBuildLog()->GetSizeRaw());
 

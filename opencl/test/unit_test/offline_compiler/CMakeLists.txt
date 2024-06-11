@@ -177,7 +177,7 @@ if(WIN32)
                      TARGET run_ocloc_tests
                      POST_BUILD
                      COMMAND echo deleting offline compiler files and directories...
-                     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/copybuffer_${CLOC_LIB_DEFAULT_DEVICE}.spv
+                     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/copybuffer_${CLOC_LIB_DEFAULT_DEVICE}.bc
                      COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/copybuffer_${CLOC_LIB_DEFAULT_DEVICE}.gen
                      COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/copybuffer_${CLOC_LIB_DEFAULT_DEVICE}.bin
                      COMMAND ${CMAKE_COMMAND} -E remove_directory ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/offline_compiler_test
@@ -189,7 +189,7 @@ else()
                      TARGET run_ocloc_tests
                      POST_BUILD
                      COMMAND echo deleting offline compiler files and directories...
-                     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/*.spv
+                     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/*.bc
                      COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/*.gen
                      COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/*.ll
                      COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_LIB_DEFAULT_DEVICE}/*.bin

@@ -115,7 +115,7 @@ HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNam
 
     auto resourceNames = getBuiltinResourceNames(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::intermediate, *pDevice);
 
-    std::string expectedResourceNameGeneric = "copy_buffer_to_buffer.builtin_kernel.spv";
+    std::string expectedResourceNameGeneric = "copy_buffer_to_buffer.builtin_kernel.bc";
     std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
 
     EXPECT_EQ(2u, resourceNames.size());

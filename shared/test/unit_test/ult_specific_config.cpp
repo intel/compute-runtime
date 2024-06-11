@@ -46,17 +46,17 @@ using namespace NEO;
 void cleanTestHelpers() {}
 
 void applyWorkarounds() {
-    const std::array<ConstStringRef, 11> builtinIntermediateNames{"copy_buffer_to_buffer.builtin_kernel.spv",
-                                                                  "copy_buffer_rect.builtin_kernel.spv",
-                                                                  "fill_buffer.builtin_kernel.spv",
-                                                                  "copy_buffer_to_image3d.builtin_kernel.spv",
-                                                                  "copy_image3d_to_buffer.builtin_kernel.spv",
-                                                                  "copy_image_to_image1d.builtin_kernel.spv",
-                                                                  "copy_image_to_image2d.builtin_kernel.spv",
-                                                                  "copy_image_to_image3d.builtin_kernel.spv",
-                                                                  "fill_image1d.builtin_kernel.spv",
-                                                                  "fill_image2d.builtin_kernel.spv",
-                                                                  "fill_image3d.builtin_kernel.spv"};
+    const std::array<ConstStringRef, 11> builtinIntermediateNames{"copy_buffer_to_buffer.builtin_kernel.bc",
+                                                                  "copy_buffer_rect.builtin_kernel.bc",
+                                                                  "fill_buffer.builtin_kernel.bc",
+                                                                  "copy_buffer_to_image3d.builtin_kernel.bc",
+                                                                  "copy_image3d_to_buffer.builtin_kernel.bc",
+                                                                  "copy_image_to_image1d.builtin_kernel.bc",
+                                                                  "copy_image_to_image2d.builtin_kernel.bc",
+                                                                  "copy_image_to_image3d.builtin_kernel.bc",
+                                                                  "fill_image1d.builtin_kernel.bc",
+                                                                  "fill_image2d.builtin_kernel.bc",
+                                                                  "fill_image3d.builtin_kernel.bc"};
     auto &storageRegistry = EmbeddedStorageRegistry::getInstance();
     for (auto builtinIntermediateName : builtinIntermediateNames) {
         std::string resource = "__mock_spirv_resource";
