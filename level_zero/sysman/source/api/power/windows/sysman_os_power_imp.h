@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ class WddmPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
 
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
+    uint32_t powerLimitCount = 0;
 };
 
 } // namespace Sysman
