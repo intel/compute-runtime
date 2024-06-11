@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,9 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
 
     const auto workaroundTableHashStr = std::to_string(hwInfo.workaroundTable.asHash());
     hash.update(workaroundTableHashStr.c_str(), workaroundTableHashStr.length());
+    hash.update("----", 4);
+
+    hash.update(reinterpret_cast<const char *>(&hwInfo.ipVersion), sizeof(uint32_t));
 
     auto res = hash.finish();
     std::stringstream stream;

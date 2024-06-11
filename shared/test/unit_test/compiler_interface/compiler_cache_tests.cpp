@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -163,6 +164,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     w1.flags.wa4kAlignUVOffsetNV12LinearSurface = true;
     w2.flags.wa4kAlignUVOffsetNV12LinearSurface = false;
     const WorkaroundTable *was[] = {&w1, &w2};
+    const uint32_t ipVersionValues[] = {1, 2};
 
     std::array<std::string, 4> inputArray = {{std::string(""),
                                               std::string("12345678901234567890123456789012"),
@@ -190,45 +192,82 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
 
     CompilerCache cache(CompilerCacheConfig{});
 
-    for (size_t i0 = 0; i0 < igcRevisions.size(); i0++) {
-        strcpy_s(buf0.get(), bufSize, igcRevisions[i0].c_str());
+    strcpy_s(buf0.get(), bufSize, igcRevisions[0].c_str());
+    igcRevision = ArrayRef<char>(buf0.get(), strlen(buf0.get()));
+    strcpy_s(buf1.get(), bufSize, inputArray[0].c_str());
+    src = ArrayRef<char>(buf1.get(), strlen(buf1.get()));
+    strcpy_s(buf2.get(), bufSize, optionsArray[0].c_str());
+    apiOptions = ArrayRef<char>(buf2.get(), strlen(buf2.get()));
+    strcpy_s(buf3.get(), bufSize, internalOptionsArray[0].c_str());
+    internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
+    auto libSize = igcLibSizes[0];
+    auto libMTime = igcLibMTimes[0];
+    hwInfo.platform = *platforms[0];
+    hwInfo.featureTable = *skus[0];
+    hwInfo.workaroundTable = *was[0];
+    hwInfo.ipVersion.architecture = ipVersionValues[0];
+    hwInfo.ipVersion.release = ipVersionValues[0];
+    hwInfo.ipVersion.revision = ipVersionValues[0];
+
+    auto verifyHash = [&]() -> void {
+        std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, libSize, libMTime);
+
+        ASSERT_TRUE(hashes.find(hash) == hashes.end());
+        hashes.emplace(hash);
+    };
+    verifyHash();
+
+    for (size_t i = 1; i < igcRevisions.size(); i++) {
+        strcpy_s(buf0.get(), bufSize, igcRevisions[i].c_str());
         igcRevision = ArrayRef<char>(buf0.get(), strlen(buf0.get()));
-
-        for (auto libSize : igcLibSizes) {
-            for (auto libMTime : igcLibMTimes) {
-                for (auto platform : platforms) {
-                    hwInfo.platform = *platform;
-
-                    for (auto sku : skus) {
-                        hwInfo.featureTable = *sku;
-
-                        for (auto wa : was) {
-                            hwInfo.workaroundTable = *wa;
-
-                            for (size_t i1 = 0; i1 < inputArray.size(); i1++) {
-                                strcpy_s(buf1.get(), bufSize, inputArray[i1].c_str());
-                                src = ArrayRef<char>(buf1.get(), strlen(buf1.get()));
-                                for (size_t i2 = 0; i2 < optionsArray.size(); i2++) {
-                                    strcpy_s(buf2.get(), bufSize, optionsArray[i2].c_str());
-                                    apiOptions = ArrayRef<char>(buf2.get(), strlen(buf2.get()));
-                                    for (size_t i3 = 0; i3 < internalOptionsArray.size(); i3++) {
-                                        strcpy_s(buf3.get(), bufSize, internalOptionsArray[i3].c_str());
-                                        internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
-
-                                        std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, libSize, libMTime);
-
-                                        if (hashes.find(hash) != hashes.end()) {
-                                            FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3;
-                                        }
-                                        hashes.emplace(hash);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        verifyHash();
+    }
+    for (size_t i = 1; i < arrayCount(igcLibSizes); i++) {
+        libSize = igcLibSizes[i];
+        verifyHash();
+    }
+    for (size_t i = 1; i < arrayCount(igcLibMTimes); i++) {
+        libMTime = igcLibMTimes[i];
+        verifyHash();
+    }
+    for (size_t i = 1; i < arrayCount(platforms); i++) {
+        hwInfo.platform = *platforms[i];
+        verifyHash();
+    }
+    for (size_t i = 1; i < arrayCount(skus); i++) {
+        hwInfo.featureTable = *skus[i];
+        verifyHash();
+    }
+    for (size_t i = 1; i < arrayCount(was); i++) {
+        hwInfo.workaroundTable = *was[i];
+        verifyHash();
+    }
+    for (size_t i = 1; i < arrayCount(ipVersionValues); i++) {
+        hwInfo.ipVersion.architecture = ipVersionValues[i];
+        verifyHash();
+    }
+    for (size_t i = 1; i < arrayCount(ipVersionValues); i++) {
+        hwInfo.ipVersion.release = ipVersionValues[i];
+        verifyHash();
+    }
+    for (size_t i = 1; i < arrayCount(ipVersionValues); i++) {
+        hwInfo.ipVersion.revision = ipVersionValues[i];
+        verifyHash();
+    }
+    for (size_t i = 1; i < inputArray.size(); i++) {
+        strcpy_s(buf1.get(), bufSize, inputArray[i].c_str());
+        src = ArrayRef<char>(buf1.get(), strlen(buf1.get()));
+        verifyHash();
+    }
+    for (size_t i = 1; i < optionsArray.size(); i++) {
+        strcpy_s(buf2.get(), bufSize, optionsArray[i].c_str());
+        apiOptions = ArrayRef<char>(buf2.get(), strlen(buf2.get()));
+        verifyHash();
+    }
+    for (size_t i = 1; i < internalOptionsArray.size(); i++) {
+        strcpy_s(buf3.get(), bufSize, internalOptionsArray[i].c_str());
+        internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
+        verifyHash();
     }
 
     std::string hash = cache.getCachedFileName(hwInfo, src, apiOptions, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
