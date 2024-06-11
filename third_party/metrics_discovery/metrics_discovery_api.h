@@ -37,7 +37,7 @@ SPDX-License-Identifier: MIT
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 171
+#define MD_API_BUILD_NUMBER_CURRENT 172
 
 namespace MetricsDiscovery
 {
@@ -91,7 +91,8 @@ namespace MetricsDiscovery
         CC_ERROR_GENERAL           = 42,
         CC_ERROR_FILE_NOT_FOUND    = 43,
         CC_ERROR_NOT_SUPPORTED     = 44,
-        CC_LAST_1_0                = 45
+        CC_ERROR_ACCESS_DENIED     = 45,
+        CC_LAST_1_0                = 46
     } TCompletionCode;
 
     /* Forward declarations */
