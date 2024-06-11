@@ -647,6 +647,7 @@ int OfflineCompiler::buildSourceCode() {
     if (igcOutput == nullptr) {
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
+
     UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
     UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
     updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
@@ -1047,6 +1048,9 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("--format" == currArg) {
             formatToEnforce = argv[argIndex + 1];
             argIndex++;
+        } else if ("-stateful_address_mode" == currArg) {
+            addressingMode = argv[argIndex + 1];
+            argIndex++;
         } else if (("-config" == currArg) && hasMoreArgs) {
             parseHwInfoConfigString(argv[argIndex + 1], hwInfoConfig);
             if (!hwInfoConfig) {
@@ -1072,6 +1076,17 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         argHelper->printf("Error: options: -gen_file/-cpp_file/-output_no_suffix/-output cannot be used with -o\n");
         retVal = OCLOC_INVALID_COMMAND_LINE;
         return retVal;
+    }
+    if (!addressingMode.empty()) {
+
+        if (addressingMode != "bindless" && addressingMode != "bindful" && addressingMode != "default") {
+            argHelper->printf("Error: -stateful_address_mode value: %s is invalid\n", addressingMode.c_str());
+            retVal = OCLOC_INVALID_COMMAND_LINE;
+        }
+        if (nullptr != strstr(internalOptions.c_str(), "-cl-intel-use-bindless") && addressingMode == "bindful") {
+            argHelper->printf("Error: option -stateful_address_mode cannot be used with internal_options containing \"-cl-intel-use-bindless\"\n");
+            retVal = OCLOC_INVALID_COMMAND_LINE;
+        }
     }
     unifyExcludeIrFlags();
 
@@ -1144,7 +1159,8 @@ void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     if (compilerProductHelper->isForceEmuInt32DivRemSPRequired()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
-    if (!compilerProductHelper->isBindlessAddressingDisabled(releaseHelper.get())) {
+    if ((!compilerProductHelper->isBindlessAddressingDisabled(releaseHelper.get()) && addressingMode != "bindful") ||
+        addressingMode == "bindless") {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
     }
 
@@ -1365,6 +1381,12 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   --format                                  Enforce given binary format. The possible values are:
                                             --format zebin - Enforce generating zebin binary
                                             --format patchtokens - Enforce generating patchtokens (legacy) binary.
+
+  -stateful_address_mode                    Enforce given addressing mode. The possible values are:
+                                            -stateful_address_mode bindful - enforce generating in bindful mode
+                                            -stateful_address_mode bindless - enforce generating in bindless mode
+                                            -stateful_address_mode default - default mode
+                                            not defined: default mode.
 
   -config                                   Target hardware info config for a single device,
                                             e.g 1x4x8.

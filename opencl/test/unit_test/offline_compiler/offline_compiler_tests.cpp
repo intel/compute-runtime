@@ -3873,6 +3873,17 @@ TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingEnabledWhenAp
     EXPECT_NE(std::string::npos, internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
 }
 
+TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessNotEnabledAddrModeSetWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotAddedToInternalOptions) {
+    releaseHelper->isBindlessAddressingDisabledResult = false;
+    mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
+    mockOfflineCompiler->addressingMode = "bindful";
+
+    auto internalOptions = mockOfflineCompiler->internalOptions;
+    mockOfflineCompiler->appendExtraInternalOptions(internalOptions);
+
+    EXPECT_EQ(std::string::npos, internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
+}
+
 TEST_F(OfflineCompilerBindlessOptionsTests, givenBindlessAddressingDisabledWhenAppendExtraInternalOptionsThenBindlessModeOptionsAreNotAddedToInternalOptions) {
     releaseHelper->isBindlessAddressingDisabledResult = true;
     mockOfflineCompiler->releaseHelper = std::move(releaseHelper);
@@ -4429,6 +4440,63 @@ TEST(OfflineCompilerTest, GivenDebugFlagWhenSetStatelessToStatefulBufferOffsetFl
         size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
         EXPECT_NE(std::string::npos, found);
     }
+}
+
+TEST(OclocCompile, GivenStatefulAddressModeWhenInvalidArgsPAssedThenErrorIsReturned) {
+    MockOfflineCompiler ocloc;
+
+    std::vector<std::string> argvA = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-stateful_address_mode",
+        "wrong"};
+
+    testing::internal::CaptureStdout();
+    int retVal = ocloc.initialize(argvA.size(), argvA);
+    ASSERT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STRNE(output.c_str(), "");
+
+    std::vector<std::string> argvB = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-stateful_address_mode",
+        "bindful",
+        "-internal_options",
+        "-cl-intel-use-bindless-mode "};
+
+    MockOfflineCompiler ocloc2;
+
+    testing::internal::CaptureStdout();
+    retVal = ocloc2.initialize(argvB.size(), argvB);
+    ASSERT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_STRNE(output.c_str(), "");
+}
+
+TEST(OclocCompile, GivenStatefulAddressModeSetToBindlessWhenBuildThenBindlessModeInternalOptionsAreAdded) {
+    MockOfflineCompiler ocloc;
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-stateful_address_mode",
+        "bindless"};
+
+    int retVal = ocloc.initialize(argv.size(), argv);
+    ASSERT_EQ(0, retVal);
+    retVal = ocloc.build();
+    EXPECT_EQ(0, retVal);
+    EXPECT_NE(std::string::npos, ocloc.internalOptions.find(NEO::CompilerOptions::bindlessMode.data()));
 }
 
 struct WhiteBoxOclocArgHelper : public OclocArgHelper {

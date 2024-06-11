@@ -20,6 +20,7 @@ class MockOclocIgcFacade;
 
 class MockOfflineCompiler : public OfflineCompiler {
   public:
+    using OfflineCompiler::addressingMode;
     using OfflineCompiler::allowCaching;
     using OfflineCompiler::appendExtraInternalOptions;
     using OfflineCompiler::argHelper;

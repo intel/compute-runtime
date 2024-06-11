@@ -177,6 +177,7 @@ All supported acronyms: %s.
     std::string optionsReadFromFile = "";
     std::string internalOptionsReadFromFile = "";
     std::string formatToEnforce = "";
+    std::string addressingMode = "default";
     std::string irHash, genHash, dbgHash, elfHash;
     std::string cacheDir;
 
