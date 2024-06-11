@@ -708,6 +708,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
                                                                                ze_event_handle_t hEvent,
                                                                                uint32_t numWaitEvents,
                                                                                ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    if (!hDstImage) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+    if (!srcPtr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
 
     auto image = Image::fromHandle(hDstImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);
@@ -871,6 +877,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
                                                                              ze_event_handle_t hEvent,
                                                                              uint32_t numWaitEvents,
                                                                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    if (!dstPtr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if (!hSrcImage) {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
 
     auto image = Image::fromHandle(hSrcImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->imageElementSizeInBytes);

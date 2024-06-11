@@ -761,8 +761,8 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenAppendImageCopyFromMemoryCalled
     imageHW->initialize(device, &zeDesc);
     ze_image_region_t dstRegion = {4, 4, 4, 2, 2, 2};
     ze_result_t ret = cmdList.appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, &dstRegion, nullptr, 0, nullptr, false);
-    EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
-    EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+    EXPECT_EQ(cmdList.getAlignedAllocationCalledTimes, 0u);
+    EXPECT_EQ(ret, ZE_RESULT_ERROR_INVALID_NULL_POINTER);
 }
 
 HWTEST2_F(CommandListAppend, givenCommandListWhenAppendImageCopyToMemoryCalledWithNullDstPtrThenAppendImageCopyToMemoryReturnsError, ImageSupport) {
@@ -775,8 +775,8 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenAppendImageCopyToMemoryCalledWi
     imageHW->initialize(device, &zeDesc);
     ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
     ze_result_t ret = cmdList.appendImageCopyToMemory(dstPtr, imageHW->toHandle(), &srcRegion, nullptr, 0, nullptr, false);
-    EXPECT_GT(cmdList.getAlignedAllocationCalledTimes, 0u);
-    EXPECT_EQ(ret, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+    EXPECT_EQ(cmdList.getAlignedAllocationCalledTimes, 0u);
+    EXPECT_EQ(ret, ZE_RESULT_ERROR_INVALID_NULL_POINTER);
 }
 
 HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromMemoryToImageThenBlitImageCopyCalled, ImageSupport) {
@@ -1218,6 +1218,41 @@ HWTEST2_F(CommandListAppend, givenCopyCommandListWhenCopyFromImageToImageThenBli
     cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, false);
     EXPECT_GT(cmdList.appendCopyImageBlitCalledTimes, 0u);
     EXPECT_FALSE(cmdList.useEvents);
+}
+
+HWTEST2_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtWithInvalidInputThenErrorReturned, IsAtLeastSkl) {
+    MockCommandListHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_1D,
+                              {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                               ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                              4,
+                              1,
+                              1,
+                              0,
+                              0};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    image->initialize(device, &zeDesc);
+
+    ze_image_region_t imgRegion = {0, 0, 0, static_cast<uint32_t>(zeDesc.width), 1, 1};
+    uint32_t rowPitch = static_cast<uint32_t>(image->getImageInfo().rowPitch);
+    uint32_t slicePitch = rowPitch;
+    uint32_t data[4];
+
+    auto res = commandList->appendImageCopyFromMemoryExt(nullptr, &data[0], &imgRegion, rowPitch, slicePitch, nullptr, 0, nullptr, false);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_NULL_HANDLE);
+    res = commandList->appendImageCopyFromMemoryExt(image->toHandle(), nullptr, &imgRegion, rowPitch, slicePitch, nullptr, 0, nullptr, false);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_NULL_POINTER);
+
+    res = commandList->appendImageCopyToMemoryExt(&data[0], nullptr, &imgRegion, rowPitch, slicePitch, nullptr, 0, nullptr, false);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_NULL_HANDLE);
+    res = commandList->appendImageCopyToMemoryExt(nullptr, image->toHandle(), &imgRegion, rowPitch, slicePitch, nullptr, 0, nullptr, false);
+    EXPECT_EQ(res, ZE_RESULT_ERROR_INVALID_NULL_POINTER);
 }
 
 HWTEST2_F(CommandListAppend, givenComputeCommandListAndEventIsUsedWhenCopyFromImageToImageThenKernelImageCopyCalled, ImageSupport) {
