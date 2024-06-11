@@ -343,13 +343,7 @@ struct CommandList : _ze_command_list_handle_t {
         return this->commandContainer;
     }
 
-    void setCsr(NEO::CommandStreamReceiver *newCsr) {
-        this->csr = newCsr;
-    }
-
-    NEO::CommandStreamReceiver *getCsr() const {
-        return this->csr;
-    }
+    NEO::CommandStreamReceiver *getCsr() const;
 
     bool hasKernelWithAssert() {
         return kernelWithAssertAppended;
@@ -414,7 +408,6 @@ struct CommandList : _ze_command_list_handle_t {
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
     CommandQueue *cmdQImmediateCopyOffload = nullptr;
-    NEO::CommandStreamReceiver *csr = nullptr;
     Device *device = nullptr;
 
     size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;

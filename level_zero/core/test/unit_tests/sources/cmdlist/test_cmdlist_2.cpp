@@ -582,7 +582,11 @@ HWTEST2_F(CommandListAppend, givenImmediateCommandListWithFlushTaskEnabledWhenAp
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
 
-    MockCommandListHw<gfxCoreFamily> cmdList;
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);

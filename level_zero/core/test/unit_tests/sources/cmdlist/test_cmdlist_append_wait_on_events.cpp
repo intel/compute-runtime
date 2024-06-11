@@ -82,7 +82,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
 
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr());
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
@@ -178,7 +178,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
 
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr());
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
@@ -225,9 +225,9 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListAndAppendingRegular
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-class MockAppendRegularCommandlistWithWaitOnEvents : public MockCommandListImmediateHw<gfxCoreFamily> {
+class MockAppendRegularCommandlistWithWaitOnEvents : public MockCommandListForAppendLaunchKernel<gfxCoreFamily> {
   public:
-    MockAppendRegularCommandlistWithWaitOnEvents() : MockCommandListImmediateHw<gfxCoreFamily>() {}
+    MockAppendRegularCommandlistWithWaitOnEvents() : MockCommandListForAppendLaunchKernel<gfxCoreFamily>() {}
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
                                    bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush) override {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -236,7 +236,7 @@ class MockAppendRegularCommandlistWithWaitOnEvents : public MockCommandListImmed
 
 HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListAndAppendingRegularCommandlistWithWaitOnEventsAndForceInvalidReturnThenCheckReturnStatus, IsAtLeastXeHpcCore) {
     MockAppendRegularCommandlistWithWaitOnEvents<gfxCoreFamily> cmdList;
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
     ze_event_handle_t hEventHandle = event->toHandle();
     auto result = cmdList.appendCommandLists(0u, nullptr, nullptr, 1u, &hEventHandle);
@@ -256,7 +256,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
 
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr());
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
@@ -293,7 +293,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
 
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->csr);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr());
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
@@ -697,8 +697,11 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
 }
 
 HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOnNotSignaledEventThenWait, IsAtLeastSkl) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.cmdQImmediate = queue.get();
+
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     ze_event_handle_t eventHandle = event->toHandle();
@@ -709,8 +712,11 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitO
 }
 
 HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOnAlreadySignaledEventThenDontWait, IsAtLeastSkl) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    cmdList.cmdQImmediate = queue.get();
+
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.dcFlushSupport = false;
     event->hostSignal(false);

@@ -121,7 +121,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleDebugSurfaceStateUpdat
 
     NEO::Device *neoDevice = this->device->getNEODevice();
     if (neoDevice->getDebugger() && !neoDevice->getBindlessHeapsHelper()) {
-        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(getCsr());
         auto &sshState = csrHw->getSshState();
         bool sshDirty = sshState.updateAndCheck(ssh);
 
@@ -152,7 +152,9 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     NEO::IndirectHeap *ioh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject);
     NEO::IndirectHeap *ssh = nullptr;
 
-    this->csr->makeResident(*ioh->getGraphicsAllocation());
+    auto csr = getCsr();
+
+    csr->makeResident(*ioh->getGraphicsAllocation());
 
     if constexpr (streamStatesSupported) {
         if (this->requiredStreamState.stateBaseAddress.indirectObjectBaseAddress.value == NEO::StreamProperty64::initValue) {
@@ -161,8 +163,8 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     }
 
     if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
-        ssh = this->csr->getGlobalStatelessHeap();
-        this->csr->makeResident(*ssh->getGraphicsAllocation());
+        ssh = csr->getGlobalStatelessHeap();
+        csr->makeResident(*ssh->getGraphicsAllocation());
 
         if constexpr (streamStatesSupported) {
             if (this->requiredStreamState.stateBaseAddress.surfaceStateBaseAddress.value == NEO::StreamProperty64::initValue) {
@@ -172,7 +174,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     } else if (this->immediateCmdListHeapSharing) {
         ssh = this->commandContainer.getSurfaceStateHeapReserve().indirectHeapReservation;
         if (ssh->getGraphicsAllocation()) {
-            this->csr->makeResident(*ssh->getGraphicsAllocation());
+            csr->makeResident(*ssh->getGraphicsAllocation());
 
             if constexpr (streamStatesSupported) {
                 this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
@@ -182,7 +184,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
         if (this->dynamicHeapRequired) {
             dsh = this->commandContainer.getDynamicStateHeapReserve().indirectHeapReservation;
             if (dsh->getGraphicsAllocation()) {
-                this->csr->makeResident(*dsh->getGraphicsAllocation());
+                csr->makeResident(*dsh->getGraphicsAllocation());
                 if constexpr (streamStatesSupported) {
                     this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
                 }
@@ -191,13 +193,13 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     } else {
         if (this->dynamicHeapRequired) {
             dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::dynamicState);
-            this->csr->makeResident(*dsh->getGraphicsAllocation());
+            csr->makeResident(*dsh->getGraphicsAllocation());
             if constexpr (streamStatesSupported) {
                 this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
             }
         }
         ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
-        this->csr->makeResident(*ssh->getGraphicsAllocation());
+        csr->makeResident(*ssh->getGraphicsAllocation());
         if constexpr (streamStatesSupported) {
             this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
                                                                                              ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
@@ -205,10 +207,10 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     }
 
     if (this->device->getL0Debugger()) {
-        this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
-        this->csr->makeResident(*this->device->getDebugSurface());
+        csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
+        csr->makeResident(*this->device->getDebugSurface());
         if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
-            this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
+            csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
         }
     }
 
@@ -216,7 +218,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     sshCpuBaseAddress = ssh->getCpuBase();
     handleDebugSurfaceStateUpdate(ssh);
 
-    this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(0u), this->getCommandListPerThreadScratchSize(1u));
+    csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(0u), this->getCommandListPerThreadScratchSize(1u));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -237,10 +239,10 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
     };
     CommandListImp::storeReferenceTsToMappedEvents(true);
 
-    return this->csr->flushImmediateTask(cmdStreamTask,
-                                         taskStartOffset,
-                                         dispatchFlags,
-                                         *(this->device->getNEODevice()));
+    return getCsr()->flushImmediateTask(cmdStreamTask,
+                                        taskStartOffset,
+                                        dispatchFlags,
+                                        *(this->device->getNEODevice()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -262,14 +264,16 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
     };
     CommandListImp::storeReferenceTsToMappedEvents(true);
 
-    return this->csr->flushImmediateTaskStateless(cmdStreamTask,
-                                                  taskStartOffset,
-                                                  dispatchFlags,
-                                                  *(this->device->getNEODevice()));
+    return getCsr()->flushImmediateTaskStateless(cmdStreamTask,
+                                                 taskStartOffset,
+                                                 dispatchFlags,
+                                                 *(this->device->getNEODevice()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation) {
+    auto csr = getCsr();
+
     NEO::DispatchFlags dispatchFlags(
         nullptr,                                                     // barrierTimestampPacketNodes
         {},                                                          // pipelineSelectArgs
@@ -290,7 +294,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         false,                                                       // gsba32BitRequired
         false,                                                       // lowPriority
         true,                                                        // implicitFlush
-        this->csr->isNTo1SubmissionModelEnabled(),                   // outOfOrderExecutionAllowed
+        csr->isNTo1SubmissionModelEnabled(),                         // outOfOrderExecutionAllowed
         false,                                                       // epilogueRequired
         false,                                                       // usePerDssBackedBuffer
         this->device->getNEODevice()->getNumGenericSubDevices() > 1, // areMultipleSubDevicesInContext
@@ -309,10 +313,10 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
 
     if (kernelOperation) {
         this->updateDispatchFlagsWithRequiredStreamState(dispatchFlags);
-        this->csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(0u), this->getCommandListPerThreadScratchSize(1u));
+        csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(0u), this->getCommandListPerThreadScratchSize(1u));
 
         if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
-            ssh = this->csr->getGlobalStatelessHeap();
+            ssh = csr->getGlobalStatelessHeap();
         } else if (this->immediateCmdListHeapSharing) {
             auto &sshReserveConfig = this->commandContainer.getSurfaceStateHeapReserve();
             if (sshReserveConfig.indirectHeapReservation->getGraphicsAllocation()) {
@@ -329,16 +333,16 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
 
         if (this->device->getL0Debugger()) {
             UNRECOVERABLE_IF(!NEO::Debugger::isDebugEnabled(this->internalUsage));
-            this->csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(this->csr->getOsContext().getContextId()));
-            this->csr->makeResident(*this->device->getDebugSurface());
+            csr->makeResident(*this->device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
+            csr->makeResident(*this->device->getDebugSurface());
             if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
-                this->csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
+                csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
             }
         }
 
         NEO::Device *neoDevice = this->device->getNEODevice();
         if (neoDevice->getDebugger() && this->immediateCmdListHeapSharing && !neoDevice->getBindlessHeapsHelper()) {
-            auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+            auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(csr);
             auto sshStateCopy = csrHw->getSshState();
             bool sshDirty = sshStateCopy.updateAndCheck(ssh);
 
@@ -364,13 +368,13 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
 
     CommandListImp::storeReferenceTsToMappedEvents(true);
 
-    return this->csr->flushTask(
+    return csr->flushTask(
         cmdStreamTask,
         taskStartOffset,
         dsh,
         ioh,
         ssh,
-        this->csr->peekTaskLevel(),
+        csr->peekTaskLevel(),
         dispatchFlags,
         *(this->device->getNEODevice()));
 }
@@ -950,7 +954,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout, TaskCountType taskCount, bool handlePostWaitOperations) {
     ze_result_t status = ZE_RESULT_SUCCESS;
 
-    auto internalAllocStorage = this->csr->getInternalAllocationStorage();
+    auto csr = getCsr();
+
+    auto internalAllocStorage = csr->getInternalAllocationStorage();
 
     auto tempAllocsCleanupRequired = handlePostWaitOperations && !internalAllocStorage->getTemporaryAllocations().peekIsEmpty();
 
@@ -963,8 +969,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     } else {
         const int64_t timeoutInMicroSeconds = timeout / 1000;
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
-        const auto waitStatus = this->csr->waitForCompletionWithTimeout(NEO::WaitParams{indefinitelyPoll, !indefinitelyPoll, timeoutInMicroSeconds},
-                                                                        taskCount);
+        const auto waitStatus = csr->waitForCompletionWithTimeout(NEO::WaitParams{indefinitelyPoll, !indefinitelyPoll, timeoutInMicroSeconds},
+                                                                  taskCount);
         if (waitStatus == NEO::WaitStatus::gpuHang) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
         } else if (waitStatus == NEO::WaitStatus::notReady) {
@@ -1135,7 +1141,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     }
 
     if (this->dependenciesPresent) {
-        auto submissionStatus = this->csr->flushTagUpdate();
+        auto submissionStatus = getCsr()->flushTagUpdate();
         if (submissionStatus != NEO::SubmissionStatus::success) {
             return getErrorCodeForSubmissionStatus(submissionStatus);
         }
@@ -1337,7 +1343,7 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferThreshold(Trans
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isBarrierRequired() {
-    return *this->csr->getBarrierCountTagAddress() < this->csr->peekBarrierCount();
+    return *getCsr()->getBarrierCountTagAddress() < getCsr()->peekBarrierCount();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1363,7 +1369,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const {
     auto numEvents = numWaitEvents + (this->hasInOrderDependencies() ? 1 : 0);
 
-    return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this->csr, numEvents);
+    return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*getCsr(), numEvents);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1378,12 +1384,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     lastHangCheckTime = std::chrono::high_resolution_clock::now();
     waitStartTime = lastHangCheckTime;
 
+    auto csr = getCsr();
+
     do {
         if (inOrderExecInfo->getHostCounterAllocation()) {
-            this->csr->downloadAllocation(*inOrderExecInfo->getHostCounterAllocation());
+            csr->downloadAllocation(*inOrderExecInfo->getHostCounterAllocation());
         } else {
             UNRECOVERABLE_IF(!inOrderExecInfo->getDeviceCounterAllocation());
-            this->csr->downloadAllocation(*inOrderExecInfo->getDeviceCounterAllocation());
+            csr->downloadAllocation(*inOrderExecInfo->getDeviceCounterAllocation());
         }
 
         bool signaled = true;
@@ -1404,7 +1412,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
             break;
         }
 
-        if (this->csr->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime)) {
+        if (csr->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime)) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
             break;
         }
@@ -1439,8 +1447,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) {
     L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     if (sizePerHwThread != 0U && kernelImp->getParentModule().shouldAllocatePrivateMemoryPerDispatch()) {
-        auto ownership = this->csr->obtainUniqueOwnership();
-        this->allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, this->csr->getOwnedPrivateAllocations());
+        auto ownership = getCsr()->obtainUniqueOwnership();
+        this->allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, getCsr()->getOwnedPrivateAllocations());
     }
 }
 

@@ -661,10 +661,9 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     commandList->device = device;
     commandList->cmdListType = CommandList::CommandListType::typeImmediate;
-    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    commandList->cmdQImmediate = CommandQueue::create(productFamily, device, commandList->csr, &desc, false, false, false, ret);
+    commandList->cmdQImmediate = CommandQueue::create(productFamily, device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, ret);
 
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -705,14 +704,15 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     commandList->isFlushTaskSubmissionEnabled = true;
     commandList->device = device;
     commandList->cmdListType = CommandList::CommandListType::typeImmediate;
-    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
-    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-
+    ze_result_t ret = ZE_RESULT_SUCCESS;
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-    commandList->cmdQImmediate = CommandQueue::create(productFamily, device, commandList->csr, &desc, false, false, false, ret);
+    commandList->cmdQImmediate = CommandQueue::create(productFamily, device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc, false, false, false, ret);
+
+    ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
     commandList->getCmdContainer().setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount = {3, 2, 1};
@@ -1729,7 +1729,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, feStateCmds.size());
 
-    auto immediateCsr = commandListImmediate->csr;
+    auto immediateCsr = commandListImmediate->getCsr();
     EXPECT_EQ(cmdQueueCsr, immediateCsr);
 
     if (fePropertiesSupport.disableEuFusion) {
@@ -1763,7 +1763,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     auto cmdQueueCsr = commandQueue->getCsr();
     auto &csrProperties = cmdQueueCsr->getStreamProperties();
 
-    auto immediateCsr = commandListImmediate->csr;
+    auto immediateCsr = commandListImmediate->getCsr();
     EXPECT_EQ(cmdQueueCsr, immediateCsr);
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -1890,10 +1890,10 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
-    auto latestFlushedTaskCount = whiteBoxCmdList->csr->peekLatestFlushedTaskCount();
+    auto latestFlushedTaskCount = whiteBoxCmdList->getCsr()->peekLatestFlushedTaskCount();
     reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false, commonImmediateCommandSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
-    EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->csr->peekLatestFlushedTaskCount());
+    EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr()->peekLatestFlushedTaskCount());
 }
 
 HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForWaitOnEventsAndImmediateCommandAndAllocationListNotEmptyThenReuseCommandBuffer, IsAtLeastSkl) {
@@ -1917,10 +1917,10 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
-    auto latestFlushedTaskCount = whiteBoxCmdList->csr->peekLatestFlushedTaskCount();
+    auto latestFlushedTaskCount = whiteBoxCmdList->getCsr()->peekLatestFlushedTaskCount();
     reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false, commonImmediateCommandSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
-    EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->csr->peekLatestFlushedTaskCount());
+    EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr()->peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(CommandListCreate, givenCommandListWhenRemoveDeallocationContainerDataThenHeapNotErased) {

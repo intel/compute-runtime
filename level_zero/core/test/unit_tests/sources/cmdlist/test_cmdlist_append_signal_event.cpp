@@ -453,12 +453,15 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
+    ze_command_queue_desc_t desc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+
     auto commandList = std::make_unique<::L0::ult::MockCommandListImmediateHw<gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
+    commandList->cmdQImmediate = queue.get();
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
 
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
@@ -472,6 +475,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
+    commandList->checkAvailableSpace(0, false, commonImmediateCommandSize);
     commandList->appendSignalEventPostWalker(event.get(), nullptr, nullptr, false, false, false);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
@@ -498,7 +502,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
             auto &productHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
-            EXPECT_EQ(productHelper.isDirectSubmissionConstantCacheInvalidationNeeded(device->getHwInfo()) && commandList->csr->isDirectSubmissionEnabled(), cmd->getConstantCacheInvalidationEnable());
+            EXPECT_EQ(productHelper.isDirectSubmissionConstantCacheInvalidationNeeded(device->getHwInfo()) && commandList->getCsr()->isDirectSubmissionEnabled(), cmd->getConstantCacheInvalidationEnable());
             EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
             postSyncFound++;
             gpuAddress += event->getSinglePacketSize();

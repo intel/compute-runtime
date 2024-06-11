@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 #include "level_zero/core/source/gen12lp/cmdlist_gen12lp.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace L0 {
@@ -91,8 +92,12 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndExecutionSuccessWhenAppendingM
     const char *rangesBuffer[rangeSizes];
     const void **ranges = reinterpret_cast<const void **>(&rangesBuffer[0]);
 
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     auto cmdList = new MockCommandListImmediateHw<gfxCoreFamily>;
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList->cmdQImmediate = queue.get();
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList->executeCommandListImmediateReturnValue = ZE_RESULT_SUCCESS;
 
@@ -113,8 +118,12 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndGpuFailureWhenAppendingMemoryB
     const char *rangesBuffer[rangeSizes];
     const void **ranges = reinterpret_cast<const void **>(&rangesBuffer[0]);
 
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     auto cmdList = new MockCommandListImmediateHw<gfxCoreFamily>;
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList->cmdQImmediate = queue.get();
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList->executeCommandListImmediateReturnValue = ZE_RESULT_ERROR_DEVICE_LOST;
 

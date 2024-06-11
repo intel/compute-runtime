@@ -142,7 +142,6 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         cmdList->cmdQImmediate = mockCmdQs[createdCmdLists].get();
         cmdList->isFlushTaskSubmissionEnabled = true;
         cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
-        cmdList->csr = csr;
         cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);
         cmdList->enableInOrderExecution();
@@ -183,7 +182,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         cmdList->engineGroupType = EngineGroupType::copy;
 
         mockCopyOsContext = std::make_unique<NEO::MockOsContext>(0, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, DeviceBitfield(1)));
-        cmdList->csr->setupContext(*mockCopyOsContext);
+        cmdList->getCsr()->setupContext(*mockCopyOsContext);
         return cmdList;
     }
 

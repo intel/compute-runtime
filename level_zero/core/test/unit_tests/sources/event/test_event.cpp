@@ -31,6 +31,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/event_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
@@ -4331,10 +4332,13 @@ struct LocalMemoryEnabledDeviceFixture : public DeviceFixture {
 
 using EventTimestampTest = Test<LocalMemoryEnabledDeviceFixture>;
 HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndCopyTimeIsLessThanDeviceTimestampResolutionThenReturnTimstampDifferenceAsOne, IsXeHpcCore) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    queue->isCopyOnlyCommandQueue = true;
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
-    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
     neoDevice->setOSTime(new NEO::MockOSTimeWithConstTimestamp());
 
     ze_event_pool_desc_t eventPoolDesc = {};

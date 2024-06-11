@@ -256,7 +256,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
     this->commandContainer.setHeapAddressModel(this->cmdListHeapAddressModel);
-    this->commandContainer.setImmediateCmdListCsr(this->csr);
+    if (isImmediateType()) {
+        this->commandContainer.setImmediateCmdListCsr(getCsr());
+    }
     this->commandContainer.setStateBaseAddressTracking(this->stateBaseAddressTracking);
     this->commandContainer.setUsingPrimaryBuffer(this->dispatchCmdListBatchBufferAsPrimary);
 
@@ -280,8 +282,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     auto createSecondaryCmdBufferInHostMem = isImmediateType() &&
                                              this->isFlushTaskSubmissionEnabled &&
                                              !device->isImplicitScalingCapable() &&
-                                             this->csr &&
-                                             this->csr->isAnyDirectSubmissionEnabled() &&
+                                             getCsr() &&
+                                             getCsr()->isAnyDirectSubmissionEnabled() &&
                                              !neoDevice->getExecutionEnvironment()->areMetricsEnabled() &&
                                              neoDevice->getMemoryManager()->isLocalMemorySupported(neoDevice->getRootDeviceIndex()) &&
                                              productHelper.isFlatRingBufferSupported();
@@ -2685,8 +2687,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     if (isImmediateType() && isCopyOnly() && trackDependencies) {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         args.commandWithPostSync = true;
-        encodeMiFlush(this->csr->getBarrierCountGpuAddress(), this->csr->getNextBarrierCount() + 1, args);
-        commandContainer.addToResidencyContainer(this->csr->getTagAllocation());
+        auto csr = getCsr();
+        encodeMiFlush(csr->getBarrierCountGpuAddress(), csr->getNextBarrierCount() + 1, args);
+        commandContainer.addToResidencyContainer(csr->getTagAllocation());
     }
 
     if (apiRequest) {
@@ -3472,9 +3475,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
             TaskCountType value = 0u;
             if (isImmediateType()) {
                 args.commandWithPostSync = true;
-                gpuAddress = this->csr->getBarrierCountGpuAddress();
-                value = this->csr->getNextBarrierCount() + 1;
-                commandContainer.addToResidencyContainer(this->csr->getTagAllocation());
+                auto csr = getCsr();
+                gpuAddress = csr->getBarrierCountGpuAddress();
+                value = csr->getNextBarrierCount() + 1;
+                commandContainer.addToResidencyContainer(csr->getTagAllocation());
             }
 
             encodeMiFlush(gpuAddress, value, args);
@@ -3817,7 +3821,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
         const auto &productHelper = this->device->getNEODevice()->getRootDeviceEnvironment().template getHelper<NEO::ProductHelper>();
         if (productHelper.isDirectSubmissionConstantCacheInvalidationNeeded(this->device->getHwInfo())) {
             if (isImmediateType()) {
-                pipeControlArgs.constantCacheInvalidationEnable = this->csr->isDirectSubmissionEnabled();
+                pipeControlArgs.constantCacheInvalidationEnable = getCsr()->isDirectSubmissionEnabled();
             } else {
                 pipeControlArgs.constantCacheInvalidationEnable = this->device->getNEODevice()->isAnyDirectSubmissionEnabled();
             }

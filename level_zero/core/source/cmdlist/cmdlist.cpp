@@ -103,11 +103,11 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
         }
     }
     if (this->storeExternalPtrAsTemporary()) {
-        auto allocation = this->csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::AllocationType::externalHostPtr);
+        auto allocation = getCsr()->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::AllocationType::externalHostPtr);
         if (allocation != nullptr) {
             auto alloc = allocation.get();
             alloc->hostPtrTaskCountAssignment++;
-            this->csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(allocation), NEO::AllocationUsage::TEMPORARY_ALLOCATION, this->csr->peekTaskCount());
+            getCsr()->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::move(allocation), NEO::AllocationUsage::TEMPORARY_ALLOCATION, getCsr()->peekTaskCount());
             return alloc;
         }
     }
@@ -133,7 +133,7 @@ NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64
     }
     if (this->storeExternalPtrAsTemporary()) {
         alloc->hostPtrTaskCountAssignment++;
-        this->csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, this->csr->peekTaskCount());
+        getCsr()->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, getCsr()->peekTaskCount());
     } else if (alloc->getAllocationType() == NEO::AllocationType::externalHostPtr) {
         hostPtrMap.insert(std::make_pair(buffer, alloc));
     } else {
@@ -216,5 +216,9 @@ void CommandList::synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t
         Event *event = Event::fromHandle(waitEventList[i]);
         event->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
+}
+
+NEO::CommandStreamReceiver *CommandList::getCsr() const {
+    return static_cast<CommandQueueImp *>(this->cmdQImmediate)->getCsr();
 }
 } // namespace L0

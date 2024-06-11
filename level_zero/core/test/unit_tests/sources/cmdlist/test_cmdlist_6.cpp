@@ -81,7 +81,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
-    auto &currentCsrStreamProperties = commandListImmediate.csr->getStreamProperties();
+    auto &currentCsrStreamProperties = commandListImmediate.getCsr()->getStreamProperties();
 
     commandListImmediate.requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value = 1;
     commandListImmediate.requiredStreamState.frontEndState.disableEUFusion.value = 1;
@@ -233,7 +233,7 @@ HWTEST2_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListI
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
-    auto &currentCsrStreamProperties = commandListImmediate.csr->getStreamProperties();
+    auto &currentCsrStreamProperties = commandListImmediate.getCsr()->getStreamProperties();
     EXPECT_EQ(-1, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
     EXPECT_EQ(-1, currentCsrStreamProperties.stateComputeMode.devicePreemptionMode.value);
 
@@ -263,11 +263,15 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenRequiredFlushOperationThenExp
 }
 
 HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    queue->isCopyOnlyCommandQueue = true;
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -286,15 +290,19 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyWithDependenciesThe
 
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
 
-    cmdList.csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+    cmdList.getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
 HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    queue->isCopyOnlyCommandQueue = true;
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -314,15 +322,19 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenc
 
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
 
-    cmdList.csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+    cmdList.getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
 HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendFillWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    queue->isCopyOnlyCommandQueue = true;
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -458,9 +470,13 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrie
     const char *rangesBuffer[rangeSizes];
     const void **ranges = reinterpret_cast<const void **>(&rangesBuffer[0]);
 
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -479,9 +495,13 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrie
     const char *rangesBuffer[rangeSizes];
     const void **ranges = reinterpret_cast<const void **>(&rangesBuffer[0]);
 
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = false;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -494,11 +514,13 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrie
 }
 
 HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverrideEventCsr, IsAtLeastSkl) {
-    ze_command_queue_desc_t desc = {};
-    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    queue->isCopyOnlyCommandQueue = true;
 
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
+    cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     cmdList.cmdQImmediate = queue.get();
@@ -515,10 +537,9 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverri
     eventDesc.index = 0;
     auto event = std::unique_ptr<Event>(static_cast<Event *>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
 
-    cmdList.csr = event->csrs[0];
     event->csrs[0] = &mockCommandStreamReceiver;
     cmdList.flushImmediate(ZE_RESULT_SUCCESS, false, false, false, false, false, event->toHandle());
-    EXPECT_EQ(event->csrs[0], cmdList.csr);
+    EXPECT_EQ(event->csrs[0], cmdList.getCsr());
 }
 
 HWTEST2_F(CommandListTest, givenRegularCmdListWhenAskingForRelaxedOrderingThenReturnFalse, IsAtLeastSkl) {
@@ -1368,11 +1389,11 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessWh
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandListImmediate->cmdListHeapAddressModel);
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandQueue->cmdListHeapAddressModel);
 
-    ASSERT_EQ(commandListImmediate->csr, commandQueue->getCsr());
-    auto globalStatelessAlloc = commandListImmediate->csr->getGlobalStatelessHeapAllocation();
+    ASSERT_EQ(commandListImmediate->getCsr(), commandQueue->getCsr());
+    auto globalStatelessAlloc = commandListImmediate->getCsr()->getGlobalStatelessHeapAllocation();
     EXPECT_NE(nullptr, globalStatelessAlloc);
 
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->csr);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
     commandList->close();
@@ -2993,11 +3014,11 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessAn
 
     commandQueue->heaplessModeEnabled = true;
 
-    ASSERT_EQ(commandListImmediate->csr, commandQueue->getCsr());
-    auto globalStatelessAlloc = commandListImmediate->csr->getGlobalStatelessHeapAllocation();
+    ASSERT_EQ(commandListImmediate->getCsr(), commandQueue->getCsr());
+    auto globalStatelessAlloc = commandListImmediate->getCsr()->getGlobalStatelessHeapAllocation();
     EXPECT_NE(nullptr, globalStatelessAlloc);
 
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->csr);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
     commandList->close();

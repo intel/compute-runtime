@@ -23,6 +23,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/multi_tile_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -982,9 +983,13 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
 
     ze_group_count_t groupCount{128, 1, 1};
 
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     auto immediateCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCmdList->isFlushTaskSubmissionEnabled = true;
+    immediateCmdList->cmdQImmediate = queue.get();
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1044,9 +1049,13 @@ HWTEST2_F(MultiTileImmediateCommandListAppendLaunchKernelXeHpCoreTest, givenImpl
 
     ze_group_count_t groupCount{128, 1, 1};
 
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     auto immediateCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     immediateCmdList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCmdList->isFlushTaskSubmissionEnabled = false;
+    immediateCmdList->cmdQImmediate = queue.get();
     auto result = immediateCmdList->initialize(device, NEO::EngineGroupType::compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 

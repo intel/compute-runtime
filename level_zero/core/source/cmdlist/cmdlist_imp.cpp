@@ -51,7 +51,7 @@ ze_result_t CommandListImp::destroy() {
 
     if (isImmediateType() && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
-        this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
+        getCsr()->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, getCsr()->peekTaskCount());
     }
 
     if (!isImmediateType() &&
@@ -200,7 +200,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         UNRECOVERABLE_IF(nullptr == csr);
 
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
-        commandList->csr = csr;
         commandList->internalUsage = internalUsage;
         commandList->cmdListType = CommandListType::typeImmediate;
         commandList->isSyncModeQueue = (cmdQdesc.mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
@@ -219,6 +218,16 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         }
         csr->initializeResources(false);
         csr->initDirectSubmission();
+
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, &cmdQdesc, NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType), internalUsage, true, returnValue);
+        if (!commandQueue) {
+            commandList->destroy();
+            commandList = nullptr;
+            return commandList;
+        }
+
+        commandList->cmdQImmediate = commandQueue;
+
         returnValue = commandList->initialize(device, engineGroupType, 0);
 
         if ((cmdQdesc.flags & ZE_COMMAND_QUEUE_FLAG_IN_ORDER) || (NEO::debugManager.flags.ForceInOrderImmediateCmdListExecution.get() == 1)) {
@@ -231,14 +240,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             return commandList;
         }
 
-        auto commandQueue = CommandQueue::create(productFamily, device, csr, &cmdQdesc, commandList->isCopyOnly(), internalUsage, true, returnValue);
-        if (!commandQueue) {
-            commandList->destroy();
-            commandList = nullptr;
-            return commandList;
-        }
-
-        commandList->cmdQImmediate = commandQueue;
         commandList->isTbxMode = csr->isTbxMode();
         commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
 

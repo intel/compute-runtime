@@ -61,7 +61,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::containsCooperativeKernelsFlag;
     using BaseClass::copyOperationFenceSupported;
     using BaseClass::copyOperationOffloadEnabled;
-    using BaseClass::csr;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;
     using BaseClass::currentIndirectObjectBaseAddress;
@@ -192,7 +191,6 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::copyOperationFenceSupported;
     using BaseClass::copyOperationOffloadEnabled;
-    using BaseClass::csr;
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
     using BaseClass::disablePatching;
@@ -247,7 +245,7 @@ struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreF
     using BaseClass::commandContainer;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
-    using BaseClass::csr;
+
     using BaseClass::device;
     using BaseClass::dynamicHeapRequired;
     using BaseClass::finalStreamState;
@@ -275,7 +273,6 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::commandsToPatch;
     using BaseClass::copyOperationOffloadEnabled;
     using BaseClass::copyThroughLockedPtrEnabled;
-    using BaseClass::csr;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;
     using BaseClass::currentIndirectObjectBaseAddress;
@@ -681,7 +678,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
   public:
     using BaseClass = WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
-    MockCommandListImmediateHw() : BaseClass() {}
+    MockCommandListImmediateHw() : BaseClass() {
+        this->cmdListType = CommandList::CommandListType::typeImmediate;
+    }
     using BaseClass::appendSignalEventPostWalker;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::cmdListType;

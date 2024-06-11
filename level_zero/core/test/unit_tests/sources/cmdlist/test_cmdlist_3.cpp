@@ -1532,22 +1532,24 @@ HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenExternalMemCreatedThenNew
 HWTEST2_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhenExternalMemCreatedThenNewAllocAddedToInternalAllocationStorage, IsAtLeastSkl) {
     auto myDevice = std::make_unique<MyDeviceMock<NEO::AllocationType::externalHostPtr>>(device->getNEODevice(), execEnv);
     myDevice->neoDevice = device->getNEODevice();
+    CommandStreamReceiver *csr = neoDevice->getInternalCopyEngine() ? neoDevice->getInternalCopyEngine()->commandStreamReceiver : neoDevice->getInternalEngine().commandStreamReceiver;
+    ze_command_queue_desc_t desc = {};
+
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, csr, &desc);
+
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     commandList->cmdListType = CommandList::CommandListType::typeImmediate;
-    if (neoDevice->getInternalCopyEngine()) {
-        commandList->csr = neoDevice->getInternalCopyEngine()->commandStreamReceiver;
-    } else {
-        commandList->csr = neoDevice->getInternalEngine().commandStreamReceiver;
-    }
+
+    commandList->cmdQImmediate = queue.get();
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    EXPECT_TRUE(commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
     auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true);
-    EXPECT_FALSE(commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(alloc, commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
-    EXPECT_EQ(commandList->csr->peekTaskCount(), commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->getTaskCount(commandList->csr->getOsContext().getContextId()));
-    EXPECT_EQ(1u, commandList->csr->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->hostPtrTaskCountAssignment);
+    EXPECT_FALSE(commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_EQ(alloc, commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
+    EXPECT_EQ(commandList->getCsr()->peekTaskCount(), commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->getTaskCount(commandList->getCsr()->getOsContext().getContextId()));
+    EXPECT_EQ(1u, commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->hostPtrTaskCountAssignment);
 }
 
 HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDifferentAllocThenReturnNewAlloc, IsAtLeastSkl) {

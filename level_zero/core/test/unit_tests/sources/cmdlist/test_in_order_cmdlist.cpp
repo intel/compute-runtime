@@ -5048,7 +5048,7 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListTests {
         ze_command_queue_desc_t desc = {};
         desc.ordinal = static_cast<uint32_t>(device->getNEODevice()->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-        cmdList->isBcsSplitNeeded = bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, &desc, cmdList->csr);
+        cmdList->isBcsSplitNeeded = bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, &desc, cmdList->getCsr());
         cmdList->isFlushTaskSubmissionEnabled = false;
 
         return cmdList;
@@ -5223,8 +5223,8 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     uint32_t copyData = 0;
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
 
-    *immCmdList->csr->getBarrierCountTagAddress() = 0u;
-    immCmdList->csr->getNextBarrierCount();
+    *immCmdList->getCsr()->getBarrierCountTagAddress() = 0u;
+    immCmdList->getCsr()->getNextBarrierCount();
 
     size_t offset = cmdStream->getUsed();
 
@@ -5242,15 +5242,15 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     uint32_t copyData = 0;
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
 
-    *immCmdList->csr->getBarrierCountTagAddress() = 0u;
-    immCmdList->csr->getNextBarrierCount();
+    *immCmdList->getCsr()->getBarrierCountTagAddress() = 0u;
+    immCmdList->getCsr()->getNextBarrierCount();
 
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
 
     size_t offset = cmdStream->getUsed();
 
-    *immCmdList->csr->getBarrierCountTagAddress() = 0u;
-    immCmdList->csr->getNextBarrierCount();
+    *immCmdList->getCsr()->getBarrierCountTagAddress() = 0u;
+    immCmdList->getCsr()->getNextBarrierCount();
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
 
     // implicit dependencies

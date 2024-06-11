@@ -1397,10 +1397,14 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidEventListWhenAppendLaunchCoo
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaunchCooperativeKernelUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastSkl) {
     createKernel();
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
-    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdList.cmdQImmediate = queue.get();
+
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ze_group_count_t groupCount{1, 1, 1};
@@ -1413,10 +1417,13 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaunchCooperativeKernelNotUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastSkl) {
     createKernel();
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.isFlushTaskSubmissionEnabled = false;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
-    cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ze_group_count_t groupCount{1, 1, 1};

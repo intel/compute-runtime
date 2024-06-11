@@ -6126,7 +6126,7 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     result = image1Dst->destroy();
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    static_cast<L0::ult::CommandList *>(commandList0.get())->csr->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device0->getNEODevice());
+    static_cast<L0::ult::CommandList *>(commandList0.get())->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device0->getNEODevice());
 }
 
 HWTEST2_F(MultipleDevicePeerImageTest,

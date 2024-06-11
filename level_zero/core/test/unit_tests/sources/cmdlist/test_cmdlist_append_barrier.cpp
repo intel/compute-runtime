@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -580,10 +580,14 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
     immediateCommandList->isFlushTaskSubmissionEnabled = true;
+    immediateCommandList->cmdQImmediate = queue.get();
     ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
@@ -675,9 +679,13 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
     auto immediateCommandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, immediateCommandList);
     immediateCommandList->cmdListType = ::L0::CommandList::CommandListType::typeImmediate;
+    immediateCommandList->cmdQImmediate = queue.get();
     immediateCommandList->isFlushTaskSubmissionEnabled = false;
     ze_result_t returnValue = immediateCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

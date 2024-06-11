@@ -199,7 +199,7 @@ void CommandListPrivateHeapsFixture::setUp() {
         auto heapAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), true, 2 * MemoryConstants::megaByte,
                                                                                                    NEO::AllocationType::linearStream, false, false,
                                                                                                    neoDevice->getDeviceBitfield()});
-        commandListImmediate->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapAllocation), REUSABLE_ALLOCATION);
+        static_cast<CommandQueueImp *>(commandListImmediate->cmdQImmediate)->getCsr()->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapAllocation), REUSABLE_ALLOCATION);
     }
 
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
@@ -251,7 +251,7 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
         auto heapAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), true, 2 * MemoryConstants::megaByte,
                                                                                                    NEO::AllocationType::linearStream, false, false,
                                                                                                    neoDevice->getDeviceBitfield()});
-        commandListImmediate->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapAllocation), REUSABLE_ALLOCATION);
+        static_cast<CommandQueueImp *>(commandListImmediate->cmdQImmediate)->getCsr()->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapAllocation), REUSABLE_ALLOCATION);
     }
 
     ze_result_t returnValue;

@@ -273,13 +273,13 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsy
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = false;
-    cmdList.setCsr(&csr);
+    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
+    cmdList.cmdQImmediate = commandQueue;
+
     result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
-    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
-    cmdList.cmdQImmediate = commandQueue;
 
     ze_group_count_t groupCount{1, 1, 1};
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
@@ -302,11 +302,6 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSyn
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = true;
-    cmdList.setCsr(&csr);
-    result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
 
     ze_command_queue_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
@@ -314,6 +309,11 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSyn
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
+
+    result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
 
     ze_group_count_t groupCount{1, 1, 1};
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;
@@ -342,17 +342,18 @@ HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynch
     cmdList.callBaseExecute = true;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList.isSyncModeQueue = true;
-    cmdList.setCsr(&csr);
-    result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
     ze_command_queue_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
     desc.pNext = 0;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, false, result);
     cmdList.cmdQImmediate = commandQueue;
+
+    result = cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
 
     ze_group_count_t groupCount{1, 1, 1};
     kernel.descriptor.kernelAttributes.flags.usesAssert = true;

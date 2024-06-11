@@ -688,7 +688,7 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
     returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto csrHeap = &commandList->csr->getIndirectHeap(NEO::HeapType::surfaceState, 0);
+    auto csrHeap = &commandList->getCsr()->getIndirectHeap(NEO::HeapType::surfaceState, 0);
     ASSERT_NE(nullptr, csrHeap);
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());
@@ -737,7 +737,7 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto csrHeap = &commandList->csr->getIndirectHeap(NEO::HeapType::surfaceState, 0);
+    auto csrHeap = &commandList->getCsr()->getIndirectHeap(NEO::HeapType::surfaceState, 0);
     ASSERT_NE(nullptr, csrHeap);
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());

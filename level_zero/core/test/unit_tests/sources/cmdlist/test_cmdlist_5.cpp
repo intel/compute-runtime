@@ -2076,7 +2076,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    ASSERT_EQ(commandListImmediate->csr, commandQueue->getCsr());
+    ASSERT_EQ(commandListImmediate->getCsr(), commandQueue->getCsr());
 
     NEO::StateBaseAddressPropertiesSupport sbaPropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
@@ -2285,7 +2285,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    ASSERT_EQ(commandListImmediate->csr, commandQueue->getCsr());
+    ASSERT_EQ(commandListImmediate->getCsr(), commandQueue->getCsr());
     auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
 
     NEO::StateBaseAddressPropertiesSupport sbaPropertiesSupport = {};
