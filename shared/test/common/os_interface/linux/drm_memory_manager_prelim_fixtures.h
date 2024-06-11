@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -103,6 +103,7 @@ class DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest : public ::testing::Te
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
 
         mock = new DrmMockCustomPrelim(*executionEnvironment->rootDeviceEnvironments[0]);
+        mock->memoryInfo.reset(new MockMemoryInfo{*mock});
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
 

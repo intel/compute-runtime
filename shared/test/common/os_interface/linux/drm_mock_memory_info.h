@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,8 @@ const std::vector<NEO::MemoryRegion> memoryRegions = {
     {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 8 * MemoryConstants::gigaByte, 0}};
 
 struct MockMemoryInfo : public NEO::MemoryInfo {
+    using NEO::MemoryInfo::localMemoryRegions;
+
     MockMemoryInfo(const NEO::Drm &drm) : MemoryInfo(memoryRegions, drm) {}
 };
 

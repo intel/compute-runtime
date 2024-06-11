@@ -27,6 +27,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
@@ -352,6 +353,35 @@ void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData
 
 StorageInfo DrmMemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {
     auto storageInfo{MemoryManager::createStorageInfoFromProperties(properties)};
+    auto *memoryInfo = getDrm(properties.rootDeviceIndex).getMemoryInfo();
+
+    if (memoryInfo == nullptr || localMemorySupported[properties.rootDeviceIndex] == false) {
+        return storageInfo;
+    }
+
+    const auto &localMemoryRegions{memoryInfo->getLocalMemoryRegions()};
+    DEBUG_BREAK_IF(localMemoryRegions.empty());
+
+    DeviceBitfield allMemoryBanks{0b0};
+    for (auto i = 0u; i < localMemoryRegions.size(); ++i) {
+        if ((properties.subDevicesBitfield & localMemoryRegions[i].tilesMask).any()) {
+            allMemoryBanks.set(i);
+        }
+    }
+    if (allMemoryBanks.none()) {
+        return storageInfo;
+    }
+
+    DeviceBitfield preferredMemoryBanks{0b0};
+    if (localMemoryRegions.size() == 1u) {
+        preferredMemoryBanks = allMemoryBanks;
+    } else if (properties.subDevicesBitfield.count() == 1u) {
+        preferredMemoryBanks = properties.subDevicesBitfield;
+    } else {
+        preferredMemoryBanks = getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)
+                                   ->getLeastOccupiedBank(properties.subDevicesBitfield);
+    }
+    storageInfo.memoryBanks = computeStorageInfoMemoryBanks(properties, preferredMemoryBanks, allMemoryBanks);
 
     return storageInfo;
 }
