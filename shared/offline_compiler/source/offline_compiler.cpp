@@ -579,8 +579,17 @@ int OfflineCompiler::buildSourceCode() {
     if (sourceCode.empty()) {
         return OCLOC_INVALID_PROGRAM;
     }
+    auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm, inputFileSpirV);
+    this->argHelper->printf(inputTypeWarnings.c_str());
     bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
-    if (false == inputIsIntermediateRepresentation) {
+    if (inputIsIntermediateRepresentation) {
+
+        storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
+        auto asBitcode = ArrayRef<const uint8_t>::fromAny(irBinary, irBinarySize);
+        isSpirV = NEO::isSpirVBitcode(asBitcode);
+
+        pBuildInfo->intermediateRepresentation = isSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc;
+    } else {
         retVal = buildIrBinary();
         if (retVal != OCLOC_SUCCESS)
             return retVal;
@@ -589,26 +598,24 @@ int OfflineCompiler::buildSourceCode() {
     const std::string igcRevision = igcFacade->getIgcRevision();
     const auto igcLibSize = igcFacade->getIgcLibSize();
     const auto igcLibMTime = igcFacade->getIgcLibMTime();
+    const bool generateDebugInfo = CompilerOptions::contains(options, CompilerOptions::generateDebugInfo);
 
     if (allowCaching) {
         genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
-        genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
-
-        const bool generateDebugInfo = CompilerOptions::contains(options, CompilerOptions::generateDebugInfo);
         if (generateDebugInfo) {
             dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
-            debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
         }
+
+        genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
 
         if (genBinary) {
             bool isZebin = isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize));
-
-            auto asBitcode = ArrayRef<const uint8_t>::fromAny(irBinary, irBinarySize);
-            isSpirV = NEO::isSpirVBitcode(asBitcode);
-
-            if (!generateDebugInfo) {
+            if (!generateDebugInfo || isZebin) {
                 return retVal;
-            } else if (debugDataBinary || isZebin) {
+            }
+            debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
+
+            if (debugDataBinary) {
                 return retVal;
             }
         }
@@ -620,24 +627,13 @@ int OfflineCompiler::buildSourceCode() {
 
     UNRECOVERABLE_IF(!igcFacade->isInitialized());
 
-    auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm, inputFileSpirV);
-    this->argHelper->printf(inputTypeWarnings.c_str());
+    auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
 
-    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
+    auto igcSrc = igcFacade->createConstBuffer(irBinary, irBinarySize);
     auto igcOptions = igcFacade->createConstBuffer(options.c_str(), options.size());
     auto igcInternalOptions = igcFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
-    if (false == inputIsIntermediateRepresentation) {
-        auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
-        auto igcSrc = igcFacade->createConstBuffer(irBinary, irBinarySize);
-        igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
+    auto igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
 
-    } else {
-        storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
-        isSpirV = inputFileSpirV;
-        auto igcSrc = igcFacade->createConstBuffer(sourceCode.c_str(), sourceCode.size());
-        auto igcTranslationCtx = igcFacade->createTranslationContext(inputFileSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
-        igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
-    }
     if (igcOutput == nullptr) {
         return OCLOC_OUT_OF_HOST_MEMORY;
     }

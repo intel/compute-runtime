@@ -3124,19 +3124,25 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
     EXPECT_FALSE(mockOfflineCompiler->inputFileSpirV);
 }
 
-TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUsed) {
+TEST(OfflineCompilerTest, givenSpirvRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUsed) {
     MockOfflineCompiler mockOfflineCompiler;
+
+    Source source{reinterpret_cast<const uint8_t *>(spirvMagic.data()), spirvMagic.size(), "some_file.spv"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler.argHelper)->inputs.push_back(source);
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "emptykernel.cl",
+        "some_file.spv",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
     testing::internal::CaptureStdout();
     struct StdoutCaptureRAII {
         ~StdoutCaptureRAII() {
-            testing::internal::GetCapturedStdout();
+            auto output = testing::internal::GetCapturedStdout();
+            if (HasFatalFailure()) {
+                printf("%s", output.c_str());
+            }
         }
     } stdoutCaptureRAII;
     auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
@@ -3150,8 +3156,34 @@ TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCod
     ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
     NEO::MockIgcOclDeviceCtx::TranslationOpT expectedTranslation = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
     ASSERT_EQ(expectedTranslation, mockIgcOclDeviceCtx->requestedTranslationCtxs[0]);
+}
 
-    mockOfflineCompiler.inputFileSpirV = false;
+TEST(OfflineCompilerTest, givenLlvmBcRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUsed) {
+    MockOfflineCompiler mockOfflineCompiler;
+
+    Source source{reinterpret_cast<const uint8_t *>(llvmBcMagic.data()), llvmBcMagic.size(), "some_file.bc"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler.argHelper)->inputs.push_back(source);
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "some_file.bc",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    testing::internal::CaptureStdout();
+    struct StdoutCaptureRAII {
+        ~StdoutCaptureRAII() {
+            auto output = testing::internal::GetCapturedStdout();
+            if (HasFatalFailure()) {
+                printf("%s", output.c_str());
+            }
+        }
+    } stdoutCaptureRAII;
+    auto retVal = mockOfflineCompiler.initialize(argv.size(), argv);
+    auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
+    mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
     mockOfflineCompiler.inputFileLlvm = true;
     mockIgcOclDeviceCtx->requestedTranslationCtxs.clear();
     retVal = mockOfflineCompiler.build();
@@ -3161,7 +3193,7 @@ TEST(OfflineCompilerTest, givenIntermediateRepresentationInputWhenBuildSourceCod
     EXPECT_FALSE(mockOfflineCompiler.isSpirV);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
-    expectedTranslation = {IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
+    NEO::MockIgcOclDeviceCtx::TranslationOpT expectedTranslation = {IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
     ASSERT_EQ(expectedTranslation, mockIgcOclDeviceCtx->requestedTranslationCtxs[0]);
 }
 
