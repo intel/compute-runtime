@@ -80,7 +80,7 @@ NTSTATUS __stdcall mockD3DKMTEvict(IN OUT D3DKMT_EVICT *);
 NTSTATUS __stdcall mockD3DKMTGetDeviceState(IN OUT D3DKMT_GETDEVICESTATE *);
 NTSTATUS __stdcall mockD3DKMTUnregisterTrimNotification(IN D3DKMT_UNREGISTERTRIMNOTIFICATION *);
 
-NTSTATUS setMockSizes(void *gmmPtr, UINT numAllocsToReturn, UINT gmmSize, UINT totalPrivateSize);
+NTSTATUS setMockSizes(void **gmmPtrArray, UINT numAllocsToReturn, UINT gmmSize, UINT totalPrivateSize);
 NTSTATUS getMockSizes(UINT &destroyAlloactionWithResourceHandleCalled, D3DKMT_DESTROYALLOCATION2 *&ptrDestroyAlloc);
 D3DKMT_HANDLE getMockLastDestroyedResHandle();
 void setMockLastDestroyedResHandle(D3DKMT_HANDLE handle);

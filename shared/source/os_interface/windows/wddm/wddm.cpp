@@ -842,14 +842,14 @@ bool Wddm::openSharedHandle(const MemoryManager::ExtendedOsHandleData &osHandleD
     std::unique_ptr<char[]> allocPrivateData(new char[queryResourceInfo.TotalPrivateDriverDataSize]);
     std::unique_ptr<char[]> resPrivateData(new char[queryResourceInfo.ResourcePrivateDriverDataSize]);
     std::unique_ptr<char[]> resPrivateRuntimeData(new char[queryResourceInfo.PrivateRuntimeDataSize]);
-    std::unique_ptr<D3DDDI_OPENALLOCATIONINFO2[]> allocationInfo(new D3DDDI_OPENALLOCATIONINFO2[queryResourceInfo.NumAllocations]);
+    std::unique_ptr<D3DDDI_OPENALLOCATIONINFO[]> allocationInfo(new D3DDDI_OPENALLOCATIONINFO[queryResourceInfo.NumAllocations]);
 
     D3DKMT_OPENRESOURCE openResource = {};
 
     openResource.hDevice = device;
     openResource.hGlobalShare = osHandleData.handle;
     openResource.NumAllocations = queryResourceInfo.NumAllocations;
-    openResource.pOpenAllocationInfo2 = allocationInfo.get();
+    openResource.pOpenAllocationInfo = allocationInfo.get();
     openResource.pTotalPrivateDriverDataBuffer = allocPrivateData.get();
     openResource.TotalPrivateDriverDataBufferSize = queryResourceInfo.TotalPrivateDriverDataSize;
     openResource.pResourcePrivateDriverData = resPrivateData.get();
@@ -860,10 +860,11 @@ bool Wddm::openSharedHandle(const MemoryManager::ExtendedOsHandleData &osHandleD
     status = getGdi()->openResource(&openResource);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
-    alloc->setDefaultHandle(allocationInfo[0].hAllocation);
+    auto allocationInfoIndex = osHandleData.arrayIndex < queryResourceInfo.NumAllocations ? osHandleData.arrayIndex : 0;
+    alloc->setDefaultHandle(allocationInfo[allocationInfoIndex].hAllocation);
     alloc->setResourceHandle(openResource.hResource);
 
-    auto resourceInfo = const_cast<void *>(allocationInfo[0].pPrivateDriverData);
+    auto resourceInfo = const_cast<void *>(allocationInfo[allocationInfoIndex].pPrivateDriverData);
     alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
 
     return true;
@@ -905,11 +906,12 @@ bool Wddm::openNTHandle(const MemoryManager::ExtendedOsHandleData &osHandleData,
     status = getGdi()->openResourceFromNtHandle(&openResourceFromNtHandle);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
-    auto resourceInfo = const_cast<void *>(allocationInfo2[0].pPrivateDriverData);
+    auto allocationInfoIndex = osHandleData.arrayIndex < queryResourceInfoFromNtHandle.NumAllocations ? osHandleData.arrayIndex : 0;
+    auto resourceInfo = const_cast<void *>(allocationInfo2[allocationInfoIndex].pPrivateDriverData);
 
     alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo), hwDeviceId->getUmKmDataTranslator()->enabled()));
 
-    alloc->setDefaultHandle(allocationInfo2[0].hAllocation);
+    alloc->setDefaultHandle(allocationInfo2[allocationInfoIndex].hAllocation);
     alloc->setResourceHandle(openResourceFromNtHandle.hResource);
 
     return true;

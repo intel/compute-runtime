@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     GMM_SURFACESTATE_FORMAT getResourceFormatSurfaceState() override { return (GMM_SURFACESTATE_FORMAT)0; }
 
     GMM_RESOURCE_TYPE getResourceType() override { return mockResourceCreateParams.Type; }
+
+    GMM_RESOURCE_USAGE_TYPE getResourceUsage() { return mockResourceCreateParams.Usage; }
 
     GMM_RESOURCE_FLAG *getResourceFlags() override { return &mockResourceCreateParams.Flags; }
 

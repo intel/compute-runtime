@@ -27,6 +27,7 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -2641,7 +2642,8 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
+    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
 
     AllocationProperties properties(0, false, 4096u, AllocationType::sharedBuffer, false, false, mockDeviceBitfield);
 
@@ -2654,23 +2656,32 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
-TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledThenNonNullGraphicsAllocationsAreReturned) {
     void *pSysMem = reinterpret_cast<void *>(0x1000);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    std::unique_ptr<Gmm> gmm2(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_IMAGE, {}, gmmRequirements));
+    void *gmmPtrArray[]{gmm->gmmResourceInfo.get(), gmm2->gmmResourceInfo.get()};
+    setSizesFcn(gmmPtrArray, 2u, 1024u, 1u);
 
-    MockWddmMemoryManager::ExtendedOsHandleData osHandleData{1u};
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
-    auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
-    ASSERT_NE(nullptr, gpuAllocation);
-    EXPECT_EQ(NT_RESOURCE_HANDLE, wddmAlloc->getResourceHandle());
-    EXPECT_EQ(NT_ALLOCATION_HANDLE, wddmAlloc->getDefaultHandle());
-    EXPECT_EQ(AllocationType::sharedImage, wddmAlloc->getAllocationType());
+    for (uint32_t i = 0; i < 3; i++) {
+        MockWddmMemoryManager::ExtendedOsHandleData osHandleData{1u, i};
+        auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
+        auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
+        ASSERT_NE(nullptr, gpuAllocation);
+        EXPECT_EQ(NT_RESOURCE_HANDLE, wddmAlloc->getResourceHandle());
+        EXPECT_EQ(NT_ALLOCATION_HANDLE, wddmAlloc->getDefaultHandle());
+        EXPECT_EQ(AllocationType::sharedImage, wddmAlloc->getAllocationType());
 
-    memoryManager->freeGraphicsMemory(gpuAllocation);
+        if (i % 2)
+            EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_IMAGE, reinterpret_cast<MockGmmResourceInfo *>(wddmAlloc->getDefaultGmm()->gmmResourceInfo.get())->getResourceUsage());
+        else
+            EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, reinterpret_cast<MockGmmResourceInfo *>(wddmAlloc->getDefaultGmm()->gmmResourceInfo.get())->getResourceUsage());
+
+        memoryManager->freeGraphicsMemory(gpuAllocation);
+    }
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledWithUmKmDataTranslatorEnabledThenNonNullGraphicsAllocationIsReturned) {
@@ -2692,7 +2703,8 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
+    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
 
     MockWddmMemoryManager::ExtendedOsHandleData osHandleData{1u};
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
@@ -2727,7 +2739,8 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndRequireSpecificBitness
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
+    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
 
@@ -2754,7 +2767,8 @@ TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndNotRequiredSpecificBit
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
+    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
 
@@ -2778,7 +2792,8 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandl
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
+    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
 
     AllocationProperties properties(0, false, 4096u, AllocationType::sharedBuffer, false, false, 0);
     auto gpuAllocation = (WddmAllocation *)memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
@@ -2815,7 +2830,8 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShared
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
+    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
 
     AllocationProperties properties(0, false, size, AllocationType::sharedBuffer, false, false, 0);
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
@@ -2924,7 +2940,8 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFa
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, size, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
-    setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
+    setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
 
     wddm->failOpenSharedHandle = true;
 
