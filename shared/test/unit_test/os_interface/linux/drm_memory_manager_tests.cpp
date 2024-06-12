@@ -2305,7 +2305,8 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1), 0, AllocationType::sharedImage);
+    TestedDrmMemoryManager::ExtendedOsHandleData osHandleData{1u};
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
 

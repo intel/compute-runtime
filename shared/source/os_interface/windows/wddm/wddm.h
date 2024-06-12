@@ -81,7 +81,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool verifySharedHandle(D3DKMT_HANDLE osHandle);
     MOCKABLE_VIRTUAL bool openSharedHandle(const MemoryManager::ExtendedOsHandleData &osHandleData, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool verifyNTHandle(HANDLE handle);
-    bool openNTHandle(HANDLE handle, WddmAllocation *alloc);
+    bool openNTHandle(const MemoryManager::ExtendedOsHandleData &osHandleData, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size);
     MOCKABLE_VIRTUAL void unlockResource(const D3DKMT_HANDLE &handle);
     MOCKABLE_VIRTUAL void kmDafLock(D3DKMT_HANDLE handle);

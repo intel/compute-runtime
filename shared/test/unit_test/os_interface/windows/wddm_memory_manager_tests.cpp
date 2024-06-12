@@ -2662,7 +2662,8 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1), 0, AllocationType::sharedImage);
+    MockWddmMemoryManager::ExtendedOsHandleData osHandleData{1u};
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(NT_RESOURCE_HANDLE, wddmAlloc->getResourceHandle());
@@ -2693,7 +2694,8 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
     std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmHelper(), pSysMem, 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
     setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1), 0, AllocationType::sharedImage);
+    MockWddmMemoryManager::ExtendedOsHandleData osHandleData{1u};
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(NT_RESOURCE_HANDLE, wddmAlloc->getResourceHandle());

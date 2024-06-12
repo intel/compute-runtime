@@ -885,7 +885,8 @@ void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, 
 
     bool isHostIpcAllocation = (allocationType == NEO::AllocationType::bufferHostMemory) ? true : false;
 
-    auto alloc = this->getMemoryManager()->createGraphicsAllocationFromNTHandle(handle, neoDevice->getRootDeviceIndex(), NEO::AllocationType::sharedBuffer);
+    NEO::MemoryManager::OsHandleData osHandleData{handle};
+    auto alloc = this->getMemoryManager()->createGraphicsAllocationFromNTHandle(osHandleData, neoDevice->getRootDeviceIndex(), NEO::AllocationType::sharedBuffer);
 
     if (alloc == nullptr) {
         return nullptr;

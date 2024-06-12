@@ -379,7 +379,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromM
     alloc->setGpuBaseAddress(0xabcd);
     return alloc;
 }
-NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
+NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) {
     auto ptr = reinterpret_cast<void *>(sharedHandleAddress);
     sharedHandleAddress += 0x1000;
     auto gmmHelper = getGmmHelper(0);
@@ -493,7 +493,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
     return alloc;
 }
 
-NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
+NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) {
     if (failOnCreateGraphicsAllocationFromNTHandle) {
         return nullptr;
     }

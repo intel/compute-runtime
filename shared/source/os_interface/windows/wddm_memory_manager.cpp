@@ -603,13 +603,11 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(const OsHandle
     auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, osHandleData.handle, MemoryPool::systemCpuInaccessible, maxOsContextCount, 0llu);
 
     bool status = false;
-    if (ntHandle) {
-        status = getWddm(rootDeviceIndex).openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle)), allocation.get());
-    } else if (allocationType == AllocationType::sharedImage) {
-        status = getWddm(rootDeviceIndex).openSharedHandle(static_cast<const ExtendedOsHandleData &>(osHandleData), allocation.get());
+    if (allocationType == AllocationType::sharedImage) {
+        status = ntHandle ? getWddm(rootDeviceIndex).openNTHandle(static_cast<const ExtendedOsHandleData &>(osHandleData), allocation.get()) : getWddm(rootDeviceIndex).openSharedHandle(static_cast<const ExtendedOsHandleData &>(osHandleData), allocation.get());
     } else {
         MemoryManager::ExtendedOsHandleData extendedOsHandleData{osHandleData.handle};
-        status = getWddm(rootDeviceIndex).openSharedHandle(extendedOsHandleData, allocation.get());
+        status = ntHandle ? getWddm(rootDeviceIndex).openNTHandle(extendedOsHandleData, allocation.get()) : getWddm(rootDeviceIndex).openSharedHandle(extendedOsHandleData, allocation.get());
     }
 
     if (!status) {
@@ -654,8 +652,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
     return createAllocationFromHandle(osHandleData, requireSpecificBitness, false, properties.allocationType, properties.rootDeviceIndex, mapPointer);
 }
 
-GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
-    ExtendedOsHandleData osHandleData{handle};
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) {
     return createAllocationFromHandle(osHandleData, false, true, allocType, rootDeviceIndex, nullptr);
 }
 

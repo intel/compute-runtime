@@ -37,7 +37,7 @@ class WddmMemoryManager : public MemoryManager {
 
     GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override;
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override;
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) override;
 
     void addAllocationToHostPtrManager(GraphicsAllocation *memory) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) override;

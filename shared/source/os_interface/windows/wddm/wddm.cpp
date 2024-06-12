@@ -877,10 +877,10 @@ bool Wddm::verifyNTHandle(HANDLE handle) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
+bool Wddm::openNTHandle(const MemoryManager::ExtendedOsHandleData &osHandleData, WddmAllocation *alloc) {
     D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE queryResourceInfoFromNtHandle = {};
     queryResourceInfoFromNtHandle.hDevice = device;
-    queryResourceInfoFromNtHandle.hNtHandle = handle;
+    queryResourceInfoFromNtHandle.hNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
     [[maybe_unused]] auto status = getGdi()->queryResourceInfoFromNtHandle(&queryResourceInfoFromNtHandle);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
@@ -892,7 +892,7 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     D3DKMT_OPENRESOURCEFROMNTHANDLE openResourceFromNtHandle = {};
 
     openResourceFromNtHandle.hDevice = device;
-    openResourceFromNtHandle.hNtHandle = handle;
+    openResourceFromNtHandle.hNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
     openResourceFromNtHandle.NumAllocations = queryResourceInfoFromNtHandle.NumAllocations;
     openResourceFromNtHandle.pOpenAllocationInfo2 = allocationInfo2.get();
     openResourceFromNtHandle.pTotalPrivateDriverDataBuffer = allocPrivateData.get();

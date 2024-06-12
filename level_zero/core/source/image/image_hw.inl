@@ -114,7 +114,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             }
             if (lookupTable.sharedHandleType.isDMABUFHandle) {
                 NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
-                NEO::MemoryManager::OsHandleData osHandleData{static_cast<NEO::osHandle>(lookupTable.sharedHandleType.fd)};
+                NEO::MemoryManager::ExtendedOsHandleData osHandleData{static_cast<NEO::osHandle>(lookupTable.sharedHandleType.fd)};
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
                 device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
             } else if (lookupTable.sharedHandleType.isNTHandle) {
@@ -122,7 +122,8 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 if (!verifyResult) {
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
-                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromNTHandle(lookupTable.sharedHandleType.ntHnadle, device->getNEODevice()->getRootDeviceIndex(), NEO::AllocationType::sharedImage);
+                NEO::MemoryManager::ExtendedOsHandleData osHandleData{lookupTable.sharedHandleType.ntHnadle};
+                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromNTHandle(osHandleData, device->getNEODevice()->getRootDeviceIndex(), NEO::AllocationType::sharedImage);
                 allocation->getDefaultGmm()->queryImageParams(imgInfo);
             }
         } else {

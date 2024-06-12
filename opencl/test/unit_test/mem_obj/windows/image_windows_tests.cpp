@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,10 @@ using namespace NEO;
 
 struct ImageWindowsTestsMockMemoryManager : MockMemoryManager {
     using MockMemoryManager::MockMemoryManager;
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) override {
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) override {
 
         auto graphicsAllocation = createMemoryAllocation(allocType, nullptr, reinterpret_cast<void *>(1), 1,
-                                                         4096u, reinterpret_cast<uint64_t>(handle), MemoryPool::systemCpuInaccessible,
+                                                         4096u, osHandleData.handle, MemoryPool::systemCpuInaccessible,
                                                          rootDeviceIndex, false, false, false);
 
         graphicsAllocation->setDefaultGmm(new MockGmm(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper()));

@@ -232,16 +232,16 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(
     }
 }
 
-GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromNTHandle(void *handle, uint32_t rootDeviceIndex, AllocationType allocType) {
-    if (toOsHandle(handle) != invalidSharedHandle) {
+GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) {
+    if (osHandleData.handle != invalidSharedHandle) {
         auto graphicsAllocation = createMemoryAllocation(NEO::AllocationType::sharedBuffer, nullptr, reinterpret_cast<void *>(1), 1,
-                                                         ipcAllocationSize, toOsHandle(handle), MemoryPool::systemCpuInaccessible, rootDeviceIndex,
+                                                         ipcAllocationSize, osHandleData.handle, MemoryPool::systemCpuInaccessible, rootDeviceIndex,
                                                          false, false, false);
-        graphicsAllocation->setSharedHandle(toOsHandle(handle));
-        this->capturedSharedHandle = toOsHandle(handle);
+        graphicsAllocation->setSharedHandle(osHandleData.handle);
+        this->capturedSharedHandle = osHandleData.handle;
         return graphicsAllocation;
     } else {
-        this->capturedSharedHandle = toOsHandle(handle);
+        this->capturedSharedHandle = osHandleData.handle;
         return nullptr;
     }
 }
