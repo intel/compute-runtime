@@ -275,6 +275,7 @@ TEST_F(SysmanGlobalOperationsFixture,
         return -1;
     });
 
+    pLinuxSysmanImp->rootPath = NEO::getPciRootPath(pLinuxSysmanImp->getDrm()->getFileDescriptor()).value_or("");
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -332,6 +333,7 @@ TEST_F(SysmanGlobalOperationsFixture,
         return -1;
     });
 
+    pLinuxSysmanImp->rootPath = NEO::getPciRootPath(pLinuxSysmanImp->getDrm()->getFileDescriptor()).value_or("");
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
@@ -391,6 +393,7 @@ TEST_F(SysmanGlobalOperationsFixture,
         return -1;
     });
 
+    pLinuxSysmanImp->rootPath = NEO::getPciRootPath(pLinuxSysmanImp->getDrm()->getFileDescriptor()).value_or("");
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
@@ -448,6 +451,7 @@ TEST_F(SysmanGlobalOperationsFixture,
         return -1;
     });
 
+    pLinuxSysmanImp->rootPath = NEO::getPciRootPath(pLinuxSysmanImp->getDrm()->getFileDescriptor()).value_or("");
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
@@ -457,7 +461,7 @@ TEST_F(SysmanGlobalOperationsFixture,
 }
 
 TEST_F(SysmanGlobalOperationsFixture,
-       GivenValidDeviceHandleAndOpenSysCallFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberAndBoardNumberAreReturned) {
+       GivenValidDeviceHandleAndOpenGuidReadFailsWhenCallingzesGlobalOperationsGetPropertiesThenInvalidSerialNumberAndBoardNumberAreReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
         std::map<std::string, std::string> fileNameLinkMap = {
@@ -474,9 +478,33 @@ TEST_F(SysmanGlobalOperationsFixture,
     });
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        std::vector<std::string> supportedFiles = {
+            "/sys/class/intel_pmt/telem1/offset",
+            "/sys/class/intel_pmt/telem1/telem",
+        };
+
+        auto itr = std::find(supportedFiles.begin(), supportedFiles.end(), std::string(pathname));
+        if (itr != supportedFiles.end()) {
+            return static_cast<int>(std::distance(supportedFiles.begin(), itr)) + 1;
+        }
         return 0;
     });
 
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::vector<std::pair<std::string, std::string>> supportedFiles = {
+            {"/sys/class/intel_pmt/telem1/guid", "0x41fe79a5\n"},
+            {"/sys/class/intel_pmt/telem1/offset", "0\n"},
+            {"/sys/class/intel_pmt/telem1/telem", "dummy"},
+        };
+
+        if ((--fd >= 0) && (fd < static_cast<int>(supportedFiles.size()))) {
+            memcpy(buf, supportedFiles[fd].second.c_str(), supportedFiles[fd].second.size());
+            return count;
+        }
+        return -1;
+    });
+
+    pLinuxSysmanImp->rootPath = NEO::getPciRootPath(pLinuxSysmanImp->getDrm()->getFileDescriptor()).value_or("");
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
@@ -500,6 +528,7 @@ TEST_F(SysmanGlobalOperationsFixture,
         return -1;
     });
 
+    pLinuxSysmanImp->rootPath = NEO::getPciRootPath(pLinuxSysmanImp->getDrm()->getFileDescriptor()).value_or("");
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 
@@ -515,6 +544,7 @@ TEST_F(SysmanGlobalOperationsFixture,
         return -1;
     });
 
+    pLinuxSysmanImp->rootPath = NEO::getPciRootPath(pLinuxSysmanImp->getDrm()->getFileDescriptor()).value_or("");
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_result_t result = zesDeviceGetProperties(device, &properties);
 

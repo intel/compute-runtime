@@ -78,7 +78,6 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     static const std::string srcVersionFile;
     static const std::string agamaVersionFile;
     static const std::string ueventWedgedFile;
-    bool getTelemOffsetAndTelemDir(uint64_t &telemOffset, const std::string &key, std::string &telemDir);
     std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex = 0u;
