@@ -579,15 +579,18 @@ int OfflineCompiler::buildSourceCode() {
     if (sourceCode.empty()) {
         return OCLOC_INVALID_PROGRAM;
     }
+    bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
+    if (false == inputIsIntermediateRepresentation) {
+        retVal = buildIrBinary();
+        if (retVal != OCLOC_SUCCESS)
+            return retVal;
+    }
 
     const std::string igcRevision = igcFacade->getIgcRevision();
     const auto igcLibSize = igcFacade->getIgcLibSize();
     const auto igcLibMTime = igcFacade->getIgcLibMTime();
 
     if (allowCaching) {
-        irHash = cache->getCachedFileName(getHardwareInfo(), sourceCode, options, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
-        irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
-
         genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
         genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
 
@@ -597,7 +600,7 @@ int OfflineCompiler::buildSourceCode() {
             debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
         }
 
-        if (irBinary && genBinary) {
+        if (genBinary) {
             bool isZebin = isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize));
 
             auto asBitcode = ArrayRef<const uint8_t>::fromAny(irBinary, irBinarySize);
@@ -610,10 +613,7 @@ int OfflineCompiler::buildSourceCode() {
             }
         }
 
-        delete[] irBinary;
         delete[] genBinary;
-        irBinary = nullptr;
-        irBinarySize = 0;
         genBinary = nullptr;
         genBinarySize = 0;
     }
@@ -624,23 +624,17 @@ int OfflineCompiler::buildSourceCode() {
     this->argHelper->printf(inputTypeWarnings.c_str());
 
     CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
-    bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
+    auto igcOptions = igcFacade->createConstBuffer(options.c_str(), options.size());
+    auto igcInternalOptions = igcFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
     if (false == inputIsIntermediateRepresentation) {
-        retVal = buildIrBinary();
-        if (retVal != OCLOC_SUCCESS)
-            return retVal;
-
         auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
-        igcOutput = igcTranslationCtx->Translate(pBuildInfo->fclOutput->GetOutput(), pBuildInfo->fclOptions.get(),
-                                                 pBuildInfo->fclInternalOptions.get(),
-                                                 nullptr, 0);
+        auto igcSrc = igcFacade->createConstBuffer(irBinary, irBinarySize);
+        igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
 
     } else {
         storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
         isSpirV = inputFileSpirV;
         auto igcSrc = igcFacade->createConstBuffer(sourceCode.c_str(), sourceCode.size());
-        auto igcOptions = igcFacade->createConstBuffer(options.c_str(), options.size());
-        auto igcInternalOptions = igcFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
         auto igcTranslationCtx = igcFacade->createTranslationContext(inputFileSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
         igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
     }
@@ -659,8 +653,6 @@ int OfflineCompiler::buildSourceCode() {
         storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
     }
     if (allowCaching) {
-        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions, ArrayRef<const char>(), ArrayRef<const char>(), igcRevision, igcLibSize, igcLibMTime);
-        cache->cacheBinary(irHash, irBinary, static_cast<uint32_t>(irBinarySize));
         cache->cacheBinary(genHash, genBinary, static_cast<uint32_t>(genBinarySize));
         cache->cacheBinary(dbgHash, debugDataBinary, static_cast<uint32_t>(debugDataBinarySize));
     }

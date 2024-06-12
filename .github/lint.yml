@@ -91,6 +91,7 @@ lint:
         - ocl
         - wa
         - internal
+        - ocloc
     mandatory_tracker:
       types:
         - feature

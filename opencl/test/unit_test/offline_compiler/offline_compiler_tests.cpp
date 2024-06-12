@@ -2584,10 +2584,9 @@ TEST(OfflineCompilerTest, givenAllowCachingWhenBuildSourceCodeThenGenBinaryIsCac
     ASSERT_NE(0u, mockOfflineCompiler->irBinarySize);
 
     // 0 - buildIrBinary   > irBinary
-    // 1 - buildSourceCode > irBinary
-    // 2 - buildSourceCode > genBinary
-    // 3 - buildSourceCode > debugDataBinary
-    const auto givenCacheBinaryGenHash = cacheMock->cacheBinaryKernelFileHashes[2];
+    // 1 - buildSourceCode > genBinary
+    // 2 - buildSourceCode > debugDataBinary
+    const auto givenCacheBinaryGenHash = cacheMock->cacheBinaryKernelFileHashes[1];
     const auto expectedCacheBinaryGenHash = cacheMock->getCachedFileName(mockOfflineCompiler->getHardwareInfo(),
                                                                          ArrayRef<const char>(mockOfflineCompiler->irBinary, mockOfflineCompiler->irBinarySize),
                                                                          mockOfflineCompiler->options,
