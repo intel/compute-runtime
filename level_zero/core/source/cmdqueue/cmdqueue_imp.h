@@ -83,7 +83,7 @@ struct CommandQueueImp : public CommandQueue {
 
     Device *getDevice() { return device; }
 
-    NEO::CommandStreamReceiver *getCsr() { return csr; }
+    NEO::CommandStreamReceiver *getCsr() const { return csr; }
 
     MOCKABLE_VIRTUAL NEO::WaitStatus reserveLinearStreamSize(size_t size);
 
