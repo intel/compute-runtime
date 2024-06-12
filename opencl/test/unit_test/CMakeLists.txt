@@ -136,6 +136,7 @@ function(neo_gen_kernels platform_it_lower device revision_id forcePatchtokenFor
   if(forcePatchtokenFormat)
     set(formatArgument "--format" "patchtokens")
   endif()
+  set(addrmode "bindful")
 
   set(kernels_to_compile)
   foreach(filepath ${ARGN})
@@ -154,7 +155,7 @@ function(neo_gen_kernels platform_it_lower device revision_id forcePatchtokenFor
 
       add_custom_command(
                          OUTPUT ${output_files}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -${NEO_BITS} -revision_id ${revision_id} -out_dir ${outputdir} ${formatArgument} -output_no_suffix -output ${outputname_base}
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -revision_id ${revision_id} -out_dir ${outputdir} ${formatArgument} -output_no_suffix -output ${outputname_base}
                          WORKING_DIRECTORY ${workdir}
                          DEPENDS ${filepath} ocloc
       )
@@ -187,6 +188,7 @@ function(neo_gen_kernels_with_options platform_it_lower device revision_id filep
 
     set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
     set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
+    set(addrmode "bindful")
 
     foreach(arg ${ARGN})
       string(REPLACE " " "_" argwospaces ${arg})
@@ -201,7 +203,7 @@ function(neo_gen_kernels_with_options platform_it_lower device revision_id filep
 
         add_custom_command(
                            OUTPUT ${output_files}
-                           COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${arg}
+                           COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${arg}
                            WORKING_DIRECTORY ${workdir}
                            DEPENDS ${filearg} ocloc
         )
@@ -235,9 +237,18 @@ function(neo_gen_kernels_with_internal_options platform_it_lower device revision
 
   set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
+  set(addrmode "bindful")
 
   if(NOT "${output_name_prefix}" STREQUAL "")
     set(basename ${output_name_prefix}_${basename})
+  endif()
+
+  if("${ARGN}" STREQUAL "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode")
+    set(addrmode "bindless")
+  endif()
+
+  if("${ARGN}" STREQUAL "-cl-intel-greater-than-4GB-buffer-required")
+    set(addrmode "default")
   endif()
 
   set(outputname_base "${basename}_${platform_it_lower}")
@@ -250,7 +261,7 @@ function(neo_gen_kernels_with_internal_options platform_it_lower device revision
 
     add_custom_command(
                        OUTPUT ${output_files}
-                       COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -revision_id ${revision_id} -${NEO_BITS} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -internal_options ${ARGN}
+                       COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -revision_id ${revision_id} -${NEO_BITS} -stateful_address_mode ${addrmode} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -internal_options ${ARGN}
                        WORKING_DIRECTORY ${workdir}
                        DEPENDS ${filearg} ocloc
     )

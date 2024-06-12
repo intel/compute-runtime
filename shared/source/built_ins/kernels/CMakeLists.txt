@@ -86,6 +86,16 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      DEPENDS ${builtin} ocloc copy_compiler_files
   )
+
+  set(addrmode "default")
+  if(${MODE} STREQUAL "bindless")
+    set(addrmode "bindless")
+  elseif(${MODE} STREQUAL "bindful")
+    set(addrmode "bindful")
+  elseif(${MODE} STREQUAL "stateless")
+    set(addrmode "bindful")
+  endif()
+
   foreach(RELEASE ${${platform_it}_${core_type}_RELEASES})
     string(REPLACE "." "_" RELEASE_FILENAME ${RELEASE})
     set(OUTPUT_FILE_CPP
@@ -101,7 +111,7 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
       get_filename_component(absolute_filepath_spv ${OUTPUT_FILE_SPV} ABSOLUTE)
       add_custom_command(
                          OUTPUT ${OUTPUT_FILES_BINARIES}
-                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${RELEASE} ${builtin_options} -${bits} -output ${mode}_${BASENAME}_${RELEASE_FILENAME} -output_no_suffix -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
+                         COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${RELEASE} ${builtin_options} -${bits} -stateful_address_mode ${addrmode} -output ${mode}_${BASENAME}_${RELEASE_FILENAME} -output_no_suffix -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                          DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files
       )
