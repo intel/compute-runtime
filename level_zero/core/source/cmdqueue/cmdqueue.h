@@ -35,6 +35,7 @@ struct Device;
 struct QueueProperties {
     NEO::SynchronizedDispatchMode synchronizedDispatchMode = NEO::SynchronizedDispatchMode::disabled;
     bool interruptHint = false;
+    bool copyOffloadHint = false;
 };
 
 struct CommandQueue : _ze_command_queue_handle_t {

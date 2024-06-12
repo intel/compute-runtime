@@ -374,6 +374,8 @@ QueueProperties CommandQueue::extractQueueProperties(const ze_command_queue_desc
             if (syncDispatchMode.has_value()) {
                 queueProperties.synchronizedDispatchMode = syncDispatchMode.value();
             }
+        } else if (baseProperties->stype == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES) {
+            queueProperties.copyOffloadHint = static_cast<const zex_intel_queue_copy_operations_offload_hint_exp_desc_t *>(desc.pNext)->copyOffloadEnabled;
         }
 
         baseProperties = static_cast<const ze_base_desc_t *>(baseProperties->pNext);

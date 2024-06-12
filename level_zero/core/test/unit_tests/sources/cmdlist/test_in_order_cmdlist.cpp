@@ -6922,6 +6922,42 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
     }
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEnableCopyOffload, IsAtLeastXeHpCore) {
+    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(-1);
+
+    ze_command_list_handle_t cmdListHandle;
+
+    zex_intel_queue_copy_operations_offload_hint_exp_desc_t copyOffloadDesc = {ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES};
+    copyOffloadDesc.copyOffloadEnabled = true;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    cmdQueueDesc.pNext = &copyOffloadDesc;
+
+    {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+        auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+        EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        zeCommandListDestroy(cmdListHandle);
+    }
+
+    {
+        copyOffloadDesc.copyOffloadEnabled = false;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+        auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+        EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        zeCommandListDestroy(cmdListHandle);
+    }
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsThenUserCopyCommands, IsAtLeastXeHpCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
 

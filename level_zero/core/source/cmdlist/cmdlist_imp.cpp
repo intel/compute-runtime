@@ -251,7 +251,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             commandList->enableSynchronizedDispatch(queueProperties.synchronizedDispatchMode);
         }
 
-        if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1) && !commandList->isCopyOnly() && commandList->isInOrderExecutionEnabled()) {
+        if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && !commandList->isCopyOnly() && commandList->isInOrderExecutionEnabled()) {
             commandList->enableCopyOperationOffload(productFamily, device, desc);
         }
 
