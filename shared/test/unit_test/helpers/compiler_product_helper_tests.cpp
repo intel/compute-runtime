@@ -126,6 +126,18 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpcThenSubgroup2DBlockIOIsNotS
     EXPECT_FALSE(compilerProductHelper.isSubgroup2DBlockIOSupported());
 }
 
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterThenSubgroupBufferPrefetchIsSupported, IsAtLeastXeHpcCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_TRUE(compilerProductHelper.isSubgroupBufferPrefetchSupported());
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpcThenSubgroupBufferPrefetchIsNotSupported, IsAtMostXeHpgCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_FALSE(compilerProductHelper.isSubgroupBufferPrefetchSupported());
+}
+
 HWTEST2_F(CompilerProductHelperFixture, GivenCompilerProductHelperThenBFloat16ConversionIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();

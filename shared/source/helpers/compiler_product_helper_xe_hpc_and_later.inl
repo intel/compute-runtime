@@ -35,4 +35,9 @@ bool CompilerProductHelperHw<gfxProduct>::isSubgroup2DBlockIOSupported() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isSubgroupBufferPrefetchSupported() const {
+    return true;
+}
+
 } // namespace NEO
