@@ -145,7 +145,7 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
-    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr, allocationData.size, allocationData.alignment,
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr, allocationData.size, 0u,
                                      CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper), systemMemoryStorageInfo, gmmRequirements);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
@@ -259,7 +259,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
 
         if (alignGpuAddressTo64KB) {
             void *tempCPUPtr = cpuPtr;
-            cpuPtr = alignUp(cpuPtr, std::max(alignUp(allocationData.alignment, MemoryConstants::pageSize64k), MemoryConstants::pageSize64k));
+            cpuPtr = alignUp(cpuPtr, MemoryConstants::pageSize64k);
             wddmAllocation->setGpuAddress(wddmAllocation->getGpuAddress() + ptrDiff(cpuPtr, tempCPUPtr));
         }
     }
