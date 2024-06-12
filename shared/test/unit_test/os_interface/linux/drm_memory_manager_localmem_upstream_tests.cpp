@@ -308,10 +308,10 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultiRootDeviceEnvironmentAndNoMemo
 
         rootDeviceIndices.pushUnique(i);
     }
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
+    auto isLocalMemorySupported = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>().getEnableLocalMemory(hwInfo);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(isLocalMemorySupported, false, false, *executionEnvironment);
 
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
-        auto isLocalMemorySupported = executionEnvironment->rootDeviceEnvironments[i]->getHelper<GfxCoreHelper>().getEnableLocalMemory(hwInfo);
         EXPECT_EQ(memoryManager->localMemBanksCount[i], (isLocalMemorySupported ? 1u : 0u));
     }
     size_t size = 4096u;

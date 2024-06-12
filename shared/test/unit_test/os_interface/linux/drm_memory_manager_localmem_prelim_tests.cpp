@@ -255,10 +255,12 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
     MultiGraphicsAllocation multiGraphics(rootDevicesNumber);
     RootDeviceIndicesContainer rootDeviceIndices;
     auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.release();
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
 
     executionEnvironment->prepareRootDeviceEnvironments(rootDevicesNumber);
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
@@ -273,10 +275,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
 
         rootDeviceIndices.pushUnique(i);
     }
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
+    auto isLocalMemorySupported = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>().getEnableLocalMemory(hwInfo);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(isLocalMemorySupported, false, false, *executionEnvironment);
 
     for (uint32_t i = 0; i < rootDevicesNumber; i++) {
-        auto isLocalMemorySupported = executionEnvironment->rootDeviceEnvironments[i]->getHelper<GfxCoreHelper>().getEnableLocalMemory(*defaultHwInfo);
         EXPECT_EQ(memoryManager->localMemBanksCount[i], (isLocalMemorySupported ? 1u : 0u));
     }
 
