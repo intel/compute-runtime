@@ -206,19 +206,24 @@ DeviceBitfield MemoryManager::computeStorageInfoMemoryBanks(const AllocationProp
         memoryBanks = (properties.flags.multiOsContextCapable ? allBanks : preferredBank);
         break;
     case AllocationType::buffer:
-    case AllocationType::svmGpu:
+    case AllocationType::svmGpu: {
+        auto granularity = properties.colouringGranularity;
+        if (debugManager.flags.MultiStorageGranularity.get() != -1) {
+            granularity = debugManager.flags.MultiStorageGranularity.get() * MemoryConstants::kiloByte;
+        }
 
-        DEBUG_BREAK_IF(properties.colouringPolicy == ColouringPolicy::deviceCountBased && properties.colouringGranularity != MemoryConstants::pageSize64k);
+        DEBUG_BREAK_IF(properties.colouringPolicy == ColouringPolicy::deviceCountBased && granularity != MemoryConstants::pageSize64k);
 
         if (this->supportsMultiStorageResources &&
             properties.multiStorageResource &&
-            properties.size >= deviceCount * properties.colouringGranularity &&
+            properties.size >= deviceCount * granularity &&
             properties.subDevicesBitfield.count() != 1u) {
 
             memoryBanks = (forcedMultiStoragePlacement == -1 ? allBanks : forcedMultiStoragePlacement);
         }
         memoryBanks = (properties.flags.readOnlyMultiStorage ? allBanks : memoryBanks);
         break;
+    }
     case AllocationType::unifiedSharedMemory:
         memoryBanks = (forcedMultiStoragePlacement == -1 ? allBanks : forcedMultiStoragePlacement);
         break;
