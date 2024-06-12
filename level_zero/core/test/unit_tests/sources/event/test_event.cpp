@@ -2212,6 +2212,7 @@ TEST_F(EventqueryKernelTimestampsExt, givenpCountLargerThanSupportedWhenCallingQ
     ze_event_query_kernel_timestamps_results_ext_properties_t results{};
     results.pKernelTimestampsBuffer = kernelTsBuffer.data();
     results.pSynchronizedTimestampsBuffer = nullptr;
+    event->hostSignal(false);
 
     auto result = event->queryKernelTimestampsExt(device, &pCount, &results);
 
@@ -2229,6 +2230,7 @@ TEST_F(EventqueryKernelTimestampsExt, givenEventWithStaticPartitionOffThenQueryK
     ze_event_query_kernel_timestamps_results_ext_properties_t results{};
     results.pKernelTimestampsBuffer = kernelTsBuffer.data();
     results.pSynchronizedTimestampsBuffer = nullptr;
+    event->hostSignal(false);
 
     uint32_t pCount = 10;
     auto result = event->queryKernelTimestampsExt(device, &pCount, &results);
@@ -2236,17 +2238,34 @@ TEST_F(EventqueryKernelTimestampsExt, givenEventWithStaticPartitionOffThenQueryK
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
+TEST_F(EventqueryKernelTimestampsExt, givenEventStatusNotReadyThenQueryKernelTimestampsExtReturnsNotReady) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EnableStaticPartitioning.set(0);
+
+    event->hasKerneMappedTsCapability = true;
+
+    std::vector<ze_kernel_timestamp_result_t> kernelTsBuffer(2);
+    ze_event_query_kernel_timestamps_results_ext_properties_t results{};
+    results.pKernelTimestampsBuffer = kernelTsBuffer.data();
+    results.pSynchronizedTimestampsBuffer = nullptr;
+
+    uint32_t pCount = 10;
+    auto result = event->queryKernelTimestampsExt(device, &pCount, &results);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
 TEST_F(EventqueryKernelTimestampsExt, givenEventWithMappedTimestampCapabilityWhenQueryKernelTimestampsExtIsCalledCorrectValuesAreReturned) {
 
+    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
     typename MockTimestampPackets32::Packet packetData[3];
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.kernelTimestampValidBits = 32;
-    auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
     event->setPacketsInUse(3u);
     event->hasKerneMappedTsCapability = true;
     const auto deviceTsFrequency = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
     const int64_t gpuReferenceTimeInNs = 2000;
     const int64_t cpuReferenceTimeInNs = 3000;
-    const auto maxKernelTsValue = maxNBitValue(32);
+    const auto maxKernelTsValue = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
 
     NEO::TimeStampData *referenceTs = event->peekReferenceTs();
     referenceTs->cpuTimeinNS = cpuReferenceTimeInNs;
@@ -2285,11 +2304,6 @@ TEST_F(EventqueryKernelTimestampsExt, givenEventWithMappedTimestampCapabilityWhe
     results.pKernelTimestampsBuffer = kernelTsBuffer.data();
     results.pSynchronizedTimestampsBuffer = synchronizedTsBuffer.data();
 
-    for (uint32_t packetId = 0; packetId < count; packetId++) {
-        event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
-        event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
-    }
-
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryKernelTimestampsExt(device, &count, &results));
     uint64_t errorOffset = 5;
     // Packet 1
@@ -2309,7 +2323,7 @@ TEST_F(EventqueryKernelTimestampsExt, givenEventWithMappedTimestampCapabilityWhe
 
     // Packet 2
     expectedGlobalStart = (cpuReferenceTimeInNs - gpuReferenceTimeInNs) + 500u +
-                          static_cast<uint64_t>(maxNBitValue(gfxCoreHelper.getGlobalTimeStampBits()) * deviceTsFrequency);
+                          static_cast<uint64_t>(maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits) * deviceTsFrequency);
     expectedGlobalEnd = expectedGlobalStart + (1500 - 500);
     EXPECT_GE(results.pSynchronizedTimestampsBuffer[1].global.kernelStart, expectedGlobalStart - errorOffset);
     EXPECT_LE(results.pSynchronizedTimestampsBuffer[1].global.kernelStart, expectedGlobalStart + errorOffset);

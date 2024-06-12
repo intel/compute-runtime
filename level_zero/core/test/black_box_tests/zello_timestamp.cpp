@@ -698,6 +698,11 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     }
 
+    uint64_t referenceHostTs, referenceDeviceTs = 0;
+    SUCCESS_OR_TERMINATE(zeDeviceGetGlobalTimestamps(device, &referenceHostTs, &referenceDeviceTs));
+    std::cout << "ReferenceDeviceTs: " << referenceDeviceTs << "| ReferenceHostTs: " << referenceHostTs << "\n";
+    previousMaximumSyncTs = referenceHostTs;
+
     for (uint32_t i = 0; i < 10; i++) {
 
         if (!useImmediate) {
@@ -722,7 +727,6 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
             if (verboseLevel == 1) {
                 std::cout << "[iter(" << i << ")][event(" << j << ")]====>\n";
             }
-            SUCCESS_OR_TERMINATE(zeEventQueryStatus(kernelTsEvent[j]));
             SUCCESS_OR_TERMINATE(zeEventQueryKernelTimestampsExt(kernelTsEvent[j], device, &count, nullptr));
             if (count == 0) {
                 return false;
@@ -754,12 +758,21 @@ bool testKernelMappedTimestampMap(int argc, char *argv[],
                               << "[global-ts(" << ts.global.kernelStart << " , " << ts.global.kernelEnd << " ) "
                               << "| syncTs( " << syncTs.global.kernelStart << " , " << syncTs.global.kernelEnd << " )] "
                               << "# [context-ts( " << ts.context.kernelStart << " , " << ts.context.kernelEnd << " ) "
-                              << "| syncTs ( " << syncTs.context.kernelStart << " , " << syncTs.context.kernelEnd << " )]\n";
+                              << "| syncTs ( " << syncTs.context.kernelStart << " , " << syncTs.context.kernelEnd << " )]"
+                              << "| timeTaken (" << currentMinimumSyncTs - previousMaximumSyncTs << " ns)"
+                              << "\n";
                 }
 
                 if (verboseLevel == 2) {
                     std::cout << "KernelSyncTs: " << syncTs.global.kernelStart << " , " << syncTs.global.kernelEnd
-                              << " | ContextSyncTs: " << syncTs.context.kernelStart << " , " << syncTs.context.kernelEnd << "\n";
+                              << " | ContextSyncTs: " << syncTs.context.kernelStart << " , " << syncTs.context.kernelEnd
+                              << "| timeTaken (" << currentMinimumSyncTs - previousMaximumSyncTs << " ns)"
+                              << "\n";
+                }
+
+                if ((currentMinimumSyncTs - previousMaximumSyncTs) > 10 * 1E9) {
+                    std::cout << "\n\n!!FAILED: Time Taken Too long! (Current Minimum Ts : " << currentMinimumSyncTs << " |  Previous Maximum Ts : " << previousMaximumSyncTs << ")\n\n";
+                    return false;
                 }
             }
             SUCCESS_OR_TERMINATE(zeEventHostReset(kernelTsEvent[j]));

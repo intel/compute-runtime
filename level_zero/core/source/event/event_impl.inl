@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
@@ -738,11 +739,20 @@ template <typename TagSizeT>
 void EventImp<TagSizeT>::getSynchronizedKernelTimestamps(ze_synchronized_timestamp_result_ext_t *pSynchronizedTimestampsBuffer,
                                                          const uint32_t count, const ze_kernel_timestamp_result_t *pKernelTimestampsBuffer) {
 
-    auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();
     const auto resolution = device->getNEODevice()->getDeviceInfo().profilingTimerResolution;
-    auto deviceTsInNs = gfxCoreHelper.getGpuTimeStampInNS(referenceTs.gpuTimeStamp, resolution);
     const auto maxKernelTsValue = maxNBitValue(hwInfo.capabilityTable.kernelTimestampValidBits);
+
+    const auto numBitsForResolution = Math::log2(static_cast<uint64_t>(resolution)) + 1u;
+    const auto clampedBitsCount = std::min(hwInfo.capabilityTable.kernelTimestampValidBits, 64u - numBitsForResolution);
+    const auto maxClampedTsValue = maxNBitValue(clampedBitsCount);
+
+    auto convertDeviceTsToNanoseconds = [&resolution, &maxClampedTsValue](uint64_t deviceTs) {
+        // Use clamped maximum to avoid overflows
+        return static_cast<uint64_t>((deviceTs & maxClampedTsValue) * resolution);
+    };
+
+    auto deviceTsInNs = convertDeviceTsToNanoseconds(referenceTs.gpuTimeStamp);
 
     auto getDuration = [&](uint64_t startTs, uint64_t endTs) {
         const uint64_t maxValue = maxKernelTsValue;
@@ -772,8 +782,8 @@ void EventImp<TagSizeT>::getSynchronizedKernelTimestamps(ze_synchronized_timesta
         int64_t offset = tsOffsetInNs;
         uint64_t startTimeStampInNs = static_cast<uint64_t>(deviceTs->kernelStart * resolution) + offset;
         if (startTimeStampInNs < referenceHostTsInNs) {
-            offset += static_cast<uint64_t>(maxNBitValue(gfxCoreHelper.getGlobalTimeStampBits()) * resolution);
-            startTimeStampInNs = static_cast<uint64_t>(deviceTs->kernelStart * resolution) + offset;
+            offset += static_cast<uint64_t>(convertDeviceTsToNanoseconds(maxKernelTsValue));
+            startTimeStampInNs = static_cast<uint64_t>(convertDeviceTsToNanoseconds(deviceTs->kernelStart) + offset);
         }
 
         // Get the kernel timestamp duration
@@ -803,6 +813,10 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestampsExt(Device *device, uint32_
 
     if (*pCount == 0) {
         return queryTimestampsExp(device, pCount, nullptr);
+    }
+
+    if (queryStatus() != ZE_RESULT_SUCCESS) {
+        return ZE_RESULT_NOT_READY;
     }
 
     ze_result_t status = queryTimestampsExp(device, pCount, pResults->pKernelTimestampsBuffer);
