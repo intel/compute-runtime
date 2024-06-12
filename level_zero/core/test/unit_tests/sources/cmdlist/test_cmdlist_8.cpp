@@ -891,8 +891,8 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAnd
     cmdList.cmdQImmediate = mockCmdQ.get();
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr())->callBaseWaitForCompletionWithTimeout = false;
-    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr())->returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
+    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr(false))->callBaseWaitForCompletionWithTimeout = false;
+    reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr(false))->returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -925,7 +925,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr())->waitForCompletionWithTimeoutTaskCountCalled;
+    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr(false))->waitForCompletionWithTimeoutTaskCountCalled;
     EXPECT_EQ(waitForFlushTagUpdateCalled, 0u);
 }
 
@@ -944,7 +944,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
     auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr())->waitForCompletionWithTimeoutTaskCountCalled;
+    uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr(false))->waitForCompletionWithTimeoutTaskCountCalled;
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 

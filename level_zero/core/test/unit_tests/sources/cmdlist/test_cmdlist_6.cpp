@@ -81,7 +81,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
-    auto &currentCsrStreamProperties = commandListImmediate.getCsr()->getStreamProperties();
+    auto &currentCsrStreamProperties = commandListImmediate.getCsr(false)->getStreamProperties();
 
     commandListImmediate.requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value = 1;
     commandListImmediate.requiredStreamState.frontEndState.disableEUFusion.value = 1;
@@ -233,7 +233,7 @@ HWTEST2_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListI
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
-    auto &currentCsrStreamProperties = commandListImmediate.getCsr()->getStreamProperties();
+    auto &currentCsrStreamProperties = commandListImmediate.getCsr(false)->getStreamProperties();
     EXPECT_EQ(-1, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
     EXPECT_EQ(-1, currentCsrStreamProperties.stateComputeMode.devicePreemptionMode.value);
 
@@ -290,7 +290,7 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyWithDependenciesThe
 
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
 
-    cmdList.getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+    cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
 HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
@@ -322,7 +322,7 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenc
 
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
 
-    cmdList.getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+    cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
 HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendFillWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
@@ -539,7 +539,7 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverri
 
     event->csrs[0] = &mockCommandStreamReceiver;
     cmdList.flushImmediate(ZE_RESULT_SUCCESS, false, false, false, false, false, event->toHandle());
-    EXPECT_EQ(event->csrs[0], cmdList.getCsr());
+    EXPECT_EQ(event->csrs[0], cmdList.getCsr(false));
 }
 
 HWTEST2_F(CommandListTest, givenRegularCmdListWhenAskingForRelaxedOrderingThenReturnFalse, IsAtLeastSkl) {
@@ -1389,11 +1389,11 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessWh
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandListImmediate->cmdListHeapAddressModel);
     EXPECT_EQ(NEO::HeapAddressModel::globalStateless, commandQueue->cmdListHeapAddressModel);
 
-    ASSERT_EQ(commandListImmediate->getCsr(), commandQueue->getCsr());
-    auto globalStatelessAlloc = commandListImmediate->getCsr()->getGlobalStatelessHeapAllocation();
+    ASSERT_EQ(commandListImmediate->getCsr(false), commandQueue->getCsr());
+    auto globalStatelessAlloc = commandListImmediate->getCsr(false)->getGlobalStatelessHeapAllocation();
     EXPECT_NE(nullptr, globalStatelessAlloc);
 
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->getCsr());
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->getCsr(false));
     ultCsr->storeMakeResidentAllocations = true;
 
     commandList->close();
@@ -3004,7 +3004,7 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_NE(nullptr, primaryCsr->getScratchSpaceController()->getScratchSpaceSlot0Allocation());
-    EXPECT_NE(primaryCsr, commandListImmediate->getCsr());
+    EXPECT_NE(primaryCsr, commandListImmediate->getCsr(false));
 }
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessAndHeaplessModeWhenExecutingCommandListThenMakeAllocationResident, IsAtLeastXeHpCore) {
@@ -3014,11 +3014,11 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessAn
 
     commandQueue->heaplessModeEnabled = true;
 
-    ASSERT_EQ(commandListImmediate->getCsr(), commandQueue->getCsr());
-    auto globalStatelessAlloc = commandListImmediate->getCsr()->getGlobalStatelessHeapAllocation();
+    ASSERT_EQ(commandListImmediate->getCsr(false), commandQueue->getCsr());
+    auto globalStatelessAlloc = commandListImmediate->getCsr(false)->getGlobalStatelessHeapAllocation();
     EXPECT_NE(nullptr, globalStatelessAlloc);
 
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->getCsr());
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->getCsr(false));
     ultCsr->storeMakeResidentAllocations = true;
 
     commandList->close();

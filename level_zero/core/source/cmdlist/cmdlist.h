@@ -343,7 +343,7 @@ struct CommandList : _ze_command_list_handle_t {
         return this->commandContainer;
     }
 
-    NEO::CommandStreamReceiver *getCsr() const;
+    NEO::CommandStreamReceiver *getCsr(bool copyOffload) const;
 
     bool hasKernelWithAssert() {
         return kernelWithAssertAppended;
@@ -375,8 +375,8 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
   protected:
-    NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
-    NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
+    NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
+    NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
     bool setupTimestampEventForMultiTile(Event *signalEvent);
     bool isTimestampEventForMultiTile(Event *signalEvent);
     bool getDcFlushRequired(bool externalCondition) const {

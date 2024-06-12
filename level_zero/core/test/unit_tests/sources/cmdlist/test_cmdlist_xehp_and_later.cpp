@@ -1871,7 +1871,7 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
     size_t csrUsedAfter = csrStream.getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto globalSurfaceHeap = commandListImmediate->getCsr()->getGlobalStatelessHeap();
+    auto globalSurfaceHeap = commandListImmediate->getCsr(false)->getGlobalStatelessHeap();
 
     auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
     auto ioBaseAddress = neoDevice->getGmmHelper()->decanonize(ioHeap->getHeapGpuBase());
@@ -1928,7 +1928,7 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
     size_t csrUsedAfter = csrStream.getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto globalSurfaceHeap = commandListImmediate->getCsr()->getGlobalStatelessHeap();
+    auto globalSurfaceHeap = commandListImmediate->getCsr(false)->getGlobalStatelessHeap();
 
     auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
 

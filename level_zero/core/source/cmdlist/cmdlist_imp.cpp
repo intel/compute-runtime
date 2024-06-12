@@ -51,7 +51,7 @@ ze_result_t CommandListImp::destroy() {
 
     if (isImmediateType() && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
-        getCsr()->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, getCsr()->peekTaskCount());
+        getCsr(false)->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, getCsr(false)->peekTaskCount());
     }
 
     if (!isImmediateType() &&

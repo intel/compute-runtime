@@ -1729,7 +1729,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     feStateCmds = findAll<FrontEndStateCommand *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(0u, feStateCmds.size());
 
-    auto immediateCsr = commandListImmediate->getCsr();
+    auto immediateCsr = commandListImmediate->getCsr(false);
     EXPECT_EQ(cmdQueueCsr, immediateCsr);
 
     if (fePropertiesSupport.disableEuFusion) {
@@ -1763,7 +1763,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     auto cmdQueueCsr = commandQueue->getCsr();
     auto &csrProperties = cmdQueueCsr->getStreamProperties();
 
-    auto immediateCsr = commandListImmediate->getCsr();
+    auto immediateCsr = commandListImmediate->getCsr(false);
     EXPECT_EQ(cmdQueueCsr, immediateCsr);
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -1890,10 +1890,10 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
-    auto latestFlushedTaskCount = whiteBoxCmdList->getCsr()->peekLatestFlushedTaskCount();
+    auto latestFlushedTaskCount = whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount();
     reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(0, false, commonImmediateCommandSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
-    EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr()->peekLatestFlushedTaskCount());
+    EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount());
 }
 
 HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForWaitOnEventsAndImmediateCommandAndAllocationListNotEmptyThenReuseCommandBuffer, IsAtLeastSkl) {
@@ -1917,10 +1917,10 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
 
     commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
-    auto latestFlushedTaskCount = whiteBoxCmdList->getCsr()->peekLatestFlushedTaskCount();
+    auto latestFlushedTaskCount = whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount();
     reinterpret_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false, commonImmediateCommandSize);
     EXPECT_EQ(1U, commandList->getCmdContainer().getCmdBufferAllocations().size());
-    EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr()->peekLatestFlushedTaskCount());
+    EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(CommandListCreate, givenCommandListWhenRemoveDeallocationContainerDataThenHeapNotErased) {
@@ -1975,7 +1975,7 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListThenEa
     auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
     auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
 
-    EXPECT_NE(commandList1->getCsr(), commandList2->getCsr());
+    EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
 
     commandList1->destroy();
     commandList2->destroy();
@@ -2049,11 +2049,11 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithIn
         auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
         auto commandList3 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle3));
 
-        EXPECT_TRUE(static_cast<MockOsContext &>(commandList1->getCsr()->getOsContext()).allocateInterruptPassed);
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandList1->getCsr()->getOsContext()).isPartOfContextGroup());
-        EXPECT_TRUE(static_cast<MockOsContext &>(commandList2->getCsr()->getOsContext()).allocateInterruptPassed);
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandList2->getCsr()->getOsContext()).isPartOfContextGroup());
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandList3->getCsr()->getOsContext()).allocateInterruptPassed);
+        EXPECT_TRUE(static_cast<MockOsContext &>(commandList1->getCsr(false)->getOsContext()).allocateInterruptPassed);
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandList1->getCsr(false)->getOsContext()).isPartOfContextGroup());
+        EXPECT_TRUE(static_cast<MockOsContext &>(commandList2->getCsr(false)->getOsContext()).allocateInterruptPassed);
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandList2->getCsr(false)->getOsContext()).isPartOfContextGroup());
+        EXPECT_FALSE(static_cast<MockOsContext &>(commandList3->getCsr(false)->getOsContext()).allocateInterruptPassed);
 
         commandList1->destroy();
         commandList2->destroy();
@@ -2106,7 +2106,7 @@ TEST(CommandList, givenCopyContextGroupEnabledWhenCreatingImmediateCommandListTh
     auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
     auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
 
-    EXPECT_NE(commandList1->getCsr(), commandList2->getCsr());
+    EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
 
     commandList1->destroy();
     commandList2->destroy();
@@ -2122,7 +2122,7 @@ TEST(CommandList, givenCopyContextGroupEnabledWhenCreatingImmediateCommandListTh
     commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
     commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
 
-    EXPECT_NE(commandList1->getCsr(), commandList2->getCsr());
+    EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
 
     commandList1->destroy();
     commandList2->destroy();

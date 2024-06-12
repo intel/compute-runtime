@@ -220,7 +220,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::inOrderExecInfo;
 
     void printKernelsPrintfOutput(bool hangDetected);
-    MOCKABLE_VIRTUAL ze_result_t synchronizeInOrderExecution(uint64_t timeout) const;
+    MOCKABLE_VIRTUAL ze_result_t synchronizeInOrderExecution(uint64_t timeout, bool copyOffloadSync) const;
     ze_result_t hostSynchronize(uint64_t timeout, bool handlePostWaitOperations);
     bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const;
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
@@ -231,6 +231,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ComputeFlushMethodType computeFlushMethod = nullptr;
     std::atomic<bool> dependenciesPresent{false};
     bool latestFlushIsHostVisible = false;
+    bool latestFlushIsCopyOffload = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

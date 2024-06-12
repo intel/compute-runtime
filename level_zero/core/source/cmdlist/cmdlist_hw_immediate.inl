@@ -121,7 +121,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleDebugSurfaceStateUpdat
 
     NEO::Device *neoDevice = this->device->getNEODevice();
     if (neoDevice->getDebugger() && !neoDevice->getBindlessHeapsHelper()) {
-        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(getCsr());
+        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(getCsr(false));
         auto &sshState = csrHw->getSshState();
         bool sshDirty = sshState.updateAndCheck(ssh);
 
@@ -152,7 +152,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     NEO::IndirectHeap *ioh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject);
     NEO::IndirectHeap *ssh = nullptr;
 
-    auto csr = getCsr();
+    auto csr = getCsr(false);
 
     csr->makeResident(*ioh->getGraphicsAllocation());
 
@@ -239,10 +239,10 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
     };
     CommandListImp::storeReferenceTsToMappedEvents(true);
 
-    return getCsr()->flushImmediateTask(cmdStreamTask,
-                                        taskStartOffset,
-                                        dispatchFlags,
-                                        *(this->device->getNEODevice()));
+    return getCsr(false)->flushImmediateTask(cmdStreamTask,
+                                             taskStartOffset,
+                                             dispatchFlags,
+                                             *(this->device->getNEODevice()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -264,15 +264,15 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
     };
     CommandListImp::storeReferenceTsToMappedEvents(true);
 
-    return getCsr()->flushImmediateTaskStateless(cmdStreamTask,
-                                                 taskStartOffset,
-                                                 dispatchFlags,
-                                                 *(this->device->getNEODevice()));
+    return getCsr(false)->flushImmediateTaskStateless(cmdStreamTask,
+                                                      taskStartOffset,
+                                                      dispatchFlags,
+                                                      *(this->device->getNEODevice()));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegularTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation) {
-    auto csr = getCsr();
+    auto csr = getCsr(false);
 
     NEO::DispatchFlags dispatchFlags(
         nullptr,                                                     // barrierTimestampPacketNodes
@@ -955,24 +955,43 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     ze_result_t status = ZE_RESULT_SUCCESS;
 
     auto waitQueue = this->cmdQImmediate;
-    auto taskCount = waitQueue->getTaskCount();
-    auto csr = static_cast<CommandQueueImp *>(waitQueue)->getCsr();
 
-    auto internalAllocStorage = csr->getInternalAllocationStorage();
+    TaskCountType mainQueueTaskCount = waitQueue->getTaskCount();
+    TaskCountType copyOffloadTaskCount = 0;
 
-    auto tempAllocsCleanupRequired = handlePostWaitOperations && !internalAllocStorage->getTemporaryAllocations().peekIsEmpty();
+    NEO::CommandStreamReceiver *mainQueueCsr = getCsr(false);
+
+    NEO::InternalAllocationStorage *mainInternalAllocStorage = mainQueueCsr->getInternalAllocationStorage();
+    NEO::InternalAllocationStorage *copyOffloadInternalAllocStorage = nullptr;
+
+    bool mainStorageCleanupNeeded = !mainInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
+    bool copyOffloadStorageCleanupNeeded = false;
+
+    if (isCopyOffloadEnabled()) {
+        copyOffloadTaskCount = this->cmdQImmediateCopyOffload->getTaskCount();
+        copyOffloadInternalAllocStorage = getCsr(true)->getInternalAllocationStorage();
+        copyOffloadStorageCleanupNeeded = !copyOffloadInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
+
+        if (this->latestFlushIsCopyOffload) {
+            waitQueue = this->cmdQImmediateCopyOffload;
+        }
+    }
+
+    auto waitTaskCount = waitQueue->getTaskCount();
+    auto waitCsr = static_cast<CommandQueueImp *>(waitQueue)->getCsr();
+
+    auto tempAllocsCleanupRequired = handlePostWaitOperations && (mainStorageCleanupNeeded || copyOffloadStorageCleanupNeeded);
 
     bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible);
 
     uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
 
     if (inOrderWaitAllowed) {
-        status = synchronizeInOrderExecution(timeout);
+        status = synchronizeInOrderExecution(timeout, (waitQueue == this->cmdQImmediateCopyOffload));
     } else {
         const int64_t timeoutInMicroSeconds = timeout / 1000;
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
-        const auto waitStatus = csr->waitForCompletionWithTimeout(NEO::WaitParams{indefinitelyPoll, !indefinitelyPoll, timeoutInMicroSeconds},
-                                                                  taskCount);
+        const auto waitStatus = waitCsr->waitForCompletionWithTimeout(NEO::WaitParams{indefinitelyPoll, !indefinitelyPoll, timeoutInMicroSeconds}, waitTaskCount);
         if (waitStatus == NEO::WaitStatus::gpuHang) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
         } else if (waitStatus == NEO::WaitStatus::notReady) {
@@ -988,9 +1007,17 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
         if (handlePostWaitOperations) {
             if (status == ZE_RESULT_SUCCESS) {
                 this->cmdQImmediate->unregisterCsrClient();
+                if (isCopyOffloadEnabled()) {
+                    this->cmdQImmediateCopyOffload->unregisterCsrClient();
+                }
 
                 if (tempAllocsCleanupRequired) {
-                    internalAllocStorage->cleanAllocationList(taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+                    if (mainStorageCleanupNeeded) {
+                        mainInternalAllocStorage->cleanAllocationList(mainQueueTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+                    }
+                    if (copyOffloadStorageCleanupNeeded) {
+                        copyOffloadInternalAllocStorage->cleanAllocationList(copyOffloadTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+                    }
                 }
             }
 
@@ -1013,6 +1040,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
     auto queue = copyOffloadSubmission ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
+    this->latestFlushIsCopyOffload = copyOffloadSubmission;
 
     if (inputRet == ZE_RESULT_SUCCESS) {
         if (this->isFlushTaskSubmissionEnabled) {
@@ -1143,7 +1171,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     }
 
     if (this->dependenciesPresent) {
-        auto submissionStatus = getCsr()->flushTagUpdate();
+        auto submissionStatus = getCsr(false)->flushTagUpdate();
         if (submissionStatus != NEO::SubmissionStatus::success) {
             return getErrorCodeForSubmissionStatus(submissionStatus);
         }
@@ -1345,7 +1373,7 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferThreshold(Trans
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isBarrierRequired() {
-    return *getCsr()->getBarrierCountTagAddress() < getCsr()->peekBarrierCount();
+    return *getCsr(false)->getBarrierCountTagAddress() < getCsr(false)->peekBarrierCount();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1371,11 +1399,11 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const {
     auto numEvents = numWaitEvents + (this->hasInOrderDependencies() ? 1 : 0);
 
-    return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*getCsr(), numEvents);
+    return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*getCsr(false), numEvents);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExecution(uint64_t timeout) const {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExecution(uint64_t timeout, bool copyOffloadSync) const {
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, now;
     uint64_t timeDiff = 0;
 
@@ -1386,7 +1414,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     lastHangCheckTime = std::chrono::high_resolution_clock::now();
     waitStartTime = lastHangCheckTime;
 
-    auto csr = getCsr();
+    auto csr = getCsr(copyOffloadSync);
 
     do {
         if (inOrderExecInfo->getHostCounterAllocation()) {
@@ -1449,8 +1477,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) {
     L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     if (sizePerHwThread != 0U && kernelImp->getParentModule().shouldAllocatePrivateMemoryPerDispatch()) {
-        auto ownership = getCsr()->obtainUniqueOwnership();
-        this->allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, getCsr()->getOwnedPrivateAllocations());
+        auto ownership = getCsr(false)->obtainUniqueOwnership();
+        this->allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, getCsr(false)->getOwnedPrivateAllocations());
     }
 }
 

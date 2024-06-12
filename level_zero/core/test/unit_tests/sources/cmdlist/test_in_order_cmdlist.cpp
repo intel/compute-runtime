@@ -5046,7 +5046,7 @@ struct BcsSplitInOrderCmdListTests : public InOrderCmdListTests {
         ze_command_queue_desc_t desc = {};
         desc.ordinal = static_cast<uint32_t>(device->getNEODevice()->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::copy));
 
-        cmdList->isBcsSplitNeeded = bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, &desc, cmdList->getCsr());
+        cmdList->isBcsSplitNeeded = bcsSplit.setupDevice(device->getHwInfo().platform.eProductFamily, false, &desc, cmdList->getCsr(false));
         cmdList->isFlushTaskSubmissionEnabled = false;
 
         return cmdList;
@@ -5221,8 +5221,8 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     uint32_t copyData = 0;
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
 
-    *immCmdList->getCsr()->getBarrierCountTagAddress() = 0u;
-    immCmdList->getCsr()->getNextBarrierCount();
+    *immCmdList->getCsr(false)->getBarrierCountTagAddress() = 0u;
+    immCmdList->getCsr(false)->getNextBarrierCount();
 
     size_t offset = cmdStream->getUsed();
 
@@ -5240,15 +5240,15 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     uint32_t copyData = 0;
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
 
-    *immCmdList->getCsr()->getBarrierCountTagAddress() = 0u;
-    immCmdList->getCsr()->getNextBarrierCount();
+    *immCmdList->getCsr(false)->getBarrierCountTagAddress() = 0u;
+    immCmdList->getCsr(false)->getNextBarrierCount();
 
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
 
     size_t offset = cmdStream->getUsed();
 
-    *immCmdList->getCsr()->getBarrierCountTagAddress() = 0u;
-    immCmdList->getCsr()->getNextBarrierCount();
+    *immCmdList->getCsr(false)->getBarrierCountTagAddress() = 0u;
+    immCmdList->getCsr(false)->getNextBarrierCount();
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
 
     // implicit dependencies
@@ -6832,7 +6832,8 @@ struct CopyOffloadInOrderTests : public InOrderCmdListTests {
         return cmdList;
     }
 
-    uint32_t copyData = 0;
+    uint32_t copyData1 = 0;
+    uint32_t copyData2 = 0;
     std::unique_ptr<VariableBackup<NEO::HardwareInfo>> backupHwInfo;
 };
 
@@ -6967,7 +6968,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
     {
         auto offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
@@ -6982,7 +6983,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto offset = cmdStream->getUsed();
 
         ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
-        immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, nullptr, 0, nullptr, false, false);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
@@ -7004,10 +7005,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWhenAppendingThenUseBcsCom
 
     auto eventHandle = events[0]->toHandle();
 
-    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle, 0, nullptr, false, false);
 
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
-    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, eventHandle, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, eventHandle, 0, nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -7040,7 +7041,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
         size_t offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -7069,7 +7070,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
         size_t offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -7098,7 +7099,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
         size_t offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -7193,7 +7194,7 @@ HWTEST2_F(CopyOffloadInOrderTests, whenDispatchingSelectCorrectQueueAndCsr, IsAt
     EXPECT_EQ(regularCsr, events[0]->csrs[0]);
     EXPECT_EQ(immCmdList->cmdQImmediate, events[0]->latestUsedCmdQueue);
 
-    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, events[0].get(), 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, false, false);
 
     EXPECT_EQ(1u, regularCsr->peekTaskCount());
     EXPECT_EQ(1u, immCmdList->cmdQImmediate->getTaskCount());
@@ -7225,9 +7226,178 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOperationWithHostVisibleEventThenMar
 
     EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
 
-    immCmdList->appendMemoryCopy(&copyData, &copyData, 1, hostVisibleEvent.get(), 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, hostVisibleEvent.get(), 0, nullptr, false, false);
 
     EXPECT_EQ(!immCmdList->dcFlushSupport, immCmdList->latestFlushIsHostVisible);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto offloadCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    EXPECT_NE(mainQueueCsr, offloadCsr);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto deviceAlloc = immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
+    auto hostAddress = static_cast<uint64_t *>(deviceAlloc->getUnderlyingBuffer());
+    *hostAddress = 0;
+
+    GraphicsAllocation *mainCsrDownloadedAlloc = nullptr;
+    uint32_t mainCsrCallCounter = 0;
+
+    GraphicsAllocation *offloadCsrDownloadedAlloc = nullptr;
+    uint32_t offloadCsrCallCounter = 0;
+
+    mainQueueCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+        mainCsrCallCounter++;
+
+        mainCsrDownloadedAlloc = &graphicsAllocation;
+    };
+
+    offloadCsr->downloadAllocationImpl = [&](GraphicsAllocation &graphicsAllocation) {
+        offloadCsrCallCounter++;
+
+        offloadCsrDownloadedAlloc = &graphicsAllocation;
+    };
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    immCmdList->hostSynchronize(0, false);
+    EXPECT_EQ(mainCsrDownloadedAlloc, deviceAlloc);
+    EXPECT_EQ(offloadCsrDownloadedAlloc, nullptr);
+    EXPECT_EQ(1u, mainCsrCallCounter);
+    EXPECT_EQ(0u, offloadCsrCallCounter);
+    EXPECT_EQ(1u, mainQueueCsr->checkGpuHangDetectedCalled);
+    EXPECT_EQ(0u, offloadCsr->checkGpuHangDetectedCalled);
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, false, false);
+
+    EXPECT_EQ(0u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(0u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+    immCmdList->hostSynchronize(0, false);
+
+    if (immCmdList->dcFlushSupport) {
+        EXPECT_EQ(0u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(1u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    } else {
+        EXPECT_EQ(mainCsrDownloadedAlloc, deviceAlloc);
+        EXPECT_EQ(offloadCsrDownloadedAlloc, deviceAlloc);
+        EXPECT_EQ(1u, mainCsrCallCounter);
+        EXPECT_EQ(1u, offloadCsrCallCounter);
+        EXPECT_EQ(1u, mainQueueCsr->checkGpuHangDetectedCalled);
+        EXPECT_EQ(1u, offloadCsr->checkGpuHangDetectedCalled);
+
+        EXPECT_EQ(0u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(0u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    }
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto offloadCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    *mainQueueCsr->getTagAddress() = 2;
+    *offloadCsr->getTagAddress() = 2;
+
+    auto mockAlloc = new MockGraphicsAllocation();
+
+    auto internalAllocStorage = mainQueueCsr->getInternalAllocationStorage();
+    internalAllocStorage->storeAllocationWithTaskCount(std::move(std::unique_ptr<MockGraphicsAllocation>(mockAlloc)), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
+
+    EXPECT_NE(mainQueueCsr, offloadCsr);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto deviceAlloc = immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
+    auto hostAddress = static_cast<uint64_t *>(deviceAlloc->getUnderlyingBuffer());
+    *hostAddress = 0;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    immCmdList->hostSynchronize(0, true);
+    EXPECT_EQ(1u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(0u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, false, false);
+
+    immCmdList->hostSynchronize(0, true);
+    EXPECT_EQ(1u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionAndTempAllocations, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto offloadCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    *mainQueueCsr->getTagAddress() = 4;
+    *offloadCsr->getTagAddress() = 4;
+
+    auto mainInternalStorage = mainQueueCsr->getInternalAllocationStorage();
+
+    auto offloadInternalStorage = offloadCsr->getInternalAllocationStorage();
+
+    EXPECT_NE(mainQueueCsr, offloadCsr);
+
+    auto deviceAlloc = immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
+    auto hostAddress = static_cast<uint64_t *>(deviceAlloc->getUnderlyingBuffer());
+    *hostAddress = 0;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+
+    mainInternalStorage->storeAllocationWithTaskCount(std::move(std::make_unique<MockGraphicsAllocation>()), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 1);
+    offloadInternalStorage->storeAllocationWithTaskCount(std::move(std::make_unique<MockGraphicsAllocation>()), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 1);
+
+    // only main is completed
+    immCmdList->hostSynchronize(0, true);
+    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+
+    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty()); // temp allocation created on offload csr
+
+    mainInternalStorage->storeAllocationWithTaskCount(std::move(std::make_unique<MockGraphicsAllocation>()), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 1);
+
+    // both completed
+    immCmdList->hostSynchronize(0, true);
+    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+
+    auto mockAlloc = new MockGraphicsAllocation();
+    mainInternalStorage->storeAllocationWithTaskCount(std::move(std::unique_ptr<MockGraphicsAllocation>(mockAlloc)), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
+
+    // only copy completed
+    immCmdList->hostSynchronize(0, true);
+    EXPECT_FALSE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+
+    mockAlloc->updateTaskCount(1, mainQueueCsr->getOsContext().getContextId());
+
+    immCmdList->hostSynchronize(0, true);
+    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+
+    // stored only in copy storage
+    offloadInternalStorage->storeAllocationWithTaskCount(std::move(std::make_unique<MockGraphicsAllocation>()), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 1);
+    immCmdList->hostSynchronize(0, true);
+    EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
 }
 
 } // namespace ult

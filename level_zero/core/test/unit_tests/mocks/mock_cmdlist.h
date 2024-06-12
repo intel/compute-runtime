@@ -232,7 +232,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 
     ADDMETHOD_CONST(synchronizeInOrderExecution, ze_result_t, true, ZE_RESULT_SUCCESS,
-                    (uint64_t timeout), (timeout));
+                    (uint64_t timeout, bool copyOffloadSync), (timeout, copyOffloadSync));
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -628,8 +628,8 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
                           uint32_t sizePerHwThread),
                          (kernel, sizePerHwThread));
 
-    AlignedAllocationData getAlignedAllocationData(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy) override {
-        return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(device, buffer, bufferSize, allowHostCopy);
+    AlignedAllocationData getAlignedAllocationData(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy, bool copyOffload) override {
+        return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(device, buffer, bufferSize, allowHostCopy, copyOffload);
     }
 
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,

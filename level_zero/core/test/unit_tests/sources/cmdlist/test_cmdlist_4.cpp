@@ -765,11 +765,11 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenI
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue));
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    EXPECT_EQ(whiteBoxCmdList->getCsr()->getNextBarrierCount(), 0u);
+    EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 0u);
 
     auto result = commandList->appendBarrier(nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(whiteBoxCmdList->getCsr()->getNextBarrierCount(), 2u);
+    EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 2u);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -782,7 +782,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenI
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_FLUSH_DW *>(*itor);
     EXPECT_EQ(cmd->getPostSyncOperation(), MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
-    EXPECT_EQ(cmd->getDestinationAddress(), whiteBoxCmdList->getCsr()->getBarrierCountGpuAddress());
+    EXPECT_EQ(cmd->getDestinationAddress(), whiteBoxCmdList->getCsr(false)->getBarrierCountGpuAddress());
     EXPECT_EQ(cmd->getImmediateData(), 2u);
 }
 
@@ -794,7 +794,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue));
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    EXPECT_EQ(whiteBoxCmdList->getCsr()->getNextBarrierCount(), 0u);
+    EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 0u);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -811,7 +811,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
 
     result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, true, false, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(whiteBoxCmdList->getCsr()->getNextBarrierCount(), 2u);
+    EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 2u);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -824,7 +824,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_FLUSH_DW *>(*itor);
     EXPECT_EQ(cmd->getPostSyncOperation(), MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
-    EXPECT_EQ(cmd->getDestinationAddress(), whiteBoxCmdList->getCsr()->getBarrierCountGpuAddress());
+    EXPECT_EQ(cmd->getDestinationAddress(), whiteBoxCmdList->getCsr(false)->getBarrierCountGpuAddress());
     EXPECT_EQ(cmd->getImmediateData(), 2u);
 }
 
@@ -836,7 +836,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue));
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    EXPECT_EQ(whiteBoxCmdList->getCsr()->getNextBarrierCount(), 0u);
+    EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 0u);
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -853,7 +853,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
 
     result = commandList->appendWaitOnEvents(1u, &eventHandle, nullptr, false, false, false, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(whiteBoxCmdList->getCsr()->getNextBarrierCount(), 1u);
+    EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 1u);
 }
 
 HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenSingleCopyAdded) {
@@ -947,7 +947,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     size_t offsetSize = 20;
     void *offsetPointer = ptrOffset(importPointer, allocOffset);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, importPointer, importSize, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, importPointer, importSize, false, false);
     auto gpuBaseAddress = static_cast<size_t>(hostAllocation->getGpuAddress());
     auto expectedAlignedAddress = alignDown(gpuBaseAddress, NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignment());
     size_t expectedOffset = gpuBaseAddress - expectedAlignedAddress;
@@ -956,7 +956,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     EXPECT_EQ(hostAllocation, outData.alloc);
     EXPECT_EQ(expectedOffset, outData.offset);
 
-    outData = commandList->getAlignedAllocationData(device, offsetPointer, offsetSize, false);
+    outData = commandList->getAlignedAllocationData(device, offsetPointer, offsetSize, false, false);
     expectedOffset += allocOffset;
     EXPECT_EQ(importPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
@@ -983,7 +983,7 @@ HWTEST2_F(HostPointerManagerCommandListTest,
     auto hostAllocation = hostDriverHandle->findHostPointerAllocation(offsetPointer, pointerSize, device->getRootDeviceIndex());
     ASSERT_NE(nullptr, hostAllocation);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, offsetPointer, pointerSize, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, offsetPointer, pointerSize, false, false);
     auto expectedAlignedAddress = static_cast<uintptr_t>(hostAllocation->getGpuAddress());
     EXPECT_EQ(heapPointer, hostAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedAlignedAddress, outData.alignedAllocationPtr);
@@ -1510,7 +1510,7 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingCopy
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr());
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlusheBatchBuffer = true;
 
     void *srcPtr = reinterpret_cast<void *>(0x12000);
@@ -1532,7 +1532,7 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyO
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr());
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlusheBatchBuffer = true;
 
     void *srcPtr = reinterpret_cast<void *>(0x12000);

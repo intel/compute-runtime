@@ -144,7 +144,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenGettingAllocInRangeThenAlloc
 
     auto newBufferPtr = ptrOffset(cpuPtr, 0x10);
     auto newBufferSize = allocSize - 0x20;
-    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize);
+    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize, false);
     EXPECT_NE(newAlloc, nullptr);
     commandList->hostPtrMap.clear();
 }
@@ -161,7 +161,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenSizeIsOutOfRangeThenNullPtrR
 
     auto newBufferPtr = ptrOffset(cpuPtr, 0x10);
     auto newBufferSize = allocSize + 0x20;
-    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize);
+    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize, false);
     EXPECT_EQ(newAlloc, nullptr);
     commandList->hostPtrMap.clear();
 }
@@ -178,7 +178,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrIsOutOfRangeThenNullPtrRe
 
     auto newBufferPtr = reinterpret_cast<const void *>(gpuAddress - 0x100);
     auto newBufferSize = allocSize - 0x200;
-    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize);
+    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize, false);
     EXPECT_EQ(newAlloc, nullptr);
     commandList->hostPtrMap.clear();
 }
@@ -196,7 +196,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenGetHostPtrAllocCalledThenCor
     size_t expectedOffset = 0x10;
     auto newBufferPtr = ptrOffset(cpuPtr, expectedOffset);
     auto newBufferSize = allocSize - 0x20;
-    auto newAlloc = commandList->getHostPtrAlloc(newBufferPtr, newBufferSize, false);
+    auto newAlloc = commandList->getHostPtrAlloc(newBufferPtr, newBufferSize, false, false);
     EXPECT_NE(nullptr, newAlloc);
     commandList->hostPtrMap.clear();
 }
@@ -221,7 +221,7 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationCalledWithInvalidPtrThenNu
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
     void *cmdListHostBuffer = reinterpret_cast<void *>(0x1234);
     AlignedAllocationData outData = {};
-    outData = commandList->getAlignedAllocationData(device, cmdListHostBuffer, cmdListHostPtrSize, false);
+    outData = commandList->getAlignedAllocationData(device, cmdListHostBuffer, cmdListHostPtrSize, false, false);
     EXPECT_EQ(nullptr, outData.alloc);
 }
 
@@ -237,7 +237,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrIsInMapThenAllocationRetu
 
     auto newBufferPtr = cpuPtr;
     auto newBufferSize = allocSize - 0x20;
-    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize);
+    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize, false);
     EXPECT_EQ(newAlloc, &alloc);
     commandList->hostPtrMap.clear();
 }
@@ -254,7 +254,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrIsInMapButWithBiggerSizeT
 
     auto newBufferPtr = cpuPtr;
     auto newBufferSize = allocSize + 0x20;
-    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize);
+    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize, false);
     EXPECT_EQ(newAlloc, nullptr);
     commandList->hostPtrMap.clear();
 }
@@ -271,7 +271,7 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrLowerThanAnyInMapThenNull
 
     auto newBufferPtr = reinterpret_cast<const void *>(gpuAddress - 0x10);
     auto newBufferSize = allocSize - 0x20;
-    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize);
+    auto newAlloc = commandList->getAllocationFromHostPtrMap(newBufferPtr, newBufferSize, false);
     EXPECT_EQ(newAlloc, nullptr);
     commandList->hostPtrMap.clear();
 }
@@ -288,7 +288,7 @@ HWTEST2_F(CommandListCreate,
     void *baseAddress = alignDown(startMemory, MemoryConstants::pageSize);
     size_t expectedOffset = ptrDiff(startMemory, baseAddress);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, startMemory, cmdListHostPtrSize, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, startMemory, cmdListHostPtrSize, false, false);
     ASSERT_NE(nullptr, outData.alloc);
     auto firstAlloc = outData.alloc;
     auto expectedGpuAddress = static_cast<uintptr_t>(alignDown(outData.alloc->getGpuAddress(), MemoryConstants::pageSize));
@@ -303,7 +303,7 @@ HWTEST2_F(CommandListCreate,
     expectedGpuAddress = ptrOffset(expectedGpuAddress, alignedOffset);
     EXPECT_EQ(outData.offset + offset, expectedOffset);
 
-    outData = commandList->getAlignedAllocationData(device, offsetMemory, 4u, false);
+    outData = commandList->getAlignedAllocationData(device, offsetMemory, 4u, false, false);
     ASSERT_NE(nullptr, outData.alloc);
     EXPECT_EQ(firstAlloc, outData.alloc);
     EXPECT_EQ(startMemory, outData.alloc->getUnderlyingBuffer());
@@ -331,7 +331,7 @@ HWTEST2_F(CommandListCreate,
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
     void *cmdListHostBuffer = device->getNEODevice()->getMemoryManager()->allocateSystemMemory(cmdListHostPtrSize, cmdListHostPtrSize);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, cmdListHostBuffer, cmdListHostPtrSize, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, cmdListHostBuffer, cmdListHostPtrSize, false, false);
     ASSERT_NE(nullptr, outData.alloc);
 
     for (const auto &engine : engines) {
@@ -1507,7 +1507,7 @@ HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenInternalMemCreatedThenNew
     auto buffer = std::make_unique<uint8_t>(0x100);
 
     auto deallocationSize = commandList->commandContainer.getDeallocationContainer().size();
-    auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x80, true);
+    auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x80, true, false);
     EXPECT_EQ(deallocationSize + 1, commandList->commandContainer.getDeallocationContainer().size());
     EXPECT_NE(alloc, nullptr);
     driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
@@ -1522,7 +1522,7 @@ HWTEST2_F(CommandListCreate, givenHostPtrAllocAllocWhenExternalMemCreatedThenNew
     auto buffer = std::make_unique<uint8_t>(0x100);
 
     auto hostPtrMapSize = commandList->getHostPtrMap().size();
-    auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true);
+    auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true, false);
     EXPECT_EQ(hostPtrMapSize + 1, commandList->getHostPtrMap().size());
     EXPECT_NE(alloc, nullptr);
     driverHandle->getMemoryManager()->freeGraphicsMemory(alloc);
@@ -1544,12 +1544,12 @@ HWTEST2_F(CommandListCreateWithBcs, givenHostPtrAllocAllocAndImmediateCmdListWhe
     commandList->cmdQImmediate = queue.get();
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    EXPECT_TRUE(commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
-    auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true);
-    EXPECT_FALSE(commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(alloc, commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
-    EXPECT_EQ(commandList->getCsr()->peekTaskCount(), commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->getTaskCount(commandList->getCsr()->getOsContext().getContextId()));
-    EXPECT_EQ(1u, commandList->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->hostPtrTaskCountAssignment);
+    EXPECT_TRUE(commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    auto alloc = commandList->getHostPtrAlloc(buffer.get(), 0x100, true, false);
+    EXPECT_FALSE(commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_EQ(alloc, commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekHead());
+    EXPECT_EQ(commandList->getCsr(false)->peekTaskCount(), commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->getTaskCount(commandList->getCsr(false)->getOsContext().getContextId()));
+    EXPECT_EQ(1u, commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekHead()->hostPtrTaskCountAssignment);
 }
 
 HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDifferentAllocThenReturnNewAlloc, IsAtLeastSkl) {
@@ -1559,8 +1559,8 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDiffe
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    auto outData1 = commandList->getAlignedAllocationData(device, buffer.get(), 0x100, true);
-    auto outData2 = commandList->getAlignedAllocationData(device, &buffer.get()[5], 0x1, true);
+    auto outData1 = commandList->getAlignedAllocationData(device, buffer.get(), 0x100, true, false);
+    auto outData2 = commandList->getAlignedAllocationData(device, &buffer.get()[5], 0x1, true, false);
     EXPECT_NE(outData1.alloc, outData2.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData2.alloc);
@@ -1573,8 +1573,8 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenExternalMemWithinDiffe
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    auto outData1 = commandList->getAlignedAllocationData(device, buffer.get(), 0x100, true);
-    auto outData2 = commandList->getAlignedAllocationData(device, &buffer.get()[5], 0x1, true);
+    auto outData1 = commandList->getAlignedAllocationData(device, buffer.get(), 0x100, true, false);
+    auto outData2 = commandList->getAlignedAllocationData(device, &buffer.get()[5], 0x1, true, false);
     EXPECT_EQ(outData1.alloc, outData2.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     commandList->hostPtrMap.clear();

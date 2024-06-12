@@ -539,7 +539,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     pipelineSelectList.clear();
 
     auto &immediateCmdListStream = *commandListImmediate->commandContainer.getCommandStream();
-    EXPECT_EQ(commandQueue->csr, commandListImmediate->getCsr());
+    EXPECT_EQ(commandQueue->csr, commandListImmediate->getCsr(false));
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = ultCsr.commandStream;
@@ -598,7 +598,7 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
 
     auto &csrState = commandQueue->csr->getStreamProperties();
 
-    EXPECT_EQ(commandQueue->csr, commandListImmediate->getCsr());
+    EXPECT_EQ(commandQueue->csr, commandListImmediate->getCsr(false));
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = ultCsr.commandStream;

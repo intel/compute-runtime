@@ -904,10 +904,10 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateImmediateComm
     auto commandList = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle));
 
     EXPECT_NE(commandList, nullptr);
-    EXPECT_TRUE(commandList->getCsr()->getOsContext().isLowPriority());
+    EXPECT_TRUE(commandList->getCsr(false)->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
     device->getCsrForLowPriority(&csr);
-    EXPECT_EQ(commandList->getCsr(), csr);
+    EXPECT_EQ(commandList->getCsr(false), csr);
     commandList->destroy();
 }
 

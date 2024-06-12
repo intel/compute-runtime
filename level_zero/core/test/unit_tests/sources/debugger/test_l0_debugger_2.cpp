@@ -132,7 +132,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWith
     auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
-    EXPECT_EQ(&csr, commandList->getCsr());
+    EXPECT_EQ(&csr, commandList->getCsr(false));
 
     csr.lastFlushedCommandStream = nullptr;
     CmdListKernelLaunchParams launchParams = {};
@@ -143,7 +143,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWith
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, commandList->getCsr()->getCS().getCpuBase(), commandList->getCsr()->getCS().getUsed()));
+        cmdList, commandList->getCsr(false)->getCS().getCpuBase(), commandList->getCsr(false)->getCS().getUsed()));
     bool gpr15Found = false;
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
     for (size_t i = 0; i < miLoadImm.size(); i++) {
@@ -179,7 +179,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSh
     auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
-    EXPECT_EQ(&csr, commandList->getCsr());
+    EXPECT_EQ(&csr, commandList->getCsr(false));
 
     csr.lastFlushedCommandStream = nullptr;
     CmdListKernelLaunchParams launchParams = {};
@@ -190,7 +190,7 @@ HWTEST2_F(singleAddressSpaceModeTest, givenUseCsrImmediateSubmissionEnabledAndSh
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, commandList->getCsr()->getCS().getCpuBase(), commandList->getCsr()->getCS().getUsed()));
+        cmdList, commandList->getCsr(false)->getCS().getCpuBase(), commandList->getCsr(false)->getCS().getUsed()));
     bool gpr15Found = false;
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
     for (size_t i = 0; i < miLoadImm.size(); i++) {
@@ -227,7 +227,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
-    EXPECT_EQ(&csr, commandList->getCsr());
+    EXPECT_EQ(&csr, commandList->getCsr(false));
 
     csr.lastFlushedCommandStream = nullptr;
     CmdListKernelLaunchParams launchParams = {};
@@ -236,7 +236,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
 
     EXPECT_NE(nullptr, csr.lastFlushedCommandStream);
 
-    auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(commandList->getCsr()->getOsContext().getContextId());
+    auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(commandList->getCsr(false)->getOsContext().getContextId());
     auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
     auto debugSurface = device->getDebugSurface();
 
@@ -246,7 +246,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, commandList->getCsr()->getCS().getCpuBase(), commandList->getCsr()->getCS().getUsed()));
+        cmdList, commandList->getCsr(false)->getCS().getCpuBase(), commandList->getCsr(false)->getCS().getUsed()));
 
     auto sipItor = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), sipItor);
@@ -274,7 +274,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
     auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 
     EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
-    EXPECT_EQ(&csr, commandList->getCsr());
+    EXPECT_EQ(&csr, commandList->getCsr(false));
 
     csr.lastFlushedCommandStream = nullptr;
     CmdListKernelLaunchParams launchParams = {};
@@ -283,7 +283,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
 
     EXPECT_NE(nullptr, csr.lastFlushedCommandStream);
 
-    auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(commandList->getCsr()->getOsContext().getContextId());
+    auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(commandList->getCsr(false)->getOsContext().getContextId());
     auto sipIsa = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getSipAllocation();
     auto debugSurface = device->getDebugSurface();
 
@@ -293,7 +293,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, commandList->getCsr()->getCS().getCpuBase(), commandList->getCsr()->getCS().getUsed()));
+        cmdList, commandList->getCsr(false)->getCS().getCpuBase(), commandList->getCsr(false)->getCS().getUsed()));
 
     auto sipItor = find<STATE_SIP *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), sipItor);
@@ -318,7 +318,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenEx
     // Internal command list must not have flush task enabled
     EXPECT_FALSE(commandList->isFlushTaskSubmissionEnabled);
 
-    auto &csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> &>(*commandList->getCsr());
+    auto &csr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> &>(*commandList->getCsr(false));
     csr.storeMakeResidentAllocations = true;
 
     CmdListKernelLaunchParams launchParams = {};
