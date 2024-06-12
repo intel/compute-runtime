@@ -195,6 +195,9 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
     if (isSubgroup2DBlockIOSupported()) {
         extensions += "cl_intel_subgroup_2d_block_io ";
     }
+    if (isSubgroupBufferPrefetchSupported()) {
+        extensions += "cl_intel_subgroup_buffer_prefetch ";
+    }
     if (isDotIntegerProductExtensionSupported()) {
         extensions += "cl_khr_integer_dot_product ";
     }
