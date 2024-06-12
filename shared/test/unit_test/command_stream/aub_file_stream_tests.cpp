@@ -980,6 +980,21 @@ HWTEST_F(AubFileStreamTests, givenEnabledGeneratingAubFilePerProcessIdDebugFlagA
     EXPECT_NE(std::string::npos, fullName.find(strExtendedFileName.str()));
 }
 
+HWTEST_F(AubFileStreamTests, givenAUBDumpCaptureDirPathAndGeneratingAubFilePerProcessIdWhenCreateFullFilePathIsCalledThenFileNameIsExtendedRootDeviceIndex) {
+    DebugManagerStateRestore stateRestore;
+
+    std::string expectedDirPath = "/tmp/path";
+    debugManager.flags.AUBDumpCaptureDirPath.set(expectedDirPath);
+    debugManager.flags.GenerateAubFilePerProcessId.set(1);
+    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", 1u);
+
+    std::stringstream expectedPerProcessPart;
+    expectedPerProcessPart << "_1_aubfile_PID_" << SysCalls::getProcessId() << ".aub";
+
+    EXPECT_NE(std::string::npos, fullName.find(expectedDirPath));
+    EXPECT_NE(std::string::npos, fullName.find(expectedPerProcessPart.str()));
+}
+
 HWTEST_F(AubFileStreamTests, givenAndAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedRootDeviceIndexAndPid) {
     auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", 1u);
     std::stringstream strExtendedFileName;

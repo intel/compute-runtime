@@ -53,6 +53,10 @@ std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwI
     }
 
     std::string filePath(folderAUB);
+    if (debugManager.flags.AUBDumpCaptureDirPath.get() != "unk") {
+        filePath.assign(debugManager.flags.AUBDumpCaptureDirPath.get());
+    }
+
     filePath.append(Os::fileSeparator);
     filePath.append(fileName);
 
