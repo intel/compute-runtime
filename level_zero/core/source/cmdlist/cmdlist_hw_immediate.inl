@@ -450,7 +450,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         cmdQ->setTaskCount(completionStamp.taskCount);
 
         if (this->isSyncModeQueue) {
-            status = hostSynchronize(std::numeric_limits<uint64_t>::max(), completionStamp.taskCount, true);
+            status = hostSynchronize(std::numeric_limits<uint64_t>::max(), true);
         }
     }
 
@@ -951,10 +951,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteToMemory(v
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout, TaskCountType taskCount, bool handlePostWaitOperations) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout, bool handlePostWaitOperations) {
     ze_result_t status = ZE_RESULT_SUCCESS;
 
-    auto csr = getCsr();
+    auto waitQueue = this->cmdQImmediate;
+    auto taskCount = waitQueue->getTaskCount();
+    auto csr = static_cast<CommandQueueImp *>(waitQueue)->getCsr();
 
     auto internalAllocStorage = csr->getInternalAllocationStorage();
 
@@ -1002,7 +1004,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint64_t timeout) {
-    return hostSynchronize(timeout, this->cmdQImmediate->getTaskCount(), true);
+    return hostSynchronize(timeout, true);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1160,7 +1162,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
     void *cpuMemcpyDstPtr = dstLockPointer ? dstLockPointer : cpuMemCopyInfo.dstPtr;
 
     if (this->dependenciesPresent || isInOrderExecutionEnabled()) {
-        auto waitStatus = hostSynchronize(std::numeric_limits<uint64_t>::max(), this->cmdQImmediate->getTaskCount(), false);
+        auto waitStatus = hostSynchronize(std::numeric_limits<uint64_t>::max(), false);
 
         if (waitStatus != ZE_RESULT_SUCCESS) {
             return waitStatus;

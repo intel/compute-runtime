@@ -924,7 +924,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderCmdListWhenWaitingOnHostThenDontProgr
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    immCmdList->hostSynchronize(1, 1, false);
+    immCmdList->hostSynchronize(1, false);
 
     auto offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
@@ -2233,7 +2233,7 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
     EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
     EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 
-    immCmdList->hostSynchronize(0, 1, false);
+    immCmdList->hostSynchronize(0, false);
 
     if (immCmdList->dcFlushSupport) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
@@ -2247,7 +2247,7 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
 
-    immCmdList->hostSynchronize(0, 1, false);
+    immCmdList->hostSynchronize(0, false);
 
     if (immCmdList->dcFlushSupport) {
         EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
@@ -2258,7 +2258,7 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
     }
 
     // handle post sync operations
-    immCmdList->hostSynchronize(0, 1, true);
+    immCmdList->hostSynchronize(0, true);
 
     if (immCmdList->dcFlushSupport) {
         EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
@@ -2287,14 +2287,14 @@ HWTEST2_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchr
     EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
     EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 
-    immCmdList->hostSynchronize(0, 1, true);
+    immCmdList->hostSynchronize(0, true);
 
     EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
     EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 
     internalAllocStorage->storeAllocationWithTaskCount(std::move(mockAlloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
 
-    immCmdList->hostSynchronize(0, 1, true);
+    immCmdList->hostSynchronize(0, true);
 
     EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
     EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
@@ -3673,7 +3673,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
 
     // single check - not ready
     {
-        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, false));
         EXPECT_EQ(downloadedAlloc, deviceAlloc);
         EXPECT_EQ(1u, callCounter);
         EXPECT_EQ(1u, ultCsr->checkGpuHangDetectedCalled);
@@ -3683,7 +3683,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     // timeout - not ready
     {
         forceFail = true;
-        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(10, false));
         EXPECT_EQ(downloadedAlloc, deviceAlloc);
         EXPECT_TRUE(callCounter > 1);
         EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
@@ -3694,7 +3694,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     {
         ultCsr->forceReturnGpuHang = true;
 
-        EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
+        EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10, false));
         EXPECT_EQ(downloadedAlloc, deviceAlloc);
 
         EXPECT_TRUE(callCounter > 1);
@@ -3708,7 +3708,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
         ultCsr->forceReturnGpuHang = false;
         forceFail = false;
         callCounter = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max(), ultCsr->taskCount, false));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max(), false));
         EXPECT_EQ(downloadedAlloc, deviceAlloc);
 
         EXPECT_EQ(failCounter, callCounter);
@@ -3719,11 +3719,11 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     *ultCsr->getTagAddress() = ultCsr->taskCount - 1;
 
-    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, true));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, true));
 
     *ultCsr->getTagAddress() = ultCsr->taskCount + 1;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, ultCsr->taskCount, true));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, true));
 }
 
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleCompletionOnHostAlloc, IsAtLeastXeHpCore) {
@@ -3766,7 +3766,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleComplet
 
     // single check - not ready
     {
-        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, false));
         EXPECT_EQ(downloadedAlloc, hostAlloc);
         EXPECT_EQ(1u, callCounter);
         EXPECT_EQ(1u, ultCsr->checkGpuHangDetectedCalled);
@@ -3776,7 +3776,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleComplet
     // timeout - not ready
     {
         forceFail = true;
-        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
+        EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(10, false));
         EXPECT_EQ(downloadedAlloc, hostAlloc);
         EXPECT_TRUE(callCounter > 1);
         EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
@@ -3787,7 +3787,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleComplet
     {
         ultCsr->forceReturnGpuHang = true;
 
-        EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10, ultCsr->taskCount, false));
+        EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, immCmdList->hostSynchronize(10, false));
         EXPECT_EQ(downloadedAlloc, hostAlloc);
         EXPECT_TRUE(callCounter > 1);
         EXPECT_TRUE(ultCsr->checkGpuHangDetectedCalled > 1);
@@ -3801,7 +3801,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleComplet
         forceFail = false;
         callCounter = 0;
         EXPECT_EQ(downloadedAlloc, hostAlloc);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max(), ultCsr->taskCount, false));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max(), false));
 
         EXPECT_EQ(failCounter, callCounter);
         EXPECT_EQ(failCounter - 1, ultCsr->checkGpuHangDetectedCalled);
@@ -3811,11 +3811,11 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleComplet
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     *ultCsr->getTagAddress() = ultCsr->taskCount - 1;
 
-    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, true));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, true));
 
     *ultCsr->getTagAddress() = ultCsr->taskCount + 1;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, ultCsr->taskCount, true));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, true));
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, IsAtLeastXeHpCore) {
@@ -4800,8 +4800,6 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSy
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSyncThenHandleCompletion, IsAtLeastXeHpCore) {
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
 
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
     auto eventPool = createEvents<FamilyType>(1, false);
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
@@ -4811,26 +4809,26 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
 
     *hostAddress0 = 0;
     *hostAddress1 = 0;
-    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, false));
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(0));
 
     *hostAddress0 = 1;
-    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, false));
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(0));
 
     *hostAddress0 = 0;
     *hostAddress1 = 1;
-    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(0, false));
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(0));
 
     *hostAddress0 = 1;
     *hostAddress1 = 1;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(0));
 
     *hostAddress0 = 3;
     *hostAddress1 = 3;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, ultCsr->taskCount, false));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(0));
 }
 
