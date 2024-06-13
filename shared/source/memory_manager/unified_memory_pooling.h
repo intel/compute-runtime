@@ -35,9 +35,9 @@ class UsmMemAllocPool {
     void *getPooledAllocationBasePtr(const void *ptr);
     size_t getOffsetInPool(const void *ptr);
 
-    static constexpr auto allocationThreshold = 1 * MemoryConstants::megaByte;
+    static constexpr auto allocationThreshold = 2 * MemoryConstants::megaByte;
     static constexpr auto chunkAlignment = 512u;
-    static constexpr auto startingOffset = 2 * allocationThreshold;
+    static constexpr auto startingOffset = chunkAlignment;
 
   protected:
     size_t poolSize{};

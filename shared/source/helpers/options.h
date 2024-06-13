@@ -7,6 +7,7 @@
 
 #pragma once
 #include <cstdint>
+#include <stddef.h>
 
 namespace NEO {
 enum class CommandStreamReceiverType {
@@ -38,4 +39,7 @@ extern const char *folderAUB;
 // Initial value for HW tag
 // Set to 0 if using HW or simulator, otherwise 0xFFFFFF00, needs to be lower then CompletionStamp::notReady.
 extern uint32_t initialHardwareTag;
+
+// default size of memory pools
+extern size_t defaultPoolSize;
 } // namespace NEO
