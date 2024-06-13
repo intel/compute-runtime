@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,9 +31,6 @@ class PowerImp : public Power, NEO::NonCopyableOrMovableClass {
 
     OsPower *pOsPower = nullptr;
     void init();
-
-  private:
-    zes_power_properties_t powerProperties = {};
 };
 } // namespace Sysman
 } // namespace L0

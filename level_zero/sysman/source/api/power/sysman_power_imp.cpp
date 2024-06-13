@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,10 @@ namespace Sysman {
 ze_result_t PowerImp::powerGetProperties(zes_power_properties_t *pProperties) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     void *pNext = pProperties->pNext;
-    *pProperties = powerProperties;
+    result = pOsPower->getProperties(pProperties);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
     pProperties->pNext = pNext;
     while (pNext) {
         zes_power_ext_properties_t *pExtProps = reinterpret_cast<zes_power_ext_properties_t *>(pNext);
@@ -65,15 +68,13 @@ PowerImp::PowerImp(OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDevic
 
     pOsPower = OsPower::create(pOsSysman, isSubDevice, subDeviceId);
     UNRECOVERABLE_IF(nullptr == pOsPower);
-
+    this->isCardPower = isSubDevice ? false : true;
     init();
 }
 
 void PowerImp::init() {
     if (pOsPower->isPowerModuleSupported()) {
-        pOsPower->getProperties(&powerProperties);
         this->initSuccess = true;
-        this->isCardPower = powerProperties.onSubdevice ? false : true;
     }
 }
 

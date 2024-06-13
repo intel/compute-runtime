@@ -93,25 +93,25 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, DISABLED_GivenValidPowerHandleWhenGettingPowerPropertiesAllowSetToTrueThenCallSucceeds) {
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesThenErrorIsReturned) {
     // Setting allow set calls or not
     init(true);
 
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
-        zes_power_properties_t properties;
+
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        zes_power_limit_ext_desc_t defaultLimit = {};
+
+        extProperties.defaultLimit = &defaultLimit;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        properties.pNext = &extProperties;
 
         ze_result_t result = zesPowerGetProperties(handle, &properties);
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0u);
-        EXPECT_TRUE(properties.canControl);
-        EXPECT_TRUE(properties.isEnergyThresholdSupported);
-        EXPECT_EQ(static_cast<uint32_t>(properties.maxLimit), pKmdSysManager->mockMaxPowerLimit);
-        EXPECT_EQ(static_cast<uint32_t>(properties.minLimit), pKmdSysManager->mockMinPowerLimit);
-        EXPECT_EQ(static_cast<uint32_t>(properties.defaultLimit), pKmdSysManager->mockTpdDefault);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     }
 }
 
