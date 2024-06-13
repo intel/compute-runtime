@@ -152,7 +152,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, CFEMaximumNumberOfThreads, -1, "Set Maximum Numb
 DECLARE_DEBUG_VARIABLE(int32_t, CFEOverDispatchControl, -1, "Set Over Dispatch Control in CFE_STATE on XEHP, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, CFELargeGRFThreadAdjustDisable, -1, "Set Large GRF thread adjust Disable field in CFE_STATE, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNumComputeUnitsForScratch, -1, "Override number of compute units used for scratch size calculation")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceThreadGroupDispatchSize, -1, "Set ThreadGroupDispatchSize in INTERFACE_DESCRIPTOR_DATA, -1 - default, 0 - TG size 8, 1 - TG size 4, 2 - TG size 2, 3 - Reserved")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceThreadGroupDispatchSize, -1, "Set ThreadGroupDispatchSize in INTERFACE_DESCRIPTOR_DATA, -1 - default, 0 - TG size 8, 1 - TG size 4, 2 - TG size 2, 3 - TG size 1")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceStatelessL1CachingPolicy, -1, "-1: default, >=0 : program value for stateless L1 caching")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceMemoryBankIndexOverride, -1, "-1: default, 0: disable, 1:enable, Force index=1 of memory bank for XEHP")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePrivateScratchSlot1, -1, "-1: default, 0: disable, 1: enable Allows using private scratch space")
@@ -381,8 +381,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, UseHighAlignmentForHeapExtended, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, DispatchCmdlistCmdBufferPrimary, -1, "-1: default, 0: dispatch command buffers as seconadry, 1: dispatch command buffers as primary and chain")
 DECLARE_DEBUG_VARIABLE(int32_t, UseImmediateFlushTask, -1, "-1: default, 0: use regular flush task, 1: use immediate flush task")
 DECLARE_DEBUG_VARIABLE(int32_t, SkipDcFlushOnBarrierWithoutEvents, -1, "-1: default (enabled), 0: disabled, 1: enabled")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceUsmAllocationPool, -1, "-1: default (enabled, 1MB), 0: disabled, >=1: enabled, size in MB")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableHostUsmAllocationPool, -1, "-1: default (enabled, 1MB), 0: disabled, >=1: enabled, size in MB")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceUsmAllocationPool, -1, "-1: default (enabled, 2MB), 0: disabled, >=1: enabled, size in MB")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableHostUsmAllocationPool, -1, "-1: default (enabled, 2MB), 0: disabled, >=1: enabled, size in MB")
 DECLARE_DEBUG_VARIABLE(int32_t, UseLocalPreferredForCacheableBuffers, -1, "Use localPreferred for cacheable buffers")
 
 /*DIRECT SUBMISSION FLAGS*/
