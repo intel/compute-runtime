@@ -935,10 +935,11 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     }
     parseDebugSettings();
 
-    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    cacheDir = cacheConfig.cacheDir;
     if (allowCaching) {
-        cacheConfig.cacheDir = cacheDir;
+        auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+        if (cacheConfig.cacheDir.empty() && !cacheDir.empty()) {
+            cacheConfig.cacheDir = cacheDir;
+        }
         cache = std::make_unique<CompilerCache>(cacheConfig);
         createDir(cacheConfig.cacheDir);
     }
