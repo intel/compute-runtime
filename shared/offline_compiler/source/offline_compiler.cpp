@@ -607,14 +607,12 @@ int OfflineCompiler::buildSourceCode() {
         }
 
         genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
-
         if (genBinary) {
             bool isZebin = isDeviceBinaryFormat<DeviceBinaryFormat::zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize));
             if (!generateDebugInfo || isZebin) {
                 return retVal;
             }
             debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
-
             if (debugDataBinary) {
                 return retVal;
             }

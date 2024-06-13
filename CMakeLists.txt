@@ -82,6 +82,12 @@ if(USE_SANITIZE_UB AND WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Xlinker /NODEFAULTLIB:clang_rt.ubsan_standalone_cxx-x86_64.lib")
 endif()
 
+if(NOT DEFINED NEO_USE_CL_CACHE)
+  set(NEO_USE_CL_CACHE FALSE CACHE BOOL "use cl_cache when running ocloc" FORCE)
+endif()
+if(NEO_USE_CL_CACHE)
+  set(NEO_DISABLE_BUILTINS_COMPILATION FALSE)
+endif()
 # define global property where we will collect component list to package
 define_property(GLOBAL PROPERTY NEO_OCL_COMPONENTS_LIST BRIEF_DOCS "List of components" FULL_DOCS "List of components to create packages")
 set(GLOBAL PROPERTY NEO_OCL_COMPONENTS_LIST "")
