@@ -147,6 +147,8 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
+add_subdirectories()
+
 add_library(neo_shared_mocks OBJECT EXCLUDE_FROM_ALL ${NEO_CORE_tests_mocks})
 
 set_target_properties(neo_shared_mocks PROPERTIES POSITION_INDEPENDENT_CODE ON)
