@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,8 @@ enum class ProductFamily : uint32_t {
     Pvc = 14u,
     Mtl = 15u,
     Arl = 15u,
+    Bmg = 17u,
+    Lnl = 18u,
     MaxProduct,
 };
 } // namespace aub_stream
