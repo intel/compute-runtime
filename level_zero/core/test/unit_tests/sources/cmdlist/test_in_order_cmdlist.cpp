@@ -7356,6 +7356,41 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
     }
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAllocationsFromBothCsrs, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+    immCmdList->isTbxMode = true;
+
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto offloadCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    EXPECT_NE(mainQueueCsr, offloadCsr);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    auto deviceAlloc = immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
+    auto hostAddress = static_cast<uint64_t *>(deviceAlloc->getUnderlyingBuffer());
+    *hostAddress = 2;
+    *mainQueueCsr->getTagAddress() = 2;
+    *offloadCsr->getTagAddress() = 2;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(0u, mainQueueCsr->downloadAllocationsCalledCount);
+    EXPECT_EQ(0u, offloadCsr->downloadAllocationsCalledCount);
+
+    immCmdList->hostSynchronize(0, false);
+
+    EXPECT_EQ(1u, mainQueueCsr->downloadAllocationsCalledCount);
+    EXPECT_EQ(1u, offloadCsr->downloadAllocationsCalledCount);
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, false, false);
+
+    immCmdList->hostSynchronize(0, false);
+
+    EXPECT_EQ(2u, mainQueueCsr->downloadAllocationsCalledCount);
+    EXPECT_EQ(2u, offloadCsr->downloadAllocationsCalledCount);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
 

@@ -960,6 +960,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     TaskCountType copyOffloadTaskCount = 0;
 
     NEO::CommandStreamReceiver *mainQueueCsr = getCsr(false);
+    NEO::CommandStreamReceiver *copyOffloadCsr = nullptr;
 
     NEO::InternalAllocationStorage *mainInternalAllocStorage = mainQueueCsr->getInternalAllocationStorage();
     NEO::InternalAllocationStorage *copyOffloadInternalAllocStorage = nullptr;
@@ -969,7 +970,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     if (isCopyOffloadEnabled()) {
         copyOffloadTaskCount = this->cmdQImmediateCopyOffload->getTaskCount();
-        copyOffloadInternalAllocStorage = getCsr(true)->getInternalAllocationStorage();
+        copyOffloadCsr = getCsr(true);
+        copyOffloadInternalAllocStorage = copyOffloadCsr->getInternalAllocationStorage();
         copyOffloadStorageCleanupNeeded = !copyOffloadInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
 
         if (this->latestFlushIsCopyOffload) {
@@ -1002,6 +1004,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     if (status != ZE_RESULT_NOT_READY) {
         if (isInOrderExecutionEnabled()) {
             this->latestHostWaitedInOrderSyncValue = inOrderSyncValue;
+        }
+
+        if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
+            mainQueueCsr->downloadAllocations();
+            if (isCopyOffloadEnabled()) {
+                copyOffloadCsr->downloadAllocations();
+            }
         }
 
         if (handlePostWaitOperations) {
