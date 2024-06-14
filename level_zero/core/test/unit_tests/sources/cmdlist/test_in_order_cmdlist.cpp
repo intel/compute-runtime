@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -1640,7 +1641,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxed
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
     findConditionalBbStarts(1); // chaining
 
-    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0));
+    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
 
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
@@ -2039,7 +2040,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
 
     immCmdList->inOrderExecInfo->addCounterValue(1);
 
-    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0));
+    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
 
     EXPECT_EQ(0u, immCmdList->flushData.size());
 
@@ -2146,7 +2147,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
 
     immCmdList->inOrderExecInfo->addCounterValue(1);
 
-    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0));
+    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
 
     EXPECT_EQ(0u, immCmdList->flushCount);
 
@@ -7229,6 +7230,65 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOperationWithHostVisibleEventThenMar
     immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, hostVisibleEvent.get(), 0, nullptr, false, false);
 
     EXPECT_EQ(!immCmdList->dcFlushSupport, immCmdList->latestFlushIsHostVisible);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenRelaxedOrderingEnabledWhenDispatchingThenUseCorrectCsr, IsAtLeastXeHpcCore) {
+    class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
+      public:
+        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent) override {
+            latestRelaxedOrderingMode = hasRelaxedOrderingDependencies;
+
+            return ZE_RESULT_SUCCESS;
+        }
+
+        bool latestRelaxedOrderingMode = false;
+    };
+
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+    auto immCmdList = createImmCmdListImpl<gfxCoreFamily, MyMockCmdList>(true);
+
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    auto mainQueueDirectSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*mainQueueCsr);
+    auto offloadDirectSubmission = new MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>(*copyQueueCsr);
+
+    mainQueueCsr->directSubmission.reset(mainQueueDirectSubmission);
+    copyQueueCsr->blitterDirectSubmission.reset(offloadDirectSubmission);
+
+    int client1, client2;
+
+    // first dependency
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    // compute CSR
+    mainQueueCsr->registerClient(&client1);
+    mainQueueCsr->registerClient(&client2);
+
+    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
+    EXPECT_FALSE(immCmdList->isRelaxedOrderingDispatchAllowed(0, true));
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_TRUE(immCmdList->latestRelaxedOrderingMode);
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+    EXPECT_FALSE(immCmdList->latestRelaxedOrderingMode);
+
+    // offload CSR
+    mainQueueCsr->unregisterClient(&client1);
+    mainQueueCsr->unregisterClient(&client2);
+    copyQueueCsr->registerClient(&client1);
+    copyQueueCsr->registerClient(&client2);
+
+    EXPECT_FALSE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
+    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, true));
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_FALSE(immCmdList->latestRelaxedOrderingMode);
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+    EXPECT_TRUE(immCmdList->latestRelaxedOrderingMode);
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleCompletionOnCorrectCsr, IsAtLeastXeHpCore) {

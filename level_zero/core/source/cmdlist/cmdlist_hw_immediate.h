@@ -213,7 +213,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     TransferType getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo);
     size_t getTransferThreshold(TransferType transferType);
     bool isBarrierRequired();
-    bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const override;
+    bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) const override;
     bool skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const override;
 
   protected:

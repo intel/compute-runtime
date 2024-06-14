@@ -588,7 +588,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     }
 
     if (this->isInOrderExecutionEnabled()) {
-        handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0));
+        handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0, false));
     }
 
     appendSynchronizedDispatchInitializationSection();
@@ -2476,7 +2476,7 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent) {
     if (this->isInOrderExecutionEnabled()) {
-        handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0));
+        handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0, false));
     }
 
     auto event = Event::fromHandle(hEvent);

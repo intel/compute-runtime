@@ -546,7 +546,7 @@ HWTEST2_F(CommandListTest, givenRegularCmdListWhenAskingForRelaxedOrderingThenRe
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    EXPECT_FALSE(commandList->isRelaxedOrderingDispatchAllowed(5));
+    EXPECT_FALSE(commandList->isRelaxedOrderingDispatchAllowed(5, false));
 }
 
 HWTEST2_F(CommandListTest,
