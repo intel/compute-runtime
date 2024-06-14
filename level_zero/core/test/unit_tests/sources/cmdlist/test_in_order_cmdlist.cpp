@@ -7460,5 +7460,23 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenInterruptEventWhenDispatchingTheProgramUserInterrupt, IsAtLeastXeHpcCore) {
+    using MI_USER_INTERRUPT = typename FamilyType::MI_USER_INTERRUPT;
+
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->enableInterruptMode();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0]->toHandle(), 0, nullptr, false, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto itor = find<MI_USER_INTERRUPT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+}
+
 } // namespace ult
 } // namespace L0

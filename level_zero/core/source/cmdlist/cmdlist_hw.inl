@@ -2775,7 +2775,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
         appendSdiInOrderCounterSignalling(inOrderExecInfo->getBaseHostGpuAddress(), signalValue, copyOffloadOperation);
     }
 
-    if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1) && signalEvent && signalEvent->isInterruptModeEnabled()) {
+    if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1 || copyOffloadOperation) && signalEvent && signalEvent->isInterruptModeEnabled()) {
         NEO::EnodeUserInterrupt<GfxFamily>::encode(*cmdStream);
     }
 }
