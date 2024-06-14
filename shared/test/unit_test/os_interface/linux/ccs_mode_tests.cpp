@@ -19,7 +19,7 @@ extern std::map<std::string, std::vector<std::string>> directoryFilesMap;
 
 static uint32_t ccsMode = 1u;
 
-static ssize_t mockWrite(int fd, void *buf, size_t count) {
+static ssize_t mockWrite(int fd, const void *buf, size_t count) {
     std::memcpy(&ccsMode, buf, count);
     return count;
 }
@@ -40,7 +40,7 @@ TEST(CcsModeTest, GivenInvalidCcsModeWhenConfigureCcsModeIsCalledThenVerifyCcsMo
         return 1;
     });
 
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         return mockWrite(fd, buf, count);
     });
 
@@ -82,7 +82,7 @@ TEST(CcsModeTest, GivenValidCcsModeWhenConfigureCcsModeIsCalledThenVerifyCcsMode
         return 1;
     });
 
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         return mockWrite(fd, buf, count);
     });
 
@@ -113,7 +113,7 @@ TEST(CcsModeTest, GivenValidCcsModeAndOpenSysCallFailsWhenConfigureCcsModeIsCall
         return -1;
     });
 
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         return mockWrite(fd, buf, count);
     });
 
@@ -144,7 +144,7 @@ TEST(CcsModeTest, GivenValidCcsModeAndOpenSysCallFailsWithNoPermissionsWhenConfi
         return -1;
     });
 
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         return mockWrite(fd, buf, count);
     });
 
@@ -185,7 +185,7 @@ TEST(CcsModeTest, GivenValidCcsModeAndOpenSysCallFailsWithNoAccessWhenConfigureC
         return -1;
     });
 
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         return mockWrite(fd, buf, count);
     });
 
@@ -226,7 +226,7 @@ TEST(CcsModeTest, GivenNumCCSFlagSetToCurrentConfigurationWhenConfigureCcsModeIs
     });
 
     SysCalls::writeFuncCalled = 0u;
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         SysCalls::writeFuncCalled++;
         return mockWrite(fd, buf, count);
     });
@@ -260,7 +260,7 @@ TEST(CcsModeTest, GivenNumCCSFlagSetToCurrentConfigurationAndReadSysCallFailsWhe
     });
 
     SysCalls::writeFuncCalled = 0u;
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         SysCalls::writeFuncCalled++;
         return mockWrite(fd, buf, count);
     });
@@ -293,7 +293,7 @@ TEST(CcsModeTest, GivenValidCcsModeAndWriteSysCallFailsWhenConfigureCcsModeIsCal
     });
 
     SysCalls::writeFuncCalled = 0u;
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         SysCalls::writeFuncCalled++;
         errno = -EAGAIN;
         return -1;
@@ -328,7 +328,7 @@ TEST(CcsModeTest, GivenWriteSysCallFailsWithEbusyForFirstTimeWhenConfigureCcsMod
     });
 
     SysCalls::writeFuncCalled = 0u;
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         if (SysCalls::writeFuncCalled++ == 0u) {
             errno = -EBUSY;
             return -1;
@@ -375,7 +375,7 @@ TEST(CcsModeTest, GivenValidCcsModeAndOpenCallFailsOnRestoreWhenConfigureCcsMode
         return -1;
     });
 
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> writeBackup(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         return mockWrite(fd, buf, count);
     });
 

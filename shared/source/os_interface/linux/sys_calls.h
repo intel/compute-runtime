@@ -34,7 +34,7 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
 void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noexcept;
 int munmap(void *addr, size_t size) noexcept;
 ssize_t read(int fd, void *buf, size_t count);
-ssize_t write(int fd, void *buf, size_t count);
+ssize_t write(int fd, const void *buf, size_t count);
 int fcntl(int fd, int cmd);
 int fcntl(int fd, int cmd, int arg);
 char *realpath(const char *path, char *buf);

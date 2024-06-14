@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1095,7 +1095,7 @@ TEST_F(SysmanEventsFixture, GivenEventsAreRegisteredWhenEventRegisterIsCalledAga
 }
 
 TEST_F(SysmanEventsFixture, GivenWriteSystemCallReturnsFailureWhenEventRegisterIsCalledThenSuccessIsReturned) {
-    VariableBackup<decltype(SysCalls::sysCallsWrite)> mockWrite(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> mockWrite(&SysCalls::sysCallsWrite, [](int fd, const void *buf, size_t count) -> ssize_t {
         return -1;
     });
 
