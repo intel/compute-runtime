@@ -102,9 +102,23 @@ class MockMemoryOperations : public MemoryOperationsHandler {
         return MemoryOperationsStatus::success;
     }
 
+    MemoryOperationsStatus free(Device *device, GraphicsAllocation &gfxAllocation) override {
+        freeCalledCount++;
+
+        if (captureGfxAllocationsForMakeResident) {
+            auto itor = std::find(gfxAllocationsForMakeResident.begin(), gfxAllocationsForMakeResident.end(), &gfxAllocation);
+            if (itor != gfxAllocationsForMakeResident.end()) {
+                gfxAllocationsForMakeResident.erase(itor, itor + 1);
+            }
+        }
+
+        return MemoryOperationsStatus::success;
+    }
+
     std::vector<GraphicsAllocation *> gfxAllocationsForMakeResident{};
     int makeResidentCalledCount = 0;
     int evictCalledCount = 0;
+    int freeCalledCount = 0;
     uint32_t isResidentCalledCount = 0;
     uint32_t lockCalledCount = 0;
     uint32_t makeResidentContextId = std::numeric_limits<uint32_t>::max();

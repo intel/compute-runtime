@@ -11,9 +11,14 @@
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_aub_center.h"
+#include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 TEST_F(AubMemoryOperationsHandlerTests, givenNullPtrAsAubManagerWhenMakeResidentCalledThenFalseReturned) {
     getMemoryOperationsHandler()->setAubManager(nullptr);
@@ -426,90 +431,141 @@ TEST_F(AubMemoryOperationsHandlerTests, givenGfxAllocationWhenSetAubWritableForN
     EXPECT_TRUE(memoryOperationsInterface->isAubWritable(allocation, device.get()));
 }
 
-TEST_F(AubMemoryOperationsHandlerTests, givenGfxAllocationWriteableWhenProcessingFlushResidencyThenPerformAllocationWriteMemory) {
-    MockAubManager aubManager;
-    getMemoryOperationsHandler()->setAubManager(&aubManager);
+HWTEST_F(AubMemoryOperationsHandlerTests, givenCloningOfPageTablesWhenProcessingFlushResidencyThenPerformAUbManagerWriteMemory) {
+    auto mockAubManager = std::make_unique<MockAubManager>();
+    auto *aubManager = mockAubManager.get();
     auto memoryOperationsInterface = getMemoryOperationsHandler();
+    memoryOperationsInterface->setAubManager(aubManager);
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
+    executionEnvironment->initializeMemoryManager();
+    auto mockAubCenter = std::make_unique<MockAubCenter>();
+    mockAubCenter->aubManager.reset(mockAubManager.release());
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter.release());
+    auto csr = std::make_unique<MockAubCsr<FamilyType>>("", true, *executionEnvironment, device->getRootDeviceIndex(), device->deviceBitfield);
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
 
     allocPtr->storageInfo.cloningOfPageTables = true;
 
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     EXPECT_EQ(result, MemoryOperationsStatus::success);
-    EXPECT_TRUE(aubManager.writeMemory2Called);
+    EXPECT_TRUE(aubManager->writeMemory2Called);
 
-    aubManager.writeMemory2Called = false;
-
-    memoryOperationsInterface->processFlushResidency(device.get());
-    EXPECT_TRUE(aubManager.writeMemory2Called);
+    aubManager->writeMemory2Called = false;
+    memoryOperationsInterface->processFlushResidency(csr.get());
+    EXPECT_TRUE(aubManager->writeMemory2Called);
 }
 
-TEST_F(AubMemoryOperationsHandlerTests, givenNonLocalGfxAllocationWriteableWhenProcessingFlushResidencyThenPerformAllocationAubManagerWriteMemory) {
-    MockAubManager aubManager;
-    getMemoryOperationsHandler()->setAubManager(&aubManager);
+HWTEST_F(AubMemoryOperationsHandlerTests, givenNonLocalGfxAllocationWriteableWhenProcessingFlushResidencyThenPerformAubManagerWriteMemory) {
+    auto mockAubManager = std::make_unique<MockAubManager>();
+    auto *aubManager = mockAubManager.get();
     auto memoryOperationsInterface = getMemoryOperationsHandler();
+    memoryOperationsInterface->setAubManager(aubManager);
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
+    executionEnvironment->initializeMemoryManager();
+    auto mockAubCenter = std::make_unique<MockAubCenter>();
+    mockAubCenter->aubManager.reset(mockAubManager.release());
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter.release());
+    auto csr = std::make_unique<MockAubCsr<FamilyType>>("", true, *executionEnvironment, device->getRootDeviceIndex(), device->deviceBitfield);
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
 
+    MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
+                                MemoryConstants::pageSize, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
+    allocPtr = &allocation;
     allocPtr->storageInfo.cloningOfPageTables = false;
 
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     EXPECT_EQ(result, MemoryOperationsStatus::success);
-    EXPECT_TRUE(aubManager.writeMemory2Called);
+    EXPECT_TRUE(aubManager->writeMemory2Called);
 
-    aubManager.writeMemory2Called = false;
+    aubManager->writeMemory2Called = false;
 
-    memoryOperationsInterface->processFlushResidency(device.get());
-    EXPECT_TRUE(aubManager.writeMemory2Called);
+    memoryOperationsInterface->processFlushResidency(csr.get());
+    EXPECT_TRUE(aubManager->writeMemory2Called);
 }
 
-TEST_F(AubMemoryOperationsHandlerTests, givenLocalGfxAllocationWriteableWhenProcessingFlushResidencyThenPerformAllocationDefaultCsrWriteMemory) {
+HWTEST_F(AubMemoryOperationsHandlerTests, givenLocalGfxAllocationWriteableWhenProcessingFlushResidencyThenPerformAllocationDefaultCsrWriteMemory) {
+    auto mockAubManager = std::make_unique<MockAubManager>();
+    auto *aubManager = mockAubManager.get();
+    auto memoryOperationsInterface = getMemoryOperationsHandler();
+    memoryOperationsInterface->setAubManager(aubManager);
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
+    executionEnvironment->initializeMemoryManager();
+    auto mockAubCenter = std::make_unique<MockAubCenter>();
+    mockAubCenter->aubManager.reset(mockAubManager.release());
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter.release());
+    auto csr = std::make_unique<MockAubCsr<FamilyType>>("", true, *executionEnvironment, device->getRootDeviceIndex(), device->deviceBitfield);
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
+    csr->localMemoryEnabled = true;
+
     MemoryAllocation allocation(0, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
                                 MemoryConstants::pageSize, 0, MemoryPool::localMemory, false, false, MemoryManager::maxOsContextCount);
     allocPtr = &allocation;
     allocPtr->storageInfo.cloningOfPageTables = false;
 
-    DeviceBitfield deviceBitfield(1);
-    const auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), 0, deviceBitfield);
-    csr->localMemoryEnabled = true;
-
     auto backupDefaultCsr = std::make_unique<VariableBackup<NEO::CommandStreamReceiver *>>(&device->getDefaultEngine().commandStreamReceiver);
     device->getDefaultEngine().commandStreamReceiver = csr.get();
 
-    MockAubManager aubManager;
-    getMemoryOperationsHandler()->setAubManager(&aubManager);
-    auto memoryOperationsInterface = getMemoryOperationsHandler();
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     EXPECT_EQ(result, MemoryOperationsStatus::success);
-    EXPECT_FALSE(aubManager.writeMemory2Called);
-    EXPECT_EQ(1u, csr->writeMemoryAubCalled);
+    EXPECT_FALSE(aubManager->writeMemory2Called);
 
-    memoryOperationsInterface->processFlushResidency(device.get());
-    EXPECT_FALSE(aubManager.writeMemory2Called);
-    EXPECT_EQ(2u, csr->writeMemoryAubCalled);
+    auto mockHwContext0 = static_cast<MockHardwareContext *>(csr->hardwareContextController->hardwareContexts[0].get());
+
+    EXPECT_TRUE(mockHwContext0->writeMemory2Called);
+
+    mockHwContext0->writeMemory2Called = false;
+    memoryOperationsInterface->processFlushResidency(csr.get());
+    EXPECT_FALSE(aubManager->writeMemory2Called);
+    EXPECT_TRUE(mockHwContext0->writeMemory2Called);
 }
 
-TEST_F(AubMemoryOperationsHandlerTests, givenGfxAllocationWriteableWithGmmPresentWhenProcessingFlushResidencyThenPerformAllocationWriteMemoryAndReflectGmmFlags) {
-    MockAubManager aubManager;
-    getMemoryOperationsHandler()->setAubManager(&aubManager);
+HWTEST_F(AubMemoryOperationsHandlerTests, givenGfxAllocationWriteableWithGmmPresentWhenProcessingFlushResidencyThenPerformAllocationWriteMemoryAndReflectGmmFlags) {
+    auto mockAubManager = std::make_unique<MockAubManager>();
+    auto *aubManager = mockAubManager.get();
+    getMemoryOperationsHandler()->setAubManager(aubManager);
     auto memoryOperationsInterface = getMemoryOperationsHandler();
 
     allocPtr->storageInfo.cloningOfPageTables = true;
 
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
+    executionEnvironment->initializeMemoryManager();
+
     MockGmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
     gmm.setCompressionEnabled(true);
     allocPtr->setDefaultGmm(&gmm);
 
+    auto mockAubCenter = std::make_unique<MockAubCenter>();
+    mockAubCenter->aubManager.reset(mockAubManager.release());
+
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter.release());
+
     auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     EXPECT_EQ(result, MemoryOperationsStatus::success);
 
-    aubManager.writeMemory2Called = false;
-    aubManager.storeAllocationParams = true;
+    aubManager->writeMemory2Called = false;
+    aubManager->storeAllocationParams = true;
 
-    memoryOperationsInterface->processFlushResidency(device.get());
-    EXPECT_TRUE(aubManager.writeMemory2Called);
-    EXPECT_EQ(1u, aubManager.storedAllocationParams.size());
-    EXPECT_TRUE(aubManager.storedAllocationParams[0].additionalParams.compressionEnabled);
-    EXPECT_FALSE(aubManager.storedAllocationParams[0].additionalParams.uncached);
+    auto csr = std::make_unique<MockAubCsr<FamilyType>>("", true, *executionEnvironment, device->getRootDeviceIndex(), device->deviceBitfield);
+    auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
+    csr->setupContext(*osContext);
+
+    memoryOperationsInterface->processFlushResidency(csr.get());
+
+    EXPECT_TRUE(aubManager->writeMemory2Called);
+    EXPECT_EQ(1u, aubManager->storedAllocationParams.size());
+    EXPECT_TRUE(aubManager->storedAllocationParams[0].additionalParams.compressionEnabled);
+    EXPECT_FALSE(aubManager->storedAllocationParams[0].additionalParams.uncached);
 }
 
 TEST_F(AubMemoryOperationsHandlerTests, givenDeviceNullWhenProcessingFlushResidencyThenAllocationIsNotWriteable) {
@@ -533,6 +589,8 @@ TEST_F(AubMemoryOperationsHandlerTests, givenDeviceNullWhenProcessingFlushReside
 
     aubManager.writeMemory2Called = false;
 
-    memoryOperationsInterface->processFlushResidency(nullptr);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), 0, device->deviceBitfield);
+
+    memoryOperationsInterface->processFlushResidency(csr.get());
     EXPECT_FALSE(aubManager.writeMemory2Called);
 }

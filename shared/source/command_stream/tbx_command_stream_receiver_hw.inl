@@ -27,6 +27,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/aub_memory_operations_handler.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include <cstring>
@@ -537,6 +538,10 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::processResidency(const R
                              !this->isTbxWritable(*gfxAllocation)));
         }
         gfxAllocation->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
+    }
+
+    if (this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface) {
+        this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface->processFlushResidency(this);
     }
 
     dumpTbxNonWritable = false;

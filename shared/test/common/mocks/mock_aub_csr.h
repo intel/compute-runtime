@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,6 +93,10 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits);
         writeMemoryCalled = true;
     }
+    bool writeMemory(GraphicsAllocation &gfxAllocation) override {
+        writeMemoryGfxAllocCalled = true;
+        return AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(gfxAllocation);
+    }
     void writeMMIO(uint32_t offset, uint32_t value) override {
         AUBCommandStreamReceiverHw<GfxFamily>::writeMMIO(offset, value);
         writeMMIOCalled = true;
@@ -146,6 +150,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool initProgrammingFlagsCalled = false;
     bool initializeEngineCalled = false;
     bool writeMemoryCalled = false;
+    bool writeMemoryGfxAllocCalled = false;
     bool writeMemoryWithAubManagerCalled = false;
     bool writeMMIOCalled = false;
     bool submitBatchBufferCalled = false;

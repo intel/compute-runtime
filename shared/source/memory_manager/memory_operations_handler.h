@@ -13,6 +13,7 @@ namespace NEO {
 class Device;
 class GraphicsAllocation;
 class OsContext;
+class CommandStreamReceiver;
 
 class MemoryOperationsHandler {
   public:
@@ -23,8 +24,10 @@ class MemoryOperationsHandler {
     virtual MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) = 0;
     virtual MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) = 0;
     virtual MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) = 0;
+    virtual MemoryOperationsStatus free(Device *device, GraphicsAllocation &gfxAllocation) { return MemoryOperationsStatus::success; }
 
     virtual MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) = 0;
     virtual MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) = 0;
+    virtual void processFlushResidency(CommandStreamReceiver *csr) {}
 };
 } // namespace NEO

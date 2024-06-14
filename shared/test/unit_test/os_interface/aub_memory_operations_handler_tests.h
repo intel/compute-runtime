@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class AubMemoryOperationsHandlerTests : public ::testing::Test {
         return residencyHandler.get();
     }
 
-    MockGraphicsAllocation allocation;
+    MockGraphicsAllocation allocation{reinterpret_cast<void *>(0x1000), 0x1000u, MemoryConstants::pageSize};
     GraphicsAllocation *allocPtr;
     DebugManagerStateRestore dbgRestore;
     HardwareInfo hardwareInfo = {};

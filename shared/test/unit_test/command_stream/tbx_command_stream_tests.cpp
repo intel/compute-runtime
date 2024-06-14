@@ -26,6 +26,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
+#include "shared/test/common/mocks/mock_aub_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_aub_subcapture_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -342,6 +343,45 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingMakeSurfacePackNonResi
     tbxCsr.makeSurfacePackNonResident(allocationsForResidency, true);
     std::set<GraphicsAllocation *> expectedAllocationsForDownload = {&allocation1, &allocation3};
     EXPECT_EQ(expectedAllocationsForDownload, tbxCsr.allocationsForDownload);
+}
+
+HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrAndResidentAllocationWhenProcessResidencyIsCalledThenWriteMemoryIsCalledOnResidentAllocations) {
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);
+
+    auto memoryOperationsHandler = new NEO::MockAubMemoryOperationsHandler(mockManager);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
+
+    auto commandStreamReceiver = std::make_unique<MockTbxCsr<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getDeviceBitfield());
+
+    auto osContext = pDevice->getExecutionEnvironment()->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),
+                                                                                                   EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(*defaultHwInfo), EngineUsage::regular},
+                                                                                                                                                PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
+    commandStreamReceiver->setupContext(*osContext);
+    commandStreamReceiver->initializeTagAllocation();
+    commandStreamReceiver->createGlobalFenceAllocation();
+
+    MockGraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+    ResidencyContainer allocationsForResidency = {&allocation};
+
+    MockGraphicsAllocation allocation2(reinterpret_cast<void *>(0x5000), 0x5000, 0x1000);
+    GraphicsAllocation *allocPtr = &allocation2;
+    memoryOperationsHandler->makeResident(pDevice, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    EXPECT_TRUE(mockManager->writeMemory2Called);
+
+    mockManager->storeAllocationParams = true;
+    commandStreamReceiver->writeMemoryGfxAllocCalled = false;
+    mockManager->writeMemory2Called = false;
+
+    commandStreamReceiver->processResidency(allocationsForResidency, 0u);
+    EXPECT_TRUE(mockManager->writeMemory2Called);
+    EXPECT_TRUE(commandStreamReceiver->writeMemoryGfxAllocCalled);
+    ASSERT_EQ(2u, mockManager->storedAllocationParams.size());
+    EXPECT_EQ(allocation2.getGpuAddress(), mockManager->storedAllocationParams[1].gfxAddress);
+    ASSERT_EQ(1u, memoryOperationsHandler->residentAllocations.size());
+    EXPECT_EQ(&allocation2, memoryOperationsHandler->residentAllocations[0]);
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForTaskCountWithKmdNotifyFallbackThenTagAllocationAndScheduledAllocationsAreDownloaded) {

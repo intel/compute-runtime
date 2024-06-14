@@ -36,6 +36,7 @@
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/page_table.h"
+#include "shared/source/os_interface/aub_memory_operations_handler.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "aubstream/aubstream.h"
@@ -777,6 +778,10 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const R
                              !this->isAubWritable(*gfxAllocation)));
         }
         gfxAllocation->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
+    }
+
+    if (this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface) {
+        this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface->processFlushResidency(this);
     }
 
     dumpAubNonWritable = false;

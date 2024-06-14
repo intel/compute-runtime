@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,11 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(gpuAddress, cpuAddress, size, memoryBank, entryBits);
         writeMemoryCalled = true;
     }
+    bool writeMemory(GraphicsAllocation &graphicsAllocation) override {
+        writeMemoryGfxAllocCalled = true;
+        return TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(graphicsAllocation);
+    }
+
     void submitBatchBufferTbx(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead) override {
         TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBufferTbx(batchBufferGpuAddress, batchBuffer, batchBufferSize, memoryBank, entryBits, overrideRingHead);
         overrideRingHeadPassed = overrideRingHead;
@@ -62,6 +67,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     bool initializeEngineCalled = false;
     bool writeMemoryWithAubManagerCalled = false;
     bool writeMemoryCalled = false;
+    bool writeMemoryGfxAllocCalled = false;
     bool submitBatchBufferCalled = false;
     bool overrideRingHeadPassed = false;
     bool pollForCompletionCalled = false;

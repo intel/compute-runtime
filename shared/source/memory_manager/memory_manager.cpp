@@ -35,6 +35,7 @@
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/os_interface/os_context.h"
@@ -259,10 +260,18 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     if (!gfxAllocation) {
         return;
     }
+    bool rootEnvAvailable = executionEnvironment.rootDeviceEnvironments.size() > 0;
 
-    if (executionEnvironment.rootDeviceEnvironments.size() > 0 && executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr) {
-        executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper()->releaseSSToReusePool(gfxAllocation->getBindlessInfo());
+    if (rootEnvAvailable) {
+        if (executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper() != nullptr) {
+            executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getBindlessHeapsHelper()->releaseSSToReusePool(gfxAllocation->getBindlessInfo());
+        }
+
+        if (this->peekExecutionEnvironment().rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface) {
+            this->peekExecutionEnvironment().rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface->free(nullptr, *gfxAllocation);
+        }
     }
+
     const bool hasFragments = gfxAllocation->fragmentsStorage.fragmentCount != 0;
     const bool isLocked = gfxAllocation->isLocked();
     DEBUG_BREAK_IF(hasFragments && isLocked);

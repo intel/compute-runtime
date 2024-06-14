@@ -26,16 +26,17 @@ class AubMemoryOperationsHandler : public MemoryOperationsHandler {
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
+    MemoryOperationsStatus free(Device *device, GraphicsAllocation &gfxAllocation) override;
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override;
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override;
+
+    void processFlushResidency(CommandStreamReceiver *csr) override;
 
     void setAubManager(aub_stream::AubManager *aubManager);
 
     bool isAubWritable(GraphicsAllocation &graphicsAllocation, Device *device) const;
     void setAubWritable(bool writable, GraphicsAllocation &graphicsAllocation, Device *device);
-
-    void processFlushResidency(Device *device);
 
   protected:
     DeviceBitfield getMemoryBanksBitfield(GraphicsAllocation *allocation, Device *device) const;

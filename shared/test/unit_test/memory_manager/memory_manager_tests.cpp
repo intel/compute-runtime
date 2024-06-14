@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
+#include "shared/test/common/mocks/mock_aub_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_deferrable_deletion.h"
 #include "shared/test/common/mocks/mock_deferred_deleter.h"
@@ -3161,6 +3162,37 @@ TEST(MemoryManagerTest, givenDuplicateRootDeviceIndicesWhenCreatingMultiGraphics
     EXPECT_EQ(mockRootDeviceIndex, allocation->getRootDeviceIndex());
 
     memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(MemoryManagerTest, givenMemoryAllocationWhenFreedThenFreeCalledOnMemoryOperationsHandler) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.initGmm();
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*executionEnvironment.rootDeviceEnvironments[0], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    executionEnvironment.rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);
+    executionEnvironment.incRefInternal();
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, &executionEnvironment, 0));
+
+    auto memoryOperationsHandler = new NEO::MockAubMemoryOperationsHandler(mockManager);
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
+
+    MockMemoryManager memoryManager(true, true, executionEnvironment);
+
+    DeviceBitfield localMemoryBitfield{1};
+    AllocationProperties allocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize, AllocationType::buffer, localMemoryBitfield};
+
+    auto memoryAllocation = memoryManager.allocateGraphicsMemoryWithProperties(allocationProperties);
+    EXPECT_NE(nullptr, memoryAllocation);
+
+    memoryOperationsHandler->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&memoryAllocation, 1));
+
+    EXPECT_EQ(1u, memoryOperationsHandler->residentAllocations.size());
+
+    memoryManager.freeGraphicsMemory(memoryAllocation);
+
+    EXPECT_TRUE(memoryOperationsHandler->freeCalled);
+    EXPECT_EQ(0u, memoryOperationsHandler->residentAllocations.size());
 }
 
 TEST(AllocationListTest, givenAllocationInListWhenFreeAllGraphicsAllocationsCalledThenHeadAndTailIsNullptr) {

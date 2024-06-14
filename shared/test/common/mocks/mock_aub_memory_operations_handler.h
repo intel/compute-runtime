@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,11 +46,17 @@ struct MockAubMemoryOperationsHandler : public AubMemoryOperationsHandler {
         return AubMemoryOperationsHandler::evictWithinOsContext(osContext, gfxAllocation);
     }
 
+    MemoryOperationsStatus free(Device *device, GraphicsAllocation &gfxAllocation) override {
+        freeCalled = true;
+        return AubMemoryOperationsHandler::free(device, gfxAllocation);
+    }
+
     bool makeResidentCalled = false;
     bool evictCalled = false;
     bool isResidentCalled = false;
     bool makeResidentWithinOsContextCalled = false;
     bool evictWithinOsContextCalled = false;
+    bool freeCalled = false;
 };
 
 } // namespace NEO
