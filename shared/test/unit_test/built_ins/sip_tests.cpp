@@ -753,6 +753,19 @@ TEST_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFrom
     EXPECT_EQ(SipKernelMock::classType, SipClassType::builtins);
 }
 
+TEST_F(DebugBuiltinSipTest, givenDebugFlagForForceSipClassWhenInitSipKernelThenProperSipClassIsSet) {
+    VariableBackup sipClassBackup(&SipKernelMock::classType);
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::builtins));
+    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
+    EXPECT_EQ(SipKernelMock::classType, SipClassType::builtins);
+
+    debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::hexadecimalHeaderFile));
+    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
+    EXPECT_EQ(SipKernelMock::classType, SipClassType::hexadecimalHeaderFile);
+}
+
 TEST_F(DebugBuiltinSipTest, givenDumpSipHeaderFileWhenGettingSipKernelThenSipHeaderFileIsCreated) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DumpSipHeaderFile.set("sip");

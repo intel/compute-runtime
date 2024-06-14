@@ -253,6 +253,9 @@ void SipKernel::selectSipClassType(std::string &fileName, Device &device) {
     } else {
         SipKernel::classType = SipClassType::rawBinaryFromFile;
     }
+    if (debugManager.flags.ForceSipClass.get() != -1) {
+        SipKernel::classType = static_cast<SipClassType>(debugManager.flags.ForceSipClass.get());
+    }
 }
 
 bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device, OsContext *context) {

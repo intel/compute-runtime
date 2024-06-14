@@ -283,6 +283,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableWaitOnUserFenceAfterBindAndUnbind, -1, "-1
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlushWithTaskCountAfterCopy, -1, "-1: default, 0: Do not force TLB flush (default), 1: Force TLB flush with task count update after copy")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdListUpdateCapability, -1, "-1: default, >=0: Use value to report command list update capability")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSynchronizedDispatchMode, -1, "-1: default, 0: disabled, 1: enable full synchronization mode")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceSipClass, -1, "-1: default, otherwise based on values from enum class SipClassType (init, builtins, rawBinaryFromFile, hexadecimalHeaderFile)")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
