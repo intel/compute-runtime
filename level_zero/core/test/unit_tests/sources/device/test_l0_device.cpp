@@ -36,6 +36,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/destructor_counted.h"
 
+#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/context/context_imp.h"
@@ -5373,6 +5374,19 @@ TEST_F(DeviceTest, givenDeviceWhenQueryingCmdListMemWaitOnMemDataSizeThenReturnV
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
     EXPECT_EQ(l0GfxCoreHelper.getCmdListWaitOnMemoryDataSize(), sizeProps.cmdListWaitOnMemoryDataSizeInBytes);
+}
+
+TEST_F(DeviceTest, givenDeviecWhenQueryingMediaPropertiesThenReturnZero) {
+    ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_intel_device_media_exp_properties_t mediaProps = {ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES};
+    mediaProps.numDecoderCores = 123;
+    mediaProps.numEncoderCores = 456;
+
+    devProps.pNext = &mediaProps;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDeviceGetProperties(device, &devProps));
+    EXPECT_EQ(0u, mediaProps.numDecoderCores);
+    EXPECT_EQ(0u, mediaProps.numEncoderCores);
 }
 
 struct RTASDeviceTest : public ::testing::Test {

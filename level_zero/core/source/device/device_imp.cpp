@@ -1055,6 +1055,10 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
             } else if (extendedProperties->stype == ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC) {
                 auto cmdListWaitOnMemDataSize = reinterpret_cast<ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t *>(extendedProperties);
                 cmdListWaitOnMemDataSize->cmdListWaitOnMemoryDataSizeInBytes = l0GfxCoreHelper.getCmdListWaitOnMemoryDataSize();
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES) {
+                auto deviceMediaProperties = reinterpret_cast<ze_intel_device_media_exp_properties_t *>(extendedProperties);
+                deviceMediaProperties->numDecoderCores = 0;
+                deviceMediaProperties->numEncoderCores = 0;
             }
             getAdditionalExtProperties(extendedProperties);
             extendedProperties = static_cast<ze_base_properties_t *>(extendedProperties->pNext);
