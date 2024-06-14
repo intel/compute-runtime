@@ -13,6 +13,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
 #include "level_zero/core/test/aub_tests/fixtures/multicontext_l0_aub_fixture.h"
@@ -22,10 +23,8 @@
 namespace L0 {
 namespace ult {
 
-struct SynchronizedDispatchMultiTileFixture : public MulticontextL0AubFixture {
-    void setUp() {
-        debugManager.flags.ForceSynchronizedDispatchMode.set(1);
-
+struct SimpleMultiTileFixture : public MulticontextL0AubFixture {
+    virtual void setUp() {
         MulticontextL0AubFixture::setUp(2, EnabledCommandStreamers::single, true);
 
         if (skipped || !rootDevice->isImplicitScalingCapable()) {
@@ -63,6 +62,13 @@ struct SynchronizedDispatchMultiTileFixture : public MulticontextL0AubFixture {
     DestroyableZeUniquePtr<Kernel> kernel;
     DestroyableZeUniquePtr<ult::WhiteBox<L0::CommandListImp>> commandList;
     DestroyableZeUniquePtr<CommandQueue> cmdQ;
+};
+
+struct SynchronizedDispatchMultiTileFixture : public SimpleMultiTileFixture {
+    void setUp() override {
+        debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+        SimpleMultiTileFixture::setUp();
+    }
 };
 
 using SynchronizedDispatchMultiTileL0AubTests = Test<SynchronizedDispatchMultiTileFixture>;
@@ -107,5 +113,74 @@ HWTEST_F(SynchronizedDispatchMultiTileL0AubTests, givenFullSyncDispatchWhenExecu
     driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer);
 }
 
+struct CopyOffloadMultiTileFixture : public SimpleMultiTileFixture {
+    void setUp() override {
+        debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+        debugManager.flags.ForceInOrderImmediateCmdListExecution.set(1);
+        SimpleMultiTileFixture::setUp();
+    }
+};
+
+using CopyOffloadMultiTileL0AubTests = Test<CopyOffloadMultiTileFixture>;
+
+HWTEST2_F(CopyOffloadMultiTileL0AubTests, givenCopyOffloadCmdListWhenDispatchingThenDataIsCorrect, IsAtLeastXeHpCore) {
+    if (!rootDevice->isImplicitScalingCapable()) {
+        GTEST_SKIP();
+    }
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    commandList.reset(ult::CommandList::whiteboxCast(CommandList::createImmediate(rootDevice->getHwInfo().platform.eProductFamily, rootDevice, &queueDesc, false, NEO::EngineGroupType::compute, returnValue)));
+    ASSERT_TRUE(commandList->isCopyOffloadEnabled());
+
+    commandList->getCsr(true)->overrideDispatchPolicy(NEO::DispatchMode::immediateDispatch);
+
+    constexpr uint8_t size = 3 * sizeof(uint32_t);
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->rootDeviceIndices, context->deviceBitfields);
+    auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+    auto readBackBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+
+    auto fillPtr = reinterpret_cast<uint32_t *>(outBuffer);
+
+    std::fill(fillPtr, ptrOffset(fillPtr, size), uint32_t(1));
+    memset(readBackBuffer, 0, size);
+
+    uint32_t hostData[3] = {0, 0, 0};
+
+    zeCommandListAppendMemoryCopy(commandList->toHandle(), outBuffer, hostData, size, nullptr, 0, nullptr);
+
+    ze_group_count_t groupCount = {};
+    groupCount.groupCountX = 128;
+    groupCount.groupCountY = 1;
+    groupCount.groupCountZ = 1;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel.get(), 0, sizeof(void *), &outBuffer));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernel.get(), 1, 1, 1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandList->toHandle(), kernel.get(), &groupCount, nullptr, 0, nullptr));
+
+    zeCommandListAppendMemoryCopy(commandList->toHandle(), readBackBuffer, outBuffer, size, nullptr, 0, nullptr);
+
+    zeCommandListHostSynchronize(commandList->toHandle(), std::numeric_limits<uint32_t>::max());
+    commandList->getCsr(true)->pollForCompletion();
+
+    const uint32_t expectedGlobalWorkSize[3] = {groupCount.groupCountX, groupCount.groupCountY, groupCount.groupCountZ};
+
+    auto compareEqual = AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual;
+
+    auto csr = getSimulatedCsr<FamilyType>(0, 0);
+
+    EXPECT_TRUE(csr->expectMemory(readBackBuffer, expectedGlobalWorkSize, size, compareEqual));
+
+    uint64_t expectedCounterValue = commandList->inOrderExecInfo->getCounterValue();
+
+    for (uint32_t i = 0; i < commandList->inOrderExecInfo->getNumDevicePartitionsToWait(); i++) {
+        uint64_t offset = i * rootDevice->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+        EXPECT_TRUE(csr->expectMemory(reinterpret_cast<void *>(commandList->inOrderExecInfo->getBaseDeviceAddress() + offset), &expectedCounterValue, sizeof(uint64_t), compareEqual));
+    }
+
+    driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer);
+    driverHandle->svmAllocsManager->freeSVMAlloc(readBackBuffer);
+}
 } // namespace ult
 } // namespace L0
