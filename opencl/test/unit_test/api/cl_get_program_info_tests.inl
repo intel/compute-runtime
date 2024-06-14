@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,7 +172,6 @@ TEST_F(ClGetProgramInfoTests, GivenIlWhenBuildingProgramThenGetProgramInfoReturn
 }
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDevicesThenCorrectDevicesAreReturned) {
-    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     MockUnrestrictiveContextMultiGPU context;
 
     auto numDevicesForProgram = 2u;
@@ -189,7 +188,7 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDe
         testFile.c_str(),
         binarySize0);
 
-    retrieveBinaryKernelFilename(testFile, "copy_buffer_to_image_", ".bin");
+    retrieveBinaryKernelFilename(testFile, "copybuffer_", ".bin");
 
     pBinary1 = loadDataFromFile(
         testFile.c_str(),
@@ -228,7 +227,6 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDe
 }
 
 TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBinariesThenCorrectBinariesAreReturned) {
-    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     MockUnrestrictiveContextMultiGPU context;
 
     auto numDevicesForProgram = 2u;
@@ -245,7 +243,7 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBi
         testFile.c_str(),
         binarySize0);
 
-    retrieveBinaryKernelFilename(testFile, "copy_buffer_to_image_", ".bin");
+    retrieveBinaryKernelFilename(testFile, "copybuffer_", ".bin");
 
     pBinary1 = loadDataFromFile(
         testFile.c_str(),

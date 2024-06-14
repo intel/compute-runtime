@@ -325,10 +325,6 @@ set(TEST_KERNEL_BINDLESS
     test_files/stateful_copy_buffer.cl
 )
 
-set(TEST_KERNEL_BINDLESS_IMAGES
-    test_files/copy_buffer_to_image.cl
-)
-
 set(TEST_KERNEL_PRINTF
     test_files/printf.cl
 )
@@ -352,9 +348,6 @@ macro(macro_for_each_platform)
   set(PLATFORM_TEST_KERNELS ${TEST_KERNELS})
   set(IMAGE_SUPPORT FALSE)
   CORE_CONTAINS_PLATFORM("SUPPORTED_IMAGES" ${CORE_TYPE} ${PLATFORM_IT} IMAGE_SUPPORT)
-  if(NOT ${IMAGE_SUPPORT})
-    list(REMOVE_ITEM PLATFORM_TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/copy_buffer_to_image.cl")
-  endif()
 
   foreach(KERNEL_TO_REMOVE ${${CORE_TYPE}_TEST_KERNELS_BLOCKLIST})
     set(KERNEL_TO_REMOVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/test_files/${KERNEL_TO_REMOVE}")
@@ -400,20 +393,6 @@ macro(macro_for_each_platform)
         neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options})
       endforeach()
     endif()
-
-    set(BINDLESS_KERNELS_IMAGES "")
-    if(IMAGE_SUPPORT)
-      set(BINDLESS_KERNELS_IMAGES ${TEST_KERNEL_BINDLESS_IMAGES})
-    endif()
-
-    foreach(file ${TEST_KERNEL_BINDLESS} ${BINDLESS_KERNELS_IMAGES})
-      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-        if(NOT ("${CORE_TYPE_LOWER}" STREQUAL "gen8"))
-          neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${file} "bindless" ${TEST_KERNEL_BINDLESS_internal_options})
-        endif()
-      endforeach()
-    endforeach()
 
     if(PLATFORM_2_0_LOWER)
       foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})

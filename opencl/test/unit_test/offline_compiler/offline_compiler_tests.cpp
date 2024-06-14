@@ -2859,10 +2859,14 @@ TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuc
     auto retVal = mockOfflineCompiler->buildSourceCode();
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
+    const char kernelWithNoCharAfterKernel[] = "__kernel void empty(){}";
+    Source source{reinterpret_cast<const uint8_t *>(kernelWithNoCharAfterKernel), sizeof(kernelWithNoCharAfterKernel), "emptykernel.cl"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(source);
+
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "emptykernel.cl",
+        "emptykernel.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -3248,10 +3252,12 @@ TEST(OfflineCompilerTest, givenSpirvInputFileWhenCmdLineHasOptionsThenCorrectOpt
     NEO::setIgcDebugVars(igcDebugVars);
 
     MockOfflineCompiler mockOfflineCompiler;
+    Source source{reinterpret_cast<const uint8_t *>(spirvMagic.data()), spirvMagic.size(), "some_file.spv"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler.argHelper)->inputs.push_back(source);
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "emptykernel.cl",
+        "some_file.spv",
         "-spirv_input",
         "-device",
         gEnvironment->devicePrefix.c_str(),
@@ -4065,17 +4071,28 @@ TEST(OfflineCompilerTest, givenCompilerWhenBuildSourceCodeFailsThenGenerateElfBi
 TEST(OfflineCompilerTest, givenDeviceSpecificKernelFileWhenCompilerIsInitializedThenOptionsAreReadFromFile) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
-    std::string kernelFileName(clFiles + "kernel_for_specific_device.skl");
-    std::string optionsFileName(clFiles + "kernel_for_specific_device_options.txt");
+    auto kernelForSpecificDevice = "__kernel void empty(){}";
+    Source source{reinterpret_cast<const uint8_t *>(kernelForSpecificDevice), sizeof(kernelForSpecificDevice), "emptykernel.cl"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(source);
 
-    ASSERT_TRUE(fileExists(kernelFileName));
-    ASSERT_TRUE(fileExists(optionsFileName));
+    const char options[] = R"===(
+/*
+ * Copyright (C) 2024 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+-cl-opt-disable
+)===";
+    Source optionsSource{reinterpret_cast<const uint8_t *>(options), sizeof(options), "emptykernel_options.txt"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(optionsSource);
 
     std::vector<std::string> argv = {
         "ocloc",
         "-q",
         "-file",
-        kernelFileName,
+        "emptykernel.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 

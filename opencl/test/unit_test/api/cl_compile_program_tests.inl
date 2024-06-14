@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,47 +66,35 @@ TEST_F(ClCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenS
 TEST_F(ClCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     cl_program pHeader = nullptr;
-    size_t sourceSize = 0;
-    std::string testFile;
-    const char *simpleHeaderName = "simple_header.h";
 
-    testFile.append(clFiles);
-    testFile.append("/copybuffer_with_header.cl");
+    auto copyBufferWithHeader = R"===(
+#include "simple_header.h"
+__kernel void CopyBuffer(){}
+	    )===";
 
-    auto pSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
+    auto copyBufferWithHeaderSize = sizeof(copyBufferWithHeader);
 
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pSource);
+    auto header = R"===(
+extenr __kernel void AddBuffer();
+	    )===";
 
-    const char *sources[1] = {pSource.get()};
+    auto headerSize = sizeof(header);
+    auto headerName = "simple_header.h";
     pProgram = clCreateProgramWithSource(
         pContext,
         1,
-        sources,
-        &sourceSize,
+        &copyBufferWithHeader,
+        &copyBufferWithHeaderSize,
         &retVal);
 
     EXPECT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    testFile.clear();
-    testFile.append(clFiles);
-    testFile.append("simple_header.h");
-    auto pHeaderSource = loadDataFromFile(
-        testFile.c_str(),
-        sourceSize);
-
-    ASSERT_NE(0u, sourceSize);
-    ASSERT_NE(nullptr, pHeaderSource);
-
-    const char *headerSources[1] = {pHeaderSource.get()};
     pHeader = clCreateProgramWithSource(
         pContext,
         1,
-        headerSources,
-        &sourceSize,
+        &header,
+        &headerSize,
         &retVal);
 
     EXPECT_NE(nullptr, pHeader);
@@ -119,7 +107,7 @@ TEST_F(ClCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramT
         nullptr,
         1,
         &pHeader,
-        &simpleHeaderName,
+        &headerName,
         nullptr,
         nullptr);
 

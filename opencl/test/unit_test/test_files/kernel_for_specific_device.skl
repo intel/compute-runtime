@@ -1,2 +1,0 @@
-__kernel void simple_device_specific_kernel() {
-}
