@@ -736,6 +736,7 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
             extendedProperties->writeBandwidth = extendedProperties->readBandwidth;
             extendedProperties->bandwidthUnit = ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC;
         }
+        getAdditionalMemoryExtProperties(pNext, this->getNEODevice()->getHardwareInfo());
         pNext = static_cast<ze_base_properties_t *>(pNext->pNext);
     }
 

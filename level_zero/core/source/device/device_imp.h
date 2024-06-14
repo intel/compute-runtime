@@ -162,6 +162,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &, bool);
     CmdListCreateFunPtrT getCmdListCreateFunc(const ze_base_desc_t *desc);
     void getAdditionalExtProperties(ze_base_properties_t *extendedProperties);
+    void getAdditionalMemoryExtProperties(ze_base_properties_t *extProperties, const NEO::HardwareInfo &hwInfo);
     ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) override;
 
     ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
