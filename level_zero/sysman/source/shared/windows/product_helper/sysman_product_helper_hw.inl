@@ -52,6 +52,40 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTem
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isTempModuleSupported(zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) {
+    if ((type == ZES_TEMP_SENSORS_GLOBAL_MIN) || (type == ZES_TEMP_SENSORS_GPU_MIN)) {
+        return false;
+    }
+
+    KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response = {};
+    uint32_t value = 0;
+
+    request.paramInfo = static_cast<uint32_t>(type);
+    request.commandId = KmdSysman::Command::Get;
+    request.componentId = KmdSysman::Component::TemperatureComponent;
+    request.requestId = KmdSysman::Requests::Temperature::NumTemperatureDomains;
+
+    status = pKmdSysManager->requestSingle(request, response);
+
+    if (status == ZE_RESULT_SUCCESS) {
+        memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+    }
+
+    if (value == 0) {
+        return false;
+    }
+
+    request.commandId = KmdSysman::Command::Get;
+    request.componentId = KmdSysman::Component::TemperatureComponent;
+    request.requestId = KmdSysman::Requests::Temperature::CurrentTemperature;
+
+    return (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pStats, WddmSysmanImp *pWddmSysmanImp) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

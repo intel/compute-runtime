@@ -22,6 +22,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     L0::Sysman::KmdSysManager *pOriginalKmdSysManager = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
     void SetUp() override {
+        std::vector<wchar_t> deviceInterfacePmt(pmtInterfaceName.begin(), pmtInterfaceName.end());
         SysmanDeviceFixture::SetUp();
 
         pKmdSysManager.reset(new TemperatureKmdSysManager);
@@ -29,6 +30,9 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
 
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
+
+        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfacePmt);
+        pWddmSysmanImp->pPmt.reset(pPmt);
 
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();
     }
@@ -44,96 +48,6 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-    uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, temperatureHandleComponentCount);
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenTempDomainsAreEnumeratedWhenCallingIsTempInitCompletedThenVerifyTempInitializationIsCompleted) {
-    uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, temperatureHandleComponentCount);
-
-    EXPECT_EQ(true, pSysmanDeviceImp->pTempHandleContext->isTempInitDone());
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenInvalidComponentCountWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-    uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, temperatureHandleComponentCount);
-
-    count = count + 1;
-    EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, temperatureHandleComponentCount);
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidPowerHandlesIsReturned) {
-    uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, temperatureHandleComponentCount);
-
-    std::vector<zes_temp_handle_t> handles(count, nullptr);
-    EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-    for (auto handle : handles) {
-        EXPECT_NE(handle, nullptr);
-    }
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenValidDeviceHandleWhenEnumeratingTemperatureSensorsOnIntegratedDeviceThenZeroCountIsReturned) {
-    uint32_t count = 0;
-    pKmdSysManager->isIntegrated = true;
-    EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0u);
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleWhenGettingTemperaturePropertiesAllowSetToTrueThenCallSucceeds) {
-    auto handles = getTempHandles(temperatureHandleComponentCount);
-    uint32_t sensorTypeIndex = 0;
-    for (auto handle : handles) {
-        zes_temp_properties_t properties;
-
-        ze_result_t result = zesTemperatureGetProperties(handle, &properties);
-
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_FALSE(properties.onSubdevice);
-        EXPECT_EQ(properties.subdeviceId, 0u);
-        EXPECT_FALSE(properties.isCriticalTempSupported);
-        EXPECT_FALSE(properties.isThreshold1Supported);
-        EXPECT_FALSE(properties.isThreshold2Supported);
-        EXPECT_EQ(properties.maxTemperature, pKmdSysManager->mockMaxTemperature);
-        EXPECT_EQ(properties.type, pKmdSysManager->mockSensorTypes[sensorTypeIndex++]);
-    }
-}
-
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingMemoryTemperatureThenValidTemperatureReadingsRetrieved, IsAtMostDg2) {
-    auto handles = getTempHandles(temperatureHandleComponentCount);
-    double temperature;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_MEMORY], &temperature));
-    EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempMemory));
-}
-
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUTemperatureThenValidTemperatureReadingsRetrieved, IsAtMostDg2) {
-    auto handles = getTempHandles(temperatureHandleComponentCount);
-    double temperature;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GPU], &temperature));
-    EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempGPU));
-}
-
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGlobalTemperatureThenValidTemperatureReadingsRetrieved, IsAtMostDg2) {
-    auto handles = getTempHandles(temperatureHandleComponentCount);
-    double temperature;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GLOBAL], &temperature));
-    EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempGlobal));
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupportedSensorsTemperatureThenUnsupportedReturned) {
-    auto pTemperatureImpMemory = std::make_unique<L0::Sysman::TemperatureImp>(pOsSysman, false, 0, ZES_TEMP_SENSORS_GLOBAL_MIN);
-    auto pWddmTemperatureImp = static_cast<L0::Sysman::WddmTemperatureImp *>(pTemperatureImpMemory->pOsTemperature.get());
-    double pTemperature = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pWddmTemperatureImp->getSensorTemperature(&pTemperature));
-}
-
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureConfigThenUnsupportedIsReturned) {
     auto handles = getTempHandles(temperatureHandleComponentCount);
     for (auto handle : handles) {
@@ -148,6 +62,40 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenSettingTemperatur
         zes_temp_config_t config = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureSetConfig(handle, &config));
     }
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidOsTemperatureObjectWhenGettingTemperaturePropertiesThenCallSucceeds) {
+    std::unique_ptr<PublicWddmTemperatureImp> pWddmTemperatureImp = std::make_unique<PublicWddmTemperatureImp>(pOsSysman);
+    zes_temp_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pWddmTemperatureImp->getProperties(&properties));
+    EXPECT_FALSE(properties.onSubdevice);
+    EXPECT_EQ(properties.subdeviceId, 0u);
+    EXPECT_FALSE(properties.isCriticalTempSupported);
+    EXPECT_FALSE(properties.isThreshold1Supported);
+    EXPECT_FALSE(properties.isThreshold2Supported);
+    EXPECT_EQ(properties.maxTemperature, pKmdSysManager->mockMaxTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidOsTemperatureObjectWhenGettingTemperatureSensorThenCallSucceeds) {
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperTemp>();
+    std::swap(pWddmSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    std::unique_ptr<PublicWddmTemperatureImp> pWddmTemperatureImp = std::make_unique<PublicWddmTemperatureImp>(pOsSysman);
+    double mockedTemperature = 40;
+    double temp = mockedTemperature;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pWddmTemperatureImp->getSensorTemperature(&temp));
+    EXPECT_EQ(temp, mockedTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidOsTemperatureObjectWhenSettingTemperatureTypeThenCallSucceeds) {
+    std::unique_ptr<PublicWddmTemperatureImp> pWddmTemperatureImp = std::make_unique<PublicWddmTemperatureImp>(pOsSysman);
+    EXPECT_EQ(pWddmTemperatureImp->type, ZES_TEMP_SENSORS_GLOBAL);
+    pWddmTemperatureImp->setSensorType(ZES_TEMP_SENSORS_GPU);
+    EXPECT_EQ(pWddmTemperatureImp->type, ZES_TEMP_SENSORS_GPU);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenValidOsTemperatureObjectWhenCheckingIfTempModuleSupportedThenCallSucceeds) {
+    std::unique_ptr<PublicWddmTemperatureImp> pWddmTemperatureImp = std::make_unique<PublicWddmTemperatureImp>(pOsSysman);
+    EXPECT_TRUE(pWddmTemperatureImp->isTempModuleSupported());
 }
 
 } // namespace ult

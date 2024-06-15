@@ -26,6 +26,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Temperature
     ze_result_t getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) override;
+    bool isTempModuleSupported(zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) override;
 
     // Pci
     ze_result_t getPciStats(zes_pci_stats_t *pStats, WddmSysmanImp *pWddmSysmanImp) override;

@@ -28,6 +28,7 @@ class PublicWddmSysmanImp : public L0::Sysman::WddmSysmanImp {
     using WddmSysmanImp::pFwUtilInterface;
     using WddmSysmanImp::pKmdSysManager;
     using WddmSysmanImp::pPmt;
+    using WddmSysmanImp::pSysmanProductHelper;
 };
 
 class SysmanDeviceFixture : public ::testing::Test {

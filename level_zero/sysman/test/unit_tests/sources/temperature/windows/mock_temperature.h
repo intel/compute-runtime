@@ -7,13 +7,18 @@
 
 #pragma once
 
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/sysman/source/api/temperature/sysman_temperature_imp.h"
+#include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
+#include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
 
+const std::wstring pmtInterfaceName = L"TEST\0";
 constexpr uint32_t temperatureHandleComponentCount = 3u;
 
 struct TemperatureKmdSysManager : public MockKmdSysManager {
@@ -24,6 +29,11 @@ struct TemperatureKmdSysManager : public MockKmdSysManager {
     uint32_t mockMaxTemperature = 100;
     bool isIntegrated = false;
     zes_temp_sensors_t mockSensorTypes[3] = {ZES_TEMP_SENSORS_GLOBAL, ZES_TEMP_SENSORS_GPU, ZES_TEMP_SENSORS_MEMORY};
+    uint32_t mockTemperatureFailure[KmdSysman::Requests::Temperature::MaxTemperatureRequests] = {0};
+
+    uint32_t getReturnCode(uint32_t temperatureRequestCode) {
+        return mockTemperatureFailure[temperatureRequestCode] ? KmdSysman::KmdSysmanFail : KmdSysman::KmdSysmanSuccess;
+    }
 
     void getTemperatureProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
@@ -45,7 +55,7 @@ struct TemperatureKmdSysManager : public MockKmdSysManager {
             } else {
                 *pValue = mockTempDomainCount;
             }
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = getReturnCode(pRequest->inRequestId);
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Temperature::TempCriticalEventSupported:
@@ -77,7 +87,7 @@ struct TemperatureKmdSysManager : public MockKmdSysManager {
             default:
                 UNRECOVERABLE_IF(true);
             }
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outReturnCode = getReturnCode(pRequest->inRequestId);
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         default: {
@@ -92,6 +102,18 @@ class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
   public:
     PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList) : PlatformMonitoringTech(deviceInterfaceList) {}
     using PlatformMonitoringTech::keyOffsetMap;
+};
+
+struct MockSysmanProductHelperTemp : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+    MockSysmanProductHelperTemp() = default;
+    ADDMETHOD_NOBASE(getSensorTemperature, ze_result_t, ZE_RESULT_SUCCESS, (double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp));
+    ADDMETHOD_NOBASE(isTempModuleSupported, bool, true, (zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp));
+};
+
+class PublicWddmTemperatureImp : public L0::Sysman::WddmTemperatureImp {
+  public:
+    PublicWddmTemperatureImp(L0::Sysman::OsSysman *pOsSysman) : L0::Sysman::WddmTemperatureImp(pOsSysman) {}
+    using L0::Sysman::WddmTemperatureImp::type;
 };
 
 } // namespace ult

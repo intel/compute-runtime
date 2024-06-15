@@ -84,46 +84,9 @@ ze_result_t WddmTemperatureImp::getSensorTemperature(double *pTemperature) {
     return pSysmanProductHelper->getSensorTemperature(pTemperature, type, pWddmSysmanImp);
 }
 
-uint32_t WddmTemperatureImp::getNumTempDomainsSupported() {
-    ze_result_t status = ZE_RESULT_SUCCESS;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response = {};
-    uint32_t value = 0;
-
-    request.paramInfo = static_cast<uint32_t>(type);
-    request.commandId = KmdSysman::Command::Get;
-    request.componentId = KmdSysman::Component::TemperatureComponent;
-    request.requestId = KmdSysman::Requests::Temperature::NumTemperatureDomains;
-
-    status = pKmdSysManager->requestSingle(request, response);
-
-    if (status == ZE_RESULT_SUCCESS) {
-        if (response.returnCode == KmdSysman::KmdSysmanSuccess) {
-            memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-        }
-    }
-
-    return value;
-}
-
 bool WddmTemperatureImp::isTempModuleSupported() {
-    if ((type == ZES_TEMP_SENSORS_GLOBAL_MIN) || (type == ZES_TEMP_SENSORS_GPU_MIN)) {
-        return false;
-    }
-
-    if (getNumTempDomainsSupported() == 0) {
-        return false;
-    }
-
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
-
-    request.paramInfo = static_cast<uint32_t>(type);
-    request.commandId = KmdSysman::Command::Get;
-    request.componentId = KmdSysman::Component::TemperatureComponent;
-    request.requestId = KmdSysman::Requests::Temperature::CurrentTemperature;
-
-    return (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS);
+    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->isTempModuleSupported(type, pWddmSysmanImp);
 }
 
 void WddmTemperatureImp::setSensorType(zes_temp_sensors_t sensorType) {
