@@ -145,7 +145,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DebuggerForceSbaTrackingMode, -1, "-1: default, 
 DECLARE_DEBUG_VARIABLE(bool, DisableSupportForL0Debugger, 0, "0: default setting for product, 1: disable l0 debugger")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugApiUsed, 0, "0: default L0 Debug API not used, 1: L0 Debug API used")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCsrAllocationSize, -1, "-1: default, >0: use value for size of CSR allocation")
-DECLARE_DEBUG_VARIABLE(int32_t, CFEComputeOverdispatchDisable, -1, "Set Compute Overdispatch Disable field in CFE_STATE, -1: do not set.")
+DECLARE_DEBUG_VARIABLE(int32_t, ComputeOverdispatchDisable, -1, "Set Compute Overdispatch Disable field, -1: do not set.")
 DECLARE_DEBUG_VARIABLE(int32_t, CFEWeightedDispatchModeDisable, -1, "Set Weighted Dispatch Mode Disable field in CFE_STATE on XEHP, -1: do not set.")
 DECLARE_DEBUG_VARIABLE(int32_t, CFESingleSliceDispatchCCSMode, -1, "Set Single Slice Dispatch CCS Mode in CFE_STATE on XEHP, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, CFENumberOfWalkers, -1, "Set Number of Walkers in CFE_STATE on XEHP, -1 - do not set")

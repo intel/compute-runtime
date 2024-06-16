@@ -60,8 +60,8 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
 
     appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
 
-    if (debugManager.flags.CFEComputeOverdispatchDisable.get() != -1) {
-        cmd.setComputeOverdispatchDisable(debugManager.flags.CFEComputeOverdispatchDisable.get());
+    if (debugManager.flags.ComputeOverdispatchDisable.get() != -1) {
+        cmd.setComputeOverdispatchDisable(debugManager.flags.ComputeOverdispatchDisable.get());
     }
 
     if (debugManager.flags.CFEMaximumNumberOfThreads.get() != -1) {
