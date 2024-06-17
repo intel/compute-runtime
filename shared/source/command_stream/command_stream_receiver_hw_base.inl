@@ -265,7 +265,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
     auto &streamToSubmit = submitCSR ? commandStreamCSR : commandStreamTask;
 
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, 0, taskStartAddress, nullptr,
-                            false, QueueThrottle::MEDIUM, NEO::QueueSliceCount::defaultSliceCount,
+                            false, getThrottleFromPowerSavingUint(this->getUmdPowerHintValue()), NEO::QueueSliceCount::defaultSliceCount,
                             streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, this->getNumClients(), (submitCSR || dispatchBcsFlags.hasStallingCmds),
                             dispatchBcsFlags.hasRelaxedOrderingDependencies, dispatchBcsFlags.flushTaskCount};
 
@@ -1123,7 +1123,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
     uint64_t taskStartAddress = commandStream.getGpuBase() + commandStreamStart;
 
-    BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, taskStartAddress, nullptr, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
+    BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, taskStartAddress, nullptr, false, getThrottleFromPowerSavingUint(this->getUmdPowerHintValue()), QueueSliceCount::defaultSliceCount,
                             commandStream.getUsed(), &commandStream, endingCmdPtr, this->getNumClients(), hasStallingCmds, isRelaxedOrderingDispatch, blocking};
 
     updateStreamTaskCount(commandStream, newTaskCount);
@@ -1144,7 +1144,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
     lock.unlock();
     if (blocking) {
-        const auto waitStatus = waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, QueueThrottle::MEDIUM);
+        const auto waitStatus = waitForTaskCountWithKmdNotifyFallback(newTaskCount, flushStampToWait, false, getThrottleFromPowerSavingUint(this->getUmdPowerHintValue()));
         internalAllocationStorage->cleanAllocationList(newTaskCount, TEMPORARY_ALLOCATION);
         internalAllocationStorage->cleanAllocationList(newTaskCount, DEFERRED_DEALLOCATION);
 
@@ -1257,7 +1257,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
     uint64_t taskStartAddress = commandStreamTask.getGpuBase() + commandStreamStartTask;
 
     BatchBuffer batchBuffer{commandStreamTask.getGraphicsAllocation(), commandStreamStartTask, 0, taskStartAddress,
-                            nullptr, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
+                            nullptr, false, getThrottleFromPowerSavingUint(this->getUmdPowerHintValue()), QueueSliceCount::defaultSliceCount,
                             commandStreamTask.getUsed(), &commandStreamTask, endingCmdPtr, this->getNumClients(), true, false, true};
 
     this->latestSentTaskCount = taskCount + 1;
@@ -2189,7 +2189,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatc
     bool hasStallingCmds = (startFromCsr || dispatchFlags.blockingAppend || dispatchFlags.hasStallingCmds);
 
     constexpr bool immediateLowPriority = false;
-    constexpr QueueThrottle immediateThrottle = QueueThrottle::MEDIUM;
+    const QueueThrottle immediateThrottle = getThrottleFromPowerSavingUint(this->getUmdPowerHintValue());
     constexpr uint64_t immediateSliceCount = QueueSliceCount::defaultSliceCount;
 
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, taskStartAddress, chainedBatchBuffer,

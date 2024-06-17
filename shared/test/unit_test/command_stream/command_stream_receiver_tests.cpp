@@ -5251,6 +5251,17 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenInitializeDeviceWithFirstSubmiss
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenGetUmdPowerHintValueCalledThenCorrectValueIsReturned) {
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    EXPECT_EQ(nullptr, commandStreamReceiver.osContext);
+    EXPECT_EQ(0u, commandStreamReceiver.getUmdPowerHintValue());
+
+    MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({defaultHwInfo->capabilityTable.defaultEngineType, EngineUsage::regular}));
+    commandStreamReceiver.setupContext(mockOsContext);
+    mockOsContext.setUmdPowerHintValue(1u);
+    EXPECT_EQ(1u, commandStreamReceiver.getUmdPowerHintValue());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenMakeResidentCalledThenUpdateTaskCountIfObjectIsAlwaysResident) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto contextId = csr.getOsContext().getContextId();

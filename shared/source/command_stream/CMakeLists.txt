@@ -57,6 +57,8 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_hw.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_stream.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/queue_throttle.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/queue_throttle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/transfer_direction.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wait_status.h
 )

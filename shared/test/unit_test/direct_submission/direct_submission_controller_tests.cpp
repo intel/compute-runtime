@@ -160,7 +160,11 @@ void fillTimeoutParamsMap(DirectSubmissionControllerMock &controller) {
         for (auto acLineStatus : {false, true}) {
             auto key = controller.getTimeoutParamsMapKey(throttle, acLineStatus);
             TimeoutParams params{};
-            params.maxTimeout = std::chrono::microseconds{500u + static_cast<size_t>(throttle) * 500u + (acLineStatus ? 0u : 1500u)};
+            if (throttle == QueueThrottle::LOW) {
+                params.maxTimeout = std::chrono::microseconds{500u};
+            } else {
+                params.maxTimeout = std::chrono::microseconds{500u + static_cast<size_t>(throttle) * 500u + (acLineStatus ? 0u : 1500u)};
+            }
             params.timeout = params.maxTimeout;
             params.timeoutDivisor = 1;
             params.directSubmissionEnabled = true;
@@ -221,8 +225,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
 
-        EXPECT_EQ(std::chrono::microseconds{500u}, controller.timeout);
-        EXPECT_EQ(std::chrono::microseconds{500u}, controller.maxTimeout);
+        EXPECT_EQ(500u, controller.timeout.count());
+        EXPECT_EQ(500u, controller.maxTimeout.count());
         EXPECT_EQ(1, controller.timeoutDivisor);
     }
 
@@ -235,8 +239,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
 
-        EXPECT_EQ(std::chrono::microseconds{1000u}, controller.timeout);
-        EXPECT_EQ(std::chrono::microseconds{1000u}, controller.maxTimeout);
+        EXPECT_EQ(1'000u, controller.timeout.count());
+        EXPECT_EQ(1'000u, controller.maxTimeout.count());
         EXPECT_EQ(1, controller.timeoutDivisor);
     }
 
@@ -249,8 +253,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
 
-        EXPECT_EQ(std::chrono::microseconds{1500u}, controller.timeout);
-        EXPECT_EQ(std::chrono::microseconds{1500u}, controller.maxTimeout);
+        EXPECT_EQ(1'500u, controller.timeout.count());
+        EXPECT_EQ(1'500u, controller.maxTimeout.count());
         EXPECT_EQ(1, controller.timeoutDivisor);
     }
 
@@ -263,8 +267,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
 
-        EXPECT_EQ(std::chrono::microseconds{2000u}, controller.timeout);
-        EXPECT_EQ(std::chrono::microseconds{2000u}, controller.maxTimeout);
+        EXPECT_EQ(500u, controller.timeout.count());
+        EXPECT_EQ(500u, controller.maxTimeout.count());
         EXPECT_EQ(1, controller.timeoutDivisor);
     }
 
@@ -277,8 +281,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
 
-        EXPECT_EQ(std::chrono::microseconds{2500u}, controller.timeout);
-        EXPECT_EQ(std::chrono::microseconds{2500u}, controller.maxTimeout);
+        EXPECT_EQ(2'500u, controller.timeout.count());
+        EXPECT_EQ(2'500u, controller.maxTimeout.count());
         EXPECT_EQ(1, controller.timeoutDivisor);
     }
 
@@ -291,8 +295,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
         EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 6u);
 
-        EXPECT_EQ(std::chrono::microseconds{3000u}, controller.timeout);
-        EXPECT_EQ(std::chrono::microseconds{3000u}, controller.maxTimeout);
+        EXPECT_EQ(3'000u, controller.timeout.count());
+        EXPECT_EQ(3'000u, controller.maxTimeout.count());
         EXPECT_EQ(1, controller.timeoutDivisor);
     }
 
@@ -365,6 +369,12 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     controller.unregisterDirectSubmission(&csr2);
     controller.unregisterDirectSubmission(&csr3);
     controller.unregisterDirectSubmission(&csr4);
+}
+
+TEST(DirectSubmissionControllerTests, givenPowerSavingUintWhenCallingGetThrottleFromPowerSavingUintThenCorrectValueIsReturned) {
+    EXPECT_EQ(QueueThrottle::MEDIUM, getThrottleFromPowerSavingUint(0u));
+    EXPECT_EQ(QueueThrottle::LOW, getThrottleFromPowerSavingUint(1u));
+    EXPECT_EQ(QueueThrottle::LOW, getThrottleFromPowerSavingUint(100u));
 }
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterCsrsFromDifferentSubdevicesThenTimeoutIsAdjusted) {

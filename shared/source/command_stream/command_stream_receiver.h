@@ -272,6 +272,7 @@ class CommandStreamReceiver {
     virtual void fillReusableAllocationsList();
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     OsContext &getOsContext() const { return *osContext; }
+    uint8_t getUmdPowerHintValue() const;
     bool initializeResources(bool allocateInterrupt);
     TagAllocatorBase *getEventTsAllocator();
     TagAllocatorBase *getEventPerfCountAllocator(const uint32_t tagSize);

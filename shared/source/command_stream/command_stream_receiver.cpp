@@ -323,6 +323,10 @@ void CommandStreamReceiver::releasePreallocationRequest() {
     requestedPreallocationsAmount -= preallocationsPerQueue;
 }
 
+uint8_t CommandStreamReceiver::getUmdPowerHintValue() const {
+    return this->osContext ? this->osContext->getUmdPowerHintValue() : 0u;
+}
+
 bool CommandStreamReceiver::initializeResources(bool allocateInterrupt) {
     if (!resourcesInitialized) {
         auto lock = obtainUniqueOwnership();

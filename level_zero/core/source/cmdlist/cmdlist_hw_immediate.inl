@@ -275,36 +275,36 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
     auto csr = getCsr(false);
 
     NEO::DispatchFlags dispatchFlags(
-        nullptr,                                                     // barrierTimestampPacketNodes
-        {},                                                          // pipelineSelectArgs
-        nullptr,                                                     // flushStampReference
-        NEO::QueueThrottle::MEDIUM,                                  // throttle
-        this->getCommandListPreemptionMode(),                        // preemptionMode
-        GrfConfig::notApplicable,                                    // numGrfRequired
-        NEO::L3CachingSettings::l3CacheOn,                           // l3CacheSettings
-        NEO::ThreadArbitrationPolicy::NotPresent,                    // threadArbitrationPolicy
-        NEO::AdditionalKernelExecInfo::notApplicable,                // additionalKernelExecInfo
-        NEO::KernelExecutionType::notApplicable,                     // kernelExecutionType
-        NEO::MemoryCompressionState::notApplicable,                  // memoryCompressionState
-        NEO::QueueSliceCount::defaultSliceCount,                     // sliceCount
-        this->isSyncModeQueue,                                       // blocking
-        this->isSyncModeQueue,                                       // dcFlush
-        this->getCommandListSLMEnable(),                             // useSLM
-        this->isSyncModeQueue,                                       // guardCommandBufferWithPipeControl
-        false,                                                       // gsba32BitRequired
-        false,                                                       // lowPriority
-        true,                                                        // implicitFlush
-        csr->isNTo1SubmissionModelEnabled(),                         // outOfOrderExecutionAllowed
-        false,                                                       // epilogueRequired
-        false,                                                       // usePerDssBackedBuffer
-        this->device->getNEODevice()->getNumGenericSubDevices() > 1, // areMultipleSubDevicesInContext
-        false,                                                       // memoryMigrationRequired
-        false,                                                       // textureCacheFlush
-        hasStallingCmds,                                             // hasStallingCmds
-        hasRelaxedOrderingDependencies,                              // hasRelaxedOrderingDependencies
-        false,                                                       // stateCacheInvalidation
-        false,                                                       // isStallingCommandsOnNextFlushRequired
-        false                                                        // isDcFlushRequiredOnStallingCommandsOnNextFlush
+        nullptr,                                                          // barrierTimestampPacketNodes
+        {},                                                               // pipelineSelectArgs
+        nullptr,                                                          // flushStampReference
+        NEO::getThrottleFromPowerSavingUint(csr->getUmdPowerHintValue()), // throttle
+        this->getCommandListPreemptionMode(),                             // preemptionMode
+        GrfConfig::notApplicable,                                         // numGrfRequired
+        NEO::L3CachingSettings::l3CacheOn,                                // l3CacheSettings
+        NEO::ThreadArbitrationPolicy::NotPresent,                         // threadArbitrationPolicy
+        NEO::AdditionalKernelExecInfo::notApplicable,                     // additionalKernelExecInfo
+        NEO::KernelExecutionType::notApplicable,                          // kernelExecutionType
+        NEO::MemoryCompressionState::notApplicable,                       // memoryCompressionState
+        NEO::QueueSliceCount::defaultSliceCount,                          // sliceCount
+        this->isSyncModeQueue,                                            // blocking
+        this->isSyncModeQueue,                                            // dcFlush
+        this->getCommandListSLMEnable(),                                  // useSLM
+        this->isSyncModeQueue,                                            // guardCommandBufferWithPipeControl
+        false,                                                            // gsba32BitRequired
+        false,                                                            // lowPriority
+        true,                                                             // implicitFlush
+        csr->isNTo1SubmissionModelEnabled(),                              // outOfOrderExecutionAllowed
+        false,                                                            // epilogueRequired
+        false,                                                            // usePerDssBackedBuffer
+        this->device->getNEODevice()->getNumGenericSubDevices() > 1,      // areMultipleSubDevicesInContext
+        false,                                                            // memoryMigrationRequired
+        false,                                                            // textureCacheFlush
+        hasStallingCmds,                                                  // hasStallingCmds
+        hasRelaxedOrderingDependencies,                                   // hasRelaxedOrderingDependencies
+        false,                                                            // stateCacheInvalidation
+        false,                                                            // isStallingCommandsOnNextFlushRequired
+        false                                                             // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
 
     auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject));

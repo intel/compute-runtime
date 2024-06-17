@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,4 +14,6 @@ enum QueueThrottle : uint32_t {
     MEDIUM,
     HIGH
 };
+
+QueueThrottle getThrottleFromPowerSavingUint(uint8_t value);
 } // namespace NEO
