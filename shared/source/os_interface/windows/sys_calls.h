@@ -49,6 +49,8 @@ DWORD setFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveH
 void setProcessPowerThrottlingState(ProcessPowerThrottlingState state);
 void setThreadPriority(ThreadPriority priority);
 void coTaskMemFree(LPVOID pv);
+MMRESULT timeBeginPeriod(UINT period);
+MMRESULT timeEndPeriod(UINT period);
 
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
 LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);

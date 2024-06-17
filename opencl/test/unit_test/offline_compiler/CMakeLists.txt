@@ -133,7 +133,7 @@ target_compile_definitions(ocloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_
 target_link_libraries(ocloc_tests gmock-gtest)
 
 if(WIN32)
-  target_link_libraries(ocloc_tests dbghelp)
+  target_link_libraries(ocloc_tests dbghelp winmm)
 endif()
 
 if(UNIX)

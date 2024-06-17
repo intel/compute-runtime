@@ -357,7 +357,7 @@ target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${CLOC_LIB_LIB_FLAGS_DEFINIT
 target_compile_definitions(${OCLOC_NAME}_lib PUBLIC ${NEO__IGC_COMPILE_DEFINITIONS})
 
 if(WIN32)
-  target_link_libraries(${OCLOC_NAME}_lib dbghelp)
+  target_link_libraries(${OCLOC_NAME}_lib dbghelp winmm)
 endif()
 
 if(UNIX)

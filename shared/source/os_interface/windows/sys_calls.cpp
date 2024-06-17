@@ -151,6 +151,14 @@ void setThreadPriority(ThreadPriority priority) {
     }
 }
 
+MMRESULT timeBeginPeriod(UINT period) {
+    return ::timeBeginPeriod(period);
+}
+
+MMRESULT timeEndPeriod(UINT period) {
+    return ::timeEndPeriod(period);
+}
+
 LSTATUS regOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
     return RegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
 }
