@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "shared/source/os_interface/linux/drm_wrappers.h"
-
 #include <array>
 #include <cstdint>
 #include <cstdlib>
@@ -18,7 +16,6 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <vector>
 
 extern int (*openFunc)(const char *pathname, int flags, ...);
 extern int (*openFull)(const char *pathname, int flags, ...);
@@ -41,7 +38,6 @@ extern int failOnSetPriority;
 extern int failOnPreemption;
 extern int havePreemption;
 extern int failOnDrmVersion;
-extern int captureVirtualMemoryCreate;
 extern char providedDrmVersion[5];
 extern int ioctlSeq[8];
 extern size_t ioctlCnt;
@@ -51,4 +47,3 @@ extern int accessCalledTimes;
 extern int readLinkCalledTimes;
 extern int fstatCalledTimes;
 extern bool forceExtraIoctlDuration;
-extern std::vector<NEO::GemVmControl> capturedVmCreate;

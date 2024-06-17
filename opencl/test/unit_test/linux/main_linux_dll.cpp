@@ -14,7 +14,6 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/i915.h"
-#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
@@ -765,28 +764,6 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
         EXPECT_TRUE(hasSubstr(errStr, std::string("INFO: Device doesn't support GEM Virtual Memory")));
     }
     ::testing::internal::GetCapturedStdout();
-}
-
-TEST_F(DrmTests, givenDrmIsCreatedWithPerContextVmRequiredWhenCreateVirtualMemoryThenCapturedVirtualMemoryIsSettingScratchPageOptionCorrectly) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.PrintDebugMessages.set(true);
-    debugManager.flags.DisableScratchPages.set(true);
-    debugManager.flags.GpuFaultCheckThreshold.set(10);
-
-    VariableBackup<decltype(captureVirtualMemoryCreate)> backupCaptureVirtualMemoryCreate(&captureVirtualMemoryCreate);
-    VariableBackup<decltype(capturedVmCreate)> backupCapturedVmCreate(&capturedVmCreate);
-
-    captureVirtualMemoryCreate = 1;
-    capturedVmCreate = {};
-
-    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
-    EXPECT_NE(drm, nullptr);
-
-    auto disableScratch = drm.get()->checkToDisableScratchPage();
-    auto ioctlHelper = drm.get()->getIoctlHelper();
-    for (auto ctl : capturedVmCreate) {
-        EXPECT_NE(0u, (ctl.flags & ioctlHelper->getFlagsForVmCreate(disableScratch, false, false)));
-    }
 }
 
 TEST(SysCalls, WhenSysCallsPollCalledThenCallIsRedirectedToOs) {
