@@ -500,28 +500,83 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
     }
 };
 
-HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+class ImageCreateExternalMemory : public DeviceFixture, public testing::Test {
+  public:
+    void SetUp() override {
+        DeviceFixture::setUp();
+
+        desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        desc.type = ZE_IMAGE_TYPE_3D;
+        desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+        desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+        desc.width = 11;
+        desc.height = 13;
+        desc.depth = 17;
+
+        desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+        desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+        desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+        desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+    }
+
+    void TearDown() override {
+        DeviceFixture::tearDown();
+    }
 
     ze_image_desc_t desc = {};
-
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    desc.type = ZE_IMAGE_TYPE_3D;
-    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
-    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
-    desc.width = 11;
-    desc.height = 13;
-    desc.depth = 17;
-
-    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
-    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
-    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-
     uint64_t imageHandle = 0x1;
+};
+
+HWTEST2_F(ImageCreateExternalMemory, givenNTHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.handle = &imageHandle;
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    delete driverHandle->svmAllocsManager;
+    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_EQ(imageHW->getAllocation()->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
+
+    imageHW.reset(nullptr);
+}
+
+HWTEST2_F(ImageCreateExternalMemory, givenD3D12HeapHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    delete driverHandle->svmAllocsManager;
+    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_EQ(imageHW->getAllocation()->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
+
+    imageHW.reset(nullptr);
+}
+
+HWTEST2_F(ImageCreateExternalMemory, givenD3D12ResourceHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
     importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
     desc.pNext = &importNTHandle;
 

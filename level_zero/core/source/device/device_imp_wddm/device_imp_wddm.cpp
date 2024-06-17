@@ -30,9 +30,13 @@ uint32_t DeviceImp::queryDeviceNodeMask() {
 
 ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties) {
     pExternalMemoryProperties->imageExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
-    pExternalMemoryProperties->imageImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    pExternalMemoryProperties->imageImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32 |
+                                                  ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP |
+                                                  ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
     pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
-    pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32 |
+                                                             ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP |
+                                                             ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
 
     return ZE_RESULT_SUCCESS;
 }

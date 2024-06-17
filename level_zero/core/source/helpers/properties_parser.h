@@ -102,7 +102,9 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32) {
             lookupTable.isSharedHandle = true;
             const ze_external_memory_import_win32_handle_t *windowsExternalMemoryImportDesc = reinterpret_cast<const ze_external_memory_import_win32_handle_t *>(extendedDesc);
-            if (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32) {
+            if ((windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32) ||
+                (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP) ||
+                (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE)) {
                 lookupTable.sharedHandleType.isSupportedHandle = true;
                 lookupTable.sharedHandleType.isNTHandle = true;
                 lookupTable.sharedHandleType.ntHnadle = windowsExternalMemoryImportDesc->handle;
