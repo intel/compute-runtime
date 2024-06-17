@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,13 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
+
+struct CallbackData {
+    cl_kernel kernel;
+    cl_command_queue queue;
+    bool callbackCalled = false;
+    UserEvent *signalCallbackDoneEvent = nullptr;
+};
 
 class ScenarioTest : public ::testing::Test,
                      public PlatformFixture {
