@@ -33,8 +33,6 @@ TEST(MockOSTime, WhenSleepingThenDeviceAndHostTimerAreIncreased) {
         &deviceTimestamp[0],
         &hostTimestamp[0]);
 
-    std::this_thread::sleep_for(std::chrono::nanoseconds(1000));
-
     mDev->getDeviceAndHostTimer(
         &deviceTimestamp[1],
         &hostTimestamp[1]);
@@ -98,8 +96,6 @@ TEST(MockOSTime, WhenSleepingThenHostTimerIsIncreased) {
 
     mDev->getHostTimer(
         &hostTimestamp[0]);
-
-    std::this_thread::sleep_for(std::chrono::nanoseconds(1000));
 
     mDev->getHostTimer(
         &hostTimestamp[1]);

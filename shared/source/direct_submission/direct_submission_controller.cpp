@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -151,7 +152,7 @@ void DirectSubmissionController::checkNewSubmissions() {
 }
 
 void DirectSubmissionController::sleep() {
-    std::this_thread::sleep_for(std::chrono::microseconds(this->timeout));
+    NEO::sleep(std::chrono::microseconds(this->timeout));
 }
 
 SteadyClock::time_point DirectSubmissionController::getCpuTimestamp() {
