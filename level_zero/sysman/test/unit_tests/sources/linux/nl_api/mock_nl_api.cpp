@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api_prelim.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api.h"
 
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
 

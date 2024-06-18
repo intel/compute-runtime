@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/source/api/fabric_port/linux/sysman_fabric_device_access_imp.h"
-#include "level_zero/sysman/source/api/fabric_port/linux/sysman_os_fabric_port_imp_prelim.h"
+#include "level_zero/sysman/source/api/fabric_port/linux/sysman_os_fabric_port_imp.h"
 #include "level_zero/sysman/source/api/fabric_port/sysman_fabric_port_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/fabric_port/linux/mock_fabric_device.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
-#include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_iaf_nl_api_prelim.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_iaf_nl_api.h"
 
 #include "gtest/gtest.h"
 

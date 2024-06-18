@@ -9,7 +9,7 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_iaf_nl_api.h"
-#include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api_prelim.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api.h"
 
 #include "gtest/gtest.h"
 

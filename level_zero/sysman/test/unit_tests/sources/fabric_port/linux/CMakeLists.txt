@@ -1,24 +1,14 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-set(L0_TESTS_SYSMAN_FABRICPORT_LINUX
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-)
-
-if(NEO_ENABLE_i915_PRELIM_DETECTION)
-  if(LIBGENL_FOUND)
-    list(APPEND L0_TESTS_SYSMAN_FABRICPORT_LINUX
-         ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_fabric_device_prelim.cpp
-         ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_fabric_port_prelim.cpp
-    )
-  endif()
-else()
-  list(APPEND L0_TESTS_SYSMAN_FABRICPORT_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_fabric_port.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_fabric_device.h
+if(LIBGENL_FOUND)
+  set(L0_TESTS_SYSMAN_FABRICPORT_LINUX
+      ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_fabric_device.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_fabric_port.cpp
   )
 endif()
 
