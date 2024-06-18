@@ -1229,7 +1229,7 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEv
 
     bool dcFlushRequired = immCmdList->getDcFlushRequired(true);
 
-    NEO::MockGraphicsAllocation mockAllocation(0, NEO::AllocationType::internalHostMemory,
+    NEO::MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                                reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
@@ -1397,7 +1397,7 @@ HWTEST2_F(InOrderCmdListTests, givenNonInOrderCmdListWhenPassingCounterBasedEven
     auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    NEO::MockGraphicsAllocation mockAllocation(0, NEO::AllocationType::internalHostMemory,
+    NEO::MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                                reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 

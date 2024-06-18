@@ -58,7 +58,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenOffsetWhenProgrammingStatePre
     constexpr uint64_t gpuVa = 0x100000;
     constexpr uint32_t gpuVaOffset = 0x10000;
 
-    const GraphicsAllocation allocation(0, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    const GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
 
     memset(buffer, 0, sizeof(buffer));
     LinearStream linearStream(buffer, sizeof(buffer));
@@ -89,7 +89,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugVariableSetwhenProgramin
     constexpr uint32_t mocsIndexForL3 = (2 << 1);
     constexpr size_t numCachelines = 3;
 
-    const GraphicsAllocation allocation(0, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+    const GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
 
     static constexpr std::array<uint32_t, 7> expectedSizes = {{
         MemoryConstants::cacheLineSize - 1,
@@ -151,7 +151,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenIsaAllocationWhenProgrammingP
         memset(buffer, 0, sizeof(STATE_PREFETCH));
         LinearStream linearStream(buffer, sizeof(buffer));
 
-        const GraphicsAllocation allocation(0, isaType,
+        const GraphicsAllocation allocation(0, 1u /*num gmms*/, isaType,
                                             nullptr, 1234, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
 
         EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
@@ -175,7 +175,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgramPrefet
 
     for (auto &isaType : isaTypes) {
         memset(buffer, 0, sizeof(STATE_PREFETCH));
-        const GraphicsAllocation allocation(0, isaType,
+        const GraphicsAllocation allocation(0, 1u /*num gmms*/, isaType,
                                             nullptr, 1234, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
 
         LinearStream linearStream(buffer, sizeof(buffer));
@@ -203,7 +203,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgrammingPr
     auto &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.platform.usRevId = 0b0010'1000; // [3:5] - BaseDie != A0
 
-    const GraphicsAllocation allocation(0, AllocationType::buffer,
+    const GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer,
                                         nullptr, 1234, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
     uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
 

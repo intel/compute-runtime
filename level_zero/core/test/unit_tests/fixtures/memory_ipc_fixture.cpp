@@ -330,6 +330,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::allocateGraphicsMemoryWithPro
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
+                                                              1u /*num gmms*/,
                                                               NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
@@ -350,6 +351,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromS
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
+                                                              1u /*num gmms*/,
                                                               NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
@@ -369,6 +371,7 @@ NEO::GraphicsAllocation *MemoryManagerOpenIpcMock::createGraphicsAllocationFromM
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(properties.rootDeviceIndex,
+                                                              1u /*num gmms*/,
                                                               NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
@@ -429,6 +432,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::allocateGraphicsMe
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
+                                                              1u /*num gmms*/,
                                                               NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
@@ -446,6 +450,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::allocateGraphicsMe
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
+                                                              1u /*num gmms*/,
                                                               NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
@@ -466,6 +471,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
+                                                              1u /*num gmms*/,
                                                               NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,
@@ -486,6 +492,7 @@ NEO::GraphicsAllocation *MemoryManagerIpcImplicitScalingMock::createGraphicsAllo
     auto gmmHelper = getGmmHelper(0);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
     auto alloc = new IpcImplicitScalingMockGraphicsAllocation(0u,
+                                                              1u /*num gmms*/,
                                                               NEO::AllocationType::buffer,
                                                               ptr,
                                                               0x1000,

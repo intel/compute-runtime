@@ -12,6 +12,7 @@ namespace ult {
 
 Mock<Event>::Mock() : WhiteBox<::L0::Event>(0, nullptr),
                       mockAllocation(0,
+                                     1u /*num gmms*/,
                                      NEO::AllocationType::internalHostMemory,
                                      &memory,
                                      reinterpret_cast<uint64_t>(&memory),

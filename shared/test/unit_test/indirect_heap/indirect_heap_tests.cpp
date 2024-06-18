@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ struct IndirectHeapTest : public ::testing::Test {
     class MyMockGraphicsAllocation : public GraphicsAllocation {
       public:
         MyMockGraphicsAllocation(void *ptr, size_t size)
-            : GraphicsAllocation(0, AllocationType::unknown, ptr, castToUint64(ptr), 0, size, MemoryPool::system4KBPages, 1) {}
+            : GraphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, ptr, castToUint64(ptr), 0, size, MemoryPool::system4KBPages, 1) {}
     };
 
     uint8_t buffer[256];

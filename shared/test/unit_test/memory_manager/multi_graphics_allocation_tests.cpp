@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ using namespace NEO;
 
 TEST(MultiGraphicsAllocationTest, whenCreatingMultiGraphicsAllocationThenTheAllocationIsObtainableAsADefault) {
     GraphicsAllocation graphicsAllocation(1, // rootDeviceIndex
+                                          1u /*num gmms*/,
                                           AllocationType::buffer,
                                           nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
 
@@ -36,9 +37,11 @@ TEST(MultiGraphicsAllocationTest, whenCreatingMultiGraphicsAllocationThenTheAllo
 
 TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenAddingMultipleGraphicsAllocationsThenTheyAreObtainableByRootDeviceIndex) {
     GraphicsAllocation graphicsAllocation0(0, // rootDeviceIndex
+                                           1u /*num gmms*/,
                                            AllocationType::buffer,
                                            nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
     GraphicsAllocation graphicsAllocation1(1, // rootDeviceIndex
+                                           1u /*num gmms*/,
                                            AllocationType::buffer,
                                            nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
 
@@ -55,6 +58,7 @@ TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenAddingMultiple
 TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenGettingAllocationTypeThenReturnAllocationTypeFromDefaultAllocation) {
     auto expectedAllocationType = AllocationType::buffer;
     GraphicsAllocation graphicsAllocation(1, // rootDeviceIndex
+                                          1u /*num gmms*/,
                                           expectedAllocationType,
                                           nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
 
@@ -68,6 +72,7 @@ TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenGettingAllocat
 TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenGettingCoherencyStatusThenReturnCoherencyStatusFromDefaultAllocation) {
     auto expectedAllocationType = AllocationType::buffer;
     GraphicsAllocation graphicsAllocation(1, // rootDeviceIndex
+                                          1u /*num gmms*/,
                                           expectedAllocationType,
                                           nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
 
@@ -88,7 +93,7 @@ TEST(MultiGraphicsAllocationTest, WhenCreatingMultiGraphicsAllocationWithoutGrap
 
 TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenRemovingGraphicsAllocationThenTheAllocationIsNoLongerAvailable) {
     uint32_t rootDeviceIndex = 1u;
-    GraphicsAllocation graphicsAllocation(rootDeviceIndex,
+    GraphicsAllocation graphicsAllocation(rootDeviceIndex, 1u /*num gmms*/,
                                           AllocationType::buffer,
                                           nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
 

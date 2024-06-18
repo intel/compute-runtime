@@ -223,7 +223,7 @@ TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThenRequestedNum
       public:
         using MockMemoryManager::MockMemoryManager;
         GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override {
-            return new MemoryAllocation(0, TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>::getAllocationType(), nullptr, nullptr, 0, MemoryConstants::pageSize,
+            return new MemoryAllocation(0, 1u /*num gmms*/, TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>::getAllocationType(), nullptr, nullptr, 0, MemoryConstants::pageSize,
                                         1, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
         }
     };

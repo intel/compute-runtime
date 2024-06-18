@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ MockCommandList::MockCommandList(Device *device) : WhiteBox<::L0::CommandListImp
     size_t batchBufferSize = 65536u;
     batchBuffer = new uint8_t[batchBufferSize];
     mockAllocation = new NEO::GraphicsAllocation(0,
+                                                 1u /*num gmms*/,
                                                  NEO::AllocationType::internalHostMemory,
                                                  &batchBuffer,
                                                  reinterpret_cast<uint64_t>(&batchBuffer),

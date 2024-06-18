@@ -35,6 +35,7 @@ ModuleImmutableDataFixture::MockImmutableData::MockImmutableData(uint32_t perHwT
 
     auto ptr = reinterpret_cast<void *>(0x1234);
     isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
+                                                                1u /*num gmms*/,
                                                                 NEO::AllocationType::kernelIsa,
                                                                 ptr,
                                                                 0x1000,
@@ -229,6 +230,7 @@ ModuleWithZebinFixture::MockImmutableData::MockImmutableData(L0::Device *device)
     this->device = device;
     auto ptr = reinterpret_cast<void *>(0x1234);
     isaGraphicsAllocation.reset(new NEO::MockGraphicsAllocation(0,
+                                                                1u /*num gmms*/,
                                                                 NEO::AllocationType::kernelIsa,
                                                                 ptr,
                                                                 0x1000,
@@ -250,6 +252,7 @@ void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {
     auto ptr = reinterpret_cast<void *>(0x1234);
     auto canonizedGpuAddress = castToUint64(ptr);
     translationUnit->globalVarBuffer = new NEO::MockGraphicsAllocation(0,
+                                                                       1u /*num gmms*/,
                                                                        NEO::AllocationType::globalSurface,
                                                                        ptr,
                                                                        0x1000,
@@ -258,6 +261,7 @@ void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {
                                                                        MemoryManager::maxOsContextCount,
                                                                        canonizedGpuAddress);
     translationUnit->globalConstBuffer = new NEO::MockGraphicsAllocation(0,
+                                                                         1u /*num gmms*/,
                                                                          NEO::AllocationType::globalSurface,
                                                                          ptr,
                                                                          0x1000,

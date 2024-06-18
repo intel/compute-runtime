@@ -115,6 +115,7 @@ class MockEvent : public ::L0::Event {
 
     MockEvent() : Event(0, nullptr) {
         mockAllocation.reset(new NEO::MockGraphicsAllocation(0,
+                                                             1u /*num gmms*/,
                                                              NEO::AllocationType::internalHostMemory,
                                                              reinterpret_cast<void *>(0x1234),
                                                              0x1000,

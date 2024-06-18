@@ -3189,7 +3189,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuV
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
-    WddmAllocation allocation(0, AllocationType::buffer, ptr, canonizedAddress, size, nullptr, MemoryPool::memoryNull, 0u, 1u);
+    WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, ptr, canonizedAddress, size, nullptr, MemoryPool::memoryNull, 0u, 1u);
     allocation.setDefaultGmm(gmm.get());
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_FALSE(ret);
@@ -3210,7 +3210,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
-    WddmAllocation allocation(0, AllocationType::buffer, ptr, canonizedAddress, size, nullptr, MemoryPool::memoryNull, 0u, 1u);
+    WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, ptr, canonizedAddress, size, nullptr, MemoryPool::memoryNull, 0u, 1u);
     allocation.setDefaultGmm(gmm.get());
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_TRUE(ret);
@@ -3232,7 +3232,7 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(ptr)));
-    WddmAllocation allocation(0, AllocationType::buffer, ptr, canonizedAddress, size, nullptr, MemoryPool::memoryNull, 0u, 1u);
+    WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, ptr, canonizedAddress, size, nullptr, MemoryPool::memoryNull, 0u, 1u);
     allocation.setDefaultGmm(gmm.get());
     bool ret = memoryManager->createWddmAllocation(&allocation, allocation.getAlignedCpuPtr());
     EXPECT_FALSE(ret);
@@ -3456,7 +3456,7 @@ TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledW
     MockWddmMemoryManager memoryManager(executionEnvironment);
 
     auto ptr = reinterpret_cast<void *>(0x1234);
-    WddmAllocation allocation{0, AllocationType::commandBuffer, ptr, castToUint64(ptr), 0, nullptr, MemoryPool::system64KBPages, 0u, 1u};
+    WddmAllocation allocation{0, 1u /*num gmms*/, AllocationType::commandBuffer, ptr, castToUint64(ptr), 0, nullptr, MemoryPool::system64KBPages, 0u, 1u};
     allocation.getHandleToModify(0u) = 1;
 
     EXPECT_TRUE(memoryManager.validateAllocationMock(&allocation));
@@ -4275,15 +4275,15 @@ TEST(WddmMemoryManagerTest3, givenRequestedContextIdTooLargeWhenGettingTrimCandi
 }
 
 TEST(WddmMemoryManagerTest3, givenAllocationTypeWhenPassedToWddmAllocationConstructorThenAllocationTypeIsStored) {
-    WddmAllocation allocation{0, AllocationType::commandBuffer, nullptr, 0, 0, nullptr, MemoryPool::memoryNull, 0u, 1u};
+    WddmAllocation allocation{0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, nullptr, MemoryPool::memoryNull, 0u, 1u};
     EXPECT_EQ(AllocationType::commandBuffer, allocation.getAllocationType());
 }
 
 TEST(WddmMemoryManagerTest3, givenMemoryPoolWhenPassedToWddmAllocationConstructorThenMemoryPoolIsStored) {
-    WddmAllocation allocation{0, AllocationType::commandBuffer, nullptr, 0, 0, nullptr, MemoryPool::system64KBPages, 0u, 1u};
+    WddmAllocation allocation{0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, nullptr, MemoryPool::system64KBPages, 0u, 1u};
     EXPECT_EQ(MemoryPool::system64KBPages, allocation.getMemoryPool());
 
-    WddmAllocation allocation2{0, AllocationType::commandBuffer, nullptr, 0, 0, 0u, MemoryPool::systemCpuInaccessible, 0u, 1u};
+    WddmAllocation allocation2{0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, 0u, MemoryPool::systemCpuInaccessible, 0u, 1u};
     EXPECT_EQ(MemoryPool::systemCpuInaccessible, allocation2.getMemoryPool());
 }
 

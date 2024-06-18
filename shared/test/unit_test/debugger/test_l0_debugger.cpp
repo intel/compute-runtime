@@ -170,7 +170,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWithoutMemoryOperationsHandlerWhenNotifyin
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
 
     StackVec<NEO::GraphicsAllocation *, 32> allocs;
-    NEO::GraphicsAllocation alloc(0, NEO::AllocationType::internalHostMemory,
+    NEO::GraphicsAllocation alloc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     allocs.push_back(&alloc);

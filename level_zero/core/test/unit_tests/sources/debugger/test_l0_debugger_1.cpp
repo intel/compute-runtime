@@ -571,10 +571,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandList
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::internalHostMemory,
+    NEO::GraphicsAllocation srcPtr(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
                                    MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::internalHostMemory,
+    NEO::GraphicsAllocation dstPtr(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
                                    MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
@@ -594,10 +594,10 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandLis
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, true, NEO::EngineGroupType::renderCompute, returnValue);
     ASSERT_NE(nullptr, commandList);
 
-    NEO::GraphicsAllocation srcPtr(0, NEO::AllocationType::internalHostMemory,
+    NEO::GraphicsAllocation srcPtr(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x1234), size, 0, sizeof(uint32_t),
                                    MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    NEO::GraphicsAllocation dstPtr(0, NEO::AllocationType::internalHostMemory,
+    NEO::GraphicsAllocation dstPtr(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                    reinterpret_cast<void *>(0x2345), size, 0, sizeof(uint32_t),
                                    MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 

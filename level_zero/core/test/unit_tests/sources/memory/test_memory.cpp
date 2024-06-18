@@ -3192,7 +3192,7 @@ TEST_F(MemoryExportImportTest,
        givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndNoFdHandleThenErrorIsReturned) {
     class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
       public:
-        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
         int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
             return -1;
@@ -3215,7 +3215,7 @@ TEST_F(MemoryExportImportTest,
        givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndNoFdHandleForWin32FormatThenErrorIsReturned) {
     class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
       public:
-        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+        ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
         int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
             return -1;
@@ -5853,7 +5853,7 @@ TEST_F(MemAllocMultiSubDeviceTestsEnabledImplicitScaling, GivenImplicitScalingDi
 
 class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
   public:
-    ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+    ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu) {}
 
     int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
         return -1;

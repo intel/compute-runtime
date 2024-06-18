@@ -288,7 +288,7 @@ HWTEST2_F(XeLpgProductHelperTests, whenCheckFp64SupportThenReturnTrue, IsXeLpg) 
 }
 
 HWTEST2_F(XeLpgProductHelperTests, givenAllocationThenCheckResourceCompatibilityReturnsTrue, IsXeLpg) {
-    auto allocation = std::make_unique<GraphicsAllocation>(0, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, 3u, 0llu);
+    auto allocation = std::make_unique<GraphicsAllocation>(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, 0u, 0, MemoryPool::memoryNull, 3u, 0llu);
     EXPECT_TRUE(gfxCoreHelper->checkResourceCompatibility(*allocation));
 }
 

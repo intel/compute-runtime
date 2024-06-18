@@ -595,7 +595,7 @@ TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocation
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
-    MemoryAllocation allocation(mockRootDeviceIndex, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
+    MemoryAllocation allocation(mockRootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
                                 0x1000, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
     EXPECT_EQ(MemoryPool::localMemory, allocation.getMemoryPool());
 }
@@ -604,7 +604,7 @@ TEST(MemoryAllocationTest, givenAubDumpForceAllToLocalMemoryWhenMemoryAllocation
     DebugManagerStateRestore debugRestorer;
     debugManager.flags.AUBDumpForceAllToLocalMemory.set(true);
 
-    MemoryAllocation allocation(mockRootDeviceIndex, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
+    MemoryAllocation allocation(mockRootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000,
                                 0x1000, 0, MemoryPool::system4KBPages, false, false, MemoryManager::maxOsContextCount);
     allocation.overrideMemoryPool(MemoryPool::system64KBPages);
     EXPECT_EQ(MemoryPool::localMemory, allocation.getMemoryPool());

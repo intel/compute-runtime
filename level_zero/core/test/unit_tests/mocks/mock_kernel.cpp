@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
     this->kernelImmData = &immutableData;
 
     auto allocation = new NEO::GraphicsAllocation(0,
+                                                  1u /*num gmms*/,
                                                   NEO::AllocationType::kernelIsa,
                                                   nullptr,
                                                   0,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,7 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
             buffer = alignedMalloc(isaSize, 64);
         }
         auto allocation = new NEO::GraphicsAllocation(0,
+                                                      1u /*num gmms*/,
                                                       NEO::AllocationType::internalHostMemory,
                                                       buffer,
                                                       reinterpret_cast<uint64_t>(buffer),

@@ -875,12 +875,12 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
     NEO::HeapContainer heapContainer;
 
     void *surfaceHeap = alignedMalloc(0x1000, 0x1000);
-    NEO::GraphicsAllocation graphicsAllocationHeap(0, NEO::AllocationType::buffer, surfaceHeap, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocationHeap(0, 1u /*num gmms*/, NEO::AllocationType::buffer, surfaceHeap, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
     heapContainer.push_back(&graphicsAllocationHeap);
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
 
-    NEO::GraphicsAllocation graphicsAllocation(1u, NEO::AllocationType::buffer, nullptr, 0u, 0u, 0u, MemoryPool::system4KBPages, 0u);
+    NEO::GraphicsAllocation graphicsAllocation(1u, 1u /*num gmms*/, NEO::AllocationType::buffer, nullptr, 0u, 0u, 0u, MemoryPool::system4KBPages, 0u);
 
     auto scratch = static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get());
     scratch->scratchAllocation = &graphicsAllocation;
@@ -934,7 +934,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
 
-    NEO::GraphicsAllocation graphicsAllocation(1u, NEO::AllocationType::buffer, nullptr, 0u, 0u, 0u, MemoryPool::system4KBPages, 0u);
+    NEO::GraphicsAllocation graphicsAllocation(1u, 1u /*num gmms*/, NEO::AllocationType::buffer, nullptr, 0u, 0u, 0u, MemoryPool::system4KBPages, 0u);
 
     auto scratch = static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get());
     scratch->scratchSlot0Allocation = &graphicsAllocation;

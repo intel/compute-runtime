@@ -43,6 +43,7 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
         auto gmmHelper = device->getGmmHelper();
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));
         MockGraphicsAllocation mockAllocation(0,
+                                              1u /*num gmms*/,
                                               AllocationType::internalHostMemory,
                                               ptr,
                                               size,

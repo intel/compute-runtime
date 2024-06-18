@@ -594,7 +594,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocationProvide
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
     length.length = static_cast<uint32_t>(allocSize - 1);
-    GraphicsAllocation allocation(0, AllocationType::unknown, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 0u);
+    GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 0u);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
@@ -636,7 +636,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationC
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(0, AllocationType::buffer, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 0u);
+    GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 0u);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
@@ -673,7 +673,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompressionDis
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(0, AllocationType::buffer, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 1);
+    GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 1);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
@@ -711,7 +711,7 @@ HWTEST_F(GfxCoreHelperTest, givenOverrideMocsIndexForScratchSpaceWhenSurfaceStat
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(0, AllocationType::buffer, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 1);
+    GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 1);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
@@ -746,7 +746,7 @@ HWTEST2_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAllocationC
     void *cpuAddr = reinterpret_cast<void *>(0x4000);
     uint64_t gpuAddr = 0x4000u;
     size_t allocSize = size;
-    GraphicsAllocation allocation(0, AllocationType::buffer, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 1u);
+    GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::memoryNull, 1u);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;

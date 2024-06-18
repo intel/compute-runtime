@@ -81,10 +81,10 @@ HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColorDepthThenAbortIsTh
 HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAddressAreCorectOffseted, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
+    MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, AllocationType::internalHostMemory,
+    MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocationSrc.setGmm(gmm.get(), 0);
@@ -119,10 +119,10 @@ HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAddre
 HWTEST2_F(BlitTests, givenInputAndDefaultSlicePitchWhenAppendBlitCommandsForImagesThenSlicePitchesAreCorrect, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
+    MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, AllocationType::internalHostMemory,
+    MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     auto bltCmd = FamilyType::cmdInitXyCopyBlt;
@@ -183,10 +183,10 @@ HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThe
     myResourecInfo->pitch = 0x100;
     myResourecInfo->flags.Info.TiledY = 1;
     gmm->gmmResourceInfo.reset(myResourecInfo.release());
-    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
+    MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, AllocationType::internalHostMemory,
+    MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocationSrc.setGmm(gmm.get(), 0);
@@ -214,10 +214,10 @@ HWTEST2_F(BlitTests, givenLinearSrcAndDestinationImagesWhenAppendImageCommandsTh
     myResourecInfo->pitch = 0x100;
     myResourecInfo->flags.Info.Linear = 1;
     gmm->gmmResourceInfo.reset(myResourecInfo.release());
-    MockGraphicsAllocation mockAllocationSrc(0, AllocationType::internalHostMemory,
+    MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    MockGraphicsAllocation mockAllocationDst(0, AllocationType::internalHostMemory,
+    MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocationSrc.setGmm(gmm.get(), 0);
