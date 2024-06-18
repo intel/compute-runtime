@@ -161,7 +161,7 @@ bool WddmMock::destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext)
     return success;
 }
 
-bool WddmMock::openSharedHandle(const MemoryManager::ExtendedOsHandleData &osHandleData, WddmAllocation *alloc) {
+bool WddmMock::openSharedHandle(const MemoryManager::OsHandleData &osHandleData, WddmAllocation *alloc) {
     if (failOpenSharedHandle) {
         return false;
     } else {

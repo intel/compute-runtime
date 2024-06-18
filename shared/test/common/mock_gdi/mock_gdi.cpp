@@ -480,7 +480,7 @@ NTSTATUS __stdcall mockD3DKMTOpenResourceFromNtHandle(IN OUT D3DKMT_OPENRESOURCE
 }
 
 NTSTATUS __stdcall mockD3DKMTQueryResourceInfo(IN OUT D3DKMT_QUERYRESOURCEINFO *queryResourceInfo) {
-    if (queryResourceInfo->hDevice != DEVICE_HANDLE || queryResourceInfo->hGlobalShare == INVALID_HANDLE) {
+    if (queryResourceInfo->hDevice != DEVICE_HANDLE || queryResourceInfo->hGlobalShare == INVALID_HANDLE || queryResourceInfo->hGlobalShare == NT_ALLOCATION_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
     queryResourceInfo->TotalPrivateDriverDataSize = totalPrivateSize;

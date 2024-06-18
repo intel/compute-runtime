@@ -89,7 +89,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
                                              AllocationType::sharedImage,
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
-        MemoryManager::ExtendedOsHandleData osHandleData{surfaceInfo->shared_handle};
+        MemoryManager::OsHandleData osHandleData{surfaceInfo->shared_handle};
         alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, allocProperties,
                                                                                       false, false, true, nullptr);
         updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imagePlane, 0u);

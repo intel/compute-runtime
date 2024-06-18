@@ -116,7 +116,7 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithNTHandleWhenPrepareLooku
     EXPECT_TRUE(l0LookupTable.isSharedHandle);
     EXPECT_TRUE(l0LookupTable.sharedHandleType.isSupportedHandle);
     EXPECT_TRUE(l0LookupTable.sharedHandleType.isNTHandle);
-    EXPECT_EQ(l0LookupTable.sharedHandleType.ntHnadle, importNTHandle.handle);
+    EXPECT_EQ(l0LookupTable.sharedHandleType.ntHandle, importNTHandle.handle);
 }
 
 TEST(L0StructuresLookupTableTests, givenL0StructuresWithSupportedExportHandlesWhenPrepareLookupTableThenProperFieldsInLookupTableAreSet) {

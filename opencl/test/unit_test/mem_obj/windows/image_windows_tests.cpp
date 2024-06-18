@@ -14,13 +14,13 @@ using namespace NEO;
 
 struct ImageWindowsTestsMockMemoryManager : MockMemoryManager {
     using MockMemoryManager::MockMemoryManager;
-    GraphicsAllocation *createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) override {
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
 
-        auto graphicsAllocation = createMemoryAllocation(allocType, nullptr, reinterpret_cast<void *>(1), 1,
+        auto graphicsAllocation = createMemoryAllocation(properties.allocationType, nullptr, reinterpret_cast<void *>(1), 1,
                                                          4096u, osHandleData.handle, MemoryPool::systemCpuInaccessible,
-                                                         rootDeviceIndex, false, false, false);
+                                                         properties.rootDeviceIndex, false, false, false);
 
-        graphicsAllocation->setDefaultGmm(new MockGmm(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper()));
+        graphicsAllocation->setDefaultGmm(new MockGmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper()));
         graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo()->OverrideSurfaceType(RESOURCE_BUFFER);
 
         return graphicsAllocation;

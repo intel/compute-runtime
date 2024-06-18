@@ -232,20 +232,6 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(
     }
 }
 
-GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) {
-    if (osHandleData.handle != invalidSharedHandle) {
-        auto graphicsAllocation = createMemoryAllocation(NEO::AllocationType::sharedBuffer, nullptr, reinterpret_cast<void *>(1), 1,
-                                                         ipcAllocationSize, osHandleData.handle, MemoryPool::systemCpuInaccessible, rootDeviceIndex,
-                                                         false, false, false);
-        graphicsAllocation->setSharedHandle(osHandleData.handle);
-        this->capturedSharedHandle = osHandleData.handle;
-        return graphicsAllocation;
-    } else {
-        this->capturedSharedHandle = osHandleData.handle;
-        return nullptr;
-    }
-}
-
 bool MockMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
     copyMemoryToAllocationBanksCalled++;
     copyMemoryToAllocationBanksParamsPassed.push_back({graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, handleMask});

@@ -828,7 +828,7 @@ bool Wddm::verifySharedHandle(D3DKMT_HANDLE osHandle) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::openSharedHandle(const MemoryManager::ExtendedOsHandleData &osHandleData, WddmAllocation *alloc) {
+bool Wddm::openSharedHandle(const MemoryManager::OsHandleData &osHandleData, WddmAllocation *alloc) {
     D3DKMT_QUERYRESOURCEINFO queryResourceInfo = {};
     queryResourceInfo.hDevice = device;
     queryResourceInfo.hGlobalShare = osHandleData.handle;
@@ -878,7 +878,7 @@ bool Wddm::verifyNTHandle(HANDLE handle) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::openNTHandle(const MemoryManager::ExtendedOsHandleData &osHandleData, WddmAllocation *alloc) {
+bool Wddm::openNTHandle(const MemoryManager::OsHandleData &osHandleData, WddmAllocation *alloc) {
     D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE queryResourceInfoFromNtHandle = {};
     queryResourceInfoFromNtHandle.hDevice = device;
     queryResourceInfoFromNtHandle.hNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));

@@ -522,7 +522,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandlesWhenCreateGraphicsAllocation
     AllocationProperties properties(0, false, 4096u, AllocationType::sharedImage, false, {});
 
     for (uint32_t i = 0; i < 3; i++) {
-        WddmMemoryManager::ExtendedOsHandleData osHandleData{ALLOCATION_HANDLE, i};
+        WddmMemoryManager::OsHandleData osHandleData{ALLOCATION_HANDLE, i};
 
         auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
         auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
@@ -970,7 +970,7 @@ NTSTATUS APIENTRY queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {
 }
 
 TEST_F(Wddm20Tests, givenOpenSharedHandleWhenZeroAllocationsThenReturnNull) {
-    MockMemoryManager::ExtendedOsHandleData osHandleData{static_cast<uint64_t>(0ull)};
+    MockMemoryManager::OsHandleData osHandleData{static_cast<uint64_t>(0ull)};
     WddmAllocation *alloc = nullptr;
 
     gdi->queryResourceInfo = reinterpret_cast<PFND3DKMT_QUERYRESOURCEINFO>(queryResourceInfoMock);

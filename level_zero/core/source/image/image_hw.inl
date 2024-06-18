@@ -113,17 +113,18 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
             if (lookupTable.sharedHandleType.isDMABUFHandle) {
+                NEO::MemoryManager::OsHandleData osHandleData{static_cast<NEO::osHandle>(lookupTable.sharedHandleType.fd)};
                 NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
-                NEO::MemoryManager::ExtendedOsHandleData osHandleData{static_cast<NEO::osHandle>(lookupTable.sharedHandleType.fd)};
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
                 device->getNEODevice()->getMemoryManager()->closeSharedHandle(allocation);
             } else if (lookupTable.sharedHandleType.isNTHandle) {
-                auto verifyResult = device->getNEODevice()->getMemoryManager()->verifyHandle(NEO::toOsHandle(lookupTable.sharedHandleType.ntHnadle), device->getNEODevice()->getRootDeviceIndex(), true);
+                auto verifyResult = device->getNEODevice()->getMemoryManager()->verifyHandle(NEO::toOsHandle(lookupTable.sharedHandleType.ntHandle), device->getNEODevice()->getRootDeviceIndex(), true);
                 if (!verifyResult) {
                     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
                 }
-                NEO::MemoryManager::ExtendedOsHandleData osHandleData{lookupTable.sharedHandleType.ntHnadle};
-                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromNTHandle(osHandleData, device->getNEODevice()->getRootDeviceIndex(), NEO::AllocationType::sharedImage);
+                NEO::MemoryManager::OsHandleData osHandleData{lookupTable.sharedHandleType.ntHandle};
+                NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
+                allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
                 allocation->getDefaultGmm()->queryImageParams(imgInfo);
             }
         } else {

@@ -111,7 +111,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
         } else {
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
             *ptr = this->driverHandle->importNTHandle(this->devices.begin()->second,
-                                                      lookupTable.sharedHandleType.ntHnadle,
+                                                      lookupTable.sharedHandleType.ntHandle,
                                                       NEO::AllocationType::bufferHostMemory);
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -239,7 +239,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
         } else {
             UNRECOVERABLE_IF(!lookupTable.sharedHandleType.isNTHandle);
             *ptr = this->driverHandle->importNTHandle(hDevice,
-                                                      lookupTable.sharedHandleType.ntHnadle,
+                                                      lookupTable.sharedHandleType.ntHandle,
                                                       NEO::AllocationType::buffer);
             if (*ptr == nullptr) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;

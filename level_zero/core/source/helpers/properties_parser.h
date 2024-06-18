@@ -63,7 +63,7 @@ struct StructuresLookupTable {
     } imageProperties;
 
     struct SharedHandleType {
-        void *ntHnadle;
+        void *ntHandle;
         int fd;
         bool isSupportedHandle;
         bool isDMABUFHandle;
@@ -107,7 +107,7 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
                 (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE)) {
                 lookupTable.sharedHandleType.isSupportedHandle = true;
                 lookupTable.sharedHandleType.isNTHandle = true;
-                lookupTable.sharedHandleType.ntHnadle = windowsExternalMemoryImportDesc->handle;
+                lookupTable.sharedHandleType.ntHandle = windowsExternalMemoryImportDesc->handle;
             } else {
                 lookupTable.sharedHandleType.isSupportedHandle = false;
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;

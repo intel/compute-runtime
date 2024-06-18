@@ -40,24 +40,17 @@ GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, U
 
 GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, ImageInfo *imgInfo, AllocationType allocationType) {
     auto memoryManager = context->getMemoryManager();
-    switch (description.type) {
-    case UnifiedSharingHandleType::win32Nt: {
-        MemoryManager::OsHandleData osHandleData{description.handle};
-        return memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, context->getDevice(0)->getRootDeviceIndex(), allocationType);
-    }
-    case UnifiedSharingHandleType::linuxFd:
-    case UnifiedSharingHandleType::win32Shared: {
-        const AllocationProperties properties{context->getDevice(0)->getRootDeviceIndex(),
-                                              false, // allocateMemory
-                                              imgInfo,
-                                              allocationType,
-                                              context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
-        MemoryManager::OsHandleData osHandleData{description.handle};
-        return memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-    }
-    default:
+
+    if (description.type != UnifiedSharingHandleType::win32Nt && description.type != UnifiedSharingHandleType::linuxFd && description.type != UnifiedSharingHandleType::win32Shared)
         return nullptr;
-    }
+
+    const AllocationProperties properties{context->getDevice(0)->getRootDeviceIndex(),
+                                          false, // allocateMemory
+                                          imgInfo,
+                                          allocationType,
+                                          context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
+    MemoryManager::OsHandleData osHandleData{description.handle};
+    return memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
 }
 
 template <>

@@ -240,7 +240,6 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     uint32_t numIpcHandles = 0;
     result = context->getIpcMemHandles(ptr, &numIpcHandles, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    this->currMemoryManager->failOnCreateGraphicsAllocationFromNTHandle = false;
     auto usmManager = context->getDriverHandle()->getSvmAllocsManager();
     auto currentAllocationCount = usmManager->allocationsCounter.load();
 
@@ -330,7 +329,6 @@ TEST_F(MemoryExportImportImplicitScalingTest,
     IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(ipcHandle.data);
     ipcData.type = static_cast<uint8_t>(ZE_MEMORY_TYPE_HOST);
     currMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
-    currMemoryManager->failOnCreateGraphicsAllocationFromNTHandle = true;
 
     result = context->openIpcMemHandle(device->toHandle(), ipcHandle, flags, &ipcPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);

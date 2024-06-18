@@ -145,7 +145,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
                                          &imgInfo,
                                          AllocationType::sharedImage,
                                          context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex()));
-    MemoryManager::ExtendedOsHandleData osHandleData{texInfo.globalShareHandle};
+    MemoryManager::OsHandleData osHandleData{texInfo.globalShareHandle};
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, allocProperties, false, false, false, nullptr);
 
     if (alloc == nullptr) {

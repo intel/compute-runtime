@@ -2304,12 +2304,6 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
     memoryManager->freeGraphicsMemory(graphicsAllocation2);
 }
 
-TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
-    TestedDrmMemoryManager::ExtendedOsHandleData osHandleData{1u};
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
-    EXPECT_EQ(nullptr, graphicsAllocation);
-}
-
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledThenReturnPtr) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemSetDomain = 1;

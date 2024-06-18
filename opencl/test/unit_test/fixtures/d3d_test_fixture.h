@@ -59,16 +59,6 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
             gmmOwnershipPassed = true;
             return alloc;
         }
-        GraphicsAllocation *createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) override {
-            if (failAlloc) {
-                return nullptr;
-            }
-            AllocationProperties properties(rootDeviceIndex, true, 0, AllocationType::internalHostMemory, false, false, 0);
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
-            alloc->setDefaultGmm(forceGmm);
-            gmmOwnershipPassed = true;
-            return alloc;
-        }
 
         bool verifyValue = true;
         bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool) override { return verifyValue; }

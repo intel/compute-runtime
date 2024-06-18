@@ -97,18 +97,11 @@ class MemoryManager {
 
     struct OsHandleData {
         osHandle handle;
+        uint32_t arrayIndex;
 
-        OsHandleData(uint64_t handle) : handle(static_cast<osHandle>(handle)){};
-        OsHandleData(void *handle) : handle(toOsHandle(handle)){};
-    };
-
-    struct ExtendedOsHandleData : public OsHandleData {
-        uint32_t arrayIndex = 0;
-
-        ExtendedOsHandleData(uint64_t handle) : OsHandleData(handle){};
-        ExtendedOsHandleData(void *handle) : OsHandleData(handle){};
-        ExtendedOsHandleData(osHandle handle, uint32_t arrayIndex) : OsHandleData(handle), arrayIndex(arrayIndex){};
-        ExtendedOsHandleData(void *handle, uint32_t arrayIndex) : OsHandleData(handle), arrayIndex(arrayIndex){};
+        OsHandleData(uint64_t handle, uint32_t arrayIndex = 0) : handle(static_cast<osHandle>(handle)), arrayIndex(arrayIndex){};
+        OsHandleData(void *handle, uint32_t arrayIndex = 0) : handle(toOsHandle(handle)), arrayIndex(arrayIndex){};
+        OsHandleData(osHandle handle, uint32_t arrayIndex = 0) : handle(handle), arrayIndex(arrayIndex){};
     };
 
     MemoryManager(ExecutionEnvironment &executionEnvironment);
@@ -139,7 +132,6 @@ class MemoryManager {
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) = 0;
     virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation){};
     virtual void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation){};
-    virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(const OsHandleData &osHandleData, uint32_t rootDeviceIndex, AllocationType allocType) = 0;
 
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation);
 

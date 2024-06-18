@@ -1358,14 +1358,6 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     memoryManager.freeGraphicsMemory(sharedAllocation);
 }
 
-TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    OsAgnosticMemoryManager::ExtendedOsHandleData osHandleData{(void *)1};
-    auto graphicsAllocation = memoryManager.createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
-    EXPECT_EQ(nullptr, graphicsAllocation);
-}
-
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenLockUnlockCalledThenReturnCpuPtr) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);

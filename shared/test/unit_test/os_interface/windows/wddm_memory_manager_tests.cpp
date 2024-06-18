@@ -972,7 +972,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSharedHandleWhenCreateGraphicsAllocatio
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationPropertiesWhenCreateAllocationFromHandleIsCalledThenCorrectAllocationTypeIsSet) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    MockMemoryManager::ExtendedOsHandleData osHandleData{1u};
+    MockMemoryManager::OsHandleData osHandleData{1u};
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -2626,7 +2626,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
-TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledThenNonNullGraphicsAllocationsAreReturned) {
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIsCalledThenNonNullGraphicsAllocationsAreReturned) {
     void *pSysMem = reinterpret_cast<void *>(0x1000);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -2637,8 +2637,9 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
     setSizesFcn(gmmPtrArray, 2u, 1024u, 1u);
 
     for (uint32_t i = 0; i < 3; i++) {
-        MockWddmMemoryManager::ExtendedOsHandleData osHandleData{1u, i};
-        auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
+        MockWddmMemoryManager::OsHandleData osHandleData{NT_ALLOCATION_HANDLE, i};
+        AllocationProperties properties(0, false, 0u, AllocationType::sharedImage, false, 0);
+        auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
         auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
         ASSERT_NE(nullptr, gpuAllocation);
         EXPECT_EQ(NT_RESOURCE_HANDLE, wddmAlloc->getResourceHandle());
@@ -2654,7 +2655,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
     }
 }
 
-TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledWithUmKmDataTranslatorEnabledThenNonNullGraphicsAllocationIsReturned) {
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIsCalledWithUmKmDataTranslatorEnabledThenNonNullGraphicsAllocationIsReturned) {
     struct MockUmKmDataTranslator : UmKmDataTranslator {
         using UmKmDataTranslator::isEnabled;
     };
@@ -2676,8 +2677,9 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
     void *gmmPtrArray[]{gmm->gmmResourceInfo.get()};
     setSizesFcn(gmmPtrArray, 1u, 1024u, 1u);
 
-    MockWddmMemoryManager::ExtendedOsHandleData osHandleData{1u};
-    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(osHandleData, 0, AllocationType::sharedImage);
+    MockWddmMemoryManager::OsHandleData osHandleData{NT_ALLOCATION_HANDLE};
+    AllocationProperties properties(0, false, 0u, AllocationType::sharedImage, false, 0);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, false, nullptr);
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(NT_RESOURCE_HANDLE, wddmAlloc->getResourceHandle());
