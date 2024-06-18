@@ -93,7 +93,7 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenSetDebugFlagWhenPreambleCfeStateIsProgr
     DebugManagerStateRestore dbgRestore;
 
     debugManager.flags.CFEFusedEUDispatch.set(expectedValue1);
-    debugManager.flags.CFEOverDispatchControl.set(expectedValue1);
+    debugManager.flags.OverDispatchControl.set(expectedValue1);
     debugManager.flags.CFESingleSliceDispatchCCSMode.set(expectedValue1);
     debugManager.flags.CFELargeGRFThreadAdjustDisable.set(expectedValue1);
     debugManager.flags.CFENumberOfWalkers.set(expectedValue2);

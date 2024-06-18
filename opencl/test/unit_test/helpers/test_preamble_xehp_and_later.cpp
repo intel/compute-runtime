@@ -185,7 +185,7 @@ HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsP
     DebugManagerStateRestore dbgRestore;
 
     debugManager.flags.CFEFusedEUDispatch.set(expectedValue1);
-    debugManager.flags.CFEOverDispatchControl.set(expectedValue1);
+    debugManager.flags.OverDispatchControl.set(expectedValue1);
     debugManager.flags.CFESingleSliceDispatchCCSMode.set(expectedValue1);
     debugManager.flags.CFELargeGRFThreadAdjustDisable.set(expectedValue1);
     debugManager.flags.CFENumberOfWalkers.set(expectedValue2);
