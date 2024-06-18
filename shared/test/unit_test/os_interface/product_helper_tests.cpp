@@ -816,7 +816,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocator
     EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeLpg) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 

@@ -67,10 +67,5 @@ bool ProductHelperHw<gfxProduct>::getUuid(NEO::DriverModel *driverModel, const u
     return true;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
-    return true;
-}
-
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

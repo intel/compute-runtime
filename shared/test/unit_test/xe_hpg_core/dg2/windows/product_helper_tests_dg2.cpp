@@ -13,5 +13,5 @@ using namespace NEO;
 using Dg2ProductHelperWindows = ProductHelperTestWindows;
 
 HWTEST2_F(Dg2ProductHelperWindows, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned, IsDG2) {
-    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
+    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
