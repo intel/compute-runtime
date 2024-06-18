@@ -9,6 +9,9 @@
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/mock_product_helper_hw.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -99,13 +102,9 @@ class AggregatedSmallBuffersKernelTest : public AggregatedSmallBuffersTestTempla
 
 using AggregatedSmallBuffersDefaultTest = AggregatedSmallBuffersTestTemplate<-1>;
 
-HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrMultiDeviceContextWhenCheckIfEnabledThenReturnCorrectValue, IsBeforeXeHpgCore) {
+HWTEST_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrMultiDeviceContextWhenCheckIfEnabledThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
     // Single device context
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
     {
         debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
@@ -120,10 +119,6 @@ HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOr
     }
     // Multi device context
     context->devices.push_back(nullptr);
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
     {
         debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
         EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
@@ -139,44 +134,28 @@ HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOr
     context->devices.pop_back();
 }
 
-HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrMultiDeviceContextWhenCheckIfEnabledThenReturnCorrectValue, IsXeHpcCore) {
-    DebugManagerStateRestore restore;
-    // Single device context
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
-        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
-        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    // Multi device context
-    context->devices.push_back(nullptr);
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(-1);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(1);
-        EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    {
-        debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(2);
-        EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
-    }
-    context->devices.pop_back();
+HWTEST2_F(AggregatedSmallBuffersDefaultTest, givenSupportsOclBufferPoolCapabilityWhenCheckIfEnabledThenReturnCorrectValue, MatchAny) {
+    auto &rootDeviceEnvironment = *device->getExecutionEnvironment()->rootDeviceEnvironments[1];
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(rootDeviceEnvironment);
+
+    rootDeviceEnvironment.ailConfiguration.reset(new MockAILConfiguration());
+    auto mockAIL = static_cast<MockAILConfiguration *>(rootDeviceEnvironment.ailConfiguration.get());
+
+    raii.mockProductHelper->isBufferPoolAllocatorSupportedValue = true;
+    mockAIL->isBufferPoolEnabledReturn = true;
+    EXPECT_TRUE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+
+    raii.mockProductHelper->isBufferPoolAllocatorSupportedValue = true;
+    mockAIL->isBufferPoolEnabledReturn = false;
+    EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+
+    raii.mockProductHelper->isBufferPoolAllocatorSupportedValue = false;
+    mockAIL->isBufferPoolEnabledReturn = true;
+    EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
+
+    raii.mockProductHelper->isBufferPoolAllocatorSupportedValue = false;
+    mockAIL->isBufferPoolEnabledReturn = false;
+    EXPECT_FALSE(context->getBufferPoolAllocator().isAggregatedSmallBuffersEnabled(context.get()));
 }
 
 using AggregatedSmallBuffersDisabledTest = AggregatedSmallBuffersTestTemplate<0>;

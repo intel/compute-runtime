@@ -46,6 +46,11 @@ inline bool AILConfigurationHw<product>::isContextSyncFlagRequired() {
 }
 
 template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::isBufferPoolEnabled() {
+    return true;
+}
+
+template <PRODUCT_FAMILY product>
 inline bool AILConfigurationHw<product>::useLegacyValidationLogic() {
     return false;
 }

@@ -30,6 +30,8 @@ const std::set<std::string_view> applicationsForceRcsDg2 = {};
 
 const std::set<std::string_view> applicationsContextSyncFlag = {};
 
+const std::set<std::string_view> applicationsBufferPoolDisabledDG2 = {};
+
 AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
 
 void AILConfiguration::apply(RuntimeCapabilityTable &runtimeCapabilityTable) {

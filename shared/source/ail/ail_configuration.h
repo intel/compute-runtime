@@ -68,6 +68,8 @@ class AILConfiguration {
 
     virtual bool isContextSyncFlagRequired() = 0;
 
+    virtual bool isBufferPoolEnabled() = 0;
+
     virtual ~AILConfiguration() = default;
 
     virtual bool useLegacyValidationLogic() = 0;
@@ -84,6 +86,7 @@ class AILConfiguration {
 
 extern const std::set<std::string_view> applicationsContextSyncFlag;
 extern const std::set<std::string_view> applicationsForceRcsDg2;
+extern const std::set<std::string_view> applicationsBufferPoolDisabledDG2;
 
 template <PRODUCT_FAMILY product>
 class AILConfigurationHw : public AILConfiguration {
@@ -98,6 +101,7 @@ class AILConfigurationHw : public AILConfiguration {
     void modifyKernelIfRequired(std::string &kernel) override;
     bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override;
     bool isContextSyncFlagRequired() override;
+    bool isBufferPoolEnabled() override;
     bool useLegacyValidationLogic() override;
     bool forceRcs() override;
 

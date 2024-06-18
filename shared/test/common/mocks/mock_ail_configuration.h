@@ -27,6 +27,11 @@ class MockAILConfiguration : public AILConfiguration {
         return contextSyncFlagReturn;
     }
 
+    bool isBufferPoolEnabledReturn = true;
+    bool isBufferPoolEnabled() override {
+        return isBufferPoolEnabledReturn;
+    }
+
     bool fallbackToLegacyValidationLogic = false;
     bool useLegacyValidationLogic() override {
         return fallbackToLegacyValidationLogic;

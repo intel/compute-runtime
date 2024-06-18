@@ -7,11 +7,13 @@
 
 #include "opencl/source/context/context.h"
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
@@ -539,8 +541,9 @@ bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *cont
     bool isSupportedForSingleDeviceContexts = false;
     bool isSupportedForAllContexts = false;
     if (context->getNumDevices() > 0) {
+        auto ailConfiguration = context->getDevices()[0]->getRootDeviceEnvironment().getAILConfigurationHelper();
         auto &productHelper = context->getDevices()[0]->getProductHelper();
-        isSupportedForSingleDeviceContexts = productHelper.isBufferPoolAllocatorSupported();
+        isSupportedForSingleDeviceContexts = productHelper.isBufferPoolAllocatorSupported() && (ailConfiguration ? ailConfiguration->isBufferPoolEnabled() : true);
     }
 
     if (debugManager.flags.ExperimentalSmallBufferPoolAllocator.get() != -1) {

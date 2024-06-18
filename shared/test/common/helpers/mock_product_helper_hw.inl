@@ -76,6 +76,11 @@ bool MockProductHelperHw<gfxProduct>::isUnlockingLockedPtrNecessary(const Hardwa
 }
 
 template <>
+bool MockProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return this->isBufferPoolAllocatorSupportedValue;
+}
+
+template <>
 std::vector<uint32_t> MockProductHelperHw<gfxProduct>::getSupportedNumGrfs(const ReleaseHelper *releaseHelper) const {
     if (releaseHelper) {
         return releaseHelper->getSupportedNumGrfs();
