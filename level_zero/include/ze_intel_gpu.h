@@ -177,6 +177,14 @@ typedef struct _zex_intel_queue_copy_operations_offload_hint_exp_desc_t {
 
 #define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES (ze_structure_type_t)0x00030019
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Queue copy operations offload hint extension version(s)
+typedef enum _zex_intel_queue_copy_operations_offload_hint_exp_version_t {
+    ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zex_intel_queue_copy_operations_offload_hint_exp_version_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

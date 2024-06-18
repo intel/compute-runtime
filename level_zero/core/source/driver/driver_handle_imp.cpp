@@ -149,7 +149,7 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 
     for (const auto device : devices) {
         if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
-            additionalExtensions.push_back({ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT});
+            additionalExtensions.emplace_back(ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT);
             break;
         }
     }
@@ -157,6 +157,10 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 
     if (devices[0]->getL0GfxCoreHelper().synchronizedDispatchSupported() && devices[0]->isImplicitScalingCapable()) {
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
+    }
+
+    if (!devices[0]->getProductHelper().isDcFlushAllowed()) {
+        additionalExtensions.emplace_back(ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME, ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_CURRENT);
     }
 
     auto extensionCount = static_cast<uint32_t>(this->extensionsSupported.size() + additionalExtensions.size());
