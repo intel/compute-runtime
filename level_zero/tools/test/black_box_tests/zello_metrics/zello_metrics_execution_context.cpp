@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <chrono>
 #include <limits>
+#include <string>
 #include <vector>
 
 namespace zmu = ZelloMetricsUtility;
@@ -186,8 +187,8 @@ void Power::showAll(double minDiff) {
     for (const auto &[energyCounter, s] : energyCounters) {
 
         if (prevTimestamp == 0) {
-            prevTimestamp = energyCounter.timestamp;
-            prevEnergy = energyCounter.energy;
+            prevTimestamp = static_cast<double>(energyCounter.timestamp);
+            prevEnergy = static_cast<double>(energyCounter.energy);
             continue;
         }
         double powerInWatts = (energyCounter.energy - prevEnergy) / (energyCounter.timestamp - prevTimestamp);
@@ -209,15 +210,15 @@ void Power::getMinMax(double &min, double &max) {
 
     double prevTimestamp = 0.0;
     double prevEnergy = 0.0;
-    std::pair<double, double> minMaxPower(std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::min());
+    std::pair<double, double> minMaxPower(std::numeric_limits<double>::max(), std::numeric_limits<double>::min());
 
     for (const auto &energyCounterInfo : energyCounters) {
 
         const auto &energyCounter = energyCounterInfo.first;
 
         if (prevTimestamp == 0) {
-            prevTimestamp = energyCounter.timestamp;
-            prevEnergy = energyCounter.energy;
+            prevTimestamp = static_cast<double>(energyCounter.timestamp);
+            prevEnergy = static_cast<double>(energyCounter.energy);
             continue;
         }
         double powerInWatts = (energyCounter.energy - prevEnergy) / (energyCounter.timestamp - prevTimestamp);
@@ -276,7 +277,7 @@ void Frequency::showAll(double minDiff) {
 
 void Frequency::getMinMax(double &min, double &max) {
 
-    std::pair<double, double> minMaxFrequency(std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::min());
+    std::pair<double, double> minMaxFrequency(std::numeric_limits<double>::max(), std::numeric_limits<double>::min());
     for (const auto &frequencyInfo : frequencies) {
         const auto &frequency = frequencyInfo.first;
         minMaxFrequency.first = std::min(frequency, minMaxFrequency.first);

@@ -10,7 +10,6 @@
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics.h"
 
 #include <cstring>
-#include <getopt.h>
 #include <iomanip>
 #include <mutex>
 #include <thread>
@@ -446,6 +445,38 @@ void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *raw
     }
 }
 
+inline bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *longName, int *optind) {
+    if (argc < 2) {
+        return false;
+    }
+    int index = 1;
+    char **arg = &argv[1];
+    char **argE = &argv[argc];
+
+    for (; arg != argE; ++arg) {
+        if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
+            *optind = index;
+            return true;
+        }
+        index++;
+    }
+
+    return false;
+}
+
+inline std::string copyArg(int argc, char *argv[], int optind) {
+    std::string valToReturn;
+    char *optarg = nullptr;
+    optind = optind + 1;
+    if (optind < argc) {
+        optarg = argv[optind];
+    }
+    if (optarg != nullptr) {
+        valToReturn = optarg;
+    }
+    return valToReturn;
+}
+
 void TestSettings::readMetricNames(char *optArg) {
     std::string args = optArg;
     std::string delim(",");
@@ -470,20 +501,7 @@ void TestSettings::readMetricNames(char *optArg) {
 // Test Settings
 ////////////////
 void TestSettings::parseArguments(int argc, char *argv[]) {
-    int opt;
-
-    struct option longOpts[] = {
-        {"help", no_argument, nullptr, 'h'},
-        {"test", required_argument, nullptr, 't'},
-        {"device", required_argument, nullptr, 'd'},
-        {"subdevice", required_argument, nullptr, 's'},
-        {"verboseLevel", required_argument, nullptr, 'v'},
-        {"metricGroupName", required_argument, nullptr, 'M'},
-        {"metricName", required_argument, nullptr, 'm'},
-        {"eventNReports", required_argument, nullptr, 'e'},
-        {"showSystemInfo", no_argument, nullptr, 'y'},
-        {0, 0, 0, 0},
-    };
+    int optind = 0;
 
     auto printUsage = []() {
         std::cout << "\n set Environment variable ZET_ENABLE_METRICS=1"
@@ -509,50 +527,41 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
         return;
     }
 
-    while ((opt = getopt_long(argc, argv, "ht:d:s:v:M:m:e:y", longOpts, nullptr)) != -1) {
-        switch (opt) {
-        case 't':
-            testName = optarg;
-            break;
+    if (isParamEnabled(argc, argv, "-h", "--help", &optind)) {
+        printUsage();
+        exit(0);
+    }
 
-        case 'd':
-            deviceId.set(std::atoi(optarg));
-            break;
+    if (isParamEnabled(argc, argv, "-t", "--test", &optind)) {
+        testName = copyArg(argc, argv, optind);
+    }
 
-        case 's':
-            subDeviceId.set(std::atoi(optarg));
-            break;
+    if (isParamEnabled(argc, argv, "-d", "--device", &optind)) {
+        deviceId.set(std::atoi(copyArg(argc, argv, optind).c_str()));
+    }
 
-        case 'v':
-            verboseLevel.set(std::atoi(optarg));
-            break;
+    if (isParamEnabled(argc, argv, "-s", "--subdevice", &optind)) {
+        subDeviceId.set(std::atoi(copyArg(argc, argv, optind).c_str()));
+    }
 
-        case 'M':
-            metricGroupName.set(optarg);
-            break;
+    if (isParamEnabled(argc, argv, "-v", "--verboseLevel", &optind)) {
+        verboseLevel.set(std::atoi(copyArg(argc, argv, optind).c_str()));
+    }
 
-        case 'm':
-            readMetricNames(optarg);
-            break;
+    if (isParamEnabled(argc, argv, "-M", "--metricGroupName", &optind)) {
+        metricGroupName.set(copyArg(argc, argv, optind));
+    }
 
-        case 'e':
-            eventNReportCount.set(std::atoi(optarg));
-            break;
+    if (isParamEnabled(argc, argv, "-m", "--metricName", &optind)) {
+        readMetricNames(&copyArg(argc, argv, optind)[0]);
+    }
 
-        case 'y':
-            showSystemInfo.set(true);
-            break;
+    if (isParamEnabled(argc, argv, "-e", "--eventNReports", &optind)) {
+        eventNReportCount.set(std::atoi(copyArg(argc, argv, optind).c_str()));
+    }
 
-        case 'h':
-            printUsage();
-            break;
-
-        default:
-            // Do not run tests in case of invalid option
-            testName.clear();
-            printUsage();
-            return;
-        }
+    if (isParamEnabled(argc, argv, "-y", "--showSystemInfo", &optind)) {
+        showSystemInfo.set(true);
     }
 }
 

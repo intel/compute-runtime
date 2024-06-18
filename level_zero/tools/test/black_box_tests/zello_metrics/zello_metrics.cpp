@@ -14,9 +14,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <sys/wait.h>
 #include <thread>
-#include <unistd.h>
 
 namespace zmu = ZelloMetricsUtility;
 
@@ -121,33 +119,7 @@ int main(int argc, char *argv[]) {
 
     int32_t runStatus = 0;
     if (testSettings->testName == "all") {
-        // Run all tests
-        for (auto const &[testName, testFn] : tests) {
-            LOG(zmu::LogLevel::INFO) << "\n== Start " << testName << " == \n";
-            // Run each test in a new process
-            pid_t pid = fork();
-            if (pid == 0) {
-                int32_t status = 0;
-                if (testFn() == true) {
-                    LOG(zmu::LogLevel::INFO) << testName << " : PASS\n";
-                } else {
-                    LOG(zmu::LogLevel::ERROR) << testName << " : FAIL \n";
-                    status = 1;
-                }
-                exit(status);
-            }
-
-            int32_t testStatus = 0;
-            // Wait for the process to complete
-            waitpid(pid, &testStatus, 0);
-            LOG(zmu::LogLevel::INFO) << "\n== End " << testName << " == \n";
-            if (WIFEXITED(testStatus) != true) {
-                runStatus = 1;
-            } else {
-                runStatus += WEXITSTATUS(testStatus);
-            }
-        }
-        return std::min(1, runStatus);
+        return zmu::osRunAllTests(runStatus);
     }
 
     // Run test.

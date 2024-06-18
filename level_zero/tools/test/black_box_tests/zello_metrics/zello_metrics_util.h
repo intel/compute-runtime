@@ -97,4 +97,9 @@ ze_event_handle_t createHostVisibleEvent(ze_event_pool_handle_t hostVisibleEvent
 void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *rawData, uint32_t rawDataSize);
 void showMetricsExportData(uint8_t *pExportData, size_t exportDataSize);
 
+// os specific methods
+bool osStreamMpCollectionWorkloadDifferentProcess();
+bool osStreamMpCollectionWorkloadSameProcess();
+int32_t osRunAllTests(int32_t runStatus);
+
 } // namespace ZelloMetricsUtility

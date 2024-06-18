@@ -14,9 +14,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <sys/wait.h>
 #include <thread>
-#include <unistd.h>
 
 namespace zmu = ZelloMetricsUtility;
 
@@ -309,7 +307,7 @@ bool streamMtCollectionWorkloadDifferentThreads() {
         std::vector<std::thread> threads;
         bool collectorStatus = true, workloadStatus = true;
 
-        std::thread collectorThread([&executionCtxt, &collector, &collectorStatus]() {
+        std::thread collectorThread([&]() {
             collectorStatus &= collector->start();
             EXPECT(collectorStatus == true);
             // sleep while the workload executes
@@ -323,7 +321,7 @@ bool streamMtCollectionWorkloadDifferentThreads() {
             collectorStatus &= executionCtxt[collectorIndex]->deactivateMetricGroups();
         });
 
-        std::thread workloadThread([&executionCtxt, &workload, &workloadStatus]() {
+        std::thread workloadThread([&]() {
             workloadStatus &= workload->appendCommands();
             EXPECT(workloadStatus == true);
             workloadStatus &= executionCtxt[workloadIndex]->run();
@@ -365,61 +363,7 @@ bool streamMpCollectionWorkloadSameProcess() {
     // This test collects Metric on devices from different processes
     // Each process runs the workload and collects for a single device
 
-    std::string metricGroupName = zmu::TestSettings::get()->metricGroupName.get();
-    LOG(zmu::LogLevel::INFO) << std::endl
-                             << "Multi Process Metric stream: device 0 / sub_device 0 & 1 ; MetricGroup : "
-                             << metricGroupName.c_str() << std::endl;
-
-    constexpr uint32_t processCount = 2;
-    bool status = true;
-
-    pid_t pids[processCount];
-    for (uint32_t i = 0; i < processCount; ++i) {
-        pids[i] = fork();
-        if (pids[i] < 0) {
-            abort();
-        } else if (pids[i] == 0) {
-            zmu::createL0();
-
-            if (!zmu::isDeviceAvailable(0, i)) {
-                exit(-1);
-            }
-
-            std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
-                std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(0, i);
-            executionCtxt->setExecutionTimeInMilliseconds(200);
-            std::unique_ptr<AppendMemoryCopyFromHeapToDeviceAndBackToHost> workload =
-                std::make_unique<AppendMemoryCopyFromHeapToDeviceAndBackToHost>(executionCtxt.get());
-            std::unique_ptr<SingleMetricStreamerCollector> collector =
-                std::make_unique<SingleMetricStreamerCollector>(executionCtxt.get(), metricGroupName.c_str());
-
-            std::unique_ptr<SingleDeviceTestRunner> testRunner =
-                std::make_unique<SingleDeviceTestRunner>(static_cast<ExecutionContext *>(executionCtxt.get()));
-            testRunner->addCollector(collector.get());
-            testRunner->addWorkload(workload.get());
-
-            if (testRunner->run()) {
-                exit(0);
-            } else {
-                exit(-1);
-            }
-        }
-    }
-
-    int32_t processExitStatus = -1;
-    uint32_t j = processCount;
-    while (j-- > 0) {
-        wait(&processExitStatus);
-        status &= WIFEXITED(processExitStatus) && (WEXITSTATUS(processExitStatus) == 0);
-
-        if (status == false) {
-            LOG(zmu::LogLevel::DEBUG) << "[" << pids[j] << "]: "
-                                      << "exitStatus : " << processExitStatus << " ; WIFEXITED : "
-                                      << WIFEXITED(processExitStatus) << " ; WEXITSTATUS: " << WEXITSTATUS(processExitStatus) << "\n";
-        }
-    }
-
-    return status;
+    return zmu::osStreamMpCollectionWorkloadSameProcess();
 }
 
 ////////////////////////////////////////////////////
@@ -432,94 +376,7 @@ bool streamMpCollectionWorkloadDifferentProcess() {
     // This test collects Metrics on one device from different processes
     // One process collects metrics and other runs the workload
 
-    bool status = true;
-    auto streamMp = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
-        LOG(zmu::LogLevel::INFO) << "Running Multi Process Stream Test : Device [" << deviceId << ", " << subDeviceId << " ] : Metric Group :" << metricGroupName.c_str() << "\n";
-        constexpr uint32_t processCount = 2;
-        bool status = true;
-
-        auto collectorProcess = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
-            zmu::createL0();
-            if (!zmu::isDeviceAvailable(deviceId, subDeviceId)) {
-                return false;
-            }
-            std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
-                std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
-            std::unique_ptr<SingleMetricStreamerCollector> collector =
-                std::make_unique<SingleMetricStreamerCollector>(executionCtxt.get(), metricGroupName.c_str());
-
-            collector->setMaxRequestRawReportCount(1000);
-            std::unique_ptr<SingleDeviceTestRunner> testRunner =
-                std::make_unique<SingleDeviceTestRunner>(static_cast<ExecutionContext *>(executionCtxt.get()));
-            testRunner->addCollector(collector.get());
-            // Since Streamer collector, no commands in the command list
-            testRunner->disableCommandsExecution();
-            return testRunner->run();
-        };
-
-        auto workloadProcess = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
-            zmu::createL0();
-            if (!zmu::isDeviceAvailable(deviceId, subDeviceId)) {
-                return false;
-            }
-            std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
-                std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
-            executionCtxt->setExecutionTimeInMilliseconds(200);
-            std::unique_ptr<AppendMemoryCopyFromHeapToDeviceAndBackToHost> workload =
-                std::make_unique<AppendMemoryCopyFromHeapToDeviceAndBackToHost>(executionCtxt.get());
-            std::unique_ptr<SingleDeviceTestRunner> testRunner =
-                std::make_unique<SingleDeviceTestRunner>(static_cast<ExecutionContext *>(executionCtxt.get()));
-            testRunner->addWorkload(workload.get());
-            return testRunner->run();
-        };
-
-        pid_t pids[processCount];
-        for (uint32_t i = 0; i < processCount; ++i) {
-            pids[i] = fork();
-            if (pids[i] < 0) {
-                abort();
-            } else if (pids[i] == 0) {
-                bool status = false;
-                if (i == 0) {
-                    status = collectorProcess(deviceId, subDeviceId, metricGroupName);
-                } else {
-                    status = workloadProcess(deviceId, subDeviceId, metricGroupName);
-                }
-
-                if (status == true) {
-                    exit(0);
-                } else {
-                    exit(-1);
-                }
-            }
-        }
-
-        int32_t processExitStatus = -1;
-        uint32_t j = processCount;
-        while (j-- > 0) {
-            wait(&processExitStatus);
-            status &= WIFEXITED(processExitStatus) && (WEXITSTATUS(processExitStatus) == 0);
-
-            if (status == false) {
-                LOG(zmu::LogLevel::DEBUG) << "[" << pids[j] << "]: "
-                                          << "exitStatus : " << processExitStatus << " ; WIFEXITED : "
-                                          << WIFEXITED(processExitStatus) << " ; WEXITSTATUS: " << WEXITSTATUS(processExitStatus) << "\n";
-            }
-        }
-
-        return status;
-    };
-
-    auto testSettings = zmu::TestSettings::get();
-
-    if (testSettings->deviceId.get() == -1) {
-        status &= streamMp(0, 0, testSettings->metricGroupName.get());
-    } else {
-        // Run for specific device
-        status &= streamMp(testSettings->deviceId.get(), testSettings->subDeviceId.get(), testSettings->metricGroupName.get());
-    }
-
-    return status;
+    return zmu::osStreamMpCollectionWorkloadDifferentProcess();
 }
 
 bool streamPowerFrequencyTest() {
