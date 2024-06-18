@@ -963,7 +963,7 @@ bool Wddm::setLowPriorityContextParam(D3DKMT_HANDLE contextHandle) {
     D3DKMT_SETCONTEXTSCHEDULINGPRIORITY contextPriority = {};
 
     contextPriority.hContext = contextHandle;
-    contextPriority.Priority = 1;
+    contextPriority.Priority = -7;
 
     if (debugManager.flags.ForceWddmLowPriorityContextValue.get() != -1) {
         contextPriority.Priority = static_cast<INT>(debugManager.flags.ForceWddmLowPriorityContextValue.get());

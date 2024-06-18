@@ -724,7 +724,7 @@ TEST_F(WddmContextSchedulingPriorityTests, givenLowPriorityContextWhenInitializi
     auto createContextParams = this->getSetContextSchedulingPriorityDataCallFcn();
 
     EXPECT_EQ(osContext->getWddmContextHandle(), createContextParams->hContext);
-    EXPECT_EQ(1, createContextParams->Priority);
+    EXPECT_EQ(-7, createContextParams->Priority);
 }
 
 TEST_F(WddmContextSchedulingPriorityTests, givenLowPriorityContextWhenFailingDuringSetSchedulingPriorityThenThrow) {
