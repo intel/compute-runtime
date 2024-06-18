@@ -1550,6 +1550,62 @@ INSTANTIATE_TEST_SUITE_P(,
                          IoctlHelperXeFenceWaitTest,
                          ::testing::Bool());
 
+TEST(IoctlHelperXeTest, givenVmBindWaitUserFenceTimeoutWhenCallingVmBindThenWaitUserFenceIsCalledWithSpecificTimeout) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.VmBindWaitUserFenceTimeout.set(5000000000ll);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    BindInfo mockBindInfo{};
+    mockBindInfo.handle = 0x1234;
+    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = mockBindInfo.handle;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+
+    drm.vmBindInputs.clear();
+    drm.syncInputs.clear();
+    drm.waitUserFenceInputs.clear();
+
+    EXPECT_EQ(0u, vmBindParams.flags);
+    vmBindParams.flags = 0x12345; // set non-zero to check if flags are passed
+    auto expectedFlags = vmBindParams.flags;
+    EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
+    EXPECT_EQ(1u, drm.vmBindInputs.size());
+    EXPECT_EQ(1u, drm.syncInputs.size());
+    EXPECT_EQ(1u, drm.waitUserFenceInputs.size());
+    auto expectedMask = std::numeric_limits<uint64_t>::max();
+    auto expectedTimeout = 5000000000ll;
+    {
+        auto &sync = drm.syncInputs[0];
+
+        EXPECT_EQ(fenceAddress, sync.addr);
+        EXPECT_EQ(fenceValue, sync.timeline_value);
+
+        auto &waitUserFence = drm.waitUserFenceInputs[0];
+
+        EXPECT_EQ(fenceAddress, waitUserFence.addr);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
+        EXPECT_EQ(0u, waitUserFence.flags);
+        EXPECT_EQ(fenceValue, waitUserFence.value);
+        EXPECT_EQ(expectedMask, waitUserFence.mask);
+        EXPECT_EQ(expectedTimeout, waitUserFence.timeout);
+        EXPECT_EQ(0u, waitUserFence.exec_queue_id);
+
+        EXPECT_EQ(expectedFlags, drm.vmBindInputs[0].bind.flags);
+    }
+}
+
 TEST(IoctlHelperXeTest, whenGemVmBindFailsThenErrorIsPropagated) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
