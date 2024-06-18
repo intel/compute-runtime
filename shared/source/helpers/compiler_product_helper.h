@@ -56,6 +56,7 @@ class CompilerProductHelper {
     virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
     virtual bool isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const = 0;
+    virtual bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isSubgroupLocalBlockIoSupported() const = 0;
@@ -106,6 +107,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isForceEmuInt32DivRemSPRequired() const override;
     bool isStatelessToStatefulBufferOffsetSupported() const override;
     bool isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const override;
+    bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const override;
     bool isSplitMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const override;
     bool isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const override;
     bool isSubgroupLocalBlockIoSupported() const override;

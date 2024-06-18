@@ -21,6 +21,11 @@ bool CompilerProductHelperHw<gfxProduct>::isForceToStatelessRequired() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isSubgroupNamedBarrierSupported() const {
     return true;
 }

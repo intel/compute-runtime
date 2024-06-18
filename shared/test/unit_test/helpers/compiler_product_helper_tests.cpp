@@ -168,6 +168,20 @@ HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenMatrixMultiplyAccu
     }
 }
 
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterThenMatrixMultiplyAccumulateTF32IsSupported, IsAtLeastXeHpcCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto hwInfo = *defaultHwInfo;
+
+    EXPECT_TRUE(compilerProductHelper.isMatrixMultiplyAccumulateTF32Supported(hwInfo));
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpcThenMatrixMultiplyAccumulateTF32IsNotSupported, IsAtMostXeHpgCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto hwInfo = *defaultHwInfo;
+
+    EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateTF32Supported(hwInfo));
+}
+
 HWTEST2_F(CompilerProductHelperFixture, GivenReleaseHelperThenDotProductAccumulateSystolicIsSupportedBasedOnReleaseHelper, IsNotXeHpcCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto releaseHelper = pDevice->getReleaseHelper();
