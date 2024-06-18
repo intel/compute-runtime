@@ -80,6 +80,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::fillPattern:
     case AllocationType::svmCpu:
     case AllocationType::svmZeroCopy:
+    case AllocationType::tagBuffer:
         if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
