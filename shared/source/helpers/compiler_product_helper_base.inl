@@ -181,6 +181,10 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
     }
 
+    if (isMatrixMultiplyAccumulateTF32Supported(hwInfo)) {
+        extensions += "cl_intel_subgroup_matrix_multiply_accumulate_tf32 ";
+    }
+
     if (isSplitMatrixMultiplyAccumulateSupported(releaseHelper)) {
         extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
     }

@@ -78,6 +78,14 @@ bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateSupported(cons
 }
 
 template <>
+bool CompilerProductHelperHw<IGFX_PVC>::isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const {
+    auto config = getProductConfigFromHwInfo(hwInfo);
+    if (config >= AOT::PVC_XT_B0 && config < AOT::PVC_XT_C0_VG)
+        return true;
+    return false;
+}
+
+template <>
 bool CompilerProductHelperHw<IGFX_PVC>::isBFloat16ConversionSupported(const ReleaseHelper *releaseHelper) const {
     return true;
 }
