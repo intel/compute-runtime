@@ -5,8 +5,8 @@
  *
  */
 
+#include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/power/linux/mock_sysfs_power.h"
-
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -55,6 +55,11 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerPointerWhenGett
 }
 
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGettingPowerPropertiesThenCallSucceeds) {
+    MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
+    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
     for (auto handle : handles) {
         zes_power_properties_t properties = {};
@@ -75,6 +80,11 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
 }
 
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
+    MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
+    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -109,6 +119,11 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
 }
 
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleAndExtPropertiesWithNullDescWhenGettingPowerPropertiesThenCallSucceeds) {
+    MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
+    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);

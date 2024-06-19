@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/power/linux/mock_sysfs_power.h"
 
 namespace L0 {
@@ -88,7 +89,16 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenScanDiectoriesFailAndPmtIsNullWhenGett
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesWhenhwmonInterfaceExistsThenCallSucceeds) {
+    MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
+    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
@@ -106,6 +116,16 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerProper
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
+    MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
+    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
@@ -136,6 +156,16 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerProper
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWithNoStypeForExtPropertiesWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
+    MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
+    pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
@@ -154,6 +184,25 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWithNoStypeForExtPrope
         EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
         EXPECT_EQ(properties.maxLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
         EXPECT_EQ(properties.minLimit, -1);
+    }
+}
+
+TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndPowerSetLimitSupportedIsUnsupportedWhenCallingzesPowerGetPropertiesThenVerifyCanControlIsSetToFalse) {
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
+    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_power_properties_t properties{};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.canControl);
     }
 }
 

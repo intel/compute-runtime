@@ -302,7 +302,7 @@ ze_result_t LinuxSchedulerImp::setTimesliceMode(zes_sched_timeslice_properties_t
 ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProperties) {
     schedProperties.onSubdevice = onSubdevice;
     schedProperties.subdeviceId = subdeviceId;
-    schedProperties.canControl = canControlScheduler();
+    schedProperties.canControl = true;
     schedProperties.engines = this->engineType;
     schedProperties.supportedModes = (1 << ZES_SCHED_MODE_TIMEOUT) | (1 << ZES_SCHED_MODE_TIMESLICE) | (1 << ZES_SCHED_MODE_EXCLUSIVE);
     return ZE_RESULT_SUCCESS;
@@ -348,10 +348,6 @@ ze_result_t LinuxSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
     return writeSchedulerValueToSysfs(SysfsName::sysfsNameSchedulerWatchDogTimeout,
                                       pLinuxSysmanImp, subdeviceId,
                                       listOfEngines, engineType, heartbeat);
-}
-
-ze_bool_t LinuxSchedulerImp::canControlScheduler() {
-    return 1;
 }
 
 ze_result_t LinuxSchedulerImp::setComputeUnitDebugMode(ze_bool_t *pNeedReload) {

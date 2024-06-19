@@ -12,7 +12,6 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/api/frequency/linux/sysman_os_frequency_imp.h"
-#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
 #include "gtest/gtest.h"
@@ -348,13 +347,6 @@ struct MockFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     MockFrequencySysfsAccess() = default;
     ~MockFrequencySysfsAccess() override = default;
-};
-
-struct MockSysmanProductHelperFreq : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
-    MockSysmanProductHelperFreq() = default;
-    bool isFrequencySetRangeSupported() override {
-        return false;
-    }
 };
 
 class PublicLinuxFrequencyImp : public L0::Sysman::LinuxFrequencyImp {

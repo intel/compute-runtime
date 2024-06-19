@@ -23,7 +23,6 @@
 
 namespace L0 {
 namespace Sysman {
-const bool LinuxFrequencyImp::canControl = true; // canControl is true on i915 (GEN9 Hardcode)
 
 ze_result_t LinuxFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &properties) {
     properties.pNext = nullptr;
@@ -72,7 +71,7 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
     double newMin = round(pLimits->min);
     double newMax = round(pLimits->max);
 
-    if (!pSysmanProductHelper->isFrequencySetRangeSupported()) {
+    if (!canControl) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -427,6 +426,7 @@ void LinuxFrequencyImp::init() {
     throttleReasonPL2File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL2, subdeviceId, baseDirectoryExists);
     throttleReasonPL4File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, subdeviceId, baseDirectoryExists);
     throttleReasonThermalFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, subdeviceId, baseDirectoryExists);
+    canControl = pSysmanProductHelper->isFrequencySetRangeSupported();
 
     if (pSysmanKmdInterface->isDefaultFrequencyAvailable()) {
         minDefaultFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinDefaultFrequency, subdeviceId, baseDirectoryExists);

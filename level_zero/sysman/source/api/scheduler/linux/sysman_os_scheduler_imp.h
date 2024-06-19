@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,6 @@ class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableOrMovableClass {
     ze_result_t setPreemptTimeout(uint64_t timeout);
     ze_result_t setTimesliceDuration(uint64_t timeslice);
     ze_result_t setHeartbeatInterval(uint64_t heartbeat);
-    ze_bool_t canControlScheduler();
     ze_result_t disableComputeUnitDebugMode(ze_bool_t *pNeedReload);
     bool isComputeUnitDebugModeEnabled();
 

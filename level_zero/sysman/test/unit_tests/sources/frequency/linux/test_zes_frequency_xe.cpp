@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/test/unit_tests/sources/frequency/linux/mock_sysfs_frequency_xe.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_xe.h"
 
 #include <cmath>
@@ -125,6 +126,11 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenActualComponentCountTwoWhenTryingToG
 }
 
 TEST_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleWhenCallingzesFrequencyGetPropertiesThenSuccessIsReturned) {
+    MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
+    pMockSysmanProductHelper->isFrequencySetRangeSupportedResult = true;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
     auto handles = getFreqHandles(handleComponentCount);
     for (auto &handle : handles) {
         EXPECT_NE(handle, nullptr);
@@ -352,8 +358,9 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivenInvalidFrequencyLimitsWhenCallingFre
 }
 
 TEST_F(SysmanDeviceFrequencyFixtureXe, GivenFrequencySetRangeNotSupportedWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeFails) {
-    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperFreq>();
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {
         const double startingMin = 900.0;
@@ -675,6 +682,11 @@ TEST_F(SysmanDeviceFrequencyFixtureXe, GivengetMinValFunctionReturnsErrorWhenVal
 }
 
 TEST_F(SysmanDeviceFrequencyFixtureXe, GivenOnSubdeviceSetWhenValidatingAnyFrequencyAPIThenSuccessIsReturned) {
+    MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
+    pMockSysmanProductHelper->isFrequencySetRangeSupportedResult = true;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper(static_cast<SysmanProductHelper *>(pMockSysmanProductHelper));
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+
     zes_freq_properties_t properties = {};
     PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 1, 0, ZES_FREQ_DOMAIN_GPU);
     EXPECT_EQ(ZE_RESULT_SUCCESS, linuxFrequencyImp.osFrequencyGetProperties(properties));

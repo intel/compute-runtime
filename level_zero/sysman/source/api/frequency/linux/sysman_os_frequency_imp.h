@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     std::string throttleReasonPL2File;
     std::string throttleReasonPL4File;
     std::string throttleReasonThermalFile;
-    static const bool canControl;
+    bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     zes_freq_domain_t frequencyDomainNumber = ZES_FREQ_DOMAIN_GPU;
