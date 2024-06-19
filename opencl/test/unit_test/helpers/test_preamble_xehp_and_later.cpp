@@ -189,7 +189,7 @@ HWTEST2_F(PreambleCfeStateXeHPAndLater, givenSetDebugFlagWhenPreambleCfeStateIsP
     debugManager.flags.CFESingleSliceDispatchCCSMode.set(expectedValue1);
     debugManager.flags.CFELargeGRFThreadAdjustDisable.set(expectedValue1);
     debugManager.flags.CFENumberOfWalkers.set(expectedValue2);
-    debugManager.flags.CFEMaximumNumberOfThreads.set(expectedValue2);
+    debugManager.flags.MaximumNumberOfThreads.set(expectedValue2);
 
     uint64_t expectedAddress = 1 << CFE_STATE::SCRATCHSPACEBUFFER_BIT_SHIFT;
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute);

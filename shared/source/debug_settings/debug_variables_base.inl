@@ -149,7 +149,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ComputeOverdispatchDisable, -1, "Set Compute Ove
 DECLARE_DEBUG_VARIABLE(int32_t, CFEWeightedDispatchModeDisable, -1, "Set Weighted Dispatch Mode Disable field in CFE_STATE on XEHP, -1: do not set.")
 DECLARE_DEBUG_VARIABLE(int32_t, CFESingleSliceDispatchCCSMode, -1, "Set Single Slice Dispatch CCS Mode in CFE_STATE on XEHP, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, CFENumberOfWalkers, -1, "Set Number of Walkers in CFE_STATE on XEHP, -1 - do not set")
-DECLARE_DEBUG_VARIABLE(int32_t, CFEMaximumNumberOfThreads, -1, "Set Maximum Number of Threads in CFE_STATE on XEHP, -1 - do not set")
+DECLARE_DEBUG_VARIABLE(int32_t, MaximumNumberOfThreads, -1, "Set Maximum Number of Threads, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, OverDispatchControl, -1, "Set Over Dispatch Control, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, CFELargeGRFThreadAdjustDisable, -1, "Set Large GRF thread adjust Disable field in CFE_STATE, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNumComputeUnitsForScratch, -1, "Override number of compute units used for scratch size calculation")

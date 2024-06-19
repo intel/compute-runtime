@@ -64,8 +64,8 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
         cmd.setComputeOverdispatchDisable(debugManager.flags.ComputeOverdispatchDisable.get());
     }
 
-    if (debugManager.flags.CFEMaximumNumberOfThreads.get() != -1) {
-        cmd.setMaximumNumberOfThreads(debugManager.flags.CFEMaximumNumberOfThreads.get());
+    if (debugManager.flags.MaximumNumberOfThreads.get() != -1) {
+        cmd.setMaximumNumberOfThreads(debugManager.flags.MaximumNumberOfThreads.get());
     }
     if (debugManager.flags.OverDispatchControl.get() != -1) {
         cmd.setOverDispatchControl(static_cast<typename CFE_STATE::OVER_DISPATCH_CONTROL>(debugManager.flags.OverDispatchControl.get()));
