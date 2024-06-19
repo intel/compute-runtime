@@ -45,6 +45,11 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
 
     gmmRequirements.overriderPreferNoCpuAccess.doOverride(this->preferNoCpuAccess);
     gmmRequirements.overriderCacheable.doOverride(cacheable);
+
+    if (NEO::debugManager.flags.OverrideGmmCacheableField.get() != -1) {
+        cacheable = !!NEO::debugManager.flags.OverrideGmmCacheableField.get();
+    }
+
     resourceParams.Flags.Info.Cacheable = cacheable;
 
     resourceParams.Flags.Gpu.Texture = 1;

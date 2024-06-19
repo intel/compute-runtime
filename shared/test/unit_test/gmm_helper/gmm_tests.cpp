@@ -136,4 +136,19 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
     }
 }
 
+HWTEST_F(GmmTests, givenVariousCacheableDebugSettingsTheCacheableFieldIsProgrammedCorrectly) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideGmmCacheableField.set(0);
+    StorageInfo storageInfo{};
+    GmmRequirements gmmRequirements{};
+
+    auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, storageInfo, gmmRequirements);
+    EXPECT_FALSE(gmm->resourceParams.Flags.Info.Cacheable);
+
+    debugManager.flags.OverrideGmmCacheableField.set(1);
+
+    auto gmm2 = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, storageInfo, gmmRequirements);
+    EXPECT_TRUE(gmm2->resourceParams.Flags.Info.Cacheable);
+}
+
 } // namespace NEO
