@@ -750,6 +750,7 @@ TEST(GmmTest, givenAllocationTypeAndMitigatedDcFlushWhenGettingUsageTypeThenRetu
             case AllocationType::gpuTimestampDeviceBuffer:
             case AllocationType::bufferHostMemory:
             case AllocationType::tagBuffer:
+            case AllocationType::printfSurface:
                 expectedUsage = uncachedGmmUsageType;
                 break;
 
