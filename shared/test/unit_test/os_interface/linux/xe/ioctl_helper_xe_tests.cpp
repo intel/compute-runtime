@@ -256,9 +256,9 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(std::nullopt, xeIoctlHelper->getPreferredLocationRegion(PreferredLocation::none, 0));
 
-    EXPECT_FALSE(xeIoctlHelper->setVmBoAdvise(0, 0, nullptr));
+    EXPECT_TRUE(xeIoctlHelper->setVmBoAdvise(0, 0, nullptr));
 
-    EXPECT_FALSE(xeIoctlHelper->setVmBoAdviseForChunking(0, 0, 0, 0, nullptr));
+    EXPECT_TRUE(xeIoctlHelper->setVmBoAdviseForChunking(0, 0, 0, 0, nullptr));
 
     EXPECT_FALSE(xeIoctlHelper->isChunkingAvailable());
 
@@ -279,7 +279,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_FALSE(xeIoctlHelper->completionFenceExtensionSupported(false));
 
-    EXPECT_EQ(std::nullopt, xeIoctlHelper->getHasPageFaultParamId());
+    EXPECT_EQ(false, xeIoctlHelper->isPageFaultSupported());
 
     EXPECT_EQ(nullptr, xeIoctlHelper->createVmControlExtRegion({}));
 
@@ -298,7 +298,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(std::nullopt, xeIoctlHelper->getCopyClassSaturateLinkCapability());
 
-    EXPECT_EQ(0u, xeIoctlHelper->getVmAdviseAtomicAttribute());
+    EXPECT_EQ(std::nullopt, xeIoctlHelper->getVmAdviseAtomicAttribute());
 
     VmBindParams vmBindParams{};
     EXPECT_EQ(-1, xeIoctlHelper->vmBind(vmBindParams));
@@ -1606,6 +1606,37 @@ TEST(IoctlHelperXeTest, givenVmBindWaitUserFenceTimeoutWhenCallingVmBindThenWait
     }
 }
 
+TEST(IoctlHelperXeTest, whenCallingVmBindAndUnbindWithNoResidencyRequiredThenWaitUserFenceIsNotCalled) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockXe drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
+
+    BindInfo mockBindInfo{};
+    mockBindInfo.handle = 0x1234;
+    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = mockBindInfo.handle;
+
+    drm.vmBindInputs.clear();
+    drm.syncInputs.clear();
+    drm.waitUserFenceInputs.clear();
+
+    EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
+    EXPECT_EQ(1u, drm.vmBindInputs.size());
+    EXPECT_EQ(0u, drm.syncInputs.size());
+    EXPECT_EQ(0u, drm.waitUserFenceInputs.size());
+
+    drm.vmBindInputs.clear();
+    drm.syncInputs.clear();
+    drm.waitUserFenceInputs.clear();
+    EXPECT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+    EXPECT_EQ(1u, drm.vmBindInputs.size());
+    EXPECT_EQ(0u, drm.syncInputs.size());
+    EXPECT_EQ(0u, drm.waitUserFenceInputs.size());
+}
+
 TEST(IoctlHelperXeTest, whenGemVmBindFailsThenErrorIsPropagated) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -2019,6 +2050,7 @@ TEST(IoctlHelperXeTest, givenMultipleBindInfosWhenVmBindIsCalledThenProperHandle
 
     MockIoctlHelperXe::UserFenceExtension userFence{};
     userFence.tag = userFence.tagValue;
+    userFence.addr = 0x1;
     VmBindParams vmBindParams{};
     vmBindParams.userFence = castToUint64(&userFence);
     vmBindParams.handle = 0;

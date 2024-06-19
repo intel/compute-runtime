@@ -7799,3 +7799,24 @@ TEST_F(DrmMemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingRe
         memoryManager->freeGraphicsMemory(allocation);
     }
 }
+
+TEST_F(DrmMemoryManagerTest, givenVmAdviseAtomicAttributeEqualZeroWhenCreateSharedUnifiedMemoryAllocationIsCalledThenNullptrReturned) {
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    drm.memoryInfo.reset(new MemoryInfo(regionInfo, drm));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    mockIoctlHelper->callBaseVmAdviseAtomicAttribute = false;
+    mockIoctlHelper->vmAdviseAtomicAttribute = 0;
+
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::cacheLineSize;
+    allocationData.rootDeviceIndex = mockRootDeviceIndex;
+    allocationData.alignment = MemoryConstants::pageSize;
+
+    auto sharedUSM = memoryManager->createSharedUnifiedMemoryAllocation(allocationData);
+    EXPECT_EQ(nullptr, sharedUSM);
+}

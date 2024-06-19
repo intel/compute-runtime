@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -340,6 +340,48 @@ TEST(DrmQueryTest, givenPageFaultSupportEnabledWhenCallingQueryPageFaultSupportT
             EXPECT_FALSE(drm.hasPageFaultSupport());
         }
     }
+}
+
+TEST(DrmQueryTest, givenPrintIoctlDebugFlagSetWhenCallingQueryPageFaultSupportThenCaptureExpectedOutput) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.PrintIoctlEntries.set(true);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
+    bool hasPageFaultSupport = true;
+    drm.context.hasPageFaultQueryValue = hasPageFaultSupport;
+
+    testing::internal::CaptureStdout(); // start capturing
+    drm.queryPageFaultSupport();
+    debugManager.flags.PrintIoctlEntries.set(false);
+    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+
+    if (productHelper.isPageFaultSupported()) {
+        std::string expectedString = "DRM_IOCTL_I915_GETPARAM: param: PRELIM_I915_PARAM_HAS_PAGE_FAULT, output value: 1, retCode: 0\n";
+        EXPECT_NE(std::string::npos, outputString.find(expectedString));
+    } else {
+        EXPECT_TRUE(outputString.empty());
+    }
+}
+
+TEST(DrmQueryTest, givenPrintIoctlDebugFlagNotSetWhenIsPageFaultSupportedCalledThenNoCapturedOutput) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.PrintIoctlEntries.set(false);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    bool hasPageFaultSupport = true;
+    drm.context.hasPageFaultQueryValue = hasPageFaultSupport;
+
+    testing::internal::CaptureStdout(); // start capturing
+    drm.queryPageFaultSupport();
+    debugManager.flags.PrintIoctlEntries.set(false);
+    std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
+
+    EXPECT_TRUE(outputString.empty());
 }
 
 TEST(DrmQueryTest, WhenQueryPageFaultSupportFailsThenReturnFalse) {
