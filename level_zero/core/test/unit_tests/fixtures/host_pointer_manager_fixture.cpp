@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -25,7 +26,7 @@ void HostPointerManagerFixure::setUp() {
     NEO::DeviceVector devices;
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
         std::make_unique<NEO::MockMemoryOperationsHandlerTests>();
     mockMemoryInterface = static_cast<NEO::MockMemoryOperationsHandlerTests *>(

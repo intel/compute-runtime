@@ -213,7 +213,7 @@ typedef EnqueueCopyBufferToImageMipMapTest MipMapCopyBufferToImageTest;
 HWTEST_P(MipMapCopyBufferToImageTest, GivenImageWithMipLevelNonZeroWhenCopyBufferToImageIsCalledThenProperMipLevelIsSet) {
     auto imageType = (cl_mem_object_type)GetParam();
     auto builtIns = new MockBuiltins();
-    pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         EBuiltInOps::copyBufferToImage3d,
         pCmdQ->getClDevice());

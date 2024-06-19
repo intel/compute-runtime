@@ -2375,7 +2375,7 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
           IsXeHpOrXeHpcOrXeHpgCore) {
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 256);
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
@@ -2404,7 +2404,7 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
           IsXeHpOrXeHpcOrXeHpgCore) {
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 256);
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
@@ -2432,7 +2432,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenGetThreadRegisterSetPropertiesCalle
 
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
 
     uint32_t count = 0;
     uint32_t threadCount = 0;
@@ -3367,7 +3367,7 @@ TEST_F(MultiTileDebugSessionTest, GivenSubDeviceAndTileAttachWhenRootDeviceDebug
     auto neoDevice = device->getNEODevice();
     device->getNEODevice()->getExecutionEnvironment()->releaseRootDeviceEnvironmentResources(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get());
     auto mockBuiltIns = new MockBuiltins();
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltIns);
 
     auto osInterface = new OsInterfaceWithDebugAttach;
     osInterface->debugAttachAvailable = false;
@@ -3391,7 +3391,7 @@ TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenGettingDebugProperti
     auto neoDevice = device->getNEODevice();
     device->getNEODevice()->getExecutionEnvironment()->releaseRootDeviceEnvironmentResources(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get());
     auto mockBuiltIns = new MockBuiltins();
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltIns);
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
 

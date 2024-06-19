@@ -307,7 +307,7 @@ TEST_F(DebugApiTest, givenNonZeroCountAndNullRegsetPointerWhenGetRegisterSetProp
 TEST_F(DebugApiTest, givenSIPHeaderHasZeroSizeMMEThenNotExposedAsRegset) {
     mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 128, 0);
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
     EXPECT_EQ(12u, count);

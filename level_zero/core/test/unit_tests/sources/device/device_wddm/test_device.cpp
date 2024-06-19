@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
 
@@ -49,7 +50,7 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureThenLuidAndNodeMaskSetF
     auto mockBuiltIns = new MockBuiltins();
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0u);
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
 
     executionEnvironment->osEnvironment.reset(osEnvironment);

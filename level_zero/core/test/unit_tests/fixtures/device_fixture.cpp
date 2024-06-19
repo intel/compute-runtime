@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
     execEnv = &executionEnvironment;
     neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(hardwareInfo == nullptr ? defaultHwInfo.get() : hardwareInfo, &executionEnvironment, rootDeviceIndex);
     mockBuiltIns = new MockBuiltins();
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
@@ -74,7 +74,7 @@ template NEO::CompilerProductHelper &DeviceFixture::getHelper() const;
 void PageFaultDeviceFixture::setUp() {
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
@@ -283,7 +283,7 @@ void GetMemHandlePtrTestFixture::setUp() {
     neoDevice =
         NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<DriverHandleGetMemHandlePtrMock>();

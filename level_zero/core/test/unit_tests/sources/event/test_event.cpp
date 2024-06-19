@@ -113,7 +113,7 @@ struct EventPoolFailTests : public ::testing::Test {
         neoDevice =
             NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleImp>();
@@ -1874,7 +1874,7 @@ HWTEST_F(EventAubCsrTest, givenCallToEventHostSynchronizeWithAubModeCsrReturnsSu
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();

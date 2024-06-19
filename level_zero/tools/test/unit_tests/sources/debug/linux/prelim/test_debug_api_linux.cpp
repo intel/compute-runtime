@@ -7135,7 +7135,7 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxPrelimFixture {
 
         mockBuiltins = new MockBuiltins();
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+        MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
         session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{}, device, 0);
         session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
         session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;

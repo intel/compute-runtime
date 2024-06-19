@@ -140,7 +140,7 @@ TEST_F(PlatformTest, givenMidThreadPreemptionWhenInitializingPlatformThenCallGet
     auto builtIns = new MockBuiltins();
     auto executionEnvironment = pPlatform->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
 
     EXPECT_EQ(SipKernelType::count, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);
@@ -156,7 +156,7 @@ TEST_F(PlatformTest, givenDisabledPreemptionAndNoSourceLevelDebuggerWhenInitiali
     auto builtIns = new MockBuiltins();
     auto executionEnvironment = pPlatform->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
 
     EXPECT_EQ(SipKernelType::count, MockSipData::calledType);
     EXPECT_FALSE(MockSipData::called);

@@ -37,7 +37,7 @@ struct L0DebuggerLinuxFixture {
         auto mockBuiltIns = new NEO::MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
-        executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo ? hwInfo : defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
         auto osInterface = new OSInterface();
@@ -555,7 +555,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenSubDeviceFilteredByAffinityMaskWhenC
     executionEnvironment->parseAffinityMask();
 
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();

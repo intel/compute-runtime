@@ -250,7 +250,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenReadWriteImageIsCalledThenH
 HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenWriteImageIsCalledThenRowPitchIsSetToSlicePitch) {
 
     auto builtIns = new MockBuiltins();
-    pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
     EBuiltInOps::Type copyBuiltIn = EBuiltInOps::copyBufferToImage3d;
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
@@ -402,7 +402,7 @@ typedef EnqueueWriteImageMipMapTest MipMapWriteImageTest;
 HWTEST_P(MipMapWriteImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalledThenProperMipLevelIsSet) {
     auto imageType = (cl_mem_object_type)GetParam();
     auto builtIns = new MockBuiltins();
-    pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         EBuiltInOps::copyBufferToImage3d,

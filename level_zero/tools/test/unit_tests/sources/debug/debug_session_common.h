@@ -26,7 +26,7 @@ struct DebugApiFixture : public DeviceFixture {
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
         mockBuiltins = new MockBuiltins();
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
+        MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
     }
 
     void tearDown() {

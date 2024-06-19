@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/fence/fence.h"
@@ -294,7 +295,7 @@ HWTEST_F(FenceAubCsrTest, givenCallToFenceHostSynchronizeWithAubModeCsrReturnsSu
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();

@@ -76,7 +76,7 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
     void setUpImpl(EBuiltInOps::Type operation) {
         auto builtIns = new MockBuiltins();
-        pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
+        MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
         auto swapBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
             rootDeviceIndex,

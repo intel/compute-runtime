@@ -254,7 +254,7 @@ TEST(L0DeviceTest, givenDebuggerEnabledButIGCNotReturnsSSAHThenSSAHIsNotCopied) 
     mockBuiltIns->stateSaveAreaHeader.clear();
 
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);

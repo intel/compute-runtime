@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -539,7 +539,7 @@ struct MemoryGetIpcHandleTest : public ::testing::Test {
 
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleGetIpcHandleMock>();

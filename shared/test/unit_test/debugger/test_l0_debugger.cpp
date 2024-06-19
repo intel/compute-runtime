@@ -56,7 +56,7 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
     auto isHexadecimalArrayPreferred = gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred();
     if (!isHexadecimalArrayPreferred) {
         auto mockBuiltIns = new NEO::MockBuiltins();
-        executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     }
 
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

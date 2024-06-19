@@ -31,7 +31,7 @@ struct L0DebuggerFixture {
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new NEO::MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
         memoryOperationsHandler = new NEO::MockMemoryOperations();
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,7 +135,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     auto executionEnvironment = device->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
     device->executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     device->setPreemptionMode(MidThread);

@@ -302,7 +302,7 @@ HWTEST_P(PreemptionHwTest, GivenPreemptionModeIsNotChangingWhenGettingRequiredCm
     {
         auto builtIns = new MockBuiltins();
 
-        mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+        MockRootDeviceEnvironment::resetBuiltins(mockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), builtIns);
         PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, mode, nullptr);
     }
     EXPECT_EQ(0U, cmdStream.getUsed());

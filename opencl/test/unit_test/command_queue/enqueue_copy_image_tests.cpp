@@ -228,7 +228,7 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
     cl_mem_object_type srcImageType, dstImageType;
     std::tie(srcImageType, dstImageType) = GetParam();
     auto builtIns = new MockBuiltins();
-    pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         EBuiltInOps::copyImageToImage3d,
         pCmdQ->getClDevice());

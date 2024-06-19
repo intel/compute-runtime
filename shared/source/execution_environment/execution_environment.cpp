@@ -39,6 +39,7 @@ void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvir
     SipKernel::freeSipKernels(rootDeviceEnvironment, memoryManager.get());
     if (rootDeviceEnvironment->builtins.get()) {
         rootDeviceEnvironment->builtins->freeSipKernels(memoryManager.get());
+        rootDeviceEnvironment->builtins.reset();
     }
     rootDeviceEnvironment->releaseDummyAllocation();
 }

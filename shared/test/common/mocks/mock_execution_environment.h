@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,8 @@
 
 namespace NEO {
 
+class BuiltIns;
+
 struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
     using BaseClass = RootDeviceEnvironment;
     using RootDeviceEnvironment::hwInfo;
@@ -25,6 +27,8 @@ struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
     void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) override;
     bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) override;
     bool initAilConfiguration() override;
+
+    static void resetBuiltins(RootDeviceEnvironment *rootDeviceEnvironment, BuiltIns *newValue);
 
     std::vector<bool> initOsInterfaceResults;
     uint32_t initOsInterfaceCalled = 0u;

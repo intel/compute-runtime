@@ -2321,7 +2321,7 @@ TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquired
     auto mockCompilerInterface = new MockCompilerInterface();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
     auto builtins = new BuiltIns;
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->builtins.reset(builtins);
+    MockRootDeviceEnvironment::resetBuiltins(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get(), builtins);
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
 
     const SipKernel &sipKernel = builtins->getSipKernel(SipKernelType::csr, *pDevice);

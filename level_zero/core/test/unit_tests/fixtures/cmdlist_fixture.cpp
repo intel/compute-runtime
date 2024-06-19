@@ -377,7 +377,7 @@ void AppendFillFixture::setUp() {
 
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     driverHandle = std::make_unique<Mock<MockDriverFillHandle>>();
@@ -539,7 +539,7 @@ void CommandQueueThreadArbitrationPolicyFixture::setUp() {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto executionEnvironment = new NEO::MockExecutionEnvironment();
     auto mockBuiltIns = new MockBuiltins();
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);

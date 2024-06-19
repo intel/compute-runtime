@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -149,7 +150,7 @@ struct MemoryGetIpcHandleTest : public ::testing::Test {
 
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         auto mockBuiltIns = new MockBuiltins();
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
+        MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<DriverHandleGetIpcHandleMock>();

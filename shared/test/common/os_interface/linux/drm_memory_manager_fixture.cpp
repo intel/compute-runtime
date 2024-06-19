@@ -52,7 +52,7 @@ void DrmMemoryManagerFixture::setUp(DrmMockCustom *mock, bool localMemoryEnabled
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMockCustom(*rootDeviceEnvironment)));
         rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i, false);
-        rootDeviceEnvironment->builtins.reset(new MockBuiltins);
+        MockRootDeviceEnvironment::resetBuiltins(rootDeviceEnvironment, new MockBuiltins);
         rootDeviceEnvironment->initGmm();
     }
 

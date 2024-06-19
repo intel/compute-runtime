@@ -474,7 +474,7 @@ TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSip
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
 
     const uint32_t contextId = 0u;
     std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
@@ -503,7 +503,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenGettingSipForContextThenCorr
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
     const uint32_t contextId = 0u;
@@ -533,7 +533,7 @@ TEST(DebugBindlessSip, givenTwoContextsWhenBindlessDebugSipIsRequestedThenEachSi
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
 
     const uint32_t context0Id = 0u;
     std::unique_ptr<OsContext> osContext0(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
@@ -571,7 +571,7 @@ TEST(DebugBindlessSip, givenFailingSipAllocationWhenBindlessDebugSipWithContextI
 
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
 
     const uint32_t contextId = 0u;
     std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
@@ -600,7 +600,7 @@ TEST(DebugBindlessSip, givenCorrectSipKernelWhenReleasingAllocationManuallyThenF
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
 
     const uint32_t contextId = 0u;
     std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
@@ -633,7 +633,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenSipIsInitializedThenBinaryIs
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
     auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
@@ -670,7 +670,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitialize
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
     auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
@@ -707,7 +707,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
     auto executionEnvironment = mockDevice->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
-    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
     auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
