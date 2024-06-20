@@ -96,11 +96,6 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendLaunchKernel(ze_kernel_handle_t kernelHandle, const ze_group_count_t &threadGroupDimensions,
                                            ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                            CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) = 0;
-    virtual ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
-                                                      const ze_group_count_t &launchKernelArgs,
-                                                      ze_event_handle_t hSignalEvent,
-                                                      uint32_t numWaitEvents,
-                                                      ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) = 0;
     virtual ze_result_t appendLaunchKernelIndirect(ze_kernel_handle_t kernelHandle,
                                                    const ze_group_count_t &pDispatchArgumentsBuffer,
                                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,

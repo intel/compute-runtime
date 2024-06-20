@@ -162,7 +162,11 @@ ze_result_t zeCommandListAppendLaunchCooperativeKernel(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchCooperativeKernel(kernelHandle, *launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, false);
+
+    L0::CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = true;
+
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(kernelHandle, *launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams, false);
 }
 
 ze_result_t zeCommandListAppendLaunchKernelIndirect(

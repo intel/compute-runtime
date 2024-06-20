@@ -450,8 +450,12 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     if (productHelper.isCooperativeEngineSupported(*defaultHwInfo)) {
         engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative, *defaultHwInfo);
     }
+
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
     pCommandList->initialize(device, engineGroupType, 0u);
-    auto result = pCommandList->appendLaunchCooperativeKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, false);
+    auto result = pCommandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -559,12 +563,15 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQue
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
     ze_result_t returnValue = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-    returnValue = pCommandList->appendLaunchCooperativeKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, false);
+    returnValue = pCommandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     void *alloc;

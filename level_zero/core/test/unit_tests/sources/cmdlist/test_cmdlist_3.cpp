@@ -1731,7 +1731,10 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
     auto &commandsToPatch = commandList->commandsToPatch;
     EXPECT_EQ(0u, commandsToPatch.size());
 
-    result = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, false);
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     if (fePropertiesSupport.computeDispatchAllWalker) {
@@ -1747,7 +1750,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
         EXPECT_EQ(0u, commandsToPatch.size());
     }
 
-    result = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     if (fePropertiesSupport.computeDispatchAllWalker) {
@@ -1772,7 +1775,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
         EXPECT_EQ(0u, commandsToPatch.size());
     }
 
-    result = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, false);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     if (fePropertiesSupport.computeDispatchAllWalker) {

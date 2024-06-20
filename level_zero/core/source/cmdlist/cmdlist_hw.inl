@@ -381,7 +381,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameBeginTag>(
             *commandContainer.getCommandStream(),
             *neoDevice,
-            "zeCommandListAppendLaunchKernel",
+            launchParams.isCooperative ? "zeCommandListAppendLaunchCooperativeKernel" : "zeCommandListAppendLaunchKernel",
             ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
     }
@@ -389,6 +389,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, launchParams.outListCommands, relaxedOrderingDispatch, true, true, launchParams.omitAddingWaitEventsResidency);
     if (ret) {
         return ret;
+    }
+
+    if (launchParams.isCooperative && device->getL0GfxCoreHelper().implicitSynchronizedDispatchForCooperativeKernelsAllowed()) {
+        enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::full);
     }
 
     appendSynchronizedDispatchInitializationSection();
@@ -419,53 +423,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
             *commandContainer.getCommandStream(),
             *neoDevice,
-            "zeCommandListAppendLaunchKernel",
+            launchParams.isCooperative ? "zeCommandListAppendLaunchCooperativeKernel" : "zeCommandListAppendLaunchKernel",
             callId);
     }
 
     return res;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchCooperativeKernel(ze_kernel_handle_t kernelHandle,
-                                                                                const ze_group_count_t &launchKernelArgs,
-                                                                                ze_event_handle_t hSignalEvent,
-                                                                                uint32_t numWaitEvents,
-                                                                                ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) {
-
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, waitEventHandles, nullptr, relaxedOrderingDispatch, true, true, false);
-    if (ret) {
-        return ret;
-    }
-
-    if (device->getL0GfxCoreHelper().implicitSynchronizedDispatchForCooperativeKernelsAllowed()) {
-        enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::full);
-    }
-
-    appendSynchronizedDispatchInitializationSection();
-
-    Event *event = nullptr;
-    if (hSignalEvent) {
-        event = Event::fromHandle(hSignalEvent);
-        event->resetKernelCountAndPacketUsedCount();
-    }
-
-    if (!handleCounterBasedEventOperations(event)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    CmdListKernelLaunchParams launchParams = {};
-    launchParams.isCooperative = true;
-
-    ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandle), launchKernelArgs,
-                                       event, launchParams);
-    addToMappedEventList(event);
-
-    handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event), false);
-
-    appendSynchronizedDispatchCleanupSection();
-
-    return ret;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

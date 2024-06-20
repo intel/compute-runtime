@@ -1204,9 +1204,12 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 
     bool stallingCmdRequired = productHelper.isComputeDispatchAllWalkerEnableInCfeStateRequired(device->getHwInfo());
 
-    verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, false), false, stallingCmdRequired);
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
 
-    verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, false), false, false);
+    verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false), false, stallingCmdRequired);
+
+    verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false), false, false);
 
     driverHandle->releaseImportedPointer(dstPtr);
 }
@@ -1274,6 +1277,9 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDi
 
     bool inOrderExecAlreadyEnabled = false;
 
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
     for (bool inOrderExecution : {false, true}) {
         if (inOrderExecution && !inOrderExecAlreadyEnabled) {
             whiteBoxCmdList->enableInOrderExecution();
@@ -1334,7 +1340,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDi
         }
 
         resetFlags();
-        verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), groupCount, nullptr, numWaitEvents, waitlist, false));
+        verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, numWaitEvents, waitlist, cooperativeParams, false));
     }
 
     driverHandle->releaseImportedPointer(dstPtr);
@@ -1605,10 +1611,13 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
                     false, false);
     }
 
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
     for (bool hasEventDependencies : {true, false}) {
         ze_event_handle_t *waitlist = hasEventDependencies ? &event : nullptr;
         uint32_t numWaitlistEvents = hasEventDependencies ? 1 : 0;
-        verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), groupCount, nullptr, numWaitlistEvents, waitlist, false),
+        verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, numWaitlistEvents, waitlist, cooperativeParams, false),
                     hasEventDependencies, hasEventDependencies);
     }
 

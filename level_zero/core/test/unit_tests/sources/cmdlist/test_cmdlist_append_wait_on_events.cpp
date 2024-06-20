@@ -923,7 +923,11 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
 
     ze_group_count_t groupCount{1, 1, 1};
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, false);
+
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
+    commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, cooperativeParams, false);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 }

@@ -1636,7 +1636,10 @@ HWTEST2_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenApp
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    returnValue = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, false);
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(event.get(), commandList->peekMappedEventList()[0]);
 }
@@ -1662,7 +1665,10 @@ HWTEST2_F(CommandListMappedTimestampTest, givenSignalEventWithoutMappedTimstampW
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    returnValue = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, false);
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(0u, commandList->peekMappedEventList().size());
 }
@@ -1688,7 +1694,10 @@ HWTEST2_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenApp
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    returnValue = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, false);
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     returnValue = commandList->appendBarrier(event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
