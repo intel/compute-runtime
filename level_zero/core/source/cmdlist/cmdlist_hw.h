@@ -381,6 +381,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool inOrderAtomicSignalingEnabled = false;
     bool allowCbWaitEventsNoopDispatch = false;
     bool copyOperationFenceSupported = false;
+    bool implicitSynchronizedDispatchForCooperativeKernelsAllowed = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

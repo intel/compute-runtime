@@ -219,6 +219,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto &l0GfxCoreHelper = device->getL0GfxCoreHelper();
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
@@ -249,6 +250,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->scratchAddressPatchingEnabled = (this->heaplessModeEnabled && !isImmediateType());
     this->copyOperationFenceSupported = (isCopyOnly() || isCopyOffloadEnabled()) && productHelper.isDeviceToHostCopySignalingFenceRequired();
     this->defaultPipelinedThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+    this->implicitSynchronizedDispatchForCooperativeKernelsAllowed = l0GfxCoreHelper.implicitSynchronizedDispatchForCooperativeKernelsAllowed();
     if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         this->defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
@@ -391,7 +393,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         return ret;
     }
 
-    if (launchParams.isCooperative && device->getL0GfxCoreHelper().implicitSynchronizedDispatchForCooperativeKernelsAllowed()) {
+    if (launchParams.isCooperative && this->implicitSynchronizedDispatchForCooperativeKernelsAllowed) {
         enableSynchronizedDispatch(NEO::SynchronizedDispatchMode::full);
     }
 
