@@ -5296,11 +5296,11 @@ HWTEST_F(CommandStreamReceiverHwHeaplessTest, whenHeaplessCommandStreamReceiverF
     EXPECT_ANY_THROW(csr->getCmdSizeForHeaplessPrologue(*pDevice));
     EXPECT_ANY_THROW(csr->handleAllocationsResidencyForHeaplessProlog(commandStream, *pDevice));
     EXPECT_ANY_THROW(csr->programHeaplessStateProlog(*pDevice, commandStream));
-    EXPECT_ANY_THROW(csr->handleAllocationsResidencyForflushTaskStateless(nullptr, nullptr, nullptr));
+    EXPECT_ANY_THROW(csr->handleAllocationsResidencyForflushTaskStateless(nullptr, nullptr, nullptr, *pDevice));
     EXPECT_ANY_THROW(csr->getRequiredCmdStreamHeaplessSize(csr->recordedDispatchFlags, *pDevice));
     EXPECT_ANY_THROW(csr->getRequiredCmdStreamHeaplessSizeAligned(csr->recordedDispatchFlags, *pDevice));
     EXPECT_ANY_THROW(csr->flushImmediateTaskStateless(commandStream, 0, csr->recordedImmediateDispatchFlags, *pDevice));
-    EXPECT_ANY_THROW(csr->handleImmediateFlushStatelessAllocationsResidency(0, commandStream));
+    EXPECT_ANY_THROW(csr->handleImmediateFlushStatelessAllocationsResidency(0, commandStream, *pDevice));
 
     EXPECT_FALSE(csr->heaplessStateInitialized);
 }

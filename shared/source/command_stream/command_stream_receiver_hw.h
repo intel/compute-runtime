@@ -198,7 +198,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programHeaplessStateProlog(Device &device, LinearStream &commandStream);
     void programStateBaseAddressHeapless(Device &device, LinearStream &commandStream);
     void programComputeModeHeapless(Device &device, LinearStream &commandStream);
-    void handleAllocationsResidencyForflushTaskStateless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh);
+    void handleAllocationsResidencyForflushTaskStateless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, Device &device);
     bool submitDependencyUpdate(TagNodeBase *tag) override;
 
   protected:
@@ -310,7 +310,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                                            ImmediateFlushData &flushData);
 
     void handleImmediateFlushStatelessAllocationsResidency(size_t csrEstimatedSize,
-                                                           LinearStream &csrStream);
+                                                           LinearStream &csrStream,
+                                                           Device &device);
 
     inline void handleImmediateFlushAllocationsResidency(Device &device,
                                                          LinearStream &immediateCommandStream,

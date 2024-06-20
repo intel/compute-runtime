@@ -532,6 +532,15 @@ TEST(ExecutionEnvironment, givenIncorrectZeAffinityMaskWhenExposeSubDevicesAsApi
     EXPECT_TRUE(executionEnvironment.mapOfSubDeviceIndices.empty());
 }
 
+TEST(ExecutionEnvironment, givenBuiltinsSetWhenRootDeviceEnvironmentIsReleasedThenBuiltinsIsReset) {
+    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.rootDeviceEnvironments[0]->builtins.reset(new BuiltIns);
+    executionEnvironment.releaseRootDeviceEnvironmentResources(executionEnvironment.rootDeviceEnvironments[0].get());
+    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->builtins);
+}
+
 TEST(ExecutionEnvironmentWithAILTests, whenAILConfigurationIsNullptrAndEnableAILFlagIsTrueWhenInitializingAILThenReturnFalse) {
     DebugManagerStateRestore restore;
     debugManager.flags.EnableAIL.set(true);

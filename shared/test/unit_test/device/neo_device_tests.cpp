@@ -1033,6 +1033,46 @@ TEST_F(DeviceTests, givenDeviceThreadGroupPreemptionWhenDebuggerDisabledThenStat
     EXPECT_FALSE(device->isStateSipRequired());
 }
 
+TEST_F(DeviceTests, WhenIsStateSipRequiredIsCalledThenCorrectValueIsReturned) {
+    struct MockRootDeviceEnvironment : RootDeviceEnvironment {
+        using RootDeviceEnvironment::RootDeviceEnvironment;
+        CompilerInterface *getCompilerInterface() override {
+            return compilerInterfaceReturnValue;
+        }
+        CompilerInterface *compilerInterfaceReturnValue = nullptr;
+    };
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    auto mockRootDeviceEnvironment = new MockRootDeviceEnvironment{*device->executionEnvironment};
+    auto backupenv = device->executionEnvironment->rootDeviceEnvironments[0].release();
+    device->executionEnvironment->rootDeviceEnvironments[0].reset(mockRootDeviceEnvironment);
+    device->executionEnvironment->rootDeviceEnvironments[0]->compilerInterface.release();
+    device->executionEnvironment->rootDeviceEnvironments[0]->debugger.release();
+
+    std::array<std::tuple<PreemptionMode, Debugger *, CompilerInterface *, bool>, 8> testParameters = {
+        {{PreemptionMode::Disabled, nullptr, nullptr, false},
+         {PreemptionMode::MidThread, nullptr, nullptr, false},
+         {PreemptionMode::Disabled, (Debugger *)0x1234, nullptr, false},
+         {PreemptionMode::MidThread, (Debugger *)0x1234, nullptr, false},
+
+         {PreemptionMode::Disabled, nullptr, (CompilerInterface *)0x1234, false},
+         {PreemptionMode::MidThread, nullptr, (CompilerInterface *)0x1234, true},
+         {PreemptionMode::Disabled, (Debugger *)0x1234, (CompilerInterface *)0x1234, true},
+         {PreemptionMode::MidThread, (Debugger *)0x1234, (CompilerInterface *)0x1234, true}}};
+
+    for (const auto &[preemptionMode, debugger, compilerInterface, expectedResult] : testParameters) {
+        device->setPreemptionMode(preemptionMode);
+        device->executionEnvironment->rootDeviceEnvironments[0]->debugger.release();
+        device->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(debugger);
+        mockRootDeviceEnvironment->compilerInterfaceReturnValue = compilerInterface;
+
+        EXPECT_EQ(expectedResult, device->isStateSipRequired());
+    }
+    device->executionEnvironment->rootDeviceEnvironments[0]->debugger.release();
+    mockRootDeviceEnvironment->compilerInterfaceReturnValue = nullptr;
+    delete device->executionEnvironment->rootDeviceEnvironments[0].release();
+    device->executionEnvironment->rootDeviceEnvironments[0].reset(backupenv);
+}
+
 HWTEST2_F(DeviceTests, GivenXeHpAndLaterThenDefaultPreemptionModeIsThreadGroup, IsWithinXeGfxFamily) {
     EXPECT_EQ(PreemptionMode::ThreadGroup, defaultHwInfo->capabilityTable.defaultPreemptionMode);
 }
@@ -1452,4 +1492,29 @@ HWTEST_F(DeviceTests, givenDebugFlagSetWhenCreatingSecondaryEnginesThenSkipSelec
     EXPECT_EQ(device->secondaryEngines.end(), device->secondaryEngines.find(aub_stream::ENGINE_CCS));
 
     executionEnvironment->decRefInternal();
+}
+
+TEST_F(DeviceTests, GivenDebuggingEnabledWhenDeviceIsInitializedThenL0DebuggerIsCreated) {
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+    EXPECT_NE(nullptr, device->getL0Debugger());
+}
+
+extern bool forceCreateNullptrDebugger;
+
+TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsInitializedThenErrorIsPrintedButNotReturned) {
+    VariableBackup backupForceCreateNullptrDebugger{&forceCreateNullptrDebugger, true};
+    DebugManagerStateRestore restorer;
+
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
+    ::testing::internal::CaptureStderr();
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+    auto output = testing::internal::GetCapturedStderr();
+
+    EXPECT_EQ(std::string("Debug mode is not enabled in the system.\n"), output);
+    EXPECT_EQ(nullptr, device->getL0Debugger());
 }

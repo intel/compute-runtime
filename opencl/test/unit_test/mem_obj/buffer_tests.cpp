@@ -641,6 +641,9 @@ struct CompressedBuffersTests : public ::testing::Test {
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         context = std::make_unique<MockContext>(device.get(), true);
         context->contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+
+        auto memoryManager = static_cast<MockMemoryManager *>(device->getExecutionEnvironment()->memoryManager.get());
+        memoryManager->allocate32BitGraphicsMemoryImplCalled = false;
     }
 
     cl_int retVal = CL_SUCCESS;

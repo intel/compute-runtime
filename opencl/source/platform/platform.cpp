@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -143,17 +143,6 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         UNRECOVERABLE_IF(!pDevice);
         pClDevice = new ClDevice{*pDevice, this};
         this->clDevices.push_back(pClDevice);
-
-        if (pClDevice->getDevice().getExecutionEnvironment()->isDebuggingEnabled()) {
-            const auto rootDeviceIndex = pClDevice->getDevice().getRootDeviceIndex();
-            auto rootDeviceEnvironment = pClDevice->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
-            rootDeviceEnvironment->initDebuggerL0(&pClDevice->getDevice());
-        }
-
-        if (pClDevice->getPreemptionMode() == PreemptionMode::MidThread) {
-            bool ret = SipKernel::initSipKernel(SipKernel::getSipKernelType(*pDevice), *pDevice);
-            UNRECOVERABLE_IF(!ret);
-        }
     }
 
     DEBUG_BREAK_IF(this->platformInfo);

@@ -542,8 +542,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
 
-    if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || debuggingEnabled) {
-
+    if (device.isStateSipRequired()) {
         GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, this->osContext).getSipAllocation();
         makeResident(*sipAllocation);
     }
@@ -2119,7 +2118,6 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidenc
     }
 
     if (device.isStateSipRequired()) {
-
         GraphicsAllocation *sipAllocation = SipKernel::getSipKernel(device, this->osContext).getSipAllocation();
         makeResident(*sipAllocation);
     }

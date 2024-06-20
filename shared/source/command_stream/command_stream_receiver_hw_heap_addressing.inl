@@ -36,7 +36,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskStateless(
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushStatelessAllocationsResidency(size_t csrEstimatedSize,
-                                                                                           LinearStream &csrStream) {
+                                                                                           LinearStream &csrStream,
+                                                                                           Device &device) {
     UNRECOVERABLE_IF(true);
 }
 
@@ -68,7 +69,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForHeaplessPrologue(Device 
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleAllocationsResidencyForflushTaskStateless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh) {
+void CommandStreamReceiverHw<GfxFamily>::handleAllocationsResidencyForflushTaskStateless(const IndirectHeap *dsh, const IndirectHeap *ioh,
+                                                                                         const IndirectHeap *ssh, Device &device) {
     UNRECOVERABLE_IF(true);
 }
 

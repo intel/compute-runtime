@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 namespace NEO {
 
@@ -31,6 +32,12 @@ struct DeviceFixture {
     HelperType &getHelper() const;
 
     const ReleaseHelper *getReleaseHelper();
+};
+
+struct DeviceWithoutSipFixture : DeviceFixture {
+    void setUp();
+    void tearDown();
+    DebugManagerStateRestore dbgRestorer;
 };
 
 } // namespace NEO

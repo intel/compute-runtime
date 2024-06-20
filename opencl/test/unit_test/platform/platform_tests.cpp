@@ -429,16 +429,6 @@ TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDevice
     EXPECT_EQ(2u, platform()->getClDevice(0)->getRootDeviceIndex());
 }
 
-TEST(PlatformInitTest, GivenDebuggingEnabledWhenPlatformIsInitializedThenL0DebuggerIsCreated) {
-    std::vector<std::unique_ptr<Device>> devices;
-    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
-    devices.push_back(std::make_unique<MockDevice>(executionEnvironment, 0));
-    auto status = platform()->initialize(std::move(devices));
-    EXPECT_TRUE(status);
-    EXPECT_NE(nullptr, platform()->getClDevice(0)->getDevice().getL0Debugger());
-}
-
 TEST(PlatformInitTest, GivenPreferredPlatformNameWhenPlatformIsInitializedThenOverridePlatformName) {
     std::vector<std::unique_ptr<Device>> devices;
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);

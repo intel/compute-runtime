@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -54,5 +55,21 @@ const ReleaseHelper *DeviceFixture::getReleaseHelper() {
 template ProductHelper &DeviceFixture::getHelper<ProductHelper>() const;
 template GfxCoreHelper &DeviceFixture::getHelper<GfxCoreHelper>() const;
 template CompilerProductHelper &DeviceFixture::getHelper<CompilerProductHelper>() const;
+
+void DeviceWithoutSipFixture::setUp() {
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::Disabled));
+    DeviceFixture::setUp();
+
+    for (auto &rootDeviceEnvironment : pDevice->executionEnvironment->rootDeviceEnvironments) {
+        for (auto &sipKernel : rootDeviceEnvironment->sipKernels) {
+            EXPECT_EQ(nullptr, sipKernel);
+        }
+    }
+    debugManager.flags.ForcePreemptionMode.set(dbgRestorer.debugVarSnapshot.ForcePreemptionMode.get());
+}
+
+void DeviceWithoutSipFixture::tearDown() {
+    DeviceFixture::tearDown();
+}
 
 } // namespace NEO

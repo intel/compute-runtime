@@ -177,7 +177,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenflushTaskThenDshAndIoh
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
-    auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::MidThread));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto &mockCsr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
     mockCsr.overrideDispatchPolicy(DispatchMode::batchedDispatch);
     mockCsr.useNewResourceImplicitFlush = false;
     mockCsr.useGpuIdleImplicitFlush = false;
@@ -187,8 +190,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionMode::MidThread;
-    auto sipType = SipKernel::getSipKernelType(*pDevice);
-    SipKernel::initSipKernel(sipType, *pDevice);
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
+    SipKernel::initSipKernel(sipType, *mockDevice);
 
     mockCsr.flushTask(commandStream,
                       0,
@@ -197,10 +200,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
                       &ssh,
                       taskLevel,
                       dispatchFlags,
-                      *pDevice);
+                      *mockDevice);
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation();
     bool found = false;
     for (auto allocation : cmdBuffer->surfaces) {
         if (allocation == sipAllocation) {
@@ -212,16 +215,19 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    pDevice->resetCommandStreamReceiver(mockCsr);
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::MidThread));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto mockCsr = new MockCsrHw2<FamilyType>(*mockDevice->executionEnvironment, mockDevice->getRootDeviceIndex(), mockDevice->getDeviceBitfield());
+    mockDevice->resetCommandStreamReceiver(mockCsr);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionMode::MidThread;
-    auto sipType = SipKernel::getSipKernelType(*pDevice);
-    SipKernel::initSipKernel(sipType, *pDevice);
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
+    SipKernel::initSipKernel(sipType, *mockDevice);
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -230,9 +236,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
                        &ssh,
                        taskLevel,
                        dispatchFlags,
-                       *pDevice);
+                       *mockDevice);
 
-    auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
+    auto sipAllocation = SipKernel::getSipKernel(*mockDevice, nullptr).getSipAllocation();
     bool found = false;
     for (auto allocation : mockCsr->copyOfAllocations) {
         if (allocation == sipAllocation) {

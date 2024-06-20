@@ -1086,21 +1086,21 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenProcessStartsMidResetWhenCa
 }
 
 TEST(SysmanGlobalOperationsTest, GivenValidDevicePciPathWhenPreparingDeviceEnvironmentThenPrepareDeviceEnvironmentReturnsTrue) {
-    auto device1 = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
+    MockExecutionEnvironment executionEnvironment;
     std::string pciPath1 = "0000:00:02.0";
-    EXPECT_TRUE(DeviceFactory::prepareDeviceEnvironment(*device1->getExecutionEnvironment(), pciPath1, 0u));
+    EXPECT_TRUE(DeviceFactory::prepareDeviceEnvironment(executionEnvironment, pciPath1, 0u));
 }
 
 TEST(SysmanGlobalOperationsTest, GivenValidDevicePciPathWhoseFileDescriptorOpenFailedThenPrepareDeviceEnvironmentReturnsFalse) {
-    auto device2 = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
+    MockExecutionEnvironment executionEnvironment;
     std::string pciPath2 = "0000:00:03.0";
-    EXPECT_FALSE(DeviceFactory::prepareDeviceEnvironment(*device2->getExecutionEnvironment(), pciPath2, 0u));
+    EXPECT_FALSE(DeviceFactory::prepareDeviceEnvironment(executionEnvironment, pciPath2, 0u));
 }
 
 TEST(SysmanGlobalOperationsTest, GivenNotExisitingPciPathWhenPrepareDeviceEnvironmentIsCalledThenFalseIsReturned) {
-    auto device3 = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
+    MockExecutionEnvironment executionEnvironment;
     std::string pciPath3 = "0000:00:04.0";
-    EXPECT_FALSE(DeviceFactory::prepareDeviceEnvironment(*device3->getExecutionEnvironment(), pciPath3, 0u));
+    EXPECT_FALSE(DeviceFactory::prepareDeviceEnvironment(executionEnvironment, pciPath3, 0u));
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingDeviceGetStateThenSuccessResultIsReturned) {

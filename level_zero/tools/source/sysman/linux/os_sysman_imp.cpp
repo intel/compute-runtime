@@ -385,7 +385,6 @@ ze_result_t LinuxSysmanImp::initDevice() {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
     static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->updateRootDeviceBitFields(neoDevice);
-    static_cast<L0::DriverHandleImp *>(device->getDriverHandle())->enableRootDeviceDebugger(neoDevice);
     Device::deviceReinit(device->getDriverHandle(), device, neoDevice, &result);
     reInitSysmanDeviceResources();
 

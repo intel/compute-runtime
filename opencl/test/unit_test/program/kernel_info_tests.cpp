@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
@@ -90,11 +91,16 @@ class MyMemoryManager : public OsAgnosticMemoryManager {
 };
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateMemoryThenReturnsFalse) {
+    VariableBackup<bool> useMockSip(&MockSipData::useMockSip);
     KernelInfo kernelInfo;
     auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
     executionEnvironment->memoryManager.reset(new MyMemoryManager(*executionEnvironment));
     if (executionEnvironment->memoryManager->isLimitedGPU(0)) {
         GTEST_SKIP();
+    }
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
+    if (gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()) {
+        useMockSip = true;
     }
     auto device = std::unique_ptr<Device>(Device::create<RootDevice>(executionEnvironment, mockRootDeviceIndex));
     auto retVal = kernelInfo.createKernelAllocation(*device, false);

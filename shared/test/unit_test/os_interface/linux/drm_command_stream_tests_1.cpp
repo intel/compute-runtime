@@ -62,17 +62,16 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDebugFlagSetWhenSubmittingThenCall
     uint32_t expectedExitCounter = 13;
 
     debugManager.flags.ExitOnSubmissionNumber.set(expectedExitCounter);
+    debugManager.flags.ForcePreemptionMode.set(PreemptionMode::Disabled);
 
     csr->initializeTagAllocation();
 
     auto &cs = csr->getCS();
     IndirectHeap ih(cs.getGraphicsAllocation());
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    dispatchFlags.preemptionMode = PreemptionMode::Disabled;
 
     executionEnvironment.incRefInternal();
     std::unique_ptr<MockDevice> device(MockDevice::create<MockDevice>(&executionEnvironment, 0));
-    device->setPreemptionMode(PreemptionMode::Disabled);
 
     bool bcsSupported = false;
     for (auto &engine : csr->getGfxCoreHelper().getGpgpuEngineInstances(device->getRootDeviceEnvironment())) {
@@ -582,7 +581,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
 
     EXPECT_EQ(testedCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
 
-    int ioctlUserPtrCnt = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 4 : 3;
+    int ioctlUserPtrCnt = 3;
     ioctlUserPtrCnt += testedCsr->clearColorAllocation ? 1 : 0;
 
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctlCnt.total);
@@ -662,7 +661,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     }
 
     int ioctlExecCnt = 1;
-    int ioctlUserPtrCnt = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 3 : 2;
+    int ioctlUserPtrCnt = 2;
     ioctlUserPtrCnt += testedCsr->clearColorAllocation ? 1 : 0;
     EXPECT_EQ(ioctlExecCnt, this->mock->ioctlCnt.execbuffer2);
     EXPECT_EQ(ioctlUserPtrCnt, this->mock->ioctlCnt.gemUserptr);

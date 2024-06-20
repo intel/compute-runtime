@@ -35,8 +35,8 @@ struct L0DebuggerWindowsFixture {
     void setUp() {
         debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
         executionEnvironment = new NEO::ExecutionEnvironment;
-        executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+        executionEnvironment->prepareRootDeviceEnvironments(1);
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         auto osEnvironment = new OsEnvironmentWin();
         gdi = new MockGdi();
@@ -223,48 +223,6 @@ TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachAvailabl
 
     ze_result_t result = driverHandle->initialize(std::move(devices));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsPrintedButNotReturned) {
-    DebugManagerStateRestore restorer;
-
-    auto executionEnvironment = new NEO::ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
-
-    WddmEuDebugInterfaceMock *wddm = new WddmEuDebugInterfaceMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    wddm->callBaseDestroyAllocations = false;
-    wddm->callBaseMapGpuVa = false;
-    wddm->callBaseWaitFromCpu = false;
-
-    auto osInterface = new OSInterface();
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
-    wddm->init();
-    executionEnvironment->memoryManager.reset(new MockWddmMemoryManager(*executionEnvironment));
-
-    auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
-    NEO::DeviceVector devices;
-    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-
-    driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
-    wddm->debugAttachAvailable = false;
-
-    ::testing::internal::CaptureStderr();
-
-    NEO::debugManager.flags.PrintDebugMessages.set(1);
-    ze_result_t result = driverHandle->initialize(std::move(devices));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    NEO::debugManager.flags.PrintDebugMessages.set(0);
-    auto output = testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string("Debug mode is not enabled in the system.\n"), output);
-
-    EXPECT_EQ(NEO::DebuggingMode::disabled, driverHandle->enableProgramDebugging);
-    EXPECT_EQ(nullptr, neoDevice->getL0Debugger());
 }
 
 } // namespace ult

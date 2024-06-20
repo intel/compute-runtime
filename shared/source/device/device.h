@@ -187,7 +187,7 @@ class Device : public ReferenceTrackedObject<Device> {
     MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
     bool isAnyDirectSubmissionEnabled();
     bool isStateSipRequired() const {
-        return getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr;
+        return (getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr) && getCompilerInterface();
     }
 
     MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt);

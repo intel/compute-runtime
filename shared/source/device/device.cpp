@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/submission_status.h"
@@ -227,6 +228,21 @@ bool Device::createDeviceImpl() {
 
     if (!createEngines()) {
         return false;
+    }
+
+    if (getExecutionEnvironment()->isDebuggingEnabled()) {
+        const auto rootDeviceIndex = getRootDeviceIndex();
+        auto rootDeviceEnvironment = getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
+        rootDeviceEnvironment->initDebuggerL0(this);
+        if (rootDeviceEnvironment->debugger == nullptr) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Debug mode is not enabled in the system.\n");
+        }
+    }
+
+    if (this->isStateSipRequired()) {
+        bool ret = SipKernel::initSipKernel(SipKernel::getSipKernelType(*this), *this);
+        UNRECOVERABLE_IF(!ret);
     }
 
     getDefaultEngine().osContext->setDefaultContext(true);

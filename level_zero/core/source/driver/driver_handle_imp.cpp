@@ -226,14 +226,6 @@ void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &ne
     entry->second = neoDevice->getDeviceBitfield();
 }
 
-void DriverHandleImp::enableRootDeviceDebugger(std::unique_ptr<NEO::Device> &neoDevice) {
-    if (enableProgramDebugging != NEO::DebuggingMode::disabled) {
-        const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
-        auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
-        rootDeviceEnvironment->initDebuggerL0(neoDevice.get());
-    }
-}
-
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
     bool multiOsContextDriver = false;
     for (auto &neoDevice : neoDevices) {
@@ -250,15 +242,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         }
 
         const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
-
-        auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
-        if (osInterface && !osInterface->isDebugAttachAvailable() && enableProgramDebugging != NEO::DebuggingMode::disabled) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                  "Debug mode is not enabled in the system.\n");
-            enableProgramDebugging = NEO::DebuggingMode::disabled;
-        }
-
-        enableRootDeviceDebugger(neoDevice);
 
         this->rootDeviceIndices.pushUnique(rootDeviceIndex);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -223,6 +223,9 @@ TEST_F(DeferrableAllocationDeletionTest, givenAllocationUsedByUnregisteredEngine
     DeferrableAllocationDeletion deletion{*memoryManager, *allocation};
 
     device.reset();
+    for (const auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
+        executionEnvironment->releaseRootDeviceEnvironmentResources(rootDeviceEnvironment.get());
+    }
     executionEnvironment->rootDeviceEnvironments.clear();
     EXPECT_EQ(0u, memoryManager->getRegisteredEngines(rootDeviceIndex).size());
     EXPECT_TRUE(allocation->isUsed());

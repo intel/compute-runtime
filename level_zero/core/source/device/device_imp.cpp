@@ -1368,9 +1368,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
 
     if (neoDevice->getDebugger() || neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
         if (neoDevice->getCompilerInterface()) {
-            bool ret = NEO::SipKernel::initSipKernel(NEO::SipKernel::getSipKernelType(*neoDevice), *neoDevice);
-            UNRECOVERABLE_IF(!ret);
-
             if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == NEO::DebuggingMode::offline) {
                 if (NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getCtxOffset() == 0) {
                     NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
