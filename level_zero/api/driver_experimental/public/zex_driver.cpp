@@ -5,16 +5,9 @@
  *
  */
 
-#include "shared/source/helpers/string.h"
-
 #include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/include/ze_intel_gpu.h"
-
-#include "driver_version.h"
-
-#include <string>
 
 namespace L0 {
 
@@ -42,25 +35,6 @@ zexDriverGetHostPointerBaseAddress(
 }
 
 } // namespace L0
-
-ze_result_t ZE_APICALL
-zeIntelGetDriverVersionString(
-    ze_driver_handle_t hDriver,
-    char *pDriverVersion,
-    size_t *pVersionSize) {
-    ze_api_version_t apiVersion;
-    L0::DriverHandle::fromHandle(hDriver)->getApiVersion(&apiVersion);
-    std::string driverVersionString = std::to_string(ZE_MAJOR_VERSION(apiVersion)) + "." + std::to_string(ZE_MINOR_VERSION(apiVersion)) + "." + std::to_string(NEO_VERSION_BUILD);
-    if (NEO_VERSION_HOTFIX > 0) {
-        driverVersionString += "+" + std::to_string(NEO_VERSION_HOTFIX);
-    }
-    if (*pVersionSize == 0) {
-        *pVersionSize = strlen(driverVersionString.c_str());
-        return ZE_RESULT_SUCCESS;
-    }
-    driverVersionString.copy(pDriverVersion, *pVersionSize, 0);
-    return ZE_RESULT_SUCCESS;
-}
 
 extern "C" {
 
