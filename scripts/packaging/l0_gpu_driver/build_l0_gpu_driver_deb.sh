@@ -32,10 +32,10 @@ source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/functions.sh"
 source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/l0_gpu_driver/l0_gpu_driver.sh"
 
 get_api_version     # API_VERSION-API_VERSION_SRC and API_DEB_MODEL_LINK
-get_l0_gpu_driver_version	# NEO_L0_VERSION_MAJOR.NEO_L0_VERSION_MINOR.NEO_L0_VERSION_PATCH.NEO_L0_VERSION_HOTFIX
+get_l0_gpu_driver_version	# NEO_L0_VERSION_MAJOR.NEO_L0_VERSION_MINOR.NEO_L0_VERSION_PATCH
 
 if [ -z "${BRANCH_SUFFIX}" ]; then
-    VERSION="${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_L0_VERSION_PATCH}-${NEO_L0_VERSION_HOTFIX}${API_DEB_MODEL_LINK}"
+    VERSION="${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_L0_VERSION_PATCH}${API_DEB_MODEL_LINK}"
 else
     VERSION="${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_L0_VERSION_PATCH}${API_VERSION}-${NEO_L0_VERSION_HOTFIX}${API_VERSION_SRC}${API_DEB_MODEL_LINK}"
 fi
@@ -85,7 +85,6 @@ fi
 
 # Update rules file with new version
 perl -pi -e "s/^ver = .*/ver = $NEO_L0_VERSION_PATCH/" $BUILD_DIR/debian/rules
-perl -pi -e "s/^ver_hf = .*/ver_hf = $NEO_L0_VERSION_HOTFIX/" $BUILD_DIR/debian/rules
 
 #needs a top level CMAKE file
 cat << EOF | tee $BUILD_DIR/CMakeLists.txt

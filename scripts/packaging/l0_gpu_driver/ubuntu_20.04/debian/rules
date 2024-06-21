@@ -1,6 +1,5 @@
 #!/usr/bin/make -f
 ver = xxx
-ver_hf = 0
 
 %:
 	dh $@ --builddir build/ --buildsystem=cmake+ninja
@@ -17,7 +16,6 @@ override_dh_auto_configure:
 	dh_auto_configure -- ${NEO_BUILD_EXTRA_OPTS} \
 		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
 		-DNEO_VERSION_BUILD=$(ver) \
-		-DNEO_VERSION_HOTFIX=$(ver_hf) \
 		-DNEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS} \
 		-DNEO_ENABLE_i915_PRELIM_DETECTION=${NEO_ENABLE_i915_PRELIM_DETECTION} \
 		-DNEO_ENABLE_XE_EU_DEBUG_SUPPORT=${NEO_ENABLE_XE_EU_DEBUG_SUPPORT} \

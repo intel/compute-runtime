@@ -4,7 +4,6 @@
 %global ver xxx
 %global rel xxx
 %global build_id xxx
-%global hotfix_id xxx
 %global NEO_RELEASE_WITH_REGKEYS FALSE
 %global NEO_ENABLE_XE_EU_DEBUG_SUPPORT FALSE
 %global NEO_I915_PRELIM_HEADERS_DIR %{nil}
@@ -73,7 +72,6 @@ Intel(R) Graphics Compute Runtime for oneAPI Level Zero - development headers
 %cmake .. \
    -GNinja ${NEO_BUILD_EXTRA_OPTS} \
    -DNEO_VERSION_BUILD=%{build_id} \
-   -DNEO_VERSION_HOTFIX=%{hotfix_id} \
    -DCMAKE_BUILD_TYPE=%{build_type} \
    -DNEO_BUILD_WITH_OCL=FALSE \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
