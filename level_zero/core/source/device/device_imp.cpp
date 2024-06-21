@@ -28,7 +28,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
@@ -39,7 +38,6 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
-#include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include "level_zero/api/driver_experimental/public/zex_module.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -56,11 +54,9 @@
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
-#include "level_zero/core/source/rtas/rtas.h"
 #include "level_zero/core/source/sampler/sampler.h"
 #include "level_zero/include/ze_intel_gpu.h"
 #include "level_zero/tools/source/debug/debug_session.h"
-#include "level_zero/tools/source/debug/debug_session_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
@@ -620,7 +616,15 @@ ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
         pP2PProperties->flags = ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS;
         if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported &&
             peerDevice->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported) {
-            pP2PProperties->flags |= ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS;
+            if (this->getNEODevice()->getRootDeviceIndex() == peerDevice->getNEODevice()->getRootDeviceIndex()) {
+                pP2PProperties->flags |= ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS;
+            } else {
+                ze_device_p2p_bandwidth_exp_properties_t p2pBandwidthProperties{};
+                getP2PPropertiesDirectFabricConnection(peerDevice, &p2pBandwidthProperties);
+                if (std::max(p2pBandwidthProperties.physicalBandwidth, p2pBandwidthProperties.logicalBandwidth) > 0u) {
+                    pP2PProperties->flags |= ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS;
+                }
+            }
         }
     }
 
