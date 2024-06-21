@@ -329,6 +329,16 @@ class CommandStreamReceiver {
         requiresInstructionCacheFlush = true;
     }
 
+    MOCKABLE_VIRTUAL bool checkDcFlushRequiredForDcMitigationAndReset() {
+        auto ret = this->requiresDcFlush;
+        this->requiresDcFlush = false;
+        return ret;
+    }
+
+    void registerDcFlushForDcMitigation() {
+        this->requiresDcFlush = true;
+    }
+
     bool isLocalMemoryEnabled() const { return localMemoryEnabled; }
 
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
@@ -637,6 +647,7 @@ class CommandStreamReceiver {
     bool nTo1SubmissionModelEnabled = false;
     bool lastSystolicPipelineSelectMode = false;
     bool requiresInstructionCacheFlush = false;
+    bool requiresDcFlush = false;
 
     bool localMemoryEnabled = false;
     bool pageTableManagerInitialized = false;

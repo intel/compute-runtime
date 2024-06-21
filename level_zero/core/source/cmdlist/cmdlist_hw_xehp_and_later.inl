@@ -454,6 +454,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (kernelImp->usesRayTracing()) {
+        if (this->device->getProductHelper().isDcFlushMitigated()) {
+            this->requiresDcFlushForDcMitigation = true;
+        }
+
         NEO::PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

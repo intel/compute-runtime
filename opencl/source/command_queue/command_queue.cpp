@@ -633,8 +633,13 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
         memObject->acquireCount--;
     }
 
-    if (isImageReleased && this->getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled()) {
-        this->getGpgpuCommandStreamReceiver().sendRenderStateCacheFlush();
+    if (this->getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled()) {
+        if (this->getDevice().getProductHelper().isDcFlushMitigated()) {
+            this->getGpgpuCommandStreamReceiver().registerDcFlushForDcMitigation();
+            this->getGpgpuCommandStreamReceiver().sendRenderStateCacheFlush();
+        } else if (isImageReleased) {
+            this->getGpgpuCommandStreamReceiver().sendRenderStateCacheFlush();
+        }
     }
 
     auto status = enqueueMarkerWithWaitList(

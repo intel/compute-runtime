@@ -1368,6 +1368,38 @@ HWTEST_F(CommandQueueTests, givenDirectSubmissionAndSharedImageWhenReleasingShar
     result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
     EXPECT_EQ(result, CL_SUCCESS);
     EXPECT_TRUE(ultCsr->renderStateCacheFlushed);
+    EXPECT_EQ(ultCsr->renderStateCacheDcFlushForced, context.getDevice(0)->getProductHelper().isDcFlushMitigated());
+}
+
+HWTEST_F(CommandQueueTests, givenDcFlushMitigationAndDirectSubmissionAndBufferWhenReleasingSharedObjectThenFlushRenderStateCacheAndForceDcFlush) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowDcFlush.set(0);
+
+    MockContext context;
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
+    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
+
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(&context));
+    buffer->setSharingHandler(mockSharingHandler);
+    buffer->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedBuffer);
+
+    cl_mem memObject = buffer.get();
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = &memObject;
+
+    cl_int result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ.getGpgpuCommandStreamReceiver());
+    ultCsr->directSubmissionAvailable = true;
+    ultCsr->callBaseSendRenderStateCacheFlush = false;
+    ultCsr->flushReturnValue = SubmissionStatus::success;
+    EXPECT_FALSE(ultCsr->renderStateCacheFlushed);
+
+    result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+    EXPECT_EQ(ultCsr->renderStateCacheFlushed, context.getDevice(0)->getProductHelper().isDcFlushMitigated());
+    EXPECT_EQ(ultCsr->renderStateCacheDcFlushForced, context.getDevice(0)->getProductHelper().isDcFlushMitigated());
 }
 
 TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandlerWithEventThenReturnSuccess) {

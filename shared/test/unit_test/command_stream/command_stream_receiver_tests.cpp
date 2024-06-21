@@ -3440,6 +3440,37 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFlushPipeControlWhenFlushWithStateCac
     EXPECT_TRUE(UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(commandStreamReceiver, commandStreamReceiver.commandStream));
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushForcedWhenSendRenderStateCacheFlushThenExpectDcFlush) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.registerDcFlushForDcMitigation();
+    commandStreamReceiver.sendRenderStateCacheFlush();
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parsePipeControl = true;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    hwParserCsr.findHardwareCommands<FamilyType>();
+
+    bool stateCacheFlushFound = false;
+    auto itorPipeControl = hwParserCsr.pipeControlList.begin();
+    while (itorPipeControl != hwParserCsr.pipeControlList.end()) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
+
+        if (pipeControl->getDcFlushEnable() &&
+            pipeControl->getRenderTargetCacheFlushEnable() &&
+            pipeControl->getStateCacheInvalidationEnable() &&
+            pipeControl->getTextureCacheInvalidationEnable() &&
+            ((commandStreamReceiver.isTlbFlushRequiredForStateCacheFlush() && pipeControl->getTlbInvalidate()) || (!commandStreamReceiver.isTlbFlushRequiredForStateCacheFlush() && !pipeControl->getTlbInvalidate()))) {
+            stateCacheFlushFound = true;
+            break;
+        }
+        itorPipeControl++;
+    }
+
+    EXPECT_TRUE(stateCacheFlushFound);
+}
+
 HWTEST2_F(CommandStreamReceiverHwTest,
           givenRayTracingAllocationPresentWhenFlushingTaskThenDispatchBtdStateCommandOnceAndResidentAlways,
           IsAtLeastXeHpCore) {

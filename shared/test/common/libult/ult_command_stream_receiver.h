@@ -256,6 +256,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         downloadAllocationCalled = true;
     }
 
+    bool checkDcFlushRequiredForDcMitigationAndReset() override {
+        this->registeredDcFlushForDcFlushMitigation = this->requiresDcFlush;
+        return BaseClass::checkDcFlushRequiredForDcMitigationAndReset();
+    }
+
     WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         std::lock_guard<std::mutex> guard(mutex);
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
@@ -457,6 +462,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     SubmissionStatus sendRenderStateCacheFlush() override {
         this->renderStateCacheFlushed = true;
+        this->renderStateCacheDcFlushForced = this->requiresDcFlush;
         if (callBaseSendRenderStateCacheFlush) {
             return BaseClass::sendRenderStateCacheFlush();
         }
@@ -523,6 +529,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
 
     bool renderStateCacheFlushed = false;
+    bool renderStateCacheDcFlushForced = false;
     bool cpuCopyForHostPtrSurfaceAllowed = false;
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
@@ -551,6 +558,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool isKmdWaitOnTaskCountAllowedValue = false;
     bool stopDirectSubmissionCalled = false;
     bool stopDirectSubmissionCalledBlocking = false;
+    bool registeredDcFlushForDcFlushMitigation = false;
 };
 
 } // namespace NEO

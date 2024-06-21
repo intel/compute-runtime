@@ -369,6 +369,8 @@ struct CommandList : _ze_command_list_handle_t {
         return taskCountUpdateFenceRequired;
     }
 
+    void registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr);
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
@@ -455,6 +457,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool heaplessStateInitEnabled = false;
     bool scratchAddressPatchingEnabled = false;
     bool taskCountUpdateFenceRequired = false;
+    bool requiresDcFlushForDcMitigation = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

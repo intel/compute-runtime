@@ -89,6 +89,13 @@ void CommandList::removeMemoryPrefetchAllocations() {
     }
 }
 
+void CommandList::registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr) {
+    if (this->requiresDcFlushForDcMitigation) {
+        csr.registerDcFlushForDcMitigation();
+        this->requiresDcFlushForDcMitigation = false;
+    }
+}
+
 NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload) {
     auto allocation = hostPtrMap.lower_bound(buffer);
     if (allocation != hostPtrMap.end()) {

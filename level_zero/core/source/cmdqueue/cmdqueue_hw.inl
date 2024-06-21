@@ -764,6 +764,8 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
             this->partitionCount = std::max(this->partitionCount, commandList->getPartitionCount());
 
             ctx.cmdListScratchAddressPatchingEnabled |= commandList->getCmdListScratchAddressPatchingEnabled();
+
+            commandList->registerCsrDcFlushForDcMitigation(*this->getCsr());
         }
 
         makeResidentAndMigrate(ctx.isMigrationRequested, commandContainer.getResidencyContainer());
@@ -1307,6 +1309,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncRegular(
 
     NEO::PipeControlArgs args;
     args.dcFlushEnable = this->csr->getDcFlushSupport();
+    args.dcFlushEnable |= this->csr->checkDcFlushRequiredForDcMitigationAndReset();
     args.workloadPartitionOffset = this->partitionCount > 1;
     args.notifyEnable = this->csr->isUsedNotifyEnableForPostSync();
     NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
