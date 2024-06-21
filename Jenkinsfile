@@ -7,5 +7,5 @@
  *
  */
 
-dependenciesRevision='10d17685b6098f57179e620da876bd45cf1be90f-2893'
+dependenciesRevision='c213379ee6c8099914ad9ed5c37243530f8d4771-2900'
 kernelVersion='dev-5582'
