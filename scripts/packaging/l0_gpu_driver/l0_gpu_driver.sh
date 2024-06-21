@@ -24,6 +24,5 @@ get_l0_gpu_driver_version() {
     unset __NEO_L0_VERSION_PATCH_TMP
     __NEO_L0_VERSION_HOTFIX_TMP=$(echo $NEO_TAG | awk -F '-' '{ if(NF>1) { print $2; } }')
     NEO_L0_VERSION_HOTFIX="${NEO_L0_VERSION_HOTFIX:-$__NEO_L0_VERSION_HOTFIX_TMP}"
-    NEO_L0_VERSION_HOTFIX="${NEO_L0_VERSION_HOTFIX:-0}"
     unset __NEO_L0_VERSION_HOTFIX_TMP
 }

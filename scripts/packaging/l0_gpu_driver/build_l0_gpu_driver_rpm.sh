@@ -47,7 +47,7 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     source "${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/l0_gpu_driver/l0_gpu_driver.sh"
 
     get_api_version                # API_VERSION-API_VERSION_SRC and API_RPM_MODEL_LINK
-    get_l0_gpu_driver_version      # NEO_L0_VERSION_MAJOR.NEO_L0_VERSION_MINOR.NEO_L0_VERSION_PATCH.NEO_L0_VERSION_HOTFIX
+    get_l0_gpu_driver_version      # NEO_L0_VERSION_MAJOR.NEO_L0_VERSION_MINOR.NEO_L0_VERSION_PATCH
 
     VERSION="${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_L0_VERSION_PATCH}${API_VERSION}"
     RELEASE="${NEO_L0_VERSION_HOTFIX}${API_VERSION_SRC}${API_RPM_MODEL_LINK}"
@@ -77,7 +77,6 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     perl -pi -e "s/^%global rel .*/%global rel ${RELEASE}/" $SPEC
     perl -pi -e "s/^%global NEO_RELEASE_WITH_REGKEYS .*/%global NEO_RELEASE_WITH_REGKEYS ${RELEASE_WITH_REGKEYS}/" $SPEC
     perl -pi -e "s/^%global build_id .*/%global build_id ${NEO_L0_VERSION_PATCH}/" $SPEC
-    perl -pi -e "s/^%global hotfix_id .*/%global hotfix_id ${NEO_L0_VERSION_HOTFIX}/" $SPEC
 
     rpmbuild --define "_topdir $BUILD_DIR" -bs $SPEC --define 'build_type ${CMAKE_BUILD_TYPE}' "${build_args[@]}"
     mkdir -p ${REPO_DIR}/../output/SRPMS
