@@ -5,6 +5,8 @@
  *
  */
 
+#pragma once
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
