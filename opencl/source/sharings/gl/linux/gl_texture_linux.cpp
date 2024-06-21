@@ -39,9 +39,11 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
 
-    /* Prepare export request */
+    /* Prepare flush & export request */
     struct mesa_glinterop_export_in texIn = {};
     struct mesa_glinterop_export_out texOut = {};
+    struct mesa_glinterop_flush_out flushOut = {};
+    int fenceFd = -1;
 
     texIn.version = 2;
     texIn.target = getBaseTargetType(target);
@@ -69,13 +71,22 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         return nullptr;
     }
 
+    flushOut.version = 1;
+    flushOut.fence_fd = &fenceFd;
+
     texOut.version = 2;
 
     /* Call MESA interop */
     GLSharingFunctionsLinux *sharingFunctions = context->getSharing<GLSharingFunctionsLinux>();
+    bool success;
+    int retValue;
 
-    int retValue = sharingFunctions->exportObject(&texIn, &texOut);
-    if ((retValue != MESA_GLINTEROP_SUCCESS) || (texOut.version != 2)) {
+    success = sharingFunctions->flushObjectsAndWait(1, &texIn, &flushOut, &retValue);
+    if (success) {
+        retValue = sharingFunctions->exportObject(&texIn, &texOut);
+    }
+
+    if (!success || (retValue != MESA_GLINTEROP_SUCCESS) || (texOut.version != 2)) {
         switch (retValue) {
         case MESA_GLINTEROP_INVALID_DISPLAY:
         case MESA_GLINTEROP_INVALID_CONTEXT:

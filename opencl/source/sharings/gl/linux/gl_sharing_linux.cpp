@@ -122,10 +122,13 @@ GLboolean GLSharingFunctionsLinux::initGLFunctions() {
 
     return 1;
 }
-bool GLSharingFunctionsLinux::flushObjectsAndWait(unsigned count, struct mesa_glinterop_export_in *resources, struct mesa_glinterop_flush_out *out) {
+bool GLSharingFunctionsLinux::flushObjectsAndWait(unsigned count, struct mesa_glinterop_export_in *resources, struct mesa_glinterop_flush_out *out, int *retValPtr) {
     /* Call MESA interop */
     int retValue = flushObjects(1, resources, out);
-    if (retValue != MESA_GLINTEROP_SUCCESS) {
+    if (retValPtr) {
+        *retValPtr = retValue;
+    }
+    if ((retValue != MESA_GLINTEROP_SUCCESS) && (out->version == 1)) {
         return false;
     }
     auto fenceFd = *out->fence_fd;
