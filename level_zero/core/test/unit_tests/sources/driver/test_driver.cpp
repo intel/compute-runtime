@@ -38,6 +38,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+#include "level_zero/include/ze_intel_gpu.h"
 
 #include "driver_version.h"
 
@@ -1255,6 +1256,7 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexDriverReleaseImportedPointer) expectedRelease = L0::zexDriverReleaseImportedPointer;
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
     decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = L0::zexKernelGetBaseAddress;
+    decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = zeIntelGetDriverVersionString;
 
     void *funPtr = nullptr;
 
@@ -1273,6 +1275,10 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     result = zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetBaseAddress", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(expectedKernelGetBaseAddress, reinterpret_cast<decltype(&zexKernelGetBaseAddress)>(funPtr));
+
+    result = zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelGetDriverVersionString", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(expectedIntelGetDriverVersionString, reinterpret_cast<decltype(&zeIntelGetDriverVersionString)>(funPtr));
 }
 
 TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenExpectProperBehavior) {
@@ -1292,6 +1298,18 @@ TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenEx
 
     result = zexDriverReleaseImportedPointer(driverHandle, testPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(DriverExperimentalApiTest, givenGetVersionStringAPIExistsThenGetCurrentVersionString) {
+    size_t sizeOfDriverString = 0;
+    auto result = zeIntelGetDriverVersionString(driverHandle, nullptr, &sizeOfDriverString);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(sizeOfDriverString, 0u);
+    char *driverVersionString = reinterpret_cast<char *>(malloc(sizeOfDriverString * sizeof(char)));
+    result = zeIntelGetDriverVersionString(driverHandle, driverVersionString, &sizeOfDriverString);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE("", driverVersionString);
+    free(driverVersionString);
 }
 
 } // namespace ult

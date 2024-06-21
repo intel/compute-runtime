@@ -156,6 +156,35 @@ typedef struct _zex_intel_queue_allocate_msix_hint_exp_desc_t {
 
 #define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES (ze_structure_type_t)0x00030018
 
+#ifndef ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME
+/// @brief Extension name for query to read the Intel Level Zero Driver Version String
+#define ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME "ZE_intel_get_driver_version_string"
+#endif // ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query to read the Intel Level Zero Driver Version String extension version(s)
+typedef enum _ze_intel_get_driver_version_string_exp_version_t {
+    ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} ze_intel_get_driver_version_string_exp_version_t;
+
+/// @brief Query to read the Intel Level Zero Driver Version String
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///     - The Driver Version String will be in the format:
+///     - Major.Minor.Patch+Optional per semver guidelines https://semver.org/#spec-item-10
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+ze_result_t ZE_APICALL
+zeIntelGetDriverVersionString(
+    ze_driver_handle_t hDriver, ///< [in] Driver handle whose version is being read.
+    char *pDriverVersion,       ///< [in,out] pointer to driver version string.
+    size_t *pVersionSize);      ///< [in,out] pointer to the size of the driver version string.
+                                ///< if size is zero, then the size of the version string is returned.
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
