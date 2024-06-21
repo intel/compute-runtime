@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_i915.h"
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -200,6 +201,16 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesGlobal
 
         return -1;
     });
+
+    MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
+    MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getProductFamily());
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pLinuxSysmanImp->pFsAccess = pFsAccess;
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
+    pFsAccess->mockReadVal = driverVersion;
 
     pLinuxSysmanImp->rootPath = NEO::getPciRootPath(pLinuxSysmanImp->getDrm()->getFileDescriptor()).value_or("");
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -554,36 +565,92 @@ TEST_F(SysmanGlobalOperationsFixture,
 }
 
 TEST_F(SysmanGlobalOperationsFixture,
-       GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDriverVersionWhenAgmaFileIsAbsentThenVerifyzesDeviceGetPropertiesCallSucceeds) {
+       GivenAgamaFileIsAbsentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned) {
+
+    MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
+    MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getProductFamily());
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pLinuxSysmanImp->pFsAccess = pFsAccess;
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
+
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    std::string test;
-    test = srcVersion;
+    pFsAccess->mockReadVal = "";
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenAgamaFileIsPresentWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned) {
+
+    MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
+    MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getProductFamily());
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pLinuxSysmanImp->pFsAccess = pFsAccess;
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
+    pFsAccess->mockReadVal = driverVersion;
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == driverVersion.compare(properties.driverVersion));
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenSrcVersionFileIsAbsentUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenZesDeviceGetPropertiesCallSucceedsAndUnknownDriverVersionIsReturned) {
+
+    MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
+    MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
+    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getProductFamily());
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pLinuxSysmanImp->pFsAccess = pFsAccess;
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    pFsAccess->mockReadVal = "";
+    ze_result_t result = zesDeviceGetProperties(device, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
+}
+
+TEST_F(SysmanGlobalOperationsFixture,
+       GivenSrcVersionFileIsPresentAndUpstreamKernelWhenCallingZesDeviceGetPropertiesForCheckingDriverVersionThenVerifyzesDeviceGetPropertiesCallSucceedsAndDriverVersionIsReturned) {
+
+    MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
+    MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
+    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getProductFamily());
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pLinuxSysmanImp->pFsAccess = pFsAccess;
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
+
     pFsAccess->mockReadVal = srcVersion;
-    ze_result_t result = zesDeviceGetProperties(device, &properties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(0 == test.compare(properties.driverVersion));
-}
-
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDriverVersionWhenAgmaFileAndSrcFileIsAbsentThenVerifyzesDeviceGetPropertiesCallSucceeds) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    pFsAccess->mockReadError = ZE_RESULT_ERROR_NOT_AVAILABLE;
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
-}
-
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDriverVersionWhenDriverVersionFileIsNotAvaliableThenVerifyzesDeviceGetPropertiesCallSucceeds) {
-    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    pFsAccess->mockReadError = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    ze_result_t result = zesDeviceGetProperties(device, &properties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
+    EXPECT_TRUE(0 == srcVersion.compare(properties.driverVersion));
 }
 
 TEST_F(SysmanGlobalOperationsFixture,
        GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDriverVersionWhenDriverVersionFileReadFailsThenVerifyzesDeviceGetPropertiesCallSucceeds) {
+
+    MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
+    MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
+    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getProductFamily());
+    pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pLinuxSysmanImp->pFsAccess = pFsAccess;
+    pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
+
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     pFsAccess->mockReadError = ZE_RESULT_ERROR_UNKNOWN;
     ze_result_t result = zesDeviceGetProperties(device, &properties);
@@ -600,36 +667,6 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(0 == unknown.compare(properties.vendorName));
     EXPECT_TRUE(0 == unknown.compare(properties.brandName));
-}
-
-TEST_F(SysmanGlobalOperationsFixture,
-       GivenValidDeviceHandleWhenCallingzesDeviceGetPropertiesForCheckingDriverVersionWhenAccessingAgamaFileOrSrcFileGotPermissionDeniedThenVerifyzesDeviceGetPropertiesCallSucceeds) {
-    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    pFsAccess->mockReadError = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    ze_result_t result = zesDeviceGetProperties(device, &properties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(0 == unknown.compare(properties.driverVersion));
-}
-
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleAndXeDriverUsedWhileRetrievingInformationAboutHostProcessesUsingDeviceThenSuccessIsReturned) {
-    pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getProductFamily());
-    pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
-    // Assume two File descriptors of gpu are obtained by process
-    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
-    pProcfsAccess->ourDeviceFd1 = pProcfsAccess->extraFd1;
-    pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
-    uint32_t count = 0;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
-    EXPECT_EQ(count, 1u);
-    std::vector<zes_process_state_t> processes(count);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
-    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
-    constexpr int64_t expectedEngines = ZES_ENGINE_TYPE_FLAG_RENDER | ZES_ENGINE_TYPE_FLAG_MEDIA;
-    EXPECT_EQ(processes[0].engines, expectedEngines);
-    uint64_t expectedMemSize = (120 * MemoryConstants::megaByte) + (50 * MemoryConstants::kiloByte) + 534 + ((50 * MemoryConstants::megaByte));
-    uint64_t expectedSharedSize = (120 * MemoryConstants::megaByte) + (80 * MemoryConstants::megaByte) + (120 * MemoryConstants::kiloByte) + 689;
-    EXPECT_EQ(processes[0].memSize, expectedMemSize);
-    EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingDeviceThenSuccessIsReturned) {

@@ -14,6 +14,7 @@ namespace ult {
 class MockSysmanKmdInterfaceXe : public L0::Sysman::SysmanKmdInterfaceXe {
 
   public:
+    using L0::Sysman::SysmanKmdInterface::pFsAccess;
     using L0::Sysman::SysmanKmdInterface::pProcfsAccess;
     using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
     MockSysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceXe(productFamily) {}

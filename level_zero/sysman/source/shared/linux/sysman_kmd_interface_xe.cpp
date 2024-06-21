@@ -121,5 +121,20 @@ uint32_t SysmanKmdInterfaceXe::getEventType(const bool isIntegratedDevice) {
     return getEventTypeImpl(xeDirName, isIntegratedDevice);
 }
 
+void SysmanKmdInterfaceXe::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
+
+    auto pFsAccess = getFsAccess();
+    const std::string srcVersionFile("/sys/module/xe/srcversion");
+    std::string strVal = {};
+    ze_result_t result = pFsAccess->read(srcVersionFile, strVal);
+    if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x\n", __FUNCTION__, srcVersionFile.c_str(), result);
+        std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+    } else {
+        std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
+    }
+    return;
+}
+
 } // namespace Sysman
 } // namespace L0

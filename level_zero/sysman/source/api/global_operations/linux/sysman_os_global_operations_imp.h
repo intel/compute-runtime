@@ -75,8 +75,6 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     static const std::string driverFile;
     static const std::string functionLevelReset;
     static const std::string clientsDir;
-    static const std::string srcVersionFile;
-    static const std::string agamaVersionFile;
     static const std::string ueventWedgedFile;
     std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;

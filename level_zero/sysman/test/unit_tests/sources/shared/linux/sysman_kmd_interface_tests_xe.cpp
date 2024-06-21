@@ -213,6 +213,11 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingSupport
     EXPECT_FALSE(pSysmanKmdInterface->isSettingTimeoutModeSupported());
 }
 
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenCheckingWhetherClientInfoAvailableInFdInfoThenTrueValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_TRUE(pSysmanKmdInterface->clientInfoAvailableInFdInfo());
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

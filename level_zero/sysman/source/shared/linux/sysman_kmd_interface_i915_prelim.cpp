@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
@@ -144,6 +145,21 @@ uint32_t SysmanKmdInterfaceI915Prelim::getEventType(const bool isIntegratedDevic
 
 void SysmanKmdInterfaceI915Prelim::getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) {
     getWedgedStatusImpl(pLinuxSysmanImp, pState);
+}
+
+void SysmanKmdInterfaceI915Prelim::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
+
+    auto pFsAccess = getFsAccess();
+    const std::string agamaVersionFile("/sys/module/i915/agama_version");
+    std::string strVal = {};
+    ze_result_t result = pFsAccess->read(agamaVersionFile, strVal);
+    if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x \n", __FUNCTION__, agamaVersionFile.c_str(), result);
+        std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+    } else {
+        std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
+    }
+    return;
 }
 
 } // namespace Sysman

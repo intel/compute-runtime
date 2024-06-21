@@ -39,8 +39,6 @@ const std::string LinuxGlobalOperationsImp::subsystemVendorFile("device/subsyste
 const std::string LinuxGlobalOperationsImp::driverFile("device/driver");
 const std::string LinuxGlobalOperationsImp::functionLevelReset("/reset");
 const std::string LinuxGlobalOperationsImp::clientsDir("clients");
-const std::string LinuxGlobalOperationsImp::srcVersionFile("/sys/module/i915/srcversion");
-const std::string LinuxGlobalOperationsImp::agamaVersionFile("/sys/module/i915/agama_version");
 const std::string LinuxGlobalOperationsImp::ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
 
 // Map engine entries(numeric values) present in /sys/class/drm/card<n>/clients/<client_n>/busy,
@@ -160,22 +158,8 @@ void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPE
 }
 
 void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
-    std::string strVal;
-    std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
-    ze_result_t result = pFsAccess->read(agamaVersionFile, strVal);
-    if (ZE_RESULT_SUCCESS != result) {
-        if (ZE_RESULT_ERROR_NOT_AVAILABLE != result) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x \n", __FUNCTION__, agamaVersionFile.c_str(), result);
-            return;
-        }
-        result = pFsAccess->read(srcVersionFile, strVal);
-        if (ZE_RESULT_SUCCESS != result) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x\n", __FUNCTION__, srcVersionFile.c_str(), result);
-            return;
-        }
-    }
-    std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
-    return;
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    pSysmanKmdInterface->getDriverVersion(driverVersion);
 }
 
 bool LinuxGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
@@ -413,30 +397,20 @@ ze_result_t LinuxGlobalOperationsImp::getMemoryStatsUsedByProcess(std::vector<st
 }
 
 ze_result_t LinuxGlobalOperationsImp::getListOfEnginesUsedByProcess(std::vector<std::string> &fdFileContents, uint32_t &activeEngines) {
-    // Map engine entries present in /proc/<pid>>/fdinfo/<fd>,
-    // with engine enum defined in leve-zero spec
-    // Note that entries with int "video" and "video_enhance"(represented as CLASS_VIDEO and CLASS_VIDEO_ENHANCE)
-    // are both mapped to MEDIA, as CLASS_VIDEO represents any media fixed-function hardware.
-    const std::map<std::string, zes_engine_type_flags_t> engineMap = {
-        {"drm-engine-render", ZES_ENGINE_TYPE_FLAG_RENDER},
-        {"drm-engine-copy", ZES_ENGINE_TYPE_FLAG_DMA},
-        {"drm-engine-video", ZES_ENGINE_TYPE_FLAG_MEDIA},
-        {"drm-engine-video-enhance", ZES_ENGINE_TYPE_FLAG_MEDIA},
-        {"drm-engine-compute", ZES_ENGINE_TYPE_FLAG_COMPUTE}};
 
-    const std::string engineStringPrefix("drm-engine-");
+    const std::string stringPrefix("drm-cycles-");
     for (const auto &fileContents : fdFileContents) {
         std::istringstream iss(fileContents);
         std::string label;
         uint64_t value;
         iss >> label >> value;
-        // Example: consider "fileContents = "drm-engine-render:      25662044495 ns""
-        // Then if we are here, then label would be "drm-engine-render:". So remove `:` from label
         label = label.substr(0, label.length() - 1);
 
-        if ((label.substr(0, engineStringPrefix.length()) == engineStringPrefix) && (value != 0)) {
-            auto it = engineMap.find(label);
-            if (it == engineMap.end()) {
+        if ((label.substr(0, stringPrefix.length()) == stringPrefix) && (value != 0)) {
+
+            std::string engineClass = label.substr(stringPrefix.length());
+            auto it = sysfsEngineMapToLevel0EngineType.find(engineClass);
+            if (it == sysfsEngineMapToLevel0EngineType.end()) {
                 NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                       "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", __FUNCTION__, label.c_str(),
                                       ZE_RESULT_ERROR_UNKNOWN);
@@ -454,29 +428,38 @@ ze_result_t LinuxGlobalOperationsImp::getListOfEnginesUsedByProcess(std::vector<
 // # cat /proc/1383/fdinfo/8
 // pos:    0
 // flags:  02100002
-// mnt_id: 21
-// ino:    397
-// drm-driver:     i915
-// drm-client-id:  18
-// drm-pdev:       0000:00:02.0
-// drm-total-vram0:        512
-// drm-total-vram1:        512 KiB
-// drm-shared-vram0:       512 KiB
-// drm-shared-vram1:       128 MiB
-// drm-total-system:       125 MiB
-// drm-shared-system:      16 MiB
-// drm-active-system:      110 MiB
-// drm-resident-system:    125 MiB
-// drm-purgeable-system:   2 MiB
-// drm-total-stolen-system:        0
-// drm-shared-stolen-system:       0
-// drm-active-stolen-system:       0
-// drm-resident-stolen-system:     0
-// drm-purgeable-stolen-system:    0
-// drm-engine-render:      25662044495 ns
-// drm-engine-copy:        0 ns
-// drm-engine-video:       0 ns
-// drm-engine-video-enhance:       0 ns
+// mnt_id: 27
+// ino:    1386
+// drm-driver:     xe
+// drm-client-id:  173
+// drm-pdev:       0000:4d:00.0
+// drm-total-system:       0
+// drm-shared-system:      0
+// drm-active-system:      0
+// drm-resident-system:    0
+// drm-purgeable-system:   0
+// drm-total-gtt:  264 KiB
+// drm-shared-gtt: 0
+// drm-active-gtt: 72 KiB
+// drm-resident-gtt:       264 KiB
+// drm-total-vram0:        65072580 KiB
+// drm-shared-vram0:       0
+// drm-active-vram0:       65069124 KiB
+// drm-resident-vram0:     65072580 KiB
+// drm-total-vram1:        63753540 KiB
+// drm-shared-vram1:       0
+// drm-active-vram1:       63751556 KiB
+// drm-resident-vram1:     63753540 KiB
+// drm-total-stolen:       0
+// drm-shared-stolen:      0
+// drm-active-stolen:      0
+// drm-resident-stolen:    0
+// drm-cycles-bcs: 395
+// drm-total-cycles-bcs:   24339816184
+// drm-engine-capacity-bcs:        16
+// drm-cycles-ccs: 326
+// drm-total-cycles-ccs:   24339816184
+// drm-engine-capacity-ccs:        2
 ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t, EngineMemoryPairType> &pidClientMap) {
     std::map<::pid_t, std::vector<int>> gpuClientProcessMap; // This map contains processes and their opened gpu File descriptors
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

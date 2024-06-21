@@ -15,6 +15,7 @@
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 
 namespace L0 {
@@ -31,6 +32,7 @@ const std::string subsystemVendorFile("device/subsystem_vendor");
 const std::string driverFile("device/driver");
 const std::string agamaVersionFile("/sys/module/i915/agama_version");
 const std::string srcVersionFile("/sys/module/i915/srcversion");
+const std::string xeSrcVersionFile("/sys/module/xe/srcversion");
 const std::string clientsDir("clients");
 constexpr uint64_t pid1 = 1711u;
 constexpr uint64_t pid2 = 1722u;
@@ -484,7 +486,7 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
         }
 
         if (mockReadVal == srcVersion) {
-            if (file.compare(srcVersionFile) == 0) {
+            if ((file.compare(srcVersionFile) == 0) || (file.compare(xeSrcVersionFile) == 0)) {
                 val = mockReadVal;
                 readResult = ZE_RESULT_SUCCESS;
                 return readResult;
@@ -519,10 +521,12 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
             val.push_back("drm-resident-system: 125 MiB");
             val.push_back("drm-total-stolen-system: 0");
             val.push_back("drm-shared-stolen-system: 0");
-            val.push_back("drm-engine-render: 25662044495 ns");
-            val.push_back("drm-engine-copy: 0 ns");
-            val.push_back("drm-engine-video: 0 ns");
-            val.push_back("drm-engine-video-enhance: 0 ns");
+            val.push_back("drm-cycles-bcs: 200");
+            val.push_back("drm-total-cycles-bcs: 220000000");
+            val.push_back("drm-engine-capacity-bcs: 16");
+            val.push_back("drm-cycles-ccs: 100");
+            val.push_back("drm-total-cycles-ccs: 220000000");
+            val.push_back("drm-engine-capacity-ccs: 2");
         }
         if (file == "/proc/4/fdinfo/6") {
             val.push_back("pos: 0");
@@ -537,10 +541,12 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
             val.push_back("drm-resident-system: 125 MiB");
             val.push_back("drm-total-stolen-system: 0");
             val.push_back("drm-shared-stolen-system: 0");
-            val.push_back("drm-engine-render: 25662044495 ns");
-            val.push_back("drm-engine-copy: 0 ns");
-            val.push_back("drm-engine-video: 5645843250 ns");
-            val.push_back("drm-engine-video-enhance: 0 ns");
+            val.push_back("drm-cycles-bcs: 200");
+            val.push_back("drm-total-cycles-bcs: 220000000");
+            val.push_back("drm-engine-capacity-bcs: 16");
+            val.push_back("drm-cycles-ccs: 0");
+            val.push_back("drm-total-cycles-ccs: 0");
+            val.push_back("drm-engine-capacity-ccs: 2");
         }
         return ZE_RESULT_SUCCESS;
     }

@@ -143,6 +143,7 @@ class SysmanKmdInterface {
     virtual void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) = 0;
     virtual bool isSettingTimeoutModeSupported() const = 0;
     virtual bool isSettingExclusiveModeSupported() const = 0;
+    virtual void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -194,6 +195,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override;
     bool isSettingTimeoutModeSupported() const override { return true; }
     bool isSettingExclusiveModeSupported() const override { return true; }
+    void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -242,6 +244,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override;
     bool isSettingTimeoutModeSupported() const override { return true; }
     bool isSettingExclusiveModeSupported() const override { return true; }
+    void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -292,6 +295,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override{};
     bool isSettingTimeoutModeSupported() const override { return false; }
     bool isSettingExclusiveModeSupported() const override { return false; }
+    void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

@@ -16,6 +16,7 @@
 
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
+#include "level_zero/sysman/source/sysman_const.h"
 namespace L0 {
 namespace Sysman {
 
@@ -35,13 +36,6 @@ static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineType
     {ZES_ENGINE_TYPE_FLAG_DMA, "bcs"},
     {ZES_ENGINE_TYPE_FLAG_MEDIA, "vcs"},
     {ZES_ENGINE_TYPE_FLAG_OTHER, "vecs"}};
-
-static const std::map<std::string, zes_engine_type_flag_t> sysfsEngineMapToLevel0EngineType = {
-    {"rcs", ZES_ENGINE_TYPE_FLAG_RENDER},
-    {"ccs", ZES_ENGINE_TYPE_FLAG_COMPUTE},
-    {"bcs", ZES_ENGINE_TYPE_FLAG_DMA},
-    {"vcs", ZES_ENGINE_TYPE_FLAG_MEDIA},
-    {"vecs", ZES_ENGINE_TYPE_FLAG_OTHER}};
 
 SysmanKmdInterface::SysmanKmdInterface() = default;
 SysmanKmdInterface::~SysmanKmdInterface() = default;

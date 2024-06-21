@@ -6,7 +6,10 @@
  */
 
 #pragma once
+#include <level_zero/zes_api.h>
+
 #include <chrono>
+#include <map>
 #include <string>
 const std::string vendorIntel("Intel(R) Corporation");
 const std::string unknown("unknown");
@@ -77,3 +80,10 @@ constexpr int32_t memoryBusWidth = 128; // bus width in bytes
 constexpr int32_t numMemoryChannels = 8;
 constexpr uint32_t unknownMemoryType = UINT32_MAX;
 #define BITS(x, at, width) (((x) >> (at)) & ((1 << (width)) - 1))
+
+const std::map<std::string, zes_engine_type_flag_t> sysfsEngineMapToLevel0EngineType = {
+    {"rcs", ZES_ENGINE_TYPE_FLAG_RENDER},
+    {"ccs", ZES_ENGINE_TYPE_FLAG_COMPUTE},
+    {"bcs", ZES_ENGINE_TYPE_FLAG_DMA},
+    {"vcs", ZES_ENGINE_TYPE_FLAG_MEDIA},
+    {"vecs", ZES_ENGINE_TYPE_FLAG_OTHER}};
