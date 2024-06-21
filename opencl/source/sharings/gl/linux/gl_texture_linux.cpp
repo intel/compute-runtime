@@ -29,6 +29,8 @@
 #include "config.h"
 #include <GL/gl.h>
 
+#include "third_party/uapi/upstream/drm/drm_fourcc.h"
+
 namespace NEO {
 Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel, cl_GLuint texture,
                                         cl_int *errcodeRet) {
@@ -135,7 +137,27 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     imgInfo.imgDesc.imageHeight = imgDesc.image_height;
     imgInfo.imgDesc.imageDepth = imgDesc.image_depth;
     imgInfo.imgDesc.imageRowPitch = imgDesc.image_row_pitch;
-    imgInfo.linearStorage = (texOut.modifier == 0);
+
+    switch (texOut.modifier) {
+    case DRM_FORMAT_MOD_LINEAR:
+        imgInfo.linearStorage = true;
+        break;
+    case I915_FORMAT_MOD_X_TILED:
+        imgInfo.forceTiling = ImageTilingMode::tiledX;
+        break;
+    case I915_FORMAT_MOD_Y_TILED:
+        imgInfo.forceTiling = ImageTilingMode::tiledY;
+        break;
+    case I915_FORMAT_MOD_Yf_TILED:
+        imgInfo.forceTiling = ImageTilingMode::tiledYf;
+        break;
+    case I915_FORMAT_MOD_4_TILED:
+        imgInfo.forceTiling = ImageTilingMode::tiled4;
+        break;
+    default:
+       /* Just pray mesa picked the same that compute-runtime will */
+       break;
+    }
 
     errorCode.set(CL_SUCCESS);
 
