@@ -99,11 +99,6 @@ ProcessPowerThrottlingState setProcessPowerThrottlingStateLastValue{};
 size_t setThreadPriorityCalled = 0u;
 ThreadPriority setThreadPriorityLastValue{};
 
-size_t timeBeginPeriodCalled = 0u;
-UINT timeBeginPeriodLastValue = 0u;
-size_t timeEndPeriodCalled = 0u;
-UINT timeEndPeriodLastValue = 0u;
-
 HANDLE(*sysCallsCreateFile)
 (LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) = nullptr;
 
@@ -310,18 +305,6 @@ void setProcessPowerThrottlingState(ProcessPowerThrottlingState state) {
 void setThreadPriority(ThreadPriority priority) {
     setThreadPriorityCalled++;
     setThreadPriorityLastValue = priority;
-}
-
-MMRESULT timeBeginPeriod(UINT period) {
-    timeBeginPeriodCalled++;
-    timeBeginPeriodLastValue = period;
-    return 0u;
-}
-
-MMRESULT timeEndPeriod(UINT period) {
-    timeEndPeriodCalled++;
-    timeEndPeriodLastValue = period;
-    return 0u;
 }
 
 HANDLE createFile(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {

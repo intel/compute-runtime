@@ -151,6 +151,10 @@ void DirectSubmissionController::checkNewSubmissions() {
     }
 }
 
+void DirectSubmissionController::sleep() {
+    NEO::sleep(std::chrono::microseconds(this->timeout));
+}
+
 SteadyClock::time_point DirectSubmissionController::getCpuTimestamp() {
     return SteadyClock::now();
 }

@@ -49,7 +49,7 @@ if(UNIX AND NOT DISABLE_WDDM_LINUX)
 endif()
 
 if(WIN32)
-  target_link_libraries(neo_shared_tests dbghelp winmm)
+  target_link_libraries(neo_shared_tests dbghelp)
 endif()
 
 target_link_libraries(neo_shared_tests
