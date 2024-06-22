@@ -532,9 +532,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
 
     auto patchPtr2 = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), regionGroupBarrier.stateless));
 
-    auto offset = alignUp(device->getHwInfo().gtSystemInfo.MaxSubSlicesSupported * sizeof(uint64_t), MemoryConstants::cacheLineSize);
-
-    EXPECT_EQ(patchPtr2, patchPtr + offset);
+    EXPECT_EQ(patchPtr2, patchPtr + MemoryConstants::cacheLineSize);
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQueryKernelTimestampsToTheSameCmdlistThenFronEndStateIsNotChanged, IsAtLeastSkl) {

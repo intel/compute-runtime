@@ -2768,16 +2768,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &ker
     auto neoDevice = device->getNEODevice();
 
     neoDevice->allocateSyncBufferHandler();
-
-    auto &gtSysInfo = device->getNEODevice()->getHardwareInfo().gtSystemInfo;
-
-    auto tileCount = std::max(gtSysInfo.MultiTileArchInfo.TileCount, uint8_t(1)); // Use physical count
-
-    constexpr size_t barrierSizePerSubslice = sizeof(uint64_t);
-
-    size_t size = alignUp(tileCount * gtSysInfo.MaxSubSlicesSupported * barrierSizePerSubslice, MemoryConstants::cacheLineSize);
-
-    auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(size);
+    auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(MemoryConstants::cacheLineSize);
 
     kernel.patchRegionGroupBarrier(patchData.first, patchData.second);
 }
