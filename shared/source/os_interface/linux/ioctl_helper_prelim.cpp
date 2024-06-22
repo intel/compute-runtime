@@ -590,7 +590,7 @@ bool IoctlHelperPrelim20::perfOpenEuStallStream(uint32_t euStallFdParameter, std
                   I915_PERF_FLAG_FD_NONBLOCK;
     param.num_properties = sizeof(properties) / 16;
     param.properties_ptr = reinterpret_cast<uintptr_t>(properties.data());
-    *stream = ioctl(DrmIoctl::perfOpen, &param);
+    *stream = ioctl(this->drm.getFileDescriptor(), DrmIoctl::perfOpen, &param);
     if (*stream < 0) {
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (*stream < 0), stderr,
                            "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_I915_PERF_OPEN", errno, *stream);
