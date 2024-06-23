@@ -234,6 +234,9 @@ struct KernelDescriptor {
         bool isNormalized;
         AddrMode addrMode;
         FilterMode filterMode;
+        CrossThreadDataOffset bindless = undefined<CrossThreadDataOffset>;
+        uint8_t size = undefined<uint8_t>;
+
         constexpr uint32_t getSamplerBindfulOffset() const {
             return borderColorStateSize + samplerStateSize * samplerIndex;
         }

@@ -1414,6 +1414,26 @@ void KernelImp::patchSamplerBindlessOffsetsInCrossThreadData(uint64_t samplerSta
             }
         }
     }
+
+    for (size_t index = 0; index < kernelImmData->getDescriptor().inlineSamplers.size(); index++) {
+        const auto &sampler = kernelImmData->getDescriptor().inlineSamplers[index];
+
+        auto crossThreadOffset = NEO::undefined<NEO::CrossThreadDataOffset>;
+        if (sampler.bindless != NEO::undefined<NEO::CrossThreadDataOffset>) {
+            crossThreadOffset = sampler.bindless;
+        } else {
+            continue;
+        }
+
+        auto samplerIndex = sampler.samplerIndex;
+
+        if (samplerIndex < std::numeric_limits<uint8_t>::max()) {
+            auto patchLocation = ptrOffset(crossThreadData, crossThreadOffset);
+            auto surfaceStateOffset = static_cast<uint64_t>(samplerStateOffset + samplerIndex * samplerStateSize);
+            auto patchValue = surfaceStateOffset;
+            patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sampler.size, patchValue);
+        }
+    }
 }
 
 uint32_t KernelImp::getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const {

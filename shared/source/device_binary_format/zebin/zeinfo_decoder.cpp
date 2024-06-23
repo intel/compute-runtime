@@ -536,12 +536,12 @@ DecodeError decodeZeInfoKernelEntry(NEO::KernelDescriptor &dst, NEO::Yaml::YamlP
         return decodeError;
     }
 
-    decodeError = decodeZeInfoKernelPayloadArguments(dst, yamlParser, zeInfokernelSections, outErrReason, outWarning);
+    decodeError = decodeZeInfoKernelInlineSamplers(dst, yamlParser, zeInfokernelSections, outErrReason, outWarning);
     if (DecodeError::success != decodeError) {
         return decodeError;
     }
 
-    decodeError = decodeZeInfoKernelInlineSamplers(dst, yamlParser, zeInfokernelSections, outErrReason, outWarning);
+    decodeError = decodeZeInfoKernelPayloadArguments(dst, yamlParser, zeInfokernelSections, outErrReason, outWarning);
     if (DecodeError::success != decodeError) {
         return decodeError;
     }
@@ -1111,6 +1111,24 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         return DecodeError::success;
     };
 
+    auto populateInlineSampler = [&src, &outErrReason, &kernelName](auto &dst, ConstStringRef typeName) {
+        if (dst.payloadMappings.samplerTable.numSamplers < src.samplerIndex) {
+            outErrReason.append("DeviceBinaryFormat::zebin : Invalid sampler index for argument of type " + typeName.str() + " in context of : " + kernelName + ".\n");
+            return DecodeError::invalidBinary;
+        }
+
+        if (src.addrmode == Types::Kernel::PayloadArgument::memoryAddressingModeBindless) {
+            for (auto &sampler : dst.inlineSamplers) {
+                if (static_cast<Types::Kernel::PayloadArgument::SamplerIndexT>(sampler.samplerIndex) == src.samplerIndex) {
+                    sampler.bindless = src.offset;
+                    sampler.size = src.size;
+                    break;
+                }
+            }
+        }
+        return DecodeError::success;
+    };
+
     switch (src.argType) {
     default:
         outErrReason.append("DeviceBinaryFormat::zebin : Invalid arg type in cross thread data section in context of : " + kernelName + ".\n");
@@ -1398,6 +1416,9 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
     case Types::Kernel::argTypeRegionGroupBarrierBuffer:
         dst.kernelAttributes.flags.usesRegionGroupBarrier = true;
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.regionGroupBarrierBuffer);
+
+    case Types::Kernel::argTypeInlineSampler:
+        return populateInlineSampler(dst, Tags::Kernel::PayloadArgument::ArgType::inlineSampler);
     }
 
     UNREACHABLE();

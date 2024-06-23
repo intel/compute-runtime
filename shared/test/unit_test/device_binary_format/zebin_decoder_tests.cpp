@@ -6814,6 +6814,9 @@ kernels:
     EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::AddrMode::clampEdge, inlineSampler.addrMode);
     EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::FilterMode::nearest, inlineSampler.filterMode);
     EXPECT_TRUE(inlineSampler.isNormalized);
+
+    EXPECT_EQ(undefined<CrossThreadDataOffset>, inlineSampler.bindless);
+    EXPECT_EQ(undefined<uint8_t>, inlineSampler.size);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenInvalidInlineSamplersEntryThenPopulateKernelDescriptorFails) {
@@ -6846,6 +6849,59 @@ kernels:
 )===";
     auto err = decodeZeInfoKernelEntry(zeinfo);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenBindlessInlineSamplersThenPopulateKernelDescriptorSetsBindlessOffsetAndSize) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+        has_sample:      true
+      payload_arguments:
+        - arg_type:        inline_sampler
+          offset:          40
+          size:            4
+          addrmode:        bindless
+          addrspace:       sampler
+          sampler_index:   0
+        - arg_type:        inline_sampler
+          offset:          44
+          size:            4
+          addrmode:        bindless
+          addrspace:       sampler
+          sampler_index:   1
+      inline_samplers:
+        - sampler_index:   1
+          addrmode:        none
+          filtermode:      nearest
+        - sampler_index:   0
+          addrmode:        repeat
+          filtermode:      linear
+          normalized:      true
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty());
+
+    ASSERT_EQ(2U, kernelDescriptor->inlineSamplers.size());
+
+    const auto &inlineSampler1 = kernelDescriptor->inlineSamplers[0];
+    EXPECT_EQ(1U, inlineSampler1.samplerIndex);
+    EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::AddrMode::none, inlineSampler1.addrMode);
+    EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::FilterMode::nearest, inlineSampler1.filterMode);
+    EXPECT_FALSE(inlineSampler1.isNormalized);
+    EXPECT_EQ(44u, inlineSampler1.bindless);
+    EXPECT_EQ(4u, inlineSampler1.size);
+
+    const auto &inlineSampler0 = kernelDescriptor->inlineSamplers[1];
+    EXPECT_EQ(0U, inlineSampler0.samplerIndex);
+    EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::AddrMode::repeat, inlineSampler0.addrMode);
+    EXPECT_EQ(NEO::KernelDescriptor::InlineSampler::FilterMode::linear, inlineSampler0.filterMode);
+    EXPECT_TRUE(inlineSampler0.isNormalized);
+    EXPECT_EQ(40u, inlineSampler0.bindless);
+    EXPECT_EQ(4u, inlineSampler0.size);
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, givenGlobalBufferAndConstBufferWhenPopulatingKernelDescriptorThenPopulateThemProperly) {
