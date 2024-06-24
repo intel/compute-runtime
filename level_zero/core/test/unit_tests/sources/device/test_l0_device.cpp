@@ -5558,9 +5558,5 @@ TEST(ExtensionLookupTest, givenLookupMapWhenAskingForBindlessImageExtensionFunct
     EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeImageGetDeviceOffsetExp"));
 }
 
-TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZeIntelGetDriverVersionStringThenReturnCorrectValue) {
-    EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeIntelGetDriverVersionString"));
-}
-
 } // namespace ult
 } // namespace L0
