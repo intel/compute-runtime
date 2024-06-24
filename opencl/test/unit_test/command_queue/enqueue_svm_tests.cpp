@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/utilities/hw_timestamps.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -2368,4 +2370,191 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToMappedPtrWhenCallingSvmMemcpyTh
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(2u, csr.createAllocationForHostSurfaceCalled);
     }
+}
+
+struct StagingBufferTest : public EnqueueSvmTest {
+    void SetUp() override {
+        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
+        EnqueueSvmTest::SetUp();
+        SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
+        unifiedMemoryProperties.device = pDevice;
+        svmManager = this->context->getSVMAllocsManager();
+
+        dstPtr = svmManager->createUnifiedMemoryAllocation(copySize, unifiedMemoryProperties);
+        srcPtr = new unsigned char[copySize];
+    }
+
+    void TearDown() override {
+        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
+            return;
+        }
+        svmManager = this->context->getSVMAllocsManager();
+        svmManager->freeSVMAlloc(dstPtr);
+        delete[] srcPtr;
+        EnqueueSvmTest::TearDown();
+    }
+
+    static constexpr size_t stagingBufferSize = MemoryConstants::megaByte * 2;
+    static constexpr size_t copySize = stagingBufferSize * 4;
+    static constexpr size_t expectedNumOfCopies = copySize / stagingBufferSize;
+
+    SVMAllocsManager *svmManager;
+    void *dstPtr;
+    unsigned char *srcPtr;
+};
+
+HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySucessfull) {
+    constexpr cl_command_type expectedLastCmd = CL_COMMAND_SVM_MEMCPY;
+
+    cl_event event;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    auto initialUsmAllocs = svmManager->getNumAllocs();
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        false,    // cl_bool blocking_copy
+        dstPtr,   // void *dst_ptr
+        srcPtr,   // const void *src_ptr
+        copySize, // size_t size
+        &event    // cl_event *event
+    );
+    auto pEvent = (Event *)event;
+    auto numOfStagingBuffers = svmManager->getNumAllocs() - initialUsmAllocs;
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, numOfStagingBuffers);
+    EXPECT_EQ(expectedNumOfCopies, myCmdQ.enqueueSVMMemcpyCalledCount);
+    EXPECT_EQ(0u, myCmdQ.finishCalledCount);
+    EXPECT_EQ(expectedLastCmd, myCmdQ.lastCommandType);
+    EXPECT_EQ(expectedLastCmd, pEvent->getCommandType());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySucessfull) {
+    constexpr cl_command_type expectedLastCmd = CL_COMMAND_BARRIER;
+
+    cl_event event;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    myCmdQ.setOoqEnabled();
+
+    auto initialUsmAllocs = svmManager->getNumAllocs();
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        false,    // cl_bool blocking_copy
+        dstPtr,   // void *dst_ptr
+        srcPtr,   // const void *src_ptr
+        copySize, // size_t size
+        &event    // cl_event *event
+    );
+
+    auto pEvent = (Event *)event;
+    auto numOfStagingBuffers = svmManager->getNumAllocs() - initialUsmAllocs;
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, numOfStagingBuffers);
+    EXPECT_EQ(expectedNumOfCopies, myCmdQ.enqueueSVMMemcpyCalledCount);
+    EXPECT_EQ(0u, myCmdQ.finishCalledCount);
+    EXPECT_EQ(expectedLastCmd, myCmdQ.lastCommandType);
+    EXPECT_EQ(expectedLastCmd, pEvent->getCommandType());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(StagingBufferTest, givenEnqueueStagingBufferMemcpyWhenTaskCountNotReadyThenCopySucessfullAndBuffersNotReused) {
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    auto initialUsmAllocs = svmManager->getNumAllocs();
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    *csr.getTagAddress() = csr.peekTaskCount();
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        false,    // cl_bool blocking_copy
+        dstPtr,   // void *dst_ptr
+        srcPtr,   // const void *src_ptr
+        copySize, // size_t size
+        nullptr   // cl_event *event
+    );
+    auto numOfStagingBuffers = svmManager->getNumAllocs() - initialUsmAllocs;
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedNumOfCopies, numOfStagingBuffers);
+    *csr.getTagAddress() = csr.peekTaskCount();
+}
+
+HWTEST_F(StagingBufferTest, givenCmdQueueWhenEnqueueStagingBufferMemcpyBlockingThenCopySucessfullAndFinishCalled) {
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    auto initialUsmAllocs = svmManager->getNumAllocs();
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        true,     // cl_bool blocking_copy
+        dstPtr,   // void *dst_ptr
+        srcPtr,   // const void *src_ptr
+        copySize, // size_t size
+        nullptr   // cl_event *event
+    );
+    auto numOfStagingBuffers = svmManager->getNumAllocs() - initialUsmAllocs;
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, numOfStagingBuffers);
+    EXPECT_EQ(1u, myCmdQ.finishCalledCount);
+
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        true,     // cl_bool blocking_copy
+        dstPtr,   // void *dst_ptr
+        srcPtr,   // const void *src_ptr
+        copySize, // size_t size
+        nullptr   // cl_event *event
+    );
+    numOfStagingBuffers = svmManager->getNumAllocs() - initialUsmAllocs;
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, numOfStagingBuffers);
+    EXPECT_EQ(2u, myCmdQ.finishCalledCount);
+}
+
+HWTEST_F(StagingBufferTest, givenCmdQueueWhenEnqueueStagingBufferWithInvalidBufferThenReturnFailure) {
+    auto dstPtr = nullptr;
+    auto srcPtr = new unsigned char[copySize];
+
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        false,    // cl_bool blocking_copy
+        dstPtr,   // void *dst_ptr
+        srcPtr,   // const void *src_ptr
+        copySize, // size_t size
+        nullptr   // cl_event *event
+    );
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    delete[] srcPtr;
+}
+
+HWTEST_F(StagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagingBufferMemcpyThenTimestampsSetCorrectly) {
+    cl_event event;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    myCmdQ.setProfilingEnabled();
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        false,    // cl_bool blocking_copy
+        dstPtr,   // void *dst_ptr
+        srcPtr,   // const void *src_ptr
+        copySize, // size_t size
+        &event    // cl_event *event
+    );
+    auto pEvent = (Event *)event;
+
+    // A small adjustment to give end timestamp a valid value instead of mocked value
+    TimeStampData tsData{};
+    pClDevice->getDevice().getOSTime()->getGpuCpuTime(&tsData);
+    if (pEvent->getTimestampPacketNodes()) {
+        auto node = pEvent->getTimestampPacketNodes()->peekNodes()[0];
+        auto contextEnd = ptrOffset(node->getCpuBase(), node->getGlobalEndOffset());
+        *reinterpret_cast<typename FamilyType::TimestampPacketType *>(contextEnd) = static_cast<typename FamilyType::TimestampPacketType>(tsData.gpuTimeStamp);
+    } else {
+        HwTimeStamps *timeStamps = static_cast<TagNode<HwTimeStamps> *>(pEvent->getHwTimeStampNode())->tagForCpuAccess;
+        timeStamps->contextEndTS = tsData.gpuTimeStamp;
+        timeStamps->globalEndTS = tsData.gpuTimeStamp;
+    }
+
+    EXPECT_FALSE(pEvent->isCPUProfilingPath());
+    EXPECT_TRUE(pEvent->isProfilingEnabled());
+    uint64_t queue, submit, start, end;
+    pEvent->getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(uint64_t), &queue, 0);
+    pEvent->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
+    pEvent->getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(uint64_t), &start, 0);
+    pEvent->getEventProfilingInfo(CL_PROFILING_COMMAND_END, sizeof(uint64_t), &end, 0);
+    EXPECT_GE(queue, 0ull);
+    EXPECT_GE(submit, queue);
+    EXPECT_GE(start, submit);
+    EXPECT_GE(end, start);
+    clReleaseEvent(event);
 }

@@ -460,6 +460,17 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return BaseClass::enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
     }
 
+    cl_int enqueueSVMMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size,
+                            cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+        enqueueSVMMemcpyCalledCount++;
+        return BaseClass::enqueueSVMMemcpy(blockingCopy, dstPtr, srcPtr, size, numEventsInWaitList, eventWaitList, event);
+    }
+
+    cl_int finish() override {
+        finishCalledCount++;
+        return BaseClass::finish();
+    }
+
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
     MultiDispatchInfo storedMultiDispatchInfo;
@@ -490,7 +501,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     std::optional<WaitStatus> waitUntilCompleteReturnValue{};
     int waitForAllEnginesCalledCount{0};
     int enqueueMarkerWithWaitListCalledCount{0};
-
+    size_t enqueueSVMMemcpyCalledCount{0};
+    size_t finishCalledCount{0};
     LinearStream *peekCommandStream() {
         return this->commandStream;
     }

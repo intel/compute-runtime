@@ -312,6 +312,14 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     static void getBoundaryTimestampValues(TimestampPacketContainer *timestampContainer, uint64_t &globalStartTS, uint64_t &globalEndTS);
 
+    void copyTimestamps(const Event &srcEvent) {
+        this->queueTimeStamp = srcEvent.queueTimeStamp;
+        this->submitTimeStamp = srcEvent.submitTimeStamp;
+        this->startTimeStamp = srcEvent.startTimeStamp;
+        this->endTimeStamp = srcEvent.endTimeStamp;
+        timestampsCopied = true;
+    }
+
   protected:
     Event(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType,
           TaskCountType taskLevel, TaskCountType taskCount);
@@ -383,6 +391,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     bool profilingEnabled = false;
     bool profilingCpuPath = false;
     bool dataCalculated = false;
+    bool timestampsCopied = false;
 
     ProfilingInfo queueTimeStamp{};
     ProfilingInfo submitTimeStamp{};

@@ -29,6 +29,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/api_intercept.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -1502,6 +1503,58 @@ void CommandQueue::unregisterGpgpuAndBcsCsrClients() {
             unregisterBcsCsrClient(*engine->commandStreamReceiver);
         }
     }
+}
+
+cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size, cl_event *event) {
+    CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &size};
+    csrSelectionArgs.direction = TransferDirection::hostToLocal;
+    auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
+
+    Event profilingEvent{this, CL_COMMAND_SVM_MEMCPY, CompletionStamp::notReady, CompletionStamp::notReady};
+    if (isProfilingEnabled()) {
+        profilingEvent.setQueueTimeStamp();
+    }
+
+    auto chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) -> int32_t {
+        auto isFirstTransfer = (chunkDst == dstPtr);
+        auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(dstPtr, size);
+        if (isFirstTransfer && isProfilingEnabled()) {
+            profilingEvent.setSubmitTimeStamp();
+        }
+        memcpy(stagingBuffer, chunkSrc, chunkSize);
+        if (isFirstTransfer && isProfilingEnabled()) {
+            profilingEvent.setStartTimeStamp();
+        }
+
+        cl_event *outEvent = nullptr;
+        if (isLastTransfer && !this->isOOQEnabled()) {
+            outEvent = event;
+        }
+        auto ret = this->enqueueSVMMemcpy(false, chunkDst, stagingBuffer, chunkSize, 0, nullptr, outEvent);
+        return ret;
+    };
+
+    auto stagingBufferManager = this->context->getStagingBufferManager();
+    auto ret = stagingBufferManager->performCopy(dstPtr, srcPtr, size, chunkCopy, csr);
+    if (ret != CL_SUCCESS) {
+        return ret;
+    }
+
+    if (event != nullptr) {
+        if (this->isOOQEnabled()) {
+            ret = this->enqueueBarrierWithWaitList(0, nullptr, event);
+        }
+        if (isProfilingEnabled()) {
+            auto pEvent = castToObjectOrAbort<Event>(*event);
+            pEvent->copyTimestamps(profilingEvent);
+            pEvent->setCPUProfilingPath(false);
+        }
+    }
+
+    if (blockingCopy) {
+        ret = this->finish();
+    }
+    return ret;
 }
 
 } // namespace NEO

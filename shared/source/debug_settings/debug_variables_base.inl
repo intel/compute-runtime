@@ -387,6 +387,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, SkipDcFlushOnBarrierWithoutEvents, -1, "-1: defa
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDeviceUsmAllocationPool, -1, "-1: default (enabled, 2MB), 0: disabled, >=1: enabled, size in MB")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostUsmAllocationPool, -1, "-1: default (enabled, 2MB), 0: disabled, >=1: enabled, size in MB")
 DECLARE_DEBUG_VARIABLE(int32_t, UseLocalPreferredForCacheableBuffers, -1, "Use localPreferred for cacheable buffers")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableCopyWithStagingBuffers, -1, "Enable copy with non-usm memory through staging buffers. -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, StagingBufferSize, -1, "Size of single staging buffer. -1: default (2MB), >0: size in KB")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")

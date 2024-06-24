@@ -897,4 +897,10 @@ template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAvailableExtendedScratch() const {
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
+    return false;
+}
+
 } // namespace NEO

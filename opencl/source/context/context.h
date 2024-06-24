@@ -40,6 +40,7 @@ class SVMAllocsManager;
 class Program;
 class Platform;
 class TagAllocatorBase;
+class StagingBufferManager;
 
 template <>
 struct OpenCLObjectMapper<_cl_context> {
@@ -256,6 +257,8 @@ class Context : public BaseObject<_cl_context> {
     void initializeUsmAllocationPools();
     void cleanupUsmAllocationPools();
 
+    StagingBufferManager *getStagingBufferManager() const;
+
   protected:
     struct BuiltInKernel {
         const char *pSource = nullptr;
@@ -299,6 +302,8 @@ class Context : public BaseObject<_cl_context> {
     ContextType contextType = ContextType::CONTEXT_TYPE_DEFAULT;
     std::unique_ptr<TagAllocatorBase> multiRootDeviceTimestampPacketAllocator;
     std::mutex multiRootDeviceAllocatorMtx;
+
+    std::unique_ptr<StagingBufferManager> stagingBufferManager;
 
     bool interopUserSync = false;
     bool resolvesRequiredInKernels = false;

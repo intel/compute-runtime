@@ -23,6 +23,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/heap_allocator.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -74,6 +75,7 @@ Context::~Context() {
         }
     }
     if (svmAllocsManager) {
+        this->stagingBufferManager.reset();
         svmAllocsManager->trimUSMDeviceAllocCache();
         delete svmAllocsManager;
     }
@@ -281,6 +283,7 @@ bool Context::createImpl(const cl_context_properties *properties,
             this->svmAllocsManager = new SVMAllocsManager(this->memoryManager,
                                                           this->areMultiStorageAllocationsPreferred());
             this->svmAllocsManager->initUsmAllocationsCaches(device->getDevice());
+            this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields);
         }
     }
 
@@ -674,6 +677,10 @@ void Context::setContextAsNonZebin() {
 
 bool Context::checkIfContextIsNonZebin() const {
     return this->nonZebinContext;
+}
+
+StagingBufferManager *Context::getStagingBufferManager() const {
+    return this->stagingBufferManager.get();
 }
 
 } // namespace NEO

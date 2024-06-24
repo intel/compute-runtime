@@ -182,6 +182,7 @@ class ProductHelperHw : public ProductHelper {
     size_t getMaxFillPaternSizeForCopyEngine() const override;
     bool isAvailableExtendedScratch() const override;
     std::optional<bool> isCoherentAllocation(uint64_t patIndex) const override;
+    bool isStagingBuffersEnabled() const override;
 
     ~ProductHelperHw() override = default;
 

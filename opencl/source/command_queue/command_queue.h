@@ -388,6 +388,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool isBcsSplitInitialized() const { return this->bcsSplitInitialized; }
     bool isBcs() const { return isCopyOnly; };
 
+    cl_int enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size, cl_event *event);
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);

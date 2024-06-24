@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -229,6 +229,31 @@ TEST_F(ClEnqueueSVMMemcpyTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMemcp
         nullptr              // cl_event *event
     );
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
+TEST_F(ClEnqueueSVMMemcpyTests, givenCopyValidForStagingBuffersCopyThenTransferSuccesfull) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        void *pDstSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
+        EXPECT_NE(nullptr, pDstSvm);
+        auto pSrc = new unsigned char[256];
+        auto retVal = clEnqueueSVMMemcpy(
+            pCommandQueue, // cl_command_queue command_queue
+            CL_FALSE,      // cl_bool blocking_copy
+            pDstSvm,       // void *dst_ptr
+            pSrc,          // const void *src_ptr
+            256,           // size_t size
+            0,             // cl_uint num_events_in_wait_list
+            nullptr,       // const cl_event *event_wait_list
+            nullptr        // cl_event *event
+        );
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        clSVMFree(pContext, pDstSvm);
+        delete[] pSrc;
+    }
 }
 
 } // namespace ULT

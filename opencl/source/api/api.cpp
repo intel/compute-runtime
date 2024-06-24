@@ -20,6 +20,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/utilities/buffer_pool_allocator.inl"
 #include "shared/source/utilities/heap_allocator.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/api/additional_extensions.h"
@@ -4913,14 +4914,19 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
     }
 
     if (size != 0) {
-        retVal = pCommandQueue->enqueueSVMMemcpy(
-            blockingCopy,
-            dstPtr,
-            srcPtr,
-            size,
-            numEventsInWaitList,
-            eventWaitList,
-            event);
+        auto stagingBufferManager = pCommandQueue->getContext().getStagingBufferManager();
+        if (stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, numEventsInWaitList)) {
+            retVal = pCommandQueue->enqueueStagingBufferMemcpy(blockingCopy, dstPtr, srcPtr, size, event);
+        } else {
+            retVal = pCommandQueue->enqueueSVMMemcpy(
+                blockingCopy,
+                dstPtr,
+                srcPtr,
+                size,
+                numEventsInWaitList,
+                eventWaitList,
+                event);
+        }
     } else {
         retVal = pCommandQueue->enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);
     }

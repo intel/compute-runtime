@@ -237,6 +237,7 @@ class ProductHelper {
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual bool isAvailableExtendedScratch() const = 0;
     virtual std::optional<bool> isCoherentAllocation(uint64_t patIndex) const = 0;
+    virtual bool isStagingBuffersEnabled() const = 0;
 
     virtual ~ProductHelper() = default;
 
