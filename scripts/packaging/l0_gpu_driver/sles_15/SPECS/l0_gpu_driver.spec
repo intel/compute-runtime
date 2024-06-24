@@ -96,12 +96,12 @@ cd build
 #Remove OpenCL files
 rm -rvf %{buildroot}%{_libdir}/intel-opencl/
 rm -rvf %{buildroot}%{_sysconfdir}/OpenCL/
-rm -rvf %{buildroot}%{_bindir}/ocloc
-rm -rvf %{buildroot}%{_libdir}/libocloc.so
+rm -rvf %{buildroot}%{_bindir}/ocloc*
+rm -rvf %{buildroot}%{_libdir}/libocloc*.so
 rm -rvf %{buildroot}%{_includedir}/ocloc_api.h
 #Remove debug files
-rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
-rm -vf %{buildroot}/%{_libdir}/libocloc.so.debug
+rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl*.so.debug
+rm -vf %{buildroot}/%{_libdir}/libocloc*.so.debug
 rm -rvf %{buildroot}/usr/lib/debug/
 #insert license into package
 mkdir -p %{buildroot}/usr/share/doc/intel-level-zero-gpu%{?name_suffix}/
@@ -113,7 +113,7 @@ fi
 
 %files -n intel-level-zero-gpu%{?name_suffix}
 %defattr(-,root,root)
-%{_libdir}/libze_intel_gpu.so.*
+%{_libdir}/libze_intel_gpu*.so.*
 /usr/share/doc/intel-level-zero-gpu%{?name_suffix}/copyright
 %config(noreplace)
 

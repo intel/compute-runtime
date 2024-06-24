@@ -1,0 +1,12 @@
+#! /bin/sh -e
+
+#
+# Copyright (C) 2024 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+update-alternatives --quiet \
+    --install /usr/bin/ocloc ocloc /usr/bin/ocloc 0
+
+exit 0

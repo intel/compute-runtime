@@ -272,12 +272,6 @@ if(BUILD_WITH_L0)
       message(STATUS "Setting L0 Resource Info")
       target_sources(${TARGET_NAME_L0} PRIVATE ${L0_DLL_RC_FILE})
     endif()
-    set_target_properties(${TARGET_NAME_L0} PROPERTIES
-                          DEBUG_OUTPUT_NAME "${TARGET_NAME_L0}${NEO_BITS}"
-                          RELEASE_OUTPUT_NAME "${TARGET_NAME_L0}${NEO_BITS}"
-                          RELEASEINTERNAL_OUTPUT_NAME "${TARGET_NAME_L0}${NEO_BITS}"
-                          OUTPUT_NAME "${TARGET_NAME_L0}${NEO_BITS}"
-    )
     add_dependencies(${TARGET_NAME_L0} ${GMM_TARGET_NAME})
   else()
     target_sources(${TARGET_NAME_L0}
@@ -300,6 +294,13 @@ if(BUILD_WITH_L0)
       )
     endif()
   endif()
+
+  set_target_properties(${TARGET_NAME_L0} PROPERTIES
+                        DEBUG_OUTPUT_NAME "${TARGET_NAME_L0}${IGDRCL_OPTION__BITS}${NEO__SO_NAME_SUFFIX}"
+                        RELEASE_OUTPUT_NAME "${TARGET_NAME_L0}${IGDRCL_OPTION__BITS}${NEO__SO_NAME_SUFFIX}"
+                        RELEASEINTERNAL_OUTPUT_NAME "${TARGET_NAME_L0}${IGDRCL_OPTION__BITS}${NEO__SO_NAME_SUFFIX}"
+                        OUTPUT_NAME "${TARGET_NAME_L0}${IGDRCL_OPTION__BITS}${NEO__SO_NAME_SUFFIX}"
+  )
 
   if(DEFINED AUB_STREAM_PROJECT_NAME)
     target_sources(${TARGET_NAME_L0}

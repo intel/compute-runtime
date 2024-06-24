@@ -110,7 +110,6 @@ foreach(TEST_NAME ${TEST_TARGETS})
                         VS_DEBUGGER_WORKING_DIRECTORY "${TargetDir}"
   )
 
-  add_dependencies(${TEST_NAME} ${TARGET_NAME_L0})
   target_link_libraries(${TEST_NAME} PUBLIC ${TARGET_NAME_L0})
 
   set_target_properties(${TEST_NAME} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})

@@ -86,9 +86,8 @@ Summary:        ocloc package for opencl
 cd build
 %ninja_install
 
-chmod +x %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so
-rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
-rm -vf %{buildroot}/%{_libdir}/libocloc.so.debug
+rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl*.so.debug
+rm -vf %{buildroot}/%{_libdir}/libocloc*.so.debug
 rm -rvf %{buildroot}/usr/lib/debug/
 
 #insert license into package
@@ -104,15 +103,24 @@ fi
 %files -n intel-opencl%{?name_suffix}
 %defattr(-,root,root)
 %{_sysconfdir}/OpenCL
-%{_libdir}/intel-opencl/libigdrcl.so
+%{_libdir}/intel-opencl/libigdrcl*.so
 /usr/share/doc/intel-opencl%{?name_suffix}/copyright
 
 %files -n intel-ocloc%{?name_suffix}
 %defattr(-,root,root)
-%{_bindir}/ocloc
-%{_libdir}/libocloc.so
+%{_bindir}/ocloc*
+%{_libdir}/libocloc*.so
 %{_includedir}/ocloc_api.h
 /usr/share/doc/intel-ocloc%{?name_suffix}/copyright
+
+%post -n intel-ocloc%{?name_suffix}
+update-alternatives --quiet --install /usr/bin/ocloc ocloc /usr/bin/ocloc-%{NEO_OCL_VERSION_MAJOR}.%{NEO_OCL_VERSION_MINOR} %{NEO_OCL_VERSION_MAJOR}%{NEO_OCL_VERSION_MINOR}
+
+%preun -n intel-ocloc%{?name_suffix}
+if [ $1 == "0" ]; then
+    # uninstall
+    update-alternatives --quiet --remove ocloc /usr/bin/ocloc-%{NEO_OCL_VERSION_MAJOR}.%{NEO_OCL_VERSION_MINOR}
+fi
 
 %changelog
 * Mon Sep 13 2021 Compute-Runtime-Automation <compute-runtime@intel.com>
