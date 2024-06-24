@@ -15,7 +15,11 @@ unsigned int ultIterationMaxTimeInS = 240;
 unsigned int ultIterationMaxTimeInS = 120;
 #endif
 #else
+#if defined(_DEBUG)
+unsigned int ultIterationMaxTimeInS = 90;
+#else
 unsigned int ultIterationMaxTimeInS = 45;
+#endif
 #endif
 unsigned int testCaseMaxTimeInMs = 16000;
 bool useMockGmm = true;
