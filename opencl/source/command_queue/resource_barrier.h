@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,10 @@ class BarrierCommand {
   public:
     BarrierCommand(CommandQueue *commandQueue, const cl_resource_barrier_descriptor_intel *descriptors, uint32_t numDescriptors);
     ~BarrierCommand() {}
+    BarrierCommand(BarrierCommand &&other) noexcept = delete;
+    BarrierCommand(const BarrierCommand &other) = delete;
+    BarrierCommand &operator=(BarrierCommand &&other) noexcept = delete;
+    BarrierCommand &operator=(const BarrierCommand &other) = delete;
     uint32_t numSurfaces = 0;
     StackVec<ResourceSurface, 32> surfaces;
     StackVec<Surface *, 32> surfacePtrs;
