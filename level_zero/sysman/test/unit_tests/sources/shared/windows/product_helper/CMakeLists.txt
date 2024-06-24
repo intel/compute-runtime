@@ -9,6 +9,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_temperature_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_memory_tests.cpp
   )
 endif()
 add_subdirectories()

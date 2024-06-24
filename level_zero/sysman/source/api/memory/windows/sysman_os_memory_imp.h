@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ class WddmMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
 
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
+    WddmSysmanImp *pWddmSysmanImp = nullptr;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
 

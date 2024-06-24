@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
+#include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
 namespace Sysman {
@@ -88,6 +89,57 @@ bool SysmanProductHelperHw<gfxProduct>::isTempModuleSupported(zes_temp_sensors_t
 template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pStats, WddmSysmanImp *pWddmSysmanImp) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwidth_t *pBandwidth, WddmSysmanImp *pWddmSysmanImp) {
+    KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
+    uint32_t retValu32 = 0;
+    uint64_t retValu64 = 0;
+    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::ResponseProperty> vResponses = {};
+    KmdSysman::RequestProperty request = {};
+
+    request.commandId = KmdSysman::Command::Get;
+    request.componentId = KmdSysman::Component::MemoryComponent;
+
+    request.requestId = KmdSysman::Requests::Memory::MaxBandwidth;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Memory::CurrentBandwidthRead;
+    vRequests.push_back(request);
+
+    request.requestId = KmdSysman::Requests::Memory::CurrentBandwidthWrite;
+    vRequests.push_back(request);
+
+    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
+
+    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
+        return status;
+    }
+
+    pBandwidth->maxBandwidth = 0;
+    if (vResponses[0].returnCode == KmdSysman::Success) {
+        memcpy_s(&retValu32, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
+        pBandwidth->maxBandwidth = static_cast<uint64_t>(retValu32) * static_cast<uint64_t>(mbpsToBytesPerSecond);
+    }
+
+    pBandwidth->readCounter = 0;
+    if (vResponses[1].returnCode == KmdSysman::Success) {
+        memcpy_s(&retValu64, sizeof(uint64_t), vResponses[1].dataBuffer, sizeof(uint64_t));
+        pBandwidth->readCounter = retValu64;
+    }
+
+    pBandwidth->writeCounter = 0;
+    if (vResponses[2].returnCode == KmdSysman::Success) {
+        memcpy_s(&retValu64, sizeof(uint64_t), vResponses[2].dataBuffer, sizeof(uint64_t));
+        pBandwidth->writeCounter = retValu64;
+    }
+
+    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
+    pBandwidth->timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
+
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace Sysman
