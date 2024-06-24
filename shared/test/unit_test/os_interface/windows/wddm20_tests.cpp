@@ -979,6 +979,15 @@ TEST_F(Wddm20Tests, givenOpenSharedHandleWhenZeroAllocationsThenReturnNull) {
     EXPECT_EQ(false, ret);
 }
 
+TEST_F(Wddm20Tests, givenOpenNTHandleWhenZeroAllocationsThenReturnNull) {
+    MockMemoryManager::OsHandleData osHandleData{static_cast<uint64_t>(0ull)};
+    WddmAllocation *alloc = nullptr;
+
+    auto ret = wddm->openNTHandle(osHandleData, alloc);
+
+    EXPECT_EQ(false, ret);
+}
+
 TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
     struct FailingCreateAllocation {
         static NTSTATUS APIENTRY mockCreateAllocation2(D3DKMT_CREATEALLOCATION *param) {
