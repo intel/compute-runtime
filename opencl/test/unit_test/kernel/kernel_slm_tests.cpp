@@ -90,7 +90,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
         pDevice->getPreemptionMode(),
         *pDevice,
         &walkerCmd,
-        nullptr);
+        nullptr,
+        false);
 
     // add the heap base + offset
     uint32_t *pIdData = (uint32_t *)indirectHeap.getCpuBase() + offsetInterfaceDescriptorData;
@@ -183,7 +184,8 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
         pDevice->getPreemptionMode(),
         *pDevice,
         &walkerCmd,
-        &interfaceDescriptorData);
+        &interfaceDescriptorData,
+        false);
 
     auto pInterfaceDescriptor = HardwareCommandsHelper<FamilyType>::getInterfaceDescriptor(indirectHeap, interfaceDescriptorOffset, &interfaceDescriptorData);
 

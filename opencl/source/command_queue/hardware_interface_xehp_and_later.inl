@@ -133,7 +133,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         interfaceDescriptor,
         localIdsGenerationByRuntime,
         scratchAddress,
-        device);
+        device,
+        walkerArgs.heaplessStateInitEnabled);
 
     bool kernelSystemAllocation = false;
     if (kernel.isBuiltIn) {

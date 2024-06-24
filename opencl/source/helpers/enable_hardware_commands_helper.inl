@@ -25,7 +25,8 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendIndirectState<
     FamilyType::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
     bool localIdsGenerationByRuntime,
     uint64_t scratchAddress,
-    const Device &device);
+    const Device &device,
+    bool heaplessStateInitEnabled);
 
 template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendCrossThreadData<NEO::FamilyType::DefaultWalkerType>(
     IndirectHeap &indirectHeap,
@@ -52,7 +53,8 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendInterfaceDescr
     PreemptionMode preemptionMode,
     const Device &device,
     FamilyType::DefaultWalkerType *walkerCmd,
-    FamilyType::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
+    FamilyType::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
+    bool heaplessStateInitEnabled);
 
 template void NEO::HardwareCommandsHelper<NEO::FamilyType>::programInlineData<NEO::FamilyType::DefaultWalkerType>(
     Kernel &kernel,

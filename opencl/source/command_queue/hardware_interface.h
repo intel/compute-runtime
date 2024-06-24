@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,7 @@ struct HardwareInterfaceWalkerArgs {
     uint32_t interfaceDescriptorIndex = 0;
     bool isMainKernel = false;
     bool relaxedOrderingEnabled = false;
+    bool heaplessStateInitEnabled = false;
 };
 
 template <typename GfxFamily>

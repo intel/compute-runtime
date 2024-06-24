@@ -95,7 +95,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
     const uint32_t threadGroupCount = 1u;
     size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
     HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<GPGPU_WALKER, INTERFACE_DESCRIPTOR_DATA>(
-        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, threadGroupCount, 1, *kernel, 0, pDevice->getPreemptionMode(), *pDevice, &walkerCmd, nullptr);
+        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, threadGroupCount, 1, *kernel, 0, pDevice->getPreemptionMode(), *pDevice, &walkerCmd, nullptr, false);
 
     auto usedIndirectHeapAfter = indirectHeap.getUsed();
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
@@ -371,7 +371,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
         nullptr,
         true,
         0,
-        *pDevice);
+        *pDevice,
+        false);
 
     // It's okay these are EXPECT_GE as they're only going to be used for
     // estimation purposes to avoid OOM.
@@ -429,7 +430,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
         nullptr,
         true,
         0,
-        *pDevice);
+        *pDevice,
+        false);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
@@ -478,7 +480,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
         nullptr,
         true,
         0,
-        *pDevice);
+        *pDevice,
+        false);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
@@ -560,7 +563,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
         nullptr,
         true,
         0,
-        *pDevice);
+        *pDevice,
+        false);
 
     constexpr uint32_t grfSize = sizeof(typename FamilyType::GRF);
     size_t localWorkSize = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
@@ -656,7 +660,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
         nullptr,
         true,
         0,
-        *pDevice);
+        *pDevice,
+        false);
 
     EXPECT_EQ(sshUsed + 0x00000000u, *(&bindingTableStatesPointers[0]));
     EXPECT_EQ(sshUsed + 0x00000040u, *(&bindingTableStatesPointers[1]));
@@ -768,7 +773,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
             nullptr,
             true,
             0,
-            *pDevice);
+            *pDevice,
+            false);
 
         bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getCpuBase()) + localSshOffset + btiOffset);
         for (uint32_t i = 0; i < numSurfaces; ++i) {
@@ -940,7 +946,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
         nullptr,
         true,
         0,
-        *pDevice);
+        *pDevice,
+        false);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     EXPECT_EQ(0U, interfaceDescriptor->getSamplerStatePointer());
@@ -966,7 +973,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerS
         nullptr,
         true,
         0,
-        *pDevice);
+        *pDevice,
+        false);
 
     interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     EXPECT_EQ(0U, interfaceDescriptor->getSamplerStatePointer());
@@ -1039,7 +1047,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
         nullptr,
         true,
         0,
-        *pDevice);
+        *pDevice,
+        false);
 
     bool isMemorySame = memcmp(borderColorPointer, mockDsh, samplerTableOffset) == 0;
     EXPECT_TRUE(isMemorySame);
@@ -1141,7 +1150,8 @@ HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirect
         &interfaceDescriptorData,
         true,
         0,
-        *pDevice);
+        *pDevice,
+        false);
 
     EXPECT_EQ(0, std::memcmp(expectedDestinationInHeap, mockKernel.getSurfaceStateHeap(), mockKernel.getSurfaceStateHeapSize()));
 
