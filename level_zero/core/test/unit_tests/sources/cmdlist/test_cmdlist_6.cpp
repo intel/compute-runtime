@@ -13,6 +13,7 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/program/sync_buffer_handler.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -44,6 +45,27 @@ HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImm
     auto returnValue = commandList->reset();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, commandList->partitionCount);
+}
+
+HWTEST2_F(MultiTileImmediateCommandListTest, givenMultipleTilesWhenAllocatingBarrierSyncBufferThenEnsureCorrectSize, IsAtLeastXeHpCore) {
+    EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.MultiTileArchInfo.TileCount = 3;
+
+    Mock<KernelImp> mockKernel;
+
+    auto cmdListImmediate = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(static_cast<L0::CommandListImp *>(commandList.get()));
+    auto whiteBoxCmdList = static_cast<WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(cmdListImmediate);
+
+    whiteBoxCmdList->programRegionGroupBarrier(mockKernel);
+
+    auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(1);
+
+    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+
+    size_t expectedOffset = alignUp(3 * hwInfo.gtSystemInfo.MaxSubSlicesSupported * sizeof(uint64_t), MemoryConstants::cacheLineSize);
+
+    EXPECT_EQ(patchData.second, expectedOffset);
 }
 
 using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixture<true, true, false, -1>>;
