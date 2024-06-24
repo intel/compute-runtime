@@ -594,6 +594,44 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
     }
 }
 
+TEST(Buffer, givenDcFlushMitigationWhenCreateBufferCopyHostptrThenUseBlitterCopy) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowDcFlush.set(0);
+    ExecutionEnvironment *executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+
+    auto productHelper = executionEnvironment->rootDeviceEnvironments[0]->productHelper.get();
+    if (!(productHelper->isBlitterFullySupported(*defaultHwInfo) && productHelper->isDcFlushMitigated())) {
+        GTEST_SKIP();
+    }
+
+    auto blitterCalled = 0u;
+    auto mockBlitMemoryToAllocation = [&](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                          Vec3<size_t> size) -> NEO::BlitOperationResult {
+        memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
+        blitterCalled++;
+        return BlitOperationResult::success;
+    };
+    VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
+        &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
+
+    auto *memoryManager = new MockMemoryManagerFailFirstAllocation(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    memoryManager->returnBaseAllocateGraphicsMemoryInDevicePool = true;
+    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
+
+    MockContext ctx(device.get());
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+    char memory[] = {1, 2, 3, 4, 5, 6, 7, 8};
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, sizeof(memory), memory, retVal));
+
+    ASSERT_NE(nullptr, buffer.get());
+    EXPECT_EQ(blitterCalled, 1u);
+}
+
 TEST(Buffer, givenPropertiesWithClDeviceHandleListKHRWhenCreateBufferThenCorrectBufferIsSet) {
     MockDefaultContext context;
     auto clDevice = context.getDevice(1);

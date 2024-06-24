@@ -191,13 +191,13 @@ bool inline copyHostPointer(Buffer *buffer,
                             bool implicitScalingEnabled,
                             cl_int &errcodeRet) {
     auto rootDeviceIndex = device.getRootDeviceIndex();
+    auto &productHelper = device.getProductHelper();
     auto memory = buffer->getGraphicsAllocation(rootDeviceIndex);
     auto isCompressionEnabled = memory->isCompressionEnabled();
     const bool isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
-    const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory;
+    const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory || productHelper.isDcFlushMitigated();
     if (gpuCopyRequired) {
         auto &hwInfo = device.getHardwareInfo();
-        auto &productHelper = device.getProductHelper();
 
         auto &osInterface = device.getRootDeviceEnvironment().osInterface;
         bool isLockable = true;
@@ -209,7 +209,9 @@ bool inline copyHostPointer(Buffer *buffer,
                                 size <= Buffer::maxBufferSizeForCopyOnCpu &&
                                 isCompressionEnabled == false &&
                                 productHelper.getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::cpuAccessDisallowed &&
-                                isLockable;
+                                isLockable &&
+                                !productHelper.isDcFlushMitigated();
+
         if (debugManager.flags.CopyHostPtrOnCpu.get() != -1) {
             copyOnCpuAllowed = debugManager.flags.CopyHostPtrOnCpu.get() == 1;
         }
@@ -221,7 +223,7 @@ bool inline copyHostPointer(Buffer *buffer,
         } else {
             auto blitMemoryToAllocationResult = BlitOperationResult::unsupported;
 
-            if (productHelper.isBlitterFullySupported(hwInfo) && isLocalMemory) {
+            if (productHelper.isBlitterFullySupported(hwInfo) && (isLocalMemory || productHelper.isDcFlushMitigated())) {
                 blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, memory, buffer->getOffset(), hostPtr, {size, 1, 1});
             }
 
