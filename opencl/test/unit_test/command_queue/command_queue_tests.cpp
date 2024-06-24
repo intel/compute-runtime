@@ -2995,8 +2995,8 @@ struct CopyOnlyQueueTests : ::testing::Test {
         device->regularEngineGroups.clear();
         device->allEngines.clear();
 
-        device->createEngine(0, typeUsageRcs);
-        device->createEngine(1, typeUsageBcs);
+        device->createEngine(typeUsageRcs);
+        device->createEngine(typeUsageBcs);
         bcsEngine = &device->getAllEngines().back();
 
         clDevice = std::make_unique<MockClDevice>(device);

@@ -245,6 +245,10 @@ bool Device::createDeviceImpl() {
         UNRECOVERABLE_IF(!ret);
     }
 
+    if (!initializeEngines()) {
+        return false;
+    }
+
     getDefaultEngine().osContext->setDefaultContext(true);
 
     for (auto &engine : allEngines) {
@@ -303,15 +307,14 @@ bool Device::createDeviceImpl() {
 
 bool Device::createEngines() {
     if (engineInstanced) {
-        return createEngine(0, {engineInstancedType, EngineUsage::regular});
+        return createEngine({engineInstancedType, EngineUsage::regular});
     }
 
     auto &gfxCoreHelper = getGfxCoreHelper();
     auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(getRootDeviceEnvironment());
 
-    uint32_t deviceCsrIndex = 0;
     for (auto &engine : gpgpuEngines) {
-        if (!createEngine(deviceCsrIndex++, engine)) {
+        if (!createEngine(engine)) {
             return false;
         }
     }
@@ -401,7 +404,7 @@ std::unique_ptr<CommandStreamReceiver> Device::createCommandStreamReceiver() con
     return std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, getRootDeviceIndex(), getDeviceBitfield()));
 }
 
-bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) {
+bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     const auto &hwInfo = getHardwareInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
     const auto engineType = engineTypeUsage.first;
@@ -439,6 +442,8 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
     osContext->setContextGroup(useContextGroup);
+    osContext->setIsPrimaryEngine(isPrimaryEngine);
+    osContext->setIsDefaultEngine(isDefaultEngine);
 
     commandStreamReceiver->setupContext(*osContext);
 
@@ -460,34 +465,6 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         return false;
     }
 
-    bool firstSubmissionDone = false;
-    if (isDefaultEngine) {
-        bool defaultEngineAlreadySet = (allEngines.size() > defaultEngineIndex) && (allEngines[defaultEngineIndex].getEngineType() == engineType);
-
-        if (!defaultEngineAlreadySet) {
-            defaultEngineIndex = deviceCsrIndex;
-
-            if (osContext->isDebuggableContext() ||
-                this->isInitDeviceWithFirstSubmissionSupported(commandStreamReceiver->getType())) {
-                if (SubmissionStatus::success != commandStreamReceiver->initializeDeviceWithFirstSubmission(*this)) {
-                    return false;
-                }
-                firstSubmissionDone = true;
-            }
-        }
-    }
-
-    auto &compilerProductHelper = this->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
-
-    bool isHeaplessStateInit = isPrimaryEngine && compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
-    bool initializeDevice = (useContextGroup || isHeaplessStateInit) && !firstSubmissionDone;
-
-    if (initializeDevice) {
-        commandStreamReceiver->initializeResources(false);
-        commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
-    }
-
     EngineControl engine{commandStreamReceiver.get(), osContext};
     allEngines.push_back(engine);
     if (engineUsage == EngineUsage::regular) {
@@ -496,6 +473,39 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
 
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 
+    return true;
+}
+
+bool Device::initializeEngines() {
+    uint32_t deviceCsrIndex = 0;
+    bool defaultEngineAlreadySet = false;
+    for (auto &engine : allEngines) {
+        bool firstSubmissionDone = false;
+        if (engine.osContext->getIsDefaultEngine() && !defaultEngineAlreadySet) {
+            defaultEngineAlreadySet = true;
+            defaultEngineIndex = deviceCsrIndex;
+
+            if (engine.osContext->isDebuggableContext() ||
+                this->isInitDeviceWithFirstSubmissionSupported(engine.commandStreamReceiver->getType())) {
+                if (SubmissionStatus::success != engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this)) {
+                    return false;
+                }
+                firstSubmissionDone = true;
+            }
+        }
+
+        auto &compilerProductHelper = this->getCompilerProductHelper();
+        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+
+        bool isHeaplessStateInit = engine.osContext->getIsPrimaryEngine() && compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
+        bool initializeDevice = (engine.osContext->isPartOfContextGroup() || isHeaplessStateInit) && !firstSubmissionDone;
+
+        if (initializeDevice) {
+            engine.commandStreamReceiver->initializeResources(false);
+            engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
+        }
+        deviceCsrIndex++;
+    }
     return true;
 }
 

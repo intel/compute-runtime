@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ SipKernelType calledType = SipKernelType::count;
 bool called = false;
 bool returned = true;
 bool useMockSip = false;
+bool uninitializedSipRequested = false;
 
 void clearUseFlags() {
     calledType = SipKernelType::count;
@@ -159,6 +160,9 @@ bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
 
 const SipKernel &SipKernel::getSipKernel(Device &device, OsContext *context) {
     if (MockSipData::useMockSip) {
+        if (!MockSipData::called) {
+            MockSipData::uninitializedSipRequested = true;
+        }
         return *MockSipData::mockSipKernel.get();
     } else {
         if (context && device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::offline) {

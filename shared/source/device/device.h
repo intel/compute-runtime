@@ -216,7 +216,8 @@ class Device : public ReferenceTrackedObject<Device> {
     virtual bool createEngines();
 
     void addEngineToEngineGroup(EngineControl &engine);
-    MOCKABLE_VIRTUAL bool createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage);
+    MOCKABLE_VIRTUAL bool createEngine(EngineTypeUsage engineTypeUsage);
+    MOCKABLE_VIRTUAL bool initializeEngines();
     MOCKABLE_VIRTUAL bool createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineTypeUsage engineTypeUsage);
 
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;

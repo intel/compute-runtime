@@ -42,7 +42,7 @@ struct MockSubDevice : public SubDevice {
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
     bool failOnCreateEngine = false;
-    bool createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) override;
+    bool createEngine(EngineTypeUsage engineTypeUsage) override;
 };
 
 class MockDevice : public RootDevice {

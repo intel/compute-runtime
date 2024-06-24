@@ -53,7 +53,7 @@ TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexZeroWhenGetInte
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
 
     UltDeviceFactory factory{1, 0};
-    factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal});
+    factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal});
     auto engine = factory.rootDevices[0]->getInternalCopyEngine();
     EXPECT_NE(nullptr, engine);
 
@@ -69,7 +69,7 @@ TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexOneWhenGetInter
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
 
     UltDeviceFactory factory{1, 0};
-    factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS1, EngineUsage::internal});
+    factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS1, EngineUsage::internal});
     auto engine = factory.rootDevices[0]->getInternalCopyEngine();
     EXPECT_NE(nullptr, engine);
 
@@ -82,10 +82,10 @@ TEST(DeviceBlitterTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineT
     defaultHwInfo->capabilityTable.blitterOperationsSupported = false;
 
     UltDeviceFactory factory{1, 0};
-    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}), std::runtime_error);
-    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::cooperative}), std::runtime_error);
-    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal}), std::runtime_error);
-    EXPECT_THROW(factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::lowPriority}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::cooperative}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal}), std::runtime_error);
+    EXPECT_THROW(factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::lowPriority}), std::runtime_error);
 }
 
 TEST(Device, givenNoDebuggerWhenGettingDebuggerThenNullptrIsReturned) {

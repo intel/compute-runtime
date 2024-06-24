@@ -79,6 +79,18 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const OsContext *getPrimaryContext() const {
         return primaryContext;
     }
+    void setIsPrimaryEngine(const bool isPrimaryEngine) {
+        this->isPrimaryEngine = isPrimaryEngine;
+    }
+    bool getIsPrimaryEngine() const {
+        return this->isPrimaryEngine;
+    }
+    void setIsDefaultEngine(const bool isDefaultEngine) {
+        this->isDefaultEngine = isDefaultEngine;
+    }
+    bool getIsDefaultEngine() const {
+        return this->isDefaultEngine;
+    }
     void setContextGroup(bool value) {
         isContextGroup = value;
     }
@@ -110,5 +122,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
 
     bool isContextGroup = false;
     const OsContext *primaryContext = nullptr;
+    bool isPrimaryEngine = false;
+    bool isDefaultEngine = false;
 };
 } // namespace NEO

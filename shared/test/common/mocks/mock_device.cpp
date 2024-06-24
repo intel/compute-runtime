@@ -157,11 +157,11 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     return executionEnvironment;
 }
 
-bool MockSubDevice::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) {
+bool MockSubDevice::createEngine(EngineTypeUsage engineTypeUsage) {
     if (failOnCreateEngine) {
         return false;
     }
-    return SubDevice::createEngine(deviceCsrIndex, engineTypeUsage);
+    return SubDevice::createEngine(engineTypeUsage);
 }
 
 MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(ExecutionEnvironment *executionEnvironment, uint32_t internalDeviceIndex) : MockDevice(executionEnvironment, internalDeviceIndex) {
