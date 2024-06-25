@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,4 +19,8 @@ MTLTEST_F(MtlProductHelperWindows, whenCheckIsTlbFlushRequiredThenReturnProperVa
 
 MTLTEST_F(MtlProductHelperWindows, whenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
     EXPECT_TRUE(productHelper->isTimestampWaitSupportedForEvents());
+}
+
+MTLTEST_F(MtlProductHelperWindows, givenProductHelperWhenIsStagingBuffersEnabledThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
 }

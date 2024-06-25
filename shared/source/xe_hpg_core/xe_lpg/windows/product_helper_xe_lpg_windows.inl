@@ -9,4 +9,9 @@
 
 namespace NEO {
 
+template <>
+bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
+    return true;
+}
+
 } // namespace NEO
