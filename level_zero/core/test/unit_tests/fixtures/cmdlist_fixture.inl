@@ -1445,7 +1445,7 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
         ptrOffset(cmdListStream->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerCmd(cmdList.begin(), cmdList.end(), true);
+    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerIterator);
     void *walkerPtrWithScratch = *walkerIterator;
 
@@ -1462,7 +1462,7 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
         ptrOffset(cmdListStream->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerCmd(cmdList.begin(), cmdList.end(), true);
+    walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerIterator);
     void *walkerPtrWithoutScratch = *walkerIterator;
 
@@ -1522,7 +1522,7 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
         ptrOffset(cmdListStream->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerCmd(cmdList.begin(), cmdList.end(), true);
+    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerIterator);
     void *walkerPtrWithScratch = *walkerIterator;
 
@@ -1563,7 +1563,7 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
         ptrOffset(cmdListStream->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerCmd(cmdList.begin(), cmdList.end(), true);
+    walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerIterator);
     void *walkerPtrWithSlot1Scratch = *walkerIterator;
 
@@ -1624,7 +1624,7 @@ void CommandListScratchPatchFixtureInit::testScratchSameNotPatching() {
         ptrOffset(cmdListStream->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerCmd(cmdList.begin(), cmdList.end(), true);
+    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerIterator);
     void *walkerPtrWithScratch = *walkerIterator;
 
@@ -1683,7 +1683,7 @@ void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
         ptrOffset(cmdListStream->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerCmd(cmdList.begin(), cmdList.end(), true);
+    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerIterator);
     void *walkerPtrWithScratch = *walkerIterator;
 
