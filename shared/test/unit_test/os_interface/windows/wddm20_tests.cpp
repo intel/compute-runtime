@@ -1129,6 +1129,7 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndMakeReside
     EXPECT_EQ(0u, mockTemporaryResources->resourceHandles.size());
     EXPECT_EQ(1u, mockWddm.evictResult.called);
     EXPECT_EQ(allocation.handle, mockWddm.makeResidentResult.handlePack[0]);
+    EXPECT_TRUE(mockWddm.makeResidentResult.cantTrimFurther);
     EXPECT_EQ(3u, mockWddm.makeResidentResult.called);
 }
 

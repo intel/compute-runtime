@@ -1331,13 +1331,19 @@ TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestr
     EXPECT_EQ(7u, destroyArg.AllocationCount);
     gdi->getDestroyArg().AllocationCount = 0;
 }
-TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {
+TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingLockedAllocationIfDeviceRequiresMakeResidentPriorToLockThenCallEvictDoNotCallOtherwise) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForcePreferredAllocationMethod.set(static_cast<int32_t>(GfxMemoryAllocationMethod::useUmdSystemPtr));
     auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     memoryManager->lockResource(allocation);
-    EXPECT_FALSE(allocation->needsMakeResidentBeforeLock());
+    auto makeResidentPriorToLockRequired = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[0u]->getHelper<GfxCoreHelper>().makeResidentBeforeLockNeeded(allocation->needsMakeResidentBeforeLock());
+    EXPECT_EQ(makeResidentPriorToLockRequired, allocation->needsMakeResidentBeforeLock());
     memoryManager->freeGraphicsMemory(allocation);
+    if (makeResidentPriorToLockRequired) {
+        EXPECT_EQ(1u, mockTemporaryResources->removeResourceResult.called);
+    } else {
+        EXPECT_EQ(0u, mockTemporaryResources->removeResourceResult.called);
+    }
     EXPECT_EQ(0u, mockTemporaryResources->evictResourceResult.called);
 }
 TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingNotLockedAllocationThatDoesntNeedMakeResidentBeforeLockThenDontEvictAllocationFromWddmTemporaryResources) {

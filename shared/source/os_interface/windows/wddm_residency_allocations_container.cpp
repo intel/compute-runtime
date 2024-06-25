@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(c
         if (evictAllResources() == MemoryOperationsStatus::success) {
             continue;
         }
-        if (!wddm->makeResident(handles, count, false, nullptr, size)) {
+        if (!(madeResident = wddm->makeResident(handles, count, true, nullptr, size))) {
             DEBUG_BREAK_IF(true);
             return MemoryOperationsStatus::outOfMemory;
         };

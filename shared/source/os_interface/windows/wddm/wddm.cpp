@@ -528,7 +528,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
         perfLogResidencyMakeResident(residencyLogger.get(), false, makeResident.PagingFenceValue);
         success = true;
     } else {
-        DEBUG_BREAK_IF(true);
+        DEBUG_BREAK_IF(cantTrimFurther);
         perfLogResidencyTrimRequired(residencyLogger.get(), makeResident.NumBytesToTrim);
         if (numberOfBytesToTrim != nullptr) {
             *numberOfBytesToTrim = makeResident.NumBytesToTrim;
