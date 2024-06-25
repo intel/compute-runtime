@@ -24,7 +24,7 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, const Unifi
     this->chunkAllocator.reset(new HeapAllocator(castToUint64(this->pool),
                                                  poolSize,
                                                  chunkAlignment,
-                                                 allocationThreshold / 2));
+                                                 2 * MemoryConstants::megaByte));
     this->poolSize = poolSize;
     this->poolMemoryType = memoryProperties.memoryType;
     return true;

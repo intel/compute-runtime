@@ -503,7 +503,8 @@ void Context::initializeUsmAllocationPools() {
     }
     auto &productHelper = getDevices()[0]->getProductHelper();
     bool enabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() && productHelper.isUsmPoolAllocatorSupported();
-    size_t poolSize = 2 * MemoryConstants::megaByte;
+
+    size_t poolSize = NEO::defaultPoolSize;
     if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableDeviceUsmAllocationPool.get() > 0;
         poolSize = debugManager.flags.EnableDeviceUsmAllocationPool.get() * MemoryConstants::megaByte;
@@ -519,7 +520,7 @@ void Context::initializeUsmAllocationPools() {
     }
 
     enabled = ApiSpecificConfig::isHostUsmPoolingEnabled() && productHelper.isUsmPoolAllocatorSupported();
-    poolSize = 2 * MemoryConstants::megaByte;
+    poolSize = NEO::defaultPoolSize;
     if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
         poolSize = debugManager.flags.EnableHostUsmAllocationPool.get() * MemoryConstants::megaByte;

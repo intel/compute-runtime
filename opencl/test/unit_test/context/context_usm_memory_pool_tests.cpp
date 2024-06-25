@@ -53,12 +53,12 @@ HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingCont
 
 HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingContextThenPoolsAreInitialized, IsXeHpgCore) {
     EXPECT_TRUE(mockDeviceUsmMemAllocPool->isInitialized());
-    EXPECT_EQ(2 * MemoryConstants::megaByte, mockDeviceUsmMemAllocPool->poolSize);
+    EXPECT_EQ(1 * MemoryConstants::megaByte, mockDeviceUsmMemAllocPool->poolSize);
     EXPECT_NE(nullptr, mockDeviceUsmMemAllocPool->pool);
     EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, mockDeviceUsmMemAllocPool->poolMemoryType);
 
     EXPECT_TRUE(mockHostUsmMemAllocPool->isInitialized());
-    EXPECT_EQ(2 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolSize);
+    EXPECT_EQ(1 * MemoryConstants::megaByte, mockHostUsmMemAllocPool->poolSize);
     EXPECT_NE(nullptr, mockHostUsmMemAllocPool->pool);
     EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, mockHostUsmMemAllocPool->poolMemoryType);
 }
