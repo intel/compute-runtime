@@ -349,8 +349,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
     auto skipOffset = kernels[2]->getKernelInfo().kernelDescriptor.entryPoints.skipPerThreadDataLoad;
     uint64_t kernelStartPointer = kernelAllocationGpuAddr + skipOffset;
 
-    INTERFACE_DESCRIPTOR_DATA &idd = walker->getInterfaceDescriptor();
-    EXPECT_EQ(static_cast<uint32_t>(kernelStartPointer), idd.getKernelStartPointer());
+    auto &idd = walker->getInterfaceDescriptor();
+
+    using KernelStartPointerType = decltype(idd.getKernelStartPointer());
+    EXPECT_EQ(static_cast<KernelStartPointerType>(kernelStartPointer), idd.getKernelStartPointer());
 
     pCmdQ->flush();
 
