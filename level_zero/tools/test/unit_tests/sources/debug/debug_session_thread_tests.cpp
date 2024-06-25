@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -297,7 +298,7 @@ TEST(DebugSession, givenAllSlicesWhenGettingSingleThreadsThenCorrectThreadsAreRe
     auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
 
     ze_device_thread_t physicalThread = {UINT32_MAX, 0, 0, 0};
-    const uint32_t numSlices = hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numSlices = neoDevice->getGfxCoreHelper().getHighestEnabledSlice(hwInfo);
 
     auto threads = debugSession->getSingleThreadsForDevice(0, physicalThread, hwInfo);
 

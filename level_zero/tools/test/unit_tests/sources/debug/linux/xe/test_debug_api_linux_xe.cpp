@@ -2093,7 +2093,7 @@ TEST_F(DebugApiLinuxTestXe, GivenSentInterruptWhenHandlingAttEventThenAttBitsAre
     sessionMock->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(data));
 
     EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
-    auto expectedThreadsToCheck = (hwInfo.capabilityTable.fusedEuEnabled && hwInfo.gtSystemInfo.MaxEuPerSubSlice != 8) ? 2u : 1u;
+    auto expectedThreadsToCheck = hwInfo.capabilityTable.fusedEuEnabled ? 2u : 1u;
     EXPECT_EQ(expectedThreadsToCheck, sessionMock->addThreadToNewlyStoppedFromRaisedAttentionCallCount);
     EXPECT_EQ(expectedThreadsToCheck, sessionMock->readSystemRoutineIdentFromMemoryCallCount);
     EXPECT_EQ(0u, sessionMock->readSystemRoutineIdentCallCount);

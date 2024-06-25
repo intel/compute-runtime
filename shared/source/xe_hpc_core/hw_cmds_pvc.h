@@ -17,11 +17,6 @@ struct PVC : public XeHpcCoreFamily {
     static const HardwareInfo hwInfo;
     static FeatureTable featureTable;
     static WorkaroundTable workaroundTable;
-    // Initial non-zero values for unit tests
-    static const uint32_t maxEuPerSubslice = 8;
-    static const uint32_t maxSlicesSupported = 8;
-    static const uint32_t maxSubslicesSupported = 64;
-    static const uint32_t maxDualSubslicesSupported = 64;
     static const RuntimeCapabilityTable capabilityTable;
     static constexpr uint32_t numberOfpartsInTileForConcurrentKernels = 8u;
 

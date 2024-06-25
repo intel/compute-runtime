@@ -111,30 +111,14 @@ void MTL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrCCSNode = true;
     featureTable->flags.ftrCCSRing = true;
     featureTable->flags.ftrTile64Optimization = true;
+    featureTable->ftrBcsInfo = 1;
 
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
 void MTL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * releaseHelper->getNumThreadsPerEu();
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = MTL::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = MTL::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = MTL::maxSubslicesSupported;
-    gtSysInfo->MaxDualSubSlicesSupported = MTL::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-
-    gtSysInfo->CCSInfo.IsValid = true;
-    gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
-    gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
+    setupDefaultGtSysInfo(hwInfo, releaseHelper);
 
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
@@ -151,30 +135,6 @@ const HardwareInfo MtlHwConfig::hwInfo = {
 GT_SYSTEM_INFO MtlHwConfig::gtSystemInfo = {0};
 void MtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
     MTL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-
-    // non-zero values for unit tests
-    if (gtSysInfo->SliceCount == 0) {
-        gtSysInfo->SliceCount = 2;
-        gtSysInfo->SubSliceCount = 8;
-        gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
-        gtSysInfo->EUCount = 40;
-        gtSysInfo->MaxEuPerSubSlice = gtSysInfo->EUCount / gtSysInfo->SubSliceCount;
-        gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
-        gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
-
-        gtSysInfo->L3BankCount = 1;
-
-        hwInfo->featureTable.ftrBcsInfo = 1;
-        gtSysInfo->IsDynamicallyPopulated = true;
-        for (uint32_t slice = 0; slice < gtSysInfo->SliceCount; slice++) {
-            gtSysInfo->SliceInfo[slice].Enabled = true;
-        }
-    }
-    gtSysInfo->L3CacheSizeInKb = 1;
 
     if (setupFeatureTableAndWorkaroundTable) {
         MTL::setupFeatureAndWorkaroundTable(hwInfo);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <algorithm>
 
@@ -127,5 +128,26 @@ aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
     return debugManager.flags.NodeOrdinal.get() == -1
                ? hwInfo.capabilityTable.defaultEngineType
                : static_cast<aub_stream::EngineType>(debugManager.flags.NodeOrdinal.get());
+}
+void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHelper) {
+    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->L3CacheSizeInKb = 1;
+    gtSysInfo->CCSInfo.IsValid = 1;
+    gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
+    gtSysInfo->CCSInfo.Instances.CCSEnableMask = 0b1;
+    // non-zero values for unit tests
+    if (gtSysInfo->SliceCount == 0) {
+        gtSysInfo->SliceCount = 2;
+        gtSysInfo->SubSliceCount = 8;
+        gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
+        gtSysInfo->EUCount = 64;
+
+        gtSysInfo->MaxEuPerSubSlice = gtSysInfo->EUCount / gtSysInfo->SubSliceCount;
+        gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
+        gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
+        gtSysInfo->MaxDualSubSlicesSupported = gtSysInfo->DualSubSliceCount;
+        gtSysInfo->L3BankCount = 1;
+    }
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * releaseHelper->getNumThreadsPerEu();
 }
 } // namespace NEO

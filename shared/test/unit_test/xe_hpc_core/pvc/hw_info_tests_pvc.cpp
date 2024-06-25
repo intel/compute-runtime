@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,15 +88,15 @@ PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupHardwareInfoBaseThenGtSys
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     PVC::setupHardwareInfoBase(&hwInfo, false, releaseHelper.get());
 
-    EXPECT_EQ(128u, gtSystemInfo.MaxFillRate);
-    EXPECT_EQ(336u, gtSystemInfo.TotalVsThreads);
-    EXPECT_EQ(336u, gtSystemInfo.TotalHsThreads);
-    EXPECT_EQ(336u, gtSystemInfo.TotalDsThreads);
-    EXPECT_EQ(336u, gtSystemInfo.TotalGsThreads);
-    EXPECT_EQ(64u, gtSystemInfo.TotalPsThreadsWindowerRange);
-    EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
+    EXPECT_EQ(0u, gtSystemInfo.MaxFillRate);
+    EXPECT_EQ(0u, gtSystemInfo.TotalVsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalHsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalDsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalGsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalPsThreadsWindowerRange);
+    EXPECT_EQ(0u, gtSystemInfo.CsrSizeInMb);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
-    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+    EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
 }
 
 PVCTEST_F(PvcConfigHwInfoTests, givenPvcConfigWhenSetupMultiTileInfoBaseThenGtSystemInfoIsCorrect) {

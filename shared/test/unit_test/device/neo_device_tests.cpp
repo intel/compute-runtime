@@ -260,7 +260,7 @@ HWTEST2_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledAndRTStackAllocationF
 
     std::unique_ptr<NEO::MemoryManager> otherMemoryManager;
     otherMemoryManager = std::make_unique<NEO::MockMemoryManagerWithCapacity>(*device->executionEnvironment);
-    static_cast<NEO::MockMemoryManagerWithCapacity &>(*otherMemoryManager).capacity = 50000000;
+    static_cast<NEO::MockMemoryManagerWithCapacity &>(*otherMemoryManager).capacity = MemoryConstants::pageSize;
     device->executionEnvironment->memoryManager.swap(otherMemoryManager);
 
     device->initializeRayTracing(5);
@@ -1105,7 +1105,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTest, givenHwInfoWhenRequestedComputeUnitsUse
 
     const uint32_t multiplyFactor = productHelper.getThreadEuRatioForScratch(hwInfo) / 8u;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) * multiplyFactor;
-    uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice * numThreadsPerEu;
+
+    uint32_t expectedValue = productHelper.computeMaxNeededSubSliceSpace(hwInfo) * hwInfo.gtSystemInfo.MaxEuPerSubSlice * numThreadsPerEu;
 
     EXPECT_EQ(expectedValue, gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment()));
     EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);

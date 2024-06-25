@@ -44,14 +44,14 @@ HWTEST2_F(XeLpgHwInfoTests, whenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect, 
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, compilerProductHelper->getHwInfoConfig(hwInfo), false, releaseHelper.get());
 
-    EXPECT_EQ(336u, gtSystemInfo.TotalVsThreads);
-    EXPECT_EQ(336u, gtSystemInfo.TotalHsThreads);
-    EXPECT_EQ(336u, gtSystemInfo.TotalDsThreads);
-    EXPECT_EQ(336u, gtSystemInfo.TotalGsThreads);
-    EXPECT_EQ(64u, gtSystemInfo.TotalPsThreadsWindowerRange);
-    EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
+    EXPECT_EQ(0u, gtSystemInfo.TotalVsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalHsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalDsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalGsThreads);
+    EXPECT_EQ(0u, gtSystemInfo.TotalPsThreadsWindowerRange);
+    EXPECT_EQ(0u, gtSystemInfo.CsrSizeInMb);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
-    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+    EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
 }
 
 HWTEST2_F(XeLpgHwInfoTests, whenCheckDirectSubmissionEnginesThenProperValuesAreSetToTrue, IsXeLpg) {
@@ -173,11 +173,6 @@ HWTEST2_F(XeLpgHwInfoTests, GivenEmptyHwInfoForUnitTestsWhenSetupHardwareInfoIsC
     EXPECT_GT_VAL(gtSystemInfo.CCSInfo.NumberOfCCSEnabled, 0u);
 
     EXPECT_NE_VAL(hwInfoToSet.featureTable.ftrBcsInfo, 0u);
-    EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
-
-    for (uint32_t i = 0; i < gtSystemInfo.SliceCount; i++) {
-        EXPECT_TRUE(gtSystemInfo.SliceInfo[i].Enabled);
-    }
 }
 
 HWTEST2_F(XeLpgProductHelperTests, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned, IsXeLpg) {

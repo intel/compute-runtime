@@ -119,25 +119,13 @@ void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
 
     featureTable->flags.ftrUnified3DMediaCompressionFormats = true;
     featureTable->flags.ftrTile64Optimization = true;
+    hwInfo->featureTable.ftrBcsInfo = 1;
 
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
 void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * releaseHelper->getNumThreadsPerEu();
-    gtSysInfo->TotalVsThreads = 336;
-    gtSysInfo->TotalHsThreads = 336;
-    gtSysInfo->TotalDsThreads = 336;
-    gtSysInfo->TotalGsThreads = 336;
-    gtSysInfo->TotalPsThreadsWindowerRange = 64;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->MaxEuPerSubSlice = DG2::maxEuPerSubslice;
-    gtSysInfo->MaxSlicesSupported = DG2::maxSlicesSupported;
-    gtSysInfo->MaxSubSlicesSupported = DG2::maxSubslicesSupported;
-    gtSysInfo->MaxDualSubSlicesSupported = DG2::maxDualSubslicesSupported;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
+    setupDefaultGtSysInfo(hwInfo, releaseHelper);
 
     if (setupFeatureTableAndWorkaroundTable) {
         setupFeatureAndWorkaroundTable(hwInfo);
@@ -153,42 +141,12 @@ const HardwareInfo Dg2HwConfig::hwInfo = {
 
 GT_SYSTEM_INFO Dg2HwConfig::gtSystemInfo = {0};
 void Dg2HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
-    GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->CsrSizeInMb = 8;
-    gtSysInfo->IsL3HashModeEnabled = false;
-    gtSysInfo->IsDynamicallyPopulated = false;
-
-    // non-zero values for unit tests
-    if (gtSysInfo->SliceCount == 0) {
-        gtSysInfo->SliceCount = 2;
-        gtSysInfo->SubSliceCount = 8;
-        gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
-        gtSysInfo->EUCount = 40;
-        gtSysInfo->MaxEuPerSubSlice = gtSysInfo->EUCount / gtSysInfo->SubSliceCount;
-        gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
-        gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
-        gtSysInfo->IsDynamicallyPopulated = true;
-        gtSysInfo->L3BankCount = 1;
-    }
-    gtSysInfo->L3CacheSizeInKb = 1;
-
-    gtSysInfo->CCSInfo.IsValid = true;
-    gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
-
-    hwInfo->featureTable.ftrBcsInfo = 1;
-    for (uint32_t slice = 0; slice < gtSysInfo->SliceCount; slice++) {
-        gtSysInfo->SliceInfo[slice].Enabled = true;
-    }
-
-    if (setupFeatureTableAndWorkaroundTable) {
-        DG2::setupFeatureAndWorkaroundTable(hwInfo);
-    }
+    DG2::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
 };
 
 const HardwareInfo DG2::hwInfo = Dg2HwConfig::hwInfo;
 
 void setupDG2HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper) {
-    DG2::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     Dg2HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
 }
 

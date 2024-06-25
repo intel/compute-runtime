@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,6 @@ struct MTL : public XeHpgCoreFamily {
     static const HardwareInfo hwInfo;
     static FeatureTable featureTable;
     static WorkaroundTable workaroundTable;
-    // Initial non-zero values for unit tests
-    static const uint32_t maxEuPerSubslice = 16;
-    static const uint32_t maxSlicesSupported = 8;
-    static const uint32_t maxSubslicesSupported = 32;
-    static const uint32_t maxDualSubslicesSupported = 32;
     static const RuntimeCapabilityTable capabilityTable;
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);

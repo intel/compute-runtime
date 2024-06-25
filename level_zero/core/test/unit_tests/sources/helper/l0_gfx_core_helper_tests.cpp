@@ -128,7 +128,12 @@ HWTEST_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmask
     };
 
     auto hwInfo = *NEO::defaultHwInfo.get();
-    MockExecutionEnvironment executionEnvironment;
+    const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 16u;
+    hwInfo.gtSystemInfo.EUCount = hwInfo.gtSystemInfo.MaxEuPerSubSlice * hwInfo.gtSystemInfo.SubSliceCount;
+    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * threadsPerEu;
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
     std::unique_ptr<uint8_t[]> bitmask;
@@ -136,8 +141,6 @@ HWTEST_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmask
 
     uint32_t subslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     uint32_t subslice = subslicesPerSlice > 1 ? subslicesPerSlice - 1 : 0;
-
-    const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
 
     auto releaseHelper = executionEnvironment.rootDeviceEnvironments[0]->getReleaseHelper();
     auto bytesPerEu = releaseHelper ? Math::divideAndRoundUp(releaseHelper->getNumThreadsPerEu(), 8u) : 1u;

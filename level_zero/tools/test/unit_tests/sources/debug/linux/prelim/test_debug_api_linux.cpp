@@ -5707,7 +5707,9 @@ TEST_F(DebugApiLinuxTest, GivenSliceALLWhenCallingResumeThenSliceIdIsNotRemapped
     ze_device_thread_t thread = {};
     thread.slice = UINT32_MAX;
 
-    for (uint32_t i = 0; i < device->getHwInfo().gtSystemInfo.MaxSlicesSupported; i++) {
+    const auto &hwInfo = device->getHwInfo();
+    auto numSlices = neoDevice->getGfxCoreHelper().getHighestEnabledSlice(hwInfo);
+    for (uint32_t i = 0; i < numSlices; i++) {
         ze_device_thread_t singleThread = thread;
         singleThread.slice = i;
         sessionMock->allThreads[EuThread::ThreadId(0, singleThread)]->stopThread(1u);
@@ -6306,7 +6308,7 @@ TEST_F(DebugApiLinuxAttentionTest, GivenSentInterruptWhenHandlingAttEventThenAtt
     sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
 
     EXPECT_EQ(2u, sessionMock->newlyStoppedThreads.size());
-    auto expectedThreadsToCheck = (hwInfo.capabilityTable.fusedEuEnabled && hwInfo.gtSystemInfo.MaxEuPerSubSlice != 8) ? 4u : 2u;
+    auto expectedThreadsToCheck = hwInfo.capabilityTable.fusedEuEnabled ? 4u : 2u;
     EXPECT_EQ(expectedThreadsToCheck, sessionMock->addThreadToNewlyStoppedFromRaisedAttentionCallCount);
     EXPECT_EQ(expectedThreadsToCheck, sessionMock->readSystemRoutineIdentFromMemoryCallCount);
     EXPECT_EQ(0u, sessionMock->readSystemRoutineIdentCallCount);
