@@ -1,0 +1,14 @@
+#! /bin/sh -e
+
+#
+# Copyright (C) 2024 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+if [ $1 != "upgrade" ]; then
+    update-alternatives --quiet --remove ocloc /usr/bin/ocloc
+fi
+
+exit 0
+
