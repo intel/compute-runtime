@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -98,8 +97,6 @@ class DrmMockTime : public DrmMockSuccess {
 
 class DrmMockCustom : public Drm {
   public:
-    static constexpr NEO::DriverModelType driverModelType = NEO::DriverModelType::drm;
-
     using Drm::bindAvailable;
     using Drm::cacheInfo;
     using Drm::checkToDisableScratchPage;

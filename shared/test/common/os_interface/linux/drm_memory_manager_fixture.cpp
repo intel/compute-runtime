@@ -13,7 +13,6 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "hw_cmds_default.h"
@@ -113,10 +112,7 @@ void DrmMemoryManagerWithLocalMemoryFixture::setUp() {
 
     MemoryManagementFixture::setUp();
     executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
-    auto drmMock = new DrmMockCustom{*executionEnvironment->rootDeviceEnvironments[1]};
-    drmMock->memoryInfo.reset(new MockMemoryInfo{*drmMock});
-    DrmMemoryManagerFixture::setUp(drmMock, true);
-    drmMock->reset();
+    DrmMemoryManagerFixture::setUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), true);
 } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 void DrmMemoryManagerWithLocalMemoryFixture::tearDown() {
     DrmMemoryManagerFixture::tearDown();

@@ -51,7 +51,6 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::createGraphicsAllocation;
     using DrmMemoryManager::createMultiHostAllocation;
     using DrmMemoryManager::createSharedUnifiedMemoryAllocation;
-    using DrmMemoryManager::createStorageInfoFromProperties;
     using DrmMemoryManager::eraseSharedBoHandleWrapper;
     using DrmMemoryManager::eraseSharedBufferObject;
     using DrmMemoryManager::getBOTypeFromPatIndex;
@@ -166,15 +165,9 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     }
     ADDMETHOD(isLimitedRange, bool, true, false, (uint32_t rootDeviceIndex), (rootDeviceIndex));
 
-    DeviceBitfield computeStorageInfoMemoryBanks(const AllocationProperties &properties, DeviceBitfield preferredBank, DeviceBitfield allBanks) override {
-        ++computeStorageInfoMemoryBanksCalled;
-        return MemoryManager::computeStorageInfoMemoryBanks(properties, preferredBank, allBanks);
-    }
-
     uint32_t acquireGpuRangeCalledTimes = 0u;
     uint32_t acquireGpuRangeWithCustomAlignmenCalledTimes = 0u;
     size_t acquireGpuRangeWithCustomAlignmenPassedAlignment = 0u;
-    size_t computeStorageInfoMemoryBanksCalled = 0u;
     ExecutionEnvironment *executionEnvironment = nullptr;
 
   protected:

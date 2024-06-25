@@ -34,7 +34,6 @@
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
-#include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -5201,82 +5200,6 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemory
     EXPECT_EQ(nullptr, ptr);
 
     memoryManager->unlockResource(&drmAllocation);
-}
-
-TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenParticularSubdeviceIndicatedThenCorrectBankIsSelected) {
-    auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
-    auto &localMemoryRegions = memoryInfo->localMemoryRegions;
-    localMemoryRegions.resize(1U);
-    localMemoryRegions[0].tilesMask = 0b11;
-
-    AllocationProperties properties{1, true, 4096, AllocationType::buffer, false, {}};
-    properties.subDevicesBitfield = 0b10;
-
-    memoryManager->computeStorageInfoMemoryBanksCalled = 0U;
-    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-
-    constexpr auto expectedMemoryBanks = 0b01;
-    EXPECT_EQ(storageInfo.memoryBanks, expectedMemoryBanks);
-    EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
-}
-
-TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenAllSubdevicesIndicatedThenCorrectBankIsSelected) {
-    auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
-    auto &localMemoryRegions = memoryInfo->localMemoryRegions;
-    localMemoryRegions.resize(1U);
-    localMemoryRegions[0].tilesMask = 0b11;
-
-    AllocationProperties properties{1, true, 4096, AllocationType::buffer, false, {}};
-    properties.subDevicesBitfield = 0b11;
-
-    memoryManager->computeStorageInfoMemoryBanksCalled = 0U;
-    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-
-    constexpr auto expectedMemoryBanks = 0b01;
-    EXPECT_EQ(storageInfo.memoryBanks, expectedMemoryBanks);
-    EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
-}
-
-TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenMultipleLocalMemoryRegionsWhenParticularSubdeviceIndicatedThenItIsSelected) {
-    auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
-    auto &localMemoryRegions = memoryInfo->localMemoryRegions;
-    constexpr auto leastOccupiedBankBitPosition = 1u;
-    debugManager.flags.OverrideLeastOccupiedBank.set(leastOccupiedBankBitPosition);
-
-    localMemoryRegions.resize(2U);
-    localMemoryRegions[0].tilesMask = 0b01;
-    localMemoryRegions[1].tilesMask = 0b10;
-
-    AllocationProperties properties{1, true, 4096, AllocationType::buffer, false, {}};
-    properties.subDevicesBitfield = 0b10;
-    const auto expectedMemoryBanks = properties.subDevicesBitfield;
-
-    memoryManager->computeStorageInfoMemoryBanksCalled = 0U;
-    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-
-    EXPECT_EQ(storageInfo.memoryBanks, expectedMemoryBanks);
-    EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
-}
-
-TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenMultipleLocalMemoryRegionsWhenAllSubdevicesIndicatedThenTheLeastOccuppiedBankIsSelected) {
-    auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
-    auto &localMemoryRegions = memoryInfo->localMemoryRegions;
-    constexpr auto leastOccupiedBankBitPosition = 1u;
-    debugManager.flags.OverrideLeastOccupiedBank.set(leastOccupiedBankBitPosition);
-    constexpr auto expectedMemoryBanks = DeviceBitfield{leastOccupiedBankBitPosition};
-
-    localMemoryRegions.resize(2U);
-    localMemoryRegions[0].tilesMask = 0b01;
-    localMemoryRegions[1].tilesMask = 0b10;
-
-    AllocationProperties properties{1, true, 4096, AllocationType::buffer, false, {}};
-    properties.subDevicesBitfield = 0b11;
-
-    memoryManager->computeStorageInfoMemoryBanksCalled = 0U;
-    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-
-    EXPECT_EQ(storageInfo.memoryBanks, expectedMemoryBanks);
-    EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
 }
 
 using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
