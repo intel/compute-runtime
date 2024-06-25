@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,6 +114,10 @@ HWTEST2_F(PvcAndLaterBufferTests, givenCompressedBufferInSystemAndBlitterSupport
     UltClDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     auto pMockContext = std::make_unique<MockContext>(pDevice);
+
+    if (pDevice->getProductHelper().isDcFlushMitigated()) {
+        debugManager.flags.AllowDcFlush.set(1);
+    }
 
     static_cast<MockMemoryManager *>(pDevice->getExecutionEnvironment()->memoryManager.get())->enable64kbpages[0] = true;
     static_cast<MockMemoryManager *>(pDevice->getExecutionEnvironment()->memoryManager.get())->localMemorySupported[0] = false;

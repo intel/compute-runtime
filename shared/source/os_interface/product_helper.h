@@ -131,6 +131,7 @@ class ProductHelper {
     virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDcFlushAllowed() const = 0;
     virtual bool isDcFlushMitigated() const = 0;
+    virtual bool mitigateDcFlush() const = 0;
     virtual bool overridePatAndUsageForDcFlushMitigation(AllocationType allocationType) const = 0;
     virtual bool overrideCacheableForDcFlushMitigation(AllocationType allocationType) const = 0;
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;
