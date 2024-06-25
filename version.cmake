@@ -78,7 +78,7 @@ if(NOT DEFINED NEO_VERSION_HOTFIX)
   set(NEO_VERSION_HOTFIX 0)
 endif()
 
-# OpenCL pacakge version
+# OpenCL package version
 set(NEO_OCL_DRIVER_VERSION "${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}")
 
 # Level-Zero package version
