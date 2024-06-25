@@ -60,8 +60,7 @@ static ze_result_t readBusynessFromGroupFd(PmuInterface *pPmuInterface, std::pai
     }
     // In data[], First u64 is "active time", And second u64 is "timestamp". Both in ticks
     pStats->activeTime = data[2];
-    pStats->timestamp = data[3];
-
+    pStats->timestamp = data[3] ? data[3] : SysmanDevice::getSysmanTimestamp();
     return ZE_RESULT_SUCCESS;
 }
 

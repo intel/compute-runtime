@@ -237,7 +237,7 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndIntegratedDeviceWhenCall
         ASSERT_NE(nullptr, handle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
         EXPECT_EQ(mockActiveTime, stats.activeTime);
-        EXPECT_EQ(mockTimestamp, stats.timestamp);
+        EXPECT_EQ(pPmuInterface->mockTimestamp, stats.timestamp);
     }
 }
 
@@ -253,7 +253,7 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndDiscreteDeviceWhenCallin
         ASSERT_NE(nullptr, handle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
         EXPECT_EQ(mockActiveTime, stats.activeTime);
-        EXPECT_EQ(mockTimestamp, stats.timestamp);
+        EXPECT_EQ(pPmuInterface->mockTimestamp, stats.timestamp);
     }
 }
 
@@ -277,7 +277,7 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndDiscreteDeviceWhenCallin
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
         for (auto &stat : engineStats) {
             EXPECT_EQ(mockActiveTime, stat.activeTime);
-            EXPECT_EQ(mockTimestamp, stat.timestamp);
+            EXPECT_EQ(pPmuInterface->mockTimestamp, stat.timestamp);
         }
     }
 }
@@ -304,7 +304,7 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndDiscreteDeviceWhenCallin
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivityExt(handle, &count, engineStats.data()));
         for (auto &stat : engineStats) {
             EXPECT_EQ(mockActiveTime, stat.activeTime);
-            EXPECT_EQ(mockTimestamp, stat.timestamp);
+            EXPECT_EQ(pPmuInterface->mockTimestamp, stat.timestamp);
         }
     }
 }
@@ -491,6 +491,20 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleWhenCallingZesEngineGetActi
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesEngineGetActivity(handle, &stats));
+    }
+}
+
+TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndPmuTimeStampIsZeroWhenCallingZesEngineGetActivityThenVerifyValidTimeStampIsReturned) {
+    zes_engine_stats_t stats = {};
+    auto handles = getEngineHandles(handleComponentCount);
+    EXPECT_EQ(handleComponentCount, handles.size());
+    pPmuInterface->mockTimestamp = 0u;
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesEngineGetActivity(handle, &stats));
+        EXPECT_EQ(mockActiveTime, stats.activeTime);
+        EXPECT_GT(stats.timestamp, 0u);
     }
 }
 

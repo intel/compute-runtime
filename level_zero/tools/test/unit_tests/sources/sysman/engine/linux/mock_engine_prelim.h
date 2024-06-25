@@ -19,7 +19,6 @@ using namespace NEO;
 namespace L0 {
 namespace ult {
 constexpr int64_t mockPmuFd = 10;
-constexpr uint64_t mockTimestamp = 87654321;
 constexpr uint64_t mockActiveTime = 987654321;
 constexpr uint16_t invalidEngineClass = UINT16_MAX;
 const std::string deviceDir("device");
@@ -107,6 +106,7 @@ struct MockEnginePmuInterfaceImpPrelim : public PmuInterfaceImp {
     bool mockPerfEventOpenRead = false;
     int32_t mockErrorNumber = -ENOSPC;
     int32_t mockPerfEventOpenFailAtCount = 1;
+    uint64_t mockTimestamp = 87654321;
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
 
