@@ -101,6 +101,20 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32
     EXPECT_NE(0u, val);
 }
 
+TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32WithNullValueReturnedFromIoctlCallThenreadValueFails) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        *lpBytesReturned = 4;
+        *(int *)lpOutBuffer = 0;
+        return true;
+    });
+    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+    pPmt->pcreateFile = mockCreateFileSuccess;
+
+    uint32_t val = 0;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val));
+}
+
 TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32WithNullBytesCountReturnedFromIoctlCallThenreadValueFails) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
         *lpBytesReturned = 0;
@@ -111,6 +125,20 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32
     pPmt->pcreateFile = mockCreateFileSuccess;
 
     uint32_t val = 0;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val));
+}
+
+TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint64WithNullValueReturnedFromIoctlCallThenreadValueFails) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        *lpBytesReturned = 4;
+        *(int *)lpOutBuffer = 0;
+        return true;
+    });
+    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+    pPmt->pcreateFile = mockCreateFileSuccess;
+
+    uint64_t val = 0;
     pPmt->keyOffsetMap = dummyKeyOffsetMap;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val));
 }

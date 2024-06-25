@@ -33,7 +33,7 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint32_t &
 
     auto res = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemtryDword, (void *)&readRequest, sizeof(PmtSysman::PmtTelemetryRead), &value, sizeof(uint32_t), &bytesReturned);
 
-    if (res == ZE_RESULT_SUCCESS && bytesReturned != 0) {
+    if (res == ZE_RESULT_SUCCESS && value != NULL && bytesReturned != 0) {
         return ZE_RESULT_SUCCESS;
     }
 
@@ -62,7 +62,7 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint64_t &
 
     auto res = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemtryQword, (void *)&readRequest, sizeof(PmtSysman::PmtTelemetryRead), &value, sizeof(uint64_t), &bytesReturned);
 
-    if (res == ZE_RESULT_SUCCESS && bytesReturned != 0) {
+    if (res == ZE_RESULT_SUCCESS && value != NULL && bytesReturned != 0) {
         return ZE_RESULT_SUCCESS;
     }
 
