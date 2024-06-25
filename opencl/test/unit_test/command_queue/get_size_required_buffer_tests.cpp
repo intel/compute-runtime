@@ -102,7 +102,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferCo
     auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
 
-    EXPECT_EQ(0u, expectedSizeIOH % GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    EXPECT_EQ(0u, expectedSizeIOH % FamilyType::indirectDataAlignment);
     EXPECT_EQ(0u, expectedSizeDSH % 64);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
@@ -155,7 +155,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenCopyingBufferThenHeapsAndCommandBufferCo
     auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
 
-    EXPECT_EQ(0u, expectedSizeIOH % GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    EXPECT_EQ(0u, expectedSizeIOH % FamilyType::indirectDataAlignment);
     EXPECT_EQ(0u, expectedSizeDSH % 64);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
@@ -209,7 +209,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferNonBlockingThenHeapsAndComm
     auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
 
-    EXPECT_EQ(0u, expectedSizeIOH % GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    EXPECT_EQ(0u, expectedSizeIOH % FamilyType::indirectDataAlignment);
     EXPECT_EQ(0u, expectedSizeDSH % 64);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
@@ -264,7 +264,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferBlockingThenThenHeapsAndCom
     auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
 
-    EXPECT_EQ(0u, expectedSizeIOH % GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    EXPECT_EQ(0u, expectedSizeIOH % FamilyType::indirectDataAlignment);
     EXPECT_EQ(0u, expectedSizeDSH % 64);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.
@@ -543,7 +543,7 @@ HWTEST_F(GetSizeRequiredBufferTest, GivenKernelWithSimpleArgWhenEnqueingKernelTh
     auto expectedSizeIOH = HardwareCommandsHelper<FamilyType>::getSizeRequiredIOH(*KernelFixture::pKernel, localWorkSizes, pClDevice->getRootDeviceEnvironment());
     auto expectedSizeSSH = HardwareCommandsHelper<FamilyType>::getSizeRequiredSSH(*KernelFixture::pKernel);
 
-    EXPECT_EQ(0u, expectedSizeIOH % GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    EXPECT_EQ(0u, expectedSizeIOH % FamilyType::indirectDataAlignment);
     EXPECT_EQ(0u, expectedSizeDSH % 64);
 
     // Since each enqueue* may flush, we may see a MI_BATCH_BUFFER_END appended.

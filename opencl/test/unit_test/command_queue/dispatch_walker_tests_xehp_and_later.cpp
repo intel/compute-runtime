@@ -662,7 +662,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocal
 
     EXPECT_EQ(1u, walker->getGenerateLocalId());
     EXPECT_EQ(1u, walker->getEmitLocalId());
-    uint32_t expectedIndirectDataLength = alignUp(kernel->mockKernel->getCrossThreadDataSize(), DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    uint32_t expectedIndirectDataLength = alignUp(kernel->mockKernel->getCrossThreadDataSize(), FamilyType::indirectDataAlignment);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
 
     INTERFACE_DESCRIPTOR_DATA &idd = walker->getInterfaceDescriptor();
@@ -732,7 +732,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
     size_t perThreadTotalDataSize = getThreadsPerWG(simd, static_cast<uint32_t>(lws[0])) * sizePerThreadData;
 
-    uint32_t expectedIndirectDataLength = alignUp(static_cast<uint32_t>(perThreadTotalDataSize), DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    uint32_t expectedIndirectDataLength = alignUp(static_cast<uint32_t>(perThreadTotalDataSize), FamilyType::indirectDataAlignment);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
 
     INTERFACE_DESCRIPTOR_DATA &idd = walker->getInterfaceDescriptor();
@@ -840,7 +840,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     // second GRF in indirect
     uint32_t expectedIndirectDataLength = sizePerThreadData + crossThreadDataSize;
-    expectedIndirectDataLength = alignUp(expectedIndirectDataLength, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    expectedIndirectDataLength = alignUp(expectedIndirectDataLength, FamilyType::indirectDataAlignment);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
 
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
@@ -883,7 +883,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWit
 
     size_t perThreadTotalDataSize = 0U;
     uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize);
-    expectedIndirectDataLength = alignUp(expectedIndirectDataLength, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    expectedIndirectDataLength = alignUp(expectedIndirectDataLength, FamilyType::indirectDataAlignment);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
 
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
@@ -931,7 +931,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     // second GRF in indirect
     uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize + sizeof(INLINE_DATA));
-    expectedIndirectDataLength = alignUp(expectedIndirectDataLength, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    expectedIndirectDataLength = alignUp(expectedIndirectDataLength, FamilyType::indirectDataAlignment);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
 
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);

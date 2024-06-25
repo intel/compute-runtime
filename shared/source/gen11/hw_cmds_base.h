@@ -133,6 +133,7 @@ struct Gen11Family : public Gen11 {
     static const XY_COLOR_BLT cmdInitXyColorBlt;
     static constexpr bool isQwordInOrderCounter = false;
     static constexpr bool walkerPostSyncSupport = false;
+    static constexpr size_t indirectDataAlignment = GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;
