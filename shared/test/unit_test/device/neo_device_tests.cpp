@@ -1261,6 +1261,45 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
     EXPECT_NE(internalEngine.commandStreamReceiver, device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::internal}, false)->commandStreamReceiver);
 }
 
+HWTEST_F(DeviceTests, givenDebugFlagSetWhenCreatingSecondaryEnginesThenCreateCorrectNumberOfHighPriorityContexts) {
+    DebugManagerStateRestore dbgRestorer;
+    constexpr uint32_t contextGroupSize = 16;
+    constexpr uint32_t numHighPriorityContexts = 6;
+    debugManager.flags.ContextGroupSize.set(contextGroupSize);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(numHighPriorityContexts);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &engineGroups = device->getRegularEngineGroups();
+
+    auto engineGroupType = EngineGroupType::compute;
+    size_t computeEnginesCount = 0;
+    for (const auto &engine : engineGroups) {
+        if (engine.engineGroupType == engineGroupType) {
+            computeEnginesCount = engine.engines.size();
+        }
+    }
+
+    if (computeEnginesCount == 0) {
+        GTEST_SKIP();
+    }
+
+    ASSERT_EQ(computeEnginesCount, device->secondaryEngines.size());
+    ASSERT_EQ(contextGroupSize, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
+
+    constexpr uint32_t regularContextCount = contextGroupSize - numHighPriorityContexts;
+
+    auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(0)];
+
+    EXPECT_EQ(regularContextCount, secondaryEngines.regularEnginesTotal);
+    EXPECT_EQ(contextGroupSize - regularContextCount, secondaryEngines.highPriorityEnginesTotal);
+}
+
 HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenResourcesAndContextAreInitialized) {
 
     HardwareInfo hwInfo = *defaultHwInfo;

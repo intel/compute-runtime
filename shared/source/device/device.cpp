@@ -330,6 +330,10 @@ bool Device::createEngines() {
             auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
             auto highPriorityContextCount = std::min(contextCount / 2, 4u);
 
+            if (debugManager.flags.OverrideNumHighPriorityContexts.get() != -1) {
+                highPriorityContextCount = static_cast<uint32_t>(debugManager.flags.OverrideNumHighPriorityContexts.get());
+            }
+
             for (uint32_t engineIndex = 0; engineIndex < static_cast<uint32_t>(engineGroup->engines.size()); engineIndex++) {
                 auto engineType = engineGroup->engines[engineIndex].getEngineType();
 
