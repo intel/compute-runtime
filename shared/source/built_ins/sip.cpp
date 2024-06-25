@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -93,16 +94,26 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
         return maxDbgSurfaceSize;
     }
 
-    auto hdr = reinterpret_cast<const SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
-    DEBUG_BREAK_IF(hdr->versionHeader.size * 8 != sizeof(SIP::StateSaveAreaHeader));
+    auto hdr = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
 
     auto numSlices = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
-    auto stateSaveAreaSize = numSlices *
-                                 hdr->regHeader.num_subslices_per_slice *
-                                 hdr->regHeader.num_eus_per_subslice *
-                                 hdr->regHeader.num_threads_per_eu *
-                                 hdr->regHeader.state_save_size +
-                             hdr->versionHeader.size * 8 + hdr->regHeader.state_area_offset;
+    size_t stateSaveAreaSize = 0;
+    if (hdr->versionHeader.version.major >= 3) {
+        stateSaveAreaSize = numSlices *
+                                hdr->regHeaderV3.num_subslices_per_slice *
+                                hdr->regHeaderV3.num_eus_per_subslice *
+                                hdr->regHeaderV3.num_threads_per_eu *
+                                hdr->regHeaderV3.state_save_size +
+                            hdr->versionHeader.size * 8 + hdr->regHeaderV3.state_area_offset;
+
+    } else {
+        stateSaveAreaSize = numSlices *
+                                hdr->regHeader.num_subslices_per_slice *
+                                hdr->regHeader.num_eus_per_subslice *
+                                hdr->regHeader.num_threads_per_eu *
+                                hdr->regHeader.state_save_size +
+                            hdr->versionHeader.size * 8 + hdr->regHeader.state_area_offset;
+    }
     return alignUp(stateSaveAreaSize, MemoryConstants::pageSize);
 }
 

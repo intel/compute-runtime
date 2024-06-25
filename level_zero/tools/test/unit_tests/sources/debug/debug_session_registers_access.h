@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ struct MockDebugSession;
 struct DebugSessionRegistersAccess {
     DebugSessionRegistersAccess();
     ~DebugSessionRegistersAccess();
-    void setUp();
+    virtual void setUp();
 
     void tearDown();
 
@@ -31,6 +31,10 @@ struct DebugSessionRegistersAccess {
     std::unique_ptr<MockDebugSession> session;
     std::unique_ptr<MockDeviceImp> deviceImp;
     NEO::MockDevice *neoDevice = nullptr;
+};
+
+struct DebugSessionRegistersAccessV3 : public DebugSessionRegistersAccess {
+    void setUp() override;
 };
 
 } // namespace ult

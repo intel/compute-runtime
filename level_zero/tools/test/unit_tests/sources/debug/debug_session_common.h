@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
@@ -27,6 +28,15 @@ struct DebugApiFixture : public DeviceFixture {
         mockBuiltins = new MockBuiltins();
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
         MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
+    }
+
+    void setUpV3Header() {
+        mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+    }
+    void setUpV3HeaderHeapless() {
+        mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+        auto pStateSaveArea = reinterpret_cast<NEO::StateSaveAreaHeader *>(mockBuiltins->stateSaveAreaHeader.data());
+        pStateSaveArea->regHeaderV3.sip_flags = 0;
     }
 
     void tearDown() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,11 +147,11 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     using L0::DebugSession::allThreads;
     using L0::DebugSession::debugArea;
-
     using L0::DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention;
     using L0::DebugSessionImp::allocateStateSaveAreaMemory;
     using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::applyResumeWa;
+    using L0::DebugSessionImp::calculateSrMagicOffset;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
     using L0::DebugSessionImp::checkTriggerEventsForAttention;
     using L0::DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped;
@@ -161,7 +161,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::getRegisterSize;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::newAttentionRaised;
+    using L0::DebugSessionImp::readDebugScratchRegisters;
+    using L0::DebugSessionImp::readModeFlags;
     using L0::DebugSessionImp::readSbaRegisters;
+    using L0::DebugSessionImp::readThreadScratchRegisters;
     using L0::DebugSessionImp::registersAccessHelper;
     using L0::DebugSessionImp::resumeAccidentallyStoppedThreads;
     using L0::DebugSessionImp::sendInterrupts;
@@ -189,7 +192,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     MockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device, true) {}
 
-    MockDebugSession(const zet_debug_config_t &config, L0::Device *device, bool rootAttach) : DebugSessionImp(config, device) {
+    MockDebugSession(const zet_debug_config_t &config, L0::Device *device, bool rootAttach) : MockDebugSession(config, device, rootAttach, 2) {
+    }
+
+    MockDebugSession(const zet_debug_config_t &config, L0::Device *device, bool rootAttach, uint32_t stateSaveHeaderVersion) : DebugSessionImp(config, device) {
         if (device) {
             topologyMap = DebugSessionMock::buildMockTopology(device);
         }
@@ -197,9 +203,12 @@ struct MockDebugSession : public L0::DebugSessionImp {
         if (rootAttach) {
             createEuThreads();
         }
-        stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(2);
+        if (stateSaveHeaderVersion == 3) {
+            stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(3);
+        } else {
+            stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(2);
+        }
     }
-
     ~MockDebugSession() override {
         for (auto session : tileSessions) {
             delete session.first;

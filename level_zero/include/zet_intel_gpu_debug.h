@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ extern "C" {
 #endif // !ZET_INTEL_GPU_DEBUG_MAJOR
 
 #ifndef ZET_INTEL_GPU_DEBUG_MINOR
-#define ZET_INTEL_GPU_DEBUG_MINOR 0
+#define ZET_INTEL_GPU_DEBUG_MINOR 1
 #endif //! ZET_INTEL_GPU_DEBUG_MINOR
 
 #if ZET_INTEL_GPU_DEBUG_MAJOR == 1
@@ -42,10 +42,32 @@ typedef enum _zet_debug_regset_type_intel_gpu_t {
     ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU = 11,    ///< The state base address register set
     ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU = 12,    ///< The debug register set
     ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU = 13,     ///< The flow control register set
+#if ZET_INTEL_GPU_DEBUG_MINOR >= 1
+    ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU = 14,            ///< The msg register set
+    ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU = 15,     ///< System Routine mode flags register set
+    ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU = 16,  ///< Debug Scratch register set
+    ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU = 17, ///< Thread Scratch register set
+    ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU = 18,         ///< The scalar register set
+#endif                                                   // ZET_INTEL_GPU_DEBUG_MINOR >= 1
     ZET_DEBUG_REGSET_TYPE_FORCE_UINT32 = 0x7fffffff
 #endif // ZET_INTEL_GPU_DEBUG_MINOR >= 0
 } zet_debug_regset_type_intel_gpu_t;
 
+#if ZET_INTEL_GPU_DEBUG_MINOR >= 1
+////////////////////////////////////////////////////////////////////////////////
+/// @brief ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU flag values
+typedef enum _zet_debug_mode_flags_intel_gpu_t {
+    ZET_DEBUG_MODE_FLAG_HEAPLESS = 1 ///< Bit set indicates heapless mode
+} zet_debug_mode_flags_intel_gpu_t;
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU register layout
+typedef enum _zet_debug_debug_scratch_intel_gpu_t {
+    ZET_DEBUG_DEBUG_SCRATCH_ADDRESS = 0, ///< VA of scratch area for debugger code injection.
+                                         ///< VA is in default address space of device
+    ZET_DEBUG_DEBUG_SCRATCH_SIZE = 1,    ///< Size of scratch area in bytes
+} zet_debug_debug_scratch_intel_gpu_t;
+#endif // ZET_INTEL_GPU_DEBUG_MINOR >= 1
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief SBA register set layout
 typedef enum _zet_debug_sba_intel_gpu_t {

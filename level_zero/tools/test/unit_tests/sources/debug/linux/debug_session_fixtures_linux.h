@@ -52,6 +52,9 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
         }
 
         if (!pReadArrayRef.empty()) {
+            if (pread2RetVal && preadCalled == 2) {
+                return pread2RetVal;
+            }
             auto offsetInMemory = offset - pReadBase;
             auto result = memcpy_s(buf, count, pReadArrayRef.begin() + offsetInMemory, std::min(count, pReadArrayRef.size() - offsetInMemory));
             if (result == 0) {
@@ -63,7 +66,11 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
         if (count > 0 && preadRetVal > 0) {
             memset(buf, 0xaa, count);
         }
-        return preadRetVal;
+        if (pread2RetVal && preadCalled == 2) {
+            return pread2RetVal;
+        } else {
+            return preadRetVal;
+        }
     }
 
     int64_t pwrite(int fd, const void *buf, size_t count, off_t offset) override {
@@ -134,6 +141,7 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
     uint64_t pReadBase = 0;
     int64_t preadCalled = 0;
     int64_t preadRetVal = 0;
+    int64_t pread2RetVal = 0;
 
     ArrayRef<char> pWriteArrayRef;
     uint64_t pWriteBase = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1906,7 +1906,7 @@ TEST_F(DebugApiWindowsTest, GivenStateSaveAreaVaWhenReadingStateSaveAreaThenGpuM
     mockWddm->srcReadBufferBaseAddress = session->stateSaveAreaVA.load();
 
     session->readStateSaveAreaHeader();
-    ASSERT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
+    ASSERT_EQ(2u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
     auto stateSaveAreaRead = session->getStateSaveAreaHeader();
     ASSERT_NE(nullptr, stateSaveAreaRead);
     EXPECT_EQ(0, memcmp(stateSaveAreaRead, stateSaveAreaHeader.data(), stateSaveAreaHeader.size()));

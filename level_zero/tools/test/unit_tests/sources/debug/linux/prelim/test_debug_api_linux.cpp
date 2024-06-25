@@ -2389,6 +2389,58 @@ TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaRetu
     }
 }
 
+TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingStateSaveAreaRegHeaderFailsThenHeaderNotSet) {
+
+    auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerI915;
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    handler->mmapRet = stateSaveAreaHeader.data();
+
+    handler->setPreadMemory(stateSaveAreaHeader.data(), stateSaveAreaHeader.size(), 0x1000);
+    handler->pread2RetVal = -1;
+
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
+
+    uint64_t vmHandle = 6;
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = {0x1000, sizeof(SIP::StateSaveAreaHeader)};
+
+    session->readStateSaveAreaHeader();
+    EXPECT_EQ(2, handler->preadCalled);
+    EXPECT_EQ(session->stateSaveAreaHeader.size(), 0u);
+}
+
+TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingStateSaveAreaWithV4HeaderThenGpuMemoryIsRead) {
+    auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandlerI915;
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+    handler->mmapRet = stateSaveAreaHeader.data();
+
+    handler->setPreadMemory(stateSaveAreaHeader.data(), stateSaveAreaHeader.size(), 0x1000);
+
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
+
+    uint64_t vmHandle = 6;
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = {0x1000, sizeof(SIP::StateSaveAreaHeader)};
+
+    session->readStateSaveAreaHeader();
+
+    if (debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
+        EXPECT_EQ(2, handler->mmapCalled);
+        EXPECT_EQ(2, handler->munmapCalled);
+    } else {
+        EXPECT_EQ(2, handler->preadCalled);
+    }
+    EXPECT_EQ(MockDebugSessionLinuxi915::mockClientHandle, handler->vmOpen.client_handle);
+    EXPECT_EQ(vmHandle, handler->vmOpen.handle);
+    EXPECT_EQ(static_cast<uint64_t>(PRELIM_I915_DEBUG_VM_OPEN_READ_ONLY), handler->vmOpen.flags);
+}
+
 TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingStateSaveAreaThenGpuMemoryIsRead) {
     auto session = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
@@ -2408,10 +2460,10 @@ TEST_F(DebugApiLinuxTest, GivenBindInfoForVmHandleWhenReadingStateSaveAreaThenGp
     session->readStateSaveAreaHeader();
 
     if (debugManager.flags.EnableDebuggerMmapMemoryAccess.get()) {
-        EXPECT_EQ(1, handler->mmapCalled);
-        EXPECT_EQ(1, handler->munmapCalled);
+        EXPECT_EQ(2, handler->mmapCalled);
+        EXPECT_EQ(2, handler->munmapCalled);
     } else {
-        EXPECT_EQ(1, handler->preadCalled);
+        EXPECT_EQ(2, handler->preadCalled);
     }
     EXPECT_EQ(MockDebugSessionLinuxi915::mockClientHandle, handler->vmOpen.client_handle);
     EXPECT_EQ(vmHandle, handler->vmOpen.handle);
@@ -7389,6 +7441,46 @@ TEST_F(DebugApiRegistersAccessTest, givenNoneThreadsStoppedWhenWriteRegistersCal
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, grf));
 }
 
+TEST_F(DebugApiRegistersAccessTest, GivenThreadAndV3HeaderWhenReadingSystemRoutineIdentThenCorrectStateSaveAreaLocationIsRead) {
+
+    SIP::version version = {3, 0, 0};
+    mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
+
+    ioctlHandler = new MockIoctlHandlerI915;
+    ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
+    ioctlHandler->mmapBase = stateSaveAreaGpuVa;
+
+    ioctlHandler->setPreadMemory(session->stateSaveAreaHeader.data(), session->stateSaveAreaHeader.size(), stateSaveAreaGpuVa);
+    ioctlHandler->setPwriteMemory(session->stateSaveAreaHeader.data(), session->stateSaveAreaHeader.size(), stateSaveAreaGpuVa);
+
+    session->ioctlHandler.reset(ioctlHandler);
+    EuThread thread({0, 0, 0, 0, 0});
+
+    SIP::sr_ident srIdent = {{0}};
+    auto result = session->readSystemRoutineIdent(&thread, vmHandle, srIdent);
+
+    EXPECT_TRUE(result);
+
+    EXPECT_EQ(2u, srIdent.count);
+    EXPECT_EQ(3u, srIdent.version.major);
+    EXPECT_EQ(0u, srIdent.version.minor);
+    EXPECT_EQ(0u, srIdent.version.patch);
+    EXPECT_STREQ("srmagic", srIdent.magic);
+
+    EuThread thread2({0, 0, 0, 7, 3});
+
+    result = session->readSystemRoutineIdent(&thread, vmHandle, srIdent);
+
+    EXPECT_TRUE(result);
+
+    EXPECT_EQ(2u, srIdent.count);
+    EXPECT_EQ(3u, srIdent.version.major);
+    EXPECT_EQ(0u, srIdent.version.minor);
+    EXPECT_EQ(0u, srIdent.version.patch);
+    EXPECT_STREQ("srmagic", srIdent.magic);
+}
+
 TEST_F(DebugApiRegistersAccessTest, GivenThreadWhenReadingSystemRoutineIdentThenCorrectStateSaveAreaLocationIsRead) {
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
@@ -7713,6 +7805,24 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalid
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 1, nullptr));
+}
+
+TEST_F(DebugApiRegistersAccessTest, givenReadDebugScratchRegisterCalledThenUnsupportedFeatureReturned) {
+    SIP::version version = {3, 0, 0};
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, 0, 1, nullptr));
+}
+
+TEST_F(DebugApiRegistersAccessTest, givenReadThreadScratchRegisterCalledThenUnsupportedFeatureReturned) {
+    SIP::version version = {3, 0, 0};
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, 0, 1, nullptr));
+}
+
+TEST_F(DebugApiRegistersAccessTest, givenReadModeRegisterCalledThenSuccessIsReturned) {
+    SIP::version version = {3, 0, 0};
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, 0, 1, nullptr));
 }
 
 using DebugApiLinuxMultitileTest = Test<DebugApiLinuxMultiDeviceFixture>;

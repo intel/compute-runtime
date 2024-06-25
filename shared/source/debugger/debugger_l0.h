@@ -10,6 +10,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "common/StateSaveAreaHeader.h"
+
 #include <cstdint>
 #include <memory>
 #include <type_traits>
@@ -20,6 +22,17 @@ class Device;
 class GraphicsAllocation;
 class LinearStream;
 class OSInterface;
+
+// NOLINTBEGIN
+struct StateSaveAreaHeader {
+    struct SIP::StateSaveArea versionHeader;
+    union {
+        struct SIP::intelgt_state_save_area regHeader;
+        struct SIP::intelgt_state_save_area_V3 regHeaderV3;
+    };
+};
+
+// NOLINTEND
 
 #pragma pack(1)
 struct SbaTrackedAddresses {
@@ -54,19 +67,6 @@ struct DebugAreaHeader {
     };
 };
 static_assert(sizeof(DebugAreaHeader) == 32u * sizeof(uint8_t));
-
-struct alignas(4) DebuggerVersion {
-    uint8_t major;
-    uint8_t minor;
-    uint16_t patch;
-};
-struct alignas(8) StateSaveAreaHeader {
-    char magic[8] = "tssarea";
-    uint64_t reserved1;
-    struct DebuggerVersion version;
-    uint8_t size;
-    uint8_t reserved2[3];
-};
 
 #pragma pack()
 

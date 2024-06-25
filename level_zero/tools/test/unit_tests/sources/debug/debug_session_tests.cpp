@@ -461,6 +461,24 @@ TEST(DebugSessionTest, givenNoStoppedThreadWhenAddingNewlyStoppedThenThreadIsNot
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
 }
 
+TEST(DebugSessionTest, givenV3SipHeaderWhenCalculatingThreadOffsetThenCorrectResultReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp, true, 3);
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, thread);
+
+    auto threadSlotOffset = sessionMock->calculateThreadSlotOffset(threadId);
+    auto pStateSaveAreaHeader = reinterpret_cast<NEO::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+    size_t expectedOffset = pStateSaveAreaHeader->versionHeader.size * 8 + pStateSaveAreaHeader->regHeaderV3.state_area_offset + ((((threadId.slice * pStateSaveAreaHeader->regHeaderV3.num_subslices_per_slice + threadId.subslice) * pStateSaveAreaHeader->regHeaderV3.num_eus_per_subslice + threadId.eu) * pStateSaveAreaHeader->regHeaderV3.num_threads_per_eu + threadId.thread) * pStateSaveAreaHeader->regHeaderV3.state_save_size);
+    EXPECT_EQ(threadSlotOffset, expectedOffset);
+}
+
 TEST(DebugSessionTest, givenStoppedThreadAndNoSrMagicWhenAddingNewlyStoppedThenThreadIsNotAddedToNewlyStopped) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -2315,6 +2333,43 @@ TEST_F(MultiTileDebugSessionTest, GivenMultitileDeviceWhenCallingAreRequestedThr
     EXPECT_TRUE(stopped);
 }
 
+using DebugSessionRegistersAccessTestV3 = Test<DebugSessionRegistersAccessV3>;
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenV3StateSaveHeaderWhenCalculatingSrMagicOffsetResultIsCorrect) {
+
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+    auto threadSlotOffset = session->calculateThreadSlotOffset(thread0);
+    auto size = session->calculateSrMagicOffset(pStateSaveAreaHeader, session->allThreads[thread0].get());
+    ASSERT_EQ(size, threadSlotOffset + pStateSaveAreaHeader->regHeaderV3.sr_magic_offset);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.grf);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.addr);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.flag);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.emask);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.sr);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.cr);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_TDR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.tdr);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.acc);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.mme);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.sp);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.dbg_reg);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.fc);
+    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.msg);
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU), &pStateSaveAreaHeader->regHeaderV3.scalar);
+    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU), nullptr);
+    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU), nullptr);
+    EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU), nullptr);
+
+    EXPECT_EQ(session->typeToRegsetDesc(0x1234), nullptr);
+}
+
 using DebugSessionRegistersAccessTest = Test<DebugSessionRegistersAccess>;
 
 TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
@@ -2334,6 +2389,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRe
     EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU), &pStateSaveAreaHeader->regHeader.dbg_reg);
     EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU), &pStateSaveAreaHeader->regHeader.fc);
     EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
+    EXPECT_EQ(session->typeToRegsetDesc(0x1234), nullptr);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreWhenTypeToRegsetDescCalledThennullptrReturned) {
@@ -2663,6 +2719,29 @@ TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipVersion2WhenCallingResum
     EXPECT_EQ(0u, session->readRegistersCallCount);
     EXPECT_EQ(0u, session->writeRegistersCallCount);
     EXPECT_EQ(1u, session->writeResumeCommandCalled);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingDebugScratchRegisterThenUnsupportedFeatureReturned) {
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readDebugScratchRegisters(0, 0, nullptr));
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingThreadScratchRegisterThenUnsupportedFeatureReturned) {
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId = {0, thread};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readThreadScratchRegisters(threadId, 0, 0, nullptr));
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingModeRegisterThenCorrectResultReturned) {
+    auto mockBuiltins = new MockBuiltins();
+    mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltins);
+
+    uint32_t modeFlags;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, session->readModeFlags(1, 1, &modeFlags));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, session->readModeFlags(0, 2, &modeFlags));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readModeFlags(0, 1, &modeFlags));
+    EXPECT_EQ(modeFlags, SIP::SIP_FLAG_HEAPLESS);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset();
 }
 
 TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddressesAreReturned) {

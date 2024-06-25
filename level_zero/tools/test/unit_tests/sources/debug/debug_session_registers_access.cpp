@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,21 @@ namespace L0 {
 namespace ult {
 DebugSessionRegistersAccess::DebugSessionRegistersAccess() = default;
 DebugSessionRegistersAccess::~DebugSessionRegistersAccess() = default;
+
+void DebugSessionRegistersAccessV3::setUp() {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0);
+    deviceImp = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
+
+    session = std::make_unique<MockDebugSession>(config, deviceImp.get(), true, 3);
+
+    session->allThreads[stoppedThreadId]->stopThread(1u);
+    session->allThreads[stoppedThreadId]->reportAsStopped();
+}
+
 void DebugSessionRegistersAccess::setUp() {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
