@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,12 @@ static constexpr uint32_t dummyDeviceBlobData[] = {
     NEO::DeviceBlobConstants::l3BankSizeInKb,
     1,
     0x2D,
+    NEO::DeviceBlobConstants::maxSubSlicesSupported,
+    1,
+    0x04,
+    NEO::DeviceBlobConstants::maxEuPerSubSlice,
+    1,
+    0x03,
 };
 
 const std::vector<uint32_t> inputBlobData(reinterpret_cast<const uint32_t *>(dummyDeviceBlobData),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,7 @@
 
 #include "shared/source/os_interface/linux/system_info.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
 
@@ -31,10 +29,10 @@ void SystemInfo::parseDeviceBlob(const std::vector<uint32_t> &inputData) {
             maxSlicesSupported = data[i + 2];
         }
         if (DeviceBlobConstants::maxDualSubSlicesSupported == data[i]) {
-            maxDualSubSlicesSupported = data[i + 2];
+            maxDualSubSlicesSupported = std::max(data[i + 2], maxDualSubSlicesSupported);
         }
         if (DeviceBlobConstants::maxEuPerDualSubSlice == data[i]) {
-            maxEuPerDualSubSlice = data[i + 2];
+            maxEuPerDualSubSlice = std::max(data[i + 2], maxEuPerDualSubSlice);
         }
         if (DeviceBlobConstants::maxMemoryChannels == data[i]) {
             maxMemoryChannels = data[i + 2];
@@ -53,6 +51,12 @@ void SystemInfo::parseDeviceBlob(const std::vector<uint32_t> &inputData) {
         }
         if (DeviceBlobConstants::l3BankSizeInKb == data[i]) {
             l3BankSizeInKb = data[i + 2];
+        }
+        if (DeviceBlobConstants::maxSubSlicesSupported == data[i]) {
+            maxDualSubSlicesSupported = std::max(data[i + 2], maxDualSubSlicesSupported);
+        }
+        if (DeviceBlobConstants::maxEuPerSubSlice == data[i]) {
+            maxEuPerDualSubSlice = std::max(data[i + 2], maxEuPerDualSubSlice);
         }
         /* Skip to next attribute */
         auto blobLength = 2 + data[i + 1];

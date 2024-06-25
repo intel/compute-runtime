@@ -163,6 +163,30 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
     EXPECT_EQ(0x2Du, systemInfo.getL3BankSizeInKb());
 }
 
+TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobAndDifferentMaxSubSlicesAndMaxDSSThenQueryReturnsTheMaxValue) {
+    uint32_t hwBlob0[] = {NEO::DeviceBlobConstants::maxDualSubSlicesSupported, 1, 4, NEO::DeviceBlobConstants::maxSubSlicesSupported, 1, 8};
+    std::vector<uint32_t> inputBlobData0(reinterpret_cast<uint32_t *>(hwBlob0), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob0, sizeof(hwBlob0))));
+    SystemInfo systemInfo0(inputBlobData0);
+    EXPECT_EQ(8u, systemInfo0.getMaxDualSubSlicesSupported());
+
+    uint32_t hwBlob1[] = {NEO::DeviceBlobConstants::maxDualSubSlicesSupported, 1, 16, NEO::DeviceBlobConstants::maxSubSlicesSupported, 1, 8};
+    std::vector<uint32_t> inputBlobData1(reinterpret_cast<uint32_t *>(hwBlob1), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob1, sizeof(hwBlob1))));
+    SystemInfo systemInfo1(inputBlobData1);
+    EXPECT_EQ(16u, systemInfo1.getMaxDualSubSlicesSupported());
+}
+
+TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobAndDifferentMaxEuPerSubSliceAndMaxEuPerDSSThenQueryReturnsTheMaxValue) {
+    uint32_t hwBlob0[] = {NEO::DeviceBlobConstants::maxEuPerDualSubSlice, 1, 7, NEO::DeviceBlobConstants::maxEuPerSubSlice, 1, 8};
+    std::vector<uint32_t> inputBlobData0(reinterpret_cast<uint32_t *>(hwBlob0), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob0, sizeof(hwBlob0))));
+    SystemInfo systemInfo0(inputBlobData0);
+    EXPECT_EQ(8u, systemInfo0.getMaxEuPerDualSubSlice());
+
+    uint32_t hwBlob1[] = {NEO::DeviceBlobConstants::maxEuPerDualSubSlice, 1, 8, NEO::DeviceBlobConstants::maxEuPerSubSlice, 1, 7};
+    std::vector<uint32_t> inputBlobData1(reinterpret_cast<uint32_t *>(hwBlob1), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob1, sizeof(hwBlob1))));
+    SystemInfo systemInfo1(inputBlobData1);
+    EXPECT_EQ(8u, systemInfo1.getMaxEuPerDualSubSlice());
+}
+
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystemInfoIsNotCreatedAndDebugMessageIsPrinted) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

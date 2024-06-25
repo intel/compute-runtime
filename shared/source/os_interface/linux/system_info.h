@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,8 @@ constexpr uint32_t numThreadsPerEu = 15;
 constexpr uint32_t maxRcs = 23;
 constexpr uint32_t maxCcs = 24;
 constexpr uint32_t l3BankSizeInKb = 64;
+constexpr uint32_t maxSubSlicesSupported = 70;
+constexpr uint32_t maxEuPerSubSlice = 71;
 
 enum MemoryType {
     lpddr4,
