@@ -924,10 +924,8 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     gtSysInfo->MemoryType = sysInfo->getMemoryType();
     gtSysInfo->MaxEuPerSubSlice = sysInfo->getMaxEuPerDualSubSlice();
     gtSysInfo->MaxSlicesSupported = sysInfo->getMaxSlicesSupported();
-    if (sysInfo->getMaxDualSubSlicesSupported() > 0) {
-        gtSysInfo->MaxSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
-        gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
-    }
+    gtSysInfo->MaxSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
+    gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
     gtSysInfo->CsrSizeInMb = sysInfo->getCsrSizeInMb();
 }
 
