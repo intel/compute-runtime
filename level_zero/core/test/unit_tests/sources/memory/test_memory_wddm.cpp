@@ -421,5 +421,31 @@ TEST_F(HostUsmPoolMemoryOpenIpcHandleTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(MemoryExportImportWinHandleTest,
+       givenCallToDeviceOrHostAllocWithExtendedImportDescriptorAndInvalidFDThenInvalidArgumentIsReturned) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    ze_device_mem_alloc_desc_t importDeviceDesc = {};
+    ze_external_memory_import_fd_t extendedImportDesc = {};
+    extendedImportDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+    extendedImportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
+    extendedImportDesc.fd = std::numeric_limits<int>::max();
+    importDeviceDesc.pNext = &extendedImportDesc;
+
+    void *importedPtr = nullptr;
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &importDeviceDesc,
+                                                 size, alignment, &importedPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(nullptr, importedPtr);
+
+    ze_host_mem_alloc_desc_t importHostDesc = {};
+    importHostDesc.pNext = &extendedImportDesc;
+    result = context->allocHostMem(&importHostDesc,
+                                   size, alignment, &importedPtr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(nullptr, importedPtr);
+}
+
 } // namespace ult
 } // namespace L0

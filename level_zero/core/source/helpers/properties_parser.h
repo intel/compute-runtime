@@ -66,6 +66,7 @@ struct StructuresLookupTable {
         void *ntHandle;
         int fd;
         bool isSupportedHandle;
+        bool isOpaqueFDHandle;
         bool isDMABUFHandle;
         bool isNTHandle;
     } sharedHandleType;
@@ -91,7 +92,11 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD) {
             lookupTable.isSharedHandle = true;
             const ze_external_memory_import_fd_t *linuxExternalMemoryImportDesc = reinterpret_cast<const ze_external_memory_import_fd_t *>(extendedDesc);
-            if (linuxExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF) {
+            if (linuxExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
+                lookupTable.sharedHandleType.isSupportedHandle = true;
+                lookupTable.sharedHandleType.isOpaqueFDHandle = true;
+                lookupTable.sharedHandleType.fd = linuxExternalMemoryImportDesc->fd;
+            } else if (linuxExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF) {
                 lookupTable.sharedHandleType.isSupportedHandle = true;
                 lookupTable.sharedHandleType.isDMABUFHandle = true;
                 lookupTable.sharedHandleType.fd = linuxExternalMemoryImportDesc->fd;
@@ -145,7 +150,9 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC) {
             const ze_external_memory_export_desc_t *externalMemoryExportDesc =
                 reinterpret_cast<const ze_external_memory_export_desc_t *>(extendedDesc);
-            if (externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF || externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32) {
+            if (externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF ||
+                externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD ||
+                externalMemoryExportDesc->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32) {
                 lookupTable.exportMemory = true;
             } else {
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;

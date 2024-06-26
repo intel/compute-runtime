@@ -99,7 +99,7 @@ ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,
     }
 
     if (lookupTable.isSharedHandle) {
-        if (lookupTable.sharedHandleType.isDMABUFHandle) {
+        if (lookupTable.sharedHandleType.isOpaqueFDHandle || lookupTable.sharedHandleType.isDMABUFHandle) {
             ze_ipc_memory_flags_t flags = {};
             *ptr = getMemHandlePtr(this->devices.begin()->second,
                                    lookupTable.sharedHandleType.fd,
@@ -227,7 +227,7 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
 
     if (lookupTable.isSharedHandle) {
-        if (lookupTable.sharedHandleType.isDMABUFHandle) {
+        if (lookupTable.sharedHandleType.isOpaqueFDHandle || lookupTable.sharedHandleType.isDMABUFHandle) {
             ze_ipc_memory_flags_t flags = {};
             *ptr = getMemHandlePtr(hDevice,
                                    lookupTable.sharedHandleType.fd,
@@ -772,9 +772,6 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
             ze_external_memory_export_fd_t *extendedMemoryExportProperties =
                 reinterpret_cast<ze_external_memory_export_fd_t *>(extendedProperties);
-            if (extendedMemoryExportProperties->flags & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
-            }
             if (type == ZE_MEMORY_TYPE_SHARED) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }

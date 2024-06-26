@@ -424,7 +424,7 @@ HWTEST2_F(ImageCreate, givenFDWhenCreatingImageThenSuccessIsReturned, IsAtLeastS
     ASSERT_EQ(static_cast<int>(imageHW->getAllocation()->peekSharedHandle()), importFd.fd);
 }
 
-HWTEST2_F(ImageCreate, givenOpaqueFdWhenCreatingImageThenUnsuportedErrorIsReturned, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, givenOpaqueFdWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -450,7 +450,7 @@ HWTEST2_F(ImageCreate, givenOpaqueFdWhenCreatingImageThenUnsuportedErrorIsReturn
 
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
     auto ret = imageHW->initialize(device, &desc);
-    ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, ret);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
 HWTEST2_F(ImageCreate, givenExportStructWhenCreatingImageThenUnsupportedErrorIsReturned, IsAtLeastSkl) {

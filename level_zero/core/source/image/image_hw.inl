@@ -112,7 +112,7 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             if (!lookupTable.sharedHandleType.isSupportedHandle) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
-            if (lookupTable.sharedHandleType.isDMABUFHandle) {
+            if (lookupTable.sharedHandleType.isOpaqueFDHandle || lookupTable.sharedHandleType.isDMABUFHandle) {
                 NEO::MemoryManager::OsHandleData osHandleData{static_cast<NEO::osHandle>(lookupTable.sharedHandleType.fd)};
                 NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, &imgInfo, NEO::AllocationType::sharedImage, device->getNEODevice()->getDeviceBitfield());
                 allocation = device->getNEODevice()->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
