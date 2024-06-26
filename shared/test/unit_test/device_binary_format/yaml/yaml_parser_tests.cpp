@@ -1059,6 +1059,145 @@ TEST(YamlTokenize, GivenSpaceSeparatedStringAsValueThenReadItCorrectly) {
     }
 }
 
+TEST(YamlTokenize, GivenHexadecimalNumbersThenTokenizesThemProperly) {
+    ConstStringRef yaml =
+        R"===(
+    - 0x1A
+    - 0xFFFF
+    - 0x1a2b3c4d
+    - 0X7F
+    - 0xabcdef
+)===";
+
+    NEO::Yaml::Token expectedTokens[] = {
+        // line 0
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 0
+
+        // line 1
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 1
+        Token{"0x1A", NEO::Yaml::Token::literalNumber}, // token 2
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 3
+
+        // line 2
+        Token{"-", NEO::Yaml::Token::singleCharacter},    // token 4
+        Token{"0xFFFF", NEO::Yaml::Token::literalNumber}, // token 5
+        Token{"\n", NEO::Yaml::Token::singleCharacter},   // token 6
+
+        // line 3
+        Token{"-", NEO::Yaml::Token::singleCharacter},        // token 7
+        Token{"0x1a2b3c4d", NEO::Yaml::Token::literalNumber}, // token 8
+        Token{"\n", NEO::Yaml::Token::singleCharacter},       // token 9
+
+        // line 4
+        Token{"-", NEO::Yaml::Token::singleCharacter},  // token 10
+        Token{"0X7F", NEO::Yaml::Token::literalNumber}, // token 11
+        Token{"\n", NEO::Yaml::Token::singleCharacter}, // token 12
+
+        // line 5
+        Token{"-", NEO::Yaml::Token::singleCharacter},      // token 13
+        Token{"0xabcdef", NEO::Yaml::Token::literalNumber}, // token 14
+        Token{"\n", NEO::Yaml::Token::singleCharacter},     // token 15
+    };
+
+    NEO::Yaml::LinesCache lines;
+    NEO::Yaml::TokensCache tokens;
+    std::string warnings;
+    std::string errors;
+    bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(errors.empty()) << errors;
+
+    ASSERT_EQ(sizeof(expectedTokens) / sizeof(expectedTokens[0]), tokens.size());
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        EXPECT_EQ(expectedTokens[i], tokens[i]) << i;
+    }
+}
+
+TEST(YamlParserReadValueCheckedInt64, GivenHexadecimalIntegerThenParsesItCorrectly) {
+    ConstStringRef yaml = "hex_value : 0x123456789ABCDEF";
+    int64_t expectedInt64 = 0x123456789ABCDEF;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto hexNode = parser.getChild(*parser.getRoot(), "hex_value");
+    ASSERT_NE(hexNode, nullptr);
+    int64_t readValue = 0;
+    auto readSuccess = parser.readValueChecked<int64_t>(*hexNode, readValue);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(expectedInt64, readValue);
+}
+
+TEST(YamlParserReadValueCheckedUint64, GivenHexadecimalIntegerThenParsesItCorrectly) {
+    ConstStringRef yaml = "hex_value : 0X123456789ABCDEF";
+    uint64_t expectedUint64 = 0X123456789ABCDEF;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto hexNode = parser.getChild(*parser.getRoot(), "hex_value");
+    ASSERT_NE(hexNode, nullptr);
+    uint64_t readValue = 0;
+    auto readSuccess = parser.readValueChecked<uint64_t>(*hexNode, readValue);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(expectedUint64, readValue);
+}
+
+TEST(YamlParserReadValueCheckedInt32, GivenHexadecimalIntegerThenParsesItCorrectly) {
+    ConstStringRef yaml = R"===(
+hex_value_32 : 0x1234ABCD
+hex_value_64 : 0x123456789ABCDEF
+)===";
+    int32_t expectedInt32 = 0x1234ABCD;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+
+    auto hex32Node = parser.getChild(*parser.getRoot(), "hex_value_32");
+    ASSERT_NE(hex32Node, nullptr);
+    int32_t readValue32 = 0;
+    auto readSuccess32 = parser.readValueChecked<int32_t>(*hex32Node, readValue32);
+    EXPECT_TRUE(readSuccess32);
+    EXPECT_EQ(expectedInt32, readValue32);
+
+    auto hex64Node = parser.getChild(*parser.getRoot(), "hex_value_64");
+    ASSERT_NE(hex64Node, nullptr);
+    int32_t readValue64 = 0;
+    auto readSuccess64 = parser.readValueChecked<int32_t>(*hex64Node, readValue64);
+    EXPECT_FALSE(readSuccess64);
+}
+
+TEST(YamlParserReadValueCheckedUint32, GivenHexadecimalIntegerThenParsesItCorrectly) {
+    ConstStringRef yaml = R"===(
+hex_value_32 : 0xABCDEF12
+hex_value_64 : 0x123456789ABCDEF
+)===";
+    uint32_t expectedUint32 = 0xABCDEF12;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+
+    auto hex32Node = parser.getChild(*parser.getRoot(), "hex_value_32");
+    ASSERT_NE(hex32Node, nullptr);
+    uint32_t readValue32 = 0;
+    auto readSuccess32 = parser.readValueChecked<uint32_t>(*hex32Node, readValue32);
+    EXPECT_TRUE(readSuccess32);
+    EXPECT_EQ(expectedUint32, readValue32);
+
+    auto hex64Node = parser.getChild(*parser.getRoot(), "hex_value_64");
+    ASSERT_NE(hex64Node, nullptr);
+    uint32_t readValue64 = 0;
+    auto readSuccess64 = parser.readValueChecked<uint32_t>(*hex64Node, readValue64);
+    EXPECT_FALSE(readSuccess64);
+}
+
 TEST(YamlNode, WhenConstructedThenSetsUpProperDefaults) {
     {
         NEO::Yaml::Node node;

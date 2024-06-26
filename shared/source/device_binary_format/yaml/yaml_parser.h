@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,14 @@ constexpr bool isAlphaNumeric(char c) {
     return isLetter(c) || isNumber(c);
 }
 
+constexpr bool isHexDigit(char c) {
+    return isNumber(c) || ((c >= 'a') & (c <= 'f')) || ((c >= 'A') & (c <= 'F'));
+}
+
+constexpr bool isHexPrefix(const char *parsePos, const char *parseEnd) {
+    return (parseEnd - parsePos >= 2) && (parsePos[0] == '0') && (parsePos[1] == 'x' || parsePos[1] == 'X');
+}
+
 constexpr bool isNameIdentifierCharacter(char c) {
     return isAlphaNumeric(c) || ('_' == c) || ('-' == c) || ('.' == c);
 }
@@ -84,11 +92,21 @@ constexpr const char *consumeNumberOrSign(ConstStringRef wholeText, const char *
     UNRECOVERABLE_IF(parsePos < wholeText.begin());
     UNRECOVERABLE_IF(parsePos == wholeText.end());
     auto parseEnd = wholeText.end();
-    if (isNumber(*parsePos)) {
-        auto it = parsePos + 1;
+    const auto isHex = isHexPrefix(parsePos, parseEnd);
+    if (isNumber(*parsePos) || isHex) {
+        auto it = parsePos;
+        if (isHex) {
+            it += 2;
+        }
         while (it < parseEnd) {
-            if (false == (isNumber(*it) || ('.' == *it))) {
-                break;
+            if (isHex) {
+                if (!isHexDigit(*it)) {
+                    break;
+                }
+            } else {
+                if (!isNumber(*it) && (*it != '.')) {
+                    break;
+                }
             }
             ++it;
         }
@@ -546,8 +564,15 @@ inline bool YamlParser::readValueChecked<int64_t>(const Node &node, int64_t &out
     }
     StackVec<char, 96> nullTerminated{token.pos, token.pos + token.len};
     nullTerminated.push_back('\0');
-    outValue = atoll(nullTerminated.begin());
-    return true;
+
+    char *endPtr;
+    if (token.len > 2 && nullTerminated[0] == '0' && (nullTerminated[1] == 'x' || nullTerminated[1] == 'X')) {
+        outValue = std::strtoll(nullTerminated.begin(), &endPtr, 16);
+    } else {
+        outValue = std::strtoll(nullTerminated.begin(), &endPtr, 10);
+    }
+
+    return (*endPtr == '\0');
 }
 
 template <>
