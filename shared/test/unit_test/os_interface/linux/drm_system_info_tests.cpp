@@ -259,6 +259,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MemoryType, 0u);
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, drm.getSystemInfo()->getCsrSizeInMb());
+    EXPECT_EQ(gtSystemInfo.SLMSizeInKb, drm.getSystemInfo()->getSlmSizePerDss());
 }
 
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSystemInfoIsCreatedAndHardwareInfoSetProperlyBasedOnBlobData) {

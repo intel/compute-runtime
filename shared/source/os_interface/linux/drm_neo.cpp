@@ -929,6 +929,7 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     gtSysInfo->MaxSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
     gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
     gtSysInfo->CsrSizeInMb = sysInfo->getCsrSizeInMb();
+    gtSysInfo->SLMSizeInKb = sysInfo->getSlmSizePerDss();
 }
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
