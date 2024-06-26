@@ -49,6 +49,7 @@ struct EngineGroupT {
     EnginesT engines;
 };
 using EngineGroupsT = std::vector<EngineGroupT>;
+using CsrContainer = std::vector<std::unique_ptr<CommandStreamReceiver>>;
 
 struct SecondaryContexts {
     SecondaryContexts() = default;
@@ -195,6 +196,8 @@ class Device : public ReferenceTrackedObject<Device> {
         return EngineHelpers::isCcs(type) || EngineHelpers::isBcs(type);
     }
 
+    const CsrContainer &getSecondaryCsrs() const { return secondaryCsrs; }
+
     std::atomic<uint32_t> debugExecutionCounter = 0;
 
   protected:
@@ -237,11 +240,11 @@ class Device : public ReferenceTrackedObject<Device> {
     DeviceInfo deviceInfo = {};
 
     std::unique_ptr<PerformanceCounters> performanceCounters;
-    std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
+    CsrContainer commandStreamReceivers;
     EnginesT allEngines;
 
     std::unordered_map<aub_stream::EngineType, SecondaryContexts> secondaryEngines;
-    std::vector<std::unique_ptr<CommandStreamReceiver>> secondaryCsrs;
+    CsrContainer secondaryCsrs;
 
     EngineGroupsT regularEngineGroups;
     std::vector<SubDevice *> subdevices;

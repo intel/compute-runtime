@@ -315,36 +315,49 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
 }
 
 template <typename TagSizeT>
+bool EventImp<TagSizeT>::tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation) {
+    if (!downloadedAllocation) {
+        if (auto &alloc = *this->getPoolAllocation(this->device); alloc.isUsedByOsContext(csr.getOsContext().getContextId())) {
+            csr.downloadAllocation(alloc);
+            downloadedAllocation = true;
+        }
+    }
+
+    if (!downloadedInOrdedAllocation) {
+        auto alloc = inOrderExecInfo->isHostStorageDuplicated() ? inOrderExecInfo->getHostCounterAllocation() : inOrderExecInfo->getDeviceCounterAllocation();
+
+        if (alloc->isUsedByOsContext(csr.getOsContext().getContextId())) {
+            csr.downloadAllocation(*alloc);
+            downloadedInOrdedAllocation = true;
+        }
+    }
+
+    if (downloadedAllocation && downloadedInOrdedAllocation) {
+        return false;
+    }
+
+    return true;
+}
+
+template <typename TagSizeT>
 bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
     if (this->eventPoolAllocation) {
         if (metricNotification != nullptr) {
             hostEventSetValue(metricNotification->getNotificationState());
         }
         if (this->tbxMode) {
-            auto &allEngines = this->device->getNEODevice()->getAllEngines();
 
             bool downloadedAllocation = false;
-            bool downloadedInOrdedAllocation = false;
+            bool downloadedInOrdedAllocation = (inOrderExecInfo.get() == nullptr);
 
-            for (auto const &engine : allEngines) {
-                const auto &csr = engine.commandStreamReceiver;
-                if (!downloadedAllocation) {
-                    if (auto &alloc = *this->getPoolAllocation(this->device); alloc.isUsedByOsContext(csr->getOsContext().getContextId())) {
-                        csr->downloadAllocation(alloc);
-                        downloadedAllocation = true;
-                    }
+            for (auto const &engine : this->device->getNEODevice()->getAllEngines()) {
+                if (!tbxDownload(*engine.commandStreamReceiver, downloadedAllocation, downloadedInOrdedAllocation)) {
+                    break;
                 }
+            }
 
-                if (!downloadedInOrdedAllocation && inOrderExecInfo) {
-                    auto alloc = inOrderExecInfo->isHostStorageDuplicated() ? inOrderExecInfo->getHostCounterAllocation() : inOrderExecInfo->getDeviceCounterAllocation();
-
-                    if (alloc->isUsedByOsContext(csr->getOsContext().getContextId())) {
-                        csr->downloadAllocation(*alloc);
-                        downloadedInOrdedAllocation = true;
-                    }
-                }
-
-                if (downloadedAllocation && downloadedInOrdedAllocation) {
+            for (auto &csr : this->device->getNEODevice()->getSecondaryCsrs()) {
+                if (!tbxDownload(*csr, downloadedAllocation, downloadedInOrdedAllocation)) {
                     break;
                 }
             }

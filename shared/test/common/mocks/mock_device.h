@@ -65,6 +65,7 @@ class MockDevice : public RootDevice {
     using Device::regularEngineGroups;
     using Device::rootCsrCreated;
     using Device::rtMemoryBackedBuffer;
+    using Device::secondaryCsrs;
     using Device::secondaryEngines;
     using Device::uuid;
     using RootDevice::createEngines;

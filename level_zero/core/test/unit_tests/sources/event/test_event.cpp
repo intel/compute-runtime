@@ -10,6 +10,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_csr.h"
@@ -3295,6 +3296,49 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
     downloadedAllocations = downloadAllocationTrack[eventAllocation];
     EXPECT_EQ(iterations + 1u, downloadedAllocations);
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
+
+    event->destroy();
+}
+
+HWTEST_F(EventTests, givenSecondaryCsrWhenDownloadingAllocationThenUseCorrectCsr) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ContextGroupSize.set(2);
+
+    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
+
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
+    auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+
+    size_t eventCompletionOffset = event->getContextStartOffset();
+    if (event->isUsingContextEndOffset()) {
+        eventCompletionOffset = event->getContextEndOffset();
+    }
+    TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    *eventAddress = Event::STATE_INITIAL;
+
+    auto ultCsr = new UltCommandStreamReceiver<FamilyType>(*neoDevice->getExecutionEnvironment(), 0, 1);
+    neoDevice->secondaryCsrs.push_back(std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(ultCsr));
+
+    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size() + 1), EngineDescriptorHelper::getDefaultDescriptor());
+
+    ultCsr->setupContext(osContext);
+
+    uint32_t downloadCounter = 0;
+    ultCsr->downloadAllocationImpl = [&downloadCounter](GraphicsAllocation &gfxAllocation) {
+        downloadCounter++;
+    };
+
+    auto eventAllocation = event->getPoolAllocation(device);
+    ultCsr->makeResident(*eventAllocation);
+
+    event->hostSynchronize(1);
+
+    EXPECT_EQ(1u, downloadCounter);
 
     event->destroy();
 }

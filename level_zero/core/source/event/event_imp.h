@@ -61,6 +61,7 @@ struct EventImp : public Event {
     ze_result_t waitForUserFence(uint64_t timeout);
 
     bool handlePreQueryStatusOperationsAndCheckCompletion();
+    bool tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation);
 
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusEventPackets();
