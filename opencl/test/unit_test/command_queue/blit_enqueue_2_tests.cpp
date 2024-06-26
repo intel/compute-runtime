@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -89,6 +90,13 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenProfilingEn
     EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
 
     auto event = castToObject<Event>(clEvent);
+    if (event->getTimestampPacketNodes()) {
+        event->getTimestampPacketNodes()->releaseNodes();
+    }
+    mockCommandQueue->timestampPacketContainer.reset();
+    HwTimeStamps *timeStamps = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode())->tagForCpuAccess;
+    timeStamps->contextStartTS = 100;
+    timeStamps->globalStartTS = 100;
 
     uint64_t submitTime = 0;
     event->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(submitTime), &submitTime, nullptr);

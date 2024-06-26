@@ -1361,3 +1361,8 @@ HWTEST_F(EnqueueKernelTest, givenTimestampWriteEnableWhenMarkerProfilingWithWait
 
     EXPECT_EQ(baseCommandStreamSize + 4 * EncodeStoreMMIO<FamilyType>::size, extendedCommandStreamSize);
 }
+
+TEST(EnqueuePropertiesTest, givenGpuKernelEnqueuePropertiesThenStartTimestampOnCpuNotRequired) {
+    EnqueueProperties properties(false, true, false, false, false, false, nullptr);
+    EXPECT_FALSE(properties.isStartTimestampOnCpuRequired());
+}

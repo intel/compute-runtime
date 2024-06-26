@@ -79,7 +79,7 @@ struct EnqueueHandlerTimestampTest : public EnqueueHandlerTest {
 
 using EnqueueHandlerTimestampEnabledTest = EnqueueHandlerTimestampTest<true>;
 
-HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEnabledWhenEnqueueCommandWithoutKernelThenSubmitTimeStampIsSet) {
+HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEnabledWhenEnqueueCommandWithoutKernelThenSubmitAndStartTimeStampIsSet) {
     cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, properties));
 
@@ -102,6 +102,10 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
     EXPECT_EQ(ev->submitTimeStamp.gpuTimeInNs, 0u);
     EXPECT_EQ(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
+    EXPECT_EQ(ev->startTimeStamp.cpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeStamp, 0u);
+
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr, false);
 
@@ -109,12 +113,15 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
     EXPECT_NE(ev->submitTimeStamp.gpuTimeInNs, 0u);
     EXPECT_NE(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
+    EXPECT_NE(ev->startTimeStamp.cpuTimeInNs, 0u);
+    EXPECT_NE(ev->startTimeStamp.gpuTimeInNs, 0u);
+    EXPECT_NE(ev->startTimeStamp.gpuTimeStamp, 0u);
     delete ev;
 }
 
 using EnqueueHandlerTimestampDisabledTest = EnqueueHandlerTimestampTest<false>;
 
-HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacketsDisabledWhenEnqueueCommandWithoutKernelThenSubmitTimeStampIsSet) {
+HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacketsDisabledWhenEnqueueCommandWithoutKernelThenSubmitAndStartTimeStampIsSet) {
     cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, properties));
 
@@ -137,6 +144,10 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
     EXPECT_EQ(ev->submitTimeStamp.gpuTimeInNs, 0u);
     EXPECT_EQ(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
+    EXPECT_EQ(ev->startTimeStamp.cpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeStamp, 0u);
+
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr, false);
 
@@ -144,6 +155,9 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
     EXPECT_NE(ev->submitTimeStamp.gpuTimeInNs, 0u);
     EXPECT_NE(ev->submitTimeStamp.gpuTimeStamp, 0u);
 
+    EXPECT_NE(ev->startTimeStamp.cpuTimeInNs, 0u);
+    EXPECT_NE(ev->startTimeStamp.gpuTimeInNs, 0u);
+    EXPECT_NE(ev->startTimeStamp.gpuTimeStamp, 0u);
     delete ev;
 }
 
@@ -357,6 +371,47 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKern
     mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0, csrDeps, &bcsCsr, false);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.isStallingCommandsOnNextFlushRequired);
+}
+
+HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationAndProfilingEnabledWhenEnqueueCommandWithoutKernelThenStartTimeStampNotSet) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    setUpImpl<CsrType>();
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+    cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), properties);
+    auto &bcsCsr = *mockCmdQ->bcsEngines[0]->commandStreamReceiver;
+
+    auto blocking = true;
+    TimestampPacketDependencies timestampPacketDependencies;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+    eventBuilder.create<MockEvent<Event>>(mockCmdQ.get(), CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady);
+    auto ev = static_cast<MockEvent<UserEvent> *>(eventBuilder.getEvent());
+    ev->setProfilingEnabled(true);
+
+    CsrDependencies csrDeps;
+    BlitPropertiesContainer blitPropertiesContainer;
+    EnqueueProperties enqueueProperties(true, false, false, false, false, false, &blitPropertiesContainer);
+
+    EXPECT_EQ(ev->submitTimeStamp.cpuTimeInNs, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.gpuTimeInNs, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.gpuTimeStamp, 0u);
+
+    EXPECT_EQ(ev->startTimeStamp.cpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeStamp, 0u);
+
+    mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
+                                          eventsRequest, eventBuilder, 0, csrDeps, &bcsCsr, false);
+
+    EXPECT_NE(ev->submitTimeStamp.cpuTimeInNs, 0u);
+    EXPECT_NE(ev->submitTimeStamp.gpuTimeInNs, 0u);
+    EXPECT_NE(ev->submitTimeStamp.gpuTimeStamp, 0u);
+
+    EXPECT_EQ(ev->startTimeStamp.cpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeInNs, 0u);
+    EXPECT_EQ(ev->startTimeStamp.gpuTimeStamp, 0u);
+    delete ev;
 }
 
 HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenAllowOutOfOrderExecution) {

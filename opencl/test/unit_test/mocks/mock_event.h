@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,7 @@ struct MockEvent : public BaseEventType {
     using Event::magic;
     using Event::multiRootDeviceTimestampPacketContainer;
     using Event::queueTimeStamp;
+    using Event::startTimeStamp;
     using Event::submitTimeStamp;
     using Event::timestampPacketContainer;
 

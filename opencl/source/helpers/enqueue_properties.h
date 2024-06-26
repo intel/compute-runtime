@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,10 @@ struct EnqueueProperties {
     bool isFlushWithoutKernelRequired() const {
         return (operation == Operation::blit) || (operation == Operation::explicitCacheFlush) ||
                (operation == Operation::dependencyResolveOnGpu) || (operation == EnqueueProperties::Operation::profilingOnly);
+    }
+
+    bool isStartTimestampOnCpuRequired() const {
+        return (operation != Operation::blit && operation != Operation::gpuKernel);
     }
 
     const BlitPropertiesContainer *blitPropertiesContainer = nullptr;
