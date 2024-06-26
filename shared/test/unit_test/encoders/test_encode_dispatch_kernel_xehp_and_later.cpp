@@ -737,7 +737,8 @@ using WalkerThreadTestXeHPAndLater = WalkerThreadTest;
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWhenIndirectIsFalseThenExpectStartGroupAndThreadDimensionsProgramming) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
+
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     MockExecutionEnvironment executionEnvironment{};
@@ -773,7 +774,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWh
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenNoStartWorkGroupWhenIndirectIsTrueThenExpectNoStartGroupAndThreadDimensionsProgramming) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     MockExecutionEnvironment executionEnvironment{};
@@ -808,7 +809,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenNoStartWorkGroup
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenSimdSizeOneWhenWorkGroupSmallerThanSimdThenExpectSimdSizeAsMaxAndExecutionMaskFull) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     workGroupSizes[0] = 30u;
@@ -845,7 +846,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenSimdSizeOneWhenW
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWhenWorkGroupSmallerThanSimdThenExpectStartGroupAndExecutionMaskNotFull) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     workGroupSizes[0] = 30u;
@@ -881,7 +882,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenStartWorkGroupWh
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGenerationByHwWhenNoLocalIdsPresentThenExpectNoEmitAndGenerateLocalIds) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     localIdDimensions = 0u;
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
@@ -915,7 +916,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGeneratio
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenLocalIdGenerationByHwWhenLocalIdsPresentThenExpectEmitAndGenerateLocalIds) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     requiredWorkGroupOrder = 2u;
     workGroupSizes[1] = workGroupSizes[2] = 2u;
     MockExecutionEnvironment executionEnvironment{};
@@ -955,7 +956,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenDebugVariableToO
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     requiredWorkGroupOrder = 2u;
     workGroupSizes[1] = workGroupSizes[2] = 2u;
 
@@ -967,7 +968,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, givenDebugVariableToO
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenInlineDataIsTrueThenExpectInlineDataProgramming) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     startWorkGroup[1] = 2u;
     startWorkGroup[2] = 3u;
     MockExecutionEnvironment executionEnvironment{};
@@ -1002,7 +1003,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenInlineDataIsTrueT
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenExecutionMaskNotZeroThenExpectOverrideExecutionMaskCalculation) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     uint32_t expectedExecutionMask = 0xFFFFu;

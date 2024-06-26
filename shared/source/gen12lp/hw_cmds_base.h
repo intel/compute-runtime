@@ -154,6 +154,11 @@ struct Gen12LpFamily : public Gen12Lp {
     static constexpr bool isHeaplessMode() {
         return false;
     }
+
+    template <typename WalkerType = DefaultWalkerType>
+    static WalkerType getInitGpuWalker() {
+        return cmdInitGpgpuWalker;
+    }
 };
 
 } // namespace NEO

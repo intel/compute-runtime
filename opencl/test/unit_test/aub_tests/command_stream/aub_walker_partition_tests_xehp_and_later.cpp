@@ -981,7 +981,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandB
     auto postSyncAddress = helperSurface->getGpuAddress();
 
     uint32_t totalBytesProgrammed = 0u;
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walkerCmd.setPartitionType(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
     walkerCmd.getPostSync().setDestinationAddress(postSyncAddress);

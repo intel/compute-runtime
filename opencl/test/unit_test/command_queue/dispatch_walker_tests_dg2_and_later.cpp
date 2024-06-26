@@ -79,7 +79,7 @@ using matcherDG2AndLater = IsAtLeastXeHpgCore;
 HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramComputeWalkerThenApplyL3PrefetchAppropriately, matcherDG2AndLater) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore;
-    auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    auto walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 

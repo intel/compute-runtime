@@ -23,7 +23,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -1084,7 +1084,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -1308,7 +1308,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdStartingX(1u);
 
     checkForProperCmdBufferAddressOffset = false;

@@ -286,6 +286,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingThenSetCorrectValu
 }
 
 HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingWalkerThenSetCorrectValues) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockDevice mockDevice;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
@@ -296,7 +297,7 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecInfoWhenPatchingWalkerThenSetCorre
 
     auto inOrderExecInfo = std::make_shared<InOrderExecInfo>(node, nullptr, memoryManager, 2, 0, false, false);
 
-    auto cmd = FamilyType::cmdInitGpgpuWalker;
+    auto cmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     InOrderPatchCommandHelpers::PatchCmd<FamilyType> patchCmd(&inOrderExecInfo, &cmd, nullptr, 1, InOrderPatchCommandHelpers::PatchCmdType::walker, false, false);
 

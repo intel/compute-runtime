@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ HWTEST_F(CommandParse, WhenGeneratingCommandBufferThenBufferIsCorrect) {
     typedef typename FamilyType::Parse Parse;
     typedef typename FamilyType::DefaultWalkerType DefaultWalkerType;
     GenCmdList cmds;
-    DefaultWalkerType buffer = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType buffer = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     EXPECT_TRUE(Parse::parseCommandBuffer(cmds, &buffer, 0));
     EXPECT_FALSE(Parse::parseCommandBuffer(cmds, &buffer, 1));

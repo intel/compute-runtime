@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct WalkerPartitionTests : public ::testing::Test {
         using WalkerType = typename GfxFamily::DefaultWalkerType;
 
         WalkerType walker;
-        walker = GfxFamily::cmdInitGpgpuWalker;
+        walker = GfxFamily::template getInitGpuWalker<WalkerType>();
         walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
         auto &postSync = walker.getPostSync();
         postSync.setOperation(POSTSYNC_DATA<GfxFamily>::OPERATION::OPERATION_WRITE_TIMESTAMP);

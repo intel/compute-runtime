@@ -34,7 +34,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
 
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(cmdBuffer,
@@ -419,7 +419,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
 
     auto expectedUsedSize = sizeof(WalkerType);
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(7u);
     walker.setThreadGroupIdYDimension(10u);
     walker.setThreadGroupIdZDimension(11u);
@@ -468,7 +468,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWhenComputePartiti
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(16u);
 
     bool staticPartitioning = false;
@@ -482,7 +482,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithNonUniformStar
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdStartingX(1u);
 
     bool staticPartitioning = false;
@@ -512,7 +512,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithDifferentWorkg
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(64u);
     walker.setThreadGroupIdYDimension(64u);
     walker.setThreadGroupIdZDimension(64u);
@@ -542,7 +542,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDisabledMinimalPartition
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(64u);
     walker.setThreadGroupIdYDimension(64u);
     walker.setThreadGroupIdZDimension(64u);
@@ -575,7 +575,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithDifferentWorkg
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(15u);
     walker.setThreadGroupIdYDimension(7u);
     walker.setThreadGroupIdZDimension(4u);
@@ -608,7 +608,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithPartitionTypeH
     DebugManagerStateRestore restore{};
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(8u);
     walker.setThreadGroupIdYDimension(4u);
     walker.setThreadGroupIdZDimension(2u);
@@ -645,7 +645,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenInvalidPartitionTypeIsRe
     DebugManagerStateRestore restore{};
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(8u);
     walker.setThreadGroupIdYDimension(4u);
     walker.setThreadGroupIdZDimension(2u);
@@ -659,7 +659,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithSmallXDimensio
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(32u);
     walker.setThreadGroupIdYDimension(1024u);
     walker.setThreadGroupIdZDimension(1u);
@@ -675,7 +675,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithBigXDimensionS
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(16384u);
     walker.setThreadGroupIdYDimension(1u);
     walker.setThreadGroupIdZDimension(1u);
@@ -691,7 +691,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenCustomMinimalPartitionSi
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(16384u);
     walker.setThreadGroupIdYDimension(1u);
     walker.setThreadGroupIdZDimension(1u);
@@ -710,7 +710,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithPartitionTypeP
     using WalkerType = typename FamilyType::DefaultWalkerType;
     using WalkerType = typename FamilyType::DefaultWalkerType;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(1u);
     walker.setThreadGroupIdZDimension(1u);
@@ -725,7 +725,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithPartitionTypeP
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenXDimensionIsNotLargetAnd2DImagesAreUsedWhenPartitionTypeIsObtainedThenSelectXDimension) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(8u);
     walker.setThreadGroupIdYDimension(64u);
     walker.setThreadGroupIdZDimension(16u);
@@ -741,7 +741,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenXDimensionIsNotLargetAnd
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndNonPartitionableWalkerWhenPartitionCountIsObtainedThenAllowPartitioning) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(1u);
     walker.setThreadGroupIdZDimension(1u);
@@ -756,7 +756,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndNon
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndPartitionableWalkerWhenPartitionCountIsObtainedThenAllowPartitioning) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(2u);
     walker.setThreadGroupIdZDimension(1u);
@@ -771,7 +771,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndPar
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndBigPartitionCountProgrammedInWalkerWhenPartitionCountIsObtainedThenNumberOfPartitionsIsEqualToNumberOfTiles) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(16384u);
     walker.setThreadGroupIdZDimension(1u);
@@ -786,7 +786,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndBig
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndAndNonUniformStartProgrammedInWalkerWhenPartitionCountIsObtainedThenDoNotAllowStaticPartitioningAndSetPartitionCountToOne) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(16384u);
     walker.setThreadGroupIdZDimension(1u);
@@ -805,7 +805,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningAndPar
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore{};
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(16384u);
     walker.setThreadGroupIdZDimension(1u);
@@ -828,7 +828,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore{};
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(1u);
     walker.setThreadGroupIdYDimension(16384u);
     walker.setThreadGroupIdZDimension(2u);
@@ -851,7 +851,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenYD
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore{};
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(16384u);
     walker.setThreadGroupIdYDimension(2u);
     walker.setThreadGroupIdZDimension(1u);
@@ -874,7 +874,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
     using WalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore{};
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(512u);
     walker.setThreadGroupIdYDimension(512u);
     walker.setThreadGroupIdZDimension(513u);
@@ -906,7 +906,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -1115,7 +1115,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -1330,7 +1330,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -1750,7 +1750,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenForceExecutionOnSingleTileWhenProgramComputeWalkerThenWalkerIsProperlyProgrammed) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
     WalkerType walker;
-    walker = FamilyType::cmdInitGpgpuWalker;
+    walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setThreadGroupIdXDimension(32u);
     walker.setThreadGroupIdYDimension(1u);
     walker.setThreadGroupIdZDimension(1u);

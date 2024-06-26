@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCm
 
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -67,7 +67,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndNoPartiti
 
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(1);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -110,7 +110,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndPartition
 
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(1);
     debugManager.flags.ExperimentalSetWalkerPartitionType.set(static_cast<int32_t>(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X));
     auto &postSync = walker.getPostSync();
@@ -158,7 +158,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenDi
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -210,7 +210,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenPa
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -264,7 +264,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(1);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -315,7 +315,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(1);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -352,7 +352,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
     uint64_t workPartitionAllocationAddress = 0x987654;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(1);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -389,7 +389,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenDynamicPartitioningPrefe
     uint64_t workPartitionAllocationAddress = 0x0;
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
     auto &postSync = walker.getPostSync();
     postSync.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP);
@@ -429,7 +429,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(DefaultWalkerType) +
@@ -496,7 +496,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
@@ -564,7 +564,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
@@ -624,7 +624,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
@@ -685,7 +685,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(DefaultWalkerType) +
@@ -752,7 +752,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(DefaultWalkerType) +
@@ -816,7 +816,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
@@ -880,7 +880,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
@@ -948,7 +948,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint64_t workPartitionAllocationAddress = 0x1000;
 
-    DefaultWalkerType walker = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(DefaultWalkerType) +

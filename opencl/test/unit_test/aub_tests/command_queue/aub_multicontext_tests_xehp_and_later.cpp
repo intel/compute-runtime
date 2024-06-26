@@ -437,7 +437,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenPreWalker
     auto taskStreamGpu = taskStream->getGraphicsAllocation()->getGpuAddress();
 
     uint32_t totalBytesProgrammed = 0u;
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walkerCmd.setPartitionType(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
 
@@ -483,7 +483,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, whenNoPreWalke
     auto taskStreamGpu = taskStream->getGraphicsAllocation()->getGpuAddress();
 
     uint32_t totalBytesProgrammed = 0u;
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
     walkerCmd.setPartitionType(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     walkerCmd.getInterfaceDescriptor().setNumberOfThreadsInGpgpuThreadGroup(1u);
 

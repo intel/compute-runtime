@@ -92,7 +92,7 @@ using XeHPAndLaterDispatchWalkerBasicTest = Test<XeHPAndLaterDispatchWalkerBasic
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimOneThenLocalWorkSizeEqualsLocalXDim) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     auto localWorkSize = GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(
         computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 5u);
@@ -111,7 +111,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimOne
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimTwoThenLocalWorkSizeEqualsProductLocalXandYDim) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     localWorkSizesIn[1] = 8;
 
@@ -131,7 +131,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimTwo
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimThreeThenLocalWorkSizeEqualsProductLocalXandYandZDim) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     localWorkSizesIn[1] = 8;
     localWorkSizesIn[2] = 2;
@@ -152,7 +152,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimThr
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOneWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({1, 0, 0});
 
@@ -176,7 +176,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOn
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTwoWhenOnlyYIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({0, 1, 0});
     localWorkSizesIn[1] = 16;
@@ -201,7 +201,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTw
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkThreeTwoWhenOnlyZIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({0, 0, 1});
     localWorkSizesIn[2] = 16;
@@ -226,7 +226,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkThree
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDifferentSIMDsizesWhenLocalIdsGeneratedThenMessageSizeIsSetToProperValue) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({0, 0, 1});
     localWorkSizesIn[2] = 16;
@@ -237,7 +237,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDifferent
 
     for (uint32_t i = 0; i < 4; i++) {
         for (uint32_t j = 0; j < 3; j++) {
-            *computeWalker = FamilyType::cmdInitGpgpuWalker;
+            *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
             GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
                                                                     localWorkSizesIn, simdProgramming[j][0], 2,
                                                                     walkerInput[i][0], walkerInput[i][1], 0u);
@@ -251,7 +251,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugFlag
     debugManager.flags.ForceSimdMessageSizeInWalker.set(1);
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({0, 0, 1});
     localWorkSizesIn[2] = 16;
@@ -262,7 +262,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugFlag
 
     for (uint32_t i = 0; i < 4; i++) {
         for (uint32_t j = 0; j < 3; j++) {
-            *computeWalker = FamilyType::cmdInitGpgpuWalker;
+            *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
             GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
                                                                     localWorkSizesIn, simdProgramming[j], 2,
                                                                     walkerInput[i][0], walkerInput[i][1], 0u);
@@ -275,7 +275,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTw
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
 
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({1, 1, 0});
     localWorkSizesIn[1] = 8;
@@ -299,7 +299,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTw
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({1, 1, 1});
     localWorkSizesIn[1] = 8;
@@ -323,7 +323,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsAndNoLocalIdsUsedThenExpectNoGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({0, 0, 0});
     localWorkSizesIn[1] = 8;
@@ -345,7 +345,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenNotAskHwForLocalIdsAndLocalIdsUsedThenExpectNoGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({1, 1, 1});
     localWorkSizesIn[1] = 8;
@@ -367,7 +367,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOneWhenAskForInlineDataAndNoLocalIdsPresentThenExpectOnlyInlineFieldSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 1, true, true, 0u);
@@ -384,7 +384,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOn
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOneWhenAskForInlineDataAndLocalIdsPresentThenExpectInlineAndDoNotExpectEmitLocalIdFieldSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({1, 0, 0});
 
@@ -404,7 +404,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOn
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenAskForInlineDataAndLocalIdsPresentThenDoNotExpectEmitLocalIdFieldSetButExpectInlineSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({1, 1, 1});
     GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
@@ -423,7 +423,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsAndInlineDataThenExpectGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
-    *computeWalker = FamilyType::cmdInitGpgpuWalker;
+    *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({1, 1, 1});
     localWorkSizesIn[1] = 8;
