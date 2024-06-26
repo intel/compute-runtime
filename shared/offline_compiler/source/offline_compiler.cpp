@@ -423,11 +423,14 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
             }
         }
     } else {
-        auto hwInfoDepAcr = getHwInfoForDeprecatedAcronym(queryAcronym);
-        if (nullptr != hwInfoDepAcr) {
-            auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfoDepAcr->platform.eProductFamily);
-            matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(compilerProductHelper->getDefaultHwIpVersion()));
-        } else {
+        bool isMatched{false};
+        if (auto hwInfoDepAcr = getHwInfoForDeprecatedAcronym(queryAcronym); hwInfoDepAcr) {
+            if (auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfoDepAcr->platform.eProductFamily); compilerProductHelper) {
+                matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(compilerProductHelper->getDefaultHwIpVersion()));
+                isMatched = true;
+            }
+        }
+        if (!isMatched) {
             helper->printf("Error: Invalid command line. Unknown acronym %s.\n", allArgs[2].c_str());
             retVal = OCLOC_INVALID_COMMAND_LINE;
             return retVal;
@@ -1263,13 +1266,13 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                             <device_type> can be: %s
                                             - can be single target device.
 
-  -o <filename>                             Optional output file name. 
-                                            Must not be used with: 
+  -o <filename>                             Optional output file name.
+                                            Must not be used with:
                                             -gen_file | -cpp_file | -output_no_suffix | -output
 
   -output <filename>                        Optional output file base name.
                                             Default is input file's base name.
-                                            This base name will be used for all output files. 
+                                            This base name will be used for all output files.
                                             For single target device proper suffixes (describing file formats)
                                             will be added automatically.
 
@@ -1332,7 +1335,7 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   -options_name                             Will add suffix to output files.
                                             This suffix will be generated based on input
-                                            options (useful when rebuilding with different 
+                                            options (useful when rebuilding with different
                                             set of options so that results won't get
                                             overwritten).
                                             This suffix is added always as the last part
