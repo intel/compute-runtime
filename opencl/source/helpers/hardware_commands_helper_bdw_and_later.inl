@@ -111,8 +111,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 }
 
 template <typename GfxFamily>
+template <typename WalkerType>
 void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
-    DefaultWalkerType *walkerCmd,
+    WalkerType *walkerCmd,
     uint32_t &interfaceDescriptorIndex) {
 
     walkerCmd->setInterfaceDescriptorOffset(interfaceDescriptorIndex++);

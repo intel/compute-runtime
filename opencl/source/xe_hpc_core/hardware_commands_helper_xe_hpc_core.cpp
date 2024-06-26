@@ -16,4 +16,4 @@ namespace NEO {
 using FamilyType = XeHpcCoreFamily;
 } // namespace NEO
 
-#include "opencl/source/helpers/enable_hardware_commands_helper.inl"
+#include "opencl/source/helpers/enable_hardware_commands_helper_cw.inl"

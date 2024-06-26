@@ -8,7 +8,7 @@
 #include "hardware_commands_helper.h"
 
 template struct NEO::HardwareCommandsHelper<NEO::FamilyType>;
-template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendIndirectState<NEO::FamilyType::DefaultWalkerType, NEO::FamilyType::INTERFACE_DESCRIPTOR_DATA>(
+template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendIndirectState<NEO::FamilyType::GPGPU_WALKER, NEO::FamilyType::INTERFACE_DESCRIPTOR_DATA>(
     LinearStream &commandStream,
     IndirectHeap &dsh,
     IndirectHeap &ioh,
@@ -21,23 +21,23 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendIndirectState<
     const uint64_t offsetInterfaceDescriptorTable,
     uint32_t &interfaceDescriptorIndex,
     PreemptionMode preemptionMode,
-    FamilyType::DefaultWalkerType *walkerCmd,
+    FamilyType::GPGPU_WALKER *walkerCmd,
     FamilyType::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
     bool localIdsGenerationByRuntime,
     uint64_t scratchAddress,
     const Device &device,
     bool heaplessStateInitEnabled);
 
-template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendCrossThreadData<NEO::FamilyType::DefaultWalkerType>(
+template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendCrossThreadData<NEO::FamilyType::GPGPU_WALKER>(
     IndirectHeap &indirectHeap,
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
-    FamilyType::DefaultWalkerType *walkerCmd,
+    FamilyType::GPGPU_WALKER *walkerCmd,
     uint32_t &sizeCrossThreadData,
     uint64_t scratchAddress,
     const RootDeviceEnvironment &rootDeviceEnvironment);
 
-template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendInterfaceDescriptorData<NEO::FamilyType::DefaultWalkerType, NEO::FamilyType::INTERFACE_DESCRIPTOR_DATA>(
+template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendInterfaceDescriptorData<NEO::FamilyType::GPGPU_WALKER, NEO::FamilyType::INTERFACE_DESCRIPTOR_DATA>(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
     uint64_t kernelStartOffset,
@@ -52,10 +52,14 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendInterfaceDescr
     uint32_t bindingTablePrefetchSize,
     PreemptionMode preemptionMode,
     const Device &device,
-    FamilyType::DefaultWalkerType *walkerCmd,
+    FamilyType::GPGPU_WALKER *walkerCmd,
     FamilyType::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
     bool heaplessStateInitEnabled);
 
-template void NEO::HardwareCommandsHelper<NEO::FamilyType>::programInlineData<NEO::FamilyType::DefaultWalkerType>(
+template void NEO::HardwareCommandsHelper<NEO::FamilyType>::programInlineData<NEO::FamilyType::GPGPU_WALKER>(
     Kernel &kernel,
-    FamilyType::DefaultWalkerType *walkerCmd, uint64_t indirectDataAddress, uint64_t scratchAddress);
+    FamilyType::GPGPU_WALKER *walkerCmd, uint64_t indirectDataAddress, uint64_t scratchAddress);
+
+template void NEO::HardwareCommandsHelper<NEO::FamilyType>::setInterfaceDescriptorOffset<NEO::FamilyType::GPGPU_WALKER>(
+    FamilyType::GPGPU_WALKER *walkerCmd,
+    uint32_t &interfaceDescriptorIndex);

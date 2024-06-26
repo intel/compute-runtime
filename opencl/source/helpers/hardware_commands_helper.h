@@ -126,8 +126,9 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     static size_t getTotalSizeRequiredSSH(
         const MultiDispatchInfo &multiDispatchInfo);
 
+    template <typename WalkerType>
     static void setInterfaceDescriptorOffset(
-        DefaultWalkerType *walkerCmd,
+        WalkerType *walkerCmd,
         uint32_t &interfaceDescriptorIndex);
 
     static bool kernelUsesLocalIds(const Kernel &kernel);
