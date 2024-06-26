@@ -303,14 +303,6 @@ class PublicLinuxMemoryImp : public L0::Sysman::LinuxMemoryImp {
     using L0::Sysman::LinuxMemoryImp::pSysmanKmdInterface;
 };
 
-class MockMemorySysmanKmdInterfaceXe : public L0::Sysman::SysmanKmdInterfaceXe {
-  public:
-    using L0::Sysman::SysmanKmdInterface::pProcfsAccess;
-    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
-    MockMemorySysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceXe(productFamily) {}
-    ~MockMemorySysmanKmdInterfaceXe() override = default;
-};
-
 struct MockMemorySysFsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     std::vector<ze_result_t> mockReadReturnStatus{};
     std::vector<std::string> mockReadStringValue{};
@@ -344,13 +336,6 @@ class MockProcFsAccessInterface : public L0::Sysman::ProcFsAccessInterface {
   public:
     MockProcFsAccessInterface() = default;
     ~MockProcFsAccessInterface() override = default;
-};
-
-class MockSysmanKmdInterfaceI915Prelim : public L0::Sysman::SysmanKmdInterfaceI915Prelim {
-  public:
-    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
-    MockSysmanKmdInterfaceI915Prelim(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceI915Prelim(productFamily) {}
-    ~MockSysmanKmdInterfaceI915Prelim() override = default;
 };
 
 } // namespace ult

@@ -15,6 +15,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_i915.h"
 
 namespace L0 {
 namespace Sysman {
@@ -247,7 +248,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWithPre
     bool isSubdevice = true;
     uint32_t subDeviceId = 0;
 
-    auto pSysmanKmdInterface = new MockSysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getProductFamily());
+    auto pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
     MockMemorySysFsAccessInterface *pSysfsAccess = new MockMemorySysFsAccessInterface();
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
@@ -272,7 +273,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceAndPhys
     bool isSubdevice = true;
     uint32_t subDeviceId = 0;
 
-    auto pSysmanKmdInterface = new MockSysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getProductFamily());
+    auto pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
     MockMemorySysFsAccessInterface *pSysfsAccess = new MockMemorySysFsAccessInterface();
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);

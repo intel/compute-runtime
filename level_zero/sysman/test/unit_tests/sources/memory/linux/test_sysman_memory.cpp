@@ -11,6 +11,7 @@
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_i915.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_xe.h"
 
 #include "gtest/gtest.h"
@@ -528,12 +529,12 @@ class SysmanDeviceMemoryFixtureXe : public SysmanDeviceMemoryFixture {
   protected:
     DebugManagerStateRestore restorer;
     MockMemoryNeoDrm *pDrm = nullptr;
-    MockMemorySysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
+    MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
 
     void SetUp() override {
         debugManager.flags.EnableLocalMemory.set(1);
         SysmanDeviceFixture::SetUp();
-        pSysmanKmdInterface = new MockMemorySysmanKmdInterfaceXe(pLinuxSysmanImp->getProductFamily());
+        pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
         pSysmanKmdInterface->pProcfsAccess = std::make_unique<MockProcFsAccessInterface>();
         pSysmanKmdInterface->pSysfsAccess = std::make_unique<MockMemorySysFsAccessInterface>();
 
@@ -602,13 +603,13 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
     MockMemoryNeoDrm *pDrm = nullptr;
     L0::Sysman::SysmanDevice *device = nullptr;
     MockMemorySysFsAccessInterface *pSysfsAccess = nullptr;
-    MockSysmanKmdInterfaceI915Prelim *pSysmanKmdInterface = nullptr;
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
 
     void SetUp() override {
         debugManager.flags.EnableLocalMemory.set(1);
         SysmanMultiDeviceFixture::SetUp();
 
-        pSysmanKmdInterface = new MockSysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getProductFamily());
+        pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
         pSysfsAccess = new MockMemorySysFsAccessInterface();
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);

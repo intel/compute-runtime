@@ -139,7 +139,7 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroWhenCallingzesDe
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenComponentCountZeroAndKMDVersionIsPrelimWhenCallingzesDeviceEnumSchedulersThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
 
     pLinuxSysmanImp->pSysmanKmdInterface.reset();
-    pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Prelim>(pLinuxSysmanImp->getProductFamily());
+    pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Prelim>(pLinuxSysmanImp->getSysmanProductHelper());
 
     auto pSchedulerHandleContextTest = std::make_unique<L0::Sysman::SchedulerHandleContext>(pOsSysman);
     pSchedulerHandleContextTest->init(pOsSysman->getSubDeviceCount());
@@ -680,7 +680,7 @@ class SysmanDeviceSchedulerFixtureXe : public SysmanDeviceSchedulerFixture {
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         pLinuxSysmanImp->pSysmanKmdInterface.reset();
-        pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getProductFamily());
+        pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<MockSchedulerSysfsAccessXe>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
@@ -847,7 +847,7 @@ TEST_F(SysmanDeviceSchedulerFixtureXe, GivenDestinationOrSourceUnitsAreNotSuppor
 
     uint64_t sourceValue = 100;
     uint64_t dstValue = 0;
-    pLinuxSysmanImp->pSysmanKmdInterface->convertSysfsValueUnit(SysmanKmdInterface::SysfsValueUnit::unAvailable, SysmanKmdInterface::SysfsValueUnit::milli, sourceValue, dstValue);
+    pLinuxSysmanImp->pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::unAvailable, SysfsValueUnit::milli, sourceValue, dstValue);
     EXPECT_EQ(sourceValue, dstValue);
 }
 
@@ -872,7 +872,7 @@ class SysmanMultiDeviceSchedulerFixtureXe : public SysmanMultiDeviceFixture {
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();
         pLinuxSysmanImp->pSysmanKmdInterface.reset();
-        pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getProductFamily());
+        pLinuxSysmanImp->pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
         MockSchedulerNeoDrm *pDrm = new MockSchedulerNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
         pDrm->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;

@@ -47,6 +47,26 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCalling
     EXPECT_EQ(expectedPowerUnit, pSysmanProductHelper->getPowerLimitUnit());
 }
 
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenFetchingCardCriticalPowerLimitFileThenFilenameIsReturned, IsPVC) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    EXPECT_STREQ("curr1_crit", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCriticalPowerLimit, 0, false).c_str());
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCallingGetCardCriticalPowerLimitNativeUnitThenCorrectValueIsReturned, IsPVC) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    EXPECT_EQ(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCriticalPowerLimit));
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenFetchingCardCriticalPowerLimitFileThenFilenameIsReturned, IsNotPVC) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    EXPECT_STREQ("power1_crit", pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameCriticalPowerLimit, 0, false).c_str());
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCallingGetCardCriticalPowerLimitNativeUnitThenCorrectValueIsReturned, IsNotPVC) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCriticalPowerLimit));
+}
+
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCallingGetPowerLimitUnitThenCorrectPowerLimitUnitIsReturned, IsNotPVC) {
     zes_limit_unit_t expectedPowerUnit = ZES_LIMIT_UNIT_POWER;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);

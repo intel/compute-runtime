@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_i915.h"
 #include "level_zero/sysman/test/unit_tests/sources/standby/linux/mock_sysfs_standby.h"
 
 namespace L0 {
@@ -30,7 +31,7 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
 class ZesStandbyFixtureI915 : public ZesStandbyFixture {
   protected:
     zes_standby_handle_t hSysmanStandby = {};
-    PublicSysmanKmdInterfaceI915 *pSysmanKmdInterface = nullptr;
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
     MockStandbySysfsAccessInterface *pSysfsAccess = nullptr;
 
     void SetUp() override {
@@ -45,7 +46,7 @@ class ZesStandbyFixtureI915 : public ZesStandbyFixture {
     }
 
     void mockKMDInterfaceSetup() {
-        pSysmanKmdInterface = new PublicSysmanKmdInterfaceI915(pLinuxSysmanImp->getProductFamily());
+        pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
         pSysfsAccess = new MockStandbySysfsAccessInterface();
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
@@ -366,7 +367,7 @@ class ZesStandbyFixtureXe : public ZesStandbyFixture {
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
 
-        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getProductFamily());
+        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pLinuxSysmanImp->getSysmanProductHelper());
         device = pSysmanDevice;
         pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
         subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();

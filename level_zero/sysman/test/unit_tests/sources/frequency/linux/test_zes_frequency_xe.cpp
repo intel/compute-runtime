@@ -37,7 +37,7 @@ class SysmanDeviceFrequencyFixtureXe : public SysmanDeviceFixture {
         SysmanDeviceFixture::SetUp();
         device = pSysmanDevice;
 
-        pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getProductFamily());
+        pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
         pSysmanKmdInterface->pSysfsAccess = std::make_unique<MockXeFrequencySysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysmanKmdInterface->pSysfsAccess.get();
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);

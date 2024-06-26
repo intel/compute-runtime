@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/i915.h"
 
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 namespace L0 {
@@ -40,20 +41,18 @@ static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineType
 SysmanKmdInterface::SysmanKmdInterface() = default;
 SysmanKmdInterface::~SysmanKmdInterface() = default;
 
-std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(NEO::Drm &drm) {
+std::unique_ptr<SysmanKmdInterface> SysmanKmdInterface::create(NEO::Drm &drm, SysmanProductHelper *pSysmanProductHelper) {
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
     auto drmVersion = drm.getDrmVersion(drm.getFileDescriptor());
-    auto pHwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
-    const auto productFamily = pHwInfo->platform.eProductFamily;
     if ("xe" == drmVersion) {
-        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(productFamily);
+        pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceXe>(pSysmanProductHelper);
     } else {
         std::string prelimVersion;
         drm.getPrelimVersion(prelimVersion);
         if (prelimVersion == "") {
-            pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(productFamily);
+            pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Upstream>(pSysmanProductHelper);
         } else {
-            pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Prelim>(productFamily);
+            pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Prelim>(pSysmanProductHelper);
         }
     }
 
@@ -152,14 +151,14 @@ ze_result_t SysmanKmdInterface::getNumEngineTypeAndInstancesForDevice(std::strin
     return result;
 }
 
-SysmanKmdInterface::SysfsValueUnit SysmanKmdInterface::getNativeUnit(const SysfsName sysfsName) {
+SysfsValueUnit SysmanKmdInterface::getNativeUnit(const SysfsName sysfsName) {
     auto sysfsNameToNativeUnitMap = getSysfsNameToNativeUnitMap();
     if (sysfsNameToNativeUnitMap.find(sysfsName) != sysfsNameToNativeUnitMap.end()) {
         return sysfsNameToNativeUnitMap[sysfsName];
     }
     // Entries are expected to be available at sysfsNameToNativeUnitMap
     DEBUG_BREAK_IF(true);
-    return unAvailable;
+    return SysfsValueUnit::unAvailable;
 }
 
 void SysmanKmdInterface::convertSysfsValueUnit(const SysfsValueUnit dstUnit, const SysfsValueUnit srcUnit, const uint64_t srcValue, uint64_t &dstValue) const {

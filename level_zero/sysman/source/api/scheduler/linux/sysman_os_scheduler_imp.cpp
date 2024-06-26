@@ -40,7 +40,7 @@ static ze_result_t readSchedulerValueFromSysfs(SysfsName schedulerSysfsName,
         }
         result = pSysmanImp->getSysfsAccess().read(path, readValue);
         if (result == ZE_RESULT_SUCCESS) {
-            pSysmanKmdInterface->convertSysfsValueUnit(SysmanKmdInterface::micro,
+            pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::micro,
                                                        pSysmanKmdInterface->getNativeUnit(schedulerSysfsName),
                                                        readValue, readValue);
             readValueVec[i] = readValue;
@@ -79,7 +79,7 @@ static ze_result_t writeSchedulerValueToSysfs(SysfsName schedulerSysfsName,
     auto pSysmanKmdInterface = pSysmanImp->getSysmanKmdInterface();
     auto sysfsName = pSysmanKmdInterface->getSysfsFilePath(schedulerSysfsName, subdeviceId, false);
     pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(schedulerSysfsName),
-                                               SysmanKmdInterface::micro, writeValue, writeValue);
+                                               SysfsValueUnit::micro, writeValue, writeValue);
     auto engineBasePath = pSysmanKmdInterface->getEngineBasePath(subdeviceId);
     for (const auto &engineName : listOfEngines) {
         auto path = engineBasePath + "/" + engineName + "/" + sysfsName;

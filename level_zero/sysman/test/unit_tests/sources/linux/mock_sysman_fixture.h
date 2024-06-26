@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -159,13 +159,6 @@ class PublicLinuxSysmanDriverImp : public L0::Sysman::LinuxSysmanDriverImp {
     PublicLinuxSysmanDriverImp() : LinuxSysmanDriverImp() {}
     using LinuxSysmanDriverImp::pLinuxEventsUtil;
     using LinuxSysmanDriverImp::pUdevLib;
-};
-
-class PublicSysmanKmdInterfaceI915 : public L0::Sysman::SysmanKmdInterfaceI915Upstream {
-  public:
-    PublicSysmanKmdInterfaceI915(const PRODUCT_FAMILY productFamily) : L0::Sysman::SysmanKmdInterfaceI915Upstream(productFamily) {}
-    ~PublicSysmanKmdInterfaceI915() override = default;
-    using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
 };
 
 } // namespace ult

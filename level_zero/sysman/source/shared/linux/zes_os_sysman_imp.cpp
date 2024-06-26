@@ -42,7 +42,10 @@ ze_result_t LinuxSysmanImp::init() {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    pSysmanKmdInterface = SysmanKmdInterface::create(*getDrm());
+    pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
+    DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
+
+    pSysmanKmdInterface = SysmanKmdInterface::create(*getDrm(), pSysmanProductHelper.get());
     auto result = pSysmanKmdInterface->initFsAccessInterface(*getDrm());
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -50,8 +53,6 @@ ze_result_t LinuxSysmanImp::init() {
     pFsAccess = pSysmanKmdInterface->getFsAccess();
     pProcfsAccess = pSysmanKmdInterface->getProcFsAccess();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
-    pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
-    DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
 
     auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
     int myDeviceFd = sysmanHwDeviceId.getFileDescriptor();

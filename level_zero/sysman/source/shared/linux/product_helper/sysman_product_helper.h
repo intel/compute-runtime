@@ -30,6 +30,7 @@ class SysmanKmdInterface;
 class FirmwareUtil;
 
 enum class RasInterfaceType;
+enum class SysfsValueUnit;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
 extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];
@@ -79,6 +80,8 @@ class SysmanProductHelper {
     virtual uint64_t setPowerLimitValue(int32_t value) = 0;
     virtual zes_limit_unit_t getPowerLimitUnit() = 0;
     virtual bool isPowerSetLimitSupported() = 0;
+    virtual std::string getCardCriticalPowerLimitFile() = 0;
+    virtual SysfsValueUnit getCardCriticalPowerLimitNativeUnit() = 0;
 
     // Diagnostics
     virtual bool isDiagnosticsSupported() = 0;

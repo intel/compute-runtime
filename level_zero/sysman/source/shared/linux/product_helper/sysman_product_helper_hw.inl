@@ -230,6 +230,16 @@ bool SysmanProductHelperHw<gfxProduct>::isPowerSetLimitSupported() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+std::string SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitFile() {
+    return "power1_crit";
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitNativeUnit() {
+    return SysfsValueUnit::micro;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isDiagnosticsSupported() {
     return false;
 }

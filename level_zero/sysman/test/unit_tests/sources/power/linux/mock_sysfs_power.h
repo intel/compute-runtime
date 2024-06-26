@@ -16,6 +16,7 @@
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_i915.h"
 
 namespace L0 {
 namespace Sysman {
@@ -311,14 +312,14 @@ class SysmanDevicePowerFixtureI915 : public SysmanDeviceFixture {
     std::unique_ptr<MockPowerPmt> pPmt;
     std::unique_ptr<MockPowerFsAccess> pFsAccess;
     std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> pmtMapOriginal;
-    PublicSysmanKmdInterfaceI915 *pSysmanKmdInterface = nullptr;
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
     MockPowerSysfsAccessInterface *pSysfsAccess = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         device = pSysmanDevice;
         pFsAccess = std::make_unique<MockPowerFsAccess>();
-        pSysmanKmdInterface = new PublicSysmanKmdInterfaceI915(pLinuxSysmanImp->getProductFamily());
+        pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
         pSysfsAccess = new MockPowerSysfsAccessInterface();
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
@@ -371,7 +372,7 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
     std::unique_ptr<MockPowerPmt> pPmt;
     std::unique_ptr<MockPowerFsAccess> pFsAccess;
     std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOriginal;
-    PublicSysmanKmdInterfaceI915 *pSysmanKmdInterface = nullptr;
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
     MockPowerSysfsAccessInterface *pSysfsAccess = nullptr;
 
     void SetUp() override {
@@ -379,7 +380,7 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
         device = pSysmanDevice;
         pFsAccess = std::make_unique<MockPowerFsAccess>();
 
-        pSysmanKmdInterface = new PublicSysmanKmdInterfaceI915(pLinuxSysmanImp->getProductFamily());
+        pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
         pSysfsAccess = new MockPowerSysfsAccessInterface();
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);

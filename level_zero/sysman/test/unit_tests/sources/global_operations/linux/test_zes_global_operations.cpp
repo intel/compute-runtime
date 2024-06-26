@@ -204,7 +204,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesGlobal
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
-    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getProductFamily());
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
     pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
@@ -569,7 +569,7 @@ TEST_F(SysmanGlobalOperationsFixture,
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
-    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getProductFamily());
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
     pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
@@ -588,7 +588,7 @@ TEST_F(SysmanGlobalOperationsFixture,
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
-    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getProductFamily());
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
     pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
@@ -606,7 +606,7 @@ TEST_F(SysmanGlobalOperationsFixture,
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
-    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getProductFamily());
+    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getSysmanProductHelper());
     pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
@@ -625,7 +625,7 @@ TEST_F(SysmanGlobalOperationsFixture,
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
-    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getProductFamily());
+    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getSysmanProductHelper());
     pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
@@ -644,7 +644,7 @@ TEST_F(SysmanGlobalOperationsFixture,
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();
-    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getProductFamily());
+    MockSysmanKmdInterfaceUpstream *pSysmanKmdInterface = new MockSysmanKmdInterfaceUpstream(pLinuxSysmanImp->getSysmanProductHelper());
     pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
     pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
     pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);

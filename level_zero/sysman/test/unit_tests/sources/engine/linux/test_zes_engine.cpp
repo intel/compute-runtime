@@ -41,7 +41,7 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrm>(pDrm));
 
-        pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Upstream(pLinuxSysmanImp->getProductFamily()));
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Upstream(pLinuxSysmanImp->getSysmanProductHelper()));
         pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pDrm);
 
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImp>(pLinuxSysmanImp);

@@ -26,7 +26,7 @@ class ZesPerformanceFixtureI915Prelim : public SysmanMultiDeviceFixture {
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();
         pSysmanDeviceImp->pPerformanceHandleContext->handleList.clear();
-        std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Prelim>(pLinuxSysmanImp->getProductFamily());
+        std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface = std::make_unique<SysmanKmdInterfaceI915Prelim>(pLinuxSysmanImp->getSysmanProductHelper());
         std::swap(pLinuxSysmanImp->pSysmanKmdInterface, pSysmanKmdInterface);
         pSysfsAccess = std::make_unique<MockPerformanceSysfsAccess>();
     }

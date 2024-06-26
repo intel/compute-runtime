@@ -40,7 +40,7 @@ class ZesEngineFixturePrelim : public SysmanDeviceFixture {
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrmPrelim>(pDrm));
 
-        pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getProductFamily()));
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getSysmanProductHelper()));
         pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pDrm);
 
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImpPrelim>(pLinuxSysmanImp);
@@ -334,7 +334,7 @@ class ZesEngineMultiFixturePrelim : public SysmanMultiDeviceFixture {
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrmPrelim>(pDrm));
 
-        pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getProductFamily()));
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getSysmanProductHelper()));
         pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pDrm);
 
         pPmuInterface = std::make_unique<MockEnginePmuInterfaceImpPrelim>(pLinuxSysmanImp);

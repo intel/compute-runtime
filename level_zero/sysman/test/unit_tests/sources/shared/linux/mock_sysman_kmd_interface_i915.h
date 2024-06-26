@@ -18,7 +18,7 @@ class MockSysmanKmdInterfacePrelim : public L0::Sysman::SysmanKmdInterfaceI915Pr
     using L0::Sysman::SysmanKmdInterface::pFsAccess;
     using L0::Sysman::SysmanKmdInterface::pProcfsAccess;
     using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
-    MockSysmanKmdInterfacePrelim(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceI915Prelim(productFamily) {}
+    MockSysmanKmdInterfacePrelim(SysmanProductHelper *pSysmanProductHelper) : SysmanKmdInterfaceI915Prelim(pSysmanProductHelper) {}
     ~MockSysmanKmdInterfacePrelim() override = default;
 };
 
@@ -28,7 +28,7 @@ class MockSysmanKmdInterfaceUpstream : public L0::Sysman::SysmanKmdInterfaceI915
     using L0::Sysman::SysmanKmdInterface::pFsAccess;
     using L0::Sysman::SysmanKmdInterface::pProcfsAccess;
     using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
-    MockSysmanKmdInterfaceUpstream(const PRODUCT_FAMILY productFamily) : SysmanKmdInterfaceI915Upstream(productFamily) {}
+    MockSysmanKmdInterfaceUpstream(SysmanProductHelper *pSysmanProductHelper) : SysmanKmdInterfaceI915Upstream(pSysmanProductHelper) {}
     ~MockSysmanKmdInterfaceUpstream() override = default;
 };
 

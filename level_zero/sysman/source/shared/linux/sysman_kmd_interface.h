@@ -29,6 +29,7 @@ class ProcFsAccessInterface;
 class SysFsAccessInterface;
 class PmuInterface;
 class LinuxSysmanImp;
+class SysmanProductHelper;
 
 typedef std::pair<std::string, std::string> valuePair;
 
@@ -94,16 +95,18 @@ enum class SysfsName {
     sysfsNamePerformanceSystemPowerBalance,
 };
 
+enum class SysfsValueUnit {
+    milli,
+    micro,
+    unAvailable,
+};
+
 class SysmanKmdInterface {
   public:
     SysmanKmdInterface();
     virtual ~SysmanKmdInterface();
-    enum SysfsValueUnit : uint32_t {
-        milli,
-        micro,
-        unAvailable,
-    };
-    static std::unique_ptr<SysmanKmdInterface> create(NEO::Drm &drm);
+
+    static std::unique_ptr<SysmanKmdInterface> create(NEO::Drm &drm, SysmanProductHelper *pSysmanProductHelper);
 
     virtual std::string getBasePath(uint32_t subDeviceId) const = 0;
     virtual std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) = 0;
@@ -166,7 +169,7 @@ class SysmanKmdInterfaceI915 {
 
 class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInterfaceI915 {
   public:
-    SysmanKmdInterfaceI915Upstream(const PRODUCT_FAMILY productFamily);
+    SysmanKmdInterfaceI915Upstream(SysmanProductHelper *pSysmanProductHelper);
     ~SysmanKmdInterfaceI915Upstream() override;
 
     std::string getBasePath(uint32_t subDeviceId) const override;
@@ -199,23 +202,17 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
-    void initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily);
+    std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap;
+    void initSysfsNameToFileMap(SysmanProductHelper *pSysmanProductHelper);
+    void initSysfsNameToNativeUnitMap(SysmanProductHelper *pSysmanProductHelper);
     const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() override {
         return sysfsNameToNativeUnitMap;
     }
-    const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
-        {SysfsName::sysfsNameSchedulerTimeout, milli},
-        {SysfsName::sysfsNameSchedulerTimeslice, milli},
-        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milli},
-        {SysfsName::sysfsNameSustainedPowerLimit, micro},
-        {SysfsName::sysfsNameCriticalPowerLimit, micro},
-        {SysfsName::sysfsNameDefaultPowerLimit, micro},
-    };
 };
 
 class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfaceI915 {
   public:
-    SysmanKmdInterfaceI915Prelim(const PRODUCT_FAMILY productFamily);
+    SysmanKmdInterfaceI915Prelim(SysmanProductHelper *pSysmanProductHelper);
     ~SysmanKmdInterfaceI915Prelim() override;
 
     std::string getBasePath(uint32_t subDeviceId) const override;
@@ -248,23 +245,17 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
-    void initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily);
+    std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap;
+    void initSysfsNameToFileMap(SysmanProductHelper *pSysmanProductHelper);
+    void initSysfsNameToNativeUnitMap(SysmanProductHelper *pSysmanProductHelper);
     const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() override {
         return sysfsNameToNativeUnitMap;
     }
-    const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
-        {SysfsName::sysfsNameSchedulerTimeout, milli},
-        {SysfsName::sysfsNameSchedulerTimeslice, milli},
-        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milli},
-        {SysfsName::sysfsNameSustainedPowerLimit, micro},
-        {SysfsName::sysfsNameCriticalPowerLimit, micro},
-        {SysfsName::sysfsNameDefaultPowerLimit, micro},
-    };
 };
 
 class SysmanKmdInterfaceXe : public SysmanKmdInterface {
   public:
-    SysmanKmdInterfaceXe(const PRODUCT_FAMILY productFamily);
+    SysmanKmdInterfaceXe(SysmanProductHelper *pSysmanProductHelper);
     ~SysmanKmdInterfaceXe() override;
 
     std::string getBasePath(uint32_t subDeviceId) const override;
@@ -299,19 +290,12 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
-    void initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily);
+    std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap;
+    void initSysfsNameToFileMap(SysmanProductHelper *pSysmanProductHelper);
+    void initSysfsNameToNativeUnitMap(SysmanProductHelper *pSysmanProductHelper);
     const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() override {
         return sysfsNameToNativeUnitMap;
     }
-    const std::map<SysfsName, SysfsValueUnit> sysfsNameToNativeUnitMap = {
-        {SysfsName::sysfsNameSchedulerTimeout, micro},
-        {SysfsName::sysfsNameSchedulerTimeslice, micro},
-        {SysfsName::sysfsNameSchedulerWatchDogTimeout, milli},
-        {SysfsName::sysfsNameSchedulerWatchDogTimeoutMaximum, milli},
-        {SysfsName::sysfsNameSustainedPowerLimit, micro},
-        {SysfsName::sysfsNameCriticalPowerLimit, micro},
-        {SysfsName::sysfsNameDefaultPowerLimit, micro},
-    };
 };
 
 } // namespace Sysman

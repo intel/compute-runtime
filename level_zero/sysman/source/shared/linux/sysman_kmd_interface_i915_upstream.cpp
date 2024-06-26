@@ -10,14 +10,16 @@
 #include "shared/source/os_interface/linux/i915.h"
 
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
 namespace L0 {
 namespace Sysman {
 
-SysmanKmdInterfaceI915Upstream::SysmanKmdInterfaceI915Upstream(const PRODUCT_FAMILY productFamily) {
-    initSysfsNameToFileMap(productFamily);
+SysmanKmdInterfaceI915Upstream::SysmanKmdInterfaceI915Upstream(SysmanProductHelper *pSysmanProductHelper) {
+    initSysfsNameToFileMap(pSysmanProductHelper);
+    initSysfsNameToNativeUnitMap(pSysmanProductHelper);
 }
 
 SysmanKmdInterfaceI915Upstream::~SysmanKmdInterfaceI915Upstream() = default;
@@ -26,7 +28,7 @@ std::string SysmanKmdInterfaceI915Upstream::getBasePath(uint32_t subDeviceId) co
     return getBasePathI915(subDeviceId);
 }
 
-void SysmanKmdInterfaceI915Upstream::initSysfsNameToFileMap(const PRODUCT_FAMILY productFamily) {
+void SysmanKmdInterfaceI915Upstream::initSysfsNameToFileMap(SysmanProductHelper *pSysmanProductHelper) {
     sysfsNameToFileMap[SysfsName::sysfsNameMinFrequency] = std::make_pair("rps_min_freq_mhz", "gt_min_freq_mhz");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxFrequency] = std::make_pair("rps_max_freq_mhz", "gt_max_freq_mhz");
     sysfsNameToFileMap[SysfsName::sysfsNameMinDefaultFrequency] = std::make_pair(".defaults/rps_min_freq_mhz", "");
@@ -47,7 +49,7 @@ void SysmanKmdInterfaceI915Upstream::initSysfsNameToFileMap(const PRODUCT_FAMILY
     sysfsNameToFileMap[SysfsName::sysfsNameSustainedPowerLimitInterval] = std::make_pair("", "power1_max_interval");
     sysfsNameToFileMap[SysfsName::sysfsNameEnergyCounterNode] = std::make_pair("", "energy1_input");
     sysfsNameToFileMap[SysfsName::sysfsNameDefaultPowerLimit] = std::make_pair("", "power1_rated_max");
-    sysfsNameToFileMap[SysfsName::sysfsNameCriticalPowerLimit] = std::make_pair("", (productFamily == IGFX_PVC) ? "curr1_crit" : "power1_crit");
+    sysfsNameToFileMap[SysfsName::sysfsNameCriticalPowerLimit] = std::make_pair("", pSysmanProductHelper->getCardCriticalPowerLimitFile());
     sysfsNameToFileMap[SysfsName::sysfsNameStandbyModeControl] = std::make_pair("rc6_enable", "power/rc6_enable");
     sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange] = std::make_pair("addr_range", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxMemoryFrequency] = std::make_pair("mem_RP0_freq_mhz", "");
@@ -60,6 +62,15 @@ void SysmanKmdInterfaceI915Upstream::initSysfsNameToFileMap(const PRODUCT_FAMILY
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactor] = std::make_pair("media_freq_factor", "");
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale] = std::make_pair("media_freq_factor.scale", "");
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceSystemPowerBalance] = std::make_pair("", "sys_pwr_balance");
+}
+
+void SysmanKmdInterfaceI915Upstream::initSysfsNameToNativeUnitMap(SysmanProductHelper *pSysmanProductHelper) {
+    sysfsNameToNativeUnitMap[SysfsName::sysfsNameSchedulerTimeout] = SysfsValueUnit::milli;
+    sysfsNameToNativeUnitMap[SysfsName::sysfsNameSchedulerTimeslice] = SysfsValueUnit::milli;
+    sysfsNameToNativeUnitMap[SysfsName::sysfsNameSchedulerWatchDogTimeout] = SysfsValueUnit::milli;
+    sysfsNameToNativeUnitMap[SysfsName::sysfsNameSustainedPowerLimit] = SysfsValueUnit::micro;
+    sysfsNameToNativeUnitMap[SysfsName::sysfsNameDefaultPowerLimit] = SysfsValueUnit::micro;
+    sysfsNameToNativeUnitMap[SysfsName::sysfsNameCriticalPowerLimit] = pSysmanProductHelper->getCardCriticalPowerLimitNativeUnit();
 }
 
 std::string SysmanKmdInterfaceI915Upstream::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory) {
