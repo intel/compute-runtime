@@ -21,9 +21,12 @@ constexpr uint32_t memoryType = 11;
 constexpr uint32_t numThreadsPerEu = 15;
 constexpr uint32_t maxRcs = 23;
 constexpr uint32_t maxCcs = 24;
+constexpr uint32_t csrSizeInMb = 62;
 constexpr uint32_t l3BankSizeInKb = 64;
+constexpr uint32_t slmSizePerDss = 65;
 constexpr uint32_t maxSubSlicesSupported = 70;
 constexpr uint32_t maxEuPerSubSlice = 71;
+constexpr uint32_t slmSizePerSs = 73;
 
 enum MemoryType {
     lpddr4,
@@ -49,6 +52,8 @@ struct SystemInfo {
     uint32_t getMaxRCS() const { return maxRCS; }
     uint32_t getMaxCCS() const { return maxCCS; }
     uint32_t getL3BankSizeInKb() const { return l3BankSizeInKb; }
+    uint32_t getSlmSizePerDss() const { return slmSizePerDss; }
+    uint32_t getCsrSizeInMb() const { return csrSizeInMb; }
 
     void checkSysInfoMismatch(HardwareInfo *hwInfo);
 
@@ -64,6 +69,8 @@ struct SystemInfo {
     uint32_t maxRCS = 0;
     uint32_t maxCCS = 0;
     uint32_t l3BankSizeInKb = 0;
+    uint32_t slmSizePerDss = 0;
+    uint32_t csrSizeInMb = 0;
 };
 
 } // namespace NEO

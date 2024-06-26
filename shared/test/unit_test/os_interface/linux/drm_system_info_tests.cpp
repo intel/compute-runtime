@@ -44,6 +44,8 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThen
     EXPECT_EQ(0u, systemInfo.getMaxRCS());
     EXPECT_EQ(0u, systemInfo.getMaxCCS());
     EXPECT_EQ(0u, systemInfo.getL3BankSizeInKb());
+    EXPECT_EQ(0u, systemInfo.getSlmSizePerDss());
+    EXPECT_EQ(0u, systemInfo.getCsrSizeInMb());
 }
 
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystemInfoIsNotCreated) {
@@ -146,6 +148,8 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsN
     EXPECT_NE(0u, systemInfo->getMaxRCS());
     EXPECT_NE(0u, systemInfo->getMaxCCS());
     EXPECT_NE(0u, systemInfo->getL3BankSizeInKb());
+    EXPECT_NE(0u, systemInfo->getSlmSizePerDss());
+    EXPECT_NE(0u, systemInfo->getCsrSizeInMb());
 
     EXPECT_EQ(2u + drm.getBaseIoctlCalls(), drm.ioctlCallsCount);
 }
@@ -161,6 +165,8 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
     EXPECT_EQ(0x17u, systemInfo.getMaxRCS());
     EXPECT_EQ(0x18u, systemInfo.getMaxCCS());
     EXPECT_EQ(0x2Du, systemInfo.getL3BankSizeInKb());
+    EXPECT_EQ(0x24u, systemInfo.getSlmSizePerDss());
+    EXPECT_EQ(0x25u, systemInfo.getCsrSizeInMb());
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobAndDifferentMaxSubSlicesAndMaxDSSThenQueryReturnsTheMaxValue) {
@@ -185,6 +191,18 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobAndDifferentMaxEuPer
     std::vector<uint32_t> inputBlobData1(reinterpret_cast<uint32_t *>(hwBlob1), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob1, sizeof(hwBlob1))));
     SystemInfo systemInfo1(inputBlobData1);
     EXPECT_EQ(8u, systemInfo1.getMaxEuPerDualSubSlice());
+}
+
+TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobAndDifferentSlmSizePerDssAndSlmSizePerSsThenQueryReturnsTheMaxValue) {
+    uint32_t hwBlob0[] = {NEO::DeviceBlobConstants::slmSizePerDss, 1, 7, NEO::DeviceBlobConstants::slmSizePerSs, 1, 8};
+    std::vector<uint32_t> inputBlobData0(reinterpret_cast<uint32_t *>(hwBlob0), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob0, sizeof(hwBlob0))));
+    SystemInfo systemInfo0(inputBlobData0);
+    EXPECT_EQ(8u, systemInfo0.getSlmSizePerDss());
+
+    uint32_t hwBlob1[] = {NEO::DeviceBlobConstants::slmSizePerDss, 1, 8, NEO::DeviceBlobConstants::slmSizePerSs, 1, 7};
+    std::vector<uint32_t> inputBlobData1(reinterpret_cast<uint32_t *>(hwBlob1), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob1, sizeof(hwBlob1))));
+    SystemInfo systemInfo1(inputBlobData1);
+    EXPECT_EQ(8u, systemInfo1.getSlmSizePerDss());
 }
 
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystemInfoIsNotCreatedAndDebugMessageIsPrinted) {
@@ -240,6 +258,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     EXPECT_GT(gtSystemInfo.MaxSubSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MemoryType, 0u);
+    EXPECT_EQ(gtSystemInfo.CsrSizeInMb, drm.getSystemInfo()->getCsrSizeInMb());
 }
 
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSystemInfoIsCreatedAndHardwareInfoSetProperlyBasedOnBlobData) {

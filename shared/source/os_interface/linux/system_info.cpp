@@ -58,6 +58,15 @@ void SystemInfo::parseDeviceBlob(const std::vector<uint32_t> &inputData) {
         if (DeviceBlobConstants::maxEuPerSubSlice == data[i]) {
             maxEuPerDualSubSlice = std::max(data[i + 2], maxEuPerDualSubSlice);
         }
+        if (DeviceBlobConstants::csrSizeInMb == data[i]) {
+            csrSizeInMb = data[i + 2];
+        }
+        if (DeviceBlobConstants::slmSizePerDss == data[i]) {
+            slmSizePerDss = std::max(data[i + 2], slmSizePerDss);
+        }
+        if (DeviceBlobConstants::slmSizePerSs == data[i]) {
+            slmSizePerDss = std::max(data[i + 2], slmSizePerDss);
+        }
         /* Skip to next attribute */
         auto blobLength = 2 + data[i + 1];
         i += blobLength;

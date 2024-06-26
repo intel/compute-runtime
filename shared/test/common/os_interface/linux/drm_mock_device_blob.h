@@ -43,6 +43,15 @@ static constexpr uint32_t dummyDeviceBlobData[] = {
     NEO::DeviceBlobConstants::maxEuPerSubSlice,
     1,
     0x03,
+    NEO::DeviceBlobConstants::slmSizePerSs,
+    1,
+    0x23,
+    NEO::DeviceBlobConstants::slmSizePerDss,
+    1,
+    0x24,
+    NEO::DeviceBlobConstants::csrSizeInMb,
+    1,
+    0x25,
 };
 
 const std::vector<uint32_t> inputBlobData(reinterpret_cast<const uint32_t *>(dummyDeviceBlobData),
