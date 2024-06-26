@@ -13,7 +13,6 @@
 std::unordered_map<std::string, std::string> mockableEnvValues;
 
 char *mockGetenv(const char *name) noexcept {
-    std::cout << "getenv( " << name << " ).2" << std::endl;
     if (mockableEnvValues.find(name) != mockableEnvValues.end()) {
         return const_cast<char *>(mockableEnvValues.find(name)->second.c_str());
     }
