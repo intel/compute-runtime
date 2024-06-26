@@ -65,25 +65,23 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResource(co
 }
 
 MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count, size_t size) {
-    bool madeResident = false;
-    while (!(madeResident = wddm->makeResident(handles, count, false, nullptr, size))) {
+    while (!wddm->makeResident(handles, count, false, nullptr, size)) {
         if (evictAllResources() == MemoryOperationsStatus::success) {
             continue;
         }
-        if (!(madeResident = wddm->makeResident(handles, count, true, nullptr, size))) {
+        if (!wddm->makeResident(handles, count, true, nullptr, size)) {
             DEBUG_BREAK_IF(true);
             return MemoryOperationsStatus::outOfMemory;
         };
         break;
     }
-    DEBUG_BREAK_IF(!madeResident);
     auto lock = acquireLock(resourcesLock);
     for (uint32_t i = 0; i < count; i++) {
         resourceHandles.push_back(handles[i]);
     }
     lock.unlock();
     wddm->waitOnPagingFenceFromCpu(false);
-    return madeResident ? MemoryOperationsStatus::success : MemoryOperationsStatus::failed;
+    return MemoryOperationsStatus::success;
 }
 
 void WddmResidentAllocationsContainer::removeResource(const D3DKMT_HANDLE &handle) {
