@@ -101,6 +101,13 @@ ze_result_t PlatformMonitoringTech::getGuid() {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
+    auto maxEntriesCount = (sizeNeeded - offsetof(PmtSysman::PmtTelemetryDiscovery, telemetry)) / sizeof(PmtSysman::PmtTelemetryEntry);
+    if (telemetryDiscovery->count > maxEntriesCount) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Incorrect telemetry entries count.\n");
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     for (uint32_t i = 0; i < telemetryDiscovery->count; i++) {
         if (telemetryDiscovery->telemetry[i].index < PmtSysman::PmtMaxInterfaces) {
             guidToIndexList[telemetryDiscovery->telemetry[i].index] = telemetryDiscovery->telemetry[i].guid;
