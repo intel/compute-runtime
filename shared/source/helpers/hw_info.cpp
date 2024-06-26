@@ -148,6 +148,14 @@ void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHel
         gtSysInfo->MaxDualSubSlicesSupported = gtSysInfo->DualSubSliceCount;
         gtSysInfo->L3BankCount = 1;
     }
+
+    if (releaseHelper->getL3BankCount() > 0) {
+        gtSysInfo->L3BankCount = releaseHelper->getL3BankCount();
+    }
+    if (releaseHelper->getL3CacheBankSizeInKb() > 0) {
+        gtSysInfo->L3CacheSizeInKb = gtSysInfo->L3BankCount * releaseHelper->getL3CacheBankSizeInKb();
+    }
+
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * releaseHelper->getNumThreadsPerEu();
 }
 } // namespace NEO
