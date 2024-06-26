@@ -5587,6 +5587,8 @@ typedef struct tagCOMPUTE_WALKER {
         return 32u;
     }
     using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA; // patched
+    using PostSyncType = POSTSYNC_DATA;                        // patched
+
 } COMPUTE_WALKER;
 STATIC_ASSERT(156 == sizeof(COMPUTE_WALKER));
 

@@ -23,12 +23,13 @@ struct WalkerPartitionTests : public ::testing::Test {
     template <typename GfxFamily>
     auto createWalker(uint64_t postSyncAddress) {
         using WalkerType = typename GfxFamily::DefaultWalkerType;
+        using PostSyncType = typename WalkerType::PostSyncType;
 
         WalkerType walker;
         walker = GfxFamily::template getInitGpuWalker<WalkerType>();
         walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
         auto &postSync = walker.getPostSync();
-        postSync.setOperation(POSTSYNC_DATA<GfxFamily>::OPERATION::OPERATION_WRITE_TIMESTAMP);
+        postSync.setOperation(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP);
         postSync.setDestinationAddress(postSyncAddress);
         return walker;
     }

@@ -14,6 +14,7 @@
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
+    using PostSyncType = typename WalkerType::PostSyncType;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.partitionCount = 16u;
@@ -26,7 +27,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
     walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
-    postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
+    postSync.setOperation(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP);
     postSync.setDestinationAddress(postSyncAddress);
     uint32_t totalBytesProgrammed;
 
@@ -1071,6 +1072,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
+    using PostSyncType = typename WalkerType::PostSyncType;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.crossTileAtomicSynchronization = false;
@@ -1087,7 +1089,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
     walker = FamilyType::template getInitGpuWalker<WalkerType>();
     walker.setPartitionType(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X);
     auto &postSync = walker.getPostSync();
-    postSync.setOperation(POSTSYNC_DATA<FamilyType>::OPERATION::OPERATION_WRITE_TIMESTAMP);
+    postSync.setOperation(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP);
     postSync.setDestinationAddress(postSyncAddress);
     uint32_t totalBytesProgrammed;
 
