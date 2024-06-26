@@ -35,6 +35,7 @@ class WddmMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
 
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
+    WddmSysmanImp *pWddmSysmanImp = nullptr;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
 

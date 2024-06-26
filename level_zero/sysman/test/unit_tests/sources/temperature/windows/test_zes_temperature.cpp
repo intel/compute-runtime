@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/test/common/test_macros/hw_test.h"
-
 #include "level_zero/sysman/source/api/temperature/windows/sysman_os_temperature_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/temperature/windows/mock_temperature.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
