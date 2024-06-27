@@ -1941,6 +1941,17 @@ TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentBiggerThan2MbAndAllocati
     testAlignment(size, expectedAlignment);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenForced2MBSizeAlignmentWhenAllocationInDevicePoolIsCreatedThenUseProperAlignment) {
+    debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.set(true);
+
+    uint32_t size = 1;
+    uint32_t expectedAlignment = MemoryConstants::pageSize2M;
+    testAlignment(size, expectedAlignment);
+
+    size = 1 + MemoryConstants::pageSize2M;
+    testAlignment(size, expectedAlignment);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationLessThen2MbWhenAllocationInDevicePoolIsCreatedThenUse64KbAlignment) {
     const uint32_t expectedAlignment = MemoryConstants::pageSize64k;
     const uint32_t size = 2 * MemoryConstants::megaByte - 1;

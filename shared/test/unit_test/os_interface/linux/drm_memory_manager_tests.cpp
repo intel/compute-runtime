@@ -6674,6 +6674,42 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenCustomAlignmentWhenAllocat
     }
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenForced2MBSizeAlignmentWhenAllocatingAllocationThenUseProperAlignment) {
+    debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.set(true);
+
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.flags.allocateMemory = true;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.type = AllocationType::buffer;
+    allocationData.flags.resource48Bit = true;
+    MemoryManager::AllocationStatus allocationStatus;
+
+    {
+        allocationData.size = 1;
+        auto memoryManager = createMemoryManager();
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::heapStandard2MB));
+        EXPECT_EQ(2 * MemoryConstants::megaByte, allocation->getUnderlyingBufferSize());
+        EXPECT_EQ(2 * MemoryConstants::megaByte, allocation->getReservedAddressSize());
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+
+    {
+        allocationData.size = 2 * MemoryConstants::megaByte + 1;
+        auto memoryManager = createMemoryManager();
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
+        EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::heapStandard2MB));
+        EXPECT_EQ(4 * MemoryConstants::megaByte, allocation->getUnderlyingBufferSize());
+        EXPECT_EQ(4 * MemoryConstants::megaByte, allocation->getReservedAddressSize());
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferThenLocalMemoryAllocationIsReturnedFromStandard64KbHeap) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;

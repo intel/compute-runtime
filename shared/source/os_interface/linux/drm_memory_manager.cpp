@@ -1872,6 +1872,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         } else {
             sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
         }
+        if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get()) {
+            sizeAligned = alignUp(sizeAligned, MemoryConstants::pageSize2M);
+        }
         gmm = this->makeGmmIfSingleHandle(allocationData, sizeAligned);
     }
 

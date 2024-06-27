@@ -551,6 +551,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSmallBufferPoolAllocator, -1, "Exper
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalCopyThroughLockWaitlistSizeThreshold, -1, "If less than given value, driver will wait for Waitlist on host, instead of sending appendBarrier. If 0, always use barrier.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableL0DebuggerForOpenCL, false, "Experimentally enable debugging OCL with L0 Debug API. When enabled - Level Zero debugging is disabled.")
 DECLARE_DEBUG_VARIABLE(bool, ExperimentalEnableTileAttach, true, "Experimentally enable attaching to tiles (subdevices).")
+DECLARE_DEBUG_VARIABLE(bool, ExperimentalAlignLocalMemorySizeTo2MB, false, "Experimentally align all local memory allocations size to 2MB.")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size to be 4 times bigger")

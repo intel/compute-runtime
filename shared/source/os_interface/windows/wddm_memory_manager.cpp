@@ -1389,6 +1389,11 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         alignment = alignmentSelector.selectAlignment(allocationData.size).alignment;
         sizeAligned = alignUp(allocationData.size, alignment);
 
+        if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get()) {
+            alignment = alignUp(alignment, MemoryConstants::pageSize2M);
+            sizeAligned = alignUp(sizeAligned, MemoryConstants::pageSize2M);
+        }
+
         if (singleBankAllocation) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
