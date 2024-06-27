@@ -142,6 +142,12 @@ static auto findAcronymForEnum(const EqComparableT &lhs) {
     return [&lhs](const auto &rhs) { return lhs == rhs.second; };
 }
 
+TEST(OclocFatBinaryIsSpvOnly, givenSpvOnlyProvidedReturnsTrue) {
+    std::vector<std::string> args = {"-spv_only"};
+
+    EXPECT_TRUE(NEO::isSpvOnly(args));
+}
+
 TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
     const char *args[] = {"ocloc", "-aaa", "*", "-device", "*"};
 
@@ -2190,6 +2196,38 @@ TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThen
     EXPECT_EQ(1, mockOfflineCompiler.buildCalledCount);
 
     EXPECT_TRUE(output.empty()) << output;
+}
+
+TEST(OclocFatBinaryHelpersTest, WhenDeviceArgIsPresentReturnsCorrectIndex) {
+    std::vector<std::string> args = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+    EXPECT_EQ(4, getDeviceArgValueIdx(args));
+}
+
+TEST(OclocFatBinaryHelpersTest, WhenDeviceArgIsLastReturnsMinusOne) {
+    std::vector<std::string> args = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device"};
+    EXPECT_EQ(-1, getDeviceArgValueIdx(args));
+}
+
+TEST(OclocFatBinaryHelpersTest, WhenDeviceArgIsAbsentReturnsMinusOne) {
+    std::vector<std::string> args = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl"};
+    EXPECT_EQ(-1, getDeviceArgValueIdx(args));
+}
+
+TEST(OclocFatBinaryHelpersTest, WhenArgsAreEmptyReturnsMinusOne) {
+    std::vector<std::string> args = {};
+    EXPECT_EQ(-1, getDeviceArgValueIdx(args));
 }
 
 TEST_P(OclocFatbinaryPerProductTests, givenReleaseWhenGetTargetProductsForFarbinaryThenCorrectAcronymsAreReturned) {

@@ -31,6 +31,11 @@
 #include <set>
 
 namespace NEO {
+
+bool isSpvOnly(const std::vector<std::string> &args) {
+    return std::find(args.begin(), args.end(), "-spv_only") != args.end();
+}
+
 bool requestedFatBinary(ConstStringRef deviceArg, OclocArgHelper *helper) {
     auto deviceName = deviceArg.str();
     ProductConfigHelper::adjustDeviceName(deviceName);
@@ -264,6 +269,17 @@ std::vector<ConstStringRef> getTargetProductsForFatbinary(ConstStringRef deviceA
         }
     }
     return retVal;
+}
+
+int getDeviceArgValueIdx(const std::vector<std::string> &args) {
+    for (size_t argIndex = 0; argIndex < args.size(); ++argIndex) {
+        const auto &currArg = args[argIndex];
+        const bool hasMoreArgs = (argIndex + 1 < args.size());
+        if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
+            return static_cast<int>(argIndex + 1);
+        }
+    }
+    return -1;
 }
 
 int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,

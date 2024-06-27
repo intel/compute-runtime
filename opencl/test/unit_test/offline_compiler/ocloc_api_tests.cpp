@@ -22,6 +22,7 @@
 #include "environment.h"
 #include "gtest/gtest.h"
 #include "hw_cmds_default.h"
+#include "platforms.h"
 
 #include <algorithm>
 #include <array>
@@ -622,6 +623,61 @@ TEST(OclocApiTests, GivenMissingFileNameWhenDecodingThenErrorIsReturned) {
 
     EXPECT_NE(std::string::npos, output.find("Unknown argument -file\n"));
     EXPECT_EQ(-1, retVal);
+}
+
+TEST(OclocApiTests, GivenOnlySpirVWithMultipleDevicesWhenCompilingThenFirstDeviceIsSelected) {
+    std::string clFileName(clFiles + "copybuffer.cl");
+    AOT::FAMILY productFamily = AOT::UNKNOWN_FAMILY;
+    std::string familyAcronym("");
+    std::string firstDeviceAcronym("");
+
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+    auto supportedDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
+    if (supportedDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &deviceConfig : supportedDeviceConfigs) {
+        if (deviceConfig.hwInfo->platform.eProductFamily == NEO::DEFAULT_PLATFORM::hwInfo.platform.eProductFamily) {
+            productFamily = deviceConfig.family;
+            familyAcronym = ProductConfigHelper::getAcronymFromAFamily(deviceConfig.family).str();
+            break;
+        }
+    }
+
+    if (familyAcronym.empty()) {
+        GTEST_SKIP();
+    }
+
+    const char *argv[] = {
+        "ocloc",
+        "-file",
+        clFileName.c_str(),
+        "-device",
+        familyAcronym.c_str(),
+        "-spv_only"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    for (const auto &deviceConfig : supportedDeviceConfigs) {
+        if (deviceConfig.family == productFamily) {
+            if (!deviceConfig.deviceAcronyms.empty()) {
+                firstDeviceAcronym = deviceConfig.deviceAcronyms.front().str();
+            } else if (!deviceConfig.rtlIdAcronyms.empty()) {
+                firstDeviceAcronym = deviceConfig.rtlIdAcronyms.front().str();
+            }
+            break;
+        }
+    }
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(retVal, OCLOC_SUCCESS);
+    EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -device " + firstDeviceAcronym + " -spv_only"));
 }
 
 TEST(OclocApiTests, GivenHelpParameterWhenCompilingThenHelpMsgIsPrintedAndSuccessIsReturned) {

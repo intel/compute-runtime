@@ -23,6 +23,7 @@ struct ArEncoder;
 }
 class OfflineCompiler;
 
+bool isSpvOnly(const std::vector<std::string> &args);
 bool requestedFatBinary(ConstStringRef deviceArg, OclocArgHelper *helper);
 bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *helper);
 inline bool requestedFatBinary(int argc, const char *argv[], OclocArgHelper *helper) {
@@ -31,6 +32,7 @@ inline bool requestedFatBinary(int argc, const char *argv[], OclocArgHelper *hel
     return requestedFatBinary(args, helper);
 }
 
+int getDeviceArgValueIdx(const std::vector<std::string> &args);
 int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelper);
 inline int buildFatBinary(int argc, const char *argv[], OclocArgHelper *argHelper) {
     std::vector<std::string> args;

@@ -119,13 +119,24 @@ void printOclocOptionsReadFromFile(OclocArgHelper &wrapper, OfflineCompiler *pCo
 namespace Commands {
 
 int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
+    std::vector<std::string> argsCopy(args);
+
     if (NEO::requestedFatBinary(args, argHelper)) {
-        return NEO::buildFatBinary(args, argHelper);
+        bool onlySpirV = NEO::isSpvOnly(args);
+
+        if (onlySpirV) {
+            int deviceArgIndex = NEO::getDeviceArgValueIdx(args);
+            std::vector<ConstStringRef> targetProducts = NEO::getTargetProductsForFatbinary(ConstStringRef(args[deviceArgIndex]), argHelper);
+            ConstStringRef firstDevice = targetProducts.front();
+            argsCopy[deviceArgIndex] = firstDevice.str();
+        } else {
+            return NEO::buildFatBinary(args, argHelper);
+        }
     }
 
     int retVal = OCLOC_SUCCESS;
+    std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, true, retVal, argHelper)};
 
-    std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(args.size(), args, true, retVal, argHelper)};
     if (retVal == OCLOC_SUCCESS) {
         if (pCompiler->showHelpOnly()) {
             return retVal;
