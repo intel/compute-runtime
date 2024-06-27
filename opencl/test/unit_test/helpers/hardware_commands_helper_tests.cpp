@@ -1090,8 +1090,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
 }
 
 HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirectStateThenSurfaceStateIsCopiedToHeapAndCrossThreadDataIsCorrectlyPatched, IsAtLeastXeHpCore) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using InterfaceDescriptorType = typename DefaultWalkerType::InterfaceDescriptorType;
 
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
@@ -1132,8 +1133,8 @@ HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirect
     auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
     auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(mockKernel);
 
-    INTERFACE_DESCRIPTOR_DATA interfaceDescriptorData;
-    HardwareCommandsHelper<FamilyType>::template sendIndirectState<DefaultWalkerType, INTERFACE_DESCRIPTOR_DATA>(
+    InterfaceDescriptorType interfaceDescriptorData;
+    HardwareCommandsHelper<FamilyType>::template sendIndirectState<DefaultWalkerType, InterfaceDescriptorType>(
         commandStream,
         dsh,
         ioh,

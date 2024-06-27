@@ -148,8 +148,9 @@ INSTANTIATE_TEST_SUITE_P(
     testing::ValuesIn(slmSizeInKb));
 
 HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverrideSlmAllocationSizeIsSetThenSlmSizeIsOverwritten) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using InterfaceDescriptorType = typename DefaultWalkerType::InterfaceDescriptorType;
 
     DefaultWalkerType walkerCmd{};
     uint32_t expectedSlmSize = 5;
@@ -166,9 +167,9 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
 
     const uint32_t threadGroupCount = 1u;
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
-    INTERFACE_DESCRIPTOR_DATA interfaceDescriptorData;
+    InterfaceDescriptorType interfaceDescriptorData;
 
-    HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<DefaultWalkerType, INTERFACE_DESCRIPTOR_DATA>(
+    HardwareCommandsHelper<FamilyType>::template sendInterfaceDescriptorData<DefaultWalkerType, InterfaceDescriptorType>(
         indirectHeap,
         interfaceDescriptorOffset,
         0,
