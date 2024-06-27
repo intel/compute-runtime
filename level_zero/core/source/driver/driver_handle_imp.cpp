@@ -109,7 +109,7 @@ NEO::SVMAllocsManager *DriverHandleImp::getSvmAllocsManager() {
 }
 
 ze_result_t DriverHandleImp::getApiVersion(ze_api_version_t *version) {
-    *version = ZE_API_VERSION_1_3;
+    *version = ZE_API_VERSION_1_5;
     return ZE_RESULT_SUCCESS;
 }
 

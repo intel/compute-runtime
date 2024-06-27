@@ -1,10 +1,29 @@
 <!---
 
-Copyright (C) 2021 Intel Corporation
+Copyright (C) 2021-2024 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
 -->
+
+# Release Notes v1.5
+
+Level Zero Core API.
+
+June 2024
+
+Changes in this release:
+
+The update involves changes introduced across Level Zero spec from v1.3 upto and including v1.5. Some of the important changes are as follows:
+
+| Feature	| Spec link	| Notes |
+| ------------------ | -------------------| ----------------------------- |
+| Support for Device IP Version extension |	https://spec.oneapi.io/level-zero/latest/core/api.html#deviceipversion-structures | |	
+| Support for Image view and Image view planar extension |	https://spec.oneapi.io/level-zero/latest/core/api.html#imageview | |	
+| Support for sub allocation properties extension |	https://spec.oneapi.io/level-zero/latest/core/api.html#suballocationsproperties	| |
+| Allow IPC events with timestamp events		| | Previously spec had limitation disallowing usage of IPC for event pools created with timestamp flag. This limitation is now removed for both spec and implemenation |
+| Support for kernel max group size properties extension |	https://spec.oneapi.io/level-zero/latest/core/api.html#kernelmaxgroupsizeproperties	| |
+
 
 # Release Notes v1.3
 
