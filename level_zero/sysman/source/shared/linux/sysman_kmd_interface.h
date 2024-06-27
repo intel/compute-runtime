@@ -296,6 +296,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() override {
         return sysfsNameToNativeUnitMap;
     }
+    static uint64_t getPmuEngineConfig(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId);
 };
 
 } // namespace Sysman

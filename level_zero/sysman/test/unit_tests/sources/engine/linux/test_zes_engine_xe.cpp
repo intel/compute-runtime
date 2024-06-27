@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine_xe.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_xe.h"
 
 namespace L0 {
 namespace Sysman {
@@ -23,6 +24,7 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
     L0::Sysman::SysmanDevice *device = nullptr;
     std::unique_ptr<MockPmuInterfaceImp> pPmuInterface;
     L0::Sysman::PmuInterface *pOriginalPmuInterface = nullptr;
+    MockSysmanKmdInterfaceXe *pSysmanKmdInterface = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -37,8 +39,10 @@ class ZesEngineFixtureXe : public SysmanDeviceFixture {
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockNeoDrm>(pDrm));
 
-        pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper()));
+        pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
+        pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
         pLinuxSysmanImp->pSysmanKmdInterface->initFsAccessInterface(*pDrm);
+
         pPmuInterface = std::make_unique<MockPmuInterfaceImp>(pLinuxSysmanImp);
         pPmuInterface->mockPmuFd = 10;
         pPmuInterface->mockActiveTime = 987654321;
