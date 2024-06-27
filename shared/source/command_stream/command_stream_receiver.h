@@ -93,6 +93,9 @@ class CommandStreamReceiver {
     CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                           uint32_t rootDeviceIndex,
                           const DeviceBitfield deviceBitfield);
+    CommandStreamReceiver(const CommandStreamReceiver &) = delete;
+    CommandStreamReceiver &operator=(const CommandStreamReceiver &) = delete;
+
     virtual ~CommandStreamReceiver();
 
     virtual SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) = 0;
