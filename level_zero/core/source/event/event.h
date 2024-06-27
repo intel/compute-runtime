@@ -121,6 +121,7 @@ struct Event : _ze_event_handle_t {
     MOCKABLE_VIRTUAL NEO::GraphicsAllocation *getPoolAllocation(Device *device) const;
 
     void setEventPool(EventPool *eventPool) { this->eventPool = eventPool; }
+    EventPool *peekEventPool() { return this->eventPool; }
 
     MOCKABLE_VIRTUAL uint64_t getGpuAddress(Device *device) const;
     virtual uint32_t getPacketsInUse() const = 0;

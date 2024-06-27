@@ -3961,7 +3961,7 @@ HWTEST2_F(InOrderCmdListTests, givenProfilingEventWhenDoingCpuCopyThenSetProfili
     context->freeMem(deviceAlloc);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenIncorrectInputParamsWhenAskingForEventAddressAndValueThenReturnError, IsAtLeastSkl) {
+HWTEST2_F(InOrderCmdListTests, givenEventCreatedFromPoolWhenItIsQueriedForAddressItReturnsProperAddressFromPool, IsAtLeastSkl) {
     auto eventPool = createEvents<FamilyType>(1, false);
     uint64_t counterValue = 0;
     uint64_t address = 0;
@@ -3973,6 +3973,17 @@ HWTEST2_F(InOrderCmdListTests, givenIncorrectInputParamsWhenAskingForEventAddres
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexEventGetDeviceAddress(nullptr, &counterValue, &address));
 
     events[0]->makeCounterBasedImplicitlyDisabled();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
+    EXPECT_EQ(Event::State::STATE_SIGNALED, counterValue);
+    EXPECT_EQ(address, events[0]->getCompletionFieldGpuAddress(events[0]->peekEventPool()->getDevice()));
+}
+HWTEST2_F(InOrderCmdListTests, givenEventCreatedFromPoolWithTimestampsWhenQueriedForAddressErrorIsReturned, IsAtLeastSkl) {
+    auto eventPool = createEvents<FamilyType>(1, true);
+    uint64_t counterValue = 0;
+    uint64_t address = 0;
+
+    auto eventHandle = events[0]->toHandle();
+
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexEventGetDeviceAddress(eventHandle, &counterValue, &address));
 }
 
