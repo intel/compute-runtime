@@ -246,6 +246,7 @@ struct ImageInfo {
     uint32_t mipCount;
     bool linearStorage;
     bool useLocalMemory;
+    bool isDisplayable;
 };
 
 struct ImageImplicitArgs {

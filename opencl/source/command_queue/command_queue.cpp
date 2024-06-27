@@ -622,12 +622,14 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
     }
 
     bool isImageReleased = false;
+    bool isDisplayableReleased = false;
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
         if (memObject == nullptr || memObject->peekSharingHandler() == nullptr) {
             return CL_INVALID_MEM_OBJECT;
         }
         isImageReleased |= memObject->getMultiGraphicsAllocation().getAllocationType() == AllocationType::sharedImage;
+        isDisplayableReleased |= memObject->isMemObjDisplayable();
 
         memObject->peekSharingHandler()->release(memObject, getDevice().getRootDeviceIndex());
         DEBUG_BREAK_IF(memObject->acquireCount <= 0);
@@ -635,7 +637,7 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
     }
 
     if (this->getGpgpuCommandStreamReceiver().isDirectSubmissionEnabled()) {
-        if (this->getDevice().getProductHelper().isDcFlushMitigated()) {
+        if (this->getDevice().getProductHelper().isDcFlushMitigated() || isDisplayableReleased) {
             this->getGpgpuCommandStreamReceiver().registerDcFlushForDcMitigation();
             this->getGpgpuCommandStreamReceiver().sendRenderStateCacheFlush();
         } else if (isImageReleased) {

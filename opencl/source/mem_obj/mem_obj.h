@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ class MemObj : public BaseObject<_cl_mem> {
            MultiGraphicsAllocation &&multiGraphicsAllocation,
            bool zeroCopy,
            bool isHostPtrSVM,
-           bool isObjectRedescrbied);
+           bool isObjectRedescribed);
     ~MemObj() override;
 
     cl_int getMemObjectInfo(cl_mem_info paramName,
@@ -103,6 +103,7 @@ class MemObj : public BaseObject<_cl_mem> {
     bool isMemObjWithHostPtrSVM() const;
     bool isMemObjUncacheable() const;
     bool isMemObjUncacheableForSurfaceState() const;
+    bool isMemObjDisplayable() const;
     virtual void transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) { UNRECOVERABLE_IF(true); };
     virtual void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) { UNRECOVERABLE_IF(true); };
 
@@ -190,6 +191,7 @@ class MemObj : public BaseObject<_cl_mem> {
     bool isZeroCopy;
     bool isHostPtrSVM;
     bool isObjectRedescribed;
+    bool isDisplayable{false};
     MemoryManager *memoryManager = nullptr;
     MultiGraphicsAllocation multiGraphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;

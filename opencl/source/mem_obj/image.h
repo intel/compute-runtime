@@ -171,6 +171,8 @@ class Image : public MemObj {
         surfaceOffsets.yOffsetForUVplane = yOffsetForUVPlane;
     }
     void getSurfaceOffsets(SurfaceOffsets &surfaceOffsetsOut) { surfaceOffsetsOut = this->surfaceOffsets; }
+    bool getIsDisplayable() const { return isDisplayable; }
+    void setIsDisplayable(bool displayable) { this->isDisplayable = displayable; }
 
     void setCubeFaceIndex(uint32_t index) { cubeFaceIndex = index; }
     uint32_t getCubeFaceIndex() { return cubeFaceIndex; }

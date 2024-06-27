@@ -779,6 +779,7 @@ TEST_P(CreateImageHostPtr, WhenGettingImageDescThenCorrectValuesAreReturned) {
     EXPECT_EQ(image->getHostPtrSlicePitch(), static_cast<size_t>(imageDesc.image_width * elementSize * imageDesc.image_height) * isArrayOr3DType);
     EXPECT_EQ(image->getImageCount(), 1u);
     EXPECT_NE(0u, image->getSize());
+    EXPECT_FALSE(image->getIsDisplayable());
     EXPECT_NE(nullptr, allocation);
 }
 

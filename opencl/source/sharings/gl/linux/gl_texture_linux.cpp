@@ -198,6 +198,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     imgInfo.surfaceFormat = &surfaceFormatInfo.surfaceFormat;
     imgInfo.qPitch = qPitch;
+    imgInfo.isDisplayable = gmm->gmmResourceInfo->isDisplayable();
 
     auto glTexture = new GlTexture(sharingFunctions, getClGlObjectType(target), texture, texInfo, target, std::max(miplevel, 0));
 

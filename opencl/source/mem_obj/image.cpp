@@ -405,6 +405,7 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
     sharedImage->setSurfaceOffsets(imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane);
     sharedImage->setMcsSurfaceInfo(mcsSurfaceInfo);
     sharedImage->setPlane(imgInfo.plane);
+    sharedImage->setIsDisplayable(imgInfo.isDisplayable);
     return sharedImage;
 }
 

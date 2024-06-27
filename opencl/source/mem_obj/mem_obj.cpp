@@ -275,6 +275,10 @@ bool MemObj::isMemObjUncacheableForSurfaceState() const {
     return isAnyBitSet(flagsIntel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE | CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 }
 
+bool MemObj::isMemObjDisplayable() const {
+    return this->isDisplayable;
+}
+
 GraphicsAllocation *MemObj::getGraphicsAllocation(uint32_t rootDeviceIndex) const {
     return multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
 }

@@ -83,6 +83,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     bool is64KBPageSuitable() const override { return is64KBPageSuitableValue; }
 
+    bool isDisplayable() const override { return isDisplayableValue; }
+
     GMM_RESOURCE_INFO *peekGmmResourceInfo() const override { return mockResourceInfoHandle; }
 
     GMM_RESOURCE_USAGE_TYPE getCachePolicyUsage() const override { return usageType; }
@@ -118,6 +120,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     uint32_t arrayIndexPassedToGetOffset = 0;
     SurfaceFormatInfo tempSurface{};
     bool is64KBPageSuitableValue = true;
+    bool isDisplayableValue = false;
     GMM_RES_COPY_BLT requestedResCopyBlt = {};
     uint32_t cpuBltCalled = 0u;
     uint8_t cpuBltResult = 1u;
