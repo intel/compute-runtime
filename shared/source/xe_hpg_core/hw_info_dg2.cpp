@@ -91,37 +91,15 @@ WorkaroundTable DG2::workaroundTable = {};
 FeatureTable DG2::featureTable = {};
 
 void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
     FeatureTable *featureTable = &hwInfo->featureTable;
-    WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    featureTable->flags.ftrL3IACoherency = true;
     featureTable->flags.ftrFlatPhysCCS = true;
-    featureTable->flags.ftrPPGTT = true;
-    featureTable->flags.ftrSVM = true;
-    featureTable->flags.ftrIA32eGfxPTEs = true;
-    featureTable->flags.ftrStandardMipTailFormat = true;
-    featureTable->flags.ftrTranslationTable = true;
-    featureTable->flags.ftrUserModeTranslationTable = true;
-    featureTable->flags.ftrTileMappedResource = true;
-    featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrAstcHdr2D = true;
-    featureTable->flags.ftrAstcLdr2D = true;
-
-    featureTable->flags.ftrGpGpuMidBatchPreempt = true;
-    featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
-
-    featureTable->flags.ftrTileY = false;
     featureTable->flags.ftrLocalMemory = true;
-    featureTable->flags.ftrLinearCCS = true;
     featureTable->flags.ftrE2ECompression = true;
-    featureTable->flags.ftrCCSNode = true;
-    featureTable->flags.ftrCCSRing = true;
-
     featureTable->flags.ftrUnified3DMediaCompressionFormats = true;
     featureTable->flags.ftrTile64Optimization = true;
-    hwInfo->featureTable.ftrBcsInfo = 1;
-
-    workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+    featureTable->ftrBcsInfo = 1;
 };
 
 void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {

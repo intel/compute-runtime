@@ -158,4 +158,30 @@ void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHel
 
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * releaseHelper->getNumThreadsPerEu();
 }
+
+void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo) {
+    FeatureTable *featureTable = &hwInfo->featureTable;
+
+    featureTable->flags.ftrAstcHdr2D = true;
+    featureTable->flags.ftrAstcLdr2D = true;
+    featureTable->flags.ftrCCSNode = true;
+    featureTable->flags.ftrCCSRing = true;
+    featureTable->flags.ftrFbc = true;
+    featureTable->flags.ftrGpGpuMidBatchPreempt = true;
+    featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
+    featureTable->flags.ftrIA32eGfxPTEs = true;
+    featureTable->flags.ftrL3IACoherency = true;
+    featureTable->flags.ftrLinearCCS = true;
+    featureTable->flags.ftrPPGTT = true;
+    featureTable->flags.ftrSVM = true;
+    featureTable->flags.ftrStandardMipTailFormat = true;
+    featureTable->flags.ftrTileMappedResource = true;
+    featureTable->flags.ftrTranslationTable = true;
+    featureTable->flags.ftrUserModeTranslationTable = true;
+
+    WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
+
+    workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+}
+
 } // namespace NEO

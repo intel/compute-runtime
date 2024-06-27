@@ -47,3 +47,33 @@ TEST(HwInfoTest, givenReleaseHelperWithL3BankConfigWhenSetupDefaultHwInfoThenL3C
     EXPECT_EQ_VAL(3u, hwInfo.gtSystemInfo.L3BankCount);
     EXPECT_EQ_VAL(9u, hwInfo.gtSystemInfo.L3CacheSizeInKb);
 }
+
+TEST(HwInfoTest, whenSettingDefaultFeatureTableAndWorkaroundTableThenProperFieldsAreSet) {
+    HardwareInfo hwInfo{};
+    FeatureTable expectedFeatureTable{};
+    WorkaroundTable expectedWorkaroundTable{};
+
+    expectedFeatureTable.flags.ftrAstcHdr2D = true;
+    expectedFeatureTable.flags.ftrAstcLdr2D = true;
+    expectedFeatureTable.flags.ftrCCSNode = true;
+    expectedFeatureTable.flags.ftrCCSRing = true;
+    expectedFeatureTable.flags.ftrFbc = true;
+    expectedFeatureTable.flags.ftrGpGpuMidBatchPreempt = true;
+    expectedFeatureTable.flags.ftrGpGpuThreadGroupLevelPreempt = true;
+    expectedFeatureTable.flags.ftrIA32eGfxPTEs = true;
+    expectedFeatureTable.flags.ftrL3IACoherency = true;
+    expectedFeatureTable.flags.ftrLinearCCS = true;
+    expectedFeatureTable.flags.ftrPPGTT = true;
+    expectedFeatureTable.flags.ftrSVM = true;
+    expectedFeatureTable.flags.ftrStandardMipTailFormat = true;
+    expectedFeatureTable.flags.ftrTileMappedResource = true;
+    expectedFeatureTable.flags.ftrTranslationTable = true;
+    expectedFeatureTable.flags.ftrUserModeTranslationTable = true;
+
+    expectedWorkaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+
+    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo);
+
+    EXPECT_EQ(expectedFeatureTable.asHash(), hwInfo.featureTable.asHash());
+    EXPECT_EQ(expectedWorkaroundTable.asHash(), hwInfo.workaroundTable.asHash());
+}

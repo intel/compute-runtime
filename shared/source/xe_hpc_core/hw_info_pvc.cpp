@@ -98,36 +98,14 @@ const RuntimeCapabilityTable PVC::capabilityTable{
 };
 
 void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
     FeatureTable *featureTable = &hwInfo->featureTable;
-    WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
-    featureTable->flags.ftrL3IACoherency = true;
     featureTable->flags.ftrLocalMemory = true;
-    featureTable->flags.ftrLinearCCS = true;
     featureTable->flags.ftrFlatPhysCCS = true;
-    featureTable->flags.ftrE2ECompression = false;
-    featureTable->flags.ftrCCSNode = true;
-    featureTable->flags.ftrCCSRing = true;
     featureTable->flags.ftrMultiTileArch = true;
 
-    featureTable->flags.ftrPPGTT = true;
-    featureTable->flags.ftrSVM = true;
-    featureTable->flags.ftrL3IACoherency = true;
-    featureTable->flags.ftrIA32eGfxPTEs = true;
-    featureTable->flags.ftrStandardMipTailFormat = true;
-    featureTable->flags.ftrTranslationTable = true;
-    featureTable->flags.ftrUserModeTranslationTable = true;
-    featureTable->flags.ftrTileMappedResource = true;
-    featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrAstcHdr2D = true;
-    featureTable->flags.ftrAstcLdr2D = true;
-
-    featureTable->flags.ftrGpGpuMidBatchPreempt = true;
-    featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
-
-    featureTable->flags.ftrTileY = false;
     featureTable->ftrBcsInfo = maxNBitValue(9);
-    workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 }
 
 void PVC::adjustHardwareInfo(HardwareInfo *hwInfo) {
@@ -155,8 +133,8 @@ void PVC::setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo, bool setupMultiTi
     gtSysInfo->MultiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(gtSysInfo->MultiTileArchInfo.TileCount));
 }
 
-FeatureTable PVC::featureTable;
-WorkaroundTable PVC::workaroundTable;
+FeatureTable PVC::featureTable{};
+WorkaroundTable PVC::workaroundTable{};
 
 const HardwareInfo PvcHwConfig::hwInfo = {
     &PVC::platform,
