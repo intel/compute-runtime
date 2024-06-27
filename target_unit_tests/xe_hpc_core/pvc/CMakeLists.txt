@@ -1,9 +1,10 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 if(TESTS_PVC)
-  include(${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_pvc_testing.cmake)
+  set(unit_test_config "pvc/2/4/8/47") # non-zero values for unit tests
+  include(${NEO_SOURCE_DIR}/cmake/run_ult_target.cmake)
 endif()
