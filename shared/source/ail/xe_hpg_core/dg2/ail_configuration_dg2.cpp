@@ -66,8 +66,8 @@ inline void AILConfigurationHw<IGFX_DG2>::applyExt(RuntimeCapabilityTable &runti
 
 template <>
 bool AILConfigurationHw<IGFX_DG2>::isBufferPoolEnabled() {
-    auto iterator = applicationsBufferPoolDisabledDG2.find(processName);
-    return iterator == applicationsBufferPoolDisabledDG2.end();
+    auto iterator = applicationsBufferPoolDisabled.find(processName);
+    return iterator == applicationsBufferPoolDisabled.end();
 }
 
 template class AILConfigurationHw<IGFX_DG2>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,6 +50,12 @@ bool AILConfigurationHw<IGFX_METEORLAKE>::useLegacyValidationLogic() {
         return this->processName == appName;
     });
     return it != applicationsLegacyValidationPathMtl.end() ? true : false;
+}
+
+template <>
+bool AILConfigurationHw<IGFX_METEORLAKE>::isBufferPoolEnabled() {
+    auto iterator = applicationsBufferPoolDisabled.find(processName);
+    return iterator == applicationsBufferPoolDisabled.end();
 }
 
 template class AILConfigurationHw<IGFX_METEORLAKE>;

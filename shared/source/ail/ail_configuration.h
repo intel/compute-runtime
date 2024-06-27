@@ -86,7 +86,7 @@ class AILConfiguration {
 
 extern const std::set<std::string_view> applicationsContextSyncFlag;
 extern const std::set<std::string_view> applicationsForceRcsDg2;
-extern const std::set<std::string_view> applicationsBufferPoolDisabledDG2;
+extern const std::set<std::string_view> applicationsBufferPoolDisabled;
 
 template <PRODUCT_FAMILY product>
 class AILConfigurationHw : public AILConfiguration {
