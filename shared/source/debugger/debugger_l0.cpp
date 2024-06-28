@@ -95,6 +95,11 @@ void DebuggerL0::initialize() {
         NEO::MemoryOperationsHandler *memoryOperationsIface = rootDeviceEnvironment.memoryOperationsInterface.get();
         if (memoryOperationsIface) {
             memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1));
+            auto numSubDevices = device->getNumSubDevices();
+            for (uint32_t i = 0; i < numSubDevices; i++) {
+                auto subDevice = device->getSubDevice(i);
+                memoryOperationsIface->makeResident(subDevice, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1));
+            }
         }
 
         const auto &productHelper = device->getProductHelper();
