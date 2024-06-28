@@ -12,6 +12,7 @@
 
 #include "igfxfmid.h"
 
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -96,6 +97,7 @@ class SysmanProductHelper {
     virtual bool isEccConfigurationSupported() = 0;
 
     virtual ~SysmanProductHelper() = default;
+    virtual const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() = 0;
 
   protected:
     SysmanProductHelper() = default;

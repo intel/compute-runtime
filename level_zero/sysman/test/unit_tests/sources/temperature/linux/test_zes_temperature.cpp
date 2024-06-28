@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt_xml_offsets.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/temperature/linux/mock_sysfs_temperature.h"
 
@@ -18,8 +17,20 @@ constexpr uint32_t handleComponentCountForSingleTileDevice = 3u;
 constexpr uint32_t handleComponentCountForNoSubDevices = 2u;
 constexpr uint32_t invalidMaxTemperature = 125;
 constexpr uint32_t invalidMinTemperature = 10;
-const std::string sampleGuid1 = "0xb15a0edc";
-const std::string sampleGuid2 = "0x490e01";
+
+const std::map<std::string, uint64_t> mockMap1 = {{"HBM0MaxDeviceTemperature", 28},
+                                                  {"HBM1MaxDeviceTemperature", 36},
+                                                  {"TileMinTemperature", 40},
+                                                  {"TileMaxTemperature", 44},
+                                                  {"GTMinTemperature", 48},
+                                                  {"GTMaxTemperature", 52},
+                                                  {"HBM2MaxDeviceTemperature", 300},
+                                                  {"HBM3MaxDeviceTemperature", 308}};
+
+const std::map<std::string, uint64_t> mockMap2 = {{"PACKAGE_ENERGY", 0x420},
+                                                  {"COMPUTE_TEMPERATURES", 0x68},
+                                                  {"SOC_TEMPERATURES", 0x60},
+                                                  {"CORE_TEMPERATURES", 0x6c}};
 
 class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
   protected:
@@ -46,8 +57,7 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
             ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
             auto pPmt = new MockTemperaturePmt(pFsAccess.get(), onSubdevice, subdeviceId);
             pPmt->mockedInit(pFsAccess.get());
-            auto keyOffsetMapEntry = L0::Sysman::guidToKeyOffsetMap.find(sampleGuid1);
-            pPmt->keyOffsetMap = keyOffsetMapEntry->second;
+            pPmt->keyOffsetMap = mockMap1;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
         } while (++subdeviceId < subDeviceCount);
         getTempHandles(0);
@@ -179,8 +189,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
             ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
             auto pPmt = new MockTemperaturePmt(pFsAccess.get(), onSubdevice, subdeviceId);
             pPmt->mockedInit(pFsAccess.get());
-            auto keyOffsetMapEntry = L0::Sysman::guidToKeyOffsetMap.find(sampleGuid2);
-            pPmt->keyOffsetMap = keyOffsetMapEntry->second;
+            pPmt->keyOffsetMap = mockMap2;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
         } while (++subdeviceId < subDeviceCount);
         getTempHandles(0);
@@ -345,9 +354,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidateEnumerateRootTelemIndexWheng
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidatePmtReadValueWhenkeyOffsetMapIsNotThereThenFailureReturned) {
     auto pPmt = std::make_unique<MockTemperaturePmt>(pFsAccess.get(), 0, 0);
     pPmt->mockedInit(pFsAccess.get());
-    // Get keyOffsetMap
-    auto keyOffsetMapEntry = L0::Sysman::guidToKeyOffsetMap.find(sampleGuid2);
-    pPmt->keyOffsetMap = keyOffsetMapEntry->second;
+    pPmt->keyOffsetMap = mockMap2;
     uint32_t val = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPmt->readValue("SOMETHING", val));
 }

@@ -15,8 +15,16 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
+static std::map<std::string, std::map<std::string, uint64_t>> mockGuidToKeyOffsetMap = {
+    {"0x490e01",
+     {{"PACKAGE_ENERGY", 0x420},
+      {"COMPUTE_TEMPERATURES", 0x68},
+      {"SOC_TEMPERATURES", 0x60},
+      {"CORE_TEMPERATURES", 0x6c}}}};
+
 struct MockSysmanProductHelper : public L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
     MockSysmanProductHelper() = default;
+    std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override { return &mockGuidToKeyOffsetMap; }
     ADDMETHOD_NOBASE(isFrequencySetRangeSupported, bool, false, ());
     ADDMETHOD_NOBASE(isPowerSetLimitSupported, bool, false, ());
 };

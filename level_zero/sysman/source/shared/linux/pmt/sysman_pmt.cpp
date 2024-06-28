@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/pmt_util.h"
 
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
@@ -120,10 +121,11 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccessInterface *p
     return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 }
 
-ze_result_t PlatformMonitoringTech::init(FsAccessInterface *pFsAccess, const std::string &gpuUpstreamPortPath, PRODUCT_FAMILY productFamily) {
+ze_result_t PlatformMonitoringTech::init(LinuxSysmanImp *pLinuxSysmanImp, const std::string &gpuUpstreamPortPath) {
     std::string telemNode = telem + std::to_string(rootDeviceTelemNodeIndex);
     // For XE_HP_SDV and PVC single tile devices, telemetry info is retrieved from
     // tile's telem node rather from root device telem node.
+    auto productFamily = pLinuxSysmanImp->getSysmanDeviceImp()->getProductFamily();
     if ((isSubdevice) || (productFamily == IGFX_PVC)) {
         uint32_t telemNodeIndex = 0;
         // If rootDeviceTelemNode is telem1, then rootDeviceTelemNodeIndex = 1
@@ -132,7 +134,9 @@ ze_result_t PlatformMonitoringTech::init(FsAccessInterface *pFsAccess, const std
         telemNodeIndex = rootDeviceTelemNodeIndex + subdeviceId + 1;
         telemNode = telem + std::to_string(telemNodeIndex);
     }
+
     std::string baseTelemSysFSNode = baseTelemSysFS + "/" + telemNode;
+    auto pFsAccess = &pLinuxSysmanImp->getFsAccess();
     if (!isValidTelemNode(pFsAccess, gpuUpstreamPortPath, baseTelemSysFSNode)) {
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
@@ -152,7 +156,9 @@ ze_result_t PlatformMonitoringTech::init(FsAccessInterface *pFsAccess, const std
                               "Telemetry sysfs entry not available %s\n", guidPath.c_str());
         return result;
     }
-    result = PlatformMonitoringTech::getKeyOffsetMap(guid, keyOffsetMap);
+
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    result = PlatformMonitoringTech::getKeyOffsetMap(pSysmanProductHelper, guid, keyOffsetMap);
     if (ZE_RESULT_SUCCESS != result) {
         // We didnt have any entry for this guid in guidToKeyOffsetMap
         return result;
@@ -173,10 +179,10 @@ PlatformMonitoringTech::PlatformMonitoringTech(FsAccessInterface *pFsAccess, ze_
                                                uint32_t subdeviceId) : subdeviceId(subdeviceId), isSubdevice(onSubdevice) {
 }
 
-void PlatformMonitoringTech::doInitPmtObject(FsAccessInterface *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt,
-                                             const std::string &gpuUpstreamPortPath,
-                                             std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject, PRODUCT_FAMILY productFamily) {
-    if (pPmt->init(pFsAccess, gpuUpstreamPortPath, productFamily) == ZE_RESULT_SUCCESS) {
+void PlatformMonitoringTech::doInitPmtObject(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId, PlatformMonitoringTech *pPmt, const std::string &gpuUpstreamPortPath,
+                                             std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject) {
+
+    if (pPmt->init(pLinuxSysmanImp, gpuUpstreamPortPath) == ZE_RESULT_SUCCESS) {
         mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                               "Pmt object: 0x%llX initialization for subdeviceId %d successful\n", pPmt, static_cast<int>(subdeviceId));
@@ -194,11 +200,9 @@ void PlatformMonitoringTech::create(LinuxSysmanImp *pLinuxSysmanImp, std::string
         uint32_t subdeviceId = 0;
         do {
             ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-            auto productFamily = pLinuxSysmanImp->getSysmanDeviceImp()->getProductFamily();
             auto pPmt = new PlatformMonitoringTech(&pLinuxSysmanImp->getFsAccess(), onSubdevice, subdeviceId);
             UNRECOVERABLE_IF(nullptr == pPmt);
-            PlatformMonitoringTech::doInitPmtObject(&pLinuxSysmanImp->getFsAccess(), subdeviceId, pPmt,
-                                                    gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject, productFamily);
+            PlatformMonitoringTech::doInitPmtObject(pLinuxSysmanImp, subdeviceId, pPmt, gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject);
             subdeviceId++;
         } while (subdeviceId < subDeviceCount);
     }
@@ -225,7 +229,7 @@ bool PlatformMonitoringTech::getTelemOffsetAndTelemDir(LinuxSysmanImp *pLinuxSys
     return true;
 }
 
-bool PlatformMonitoringTech::getTelemOffsetForContainer(const std::string &telemDir, const std::string &key, uint64_t &telemOffset) {
+bool PlatformMonitoringTech::getTelemOffsetForContainer(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset) {
     std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
     if (!NEO::PmtUtil::readGuid(telemDir, guidString)) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GUID from %s \n", __FUNCTION__, telemDir.c_str());
@@ -233,7 +237,7 @@ bool PlatformMonitoringTech::getTelemOffsetForContainer(const std::string &telem
     }
 
     std::map<std::string, uint64_t> keyOffsetMap;
-    if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::getKeyOffsetMap(guidString.data(), keyOffsetMap)) {
+    if (ZE_RESULT_SUCCESS == PlatformMonitoringTech::getKeyOffsetMap(pSysmanProductHelper, guidString.data(), keyOffsetMap)) {
         auto keyOffset = keyOffsetMap.find(key.c_str());
         if (keyOffset != keyOffsetMap.end()) {
             telemOffset = keyOffset->second;

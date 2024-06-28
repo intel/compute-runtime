@@ -73,6 +73,8 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     ~SysmanProductHelperHw() override = default;
 
+    const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override;
+
   protected:
     SysmanProductHelperHw() = default;
 };

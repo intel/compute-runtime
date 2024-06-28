@@ -61,7 +61,7 @@ bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
     }
 
     uint64_t containerOffset = 0;
-    if (!PlatformMonitoringTech::getTelemOffsetForContainer(telemDir, "PPIN", containerOffset)) {
+    if (!PlatformMonitoringTech::getTelemOffsetForContainer(pLinuxSysmanImp->getSysmanProductHelper(), telemDir, "PPIN", containerOffset)) {
         return false;
     }
 
@@ -88,7 +88,7 @@ bool LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PRO
     }
 
     uint64_t containerOffset = 0;
-    if (!PlatformMonitoringTech::getTelemOffsetForContainer(telemDir, "BoardNumber", containerOffset)) {
+    if (!PlatformMonitoringTech::getTelemOffsetForContainer(pLinuxSysmanImp->getSysmanProductHelper(), telemDir, "BoardNumber", containerOffset)) {
         return false;
     }
 

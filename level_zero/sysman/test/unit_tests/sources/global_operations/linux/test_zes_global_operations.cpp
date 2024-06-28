@@ -11,6 +11,7 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
@@ -201,6 +202,19 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesGlobal
 
         return -1;
     });
+
+    struct MockSysmanProductHelperGlobalOperation : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+        MockSysmanProductHelperGlobalOperation() = default;
+        std::unique_ptr<std::map<std::string, std::map<std::string, uint64_t>>> mockMap;
+        std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override {
+            mockMap = std::make_unique<std::map<std::string, std::map<std::string, uint64_t>>>();
+            (*mockMap)["0x41fe79a5"] = {{"PPIN", 152},
+                                        {"BoardNumber", 72}};
+            return mockMap.get();
+        }
+    };
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperGlobalOperation>();
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
     MockGlobalOperationsFsAccess *pFsAccess = new MockGlobalOperationsFsAccess();
     MockGlobalOperationsSysfsAccess *pSysfsAccess = new MockGlobalOperationsSysfsAccess();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,23 @@
 namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_DG1;
+
+static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
+    {"0x490e01", // DG1 B stepping
+     {{"PACKAGE_ENERGY", 0x420},
+      {"COMPUTE_TEMPERATURES", 0x68},
+      {"SOC_TEMPERATURES", 0x60},
+      {"CORE_TEMPERATURES", 0x6c}}},
+    {"0x490e", // DG1 A stepping
+     {{"PACKAGE_ENERGY", 0x400},
+      {"COMPUTE_TEMPERATURES", 0x68},
+      {"SOC_TEMPERATURES", 0x60},
+      {"CORE_TEMPERATURES", 0x6c}}}};
+
+template <>
+const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
+    return &guidToKeyOffsetMap;
+}
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {

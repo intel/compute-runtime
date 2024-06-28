@@ -25,6 +25,11 @@ namespace L0 {
 namespace Sysman {
 
 template <PRODUCT_FAMILY gfxProduct>
+const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
+    return nullptr;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void SysmanProductHelperHw<gfxProduct>::getFrequencyStepSize(double *pStepSize) {
     *pStepSize = (50.0 / 3); // Step of 16.6666667 Mhz
 }

@@ -11,8 +11,6 @@
 
 #include "level_zero/zes_api.h"
 
-#include "igfxfmid.h"
-
 #include <fcntl.h>
 #include <map>
 #include <sys/stat.h>
@@ -22,6 +20,7 @@ namespace L0 {
 namespace Sysman {
 class LinuxSysmanImp;
 class FsAccessInterface;
+class SysmanProductHelper;
 
 class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
   public:
@@ -35,18 +34,18 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
     static ze_result_t enumerateRootTelemIndex(FsAccessInterface *pFsAccess, std::string &gpuUpstreamPortPath);
     static void create(LinuxSysmanImp *pLinuxSysmanImp, std::string &gpuUpstreamPortPath,
                        std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject);
-    static ze_result_t getKeyOffsetMap(std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
+    static ze_result_t getKeyOffsetMap(SysmanProductHelper *pSysmanProductHelper, std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
     static bool getTelemOffsetAndTelemDir(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &telemOffset, std::string &telemDir);
-    static bool getTelemOffsetForContainer(const std::string &telemDir, const std::string &key, uint64_t &telemOffset);
+    static bool getTelemOffsetForContainer(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset);
 
   protected:
     static uint32_t rootDeviceTelemNodeIndex;
     std::string telemetryDeviceEntry{};
     std::map<std::string, uint64_t> keyOffsetMap;
     std::string guid;
-    ze_result_t init(FsAccessInterface *pFsAccess, const std::string &gpuUpstreamPortPath, PRODUCT_FAMILY productFamily);
-    static void doInitPmtObject(FsAccessInterface *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt, const std::string &gpuUpstreamPortPath,
-                                std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject, PRODUCT_FAMILY productFamily);
+    ze_result_t init(LinuxSysmanImp *pLinuxSysmanImp, const std::string &gpuUpstreamPortPath);
+    static void doInitPmtObject(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId, PlatformMonitoringTech *pPmt, const std::string &gpuUpstreamPortPath,
+                                std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject);
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
 
   private:
