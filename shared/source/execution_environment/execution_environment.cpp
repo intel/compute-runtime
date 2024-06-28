@@ -105,8 +105,9 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
             }
         }
 
-        if (debugManager.flags.ContextGroupSize.get() >= 1) {
-            MemoryManager::maxOsContextCount += numRegularEngines * debugManager.flags.ContextGroupSize.get();
+        if (gfxCoreHelper.getContextGroupContextsCount() > 0) {
+            MemoryManager::maxOsContextCount += numRegularEngines * gfxCoreHelper.getContextGroupContextsCount();
+            MemoryManager::maxOsContextCount += static_cast<uint32_t>(hwInfo->featureTable.ftrBcsInfo.count()); // LP contexts
         }
 
         MemoryManager::maxOsContextCount += osContextCount * subDevicesCount + hasRootCsr;

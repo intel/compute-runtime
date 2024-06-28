@@ -5448,7 +5448,7 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenContextGroupWhenCreatingEng
         }
     }
 
-    auto osContextCount = static_cast<uint32_t>(engineInstances.size()) + (numRegularEngines * debugManager.flags.ContextGroupSize.get());
+    auto osContextCount = static_cast<uint32_t>(engineInstances.size()) + (numRegularEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) + static_cast<uint32_t>(hwInfo.featureTable.ftrBcsInfo.count());
 
     EXPECT_EQ(osContextCount, MemoryManager::maxOsContextCount);
 }
