@@ -14,13 +14,7 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_hw_device_id_linux.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/zes_os_sysman_driver_imp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/zes_os_sysman_driver_imp.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_interface.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_interface_i915_prelim.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_interface_i915_upstream.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_interface_xe.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/sysman_kmd_interface_xe_pmu.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_fs_access_interface.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_kmd_interface.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_fs_access_interface.h
   )
 

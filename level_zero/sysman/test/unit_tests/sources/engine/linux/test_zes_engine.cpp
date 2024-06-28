@@ -7,8 +7,8 @@
 
 #include "shared/source/os_interface/linux/memory_info.h"
 
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
-#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 

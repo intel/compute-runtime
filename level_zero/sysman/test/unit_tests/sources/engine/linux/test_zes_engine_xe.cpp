@@ -13,7 +13,7 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine_xe.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
-#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_xe.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
 
 namespace L0 {
 namespace Sysman {

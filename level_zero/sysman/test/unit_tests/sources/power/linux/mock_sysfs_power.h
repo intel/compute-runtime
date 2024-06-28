@@ -16,7 +16,7 @@
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
-#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_i915.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
 
 namespace L0 {
 namespace Sysman {

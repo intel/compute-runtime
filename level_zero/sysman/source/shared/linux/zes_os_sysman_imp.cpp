@@ -20,11 +20,11 @@
 #include "level_zero/sysman/source/api/pci/linux/sysman_os_pci_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
-#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
 
 namespace L0 {
 namespace Sysman {

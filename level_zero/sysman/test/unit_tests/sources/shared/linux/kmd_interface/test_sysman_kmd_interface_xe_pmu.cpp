@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_fixture_xe.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_fixture_xe.h"
 
 #include "gtest/gtest.h"
 

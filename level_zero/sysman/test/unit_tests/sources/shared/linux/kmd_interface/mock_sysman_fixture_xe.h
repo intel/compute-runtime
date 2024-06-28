@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/test/common/helpers/variable_backup.h"
 
-#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
-#include "level_zero/sysman/test/unit_tests/sources/shared/linux/sysman_kmd_interface_tests.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_pmu_interface.h"
 
 namespace L0 {
 namespace Sysman {

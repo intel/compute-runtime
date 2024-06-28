@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/sysman/source/shared/linux/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 
 namespace L0 {
 namespace Sysman {

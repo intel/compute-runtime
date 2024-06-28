@@ -15,7 +15,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/linux/mock_memory.h"
-#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_sysman_kmd_interface_i915.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
 
 namespace L0 {
 namespace Sysman {
