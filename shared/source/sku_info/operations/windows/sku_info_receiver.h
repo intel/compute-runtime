@@ -71,6 +71,10 @@ class SkuInfoReceiver {
         RECEIVE_FTR(57bGPUAddressing);
         RECEIVE_FTR(Tile64Optimization);
         RECEIVE_FTR(WalkerMTP);
+        RECEIVE_FTR(Xe2Compression);
+        RECEIVE_FTR(Xe2PlusTiling);
+        RECEIVE_FTR(Pml5Support);
+        RECEIVE_FTR(L3TransientDataFlush);
 
 #undef RECEIVE_FTR
     }

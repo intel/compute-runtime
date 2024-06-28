@@ -67,7 +67,11 @@ struct FeatureTableBase {
         uint32_t ftr57bGPUAddressing : 1;
         uint32_t ftrTile64Optimization : 1;
         uint32_t ftrWalkerMTP : 1;
-        uint32_t reserved : 21;
+        uint32_t ftrXe2Compression : 1;
+        uint32_t ftrXe2PlusTiling : 1;
+        uint32_t ftrL3TransientDataFlush : 1;
+        uint32_t ftrPml5Support : 1;
+        uint32_t reserved : 17;
     };
 
     BcsInfoMask ftrBcsInfo = 1;

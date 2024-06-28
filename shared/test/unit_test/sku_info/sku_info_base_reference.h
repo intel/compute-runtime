@@ -44,6 +44,10 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrPpgtt64KBWalkOptimization = 1;
         refFtrTable.FtrUnified3DMediaCompressionFormats = 1;
         refFtrTable.Ftr57bGPUAddressing = 1;
+        refFtrTable.FtrXe2Compression = 1;
+        refFtrTable.FtrXe2PlusTiling = 1;
+        refFtrTable.FtrPml5Support = 1;
+        refFtrTable.FtrL3TransientDataFlush = 1;
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
@@ -115,6 +119,10 @@ struct SkuInfoBaseReference {
 
         refFtrTable.flags.ftrWddmHwQueues = true;
         refFtrTable.flags.ftrWalkerMTP = true;
+        refFtrTable.flags.ftrXe2Compression = true;
+        refFtrTable.flags.ftrXe2PlusTiling = true;
+        refFtrTable.flags.ftrPml5Support = true;
+        refFtrTable.flags.ftrL3TransientDataFlush = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {
