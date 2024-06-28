@@ -150,6 +150,8 @@ INSTANTIATE_TEST_SUITE_P(
 HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverrideSlmAllocationSizeIsSetThenSlmSizeIsOverwritten) {
 
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
     using InterfaceDescriptorType = typename DefaultWalkerType::InterfaceDescriptorType;
 
     DefaultWalkerType walkerCmd{};
@@ -188,7 +190,13 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
         &interfaceDescriptorData,
         false);
 
-    auto pInterfaceDescriptor = HardwareCommandsHelper<FamilyType>::getInterfaceDescriptor(indirectHeap, interfaceDescriptorOffset, &interfaceDescriptorData);
+    InterfaceDescriptorType *pInterfaceDescriptor = nullptr;
+
+    if constexpr (std::is_same_v<InterfaceDescriptorType, INTERFACE_DESCRIPTOR_DATA>) {
+        pInterfaceDescriptor = HardwareCommandsHelper<FamilyType>::getInterfaceDescriptor(indirectHeap, interfaceDescriptorOffset, &interfaceDescriptorData);
+    } else {
+        pInterfaceDescriptor = &interfaceDescriptorData;
+    }
 
     EXPECT_EQ(expectedSlmSize, pInterfaceDescriptor->getSharedLocalMemorySize());
 }
