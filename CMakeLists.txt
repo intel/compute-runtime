@@ -581,9 +581,8 @@ if(UNIX)
   endif()
   message(STATUS "Xe EU Debug support: ${NEO_ENABLE_XE_EU_DEBUG_SUPPORT}")
 
-  get_filename_component(THIRD_PARTY_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}" ABSOLUTE)
-  include_directories(BEFORE ${THIRD_PARTY_DIR})
-
+  get_filename_component(XE_DEBUG_INCLUDE_DIR "${NEO_SOURCE_DIR}/shared/source/debugger/linux${BRANCH_DIR_SUFFIX}" ABSOLUTE)
+  include_directories(BEFORE ${XE_DEBUG_INCLUDE_DIR})
 endif()
 
 include(cmake${BRANCH_DIR_SUFFIX}/find_drm.cmake)

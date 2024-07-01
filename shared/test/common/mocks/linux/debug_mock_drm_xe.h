@@ -23,8 +23,7 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "uapi-eudebug/drm/xe_drm.h"
-#include "uapi-eudebug/drm/xe_drm_tmp.h"
+#include "debug_xe_includes.h"
 
 using namespace NEO;
 

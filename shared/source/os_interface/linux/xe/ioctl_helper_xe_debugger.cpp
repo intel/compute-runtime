@@ -8,8 +8,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
-#include "uapi-eudebug/drm/xe_drm.h"
-#include "uapi-eudebug/drm/xe_drm_tmp.h"
+#include "debug_xe_includes.h"
 
 #include <fstream>
 #include <sstream>

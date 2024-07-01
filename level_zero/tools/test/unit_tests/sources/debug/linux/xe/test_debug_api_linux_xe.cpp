@@ -37,8 +37,7 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 
 #include "common/StateSaveAreaHeader.h"
-#include "uapi-eudebug/drm/xe_drm.h"
-#include "uapi-eudebug/drm/xe_drm_tmp.h"
+#include "debug_xe_includes.h"
 
 #include <fcntl.h>
 #include <fstream>

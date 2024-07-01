@@ -24,8 +24,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "uapi-eudebug/drm/xe_drm.h"
-#include "uapi-eudebug/drm/xe_drm_tmp.h"
+#include "debug_xe_includes.h"
 
 using namespace NEO;
 

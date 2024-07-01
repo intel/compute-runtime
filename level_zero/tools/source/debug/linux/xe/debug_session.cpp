@@ -42,7 +42,7 @@ DebugSessionLinuxXe::~DebugSessionLinuxXe() {
 
 DebugSession *DebugSessionLinuxXe::createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach) {
 
-    struct drm_xe_eudebug_connect open = {
+    drm_xe_eudebug_connect open = {
         .extensions = 0,
         .pid = config.pid,
         .flags = 0,
@@ -638,7 +638,7 @@ void DebugSessionLinuxXe::handleAttentionEvent(drm_xe_eudebug_event_eu_attention
 
 int DebugSessionLinuxXe::threadControlInterruptAll() {
     int euControlRetVal = -1;
-    struct drm_xe_eudebug_eu_control euControl = {};
+    drm_xe_eudebug_eu_control euControl = {};
     euControl.client_handle = clientHandle;
     euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL;
     euControl.bitmask_size = 0;
@@ -671,7 +671,7 @@ int DebugSessionLinuxXe::threadControlStopped(std::unique_ptr<uint8_t[]> &bitmas
     int euControlRetVal = -1;
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
-    struct drm_xe_eudebug_eu_control euControl = {};
+    drm_xe_eudebug_eu_control euControl = {};
     euControl.client_handle = clientHandle;
     euControl.cmd = DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED;
 
@@ -714,7 +714,7 @@ int DebugSessionLinuxXe::threadControlResume(const std::vector<EuThread::ThreadI
     int euControlRetVal = -1;
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
-    struct drm_xe_eudebug_eu_control euControl = {};
+    drm_xe_eudebug_eu_control euControl = {};
     euControl.client_handle = clientHandle;
     euControl.bitmask_size = 0;
     euControl.bitmask_ptr = 0;

@@ -14,8 +14,7 @@
 #include "level_zero/tools/source/debug/linux/debug_session.h"
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
 
-#include "uapi-eudebug/drm/xe_drm.h"
-#include "uapi-eudebug/drm/xe_drm_tmp.h"
+#include "debug_xe_includes.h"
 
 namespace L0 {
 
