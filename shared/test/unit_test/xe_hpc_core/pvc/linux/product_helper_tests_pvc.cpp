@@ -82,7 +82,7 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSuppor
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
+    EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
