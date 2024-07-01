@@ -11,7 +11,5 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_pmt_helper.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_pmt.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_pmt.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/sysman_pmt_helper.cpp
   )
 endif()
-add_subdirectories()

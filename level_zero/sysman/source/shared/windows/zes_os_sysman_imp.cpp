@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
@@ -32,8 +33,6 @@ ze_result_t WddmSysmanImp::init() {
     pKmdSysManager = KmdSysManager::create(pWddm);
     UNRECOVERABLE_IF(nullptr == pKmdSysManager);
 
-    pPmt = PlatformMonitoringTech::create();
-
     subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(&pParentSysmanDeviceImp->getHardwareInfo());
     if (subDeviceCount == 1) {
         subDeviceCount = 0;
@@ -41,6 +40,8 @@ ze_result_t WddmSysmanImp::init() {
 
     pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
     DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
+
+    pPmt = PlatformMonitoringTech::create(pSysmanProductHelper.get());
 
     return ZE_RESULT_SUCCESS;
 }

@@ -13,7 +13,6 @@
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
-#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
 namespace NEO {
@@ -22,6 +21,7 @@ class Wddm;
 namespace L0 {
 namespace Sysman {
 class SysmanProductHelper;
+class PlatformMonitoringTech;
 
 class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:

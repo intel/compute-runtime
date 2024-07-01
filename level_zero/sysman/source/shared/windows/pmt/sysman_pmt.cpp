@@ -10,6 +10,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
+
 namespace L0 {
 namespace Sysman {
 
@@ -122,6 +124,31 @@ ze_result_t PlatformMonitoringTech::getGuid() {
     return heapFreeFunction(GetProcessHeap(), 0, telemetryDiscovery) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
+ze_result_t PlatformMonitoringTech::getKeyOffsetMap(std::map<std::string, std::pair<uint32_t, uint32_t>> &keyOffsetMap) {
+    int indexCount = 0;
+    auto pGuidToKeyOffsetMap = pSysmanProductHelper->getGuidToKeyOffsetMap();
+    if (pGuidToKeyOffsetMap == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    for (uint32_t index = 0; index < PmtSysman::PmtMaxInterfaces; index++) {
+        std::map<std::string, uint32_t>::iterator it;
+        auto keyOffsetMapEntry = pGuidToKeyOffsetMap->find(guidToIndexList[index]);
+        if (keyOffsetMapEntry == pGuidToKeyOffsetMap->end()) {
+            continue;
+        } else {
+            indexCount++;
+            std::map<std::string, uint32_t> tempKeyOffsetMap = keyOffsetMapEntry->second;
+            for (it = tempKeyOffsetMap.begin(); it != tempKeyOffsetMap.end(); it++) {
+                keyOffsetMap.insert(std::make_pair(it->first, std::make_pair(it->second, index)));
+            }
+        }
+    }
+    if (indexCount == 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t PlatformMonitoringTech::init() {
     ze_result_t result = getGuid();
     if (result != ZE_RESULT_SUCCESS) {
@@ -131,11 +158,11 @@ ze_result_t PlatformMonitoringTech::init() {
     return result;
 }
 
-std::unique_ptr<PlatformMonitoringTech> PlatformMonitoringTech::create() {
+std::unique_ptr<PlatformMonitoringTech> PlatformMonitoringTech::create(SysmanProductHelper *pSysmanProductHelper) {
     std::vector<wchar_t> deviceInterface;
     if (enumeratePMTInterface(&PmtSysman::GuidIntefacePmtTelemetry, deviceInterface) == ZE_RESULT_SUCCESS) {
         std::unique_ptr<PlatformMonitoringTech> pPmt;
-        pPmt = std::make_unique<PlatformMonitoringTech>(deviceInterface);
+        pPmt = std::make_unique<PlatformMonitoringTech>(deviceInterface, pSysmanProductHelper);
         UNRECOVERABLE_IF(nullptr == pPmt);
         if (pPmt->init() != ZE_RESULT_SUCCESS) {
             pPmt.reset(nullptr);

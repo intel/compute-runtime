@@ -22,16 +22,17 @@
 namespace L0 {
 namespace Sysman {
 
+class SysmanProductHelper;
 class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
   public:
     PlatformMonitoringTech() = delete;
-    PlatformMonitoringTech(std::vector<wchar_t> deviceInterface) : deviceInterface(std::move(deviceInterface)) {}
+    PlatformMonitoringTech(std::vector<wchar_t> deviceInterface, SysmanProductHelper *pSysmanProductHelper) : deviceInterface(std::move(deviceInterface)), pSysmanProductHelper(pSysmanProductHelper) {}
     virtual ~PlatformMonitoringTech();
 
     virtual ze_result_t readValue(const std::string &key, uint32_t &value);
     virtual ze_result_t readValue(const std::string &key, uint64_t &value);
     ze_result_t getKeyOffsetMap(std::map<std::string, std::pair<uint32_t, uint32_t>> &keyOffsetMap);
-    static std::unique_ptr<PlatformMonitoringTech> create();
+    static std::unique_ptr<PlatformMonitoringTech> create(SysmanProductHelper *pSysmanProductHelper);
     static ze_result_t enumeratePMTInterface(const GUID *Guid, std::vector<wchar_t> &deviceInterface);
 
   protected:
@@ -48,6 +49,7 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
 
   private:
     std::vector<wchar_t> deviceInterface;
+    SysmanProductHelper *pSysmanProductHelper = nullptr;
     uint32_t baseOffset = 0;
 };
 

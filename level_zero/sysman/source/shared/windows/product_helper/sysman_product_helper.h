@@ -50,6 +50,9 @@ class SysmanProductHelper {
     // Memory
     virtual ze_result_t getMemoryBandWidth(zes_mem_bandwidth_t *pBandwidth, WddmSysmanImp *pWddmSysmanImp) = 0;
 
+    // Pmt
+    virtual std::map<unsigned long, std::map<std::string, uint32_t>> *getGuidToKeyOffsetMap() = 0;
+
   protected:
     SysmanProductHelper() = default;
 };

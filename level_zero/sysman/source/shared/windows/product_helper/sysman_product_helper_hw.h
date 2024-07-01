@@ -34,6 +34,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Memory
     ze_result_t getMemoryBandWidth(zes_mem_bandwidth_t *pBandwidth, WddmSysmanImp *pWddmSysmanImp) override;
 
+    // Pmt
+    std::map<unsigned long, std::map<std::string, uint32_t>> *getGuidToKeyOffsetMap() override;
+
   protected:
     SysmanProductHelperHw() = default;
 };

@@ -142,5 +142,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
     return ZE_RESULT_SUCCESS;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+std::map<unsigned long, std::map<std::string, uint32_t>> *SysmanProductHelperHw<gfxProduct>::getGuidToKeyOffsetMap() {
+    return nullptr;
+}
+
 } // namespace Sysman
 } // namespace L0

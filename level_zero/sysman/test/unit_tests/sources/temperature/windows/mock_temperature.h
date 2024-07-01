@@ -10,6 +10,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/sysman/source/api/temperature/sysman_temperature_imp.h"
+#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
@@ -100,7 +101,7 @@ struct TemperatureKmdSysManager : public MockKmdSysManager {
 
 class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
   public:
-    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList) : PlatformMonitoringTech(deviceInterfaceList) {}
+    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
     using PlatformMonitoringTech::keyOffsetMap;
 };
 

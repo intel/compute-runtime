@@ -11,6 +11,7 @@
 
 #include "level_zero/sysman/source/api/memory/sysman_memory_imp.h"
 #include "level_zero/sysman/source/api/memory/windows/sysman_os_memory_imp.h"
+#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/memory/windows/mock_memory_manager.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
@@ -201,7 +202,7 @@ class PublicWddmPowerImp : public L0::Sysman::WddmMemoryImp {
 
 class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
   public:
-    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList) : PlatformMonitoringTech(deviceInterfaceList) {}
+    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
     using PlatformMonitoringTech::keyOffsetMap;
 };
 

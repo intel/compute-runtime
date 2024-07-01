@@ -7,6 +7,7 @@
 
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/pmt/mock_pmt.h"
 
@@ -36,7 +37,7 @@ class SysmanDevicePmtFixture : public SysmanDeviceFixture {
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         std::vector<wchar_t> deviceInterface;
-        pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+        pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
     }
 
     void TearDown() override {
@@ -66,7 +67,7 @@ TEST_F(SysmanDevicePmtFixture, GivenInvalidPmtHandleWhenCallingReadValue32CallFa
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
         return INVALID_HANDLE_VALUE;
     });
-    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
     uint32_t val = 0;
     pPmt->keyOffsetMap = dummyKeyOffsetMap;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val));
@@ -76,14 +77,14 @@ TEST_F(SysmanDevicePmtFixture, GivenInvalidPmtHandleWhenCallingReadValue64CallFa
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
         return INVALID_HANDLE_VALUE;
     });
-    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
     uint64_t val = 0;
     pPmt->keyOffsetMap = dummyKeyOffsetMap;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val));
 }
 
 TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32WhenIoctlCallFailsThenProperErrorIsReturned) {
-    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
     pPmt->pcreateFile = mockCreateFileSuccess;
     uint32_t val = 0;
     pPmt->keyOffsetMap = dummyKeyOffsetMap;
@@ -91,7 +92,7 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32
 }
 
 TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32TypeWhenIoctlCallSucceedsThenreadValueReturned) {
-    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
     pPmt->pcreateFile = mockCreateFileSuccess;
     pPmt->pdeviceIoControl = mockDeviceIoControlSuccess;
 
@@ -107,7 +108,7 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32
         *(int *)lpOutBuffer = 4;
         return true;
     });
-    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
     pPmt->pcreateFile = mockCreateFileSuccess;
 
     uint32_t val = 0;
@@ -121,7 +122,7 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint64
         *(int *)lpOutBuffer = 4;
         return true;
     });
-    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
     pPmt->pcreateFile = mockCreateFileSuccess;
 
     uint64_t val = 0;
@@ -130,7 +131,7 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint64
 }
 
 TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingreadValueWithUint64TypeAndIoctlCallSucceedsThenreadValueReturned) {
-    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface);
+    pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
     pPmt->pcreateFile = mockCreateFileSuccess;
     pPmt->pdeviceIoControl = mockDeviceIoControlSuccess;
     uint64_t val = 0;
@@ -140,12 +141,42 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingreadValueWithUint64
 }
 
 TEST_F(SysmanDevicePmtFixture, GivenInvalidPmtInterfaceWhenCallingCreateThenCallReturnsNullPtr) {
-    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create();
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
     EXPECT_EQ(nullptr, pPmt);
 }
 
 TEST_F(SysmanDevicePmtFixture, GivenInvalidPmtInterfaceWhenCallingGetSysmanPmtThenCallReturnsNullPtr) {
     PlatformMonitoringTech *pPmt = pWddmSysmanImp->getSysmanPmt();
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+TEST_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWithUnsupportedGuidWhenCallingGetSysmanPmtThenCallReturnsNullPtr) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *(unsigned long *)lpOutBuffer = 40;
+        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x1e2f8201, 10}}};
+            *(PmtSysman::PmtTelemetryDiscovery *)lpOutBuffer = temp;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    struct MockSysmanProductHelperPmt : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+        MockSysmanProductHelperPmt() = default;
+    };
+
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperPmt>();
+    std::swap(pWddmSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
     EXPECT_EQ(nullptr, pPmt);
 }
 

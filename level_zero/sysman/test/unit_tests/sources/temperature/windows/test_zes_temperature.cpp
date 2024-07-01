@@ -29,7 +29,7 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfacePmt);
+        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfacePmt, pWddmSysmanImp->getSysmanProductHelper());
         pWddmSysmanImp->pPmt.reset(pPmt);
 
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();
