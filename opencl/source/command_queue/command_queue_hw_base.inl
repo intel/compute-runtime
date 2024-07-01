@@ -231,7 +231,7 @@ void CommandQueueHw<Family>::setupEvent(EventBuilder &eventBuilder, cl_event *ou
         if (eventObj->isProfilingEnabled()) {
             eventObj->setQueueTimeStamp();
 
-            if (isCommandWithoutKernel(cmdType) && cmdType != CL_COMMAND_MARKER) {
+            if (isCommandWithoutKernel(cmdType) && !isFlushForProfilingRequired(cmdType)) {
                 eventObj->setCPUProfilingPath(true);
             }
         }

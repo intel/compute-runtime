@@ -22,7 +22,7 @@ struct EnqueueProperties {
     };
 
     EnqueueProperties() = delete;
-    EnqueueProperties(bool blitEnqueue, bool hasKernels, bool isCacheFlushCmd, bool flushDependenciesOnly, bool isMarkerWithEvent, bool hasStallingCmds,
+    EnqueueProperties(bool blitEnqueue, bool hasKernels, bool isCacheFlushCmd, bool flushDependenciesOnly, bool isFlushWithEvent, bool hasStallingCmds,
                       const BlitPropertiesContainer *blitPropertiesContainer) : hasStallingCmds(hasStallingCmds) {
         if (blitEnqueue) {
             operation = Operation::blit;
@@ -46,7 +46,7 @@ struct EnqueueProperties {
             return;
         }
 
-        if (isMarkerWithEvent) {
+        if (isFlushWithEvent) {
             operation = Operation::profilingOnly;
             return;
         }

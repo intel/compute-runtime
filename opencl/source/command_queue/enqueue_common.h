@@ -157,7 +157,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     EventBuilder eventBuilder;
     setupEvent(eventBuilder, event, commandType);
 
-    const bool isMarkerWithPostSyncWrite = (CL_COMMAND_MARKER == commandType) && ((eventBuilder.getEvent() && eventBuilder.getEvent()->isProfilingEnabled()) || multiDispatchInfo.peekBuiltinOpParams().bcsSplit);
+    const bool isFlushWithPostSyncWrite = isFlushForProfilingRequired(commandType) && ((eventBuilder.getEvent() && eventBuilder.getEvent()->isProfilingEnabled()) || multiDispatchInfo.peekBuiltinOpParams().bcsSplit);
 
     std::unique_ptr<KernelOperation> blockedCommandsData;
     std::unique_ptr<PrintfHandler> printfHandler;
@@ -209,7 +209,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         auto allocator = computeCommandStreamReceiver.getTimestampPacketAllocator();
 
         size_t nodesCount = 0u;
-        if (isCacheFlushCommand(commandType) || isMarkerWithPostSyncWrite || isNonStallingIoqBarrierWithDependencies) {
+        if (isCacheFlushCommand(commandType) || isFlushWithPostSyncWrite || isNonStallingIoqBarrierWithDependencies) {
             nodesCount = 1;
         } else if (!multiDispatchInfo.empty()) {
             if (isOOQEnabled() && !event) {
@@ -234,7 +234,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     auto &commandStream = *obtainCommandStream<commandType>(csrDeps, false, blockQueue, multiDispatchInfo, eventsRequest,
-                                                            blockedCommandsData, surfacesForResidency, numSurfaceForResidency, canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies, isMarkerWithPostSyncWrite);
+                                                            blockedCommandsData, surfacesForResidency, numSurfaceForResidency, canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies, isFlushWithPostSyncWrite);
     auto commandStreamStart = commandStream.getUsed();
 
     if (canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
@@ -301,7 +301,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
-        if (isMarkerWithPostSyncWrite) {
+        if (isFlushWithPostSyncWrite) {
             setStallingCommandsOnNextFlush(true);
             flushDependenciesForNonKernelCommand = true;
         }
@@ -328,13 +328,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             TimestampPacketHelper::nonStallingContextEndNodeSignal<GfxFamily>(commandStream, *node, getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled());
         }
 
-        if (isMarkerWithPostSyncWrite) {
+        if (isFlushWithPostSyncWrite) {
             if (numEventsInWaitList == 0) {
                 computeCommandStreamReceiver.programComputeBarrierCommand(commandStream);
             }
             processDispatchForMarkerWithTimestampPacket(*this, &commandStream, eventsRequest, csrDeps);
         }
-    } else if (isMarkerWithPostSyncWrite) {
+    } else if (isFlushWithPostSyncWrite) {
         processDispatchForMarker(*this, &commandStream, eventsRequest, csrDeps);
     }
     TagNodeBase *multiRootEventSyncStamp = nullptr;
@@ -352,7 +352,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
     const EnqueueProperties enqueueProperties(false, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
-                                              flushDependenciesForNonKernelCommand, isMarkerWithPostSyncWrite, programBarrierInTaskStream, &blitPropertiesContainer);
+                                              flushDependenciesForNonKernelCommand, isFlushWithPostSyncWrite, programBarrierInTaskStream, &blitPropertiesContainer);
 
     if (!blockQueue && isOOQEnabled()) {
         setupBarrierTimestampForBcsEngines(computeCommandStreamReceiver.getOsContext().getEngineType(), timestampPacketDependencies);
@@ -717,12 +717,14 @@ void CommandQueueHw<GfxFamily>::processDispatchForMarkerWithTimestampPacket(Comm
 
     EncodeStoreMMIO<GfxFamily>::encode(*commandStream, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, timestampContextStartGpuAddress, false, nullptr);
     EncodeStoreMMIO<GfxFamily>::encode(*commandStream, RegisterOffsets::globalTimestampLdw, timestampGlobalStartAddress, false, nullptr);
+    MemorySynchronizationCommands<GfxFamily>::encodeAdditionalTimestampOffsets(*commandStream, timestampContextStartGpuAddress, timestampGlobalStartAddress);
 
     auto timestampContextEndGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*currentTimestampPacketNode);
     auto timestampGlobalEndAddress = TimestampPacketHelper::getGlobalEndGpuAddress(*currentTimestampPacketNode);
 
     EncodeStoreMMIO<GfxFamily>::encode(*commandStream, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, timestampContextEndGpuAddress, false, nullptr);
     EncodeStoreMMIO<GfxFamily>::encode(*commandStream, RegisterOffsets::globalTimestampLdw, timestampGlobalEndAddress, false, nullptr);
+    MemorySynchronizationCommands<GfxFamily>::encodeAdditionalTimestampOffsets(*commandStream, timestampContextEndGpuAddress, timestampGlobalEndAddress);
 }
 
 template <typename GfxFamily>

@@ -19,6 +19,7 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -1835,4 +1836,19 @@ HWTEST_F(GfxCoreHelperTest, whenCallGetMaxPtssIndexThenCorrectValue) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_EQ(15u, gfxCoreHelper.getMaxPtssIndex(productHelper));
+}
+
+HWTEST_F(GfxCoreHelperTest, whenEncodeAdditionalTimestampOffsetsThenNothingEncoded) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    constexpr static auto bufferSize = sizeof(MI_STORE_REGISTER_MEM);
+    char streamBuffer[bufferSize];
+    LinearStream stream(streamBuffer, bufferSize);
+    uint64_t fstAddress = 0;
+    uint64_t sndAddress = 0;
+    MemorySynchronizationCommands<FamilyType>::encodeAdditionalTimestampOffsets(stream, fstAddress, sndAddress);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream, 0);
+    GenCmdList storeRegMemList = hwParser.getCommandsList<MI_STORE_REGISTER_MEM>();
+    EXPECT_EQ(0u, storeRegMemList.size());
 }

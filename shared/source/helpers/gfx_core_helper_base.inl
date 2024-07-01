@@ -805,4 +805,8 @@ void *LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, u
     return LriHelper<GfxFamily>::program(lri, address, value, remap, isBcs);
 }
 
+template <typename GfxFamily>
+void MemorySynchronizationCommands<GfxFamily>::encodeAdditionalTimestampOffsets(LinearStream &commandStream, uint64_t contextAddress, uint64_t globalAddress) {
+}
+
 } // namespace NEO

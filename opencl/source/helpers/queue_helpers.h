@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,10 @@ inline bool isCommandWithoutKernel(uint32_t commandType) {
             (commandType == CL_COMMAND_SVM_MAP) ||
             (commandType == CL_COMMAND_SVM_MIGRATE_MEM) ||
             (commandType == CL_COMMAND_SVM_UNMAP));
+}
+
+inline bool isFlushForProfilingRequired(uint32_t commandType) {
+    return (commandType == CL_COMMAND_BARRIER || commandType == CL_COMMAND_MARKER);
 }
 
 inline void retainQueue(cl_command_queue commandQueue, cl_int &retVal) {

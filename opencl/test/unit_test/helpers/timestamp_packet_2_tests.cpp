@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,33 @@ class MockCommandStreamReceiverHW : public UltCommandStreamReceiver<FamilyType> 
     LinearStream *stream = nullptr;
 };
 
+HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndEventWheBarrierProfilingEnabledThenPipeControlAddedBeforeWritingTimestamp) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto commandStreamReceiver = std::make_unique<MockCommandStreamReceiverHW<FamilyType>>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    auto commandStreamReceiverPtr = commandStreamReceiver.get();
+    commandStreamReceiver->timestampPacketWriteEnabled = true;
+    device->resetCommandStreamReceiver(commandStreamReceiver.release());
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
+    cmdQ->setProfilingEnabled();
+
+    cl_event event;
+    cmdQ->enqueueBarrierWithWaitList(0, nullptr, &event);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*(commandStreamReceiverPtr->stream), 0);
+    GenCmdList storeRegMemList = hwParser.getCommandsList<MI_STORE_REGISTER_MEM>();
+    EXPECT_EQ(0u, storeRegMemList.size() % 4u);
+    auto storeRegMemIt = find<MI_STORE_REGISTER_MEM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_NE(storeRegMemIt, hwParser.cmdList.end());
+    auto pipeControlIt = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), storeRegMemIt);
+    EXPECT_NE(storeRegMemIt, pipeControlIt);
+    EXPECT_NE(hwParser.cmdList.end(), pipeControlIt);
+
+    clReleaseEvent(event);
+}
+
 HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndEventWhenMarkerProfilingEnabledThenPipeControlAddedBeforeWritingTimestamp) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -89,7 +116,7 @@ HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndEventWhenMarkerProfilingEnab
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*(commandStreamReceiverPtr->stream), 0);
     GenCmdList storeRegMemList = hwParser.getCommandsList<MI_STORE_REGISTER_MEM>();
-    EXPECT_EQ(4u, storeRegMemList.size());
+    EXPECT_EQ(0u, storeRegMemList.size() % 4u);
     auto storeRegMemIt = find<MI_STORE_REGISTER_MEM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     EXPECT_NE(storeRegMemIt, hwParser.cmdList.end());
     auto pipeControlIt = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), storeRegMemIt);
@@ -125,7 +152,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, TimestampPacketTests, givenEmptyWaitlistAndEventWhe
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*(commandStreamReceiverPtr->stream), 0);
     GenCmdList storeRegMemList = hwParser.getCommandsList<MI_STORE_REGISTER_MEM>();
-    EXPECT_EQ(4u, storeRegMemList.size());
+    EXPECT_EQ(0u, storeRegMemList.size() % 4u);
     auto storeRegMemIt = find<MI_STORE_REGISTER_MEM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     EXPECT_NE(storeRegMemIt, hwParser.cmdList.end());
     GenCmdList::reverse_iterator rItorStoreRegMemIt(storeRegMemIt);

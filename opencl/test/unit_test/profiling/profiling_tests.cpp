@@ -462,29 +462,24 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProflingWhenMar
     clReleaseEvent(event);
 }
 
-HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPath) {
+HWTEST_F(ProfilingTests, givenBarrierEnqueueWhenNonBlockedEnqueueThenSetGpuPath) {
     cl_event event;
     pCmdQ->enqueueBarrierWithWaitList(0, nullptr, &event);
     auto eventObj = static_cast<Event *>(event);
-    EXPECT_TRUE(eventObj->isCPUProfilingPath() == CL_TRUE);
+    EXPECT_FALSE(eventObj->isCPUProfilingPath());
     pCmdQ->finish();
 
-    uint64_t queued, submit, start, end;
+    uint64_t queued, submit;
     cl_int retVal;
 
     retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(uint64_t), &queued, 0);
     EXPECT_EQ(CL_SUCCESS, retVal);
     retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(uint64_t), &start, 0);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_END, sizeof(uint64_t), &end, 0);
-    EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_LT(0u, queued);
     EXPECT_LT(queued, submit);
-    EXPECT_LT(submit, start);
-    EXPECT_LT(start, end);
+
     eventObj->release();
 }
 
@@ -547,6 +542,41 @@ HWTEST_F(ProfilingTests, givenMarkerEnqueueWhenBlockedEnqueueThenSetGpuPath) {
     static_cast<MockEvent<Event> *>(eventObj)->timeStampNode = nullptr;
     eventObj->release();
     userEventObj->release();
+}
+
+HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPath) {
+    cl_event event;
+    MockBuffer buffer;
+    auto bufferMemObj = static_cast<cl_mem>(&buffer);
+    auto pBufferMemObj = &bufferMemObj;
+
+    auto retVal = pCmdQ->enqueueMigrateMemObjects(
+        1,
+        pBufferMemObj,
+        CL_MIGRATE_MEM_OBJECT_HOST,
+        0,
+        nullptr,
+        &event);
+    auto eventObj = static_cast<Event *>(event);
+    EXPECT_TRUE(eventObj->isCPUProfilingPath() == CL_TRUE);
+    pCmdQ->finish();
+
+    uint64_t queued, submit, start, end;
+
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(uint64_t), &queued, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(uint64_t), &start, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_END, sizeof(uint64_t), &end, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_LT(0u, queued);
+    EXPECT_LT(queued, submit);
+    EXPECT_LT(submit, start);
+    EXPECT_LT(start, end);
+    eventObj->release();
 }
 
 using EventProfilingTest = ProfilingTests;
