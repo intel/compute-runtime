@@ -88,7 +88,7 @@ struct UnitTestHelper {
 
     static void validateSbaMocs(uint32_t expectedMocs, CommandStreamReceiver &csr);
 
-    static GenCmdList::iterator findMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end);
+    static GenCmdList::iterator findCsrBaseAddressCommand(GenCmdList::iterator begin, GenCmdList::iterator end);
 
     static std::vector<GenCmdList::iterator> findAllMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end);
 

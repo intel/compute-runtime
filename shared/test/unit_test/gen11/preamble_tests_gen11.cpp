@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,5 +46,5 @@ GEN11TEST_F(PreambleTestGen11, givenDisabledPreemptionAndDisabledDebuggingWhenPr
 }
 
 GEN11TEST_F(PreambleTestGen11, givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAndStateSipAreInlcuded) {
-    SourceLevelDebuggerPreambleTest<FamilyType>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreInlcudedTest();
+    SourceLevelDebuggerPreambleTest<FamilyType>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThenCorrectSizeIsInlcudedTest();
 }

@@ -4457,7 +4457,6 @@ TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenResourcesRelea
     EXPECT_TRUE(deviceImp->resourcesReleased);
     EXPECT_TRUE(nullptr == deviceImp->getNEODevice());
     EXPECT_TRUE(nullptr == deviceImp->pageFaultCommandList);
-    EXPECT_TRUE(nullptr == deviceImp->getDebugSurface());
     deviceImp->releaseResources();
     EXPECT_TRUE(deviceImp->resourcesReleased);
 }

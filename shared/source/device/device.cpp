@@ -240,9 +240,23 @@ bool Device::createDeviceImpl() {
         }
     }
 
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    auto debugSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     if (this->isStateSipRequired()) {
         bool ret = SipKernel::initSipKernel(SipKernel::getSipKernelType(*this), *this);
         UNRECOVERABLE_IF(!ret);
+        debugSurfaceSize = NEO::SipKernel::getSipKernel(*this, nullptr).getStateSaveAreaSize(this);
+    }
+
+    const bool allocateDebugSurface = getL0Debugger() && !isSubDevice();
+    if (allocateDebugSurface) {
+        debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties(
+            {getRootDeviceIndex(), true,
+             debugSurfaceSize,
+             NEO::AllocationType::debugContextSaveArea,
+             false,
+             false,
+             getDeviceBitfield()});
     }
 
     if (!initializeEngines()) {
@@ -280,7 +294,6 @@ bool Device::createDeviceImpl() {
     }
 
     createBindlessHeapsHelper();
-    auto &gfxCoreHelper = getGfxCoreHelper();
     if (!isEngineInstanced()) {
         uuid.isValid = false;
 

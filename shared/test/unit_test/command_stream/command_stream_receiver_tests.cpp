@@ -4505,7 +4505,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     HardwareParse hwParserCsr;
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    auto itCsrCommand = NEO::UnitTestHelper<FamilyType>::findMidThreadPreemptionAllocationCommand(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    auto itCsrCommand = NEO::UnitTestHelper<FamilyType>::findCsrBaseAddressCommand(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
     if (csrSurfaceProgramming) {
         EXPECT_NE(hwParserCsr.cmdList.end(), itCsrCommand);
     } else {
@@ -4522,10 +4522,61 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     hwParserCsr.tearDown();
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
-    itCsrCommand = NEO::UnitTestHelper<FamilyType>::findMidThreadPreemptionAllocationCommand(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    itCsrCommand = NEO::UnitTestHelper<FamilyType>::findCsrBaseAddressCommand(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
     EXPECT_EQ(hwParserCsr.cmdList.end(), itCsrCommand);
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getPreemptionAllocation()));
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenDebugSurfaceProgrammingNeededThenOnlyOneTimeCsrProgrammed,
+          IsAtLeastXeHpCore) {
+
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    EXPECT_FALSE(commandStreamReceiver.csrSurfaceProgrammed());
+    commandStreamReceiver.setCsrSurfaceProgrammed(true);
+    EXPECT_TRUE(commandStreamReceiver.csrSurfaceProgrammed());
+    commandStreamReceiver.setCsrSurfaceProgrammed(false);
+    EXPECT_FALSE(commandStreamReceiver.csrSurfaceProgrammed());
+
+    const auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto debugSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(*defaultHwInfo);
+    NEO::GraphicsAllocation *debugSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(), true,
+         debugSurfaceSize,
+         NEO::AllocationType::debugContextSaveArea,
+         false,
+         false,
+         pDevice->getDeviceBitfield()});
+    pDevice->setDebugSurface(debugSurface);
+
+    bool csrSurfaceProgramming = NEO::PreemptionHelper::getRequiredPreambleSize<FamilyType>(*pDevice) > 0;
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    EXPECT_TRUE(commandStreamReceiver.csrSurfaceProgrammed());
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto itCsrCommand = NEO::UnitTestHelper<FamilyType>::findCsrBaseAddressCommand(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    if (csrSurfaceProgramming) {
+        EXPECT_NE(hwParserCsr.cmdList.end(), itCsrCommand);
+    } else {
+        EXPECT_EQ(hwParserCsr.cmdList.end(), itCsrCommand);
+    }
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    itCsrCommand = NEO::UnitTestHelper<FamilyType>::findCsrBaseAddressCommand(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    EXPECT_EQ(hwParserCsr.cmdList.end(), itCsrCommand);
 }
 
 HWTEST2_F(CommandStreamReceiverHwTest,
@@ -4543,6 +4594,16 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
     commandStreamReceiver.setSipSentFlag(false);
     EXPECT_FALSE(commandStreamReceiver.getSipSentFlag());
+    const auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto debugSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(*defaultHwInfo);
+    NEO::GraphicsAllocation *debugSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(), true,
+         debugSurfaceSize,
+         NEO::AllocationType::debugContextSaveArea,
+         false,
+         false,
+         pDevice->getDeviceBitfield()});
+    pDevice->setDebugSurface(debugSurface);
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
@@ -4589,6 +4650,16 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
     commandStreamReceiver.setSipSentFlag(false);
     EXPECT_FALSE(commandStreamReceiver.getSipSentFlag());
+    const auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto debugSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(*defaultHwInfo);
+    NEO::GraphicsAllocation *debugSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(), true,
+         debugSurfaceSize,
+         NEO::AllocationType::debugContextSaveArea,
+         false,
+         false,
+         pDevice->getDeviceBitfield()});
+    pDevice->setDebugSurface(debugSurface);
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 

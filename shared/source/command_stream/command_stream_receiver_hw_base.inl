@@ -2052,7 +2052,12 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
         flushData.estimatedSize += this->getCmdSizeForPerDssBackedBuffer(peekHwInfo());
     }
 
-    if (this->getPreemptionMode() == PreemptionMode::Initial) {
+    if (device.getDebugger() != nullptr) {
+        if (!this->csrSurfaceProgrammed()) {
+            flushData.contextOneTimeInit = true;
+            flushData.estimatedSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
+        }
+    } else if (this->getPreemptionMode() == PreemptionMode::Initial) {
         flushData.contextOneTimeInit = true;
         flushData.estimatedSize += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(device.getPreemptionMode(), this->getPreemptionMode());
         flushData.estimatedSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
@@ -2079,7 +2084,12 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
             this->dispatchRayTracingStateCommand(csrStream, device);
         }
 
-        if (this->getPreemptionMode() == PreemptionMode::Initial) {
+        if (device.getDebugger() != nullptr) {
+            PreemptionHelper::programCsrBaseAddress<GfxFamily>(csrStream,
+                                                               device,
+                                                               device.getDebugSurface());
+            this->setCsrSurfaceProgrammed(true);
+        } else if (this->getPreemptionMode() == PreemptionMode::Initial) {
             PreemptionHelper::programCmdStream<GfxFamily>(csrStream, device.getPreemptionMode(), this->getPreemptionMode(), this->getPreemptionAllocation());
             PreemptionHelper::programCsrBaseAddress<GfxFamily>(csrStream,
                                                                device,

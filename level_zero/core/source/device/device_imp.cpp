@@ -1367,7 +1367,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     auto osInterface = rootDeviceEnvironment.osInterface.get();
     device->driverInfo.reset(NEO::DriverInfo::create(&hwInfo, osInterface));
 
-    auto debugSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     std::vector<char> stateSaveAreaHeader;
 
     if (neoDevice->getDebugger() || neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
@@ -1380,25 +1379,12 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
             }
 
             stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getStateSaveAreaHeader();
-            debugSurfaceSize = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getStateSaveAreaSize(neoDevice);
         } else {
             *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }
     }
 
-    const bool allocateDebugSurface = device->getL0Debugger() && !isSubDevice;
-    NEO::GraphicsAllocation *debugSurface = nullptr;
-    if (allocateDebugSurface) {
-        debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-            {device->getRootDeviceIndex(), true,
-             debugSurfaceSize,
-             NEO::AllocationType::debugContextSaveArea,
-             false,
-             false,
-             device->getNEODevice()->getDeviceBitfield()});
-        device->setDebugSurface(debugSurface);
-    }
-
+    NEO::GraphicsAllocation *debugSurface = device->getDebugSurface();
     if (debugSurface && stateSaveAreaHeader.size() > 0) {
         const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *debugSurface),
@@ -1523,13 +1509,6 @@ void DeviceImp::releaseResources() {
     if (allocationsForReuse.get()) {
         allocationsForReuse->freeAllGraphicsAllocations(neoDevice);
         allocationsForReuse.reset();
-    }
-
-    if (!isSubdevice) {
-        if (this->debugSurface) {
-            this->neoDevice->getMemoryManager()->freeGraphicsMemory(this->debugSurface);
-            this->debugSurface = nullptr;
-        }
     }
 
     neoDevice->decRefInternal();

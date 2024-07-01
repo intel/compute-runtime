@@ -104,8 +104,12 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     void getExtendedDeviceModuleProperties(ze_base_desc_t *pExtendedProperties);
     uint32_t getAdditionalEngines(uint32_t numAdditionalEnginesRequested,
                                   ze_command_queue_group_properties_t *pCommandQueueGroupProperties);
-    NEO::GraphicsAllocation *getDebugSurface() const override { return debugSurface; }
-    void setDebugSurface(NEO::GraphicsAllocation *debugSurface) { this->debugSurface = debugSurface; };
+    NEO::GraphicsAllocation *getDebugSurface() const override {
+        return this->getNEODevice()->getDebugSurface();
+    }
+    void setDebugSurface(NEO::GraphicsAllocation *debugSurface) {
+        this->getNEODevice()->setDebugSurface(debugSurface);
+    };
     ~DeviceImp() override;
     NEO::GraphicsAllocation *allocateManagedMemoryFromHostPtr(void *buffer, size_t size, struct CommandList *commandList) override;
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override;
@@ -181,7 +185,6 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, NEO::CommandStreamReceiver **csr, bool allocateInterrupt);
     NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
-    NEO::GraphicsAllocation *debugSurface = nullptr;
     SysmanDevice *pSysmanDevice = nullptr;
     std::unique_ptr<DebugSession> debugSession;
 };

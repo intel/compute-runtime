@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,7 +120,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenDisabledPreemptionAndDisab
 }
 
 template <typename GfxFamily>
-void SourceLevelDebuggerPreambleTest<GfxFamily>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreInlcudedTest() {
+void SourceLevelDebuggerPreambleTest<GfxFamily>::givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThenCorrectSizeIsInlcudedTest() {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -133,6 +133,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenKernelDebuggingActiveAndDi
 
     size_t diff = withDebugging - withoutDebugging;
     size_t sizeExpected = 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    sizeExpected += sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS);
     EXPECT_EQ(sizeExpected, diff);
 }
 

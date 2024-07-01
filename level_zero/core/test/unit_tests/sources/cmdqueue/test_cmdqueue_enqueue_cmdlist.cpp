@@ -669,7 +669,7 @@ void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest
     auto preemptionMode = neoDevice->getPreemptionMode();
     GenCmdList::iterator itor = cmdList.begin();
 
-    GenCmdList::iterator itorCsrCmd = NEO::UnitTestHelper<FamilyType>::findMidThreadPreemptionAllocationCommand(cmdList.begin(), cmdList.end());
+    GenCmdList::iterator itorCsrCmd = NEO::UnitTestHelper<FamilyType>::findCsrBaseAddressCommand(cmdList.begin(), cmdList.end());
     if (preemptionMode == NEO::PreemptionMode::MidThread) {
         EXPECT_NE(itorCsrCmd, cmdList.end());
 

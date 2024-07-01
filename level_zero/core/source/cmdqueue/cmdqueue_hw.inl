@@ -346,7 +346,17 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         if (!this->stateBaseAddressTracking) {
             this->programStateBaseAddressWithGsbaIfDirty(ctx, ctx.firstCommandList, child);
         }
-        this->programCsrBaseAddressIfPreemptionModeInitial(ctx.isPreemptionModeInitial, child);
+        NEO::Device *neoDevice = this->device->getNEODevice();
+        if (neoDevice->getDebugger() != nullptr) {
+            if (!this->csr->csrSurfaceProgrammed()) {
+                NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(child,
+                                                                        *neoDevice,
+                                                                        neoDevice->getDebugSurface());
+                this->csr->setCsrSurfaceProgrammed(true);
+            }
+        } else {
+            this->programCsrBaseAddressIfPreemptionModeInitial(ctx.isPreemptionModeInitial, child);
+        }
         this->programStateSip(ctx.stateSipRequired, child);
         this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, child);
         bool shouldProgramVfe = !frontEndTrackingEnabled() && ctx.frontEndStateDirty;
@@ -941,7 +951,11 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
     }
 
     NEO::Device *neoDevice = this->device->getNEODevice();
-    if (ctx.isPreemptionModeInitial) {
+    if (neoDevice->getDebugger() != nullptr) {
+        if (!this->csr->csrSurfaceProgrammed()) {
+            linearStreamSizeEstimate += NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice);
+        }
+    } else if (ctx.isPreemptionModeInitial) {
         linearStreamSizeEstimate += NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice);
     }
     if (ctx.stateSipRequired) {

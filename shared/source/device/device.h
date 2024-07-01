@@ -196,6 +196,8 @@ class Device : public ReferenceTrackedObject<Device> {
         return EngineHelpers::isCcs(type) || EngineHelpers::isBcs(type);
     }
 
+    GraphicsAllocation *getDebugSurface() const { return debugSurface; }
+    void setDebugSurface(GraphicsAllocation *debugSurface) { this->debugSurface = debugSurface; };
     const CsrContainer &getSecondaryCsrs() const { return secondaryCsrs; }
 
     std::atomic<uint32_t> debugExecutionCounter = 0;
@@ -262,6 +264,7 @@ class Device : public ReferenceTrackedObject<Device> {
     bool engineInstanced = false;
     bool rootCsrCreated = false;
     const uint32_t rootDeviceIndex;
+    GraphicsAllocation *debugSurface = nullptr;
 
     SelectorCopyEngine selectorCopyEngine = {};
 

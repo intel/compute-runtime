@@ -27,6 +27,10 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment, rootDeviceIndex) {}
 
 RootDevice::~RootDevice() {
+    if (getDebugSurface()) {
+        getMemoryManager()->freeGraphicsMemory(debugSurface);
+        debugSurface = nullptr;
+    }
     if (getRootDeviceEnvironment().tagsManager) {
         getRootDeviceEnvironment().tagsManager->shutdown();
     }

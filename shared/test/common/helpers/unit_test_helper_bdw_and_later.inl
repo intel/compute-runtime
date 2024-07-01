@@ -131,7 +131,7 @@ inline bool UnitTestHelper<GfxFamily>::getWorkloadPartitionForStoreRegisterMemCm
 }
 
 template <typename GfxFamily>
-GenCmdList::iterator UnitTestHelper<GfxFamily>::findMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end) {
+GenCmdList::iterator UnitTestHelper<GfxFamily>::findCsrBaseAddressCommand(GenCmdList::iterator begin, GenCmdList::iterator end) {
     return find<typename GfxFamily::GPGPU_CSR_BASE_ADDRESS *>(begin, end);
 }
 

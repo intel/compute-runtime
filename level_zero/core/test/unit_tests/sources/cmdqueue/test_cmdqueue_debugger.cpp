@@ -5,10 +5,12 @@
  *
  */
 
+#include "shared/source/command_stream/preemption.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -159,6 +161,78 @@ HWTEST2_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenIntern
     EXPECT_EQ(cmdList.end(), sdiItor);
 
     cmdQ->destroy();
+}
+
+HWTEST2_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTimesThenCsrBaseProgrammedOnlyTheFirstTime, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    bool internalQueueMode[] = {false, true};
+
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
+
+    for (auto internalQueue : internalQueueMode) {
+        ze_command_queue_desc_t queueDesc = {};
+        ze_result_t returnValue;
+        auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, internalQueue, false, returnValue);
+        ASSERT_NE(nullptr, cmdQ);
+
+        auto commandQueue = whiteboxCast(cmdQ);
+
+        Mock<KernelImp> kernel;
+        kernel.module = mockModule.get();
+
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+        ze_group_count_t groupCount{1, 1, 1};
+        NEO::LinearStream &cmdStream = commandQueue->commandStream;
+
+        auto usedSpaceBefore = cmdStream.getUsed();
+
+        CmdListKernelLaunchParams launchParams = {};
+        auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        commandList->close();
+
+        ze_command_list_handle_t commandListHandle = commandList->toHandle();
+        const uint32_t numCommandLists = 1u;
+
+        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, true, nullptr);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        auto usedSpaceAfter = cmdStream.getUsed();
+        ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList, ptrOffset(cmdStream.getCpuBase(), 0), usedSpaceAfter));
+
+        bool csrSurfaceProgramming = NEO::PreemptionHelper::getRequiredPreambleSize<FamilyType>(*neoDevice) > 0;
+        csrSurfaceProgramming = csrSurfaceProgramming & !internalQueue;
+        auto itCsrCommand = NEO::UnitTestHelper<FamilyType>::findCsrBaseAddressCommand(cmdList.begin(), cmdList.end());
+        if (csrSurfaceProgramming) {
+            EXPECT_NE(cmdList.end(), itCsrCommand);
+        } else {
+            EXPECT_EQ(cmdList.end(), itCsrCommand);
+        }
+
+        result = cmdQ->executeCommandLists(numCommandLists, &commandListHandle, nullptr, true, nullptr);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        GenCmdList cmdList2;
+        auto cmdBufferAddress = ptrOffset(cmdStream.getCpuBase(), usedSpaceAfter);
+        auto usedSpaceOn2ndExecute = cmdStream.getUsed() - usedSpaceAfter;
+
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList2, cmdBufferAddress, usedSpaceOn2ndExecute));
+
+        itCsrCommand = NEO::UnitTestHelper<FamilyType>::findCsrBaseAddressCommand(cmdList2.begin(), cmdList2.end());
+        EXPECT_EQ(cmdList2.end(), itCsrCommand);
+        cmdQ->destroy();
+
+        neoDevice->getDefaultEngine().commandStreamReceiver->getStreamProperties().stateBaseAddress.resetState();
+    }
 }
 
 } // namespace ult

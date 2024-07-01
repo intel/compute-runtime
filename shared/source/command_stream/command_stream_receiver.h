@@ -471,6 +471,12 @@ class CommandStreamReceiver {
     void setPreemptionMode(PreemptionMode value) {
         lastPreemptionMode = value;
     }
+    bool csrSurfaceProgrammed() const {
+        return csrSurfaceProgrammingDone;
+    }
+    void setCsrSurfaceProgrammed(bool value) {
+        csrSurfaceProgrammingDone = value;
+    }
 
     virtual SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) = 0;
 
@@ -611,6 +617,7 @@ class CommandStreamReceiver {
     DispatchMode dispatchMode = DispatchMode::immediateDispatch;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
+    bool csrSurfaceProgrammingDone = false;
 
     std::chrono::microseconds gpuHangCheckPeriod{500'000};
     uint32_t lastSentL3Config = 0;

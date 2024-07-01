@@ -21,7 +21,9 @@ namespace NEO {
 
 template <typename GfxFamily>
 void PreemptionHelper::programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr) {
-    if (device.getPreemptionMode() == PreemptionMode::MidThread) {
+    bool debuggingEnabled = device.getDebugger() != nullptr;
+    bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
+    if (isMidThreadPreemption || debuggingEnabled) {
         UNRECOVERABLE_IF(nullptr == preemptionCsr);
 
         programCsrBaseAddressCmd<GfxFamily>(preambleCmdStream, preemptionCsr);
@@ -98,7 +100,9 @@ size_t PreemptionHelper::getRequiredCmdStreamSize(PreemptionMode newPreemptionMo
 
 template <typename GfxFamily>
 size_t PreemptionHelper::getRequiredPreambleSize(const Device &device) {
-    if (device.getPreemptionMode() == PreemptionMode::MidThread) {
+    bool debuggingEnabled = device.getDebugger() != nullptr;
+    bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
+    if (isMidThreadPreemption || debuggingEnabled) {
         return sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS);
     }
     return 0;
