@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,6 +118,12 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     virtual bool isBindlessSystemRoutine();
     virtual bool readModuleDebugArea() = 0;
+
+    struct DebugAreaInfo {
+        uint64_t gpuVa;
+        uint64_t size;
+    };
+    virtual DebugAreaInfo getModuleDebugAreaInfo() { return {0, 0}; }
     virtual ze_result_t readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) = 0;
 
     void fillDevicesFromThread(ze_device_thread_t thread, std::vector<uint8_t> &devices);

@@ -7807,16 +7807,18 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalid
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 1, nullptr));
 }
 
-TEST_F(DebugApiRegistersAccessTest, givenReadDebugScratchRegisterCalledThenUnsupportedFeatureReturned) {
+TEST_F(DebugApiRegistersAccessTest, givenReadDebugScratchRegisterCalledThenCorrectValuesReturned) {
     SIP::version version = {3, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, 0, 1, nullptr));
-}
+    uint64_t debugSurfaceAddress = 0xDEADBEEF;
+    uint64_t debugSurfaceSize = 0xBEEFDEAD;
+    uint64_t scratch[2];
 
-TEST_F(DebugApiRegistersAccessTest, givenReadThreadScratchRegisterCalledThenUnsupportedFeatureReturned) {
-    SIP::version version = {3, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version, device);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, 0, 1, nullptr));
+    session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToModuleDebugAreaBindInfo[0] = {debugSurfaceAddress, debugSurfaceSize};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, 0, 2, scratch));
+    EXPECT_EQ(scratch[0], debugSurfaceAddress);
+    EXPECT_EQ(scratch[1], debugSurfaceSize);
 }
 
 TEST_F(DebugApiRegistersAccessTest, givenReadModeRegisterCalledThenSuccessIsReturned) {

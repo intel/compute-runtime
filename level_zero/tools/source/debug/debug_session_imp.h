@@ -102,8 +102,8 @@ struct DebugSessionImp : DebugSession {
 
     ze_result_t readSbaRegisters(EuThread::ThreadId thread, uint32_t start, uint32_t count, void *pRegisterValues);
     ze_result_t readModeFlags(uint32_t start, uint32_t count, void *pRegisterValues);
-    ze_result_t readDebugScratchRegisters([[maybe_unused]] uint32_t start, [[maybe_unused]] uint32_t count, [[maybe_unused]] void *pRegisterValues);
-    ze_result_t readThreadScratchRegisters([[maybe_unused]] EuThread::ThreadId thread, [[maybe_unused]] uint32_t start, [[maybe_unused]] uint32_t count, [[maybe_unused]] void *pRegisterValues);
+    ze_result_t readDebugScratchRegisters(uint32_t start, uint32_t count, void *pRegisterValues);
+    MOCKABLE_VIRTUAL ze_result_t readThreadScratchRegisters(EuThread::ThreadId thread, uint32_t start, uint32_t count, void *pRegisterValues);
 
     MOCKABLE_VIRTUAL bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0);
     MOCKABLE_VIRTUAL bool isAIPequalToThreadStartIP(uint32_t *cr0, uint32_t *dbg0);

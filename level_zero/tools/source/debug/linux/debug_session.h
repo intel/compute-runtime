@@ -94,6 +94,7 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override;
     ze_result_t writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) override;
     bool readModuleDebugArea() override;
+    DebugAreaInfo getModuleDebugAreaInfo() override;
     ze_result_t readSbaBuffer(EuThread::ThreadId, NEO::SbaTrackedAddresses &sbaBuffer) override;
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override;
     size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override;

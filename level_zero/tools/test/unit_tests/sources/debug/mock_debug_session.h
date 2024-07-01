@@ -296,6 +296,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
     }
 
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
+        readGpuMemoryCallCount++;
+        if (forcereadGpuMemoryFailOnCount == readGpuMemoryCallCount) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
         if (gpuVa != 0 && gpuVa >= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data()) &&
             ((gpuVa + size) <= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data() + stateSaveAreaHeader.size()))) {
             [[maybe_unused]] auto offset = ptrDiff(gpuVa, reinterpret_cast<uint64_t>(stateSaveAreaHeader.data()));
@@ -317,6 +321,14 @@ struct MockDebugSession : public L0::DebugSessionImp {
             memcpy_s(reinterpret_cast<void *>(gpuVa), size, input, size);
         }
         return writeMemoryResult;
+    }
+
+    ze_result_t readThreadScratchRegisters(EuThread::ThreadId thread, uint32_t start, uint32_t count, void *pRegisterValues) override {
+
+        if (readThreadScratchRegistersResult != ZE_RESULT_FORCE_UINT32) {
+            return readThreadScratchRegistersResult;
+        }
+        return DebugSessionImp::readThreadScratchRegisters(thread, start, count, pRegisterValues);
     }
 
     void resumeAccidentallyStoppedThreads(const std::vector<EuThread::ThreadId> &threadIds) override {
@@ -516,12 +528,16 @@ struct MockDebugSession : public L0::DebugSessionImp {
     ze_result_t readMemoryResult = ZE_RESULT_SUCCESS;
     ze_result_t writeMemoryResult = ZE_RESULT_SUCCESS;
     ze_result_t writeRegistersResult = ZE_RESULT_FORCE_UINT32;
+    ze_result_t readThreadScratchRegistersResult = ZE_RESULT_FORCE_UINT32;
 
     uint32_t readStateSaveAreaHeaderCalled = 0;
     uint32_t readRegistersCallCount = 0;
     uint32_t readRegistersReg = 0;
     uint32_t writeRegistersCallCount = 0;
     uint32_t writeRegistersReg = 0;
+
+    uint32_t readGpuMemoryCallCount = 0;
+    uint32_t forcereadGpuMemoryFailOnCount = 0;
 
     bool skipWriteResumeCommand = true;
     uint32_t writeResumeCommandCalled = 0;

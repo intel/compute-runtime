@@ -51,18 +51,32 @@ void DebugSessionRegistersAccess::dumpRegisterState() {
     if (session->stateSaveAreaHeader.size() == 0) {
         return;
     }
-    auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+    auto pStateSaveAreaHeader = reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
 
-    for (uint32_t thread = 0; thread < pStateSaveAreaHeader->regHeader.num_threads_per_eu; thread++) {
-        EuThread::ThreadId threadId(0, 0, 0, 0, thread);
-        auto threadSlotOffset = session->calculateThreadSlotOffset(threadId);
+    if (pStateSaveAreaHeader->versionHeader.version.major >= 3) {
+        for (uint32_t thread = 0; thread < pStateSaveAreaHeader->regHeaderV3.num_threads_per_eu; thread++) {
+            EuThread::ThreadId threadId(0, 0, 0, 0, thread);
+            auto threadSlotOffset = session->calculateThreadSlotOffset(threadId);
 
-        auto srMagicOffset = threadSlotOffset + pStateSaveAreaHeader->regHeader.sr_magic_offset;
-        SIP::sr_ident srMagic;
-        srMagic.count = 1;
-        srMagic.version.major = pStateSaveAreaHeader->versionHeader.version.major;
+            auto srMagicOffset = threadSlotOffset + pStateSaveAreaHeader->regHeaderV3.sr_magic_offset;
+            SIP::sr_ident srMagic;
+            srMagic.count = 1;
+            srMagic.version.major = pStateSaveAreaHeader->versionHeader.version.major;
 
-        session->writeGpuMemory(0, reinterpret_cast<char *>(&srMagic), sizeof(srMagic), reinterpret_cast<uint64_t>(pStateSaveAreaHeader) + srMagicOffset);
+            session->writeGpuMemory(0, reinterpret_cast<char *>(&srMagic), sizeof(srMagic), reinterpret_cast<uint64_t>(pStateSaveAreaHeader) + srMagicOffset);
+        }
+    } else {
+        for (uint32_t thread = 0; thread < pStateSaveAreaHeader->regHeader.num_threads_per_eu; thread++) {
+            EuThread::ThreadId threadId(0, 0, 0, 0, thread);
+            auto threadSlotOffset = session->calculateThreadSlotOffset(threadId);
+
+            auto srMagicOffset = threadSlotOffset + pStateSaveAreaHeader->regHeader.sr_magic_offset;
+            SIP::sr_ident srMagic;
+            srMagic.count = 1;
+            srMagic.version.major = pStateSaveAreaHeader->versionHeader.version.major;
+
+            session->writeGpuMemory(0, reinterpret_cast<char *>(&srMagic), sizeof(srMagic), reinterpret_cast<uint64_t>(pStateSaveAreaHeader) + srMagicOffset);
+        }
     }
 }
 

@@ -2721,14 +2721,13 @@ TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipVersion2WhenCallingResum
     EXPECT_EQ(1u, session->writeResumeCommandCalled);
 }
 
-TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingDebugScratchRegisterThenUnsupportedFeatureReturned) {
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readDebugScratchRegisters(0, 0, nullptr));
-}
-
-TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingThreadScratchRegisterThenUnsupportedFeatureReturned) {
-    ze_device_thread_t thread = {0, 0, 0, 0};
-    EuThread::ThreadId threadId = {0, thread};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, session->readThreadScratchRegisters(threadId, 0, 0, nullptr));
+TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingDebugScratchRegisterThenErrorsHandled) {
+    uint64_t scratch[2];
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, session->readDebugScratchRegisters(5, 0, scratch));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, session->readDebugScratchRegisters(0, 5, scratch));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readDebugScratchRegisters(0, 2, scratch));
+    EXPECT_EQ(scratch[0], 0u);
+    EXPECT_EQ(scratch[1], 0u);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingModeRegisterThenCorrectResultReturned) {

@@ -157,7 +157,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
         0,                              // fifo_version;
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // reserved1[10];
         SIP::SIP_FLAG_HEAPLESS,         // sip_flags;
-        {0, grfNum, 256, 32},           // grf
+        {0, grfNum, 512, 64},           // grf
         {4096, 1, 256, 32},             // addr
         {4128, 2, 32, 4},               // flag
         {4156, 1, 32, 4},               // emask

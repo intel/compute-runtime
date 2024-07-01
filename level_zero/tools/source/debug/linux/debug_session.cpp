@@ -837,6 +837,12 @@ bool DebugSessionLinux::readModuleDebugArea() {
     return true;
 }
 
+DebugSessionLinux::DebugAreaInfo DebugSessionLinux::getModuleDebugAreaInfo() {
+    auto gpuVa = getClientConnection(clientHandle)->vmToModuleDebugAreaBindInfo.begin()->second.gpuVa;
+    auto size = getClientConnection(clientHandle)->vmToModuleDebugAreaBindInfo.begin()->second.size;
+    return {gpuVa, size};
+}
+
 ze_result_t DebugSessionLinux::readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) {
     auto vmHandle = allThreads[threadId]->getMemoryHandle();
 

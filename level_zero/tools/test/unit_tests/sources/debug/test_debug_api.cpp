@@ -370,7 +370,7 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV3HeaderCorrectPrope
         EXPECT_EQ(regsetProps.byteSize, bytes);
     };
 
-    validateRegsetProps(regsetProps[0], ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 128, 256, 32);
+    validateRegsetProps(regsetProps[0], ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 128, 512, 64);
     validateRegsetProps(regsetProps[1], ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 256, 32);
     validateRegsetProps(regsetProps[2], ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 2, 32, 4);
     validateRegsetProps(regsetProps[3], ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 1, 32, 4);
@@ -414,7 +414,7 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThen
         EXPECT_EQ(regsetProps.byteSize, bytes);
     };
 
-    validateRegsetProps(regsetProps[0], ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 128, 256, 32);
+    validateRegsetProps(regsetProps[0], ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 128, 512, 64);
     validateRegsetProps(regsetProps[1], ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 256, 32);
     validateRegsetProps(regsetProps[2], ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 2, 32, 4);
     validateRegsetProps(regsetProps[3], ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, 1, 32, 4);
@@ -598,7 +598,7 @@ TEST_F(DebugApiTest, givenZeAffinityMaskAndEnabledDebugMessagesWhenDebugAttachCa
     EXPECT_EQ(std::string("ZE_AFFINITY_MASK is not recommended while using program debug API\n"), output);
 }
 
-TEST_F(DebugApiTest, givenReadDebugScratchRegisterCalledThenUnsupportedFeatureReturned) {
+TEST_F(DebugApiTest, givenReadDebugScratchRegisterCalledThenSuccessIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -614,26 +614,10 @@ TEST_F(DebugApiTest, givenReadDebugScratchRegisterCalledThenUnsupportedFeatureRe
     EuThread::ThreadId stoppedThreadId{0, stoppedThread};
     session->allThreads[stoppedThreadId]->stopThread(1u);
     session->allThreads[stoppedThreadId]->reportAsStopped();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, 0, 1, nullptr));
-}
-
-TEST_F(DebugApiTest, givenReadThreadScratchRegisterCalledThenUnsupportedFeatureReturned) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
-
-    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-    auto session = new MockDebugSession(config, device, true);
-    session->initialize();
-    deviceImp->setDebugSession(session);
-    SIP::version version = {3, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version, device);
-    ze_device_thread_t stoppedThread = {0, 0, 0, 0};
-    EuThread::ThreadId stoppedThreadId{0, stoppedThread};
-    session->allThreads[stoppedThreadId]->stopThread(1u);
-    session->allThreads[stoppedThreadId]->reportAsStopped();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU, 0, 1, nullptr));
+    uint64_t scratch[2];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU, 0, 2, scratch));
+    EXPECT_EQ(scratch[0], 0u);
+    EXPECT_EQ(scratch[1], 0u);
 }
 
 TEST_F(DebugApiTest, givenReadModeRegisterCalledThenSuccessIsReturned) {

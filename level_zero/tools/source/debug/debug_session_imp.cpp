@@ -1217,10 +1217,27 @@ ze_result_t DebugSessionImp::readModeFlags(uint32_t start, uint32_t count, void 
     return ZE_RESULT_SUCCESS;
 }
 ze_result_t DebugSessionImp::readDebugScratchRegisters(uint32_t start, uint32_t count, void *pRegisterValues) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-ze_result_t DebugSessionImp::readThreadScratchRegisters(EuThread::ThreadId threadId, uint32_t start, uint32_t count, void *pRegisterValues) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    auto debugScratchRegDesc = DebugSessionImp::getDebugScratchRegsetDesc();
+
+    if (start >= debugScratchRegDesc->num) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (start + count > debugScratchRegDesc->num) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto info = getModuleDebugAreaInfo();
+
+    std::vector<uint64_t> packed;
+    packed.push_back(info.gpuVa);
+    packed.push_back(info.size);
+
+    size_t size = count * debugScratchRegDesc->bytes;
+    memcpy_s(pRegisterValues, size, &packed[start], size);
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint32_t start, uint32_t count, void *pRegisterValues) {
