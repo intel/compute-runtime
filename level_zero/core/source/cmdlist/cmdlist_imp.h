@@ -48,6 +48,7 @@ struct CommandListImp : public CommandList {
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
     void enableCopyOperationOffload(uint32_t productFamily, Device *device, const ze_command_queue_desc_t *desc);
     bool isCopyOffloadEnabled() const { return copyOperationOffloadEnabled; }
+    void setInterruptEventsCsr(NEO::CommandStreamReceiver &csr);
 
   protected:
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
@@ -62,7 +63,9 @@ struct CommandListImp : public CommandList {
     static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
     static constexpr bool cmdListDefaultMediaSamplerClockGate = false;
     static constexpr bool cmdListDefaultGlobalAtomics = false;
-    std::vector<Event *> mappedTsEventList{};
+    std::vector<Event *> mappedTsEventList;
+    std::vector<Event *> interruptEvents;
+
     bool copyOperationOffloadEnabled = false;
 };
 

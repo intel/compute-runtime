@@ -348,4 +348,10 @@ void CommandListImp::enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mo
     }
 }
 
+void CommandListImp::setInterruptEventsCsr(NEO::CommandStreamReceiver &csr) {
+    for (auto &event : interruptEvents) {
+        event->setCsr(&csr, true);
+    }
+}
+
 } // namespace L0

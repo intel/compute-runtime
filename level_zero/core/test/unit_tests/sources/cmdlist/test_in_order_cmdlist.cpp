@@ -389,6 +389,65 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
     EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInterruptableEventsWhenExecutingOnDifferentCsrThenAssignItToEventOnExecute, IsAtLeastXeHpCore) {
+    auto cmdList = createRegularCmdList<gfxCoreFamily>(false);
+    auto cmdlistHandle = cmdList->toHandle();
+
+    auto eventPool = createEvents<FamilyType>(3, false);
+    events[0]->enableKmdWaitMode();
+    events[1]->enableKmdWaitMode();
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[2]->toHandle(), 0, nullptr, launchParams, false);
+    cmdList->close();
+
+    ASSERT_EQ(2u, cmdList->interruptEvents.size());
+    EXPECT_EQ(events[0].get(), cmdList->interruptEvents[0]);
+    EXPECT_EQ(events[1].get(), cmdList->interruptEvents[1]);
+
+    ze_command_queue_desc_t desc = {};
+
+    NEO::CommandStreamReceiver *csr1 = nullptr;
+    for (auto &it : device->getNEODevice()->getAllEngines()) {
+        if (it.osContext->isLowPriority() && NEO::EngineHelpers::isComputeEngine(it.osContext->getEngineType())) {
+            csr1 = it.commandStreamReceiver;
+            break;
+        }
+    }
+
+    ASSERT_NE(nullptr, csr1);
+
+    auto firstQueue = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, csr1, &desc);
+    firstQueue->initialize(false, false, false);
+
+    auto csr2 = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    ASSERT_NE(nullptr, csr2);
+    auto secondQueue = makeZeUniquePtr<MockCommandQueueHw<gfxCoreFamily>>(device, csr2, &desc);
+    secondQueue->initialize(false, false, false);
+
+    EXPECT_NE(firstQueue->getCsr(), secondQueue->getCsr());
+
+    firstQueue->executeCommandLists(1, &cmdlistHandle, nullptr, false, nullptr);
+    EXPECT_EQ(1u, events[0]->csrs.size());
+    EXPECT_EQ(firstQueue->getCsr(), events[0]->csrs[0]);
+    EXPECT_EQ(1u, events[1]->csrs.size());
+    EXPECT_EQ(firstQueue->getCsr(), events[1]->csrs[0]);
+    EXPECT_EQ(1u, events[2]->csrs.size());
+    EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, events[2]->csrs[0]);
+
+    secondQueue->executeCommandLists(1, &cmdlistHandle, nullptr, false, nullptr);
+    EXPECT_EQ(1u, events[0]->csrs.size());
+    EXPECT_EQ(secondQueue->getCsr(), events[0]->csrs[0]);
+    EXPECT_EQ(1u, events[1]->csrs.size());
+    EXPECT_EQ(secondQueue->getCsr(), events[1]->csrs[0]);
+    EXPECT_EQ(1u, events[2]->csrs.size());
+    EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, events[2]->csrs[0]);
+
+    cmdList->reset();
+    EXPECT_EQ(0u, cmdList->interruptEvents.size());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenWaitForUserFenceWithParams, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 

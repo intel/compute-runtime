@@ -143,6 +143,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     cmdListCurrentStartOffset = 0;
 
     mappedTsEventList.clear();
+    interruptEvents.clear();
 
     if (inOrderExecInfo) {
         inOrderExecInfo.reset();
@@ -3958,8 +3959,14 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             return false;
         }
 
-        if (!isImmediateType() && !(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE)) {
-            return false;
+        if (!isImmediateType()) {
+            if (!(counterBasedFlags & ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE)) {
+                return false;
+            }
+
+            if (signalEvent->isKmdWaitModeEnabled()) {
+                this->interruptEvents.push_back(signalEvent);
+            }
         }
     }
 

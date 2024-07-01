@@ -91,6 +91,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::inOrderAtomicSignalingEnabled;
     using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;
+    using BaseClass::interruptEvents;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isInOrderNonWalkerSignalingRequired;
     using BaseClass::isQwordInOrderCounter;
@@ -209,6 +210,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::inOrderAtomicSignalingEnabled;
     using BaseClass::inOrderExecInfo;
     using BaseClass::inOrderPatchCmds;
+    using BaseClass::interruptEvents;
     using BaseClass::isBcsSplitNeeded;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isInOrderNonWalkerSignalingRequired;
@@ -290,6 +292,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::initialize;
     using BaseClass::inOrderExecInfo;
+    using BaseClass::interruptEvents;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;

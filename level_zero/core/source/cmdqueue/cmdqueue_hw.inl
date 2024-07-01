@@ -731,6 +731,7 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         commandList->storeReferenceTsToMappedEvents(false);
         commandList->addRegularCmdListSubmissionCounter();
         commandList->patchInOrderCmds();
+        commandList->setInterruptEventsCsr(*this->csr);
 
         auto &commandContainer = commandList->getCmdContainer();
 
