@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,7 @@ std::vector<std::string> getFiles(const std::string &path) {
 void createDirectory(const std::string &path) {
     const mode_t mode = 0777; // 777 in base 8
     [[maybe_unused]] auto status = mkdir(path.c_str(), mode);
-    DEBUG_BREAK_IF(status != 0);
+    DEBUG_BREAK_IF(status != 0 && errno != EEXIST);
 }
+
 }; // namespace NEO::Directory

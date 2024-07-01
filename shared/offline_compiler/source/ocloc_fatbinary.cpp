@@ -20,6 +20,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/utilities/directory.h"
 
 #include "igfxfmid.h"
 #include "platforms.h"
@@ -424,14 +425,15 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
 
     std::string fatbinaryFileName = "";
 
-    if (false == outputDirectory.empty()) {
+    if (!outputDirectory.empty()) {
         fatbinaryFileName = outputDirectory + "/";
+        NEO::Directory::getDirectories(outputDirectory, NEO::Directory::createDirs);
     }
 
-    if (false == outputFileName.empty()) {
+    if (!outputFileName.empty()) {
         fatbinaryFileName += outputFileName;
     } else {
-        if (false == inputFileName.empty()) {
+        if (!inputFileName.empty()) {
             fatbinaryFileName += OfflineCompiler::getFileNameTrunk(inputFileName) + ".ar";
         }
     }
