@@ -1121,7 +1121,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     if (eventBuilder.getEvent() && isProfilingEnabled() && !isBcsSplitInitialized()) {
         auto event = eventBuilder.getEvent();
         event->setSubmitTimeStamp();
-        if (enqueueProperties.isStartTimestampOnCpuRequired()) {
+        if (enqueueProperties.isStartTimestampOnCpuRequired() || !getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             event->setStartTimeStamp();
         }
     }
