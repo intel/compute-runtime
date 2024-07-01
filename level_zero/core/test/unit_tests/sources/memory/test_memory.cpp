@@ -3948,7 +3948,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
     L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
-    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, false);
+    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -3990,7 +3990,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr0 = nullptr;
     L0::DeviceImp *deviceImp0 = static_cast<L0::DeviceImp *>(device0);
-    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, false);
+    auto ret = deviceImp0->getCsrForOrdinalAndIndex(&csr0, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -4040,7 +4040,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
     L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
-    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, false);
+    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;
@@ -4081,7 +4081,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     auto svmManager = driverHandle->getSvmAllocsManager();
     NEO::CommandStreamReceiver *csr = nullptr;
     L0::DeviceImp *deviceImp1 = static_cast<L0::DeviceImp *>(device1);
-    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, false);
+    auto ret = deviceImp1->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     ASSERT_EQ(ret, ZE_RESULT_SUCCESS);
 
     size_t size = 1024;

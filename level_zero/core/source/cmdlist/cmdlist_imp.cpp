@@ -189,7 +189,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                 engineGroupType = deviceImp->getInternalEngineGroupType();
             }
         } else {
-            returnValue = device->getCsrForOrdinalAndIndexWithPriority(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.interruptHint);
+            returnValue = device->getCsrForOrdinalAndIndex(&csr, cmdQdesc.ordinal, cmdQdesc.index, cmdQdesc.priority, queueProperties.interruptHint);
             if (returnValue != ZE_RESULT_SUCCESS) {
                 return commandList;
             }
@@ -265,7 +265,7 @@ void CommandListImp::enableCopyOperationOffload(uint32_t productFamily, Device *
     NEO::CommandStreamReceiver *copyCsr = nullptr;
     uint32_t ordinal = static_cast<DeviceImp *>(device)->getCopyEngineOrdinal();
 
-    device->getCsrForOrdinalAndIndexWithPriority(&copyCsr, ordinal, 0, desc->priority, false);
+    device->getCsrForOrdinalAndIndex(&copyCsr, ordinal, 0, desc->priority, false);
     UNRECOVERABLE_IF(!copyCsr);
 
     ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};

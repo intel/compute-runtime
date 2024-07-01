@@ -949,7 +949,7 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
 
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr, &desc);
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
 
@@ -1000,7 +1000,7 @@ using IsWithinNotSupported = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWhenPatchCommandsIsCalledThenAbortIsThrown, IsWithinNotSupported) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr, &desc);
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
 

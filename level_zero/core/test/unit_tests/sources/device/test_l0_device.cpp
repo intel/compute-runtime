@@ -4555,7 +4555,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingLowPriorityCsrThenCorr
         MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
         NEO::CommandStreamReceiver *lowPriorityCsr = nullptr;
-        auto result = deviceImp.getCsrForLowPriority(&lowPriorityCsr);
+        auto result = deviceImp.getCsrForLowPriority(&lowPriorityCsr, device->getNEODevice()->getDefaultEngine().getEngineType());
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, lowPriorityCsr);
 
@@ -4640,7 +4640,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         ASSERT_TRUE(engineGroups[ordinal].engineGroupType == NEO::EngineGroupType::compute);
 
         uint32_t index = 1;
-        auto result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
+        auto result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, highPriorityCsr);
 
@@ -4657,7 +4657,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         EXPECT_TRUE(highPriorityCsr->getOsContext().isPartOfContextGroup());
         EXPECT_NE(nullptr, highPriorityCsr->getOsContext().getPrimaryContext());
 
-        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr2, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
+        result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr2, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, highPriorityCsr2);
         EXPECT_NE(highPriorityCsr, highPriorityCsr2);
@@ -4666,12 +4666,12 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         EXPECT_TRUE(highPriorityCsr2->getOsContext().isPartOfContextGroup());
 
         index = 100;
-        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
+        result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
         index = 0;
         ordinal = 100;
-        result = deviceImp.getCsrForOrdinalAndIndexWithPriority(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
+        result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }
 }
@@ -5075,7 +5075,10 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhen
     auto &defaultEngine = deviceImp->getActiveDevice()->getDefaultEngine();
 
     NEO::CommandStreamReceiver *csr = nullptr;
-    auto ret = deviceImp->getCsrForLowPriority(&csr);
+    EXPECT_ANY_THROW(deviceImp->getCsrForLowPriority(&csr, defaultEngine.getEngineType()));
+
+    auto ret = deviceImp->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, false);
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
 }

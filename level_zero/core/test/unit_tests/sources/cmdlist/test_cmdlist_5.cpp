@@ -875,7 +875,7 @@ HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileDirectSubmissionComm
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, false);
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
@@ -896,7 +896,7 @@ HWTEST_F(CommandListCreate, givenMetricsImmediateCopyOnlySingleTileDirectSubmiss
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, false);
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
@@ -916,7 +916,7 @@ HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenC
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, false);
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
@@ -969,7 +969,7 @@ HWTEST_F(CommandListCreate, givenDirectSubmissionFlatRingBufferFlagDisabledImmed
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, false);
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
@@ -997,7 +997,7 @@ HWTEST_F(CommandListCreateImplicitScaling, givenImmediateCopyOnlyDirectSubmissio
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, false);
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
@@ -1010,7 +1010,7 @@ HWTEST_F(CommandListCreate, givenCopyOnlySingleTileDirectSubmissionCommandListWh
     debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
     ze_result_t returnValue;
     CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, false);
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
     reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);

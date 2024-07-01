@@ -115,9 +115,8 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size, bool hostCopyAllowed) override;
     void setSysmanHandle(SysmanDevice *pSysman) override;
     SysmanDevice *getSysmanHandle() override;
-    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, bool allocateInterrupt) override;
-    ze_result_t getCsrForOrdinalAndIndexWithPriority(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, bool allocateInterrupt) override;
-    ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) override;
+    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, bool allocateInterrupt) override;
+    ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr, aub_stream::EngineType engineType) override;
     bool isSuitableForLowPriority(ze_command_queue_priority_t priority, bool copyOnly);
     NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::AllocationType type) override;
     void storeReusableAllocation(NEO::GraphicsAllocation &alloc) override;
