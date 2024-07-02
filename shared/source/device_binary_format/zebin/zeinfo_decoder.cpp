@@ -567,6 +567,8 @@ DecodeError decodeZeInfoKernelEntry(NEO::KernelDescriptor &dst, NEO::Yaml::YamlP
         dst.kernelAttributes.numArgsStateful = std::max(dst.kernelAttributes.numArgsStateful, static_cast<uint16_t>(dst.payloadMappings.bindingTable.numEntries));
     }
 
+    DEBUG_BREAK_IF(dst.payloadMappings.samplerTable.numSamplers < dst.inlineSamplers.size());
+
     if (dst.payloadMappings.samplerTable.numSamplers > 0U) {
         generateDSH(dst);
     }

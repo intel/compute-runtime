@@ -212,10 +212,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     // add offset of graphics allocation base address relative to heap base address
                     samplerStateOffset += static_cast<uint32_t>(ptrDiff(dsHeap->getGpuBase(), args.device->getBindlessHeapsHelper()->getGlobalHeapsBase()));
                 }
+
+                args.dispatchInterface->patchSamplerBindlessOffsetsInCrossThreadData(samplerStateOffset);
             }
 
             idd.setSamplerStatePointer(samplerStateOffset);
-            args.dispatchInterface->patchSamplerBindlessOffsetsInCrossThreadData(samplerStateOffset);
         }
     }
 
