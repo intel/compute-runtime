@@ -1167,41 +1167,29 @@ void IoctlHelperXe::xeShowBindTable() {
 }
 
 int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex, bool allocateInterrupt) {
-    drm_xe_exec_queue_create create = {};
     uint32_t drmContextId = 0;
 
     xeLog("createDrmContext VM=0x%x\n", drmVmId);
     drm.bindDrmContext(drmContextId, deviceIndex, osContext.getEngineType(), osContext.isEngineInstanced());
 
-    size_t n = contextParamEngine.size();
-    UNRECOVERABLE_IF(n == 0);
-    create.vm_id = drmVmId;
-    create.width = 1;
-    create.instances = castToUint64(contextParamEngine.data());
-    create.num_placements = contextParamEngine.size();
+    UNRECOVERABLE_IF(contextParamEngine.empty());
 
     std::array<drm_xe_ext_set_property, maxContextSetProperties> extProperties{};
-    uint32_t extPropertyIndex = 0;
-
-    auto &gfxCoreHelper = drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
-    if ((contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_RENDER) || (contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_COMPUTE)) {
-        if (gfxCoreHelper.isRunaloneModeRequired(drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode())) {
-            extProperties[extPropertyIndex].base.next_extension = 0;
-            extProperties[extPropertyIndex].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
-            extProperties[extPropertyIndex].property = getRunaloneExtProperty();
-            extProperties[extPropertyIndex].value = 1;
-            extPropertyIndex++;
-        }
-    }
+    uint32_t extPropertyIndex{0U};
+    setOptionalContextProperties(drm, &extProperties, extPropertyIndex);
     setContextProperties(osContext, &extProperties, extPropertyIndex);
-    applyContextFlags(&create, allocateInterrupt);
 
-    if (extPropertyIndex > 0) {
-        create.extensions = castToUint64(&extProperties[0]);
-    }
+    drm_xe_exec_queue_create create{};
+    create.width = 1;
+    create.num_placements = contextParamEngine.size();
+    create.vm_id = drmVmId;
+    create.instances = castToUint64(contextParamEngine.data());
+    create.extensions = (extPropertyIndex > 0U ? castToUint64(extProperties.data()) : 0UL);
+    applyContextFlags(&create, allocateInterrupt);
 
     int ret = IoctlHelper::ioctl(DrmIoctl::gemContextCreateExt, &create);
     drmContextId = create.exec_queue_id;
+
     xeLog("%s:%d (%d) vmid=0x%x ctx=0x%x r=0x%x\n", xeGetClassName(contextParamEngine[0].engine_class),
           contextParamEngine[0].engine_instance, create.num_placements, drmVmId, drmContextId, ret);
     if (ret != 0) {
@@ -1473,7 +1461,6 @@ void IoctlHelperXe::registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation)
         break;
     default:
         return;
-        break;
     }
 
     uint64_t gpuAddress = drmAllocation->getGpuAddress();
@@ -1492,6 +1479,22 @@ void IoctlHelperXe::registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation)
 
 bool IoctlHelperXe::getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) {
     return false;
+}
+
+void IoctlHelperXe::setOptionalContextProperties(Drm &drm, void *extProperties, uint32_t &extIndexInOut) {
+
+    auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
+
+    auto &gfxCoreHelper = drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    if ((contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_RENDER) || (contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_COMPUTE)) {
+        if (gfxCoreHelper.isRunaloneModeRequired(drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode())) {
+            ext[extIndexInOut].base.next_extension = 0;
+            ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
+            ext[extIndexInOut].property = getRunaloneExtProperty();
+            ext[extIndexInOut].value = 1;
+            extIndexInOut++;
+        }
+    }
 }
 
 void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut) {

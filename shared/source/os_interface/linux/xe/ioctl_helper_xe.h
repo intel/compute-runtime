@@ -165,6 +165,7 @@ class IoctlHelperXe : public IoctlHelper {
     };
 
     uint16_t getDefaultEngineClass(const aub_stream::EngineType &defaultEngineType);
+    void setOptionalContextProperties(Drm &drm, void *extProperties, uint32_t &extIndexInOut);
     virtual void setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut);
     virtual void applyContextFlags(void *execQueueCreate, bool allocateInterrupt){};
 
