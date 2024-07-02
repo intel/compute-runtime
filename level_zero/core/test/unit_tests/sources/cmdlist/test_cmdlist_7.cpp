@@ -2137,5 +2137,46 @@ TEST(CommandList, givenCopyContextGroupEnabledWhenCreatingImmediateCommandListTh
     commandList2->destroy();
 }
 
+TEST(CommandList, givenLowPriorityCopyEngineWhenCreatingCmdListThenAssignCorrectEngine) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.ftrBcsInfo = 0b111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = static_cast<DeviceImp *>(driverHandle->devices[0]);
+
+    auto &engines = device->getNEODevice()->getAllEngines();
+
+    auto lpBcsEngine = std::find_if(engines.begin(), engines.end(), [](const auto &engine) {
+        return ((engine.getEngineUsage() == EngineUsage::lowPriority) && EngineHelpers::isBcs(engine.getEngineType()));
+    });
+
+    if (lpBcsEngine == engines.end()) {
+        GTEST_SKIP();
+    }
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = device->getCopyEngineOrdinal();
+    desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+    ze_command_list_handle_t commandListHandle;
+
+    auto result = device->createCommandListImmediate(&desc, &commandListHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandList = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle));
+
+    EXPECT_EQ(commandList->getCsr(false), lpBcsEngine->commandStreamReceiver);
+
+    commandList->destroy();
+}
+
 } // namespace ult
 } // namespace L0

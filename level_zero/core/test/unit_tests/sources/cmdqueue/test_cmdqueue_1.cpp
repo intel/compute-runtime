@@ -788,7 +788,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueI
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_TRUE(commandQueue->getCsr()->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForLowPriority(&csr, device->getNEODevice()->getDefaultEngine().getEngineType());
+    device->getCsrForLowPriority(&csr, false);
     EXPECT_EQ(commandQueue->getCsr(), csr);
     commandQueue->destroy();
 }
@@ -873,7 +873,7 @@ struct DeferredContextCreationDeviceCreateCommandQueueTest : DeviceCreateCommand
 
 TEST_F(DeferredContextCreationDeviceCreateCommandQueueTest, givenLowPriorityEngineNotInitializedWhenCreateLowPriorityCommandQueueIsCalledThenEngineIsInitialized) {
     NEO::CommandStreamReceiver *lowPriorityCsr = nullptr;
-    device->getCsrForLowPriority(&lowPriorityCsr, device->getNEODevice()->getDefaultEngine().getEngineType());
+    device->getCsrForLowPriority(&lowPriorityCsr, false);
     ASSERT_FALSE(lowPriorityCsr->getOsContext().isInitialized());
 
     ze_command_queue_desc_t desc{};
@@ -906,7 +906,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateImmediateComm
     EXPECT_NE(commandList, nullptr);
     EXPECT_TRUE(commandList->getCsr(false)->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForLowPriority(&csr, device->getNEODevice()->getDefaultEngine().getEngineType());
+    device->getCsrForLowPriority(&csr, false);
     EXPECT_EQ(commandList->getCsr(false), csr);
     commandList->destroy();
 }
@@ -1012,7 +1012,7 @@ TEST_F(MultiDeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQ
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_TRUE(commandQueue->getCsr()->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForLowPriority(&csr, device->getNEODevice()->getDefaultEngine().getEngineType());
+    device->getCsrForLowPriority(&csr, false);
     EXPECT_EQ(commandQueue->getCsr(), csr);
     commandQueue->destroy();
 }

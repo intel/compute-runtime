@@ -4555,7 +4555,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingLowPriorityCsrThenCorr
         MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
         NEO::CommandStreamReceiver *lowPriorityCsr = nullptr;
-        auto result = deviceImp.getCsrForLowPriority(&lowPriorityCsr, device->getNEODevice()->getDefaultEngine().getEngineType());
+        auto result = deviceImp.getCsrForLowPriority(&lowPriorityCsr, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, lowPriorityCsr);
 
@@ -5075,7 +5075,7 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhen
     auto &defaultEngine = deviceImp->getActiveDevice()->getDefaultEngine();
 
     NEO::CommandStreamReceiver *csr = nullptr;
-    EXPECT_ANY_THROW(deviceImp->getCsrForLowPriority(&csr, defaultEngine.getEngineType()));
+    EXPECT_ANY_THROW(deviceImp->getCsrForLowPriority(&csr, false));
 
     auto ret = deviceImp->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, false);
 
