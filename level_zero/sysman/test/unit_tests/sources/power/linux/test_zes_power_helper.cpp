@@ -32,7 +32,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidDeviceHandlesAndHwmo
     uint32_t subdeviceId = 0;
     do {
         ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-        PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman, onSubdevice, subdeviceId);
+        PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, ZES_POWER_DOMAIN_CARD);
         EXPECT_TRUE(pPowerImp->isPowerModuleSupported());
         delete pPowerImp;
 

@@ -58,7 +58,7 @@ ze_result_t LinuxPowerImp::getDefaultLimit(int32_t &defaultLimit) {
 }
 
 ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
-    pExtPoperties->domain = isSubdevice ? ZES_POWER_DOMAIN_PACKAGE : ZES_POWER_DOMAIN_CARD;
+    pExtPoperties->domain = isSubdevice ? ZES_POWER_DOMAIN_PACKAGE : powerDomain;
     if (pExtPoperties->defaultLimit) {
         if (!isSubdevice) {
             uint64_t val = 0;
@@ -320,7 +320,7 @@ bool LinuxPowerImp::isPowerModuleSupported() {
     return true;
 }
 
-LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
+LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), powerDomain(powerDomain) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
@@ -328,8 +328,13 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
 }
 
-OsPower *OsPower::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
-    LinuxPowerImp *pLinuxPowerImp = new LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId);
+std::vector<zes_power_domain_t> OsPower::getNumberOfPowerDomainsSupported(OsSysman *pOsSysman) {
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD};
+    return powerDomains;
+}
+
+OsPower *OsPower::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) {
+    LinuxPowerImp *pLinuxPowerImp = new LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, powerDomain);
     return static_cast<OsPower *>(pLinuxPowerImp);
 }
 } // namespace Sysman

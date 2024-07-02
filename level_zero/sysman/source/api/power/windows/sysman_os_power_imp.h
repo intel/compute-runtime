@@ -26,13 +26,14 @@ class WddmPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) override;
 
     bool isPowerModuleSupported() override;
-    WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
+    WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);
     WddmPowerImp() = default;
     ~WddmPowerImp() override = default;
 
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
     uint32_t powerLimitCount = 0;
+    zes_power_domain_t powerDomain = ZES_POWER_DOMAIN_CARD;
 };
 
 } // namespace Sysman

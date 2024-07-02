@@ -12,7 +12,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint32_t powerHandleComponentCount = 1u;
+constexpr uint32_t powerHandleComponentCount = 2u;
 class SysmanDevicePowerFixture : public SysmanDeviceFixture {
 
   protected:
@@ -57,6 +57,33 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
     EXPECT_EQ(count, powerHandleComponentCount);
 }
 
+TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithOnlyOneDomainSupportedThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+    init(true);
+
+    uint32_t count = 0;
+    pKmdSysManager->mockPowerDomainCount = 1;
+    EXPECT_EQ(zesDeviceEnumPowerDomains(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, pKmdSysManager->mockPowerDomainCount);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithKmdFailureThenZeroCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+    init(true);
+
+    uint32_t count = 0;
+    pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::NumPowerDomains] = 1;
+    EXPECT_EQ(zesDeviceEnumPowerDomains(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 0u);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithUnexpectedValueFromKmdForDomainsSupportedThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+    init(true);
+
+    uint32_t count = 0;
+    pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::NumPowerDomains] = 3;
+    EXPECT_EQ(zesDeviceEnumPowerDomains(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 0u);
+}
+
 TEST_F(SysmanDevicePowerFixture, GivenPowerDomainsAreEnumeratedWhenCallingIsPowerInitCompletedThenVerifyPowerInitializationIsCompleted) {
     init(true);
 
@@ -93,7 +120,7 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesThenErrorIsReturned) {
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesThenCallSucceeds) {
     // Setting allow set calls or not
     init(true);
 
@@ -111,7 +138,68 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
 
         ze_result_t result = zesPowerGetProperties(handle, &properties);
 
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_TRUE(properties.canControl);
+        EXPECT_TRUE(properties.isEnergyThresholdSupported);
+        EXPECT_EQ(static_cast<uint32_t>(properties.maxLimit), pKmdSysManager->mockMaxPowerLimit);
+        EXPECT_EQ(static_cast<uint32_t>(properties.minLimit), pKmdSysManager->mockMinPowerLimit);
+        EXPECT_EQ(static_cast<uint32_t>(properties.defaultLimit), pKmdSysManager->mockTpdDefault);
+        EXPECT_TRUE(defaultLimit.limitValueLocked);
+        EXPECT_TRUE(defaultLimit.enabledStateLocked);
+        EXPECT_EQ(ZES_POWER_SOURCE_ANY, defaultLimit.source);
+        EXPECT_EQ(ZES_LIMIT_UNIT_POWER, defaultLimit.limitUnit);
+        EXPECT_EQ(defaultLimit.limit, static_cast<int32_t>(pKmdSysManager->mockTpdDefault));
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndExtPropertiesWithUnsetDefaultLimitThenCallSucceeds) {
+    // Setting allow set calls or not
+    init(true);
+
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        properties.pNext = &extProperties;
+
+        ze_result_t result = zesPowerGetProperties(handle, &properties);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+        EXPECT_TRUE(properties.canControl);
+        EXPECT_TRUE(properties.isEnergyThresholdSupported);
+        EXPECT_EQ(static_cast<uint32_t>(properties.maxLimit), pKmdSysManager->mockMaxPowerLimit);
+        EXPECT_EQ(static_cast<uint32_t>(properties.minLimit), pKmdSysManager->mockMinPowerLimit);
+        EXPECT_EQ(static_cast<uint32_t>(properties.defaultLimit), pKmdSysManager->mockTpdDefault);
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndDefaultPowerIsNotAvailableThenCallSucceedsAndDefaultLimitIsInvalid) {
+    // Setting allow set calls or not
+    init(true);
+
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        zes_power_limit_ext_desc_t defaultLimit = {};
+
+        extProperties.defaultLimit = &defaultLimit;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        properties.pNext = &extProperties;
+
+        pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::TdpDefault] = 1;
+        ze_result_t result = zesPowerGetProperties(handle, &properties);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(defaultLimit.limit, -1);
     }
 }
 
@@ -375,15 +463,15 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetAnsSetPowerL
         pKmdSysManager->mockRequestMultiple = false;
         pKmdSysManager->requestMultipleSizeDiff = false;
 
-        pKmdSysManager->mockPowerLimit2EnabledFailure = true;
+        pKmdSysManager->mockPowerLimit2Enabled = 0;
         count = mockLimitCount;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, allLimits.data()));
-        pKmdSysManager->mockPowerLimit2EnabledFailure = false;
+        pKmdSysManager->mockPowerLimit2Enabled = 1;
 
-        pKmdSysManager->mockPowerLimit1EnabledFailure = true;
+        pKmdSysManager->mockPowerLimit1Enabled = 0;
         count = mockLimitCount;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, allLimits.data()));
-        pKmdSysManager->mockPowerLimit1EnabledFailure = false;
+        pKmdSysManager->mockPowerLimit1Enabled = 1;
 
         allLimits[0].level = ZES_POWER_LEVEL_UNKNOWN;
         count = mockLimitCount;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #pragma once
 
 #include <level_zero/zes_api.h>
+
+#include <vector>
 
 namespace L0 {
 namespace Sysman {
@@ -26,7 +28,9 @@ class OsPower {
     virtual ze_result_t getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) = 0;
 
     virtual bool isPowerModuleSupported() = 0;
-    static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
+    static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);
+    static std::vector<zes_power_domain_t> getNumberOfPowerDomainsSupported(OsSysman *pOsSysman);
+
     virtual ~OsPower() = default;
 };
 

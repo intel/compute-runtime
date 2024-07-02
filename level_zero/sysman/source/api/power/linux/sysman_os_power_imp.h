@@ -36,7 +36,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     bool isPowerModuleSupported() override;
     bool isIntelGraphicsHwmonDir(const std::string &name);
     ze_result_t getPmtEnergyCounter(zes_power_energy_counter_t *pEnergy);
-    LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
+    LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);
     LinuxPowerImp() = default;
     ~LinuxPowerImp() override = default;
 
@@ -55,6 +55,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     uint32_t powerLimitCount = 0;
+    zes_power_domain_t powerDomain = ZES_POWER_DOMAIN_CARD;
 
     ze_result_t getErrorCode(ze_result_t result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {

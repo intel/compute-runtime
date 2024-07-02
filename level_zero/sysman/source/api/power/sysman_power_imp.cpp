@@ -64,9 +64,9 @@ ze_result_t PowerImp::powerSetEnergyThreshold(double threshold) {
     return pOsPower->setEnergyThreshold(threshold);
 }
 
-PowerImp::PowerImp(OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId) {
+PowerImp::PowerImp(OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId, zes_power_domain_t powerDomain) {
 
-    pOsPower = OsPower::create(pOsSysman, isSubDevice, subDeviceId);
+    pOsPower = OsPower::create(pOsSysman, isSubDevice, subDeviceId, powerDomain);
     UNRECOVERABLE_IF(nullptr == pOsPower);
     this->isCardPower = isSubDevice ? false : true;
     init();

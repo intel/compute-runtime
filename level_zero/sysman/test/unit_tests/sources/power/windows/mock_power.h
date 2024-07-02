@@ -16,6 +16,7 @@ constexpr uint32_t mockLimitCount = 3u;
 
 struct PowerKmdSysManager : public MockKmdSysManager {
 
+    uint32_t mockPowerDomainCount = 2;
     uint32_t mockPowerLimit1Enabled = 1;
     uint32_t mockPowerLimit2Enabled = 1;
     int32_t mockPowerLimit1 = 25000;
@@ -32,8 +33,6 @@ struct PowerKmdSysManager : public MockKmdSysManager {
     uint32_t mockEnergyUnit = 14;
     uint64_t mockEnergyCounter64Bit = 32323232323232;
     uint32_t mockFrequencyTimeStamp = 38400000;
-    bool mockPowerLimit2EnabledFailure = false;
-    bool mockPowerLimit1EnabledFailure = false;
     uint32_t mockPowerFailure[KmdSysman::Requests::Power::MaxPowerRequests] = {0};
 
     void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
@@ -63,6 +62,12 @@ struct PowerKmdSysManager : public MockKmdSysManager {
         pBuffer += sizeof(KmdSysman::GfxSysmanReqHeaderOut);
 
         switch (pRequest->inRequestId) {
+        case KmdSysman::Requests::Power::NumPowerDomains: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockPowerDomainCount;
+            pResponse->outReturnCode = getReturnCode(pRequest->inRequestId);
+            pResponse->outDataSize = sizeof(uint32_t);
+        } break;
         case KmdSysman::Requests::Power::EnergyThresholdSupported: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = static_cast<uint32_t>(this->allowSetCalls);
@@ -89,21 +94,13 @@ struct PowerKmdSysManager : public MockKmdSysManager {
         } break;
         case KmdSysman::Requests::Power::PowerLimit1Enabled: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
-            if (mockPowerLimit1EnabledFailure) {
-                *pValue = 0;
-            } else {
-                *pValue = mockPowerLimit1Enabled;
-            }
+            *pValue = mockPowerLimit1Enabled;
             pResponse->outReturnCode = getReturnCode(pRequest->inRequestId);
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Power::PowerLimit2Enabled: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
-            if (mockPowerLimit2EnabledFailure) {
-                *pValue = false;
-            } else {
-                *pValue = mockPowerLimit2Enabled;
-            }
+            *pValue = mockPowerLimit2Enabled;
             pResponse->outReturnCode = getReturnCode(pRequest->inRequestId);
             pResponse->outDataSize = sizeof(uint32_t);
         } break;

@@ -207,7 +207,7 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndPowerSetLimitSuppor
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesAndSysfsReadFailsThenFailureIsReturned) {
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0));
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD));
     pLinuxPowerImp->pSysfsAccess = pSysfsAccess;
     pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
     pLinuxPowerImp->isPowerModuleSupported();
@@ -708,7 +708,7 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenScanDirectoriesFailAndPmtIsNotNullPoin
     pSysmanDeviceImp->pPowerHandleContext->init(subDeviceCount);
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
-    PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman, onSubdevice, subdeviceId);
+    PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, ZES_POWER_DOMAIN_CARD);
     EXPECT_TRUE(pPowerImp->isPowerModuleSupported());
     delete pPowerImp;
 }

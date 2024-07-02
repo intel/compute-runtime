@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,7 @@ struct PowerHandleContext {
     }
 
   private:
-    void createHandle(ze_bool_t isSubDevice, uint32_t subDeviceId);
+    void createHandle(ze_bool_t isSubDevice, uint32_t subDeviceId, zes_power_domain_t powerDomain);
     std::once_flag initPowerOnce;
     void initPower();
     bool powerInitDone = false;

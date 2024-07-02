@@ -26,7 +26,7 @@ class PowerImp : public Power, NEO::NonCopyableOrMovableClass {
     ze_result_t powerSetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) override;
 
     PowerImp() = default;
-    PowerImp(OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId);
+    PowerImp(OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId, zes_power_domain_t powerDomain);
     ~PowerImp() override;
 
     OsPower *pOsPower = nullptr;

@@ -281,6 +281,20 @@ int geteuid() {
     }
 }
 #endif // defined(_WIN32) || defined(_WIN64)
+static std::string getPowerDomainType(zes_power_domain_t type) {
+    static const std::map<zes_power_domain_t, std::string> powerDomainEnumToStringMap{
+        {ZES_POWER_DOMAIN_CARD, "ZES_POWER_DOMAIN_CARD"},
+        {ZES_POWER_DOMAIN_PACKAGE, "ZES_POWER_DOMAIN_PACKAGE"},
+        {ZES_POWER_DOMAIN_STACK, "ZES_POWER_DOMAIN_STACK"},
+        {ZES_POWER_DOMAIN_MEMORY, "ZES_POWER_DOMAIN_MEMORY"},
+        {ZES_POWER_DOMAIN_GPU, "ZES_POWER_DOMAIN_GPU"}};
+    if (powerDomainEnumToStringMap.find(type) != powerDomainEnumToStringMap.end()) {
+        return powerDomainEnumToStringMap.at(type);
+    } else {
+        return "invalid";
+    }
+}
+
 void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, uint32_t &curDeviceIndex) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     std::cout << std::endl
@@ -297,15 +311,23 @@ void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, 
 
     for (const auto &handle : handles) {
         zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        zes_power_limit_ext_desc_t defaultLimit = {};
+
+        extProperties.defaultLimit = &defaultLimit;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        properties.pNext = &extProperties;
         VALIDATECALL(zesPowerGetProperties(handle, &properties));
         if (verbose) {
             std::cout << "properties.onSubdevice = " << static_cast<uint32_t>(properties.onSubdevice) << std::endl;
             std::cout << "properties.subdeviceId = " << properties.subdeviceId << std::endl;
             std::cout << "properties.canControl = " << static_cast<uint32_t>(properties.canControl) << std::endl;
-            std::cout << "properties.isEnergyThresholdSupported= " << static_cast<uint32_t>(properties.isEnergyThresholdSupported) << std::endl;
-            std::cout << "properties.defaultLimit= " << properties.defaultLimit << std::endl;
-            std::cout << "properties.maxLimit =" << properties.maxLimit << std::endl;
-            std::cout << "properties.minLimit =" << properties.minLimit << std::endl;
+            std::cout << "properties.isEnergyThresholdSupported = " << static_cast<uint32_t>(properties.isEnergyThresholdSupported) << std::endl;
+            std::cout << "properties.defaultLimit = " << properties.defaultLimit << std::endl;
+            std::cout << "properties.maxLimit = " << properties.maxLimit << std::endl;
+            std::cout << "properties.minLimit = " << properties.minLimit << std::endl;
+            std::cout << "extProperties.domain = " << getPowerDomainType(extProperties.domain) << std::endl;
+            std::cout << "defaultLimit.limit = " << defaultLimit.limit << std::endl;
         }
         int count = 5; // Measure average power 5 times
         for (; count > 0; count--) {

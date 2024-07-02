@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/basic_math.h"
 
+#include "level_zero/sysman/source/api/power/sysman_os_power.h"
 #include "level_zero/sysman/source/api/power/sysman_power_imp.h"
 #include "level_zero/sysman/source/device/os_sysman.h"
 
@@ -26,8 +27,8 @@ PowerHandleContext::~PowerHandleContext() {
     releasePowerHandles();
 }
 
-void PowerHandleContext::createHandle(ze_bool_t isSubDevice, uint32_t subDeviceId) {
-    Power *pPower = new PowerImp(pOsSysman, isSubDevice, subDeviceId);
+void PowerHandleContext::createHandle(ze_bool_t isSubDevice, uint32_t subDeviceId, zes_power_domain_t powerDomain) {
+    Power *pPower = new PowerImp(pOsSysman, isSubDevice, subDeviceId, powerDomain);
     if (pPower->initSuccess == true) {
         handleList.push_back(pPower);
     } else {
@@ -35,11 +36,17 @@ void PowerHandleContext::createHandle(ze_bool_t isSubDevice, uint32_t subDeviceI
     }
 }
 ze_result_t PowerHandleContext::init(uint32_t subDeviceCount) {
-    // Create Handle for card level power
-    createHandle(false, 0);
+
+    auto totalDomains = OsPower::getNumberOfPowerDomainsSupported(pOsSysman);
+
+    for (auto &powerDomain : totalDomains) {
+        createHandle(false, 0, powerDomain);
+    }
 
     for (uint32_t subDeviceId = 0; subDeviceId < subDeviceCount; subDeviceId++) {
-        createHandle(true, subDeviceId);
+        for (auto &powerDomain : totalDomains) {
+            createHandle(true, subDeviceId, powerDomain);
+        }
     }
 
     return ZE_RESULT_SUCCESS;
