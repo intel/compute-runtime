@@ -431,7 +431,7 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
             bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
 
             MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
-                memoryProperties, compressionEnabled, false, false);
+                memoryProperties, compressionEnabled, false);
 
             bool expectBufferCompressed = ftrRenderCompressedBuffers && (enableMultiTileCompressionValue == 1);
             if (expectBufferCompressed) {
@@ -483,7 +483,7 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
 
                     bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
                     MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
-                        memoryProperties, compressionEnabled, false, false);
+                        memoryProperties, compressionEnabled, false);
 
                     bool isCompressionDisabled = isValueSet(flags, CL_MEM_UNCOMPRESSED_HINT_INTEL) ||
                                                  isValueSet(flagsIntel, CL_MEM_UNCOMPRESSED_HINT_INTEL);

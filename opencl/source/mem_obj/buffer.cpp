@@ -339,14 +339,12 @@ Buffer *Buffer::create(Context *context,
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
         auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
         bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
                                                                          gfxCoreHelper.isBufferSizeSuitableForCompression(size));
-        auto isNewCoherencyModelSupported = productHelper.isNewCoherencyModelSupported();
+
         allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled,
-                                                                                          memoryManager->isLocalMemorySupported(rootDeviceIndex),
-                                                                                          isNewCoherencyModelSupported);
+                                                                                          memoryManager->isLocalMemorySupported(rootDeviceIndex));
 
         if (allocationCpuPtr) {
             forceCopyHostPtr = !useHostPtr && !copyHostPtr;
@@ -374,9 +372,6 @@ Buffer *Buffer::create(Context *context,
                     allocationInfo.zeroCopyAllowed = false;
                     allocationInfo.allocateMemory = true;
                 }
-            } else if (isNewCoherencyModelSupported) {
-                allocationInfo.zeroCopyAllowed = false;
-                allocationInfo.allocateMemory = true;
             }
 
             if (debugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
@@ -643,14 +638,13 @@ void Buffer::checkMemory(const MemoryProperties &memoryProperties,
 }
 
 AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties,
-                                                                         bool &compressionEnabled, bool isLocalMemoryEnabled,
-                                                                         bool isNewCoherencyModelSupported) {
+                                                                         bool &compressionEnabled, bool isLocalMemoryEnabled) {
     if (properties.flags.forceHostMemory) {
         compressionEnabled = false;
         return AllocationType::bufferHostMemory;
     }
 
-    if (properties.flags.useHostPtr && (!isLocalMemoryEnabled && !isNewCoherencyModelSupported)) {
+    if (properties.flags.useHostPtr && !isLocalMemoryEnabled) {
         compressionEnabled = false;
         return AllocationType::bufferHostMemory;
     }
