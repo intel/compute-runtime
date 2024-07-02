@@ -2456,6 +2456,34 @@ HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcp
     clReleaseEvent(event);
 }
 
+HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingWithSingleTransferThenNoBarrierEnqueued) {
+    constexpr cl_command_type expectedLastCmd = CL_COMMAND_SVM_MEMCPY;
+
+    cl_event event;
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    myCmdQ.setOoqEnabled();
+
+    auto initialUsmAllocs = svmManager->getNumAllocs();
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(
+        false,             // cl_bool blocking_copy
+        dstPtr,            // void *dst_ptr
+        srcPtr,            // const void *src_ptr
+        stagingBufferSize, // size_t size
+        &event             // cl_event *event
+    );
+
+    auto pEvent = (Event *)event;
+    auto numOfStagingBuffers = svmManager->getNumAllocs() - initialUsmAllocs;
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, numOfStagingBuffers);
+    EXPECT_EQ(1u, myCmdQ.enqueueSVMMemcpyCalledCount);
+    EXPECT_EQ(0u, myCmdQ.finishCalledCount);
+    EXPECT_EQ(expectedLastCmd, myCmdQ.lastCommandType);
+    EXPECT_EQ(expectedLastCmd, pEvent->getCommandType());
+
+    clReleaseEvent(event);
+}
+
 HWTEST_F(StagingBufferTest, givenEnqueueStagingBufferMemcpyWhenTaskCountNotReadyThenCopySucessfullAndBuffersNotReused) {
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     auto initialUsmAllocs = svmManager->getNumAllocs();

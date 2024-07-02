@@ -397,7 +397,7 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     auto &device = this->cmdQueue->getDevice();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto resolution = device.getDeviceInfo().profilingTimerResolution;
-    if (timestampsCopied) {
+    if (isAdjustmentNeeded) {
         // Adjust startTS since we calculate profiling based on other event timestamps
         contextStartTS = startTimeStamp.gpuTimeStamp;
     }

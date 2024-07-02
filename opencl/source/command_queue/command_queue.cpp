@@ -1517,13 +1517,21 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
         profilingEvent.setQueueTimeStamp();
     }
 
+    // If there was only one chunk copy, no barrier for OOQ is needed
+    bool isSingleTransfer = false;
     auto chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) -> int32_t {
         auto isFirstTransfer = (chunkDst == dstPtr);
         auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(dstPtr, size);
+        isSingleTransfer = isFirstTransfer && isLastTransfer;
+
         if (isFirstTransfer && isProfilingEnabled()) {
             profilingEvent.setSubmitTimeStamp();
         }
         memcpy(stagingBuffer, chunkSrc, chunkSize);
+        if (isSingleTransfer) {
+            return this->enqueueSVMMemcpy(false, chunkDst, stagingBuffer, chunkSize, 0, nullptr, event);
+        }
+
         if (isFirstTransfer && isProfilingEnabled()) {
             profilingEvent.setStartTimeStamp();
         }
@@ -1543,12 +1551,12 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
     }
 
     if (event != nullptr) {
-        if (this->isOOQEnabled()) {
+        if (!isSingleTransfer && this->isOOQEnabled()) {
             ret = this->enqueueBarrierWithWaitList(0, nullptr, event);
         }
         if (isProfilingEnabled()) {
             auto pEvent = castToObjectOrAbort<Event>(*event);
-            pEvent->copyTimestamps(profilingEvent);
+            pEvent->copyTimestamps(profilingEvent, !isSingleTransfer);
             pEvent->setCPUProfilingPath(false);
         }
     }
