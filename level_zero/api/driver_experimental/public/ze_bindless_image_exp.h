@@ -11,6 +11,7 @@
 #pragma once
 #endif
 
+#include "level_zero/include/ze_stypes.h"
 #include <level_zero/ze_api.h>
 
 #ifndef ZE_BINDLESS_IMAGE_EXP_NAME
@@ -28,8 +29,6 @@ typedef enum _ze_image_bindless_exp_flags_t {
     ZE_IMAGE_BINDLESS_EXP_FLAG_FORCE_UINT32 = 0x7fffffff
 } ze_image_bindless_exp_flags_t;
 
-#define ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC (ze_structure_type_t)0x0002001E
-
 typedef struct _ze_image_bindless_exp_desc_t {
     ze_structure_type_t stype;           ///< [in] type of this structure
     const void *pNext;                   ///< [in][optional] must be null or a pointer to an extension-specific
@@ -39,16 +38,12 @@ typedef struct _ze_image_bindless_exp_desc_t {
                                          ///< default behavior bindless images are not used when creating handles via zeImageCreate.
 } ze_image_bindless_exp_desc_t;
 
-#define ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC (ze_structure_type_t)0x0002001F
-
 typedef struct _ze_image_pitched_exp_desc_t {
     ze_structure_type_t stype; ///< [in] type of this structure
     const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific
                                ///< structure (i.e. contains stype and pNext).
     void *ptr;                 ///< [in] pointer to pitched device allocation allocated using zeMemAllocDevice.
 } ze_image_pitched_exp_desc_t;
-
-#define ZE_STRUCTURE_TYPE_PITCHED_ALLOC_DEVICE_EXP_PROPERTIES (ze_structure_type_t)0x0002001D
 
 typedef struct _ze_device_pitched_alloc_exp_properties_t {
     ze_structure_type_t stype;   ///< [in] type of this structure

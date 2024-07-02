@@ -95,8 +95,6 @@ typedef struct _ze_synchronized_dispatch_exp_desc_t {
 
 } ze_synchronized_dispatch_exp_desc_t;
 
-#define ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC (ze_structure_type_t)0x00020020
-
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Forward-declare ze_intel_media_communication_desc_t
 typedef struct _ze_intel_media_communication_desc_t ze_intel_media_communication_desc_t;
@@ -125,9 +123,6 @@ typedef struct _ze_intel_media_doorbell_handle_desc_t {
     uint64_t doorbell;         ///< [in,out] handle of the doorbell
 } ze_intel_media_doorbell_handle_desc_t;
 
-#define ZE_STRUCTURE_TYPE_INTEL_MEDIA_COMMUNICATION_DESC (ze_structure_type_t)0x00020021
-#define ZE_STRUCTURE_TYPE_INTEL_MEDIA_DOORBELL_HANDLE_DESC (ze_structure_type_t)0x00020022
-
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Supported device media flags
 typedef uint32_t ze_intel_device_media_exp_flags_t;
@@ -150,8 +145,6 @@ typedef struct _ze_intel_device_media_exp_properties_t {
     uint32_t numEncoderCores;                ///< [out] number of encoder cores
     uint32_t numDecoderCores;                ///< [out] number of decoder cores
 } ze_intel_device_media_exp_properties_t;
-
-#define ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES (ze_structure_type_t)0x00020023
 
 #if defined(__cplusplus)
 } // extern "C"

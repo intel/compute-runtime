@@ -8,6 +8,7 @@
 #ifndef _ZE_INTEL_GPU_H
 #define _ZE_INTEL_GPU_H
 
+#include "level_zero/include/ze_stypes.h"
 #include <level_zero/ze_api.h>
 
 #if defined(__cplusplus)
@@ -46,8 +47,6 @@ typedef enum _ze_intel_device_module_dp_exp_flag_t {
 } ze_intel_device_module_dp_exp_flag_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-#define ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES (ze_structure_type_t)0x00030013
-///////////////////////////////////////////////////////////////////////////////
 /// @brief Device Module dot product properties queried using
 ///        ::zeDeviceGetModuleProperties
 ///
@@ -77,7 +76,6 @@ typedef enum _ze_intel_command_list_memory_sync_exp_version_t {
 
 #ifndef ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC
 /// @brief stype for _ze_intel_device_command_list_wait_on_memory_data_size_exp_desc_t
-#define ZE_INTEL_STRUCTURE_TYPE_DEVICE_COMMAND_LIST_WAIT_ON_MEMORY_DATA_SIZE_EXP_DESC (ze_structure_type_t)0x00030017
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -117,11 +115,6 @@ typedef enum _zex_intel_event_sync_mode_exp_flag_t {
 
 } zex_intel_event_sync_mode_exp_flag_t;
 
-#ifndef ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC
-/// @brief stype for _zex_intel_event_sync_mode_exp_flag_t
-#define ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC (ze_structure_type_t)0x00030016
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Extended descriptor for event sync mode
 ///
@@ -154,8 +147,6 @@ typedef struct _zex_intel_queue_allocate_msix_hint_exp_desc_t {
 
 } zex_intel_queue_allocate_msix_hint_exp_desc_t;
 
-#define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES (ze_structure_type_t)0x00030018
-
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Command queue descriptor for enabling copy operations offload. This structure may be
 /// passed as pNext member of ::ze_command_queue_desc_t.
@@ -174,8 +165,6 @@ typedef struct _zex_intel_queue_copy_operations_offload_hint_exp_desc_t {
 /// @brief Queue copy operations offload hint extension name
 #define ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME "ZEX_intel_experimental_queue_copy_operations_offload_hint"
 #endif // ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME
-
-#define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES (ze_structure_type_t)0x0003001B
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Queue copy operations offload hint extension version(s)
@@ -218,4 +207,4 @@ zeIntelGetDriverVersionString(
 } // extern "C"
 #endif
 
-#endif // _ZE_INTEL_GPU_H
+#endif
