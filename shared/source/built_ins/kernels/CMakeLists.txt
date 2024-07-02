@@ -134,14 +134,12 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
         endif()
       endforeach()
       set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/built_ins/${NEO_ARCH}/${core_type_lower}/${mode}_${BASENAME}_${RELEASE_FILENAME}.cpp")
-      if(EXISTS ${_file_prebuilt})
-        add_custom_command(
-                           OUTPUT ${OUTPUT_FILE_CPP}
-                           COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUTDIR}
-                           COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${OUTPUTDIR}
-        )
-        list(APPEND BUILTINS_COMMANDS "${OUTPUT_FILE_CPP}")
-      endif()
+      add_custom_command(
+                         OUTPUT ${OUTPUT_FILE_CPP}
+                         COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUTDIR}
+                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${OUTPUTDIR}
+      )
+      list(APPEND BUILTINS_COMMANDS "${OUTPUT_FILE_CPP}")
     endif()
   endforeach()
   set(BUILTINS_COMMANDS ${BUILTINS_COMMANDS} PARENT_SCOPE)
