@@ -96,10 +96,16 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationTh
 
 TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHostPtrThen32BitBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
+    auto isNewCoherencyModelSupported = pClDevice->getProductHelper().isNewCoherencyModelSupported();
+
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
-
+    if (isNewCoherencyModelSupported) {
+        mock->ioctlExpected.gemUserptr = 2;
+        mock->ioctlExpected.gemWait = 2;
+        mock->ioctlExpected.gemClose = 2;
+    }
     debugManager.flags.Force32bitAddressing.set(true);
     MockContext context(pClDevice);
     memoryManager->setForce32BitAllocations(true);
@@ -118,7 +124,6 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromH
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
     auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
     auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation(rootDeviceIndex));
 
@@ -135,15 +140,20 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromH
 
     auto bufferObject = drmAllocation->getBO();
 
-    EXPECT_EQ(drmAllocation->getUnderlyingBuffer(), reinterpret_cast<void *>(offsetedPtr));
-
     // Gpu address should be different
     EXPECT_NE(offsetedPtr, drmAllocation->getGpuAddress());
-    // Gpu address offset iqual to cpu offset
-    EXPECT_EQ(allocationGpuOffset, ptrOffset);
 
-    EXPECT_EQ(allocationPageOffset, ptrOffset);
-
+    if (isNewCoherencyModelSupported) {
+        EXPECT_FALSE(buffer->isMemObjZeroCopy());
+        EXPECT_EQ(allocationGpuOffset, 0ull);
+        EXPECT_EQ(allocationPageOffset, 0ull);
+    } else {
+        EXPECT_TRUE(buffer->isMemObjZeroCopy());
+        EXPECT_EQ(drmAllocation->getUnderlyingBuffer(), reinterpret_cast<void *>(offsetedPtr));
+        // Gpu address offset iqual to cpu offset
+        EXPECT_EQ(allocationGpuOffset, ptrOffset);
+        EXPECT_EQ(allocationPageOffset, ptrOffset);
+    }
     auto boAddress = bufferObject->peekAddress();
     EXPECT_EQ(alignDown(boAddress, MemoryConstants::pageSize), boAddress);
 
@@ -152,6 +162,7 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromH
 
 TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64BitHostPtrThen32BitBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
+    auto isNewCoherencyModelSupported = pClDevice->getProductHelper().isNewCoherencyModelSupported();
     {
         if (is32bit) {
             mock->ioctlExpected.total = -1;
@@ -159,7 +170,11 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom6
             mock->ioctlExpected.gemUserptr = 1;
             mock->ioctlExpected.gemWait = 1;
             mock->ioctlExpected.gemClose = 1;
-
+            if (isNewCoherencyModelSupported) {
+                mock->ioctlExpected.gemUserptr = 2;
+                mock->ioctlExpected.gemWait = 2;
+                mock->ioctlExpected.gemClose = 2;
+            }
             debugManager.flags.Force32bitAddressing.set(true);
             MockContext context(pClDevice);
             memoryManager->setForce32BitAllocations(true);
@@ -178,7 +193,6 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom6
                 retVal);
             EXPECT_EQ(CL_SUCCESS, retVal);
 
-            EXPECT_TRUE(buffer->isMemObjZeroCopy());
             auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
             auto baseAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuBaseAddress();
@@ -191,8 +205,13 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom6
             auto allocationCpuPtr = drmAllocation->getUnderlyingBuffer();
             auto allocationPageOffset = ptrDiff(allocationCpuPtr, alignDown(allocationCpuPtr, MemoryConstants::pageSize));
             auto bufferObject = drmAllocation->getBO();
-
-            EXPECT_EQ(allocationPageOffset, ptrOffset);
+            if (isNewCoherencyModelSupported) {
+                EXPECT_FALSE(buffer->isMemObjZeroCopy());
+                EXPECT_EQ(allocationPageOffset, 0ull);
+            } else {
+                EXPECT_TRUE(buffer->isMemObjZeroCopy());
+                EXPECT_EQ(allocationPageOffset, ptrOffset);
+            }
 
             auto boAddress = bufferObject->peekAddress();
             EXPECT_EQ(alignDown(boAddress, MemoryConstants::pageSize), boAddress);

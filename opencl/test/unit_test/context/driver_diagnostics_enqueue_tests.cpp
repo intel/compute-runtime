@@ -148,7 +148,11 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndSharedMemWhenEnq
         nullptr,
         nullptr);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    if (isZeroCopyAllowed) {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    } else {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], address, MemoryConstants::cacheLineSize, MemoryConstants::pageSize, MemoryConstants::pageSize);
+    }
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -184,7 +188,11 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndBufferSharesMem
         0,
         nullptr,
         nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    if (isZeroCopyAllowed) {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    } else {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    }
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -220,7 +228,11 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingWriteAndBufferSharesMemWit
         0,
         nullptr,
         nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    if (isZeroCopyAllowed) {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    } else {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    }
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -256,7 +268,11 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndBufferSharesMemW
         0,
         nullptr,
         nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    if (isZeroCopyAllowed) {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    } else {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    }
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -292,7 +308,11 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadAndBufferSharesMemWith
         0,
         nullptr,
         nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    if (isZeroCopyAllowed) {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    } else {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    }
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -343,8 +363,11 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndSharedMemWhenEn
         0,
         nullptr,
         nullptr);
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_RECT_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer));
+    if (isZeroCopyAllowed) {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_RECT_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer));
+    } else {
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer));
+    }
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 

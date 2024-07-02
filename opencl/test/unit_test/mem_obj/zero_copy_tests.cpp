@@ -13,6 +13,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -83,6 +84,10 @@ TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCop
         passedPtr,
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    auto &productHelper = pClDevice->getProductHelper();
+    if (flags & CL_MEM_USE_HOST_PTR) {
+        shouldBeZeroCopy = shouldBeZeroCopy && !productHelper.isNewCoherencyModelSupported();
+    }
     EXPECT_EQ(shouldBeZeroCopy, buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
     if (!shouldBeZeroCopy && flags & CL_MEM_USE_HOST_PTR) {
         EXPECT_NE(buffer->getCpuAddress(), hostPtr);
@@ -148,7 +153,7 @@ TEST(ZeroCopyWithDebugFlag, GivenBufferInputsThatWouldResultInZeroCopyAndDisable
     EXPECT_NE(mapAllocation, bufferAllocation);
 }
 
-TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhenAskedForBufferCreationFromHostPtrThenNonZeroCopyBufferIsReturned) {
+TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingAndOldCoherencyModelWhenAskedForBufferCreationFromHostPtrThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.Force32bitAddressing.set(true);
     MockContext context;
@@ -158,8 +163,13 @@ TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhen
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
+    auto &productHelper = context.getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        EXPECT_FALSE(buffer->isMemObjZeroCopy());
+    } else {
+        EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    }
 
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
     if constexpr (is64bit) {
         EXPECT_TRUE(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation());
     }

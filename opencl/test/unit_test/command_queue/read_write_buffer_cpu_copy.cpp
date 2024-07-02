@@ -136,7 +136,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMe
     delete[] bufferPtrBase;
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWritingMemoryThenCpuReadWriteIsAllowed) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndOldCoherencyModelWhenReadingWritingMemoryThenCpuReadWriteIsAllowed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal;
@@ -152,13 +152,14 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
     auto mockContext = std::unique_ptr<MockContext>(new MockContext(mockDevice.get()));
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
-
+    auto &productHelper = mockDevice->getProductHelper();
+    auto isZeroCopyAllowed = !productHelper.isNewCoherencyModelSupported();
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, alignedBufferPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isMemObjZeroCopy());
 
     // zeroCopy == true && aligned/unaligned hostPtr
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(alignedHostPtr, MemoryConstants::cacheLineSize + 1, mockDevice->getDevice()));
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isReadWriteOnCpuPreferred(alignedHostPtr, MemoryConstants::cacheLineSize + 1, mockDevice->getDevice()));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(unalignedHostPtr, MemoryConstants::cacheLineSize, mockDevice->getDevice()));
 
     buffer.reset(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, unalignedBufferPtr, retVal));
@@ -172,11 +173,11 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
 
     // platform LP == true && size <= 10 MB
     mockDevice->deviceInfo.platformLP = true;
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(smallBufferPtr, 1 * MemoryConstants::megaByte, mockDevice->getDevice()));
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isReadWriteOnCpuPreferred(smallBufferPtr, 1 * MemoryConstants::megaByte, mockDevice->getDevice()));
 
     // platform LP == false && size <= 10 MB
     mockDevice->deviceInfo.platformLP = false;
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(smallBufferPtr, 1 * MemoryConstants::megaByte, mockDevice->getDevice()));
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isReadWriteOnCpuPreferred(smallBufferPtr, 1 * MemoryConstants::megaByte, mockDevice->getDevice()));
 
     buffer.reset(Buffer::create(mockContext.get(), CL_MEM_ALLOC_HOST_PTR, largeBufferSize, nullptr, retVal));
 
@@ -189,7 +190,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
     alignedFree(alignedBufferPtr);
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWritingMemoryThenCpuReadWriteIsNotAllowed) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndOldCoherencyModelWhenReadingWritingMemoryThenCpuReadWriteIsNotAllowed) {
     cl_int retVal;
     size_t size = MemoryConstants::cacheLineSize;
     auto alignedBufferPtr = alignedMalloc(MemoryConstants::cacheLineSize + 1, MemoryConstants::cacheLineSize);
@@ -204,10 +205,11 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
 
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
-
+    auto &productHelper = mockDevice->getProductHelper();
+    auto isZeroCopyAllowed = !productHelper.isNewCoherencyModelSupported();
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, alignedBufferPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isMemObjZeroCopy());
 
     // non blocking
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_NDRANGE_KERNEL, false, size, unalignedHostPtr, 0u, nullptr));

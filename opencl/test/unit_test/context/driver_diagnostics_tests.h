@@ -141,6 +141,8 @@ struct PerformanceHintEnqueueBufferTest : public PerformanceHintEnqueueTest {
             MemoryConstants::cacheLineSize,
             address,
             retVal);
+        auto &productHelper = context->getDevice(0)->getProductHelper();
+        isZeroCopyAllowed = !productHelper.isNewCoherencyModelSupported();
     }
 
     void TearDown() override {
@@ -150,6 +152,7 @@ struct PerformanceHintEnqueueBufferTest : public PerformanceHintEnqueueTest {
     }
     void *address = nullptr;
     Buffer *buffer = nullptr;
+    bool isZeroCopyAllowed = true;
 };
 
 struct PerformanceHintEnqueueReadBufferTest : public PerformanceHintEnqueueBufferTest,
@@ -213,6 +216,9 @@ struct PerformanceHintEnqueueMapTest : public PerformanceHintEnqueueTest,
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
         if (context->getDevice(0)->getRootDeviceEnvironment().getProductHelper().isDcFlushMitigated()) {
+            GTEST_SKIP();
+        }
+        if (context->getDevice(0)->getRootDeviceEnvironment().getProductHelper().isNewCoherencyModelSupported()) {
             GTEST_SKIP();
         }
     }
