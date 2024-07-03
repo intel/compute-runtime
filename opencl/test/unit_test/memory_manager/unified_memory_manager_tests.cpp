@@ -1341,8 +1341,9 @@ TEST(UnifiedMemoryManagerTest, givenEnableStatelessCompressionWhenDeviceAllocati
 
         auto deviceMemAlloc = allocationsManager->getSVMAllocs()->get(deviceMemAllocPtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         EXPECT_NE(nullptr, deviceMemAlloc);
-
-        EXPECT_EQ((enable > 0), deviceMemAlloc->isCompressionEnabled());
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto isCompressionEnabled = gfxCoreHelper.usmCompressionSupported(device->getHardwareInfo());
+        EXPECT_EQ(enable > 0 || isCompressionEnabled, deviceMemAlloc->isCompressionEnabled());
 
         retVal = clMemFreeINTEL(&mockContext, deviceMemAllocPtr);
         EXPECT_EQ(CL_SUCCESS, retVal);

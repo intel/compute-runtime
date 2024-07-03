@@ -545,7 +545,7 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
     {
         auto allocation = allocDeviceMem(2048);
 
-        auto supportedByDefault = l0GfxCoreHelper.usmCompressionSupported(hwInfo) && l0GfxCoreHelper.forceDefaultUsmCompressionSupport();
+        auto supportedByDefault = gfxCoreHelper.usmCompressionSupported(hwInfo) || (l0GfxCoreHelper.usmCompressionSupported(hwInfo) && l0GfxCoreHelper.forceDefaultUsmCompressionSupport());
 
         EXPECT_EQ(supportedByDefault, allocation->isCompressionEnabled());
 
@@ -624,7 +624,7 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
 
         auto allocation = allocDeviceMem(2048);
 
-        EXPECT_FALSE(allocation->isCompressionEnabled());
+        EXPECT_EQ(gfxCoreHelper.usmCompressionSupported(hwInfo), allocation->isCompressionEnabled());
 
         context->freeMem(ptr);
 
@@ -651,7 +651,7 @@ HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressi
 
         auto allocation = allocDeviceMem(1);
 
-        if (!gfxCoreHelper.isBufferSizeSuitableForCompression(1)) {
+        if (!gfxCoreHelper.isBufferSizeSuitableForCompression(1) && !gfxCoreHelper.usmCompressionSupported(hwInfo)) {
             EXPECT_FALSE(allocation->isCompressionEnabled());
         }
 

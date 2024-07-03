@@ -14,6 +14,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
@@ -817,7 +818,9 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             allocationType = AllocationType::writeCombined;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
-            if (CompressionSelector::allowStatelessCompression()) {
+            auto &gfxCoreHelper = unifiedMemoryProperties.device->getGfxCoreHelper();
+            auto &hwInfo = unifiedMemoryProperties.device->getHardwareInfo();
+            if (CompressionSelector::allowStatelessCompression() || gfxCoreHelper.usmCompressionSupported(hwInfo)) {
                 compressionEnabled = true;
             }
             if (unifiedMemoryProperties.requestedAllocationType != AllocationType::unknown) {

@@ -809,4 +809,9 @@ template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::encodeAdditionalTimestampOffsets(LinearStream &commandStream, uint64_t contextAddress, uint64_t globalAddress) {
 }
 
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
+    return false;
+}
+
 } // namespace NEO

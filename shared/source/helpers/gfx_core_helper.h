@@ -197,6 +197,8 @@ class GfxCoreHelper {
     virtual uint32_t getMaxPtssIndex(const ProductHelper &productHelper) const = 0;
     virtual uint32_t getDefaultSshSize(const ProductHelper &productHelper) const = 0;
 
+    virtual bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
+
     virtual ~GfxCoreHelper() = default;
 
   protected:
@@ -430,6 +432,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
                                              uint32_t simd) const override;
     uint32_t getMaxPtssIndex(const ProductHelper &productHelper) const override;
     uint32_t getDefaultSshSize(const ProductHelper &productHelper) const override;
+
+    bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
 
     ~GfxCoreHelperHw() override = default;
 
