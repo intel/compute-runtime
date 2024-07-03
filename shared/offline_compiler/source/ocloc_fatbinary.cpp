@@ -425,7 +425,7 @@ int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelp
 
     std::string fatbinaryFileName = "";
 
-    if (!outputDirectory.empty()) {
+    if (!outputDirectory.empty() && outputDirectory != "/dev/null") {
         fatbinaryFileName = outputDirectory + "/";
         NEO::Directory::getDirectories(outputDirectory, NEO::Directory::createDirs);
     }
