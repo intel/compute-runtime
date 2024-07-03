@@ -193,7 +193,7 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGettingEvictIfNecessary
 }
 
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckBlitEnqueueAllowedThenReturnFalse, IsXeLpg) {
-    EXPECT_FALSE(productHelper->blitEnqueueAllowed());
+    EXPECT_FALSE(productHelper->blitEnqueueAllowed(false));
 }
 
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue, IsXeLpg) {

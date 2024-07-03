@@ -480,7 +480,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsS
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckBlitEnqueueAllowedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->blitEnqueueAllowed());
+    EXPECT_TRUE(productHelper->blitEnqueueAllowed(false));
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned) {

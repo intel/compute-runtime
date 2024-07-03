@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -173,7 +173,7 @@ HWTEST_F(NoBcsBufferTests, givenProductWithNoFullyBlitterSupportWhenCreatingBuff
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIsCalledThenUseBcsCsr) {
-    if (!device->getRootDeviceEnvironment().getProductHelper().blitEnqueueAllowed()) {
+    if (!device->getRootDeviceEnvironment().getProductHelper().blitEnqueueAllowed(false)) {
         GTEST_SKIP();
     }
 

@@ -1061,7 +1061,8 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
-    bool blitEnqueueAllowed = ((device->getRootDeviceEnvironment().isWddmOnLinux() || device->getRootDeviceEnvironment().getProductHelper().blitEnqueueAllowed()) && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) || this->isCopyOnly;
+    auto isWriteToImageFromBuffer = args.dstResource.image && args.dstResource.image->isImageFromBuffer();
+    bool blitEnqueueAllowed = ((device->getRootDeviceEnvironment().isWddmOnLinux() || device->getRootDeviceEnvironment().getProductHelper().blitEnqueueAllowed(isWriteToImageFromBuffer)) && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) || this->isCopyOnly;
     if (debugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
         blitEnqueueAllowed = debugManager.flags.EnableBlitterForEnqueueOperations.get();
     }

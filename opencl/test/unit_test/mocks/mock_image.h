@@ -16,6 +16,7 @@
 namespace NEO {
 
 struct MockImageBase : public Image {
+    using Image::associatedMemObject;
     using Image::imageDesc;
     using Image::imageFormat;
     using Image::is3DUAVOrRTV;
