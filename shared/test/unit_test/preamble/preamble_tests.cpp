@@ -23,7 +23,6 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "reg_configs_common.h"
 #include <gtest/gtest.h>
 
 #include <algorithm>

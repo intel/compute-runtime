@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/state_base_address.h"
@@ -23,7 +24,6 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "encode_surface_state_args.h"
-#include "reg_configs_common.h"
 #include "test_traits_common.h"
 
 using namespace NEO;

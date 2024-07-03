@@ -48,6 +48,7 @@ inline constexpr uint32_t csPredicateResult2 = 0x23BC;
 inline constexpr uint32_t semaWaitPoll = 0x0224c;
 
 inline constexpr uint32_t gpThreadTimeRegAddressOffsetLow = 0x23A8;
+inline constexpr uint32_t gpThreadTimeRegAddressOffsetHigh = 0x23AC;
 
 inline constexpr uint32_t globalTimestampLdw = 0x2358;
 inline constexpr uint32_t globalTimestampUn = 0x235c;

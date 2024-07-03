@@ -8,8 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gen11/hw_cmds_base.h"
 #include "shared/source/gen11/reg_configs.h"
-
-#include "reg_configs_common.h"
+#include "shared/source/gen_common/reg_configs_common.h"
 
 using Family = NEO::Gen11Family;
 
