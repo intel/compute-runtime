@@ -461,11 +461,15 @@ int Drm::getErrno() {
 }
 
 int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTableAndWorkaroundTable) {
-    HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    auto deviceId = hwInfo->platform.usDeviceID;
-    auto revisionId = hwInfo->platform.usRevId;
+    const auto usDeviceIdOverride = rootDeviceEnvironment.getHardwareInfo()->platform.usDeviceID;
+    const auto usRevIdOverride = rootDeviceEnvironment.getHardwareInfo()->platform.usRevId;
 
+    // reset hwInfo and apply overrides
     rootDeviceEnvironment.setHwInfo(device->pHwInfo);
+    HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo->platform.usDeviceID = usDeviceIdOverride;
+    hwInfo->platform.usRevId = usRevIdOverride;
+
     rootDeviceEnvironment.initProductHelper();
     rootDeviceEnvironment.initGfxCoreHelper();
     rootDeviceEnvironment.initApiGfxCoreHelper();
@@ -476,9 +480,6 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: AIL creation failed!\n");
         return -1;
     }
-
-    hwInfo->platform.usDeviceID = deviceId;
-    hwInfo->platform.usRevId = revisionId;
 
     const auto productFamily = hwInfo->platform.eProductFamily;
     setupIoctlHelper(productFamily);
@@ -539,6 +540,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     setupCacheInfo(*hwInfo);
+    hwInfo->capabilityTable.deviceName = device->devName;
 
     return 0;
 }

@@ -36,30 +36,29 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     if (!drm->queryDeviceIdAndRevision()) {
         return nullptr;
     }
-    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    if (!DeviceFactory::isAllowedDeviceId(hwInfo->platform.usDeviceID, debugManager.flags.FilterDeviceId.get())) {
+
+    const auto usDeviceID = rootDeviceEnvironment.getHardwareInfo()->platform.usDeviceID;
+    const auto usRevId = rootDeviceEnvironment.getHardwareInfo()->platform.usRevId;
+    if (!DeviceFactory::isAllowedDeviceId(usDeviceID, debugManager.flags.FilterDeviceId.get())) {
         return nullptr;
     }
 
     const DeviceDescriptor *deviceDescriptor = nullptr;
-    const char *deviceName = "";
     for (auto &deviceDescriptorEntry : deviceDescriptorTable) {
-        if (hwInfo->platform.usDeviceID == deviceDescriptorEntry.deviceId) {
+        if (usDeviceID == deviceDescriptorEntry.deviceId) {
             deviceDescriptor = &deviceDescriptorEntry;
-            deviceName = deviceDescriptorEntry.devName;
             break;
         }
     }
     if (!deviceDescriptor) {
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", hwInfo->platform.usDeviceID, hwInfo->platform.usRevId);
+                         "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", usDeviceID, usRevId);
         return nullptr;
     }
 
     if (drm->setupHardwareInfo(deviceDescriptor, true)) {
         return nullptr;
     }
-    hwInfo->capabilityTable.deviceName = deviceName;
 
     if (drm->enableTurboBoost()) {
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
