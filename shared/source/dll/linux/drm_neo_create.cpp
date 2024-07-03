@@ -50,22 +50,18 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
             break;
         }
     }
-    int ret = 0;
-    if (deviceDescriptor) {
-        ret = drm->setupHardwareInfo(deviceDescriptor, true);
-        if (ret != 0) {
-            return nullptr;
-        }
-        hwInfo->capabilityTable.deviceName = deviceName;
-    } else {
+    if (!deviceDescriptor) {
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
                          "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", hwInfo->platform.usDeviceID, hwInfo->platform.usRevId);
         return nullptr;
     }
 
-    // Activate the Turbo Boost Frequency feature
-    ret = drm->enableTurboBoost();
-    if (ret != 0) {
+    if (drm->setupHardwareInfo(deviceDescriptor, true)) {
+        return nullptr;
+    }
+    hwInfo->capabilityTable.deviceName = deviceName;
+
+    if (drm->enableTurboBoost()) {
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
