@@ -12,6 +12,7 @@
 #include <cstring>
 #include <igfxfmid.h>
 #include <type_traits>
+#include <variant>
 
 template <class T>
 struct CmdParse;
@@ -172,6 +173,8 @@ struct Xe2HpgCoreFamily : public Xe2HpgCore {
     static constexpr bool isHeaplessMode() {
         return false;
     }
+
+    using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 
 enum class MemoryCompressionState;

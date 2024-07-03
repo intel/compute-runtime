@@ -114,4 +114,14 @@ uint32_t UnitTestHelper<GfxFamily>::getMiLoadRegisterImmProgrammedCmdsCount(bool
     return (debuggingEnabled ? 2u : 0u);
 }
 
+template <typename GfxFamily>
+typename GfxFamily::WalkerVariant UnitTestHelper<GfxFamily>::getWalkerVariant(void *walkerItor) {
+    if (auto walker = genCmdCast<typename GfxFamily::DefaultWalkerType *>(walkerItor); walker) {
+        return walker;
+    }
+
+    UNRECOVERABLE_IF(true);
+    return {};
+}
+
 } // namespace NEO

@@ -32,6 +32,7 @@
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 #include <type_traits>
+#include <variant>
 
 namespace L0 {
 namespace ult {
@@ -2888,8 +2889,7 @@ HWTEST2_F(InOrderCmdListTests, givenEventGeneratedByRegularCmdListWhenWaitingFro
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDontSignalFromWalker, IsAtLeastXeHpCore) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -2905,18 +2905,24 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDon
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
 
     uint32_t walkersFound = 0;
     while (cmdList.end() != walkerItor) {
         walkersFound++;
 
-        auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
-        auto &postSync = walkerCmd->getPostSync();
+        WalkerVariant walkerCmd = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
 
-        EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, postSync.getOperation());
+        std::visit([](auto &&walker) {
+            using WalkerType = std::decay_t<decltype(*walker)>;
+            using PostSyncType = typename WalkerType::PostSyncType;
 
-        walkerItor = find<DefaultWalkerType *>(++walkerItor, cmdList.end());
+            auto &postSync = walker->getPostSync();
+            EXPECT_EQ(PostSyncType::OPERATION_NO_WRITE, postSync.getOperation());
+        },
+                   walkerCmd);
+
+        walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++walkerItor, cmdList.end());
     }
 
     EXPECT_TRUE(walkersFound > 1);
@@ -3166,7 +3172,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithoutSplitTh
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);

@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <variant>
 
 // forward declaration for parsing logic
 template <class T>
@@ -158,6 +159,8 @@ struct Gen8Family : public Gen8 {
     static constexpr bool isHeaplessMode() {
         return false;
     }
+
+    using WalkerVariant = std::variant<GPGPU_WALKER *>;
 };
 
 } // namespace NEO

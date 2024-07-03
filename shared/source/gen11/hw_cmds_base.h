@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <cstring>
+#include <variant>
 
 template <class T>
 struct CmdParse;
@@ -158,5 +159,7 @@ struct Gen11Family : public Gen11 {
     static constexpr bool isHeaplessMode() {
         return false;
     }
+
+    using WalkerVariant = std::variant<GPGPU_WALKER *>;
 };
 } // namespace NEO

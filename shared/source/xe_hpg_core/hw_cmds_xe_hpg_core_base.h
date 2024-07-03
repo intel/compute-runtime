@@ -14,6 +14,7 @@
 
 #include <cstring>
 #include <type_traits>
+#include <variant>
 
 template <class T>
 struct CmdParse;
@@ -171,6 +172,7 @@ struct XeHpgCoreFamily : public XeHpgCore {
     static constexpr bool isHeaplessMode() {
         return false;
     }
+    using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 
 } // namespace NEO
