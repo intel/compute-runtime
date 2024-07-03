@@ -195,8 +195,7 @@ bool inline copyHostPointer(Buffer *buffer,
     auto memory = buffer->getGraphicsAllocation(rootDeviceIndex);
     auto isCompressionEnabled = memory->isCompressionEnabled();
     const bool isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
-    const bool isGpuCopyRequiredForDcFlushMitigation = productHelper.isDcFlushMitigated() && memory->getAllocationType() != AllocationType::bufferHostMemory;
-    const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory || isGpuCopyRequiredForDcFlushMitigation;
+    const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory || productHelper.isDcFlushMitigated();
     if (gpuCopyRequired) {
         auto &hwInfo = device.getHardwareInfo();
 
@@ -211,7 +210,7 @@ bool inline copyHostPointer(Buffer *buffer,
                                 isCompressionEnabled == false &&
                                 productHelper.getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::cpuAccessDisallowed &&
                                 isLockable &&
-                                !isGpuCopyRequiredForDcFlushMitigation;
+                                !productHelper.isDcFlushMitigated();
 
         if (debugManager.flags.CopyHostPtrOnCpu.get() != -1) {
             copyOnCpuAllowed = debugManager.flags.CopyHostPtrOnCpu.get() == 1;
@@ -224,7 +223,7 @@ bool inline copyHostPointer(Buffer *buffer,
         } else {
             auto blitMemoryToAllocationResult = BlitOperationResult::unsupported;
 
-            if (productHelper.isBlitterFullySupported(hwInfo) && (isLocalMemory || isGpuCopyRequiredForDcFlushMitigation)) {
+            if (productHelper.isBlitterFullySupported(hwInfo) && (isLocalMemory || productHelper.isDcFlushMitigated())) {
                 blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, memory, buffer->getOffset(), hostPtr, {size, 1, 1});
             }
 
