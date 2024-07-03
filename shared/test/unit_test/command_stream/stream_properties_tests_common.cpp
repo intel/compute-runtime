@@ -192,6 +192,16 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
             EXPECT_EQ(-1, properties.stateComputeMode.threadArbitrationPolicy.value);
         }
     }
+
+    for (auto forceScratchAndMTPBufferSizeMode : ::testing::Bool()) {
+        debugManager.flags.ForceScratchAndMTPBufferSizeMode.set(forceScratchAndMTPBufferSizeMode);
+        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
+        if (scmPropertiesSupport.allocationForScratchAndMidthreadPreemption) {
+            EXPECT_EQ(forceScratchAndMTPBufferSizeMode, properties.stateComputeMode.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
+        } else {
+            EXPECT_EQ(-1, properties.stateComputeMode.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
+        }
+    }
 }
 
 template <typename PropertiesT>
@@ -387,12 +397,15 @@ TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePr
 }
 
 TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceScratchAndMTPBufferSizeMode.set(2);
     MockStateComputeModeProperties scmProperties{};
     scmProperties.propertiesSupportLoaded = true;
     scmProperties.scmPropertiesSupport.coherencyRequired = true;
     scmProperties.scmPropertiesSupport.largeGrfMode = true;
     scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
     scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
+    scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption = true;
 
     int32_t grfNumber = 128;
     int32_t threadArbitration = 1;
@@ -404,6 +417,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+    EXPECT_EQ(2, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
 
     scmProperties.resetState();
     EXPECT_FALSE(scmProperties.isDirty());
@@ -411,12 +425,14 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(-1, scmProperties.threadArbitrationPolicy.value);
     EXPECT_EQ(-1, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
+    EXPECT_EQ(-1, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
 
     EXPECT_TRUE(scmProperties.propertiesSupportLoaded);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.coherencyRequired);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.largeGrfMode);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.threadArbitrationPolicy);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.devicePreemptionMode);
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption);
 }
 
 TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {

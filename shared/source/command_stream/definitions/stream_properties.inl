@@ -19,6 +19,7 @@ struct StateComputeModePropertiesSupport {
     bool pixelAsyncComputeThreadLimit = false;
     bool threadArbitrationPolicy = false;
     bool devicePreemptionMode = false;
+    bool allocationForScratchAndMidthreadPreemption = false;
 };
 
 struct StateComputeModeProperties {
@@ -28,6 +29,7 @@ struct StateComputeModeProperties {
     StreamProperty pixelAsyncComputeThreadLimit{};
     StreamProperty threadArbitrationPolicy{};
     StreamProperty devicePreemptionMode{};
+    StreamProperty memoryAllocationForScratchAndMidthreadPreemptionBuffers{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();

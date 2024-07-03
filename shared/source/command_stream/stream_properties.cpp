@@ -41,6 +41,14 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
     }
     setDevicePreemptionProperty(devicePreemptionMode);
 
+    int32_t memoryAllocationForScratchAndMidthreadPreemptionBuffers = -1;
+    if (debugManager.flags.ForceScratchAndMTPBufferSizeMode.get() != -1) {
+        memoryAllocationForScratchAndMidthreadPreemptionBuffers = debugManager.flags.ForceScratchAndMTPBufferSizeMode.get();
+    }
+    if (this->scmPropertiesSupport.allocationForScratchAndMidthreadPreemption) {
+        this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(memoryAllocationForScratchAndMidthreadPreemptionBuffers);
+    }
+
     setPropertiesExtraPerContext();
     setPropertiesExtraPerKernel();
 }
@@ -54,6 +62,7 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
     pixelAsyncComputeThreadLimit.set(properties.pixelAsyncComputeThreadLimit.value);
     threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
     devicePreemptionMode.set(properties.devicePreemptionMode.value);
+    memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
 
     copyPropertiesExtra(properties);
 }
@@ -72,7 +81,7 @@ void StateComputeModeProperties::copyPropertiesGrfNumberThreadArbitration(const 
 
 bool StateComputeModeProperties::isDirty() const {
     return isCoherencyRequired.isDirty || largeGrfMode.isDirty || zPassAsyncComputeThreadLimit.isDirty ||
-           pixelAsyncComputeThreadLimit.isDirty || threadArbitrationPolicy.isDirty || devicePreemptionMode.isDirty || isDirtyExtra();
+           pixelAsyncComputeThreadLimit.isDirty || threadArbitrationPolicy.isDirty || devicePreemptionMode.isDirty || memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty || isDirtyExtra();
 }
 
 void StateComputeModeProperties::clearIsDirty() {
@@ -82,6 +91,7 @@ void StateComputeModeProperties::clearIsDirty() {
     pixelAsyncComputeThreadLimit.isDirty = false;
     threadArbitrationPolicy.isDirty = false;
     devicePreemptionMode.isDirty = false;
+    memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty = false;
 
     clearIsDirtyExtraPerContext();
     clearIsDirtyExtraPerKernel();
@@ -142,6 +152,7 @@ void StateComputeModeProperties::resetState() {
     this->pixelAsyncComputeThreadLimit.value = StreamProperty::initValue;
     this->threadArbitrationPolicy.value = StreamProperty::initValue;
     this->devicePreemptionMode.value = StreamProperty::initValue;
+    this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.value = StreamProperty::initValue;
     resetStateExtra();
 }
 
