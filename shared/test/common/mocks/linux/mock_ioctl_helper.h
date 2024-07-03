@@ -67,6 +67,15 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         return IoctlHelperPrelim20::releaseInterrupt(handle);
     }
 
+    bool createMediaContext(void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, uint64_t &outDoorbell) override {
+        createMediaContextCalled++;
+        return IoctlHelperPrelim20::createMediaContext(controlSharedMemoryBuffer, controlSharedMemoryBufferSize, controlBatchBuffer, controlBatchBufferSize, outDoorbell);
+    }
+    bool releaseMediaContext(uint64_t doorbellHandle) override {
+        releaseMediaContextCalled++;
+        return IoctlHelperPrelim20::releaseMediaContext(doorbellHandle);
+    }
+
     std::unique_ptr<MemoryInfo> createMemoryInfo() override {
 
         std::vector<MemoryRegion> regionInfo(3);
@@ -91,5 +100,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     uint32_t allocateInterruptCalled = 0;
     uint32_t releaseInterruptCalled = 0;
     uint32_t latestReleaseInterruptHandle = InterruptId::notUsed;
+    uint32_t createMediaContextCalled = 0;
+    uint32_t releaseMediaContextCalled = 0;
 };
 } // namespace NEO

@@ -994,7 +994,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         struct drm_xe_exec_queue_destroy destroy = {};
         destroy.exec_queue_id = d->contextId;
         ret = IoctlHelper::ioctl(request, &destroy);
-        xeLog(" -> IoctlHelperXe::ioctl GemContextDestroryExt ctx=0x%x r=%d\n",
+        xeLog(" -> IoctlHelperXe::ioctl GemContextDestrory ctx=0x%x r=%d\n",
               d->contextId, ret);
     } break;
     case DrmIoctl::gemContextGetparam: {

@@ -34,7 +34,7 @@ struct EngineInfo {
     const EngineClassInstance *getEngineInstance(uint32_t tile, aub_stream::EngineType engineType) const;
     uint32_t getEngineTileIndex(const EngineClassInstance &engine);
     void getListOfEnginesOnATile(uint32_t tile, std::vector<EngineClassInstance> &listOfEngines);
-    std::multimap<uint32_t, EngineClassInstance> getEngineTileInfo();
+    const std::multimap<uint32_t, EngineClassInstance> &getEngineTileInfo() const;
     bool hasEngines();
     const std::vector<EngineCapabilities> &getEngineInfos() const;
 

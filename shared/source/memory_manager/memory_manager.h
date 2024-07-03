@@ -303,6 +303,9 @@ class MemoryManager {
     virtual bool allocateInterrupt(uint32_t &outHandle, uint32_t rootDeviceIndex) { return false; }
     virtual bool releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceIndex) { return false; }
 
+    virtual bool createMediaContext(uint32_t rootDeviceIndex, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, uint64_t &outDoorbell) { return false; }
+    virtual bool releaseMediaContext(uint32_t rootDeviceIndex, uint64_t doorbellHandle) { return false; }
+
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);

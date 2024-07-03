@@ -200,7 +200,7 @@ void EngineInfo::getListOfEnginesOnATile(uint32_t tile, std::vector<EngineClassI
     }
 }
 
-std::multimap<uint32_t, EngineClassInstance> EngineInfo::getEngineTileInfo() {
+const std::multimap<uint32_t, EngineClassInstance> &EngineInfo::getEngineTileInfo() const {
     return tileToEngineMap;
 }
 

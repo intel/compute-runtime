@@ -101,6 +101,9 @@ class DrmMemoryManager : public MemoryManager {
     bool allocateInterrupt(uint32_t &outHandle, uint32_t rootDeviceIndex) override;
     bool releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceIndex) override;
 
+    bool createMediaContext(uint32_t rootDeviceIndex, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, uint64_t &outDoorbell) override;
+    bool releaseMediaContext(uint32_t rootDeviceIndex, uint64_t doorbellHandle) override;
+
   protected:
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
     BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle);

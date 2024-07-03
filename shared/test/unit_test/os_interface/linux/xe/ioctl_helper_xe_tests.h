@@ -302,6 +302,7 @@ class DrmMockXe : public DrmMockCustom {
         case DrmIoctl::gemContextCreateExt: {
             auto queueCreate = static_cast<drm_xe_exec_queue_create *>(arg);
             latestExecQueueCreate = *queueCreate;
+            latestQueueEngineClassInstance = reinterpret_cast<drm_xe_engine_class_instance *>(queueCreate->instances)[0];
 
             auto extension = queueCreate->extensions;
             while (extension) {
@@ -310,6 +311,7 @@ class DrmMockXe : public DrmMockCustom {
                     auto setProperty = reinterpret_cast<drm_xe_ext_set_property *>(ext);
                     execQueueProperties.push_back(*setProperty);
                 }
+                handleContextCreateExtensions(ext);
                 extension = ext->next_extension;
             }
             queueCreate->exec_queue_id = mockExecQueueId;
@@ -334,6 +336,7 @@ class DrmMockXe : public DrmMockCustom {
     }
 
     virtual void handleUserFenceWaitExtensions(drm_xe_wait_user_fence *userFenceWait) {}
+    virtual void handleContextCreateExtensions(drm_xe_user_extension *extension) {}
 
     void addMockedQueryTopologyData(uint16_t tileId, uint16_t maskType, uint32_t nBytes, const std::vector<uint8_t> &mask) {
 
@@ -382,6 +385,7 @@ class DrmMockXe : public DrmMockCustom {
     StackVec<drm_xe_sync, 1> syncInputs;
     StackVec<drm_xe_ext_set_property, 1> execQueueProperties;
     drm_xe_exec_queue_create latestExecQueueCreate = {};
+    drm_xe_engine_class_instance latestQueueEngineClassInstance = {};
 
     int waitUserFenceReturn = 0;
     int execQueueBanPropertyReturn = 0;
