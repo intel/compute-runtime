@@ -239,6 +239,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         inlineDataProgramming = inlineDataProgrammingOffset != 0;
     }
 
+    auto scratchAddressForImmediatePatching = EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching<heaplessModeEnabled>(container, args);
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching + args.reserveExtraPayloadSpace;
@@ -258,6 +259,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         if (pImplicitArgs) {
             offsetThreadData -= ImplicitArgs::getSize();
             pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
+            EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs<heaplessModeEnabled>(*pImplicitArgs, scratchAddressForImmediatePatching, args.immediateScratchAddressPatching);
+
             ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(localIdsGenerationByRuntime, requiredWorkgroupOrder), rootDeviceEnvironment);
         }
 
@@ -322,7 +325,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     uint8_t *inlineData = reinterpret_cast<uint8_t *>(walkerCmd.getInlineDataPointer());
-    EncodeDispatchKernel<Family>::programInlineDataHeapless<heaplessModeEnabled>(inlineData, args, container, offsetThreadData);
+    EncodeDispatchKernel<Family>::programInlineDataHeapless<heaplessModeEnabled>(inlineData, args, container, offsetThreadData, scratchAddressForImmediatePatching);
 
     if constexpr (heaplessModeEnabled == false) {
         walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));

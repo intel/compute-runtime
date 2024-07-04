@@ -24,8 +24,10 @@ template void NEO::EncodeDispatchKernel<Family>::adjustWalkOrder<Family::Default
 template void NEO::EncodeDispatchKernel<Family>::programBarrierEnable<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
 template void NEO::EncodeDispatchKernel<Family>::setScratchAddress<false>(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr);
 template void NEO::EncodeDispatchKernel<Family>::setScratchAddress<true>(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr);
-template void NEO::EncodeDispatchKernel<Family>::programInlineDataHeapless<false>(uint8_t *inlineDataPtr, EncodeDispatchKernelArgs &args, CommandContainer &container, uint64_t offsetThreadData);
+template void NEO::EncodeDispatchKernel<Family>::programInlineDataHeapless<false>(uint8_t *inlineDataPtr, EncodeDispatchKernelArgs &args, CommandContainer &container, uint64_t offsetThreadData, uint64_t scratchPtr);
 template void NEO::EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy<Family::INTERFACE_DESCRIPTOR_DATA>(Family::INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy);
+template uint64_t NEO::EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching<false>(CommandContainer &container, EncodeDispatchKernelArgs &args);
+template void NEO::EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs<false>(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 
 template struct NEO::EncodeStates<Family>;
 template struct NEO::EncodeMath<Family>;

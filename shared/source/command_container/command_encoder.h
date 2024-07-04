@@ -43,6 +43,7 @@ struct PipelineSelectArgs;
 struct RootDeviceEnvironment;
 struct StateBaseAddressProperties;
 struct StateComputeModeProperties;
+struct ImplicitArgs;
 
 struct EncodeDispatchKernelArgs {
     uint64_t eventAddress = 0;
@@ -187,7 +188,7 @@ struct EncodeDispatchKernel {
     static void adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     template <bool heaplessModeEnabled>
-    static void programInlineDataHeapless(uint8_t *inlineDataPtr, EncodeDispatchKernelArgs &args, CommandContainer &container, uint64_t offsetThreadData);
+    static void programInlineDataHeapless(uint8_t *inlineDataPtr, EncodeDispatchKernelArgs &args, CommandContainer &container, uint64_t offsetThreadData, uint64_t scratchPtr);
 
     static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount);
     static size_t getSizeRequiredSsh(const KernelInfo &kernelInfo);
@@ -201,6 +202,10 @@ struct EncodeDispatchKernel {
 
     template <bool isHeapless>
     static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr);
+    template <bool isHeapless>
+    static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args);
+    template <bool isHeapless>
+    static void patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 
     static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);
 };
