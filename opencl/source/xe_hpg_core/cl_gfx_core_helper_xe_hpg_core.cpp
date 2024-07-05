@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,11 +50,6 @@ std::vector<uint32_t> ClGfxCoreHelperHw<Family>::getSupportedThreadArbitrationPo
 
 template <>
 bool ClGfxCoreHelperHw<Family>::isSupportedKernelThreadArbitrationPolicy() const { return false; }
-
-template <>
-cl_version ClGfxCoreHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
-    return makeDeviceIpVersion(12, 7, makeDeviceRevision(hwInfo));
-}
 
 static const std::vector<cl_image_format> incompressibleFormats = {
     {CL_LUMINANCE, CL_UNORM_INT8},

@@ -36,31 +36,6 @@ GEN12LPTEST_F(ClGfxCoreHelperTestsGen12Lp, givenTglLpThenAuxTranslationIsRequire
     }
 }
 
-HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsTGLLP) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-}
-
-HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsRKL) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-}
-
-HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsADLS) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-}
-
-HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsADLP) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-}
-
-HWTEST2_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion, IsDG1) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 0, 1), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-}
-
 GEN12LPTEST_F(ClGfxCoreHelperTestsGen12Lp, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;

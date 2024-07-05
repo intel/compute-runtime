@@ -43,7 +43,6 @@ class ClGfxCoreHelper : public ApiGfxCoreHelper {
     virtual bool preferBlitterForLocalToLocalTransfers() const = 0;
     virtual bool isSupportedKernelThreadArbitrationPolicy() const = 0;
     virtual std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const = 0;
-    virtual cl_version getDeviceIpVersion(const HardwareInfo &hwInfo) const = 0;
     virtual cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool allowImageCompression(cl_image_format format) const = 0;
     virtual bool isFormatRedescribable(cl_image_format format) const = 0;
@@ -53,7 +52,6 @@ class ClGfxCoreHelper : public ApiGfxCoreHelper {
     virtual bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const = 0;
 
     static uint8_t makeDeviceRevision(const HardwareInfo &hwInfo);
-    static cl_version makeDeviceIpVersion(uint16_t major, uint8_t minor, uint8_t revision);
 
     ClGfxCoreHelper() = default;
 };
@@ -73,7 +71,6 @@ class ClGfxCoreHelperHw : public ClGfxCoreHelper {
     bool preferBlitterForLocalToLocalTransfers() const override;
     bool isSupportedKernelThreadArbitrationPolicy() const override;
     std::vector<uint32_t> getSupportedThreadArbitrationPolicies() const override;
-    cl_version getDeviceIpVersion(const HardwareInfo &hwInfo) const override;
     cl_device_feature_capabilities_intel getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool allowImageCompression(cl_image_format format) const override;
     bool isFormatRedescribable(cl_image_format format) const override;

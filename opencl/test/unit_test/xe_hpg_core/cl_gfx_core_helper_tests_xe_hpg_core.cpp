@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,16 +21,6 @@
 using ClGfxCoreHelperTestsXeHpgCore = Test<ClDeviceFixture>;
 
 using namespace NEO;
-
-XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-
-    if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
-        EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 7, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-    } else {
-        EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 7, 1), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-    }
-}
 
 XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();

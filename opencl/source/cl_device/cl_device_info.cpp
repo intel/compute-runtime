@@ -259,13 +259,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = deviceInfo.supportedThreadArbitrationPolicies.size() * sizeof(cl_uint);
         break;
     case CL_DEVICE_IP_VERSION_INTEL: {
-        if (debugManager.flags.UseDeprecatedClDeviceIpVersion.get()) {
-            auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-            param.uint = clGfxCoreHelper.getDeviceIpVersion(getHardwareInfo());
-        } else {
-            auto &compilerProductHelper = device.getCompilerProductHelper();
-            param.uint = static_cast<cl_version>(compilerProductHelper.getHwIpVersion(getHardwareInfo()));
-        }
+        auto &compilerProductHelper = device.getCompilerProductHelper();
+        param.uint = static_cast<cl_version>(compilerProductHelper.getHwIpVersion(getHardwareInfo()));
         src = &param.uint;
         retSize = srcSize = sizeof(cl_version);
         break;

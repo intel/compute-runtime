@@ -801,9 +801,3 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCommandBufferAllocationWhenS
     gfxCoreHelper.setExtraAllocationData(allocData, allTilesAllocProperties, pDevice->getRootDeviceEnvironment());
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
-
-XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-
-    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 8, 1), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-}

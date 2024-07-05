@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,11 +21,6 @@ static auto gfxCore = IGFX_GEN12LP_CORE;
 template <>
 cl_device_feature_capabilities_intel ClGfxCoreHelperHw<Family>::getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
-}
-
-template <>
-cl_version ClGfxCoreHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
-    return makeDeviceIpVersion(12, 0, makeDeviceRevision(hwInfo));
 }
 
 template class ClGfxCoreHelperHw<Family>;

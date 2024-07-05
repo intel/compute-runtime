@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_gfx_core_helper.h"
 
 using ClGfxCoreHelperTestGen11 = Test<ClDeviceFixture>;
-
-GEN11TEST_F(ClGfxCoreHelperTestGen11, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(11, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-}
 
 GEN11TEST_F(ClGfxCoreHelperTestGen11, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();

@@ -1122,13 +1122,8 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
             auto pDeviceIpVersion = reinterpret_cast<cl_version *>(object.get());
             auto &hwInfo = device.getHardwareInfo();
 
-            if (debugManager.flags.UseDeprecatedClDeviceIpVersion.get()) {
-                auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-                EXPECT_EQ(clGfxCoreHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
-            } else {
-                auto &compilerProductHelper = device.getCompilerProductHelper();
-                EXPECT_EQ(static_cast<cl_version>(compilerProductHelper.getHwIpVersion(hwInfo)), *pDeviceIpVersion);
-            }
+            auto &compilerProductHelper = device.getCompilerProductHelper();
+            EXPECT_EQ(static_cast<cl_version>(compilerProductHelper.getHwIpVersion(hwInfo)), *pDeviceIpVersion);
             EXPECT_EQ(sizeof(cl_version), sizeReturned);
             break;
         }
@@ -1182,18 +1177,6 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
     cl_device_info param;
     DebugManagerStateRestore restorer;
 };
-
-TEST_P(DeviceAttributeQueryTest, givenDeprecatedDeviceIpVersionWhenVerifyDeviceAttributeThenCorrectResultsAreReturned) {
-    debugManager.flags.UseDeprecatedClDeviceIpVersion.set(true);
-    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    verifyDeviceAttribute(*pClDevice);
-}
-
-TEST_P(DeviceAttributeQueryTest, givenNewDeviceIpVersionWhenVerifyDeviceAttributeThenCorrectResultsAreReturned) {
-    debugManager.flags.UseDeprecatedClDeviceIpVersion.set(false);
-    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    verifyDeviceAttribute(*pClDevice);
-}
 
 TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnRootDeviceAndSubDevicesThenReturnCorrectAttributeValues) {
     debugManager.flags.CreateMultipleSubDevices.set(2);

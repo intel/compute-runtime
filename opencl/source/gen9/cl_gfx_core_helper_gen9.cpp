@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,6 @@ using Family = Gen9Family;
 static auto gfxCore = IGFX_GEN9_CORE;
 
 #include "opencl/source/helpers/cl_gfx_core_helper_factory_init.inl"
-
-template <>
-cl_version ClGfxCoreHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
-    return makeDeviceIpVersion(9, 0, 0);
-}
 
 template class ClGfxCoreHelperHw<Family>;
 

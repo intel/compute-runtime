@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,11 +17,6 @@
 
 using namespace NEO;
 using ClGfxCoreHelperTestGen8 = Test<ClDeviceFixture>;
-
-GEN8TEST_F(ClGfxCoreHelperTestGen8, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(8, 0, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
-}
 
 GEN8TEST_F(ClGfxCoreHelperTestGen8, WhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
