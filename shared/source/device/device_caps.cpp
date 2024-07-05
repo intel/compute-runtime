@@ -155,9 +155,6 @@ void Device::initializeCaps() {
     deviceInfo.maxFrontEndThreads = gfxCoreHelper.getMaxThreadsForVfe(hwInfo);
 
     deviceInfo.localMemSize = hwInfo.capabilityTable.slmSize * MemoryConstants::kiloByte;
-    if (debugManager.flags.OverrideSlmSize.get() != -1) {
-        deviceInfo.localMemSize = debugManager.flags.OverrideSlmSize.get() * MemoryConstants::kiloByte;
-    }
 
     deviceInfo.imageSupport = hwInfo.capabilityTable.supportsImages;
     deviceInfo.image2DMaxWidth = 16384;

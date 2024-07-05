@@ -489,7 +489,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForcePipeSupport, -1, "-1: default, 0: disabled,
 DECLARE_DEBUG_VARIABLE(int32_t, UseAsyncDrmExec, -1, "-1: default, 0: Disabled 1: Enabled. If enabled, pass EXEC_OBJECT_ASYNC to exec ioctl.")
 DECLARE_DEBUG_VARIABLE(int32_t, UseBindlessMode, -1, "Use precompiled builtins in bindless mode, -1: api dependent, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UseExternalAllocatorForSshAndDsh, -1, "Use 32 bit external allocator for ssh and dsh in Level Zero, -1: default, 0: disabled, 1: enabled")
-DECLARE_DEBUG_VARIABLE(int32_t, OverrideSlmSize, -1, "Force different slm size than default in kB")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideSlmSize, -1, "Force per subslice slm size in KB; ignore when -1")
 DECLARE_DEBUG_VARIABLE(int32_t, UseCyclesPerSecondTimer, 0, "0: default behavior, 0: disabled: Report L0 timer in nanosecond units, 1: enabled: Report L0 timer in cycles per second")
 DECLARE_DEBUG_VARIABLE(int32_t, WaitLoopCount, -1, "-1: use default, >=0: number of iterations in wait loop")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWaitpkg, -1, "-1: use default, 0: disable, 1: enable")

@@ -109,6 +109,10 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
         }
+        if (debugManager.flags.OverrideSlmSize.get() != -1) {
+            hardwareInfo->capabilityTable.slmSize = debugManager.flags.OverrideSlmSize.get();
+            hardwareInfo->gtSystemInfo.SLMSizeInKb = debugManager.flags.OverrideSlmSize.get();
+        }
 
         [[maybe_unused]] bool result = rootDeviceEnvironment.initAilConfiguration();
         DEBUG_BREAK_IF(!result);
@@ -159,6 +163,11 @@ static bool initHwDeviceIdResources(ExecutionEnvironment &executionEnvironment,
     if (debugManager.flags.OverrideRevision.get() != -1) {
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->platform.usRevId =
             static_cast<unsigned short>(debugManager.flags.OverrideRevision.get());
+    }
+    if (debugManager.flags.OverrideSlmSize.get() != -1) {
+        auto hardwareInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
+        hardwareInfo->capabilityTable.slmSize = debugManager.flags.OverrideSlmSize.get();
+        hardwareInfo->gtSystemInfo.SLMSizeInKb = debugManager.flags.OverrideSlmSize.get();
     }
 
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initGmm();

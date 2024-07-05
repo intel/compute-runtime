@@ -237,66 +237,6 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenPrepareDevi
     EXPECT_EQ(requiredDeviceCount, executionEnvironment->rootDeviceEnvironments.size());
 }
 
-TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideGpuAddressSpace) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.OverrideGpuAddressSpace.set(12);
-
-    bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
-
-    EXPECT_TRUE(success);
-    EXPECT_EQ(maxNBitValue(12), executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
-}
-
-TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideGpuAddressSpace) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.OverrideGpuAddressSpace.set(12);
-
-    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(*executionEnvironment);
-
-    EXPECT_TRUE(success);
-    EXPECT_EQ(maxNBitValue(12), executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
-}
-
-TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideRevision) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.OverrideRevision.set(3);
-
-    bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
-
-    EXPECT_TRUE(success);
-    EXPECT_EQ(3u, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.usRevId);
-}
-
-TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideRevision) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.OverrideRevision.set(3);
-
-    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(*executionEnvironment);
-
-    EXPECT_TRUE(success);
-    EXPECT_EQ(3u, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.usRevId);
-}
-
-TEST_F(DeviceFactoryTest, givenDebugFlagWithoutZeroXWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideDeviceIdToHexValue) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ForceDeviceId.set("1234");
-
-    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(*executionEnvironment);
-
-    EXPECT_TRUE(success);
-    EXPECT_EQ(0x1234u, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
-}
-
-TEST_F(DeviceFactoryTest, givenDebugFlagWithZeroXWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideDeviceIdToHexValue) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ForceDeviceId.set("0x1234");
-
-    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(*executionEnvironment);
-
-    EXPECT_TRUE(success);
-    EXPECT_EQ(0x1234u, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
-}
-
 TEST_F(DeviceFactoryTest, whenPrepareDeviceEnvironmentsIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;

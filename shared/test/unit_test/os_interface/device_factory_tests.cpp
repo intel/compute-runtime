@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -182,4 +183,90 @@ TEST_F(DeviceFactoryTests, givenFailedAilInitializationResultWhenPrepareDeviceEn
 
     bool res = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_FALSE(res);
+}
+
+struct DeviceFactoryOverrideTest : public ::testing::Test {
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get()};
+};
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideGpuAddressSpace) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideGpuAddressSpace.set(12);
+
+    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(maxNBitValue(12), executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideGpuAddressSpace) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideGpuAddressSpace.set(12);
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(maxNBitValue(12), executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideRevision) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideRevision.set(3);
+
+    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(3u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usRevId);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideRevision) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideRevision.set(3);
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(3u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usRevId);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagWithoutZeroXWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideDeviceIdToHexValue) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ForceDeviceId.set("1234");
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(0x1234u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagWithZeroXWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideDeviceIdToHexValue) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ForceDeviceId.set("0x1234");
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(0x1234u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideSlmSize) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideSlmSize.set(123);
+
+    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.slmSize);
+    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.SLMSizeInKb);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideSlmSize) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideSlmSize.set(123);
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.slmSize);
+    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.SLMSizeInKb);
 }
