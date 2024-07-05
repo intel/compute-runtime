@@ -8,8 +8,11 @@
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
@@ -56,6 +59,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
             chunkCounter++;
             memcpy(stagingBuffer, chunkSrc, chunkSize);
             memcpy(chunkDst, stagingBuffer, chunkSize);
+            reinterpret_cast<MockCommandStreamReceiver *>(csr)->taskCount++;
             return 0;
         };
         auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
@@ -139,6 +143,18 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenTaskCountNotReadyThenDont
 
     *csr->getTagAddress() = csr->peekTaskCount();
     copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 8);
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenTaskCountNotReadyButSmallTransfersThenReuseBuffer) {
+    constexpr size_t numOfChunkCopies = 1;
+    constexpr size_t totalCopySize = MemoryConstants::pageSize;
+    constexpr size_t availableTransfersWithinBuffer = stagingBufferSize / totalCopySize;
+    *csr->getTagAddress() = csr->peekTaskCount();
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 1);
+    for (auto i = 1u; i < availableTransfersWithinBuffer; i++) {
+        copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 0);
+    }
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 1);
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenUpdatedTaskCountThenReuseBuffers) {
@@ -227,4 +243,33 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenChangedBufferSizeThenPerf
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager.get(), rootDeviceIndices, deviceBitfields);
     copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 1);
+}
+
+HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabledThenFlushTagCalled) {
+    constexpr size_t numOfChunkCopies = 8;
+    constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies;
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    ultCsr->directSubmissionAvailable = true;
+    ultCsr->callFlushTagUpdate = false;
+
+    auto usmBuffer = allocateDeviceBuffer(totalCopySize);
+    auto nonUsmBuffer = new unsigned char[totalCopySize];
+
+    size_t flushTagsCalled = 0;
+    auto chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) {
+        if (ultCsr->flushTagUpdateCalled) {
+            flushTagsCalled++;
+            ultCsr->flushTagUpdateCalled = false;
+        }
+        reinterpret_cast<MockCommandStreamReceiver *>(csr)->taskCount++;
+        return 0;
+    };
+    stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr);
+    if (ultCsr->flushTagUpdateCalled) {
+        flushTagsCalled++;
+    }
+
+    EXPECT_EQ(flushTagsCalled, numOfChunkCopies);
+    svmAllocsManager->freeSVMAlloc(usmBuffer);
+    delete[] nonUsmBuffer;
 }

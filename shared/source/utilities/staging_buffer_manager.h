@@ -12,19 +12,39 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <mutex>
 
 namespace NEO {
 class SVMAllocsManager;
 class CommandStreamReceiver;
 class Device;
-struct SvmAllocationData;
+class HeapAllocator;
 
 using ChunkCopyFunction = std::function<int32_t(void *, void *, const void *, size_t)>;
 
+class StagingBuffer {
+  public:
+    StagingBuffer(void *baseAddress, size_t size);
+    StagingBuffer(StagingBuffer &&other);
+
+    void *getBaseAddress() const {
+        return baseAddress;
+    }
+    HeapAllocator *getAllocator() const {
+        return allocator.get();
+    }
+
+  private:
+    void *baseAddress;
+    std::unique_ptr<HeapAllocator> allocator;
+};
+
 struct StagingBufferTracker {
-    void *stagingBuffer;
-    uint64_t taskCount;
+    HeapAllocator *allocator;
+    uint64_t chunkAddress;
+    size_t size;
+    uint64_t taskCountToWait;
 };
 
 class StagingBufferManager {
@@ -36,15 +56,17 @@ class StagingBufferManager {
     int32_t performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction chunkCopyFunc, CommandStreamReceiver *csr);
 
   private:
-    void *getExistingBuffer(uint64_t taskCount, uint32_t rootDeviceIndex);
+    std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size, CommandStreamReceiver *csr);
+    std::pair<HeapAllocator *, uint64_t> getExistingBuffer(size_t &size);
     void *allocateStagingBuffer();
-    void storeBuffer(void *stagingBuffer, uint64_t taskCount);
+    void clearTrackedChunks(CommandStreamReceiver *csr);
+
     int32_t performChunkCopy(void *chunkDst, const void *chunkSrc, size_t size, ChunkCopyFunction chunkCopyFunc, CommandStreamReceiver *csr);
 
     size_t chunkSize = MemoryConstants::pageSize2M;
-
-    std::vector<std::pair<SvmAllocationData *, uint64_t>> stagingBuffers;
     std::mutex mtx;
+    std::vector<StagingBuffer> stagingBuffers;
+    std::vector<StagingBufferTracker> trackers;
 
     SVMAllocsManager *svmAllocsManager;
     const RootDeviceIndicesContainer rootDeviceIndices;

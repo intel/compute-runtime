@@ -11,8 +11,17 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/heap_allocator.h"
 
 namespace NEO {
+
+StagingBuffer::StagingBuffer(void *baseAddress, size_t size) : baseAddress(baseAddress) {
+    this->allocator = std::make_unique<HeapAllocator>(castToUint64(baseAddress), size, MemoryConstants::pageSize, 0u);
+}
+
+StagingBuffer::StagingBuffer(StagingBuffer &&other) : baseAddress(other.baseAddress) {
+    this->allocator.reset(other.allocator.release());
+}
 
 StagingBufferManager::StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields) : svmAllocsManager(svmAllocsManager), rootDeviceIndices(rootDeviceIndices), deviceBitfields(deviceBitfields) {
     if (debugManager.flags.StagingBufferSize.get() != -1) {
@@ -22,27 +31,28 @@ StagingBufferManager::StagingBufferManager(SVMAllocsManager *svmAllocsManager, c
 
 StagingBufferManager::~StagingBufferManager() {
     for (auto &stagingBuffer : stagingBuffers) {
-        svmAllocsManager->freeSVMAlloc(stagingBuffer.first->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBuffer());
+        svmAllocsManager->freeSVMAlloc(stagingBuffer.getBaseAddress());
     }
 }
 
 /*
  * This method performs 4 steps for single chunk copy
- * 1. Get existing staging buffer, if can't - allocate new one,
+ * 1. Get existing chunk of staging buffer, if can't - allocate new one,
  * 2. Perform actual copy,
- * 3. Store used buffer back to the container (with current task count)
- * 4. Update tag to reuse previous buffers within same API call
+ * 3. Store used buffer to tracking container (with current task count)
+ * 4. Update tag if required to reuse this buffer in next chunk copies
  */
 int32_t StagingBufferManager::performChunkCopy(void *chunkDst, const void *chunkSrc, size_t size, ChunkCopyFunction chunkCopyFunc, CommandStreamReceiver *csr) {
-    auto rootDeviceIndex = csr->getRootDeviceIndex();
-    auto taskCount = *csr->getTagAddress();
-    auto stagingBuffer = getExistingBuffer(taskCount, rootDeviceIndex);
-    if (stagingBuffer == nullptr) {
-        stagingBuffer = allocateStagingBuffer();
+    auto allocatedSize = size;
+    auto [allocator, chunkBuffer] = requestStagingBuffer(allocatedSize, csr);
+    auto ret = chunkCopyFunc(chunkDst, addrToPtr(chunkBuffer), chunkSrc, size);
+    {
+        auto lock = std::lock_guard<std::mutex>(mtx);
+        trackers.push_back({allocator, chunkBuffer, allocatedSize, csr->peekTaskCount()});
     }
-    auto ret = chunkCopyFunc(chunkDst, stagingBuffer, chunkSrc, size);
-    storeBuffer(stagingBuffer, csr->peekTaskCount());
-    csr->flushTagUpdate();
+    if (csr->isAnyDirectSubmissionEnabled()) {
+        csr->flushTagUpdate();
+    }
     return ret;
 }
 
@@ -76,37 +86,53 @@ int32_t StagingBufferManager::performCopy(void *dstPtr, const void *srcPtr, size
 }
 
 /*
- * This method will try to return existing staging buffer from the container.
- * It's checking only "oldest" allocation.
- * Returns nullptr if no staging buffer available.
+ * This method returns allocator and chunk from staging buffer.
+ * Creates new staging buffer if it failed to allocate chunk from existing buffers.
  */
-void *StagingBufferManager::getExistingBuffer(uint64_t taskCount, uint32_t rootDeviceIndex) {
+std::pair<HeapAllocator *, uint64_t> StagingBufferManager::requestStagingBuffer(size_t &size, CommandStreamReceiver *csr) {
     auto lock = std::lock_guard<std::mutex>(mtx);
-    if (stagingBuffers.empty()) {
-        return nullptr;
-    }
-    void *buffer = nullptr;
-    auto iterator = stagingBuffers.begin();
-    UNRECOVERABLE_IF(iterator == stagingBuffers.end());
 
-    if (taskCount > iterator->second) {
-        auto allocation = iterator->first->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
-        buffer = allocation->getUnderlyingBuffer();
-        stagingBuffers.erase(iterator);
+    auto [allocator, chunkBuffer] = getExistingBuffer(size);
+    if (chunkBuffer != 0) {
+        return {allocator, chunkBuffer};
     }
-    return buffer;
+
+    clearTrackedChunks(csr);
+
+    auto [retriedAllocator, retriedChunkBuffer] = getExistingBuffer(size);
+    if (retriedChunkBuffer != 0) {
+        return {retriedAllocator, retriedChunkBuffer};
+    }
+
+    StagingBuffer stagingBuffer{allocateStagingBuffer(), chunkSize};
+    allocator = stagingBuffer.getAllocator();
+    chunkBuffer = allocator->allocate(size);
+    stagingBuffers.push_back(std::move(stagingBuffer));
+    return {allocator, chunkBuffer};
+}
+
+/*
+ * This method will try to allocate chunk from existing staging buffer.
+ * Returns allocator and chunk from consumed staging buffer.
+ */
+std::pair<HeapAllocator *, uint64_t> StagingBufferManager::getExistingBuffer(size_t &size) {
+    uint64_t buffer = 0;
+    HeapAllocator *allocator = nullptr;
+
+    for (auto &stagingBuffer : stagingBuffers) {
+        allocator = stagingBuffer.getAllocator();
+        buffer = allocator->allocate(size);
+        if (buffer != 0) {
+            break;
+        }
+    }
+    return {allocator, buffer};
 }
 
 void *StagingBufferManager::allocateStagingBuffer() {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 0u, rootDeviceIndices, deviceBitfields);
     auto hostPtr = svmAllocsManager->createHostUnifiedMemoryAllocation(chunkSize, unifiedMemoryProperties);
     return hostPtr;
-}
-
-void StagingBufferManager::storeBuffer(void *stagingBuffer, uint64_t taskCount) {
-    auto lock = std::lock_guard<std::mutex>(mtx);
-    auto svmData = svmAllocsManager->getSVMAlloc(stagingBuffer);
-    stagingBuffers.push_back({svmData, taskCount});
 }
 
 bool StagingBufferManager::isValidForCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const {
@@ -122,6 +148,17 @@ bool StagingBufferManager::isValidForCopy(Device &device, void *dstPtr, const vo
         isUsedByOsContext = usmDstData->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex())->isUsedByOsContext(osContextId);
     }
     return stagingCopyEnabled && hostToUsmCopy && !hasDependencies && (isUsedByOsContext || size <= chunkSize);
+}
+
+void StagingBufferManager::clearTrackedChunks(CommandStreamReceiver *csr) {
+    for (auto iterator = trackers.begin(); iterator != trackers.end();) {
+        if (csr->testTaskCountReady(csr->getTagAddress(), iterator->taskCountToWait)) {
+            iterator->allocator->free(iterator->chunkAddress, iterator->size);
+            iterator = trackers.erase(iterator);
+        } else {
+            break;
+        }
+    }
 }
 
 } // namespace NEO
