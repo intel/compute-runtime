@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,4 +41,3 @@ HWTEST_EXCLUDE_PRODUCT(EnqueueWriteBufferStatefulTest, WhenWritingBufferStateful
 HWTEST_EXCLUDE_PRODUCT(EnqueueReadBufferStatefulTest, WhenReadingBufferStatefulThenSuccessIsReturned, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(EnqueueWriteBufferRectStatefulTest, WhenWritingBufferRectStatefulThenSuccessIsReturned, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode, IGFX_XE_HPC_CORE);
-HWTEST_EXCLUDE_PRODUCT(XeHPAndLaterAubCommandStreamReceiverWithoutFixtureTests, GivenCopyHostPtrAndHostNoAccessAndReadOnlyFlagsWhenAllocatingBufferThenAllocationIsCopiedToEveryTile, IGFX_XE_HPC_CORE);
