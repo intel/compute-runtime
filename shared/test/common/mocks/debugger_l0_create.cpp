@@ -12,10 +12,12 @@
 
 NEO::DebugerL0CreateFn mockDebuggerL0HwFactory[IGFX_MAX_CORE];
 bool forceCreateNullptrDebugger = false;
+size_t createDebuggerCallCount = 0;
 
 namespace NEO {
 
 std::unique_ptr<Debugger> DebuggerL0::create(NEO::Device *device) {
+    createDebuggerCallCount++;
     if (forceCreateNullptrDebugger) {
         return nullptr;
     }

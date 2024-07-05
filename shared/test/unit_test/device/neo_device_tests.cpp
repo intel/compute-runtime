@@ -1541,9 +1541,9 @@ TEST_F(DeviceTests, GivenDebuggingEnabledWhenDeviceIsInitializedThenL0DebuggerIs
     EXPECT_NE(nullptr, device->getL0Debugger());
 }
 
-extern bool forceCreateNullptrDebugger;
-
 TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsInitializedThenErrorIsPrintedButNotReturned) {
+    extern bool forceCreateNullptrDebugger;
+
     VariableBackup backupForceCreateNullptrDebugger{&forceCreateNullptrDebugger, true};
     DebugManagerStateRestore restorer;
 
@@ -1557,4 +1557,16 @@ TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsIniti
 
     EXPECT_EQ(std::string("Debug mode is not enabled in the system.\n"), output);
     EXPECT_EQ(nullptr, device->getL0Debugger());
+}
+
+TEST_F(DeviceTests, givenDebuggerRequestedByUserWhenDeviceWithSubDevicesCreatedThenInitializeDebuggerOncePerRootDevice) {
+    extern size_t createDebuggerCallCount;
+
+    createDebuggerCallCount = 0;
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    executionEnvironment->setDebuggingMode(DebuggingMode::online);
+
+    UltDeviceFactory deviceFactory{1, 4, *executionEnvironment};
+    EXPECT_EQ(1u, createDebuggerCallCount);
+    EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getL0Debugger());
 }

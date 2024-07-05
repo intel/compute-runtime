@@ -208,10 +208,29 @@ void Device::setAsEngineInstanced() {
 }
 
 bool Device::createDeviceImpl() {
+    // init sub devices first
     if (!createSubDevices()) {
         return false;
     }
 
+    // create engines
+    if (!initDeviceWithEngines()) {
+        return false;
+    }
+
+    // go back to root-device init
+    if (isSubDevice()) {
+        return true;
+    }
+
+    // initialize common resources once
+    initializeCommonResources();
+
+    // continue proper init for all devices
+    return initDeviceFully();
+}
+
+bool Device::initDeviceWithEngines() {
     setAsEngineInstanced();
 
     auto &hwInfo = getHardwareInfo();
@@ -226,10 +245,10 @@ bool Device::createDeviceImpl() {
 
     initializeCaps();
 
-    if (!createEngines()) {
-        return false;
-    }
+    return createEngines();
+}
 
+void Device::initializeCommonResources() {
     if (getExecutionEnvironment()->isDebuggingEnabled()) {
         const auto rootDeviceIndex = getRootDeviceIndex();
         auto rootDeviceEnvironment = getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
@@ -240,6 +259,7 @@ bool Device::createDeviceImpl() {
         }
     }
 
+    auto &hwInfo = getHardwareInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
     auto debugSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     if (this->isStateSipRequired()) {
@@ -248,7 +268,7 @@ bool Device::createDeviceImpl() {
         debugSurfaceSize = NEO::SipKernel::getSipKernel(*this, nullptr).getStateSaveAreaSize(this);
     }
 
-    const bool allocateDebugSurface = getL0Debugger() && !isSubDevice();
+    const bool allocateDebugSurface = getL0Debugger();
     if (allocateDebugSurface) {
         debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties(
             {getRootDeviceIndex(), true,
@@ -257,6 +277,14 @@ bool Device::createDeviceImpl() {
              false,
              false,
              getDeviceBitfield()});
+    }
+}
+
+bool Device::initDeviceFully() {
+    for (auto &subdevice : this->subdevices) {
+        if (subdevice && !subdevice->initDeviceFully()) {
+            return false;
+        }
     }
 
     if (!initializeEngines()) {
@@ -281,6 +309,7 @@ bool Device::createDeviceImpl() {
     }
     executionEnvironment->memoryManager->setDefaultEngineIndex(getRootDeviceIndex(), defaultEngineIndexWithinMemoryManager);
 
+    auto &hwInfo = getHardwareInfo();
     if (getRootDeviceEnvironment().osInterface) {
         if (hwInfo.capabilityTable.instrumentationEnabled) {
             performanceCounters = createPerformanceCountersFunc(this);
@@ -301,6 +330,8 @@ bool Device::createDeviceImpl() {
             return true;
         }
 
+        auto &gfxCoreHelper = getGfxCoreHelper();
+        auto &productHelper = getProductHelper();
         if (debugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
             if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
 

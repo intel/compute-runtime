@@ -218,6 +218,9 @@ class Device : public ReferenceTrackedObject<Device> {
     }
 
     MOCKABLE_VIRTUAL bool createDeviceImpl();
+    bool initDeviceWithEngines();
+    void initializeCommonResources();
+    bool initDeviceFully();
     virtual bool createEngines();
 
     void addEngineToEngineGroup(EngineControl &engine);
