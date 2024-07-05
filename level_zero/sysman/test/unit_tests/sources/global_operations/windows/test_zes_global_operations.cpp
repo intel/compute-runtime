@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,6 +81,37 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingzesDeviceResetE
     init(true);
     ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDeviceGetSubDevicePropertiesExpThenUnsupportedIsReturned) {
+    init(true);
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetSubDevicePropertiesExp(pSysmanDevice->toHandle(), &count, nullptr));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDriverGetDeviceByUuidExpWithInvalidUuidThenInvalidArgumentErrorIsReturned) {
+    init(true);
+    zes_uuid_t uuid = {};
+    zes_device_handle_t phDevice;
+    ze_bool_t onSubdevice;
+    uint32_t subdeviceId;
+    ze_result_t result = zesDriverGetDeviceByUuidExp(driverHandle.get(), uuid, &phDevice, &onSubdevice, &subdeviceId);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDriverGetDeviceByUuidExpWithValidUuidThenSuccessIsReturned) {
+    init(true);
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zes_uuid_t uuid;
+    zes_device_handle_t phDevice;
+    ze_bool_t onSubdevice;
+    uint32_t subdeviceId;
+    std::copy_n(std::begin(properties.core.uuid.id), ZE_MAX_DEVICE_UUID_SIZE, std::begin(uuid.id));
+    result = zesDriverGetDeviceByUuidExp(driverHandle.get(), uuid, &phDevice, &onSubdevice, &subdeviceId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
@@ -177,6 +208,20 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenNullOsInterfaceObjectWhenRetrievi
     std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
     bool result = pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid);
     EXPECT_EQ(false, result);
+    rootDeviceEnvironment.osInterface = std::move(prevOsInterface);
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenNullOsInterfaceObjectWhenRetrievingDeviceInfoByUuidThenFalseIsReturned) {
+    initGlobalOps();
+
+    auto &rootDeviceEnvironment = (pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef());
+    auto prevOsInterface = std::move(rootDeviceEnvironment.osInterface);
+    rootDeviceEnvironment.osInterface = nullptr;
+    zes_uuid_t uuid = {};
+    ze_bool_t onSubdevice = false;
+    uint32_t subdeviceId = 0;
+    bool result = pGlobalOperationsImp->pOsGlobalOperations->getDeviceInfoByUuid(uuid, &onSubdevice, &subdeviceId);
+    EXPECT_FALSE(result);
     rootDeviceEnvironment.osInterface = std::move(prevOsInterface);
 }
 

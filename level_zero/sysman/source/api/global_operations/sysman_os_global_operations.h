@@ -31,6 +31,8 @@ class OsGlobalOperations {
     virtual void getRepairStatus(zes_device_state_t *pState) = 0;
     virtual bool getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) = 0;
     virtual bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) = 0;
+    virtual ze_bool_t getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) = 0;
+    virtual ze_result_t getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) = 0;
     virtual ze_result_t reset(ze_bool_t force) = 0;
     virtual ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) = 0;
     virtual ze_result_t deviceGetState(zes_device_state_t *pState) = 0;

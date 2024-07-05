@@ -99,6 +99,24 @@ bool WddmGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevi
 
     return false;
 }
+
+ze_bool_t WddmGlobalOperationsImp::getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) {
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+    bool uuidValid = getUuid(deviceUuid);
+    if (uuidValid) {
+        if (0 == std::memcmp(uuid.id, deviceUuid.data(), ZE_MAX_DEVICE_UUID_SIZE)) {
+            *onSubdevice = false;
+            *subdeviceId = 0;
+            return true;
+        }
+    }
+    return false;
+}
+
+ze_result_t WddmGlobalOperationsImp::getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {
     uint32_t value = 0;
     KmdSysman::RequestProperty request;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,6 +99,16 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+bool GlobalOperationsImp::getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) {
+    initGlobalOperations();
+    return pOsGlobalOperations->getDeviceInfoByUuid(uuid, onSubdevice, subdeviceId);
+}
+
+ze_result_t GlobalOperationsImp::deviceGetSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) {
+    initGlobalOperations();
+    return pOsGlobalOperations->getSubDeviceProperties(pCount, pSubdeviceProps);
 }
 
 ze_result_t GlobalOperationsImp::reset(ze_bool_t force) {

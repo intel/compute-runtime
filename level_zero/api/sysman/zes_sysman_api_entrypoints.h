@@ -87,6 +87,28 @@ ze_result_t zesDeviceGetState(
     }
 }
 
+ze_result_t zesDeviceGetSubDevicePropertiesExp(zes_device_handle_t hDevice,
+                                               uint32_t *pCount,
+                                               zes_subdevice_exp_properties_t *pSubdeviceProps) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::deviceGetSubDeviceProperties(hDevice, pCount, pSubdeviceProps);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesDriverGetDeviceByUuidExp(zes_driver_handle_t hDriver, zes_uuid_t uuid, zes_device_handle_t *phDevice, ze_bool_t *onSubdevice, uint32_t *subdeviceId) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getDeviceByUuid(uuid, phDevice, onSubdevice, subdeviceId);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 ze_result_t zesDeviceEnumSchedulers(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
@@ -788,34 +810,6 @@ ze_result_t zesFirmwareGetConsoleLogs(
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetConsoleLogs(pSize, pFirmwareLog);
-    } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-}
-
-ze_result_t zesDeviceGetSubDevicePropertiesExp(
-    zes_device_handle_t hDevice,
-    uint32_t *pCount,
-    zes_subdevice_exp_properties_t *pSubdeviceProps) {
-    if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else if (L0::Sysman::sysmanOnlyInit) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-}
-
-ze_result_t zesDriverGetDeviceByUuidExp(
-    zes_driver_handle_t hDriver,
-    zes_uuid_t uuid,
-    zes_device_handle_t *phDevice,
-    ze_bool_t *onSubdevice,
-    uint32_t *subdeviceId) {
-    if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else if (L0::Sysman::sysmanOnlyInit) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }

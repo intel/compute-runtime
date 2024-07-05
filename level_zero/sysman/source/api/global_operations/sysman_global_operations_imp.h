@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,8 @@ class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableOrMovableCl
     void init() override;
     ze_result_t reset(ze_bool_t force) override;
     ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) override;
+    ze_result_t deviceGetSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) override;
+    bool getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) override;
     ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) override;
     ze_result_t deviceGetState(zes_device_state_t *pState) override;
     ze_result_t resetExt(zes_reset_properties_t *pProperties) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,10 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t deviceGetProperties(zes_device_handle_t hDevice, zes_device_properties_t *pProperties);
     virtual ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) = 0;
+
+    static ze_result_t deviceGetSubDeviceProperties(zes_device_handle_t hDevice, uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps);
+    virtual ze_result_t deviceGetSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) = 0;
+    virtual ze_bool_t getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) = 0;
 
     static ze_result_t deviceGetState(zes_device_handle_t hDevice, zes_device_state_t *pState);
     virtual ze_result_t deviceGetState(zes_device_state_t *pState) = 0;

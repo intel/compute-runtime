@@ -94,6 +94,17 @@ ze_result_t SysmanDriverHandleImp::getDevice(uint32_t *pCount, zes_device_handle
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t SysmanDriverHandleImp::getDeviceByUuid(zes_uuid_t uuid, zes_device_handle_t *phDevice, ze_bool_t *onSubdevice, uint32_t *subdeviceId) {
+    for (uint32_t index = 0; index < this->numDevices; index++) {
+        ze_bool_t deviceFound = this->sysmanDevices[index]->getDeviceInfoByUuid(uuid, onSubdevice, subdeviceId);
+        if (deviceFound) {
+            *phDevice = this->sysmanDevices[index];
+            return ZE_RESULT_SUCCESS;
+        }
+    }
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
 ze_result_t SysmanDriverHandleImp::getExtensionProperties(uint32_t *pCount, zes_driver_extension_properties_t *pExtensionProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
@@ -1331,6 +1332,13 @@ class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
 
+    void setPciBusInfo(NEO::ExecutionEnvironment *executionEnvironment, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, const uint32_t rootDeviceIndex) {
+        auto driverModel = std::make_unique<NEO::MockDriverModel>();
+        driverModel->pciSpeedInfo = {1, 1, 1};
+        driverModel->pciBusInfo = pciBusInfo;
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::move(driverModel));
+    }
+
     void initGlobalOps() {
         zes_device_state_t deviceState;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
@@ -1362,6 +1370,130 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceFDWhenRetrievingUuidTh
     EXPECT_EQ(true, result);
 
     std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
+}
+
+using SysmanSubDevicePropertiesExperimentalTestMultiDevice = SysmanMultiDeviceFixture;
+HWTEST2_F(SysmanSubDevicePropertiesExperimentalTestMultiDevice,
+          GivenValidDeviceHandleWhenCallingGetSubDevicePropertiesThenApiSucceeds, IsXeHpcCore) {
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceGetSubDevicePropertiesExp(pSysmanDevice, &count, nullptr);
+    EXPECT_TRUE(count > 0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::vector<zes_subdevice_exp_properties_t> subDeviceProps(count);
+    result = zesDeviceGetSubDevicePropertiesExp(pSysmanDevice, &count, subDeviceProps.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST2_F(SysmanSubDevicePropertiesExperimentalTestMultiDevice,
+          GivenValidDeviceHandleWhenCallingGetSubDevicePropertiesTwiceThenApiResultsMatch, IsXeHpcCore) {
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceGetSubDevicePropertiesExp(pSysmanDevice, &count, nullptr);
+    EXPECT_EQ(true, (count > 0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::vector<zes_subdevice_exp_properties_t> subDeviceProps(count);
+    result = zesDeviceGetSubDevicePropertiesExp(pSysmanDevice, &count, subDeviceProps.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    std::vector<zes_subdevice_exp_properties_t> subDeviceProps2(count);
+    result = zesDeviceGetSubDevicePropertiesExp(pSysmanDevice, &count, subDeviceProps2.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    for (uint32_t i = 0; i < count; i++) {
+        EXPECT_EQ(subDeviceProps[i].subdeviceId, subDeviceProps2[i].subdeviceId);
+        EXPECT_EQ(0, memcmp(subDeviceProps[i].uuid.id, subDeviceProps2[i].uuid.id, ZES_MAX_UUID_SIZE));
+    }
+}
+
+using SysmanDeviceGetByUuidExperimentalTestMultiDevice = SysmanMultiDeviceFixture;
+HWTEST2_F(SysmanDeviceGetByUuidExperimentalTestMultiDevice,
+          GivenValidDriverHandleWhenCallingGetDeviceByUuidWithInvalidUuidThenErrorResultIsReturned, IsXeHpcCore) {
+    zes_uuid_t uuid = {};
+    zes_device_handle_t phDevice;
+    ze_bool_t onSubdevice;
+    uint32_t subdeviceId;
+
+    ze_result_t result = zesDriverGetDeviceByUuidExp(driverHandle.get(), uuid, &phDevice, &onSubdevice, &subdeviceId);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWTEST2_F(SysmanDeviceGetByUuidExperimentalTestMultiDevice,
+          GivenValidDriverHandleWhenCallingGetDeviceByUuidWithValidUuidThenCorrectDeviceIsReturned, IsXeHpcCore) {
+
+    zes_device_properties_t properties = {};
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zes_uuid_t uuid = {};
+    std::copy_n(std::begin(properties.core.uuid.id), ZE_MAX_DEVICE_UUID_SIZE, std::begin(uuid.id));
+    zes_device_handle_t phDevice;
+    ze_bool_t onSubdevice;
+    uint32_t subdeviceId;
+
+    result = zesDriverGetDeviceByUuidExp(driverHandle.get(), uuid, &phDevice, &onSubdevice, &subdeviceId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(phDevice, pSysmanDevice);
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceHandleWhenCallingGenerateUuidFromPciBusInfoThenValidUuidIsReturned) {
+    initGlobalOps();
+
+    auto pHwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    pHwInfo->platform.usDeviceID = 0x1234;
+    pHwInfo->platform.usRevId = 0x1;
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    NEO::PhysicalDevicePciBusInfo pciBusInfo = {};
+    pciBusInfo.pciDomain = 0x5678;
+    pciBusInfo.pciBus = 0x9;
+    pciBusInfo.pciDevice = 0xA;
+    pciBusInfo.pciFunction = 0xB;
+
+    bool result = pGlobalOperationsImp->pOsGlobalOperations->generateUuidFromPciBusInfo(pciBusInfo, uuid);
+    EXPECT_EQ(true, result);
+    uint8_t *pUuid = (uint8_t *)uuid.data();
+    EXPECT_EQ(*((uint16_t *)pUuid), (uint16_t)0x8086);
+    EXPECT_EQ(*((uint16_t *)(pUuid + 2)), (uint16_t)pHwInfo->platform.usDeviceID);
+    EXPECT_EQ(*((uint16_t *)(pUuid + 4)), (uint16_t)pHwInfo->platform.usRevId);
+    EXPECT_EQ(*((uint16_t *)(pUuid + 6)), (uint16_t)pciBusInfo.pciDomain);
+    EXPECT_EQ((*(pUuid + 8)), (uint8_t)pciBusInfo.pciBus);
+    EXPECT_EQ((*(pUuid + 9)), (uint8_t)pciBusInfo.pciDevice);
+    EXPECT_EQ((*(pUuid + 10)), (uint8_t)pciBusInfo.pciFunction);
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallingGenerateUuidFromPciBusInfoThenFalseIsReturned) {
+    initGlobalOps();
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    NEO::PhysicalDevicePciBusInfo pciBusInfo = {};
+    pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
+
+    bool result = pGlobalOperationsImp->pOsGlobalOperations->generateUuidFromPciBusInfo(pciBusInfo, uuid);
+    EXPECT_EQ(false, result);
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenNullOsInterfaceObjectWhenRetrievingUuidThenFalseIsReturned) {
+    initGlobalOps();
+
+    auto &rootDeviceEnvironment = (pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef());
+    auto prevOsInterface = std::move(rootDeviceEnvironment.osInterface);
+    rootDeviceEnvironment.osInterface = nullptr;
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    bool result = pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid);
+    EXPECT_EQ(false, result);
+    rootDeviceEnvironment.osInterface = std::move(prevOsInterface);
+}
+
+TEST_F(SysmanGlobalOperationsUuidFixture, GivenInvalidPciBusInfoWhenRetrievingUuidThenFalseIsReturned) {
+    initGlobalOps();
+    auto prevFlag = debugManager.flags.EnableChipsetUniqueUUID.get();
+    debugManager.flags.EnableChipsetUniqueUUID.set(0);
+
+    PhysicalDevicePciBusInfo pciBusInfo = {};
+    pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
+    setPciBusInfo(execEnv, pciBusInfo, 0);
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    bool result = pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid);
+    EXPECT_EQ(false, result);
+    debugManager.flags.EnableChipsetUniqueUUID.set(prevFlag);
 }
 
 } // namespace ult

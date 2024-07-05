@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,12 @@ ze_result_t SysmanDevice::deviceGetState(zes_device_handle_t hDevice, zes_device
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     return pSysmanDevice->deviceGetState(pState);
 }
-
+ze_result_t SysmanDevice::deviceGetSubDeviceProperties(zes_device_handle_t hDevice,
+                                                       uint32_t *pCount,
+                                                       zes_subdevice_exp_properties_t *pSubdeviceProps) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceGetSubDeviceProperties(pCount, pSubdeviceProps);
+}
 ze_result_t SysmanDevice::standbyGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_standby_handle_t *phStandby) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     return pSysmanDevice->standbyGet(pCount, phStandby);

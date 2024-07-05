@@ -76,6 +76,14 @@ ze_result_t SysmanDeviceImp::deviceGetProperties(zes_device_properties_t *pPrope
     return pGlobalOperations->deviceGetProperties(pProperties);
 }
 
+ze_result_t SysmanDeviceImp::deviceGetSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) {
+    return pGlobalOperations->deviceGetSubDeviceProperties(pCount, pSubdeviceProps);
+}
+
+ze_bool_t SysmanDeviceImp::getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) {
+    return pGlobalOperations->getDeviceInfoByUuid(uuid, onSubdevice, subdeviceId);
+}
+
 ze_result_t SysmanDeviceImp::processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) {
     return pGlobalOperations->processesGetState(pCount, pProcesses);
 }

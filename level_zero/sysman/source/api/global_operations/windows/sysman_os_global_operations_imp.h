@@ -30,7 +30,8 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMov
     ze_result_t resetExt(zes_reset_properties_t *pProperties) override;
     bool getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
     bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
-
+    ze_bool_t getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) override;
+    ze_result_t getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) override;
     WddmGlobalOperationsImp(OsSysman *pOsSysman);
     WddmGlobalOperationsImp() = default;
     ~WddmGlobalOperationsImp() override = default;
