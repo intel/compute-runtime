@@ -23,13 +23,16 @@ using MockExecutionEnvironmentGmmFixtureTest = Test<NEO::MockExecutionEnvironmen
 
 using namespace ::testing;
 
-namespace NEO {
+using namespace NEO;
 
+namespace NEO {
 extern GMM_INIT_IN_ARGS passedInputArgs;
 extern GT_SYSTEM_INFO passedGtSystemInfo;
 extern SKU_FEATURE_TABLE passedFtrTable;
 extern WA_TABLE passedWaTable;
 extern bool copyInputArgs;
+
+} // namespace NEO
 
 struct GmmHelperTests : public MockExecutionEnvironmentGmmFixtureTest {
     void SetUp() override {
@@ -1643,5 +1646,3 @@ TEST_F(MultiTileGmmTests, whenAllocationIsTileInstancedWithClonningPageTablesThe
     EXPECT_EQ(1u, gmm.resourceParams.MultiTileArch.Enable);
     EXPECT_EQ(0u, gmm.resourceParams.MultiTileArch.TileInstanced);
 }
-
-} // namespace NEO

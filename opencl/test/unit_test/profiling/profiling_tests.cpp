@@ -27,7 +27,7 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
-namespace NEO {
+using namespace NEO;
 
 struct ProfilingTests : public CommandEnqueueFixture,
                         public ::testing::Test {
@@ -87,10 +87,10 @@ class MyOSDeviceTime : public DeviceTime {
     }
 };
 
-class MyOSTime : public OSTime {
+class MockOsTime2 : public OSTime {
   public:
     static int instanceNum;
-    MyOSTime() {
+    MockOsTime2() {
         instanceNum++;
         this->deviceTime = std::make_unique<MyOSDeviceTime>();
     }
@@ -109,7 +109,7 @@ class MyOSTime : public OSTime {
     }
 };
 
-int MyOSTime::instanceNum = 0;
+int MockOsTime2::instanceNum = 0;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingAndForWorkloadWithKernelWhenGetCSFromCmdQueueThenEnoughSpaceInCS) {
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
@@ -583,9 +583,9 @@ using EventProfilingTest = ProfilingTests;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEndTimestampInCompleteTimestampAndDoesntCallOsTimeMethods) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MyOSTime::instanceNum = 0;
-    device->setOSTime(new MyOSTime());
-    EXPECT_EQ(1, MyOSTime::instanceNum);
+    MockOsTime2::instanceNum = 0;
+    device->setOSTime(new MockOsTime2());
+    EXPECT_EQ(1, MockOsTime2::instanceNum);
     MockContext context;
     cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
     MockCommandQueue cmdQ(&context, device.get(), props, false);
@@ -620,9 +620,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhen
     DebugManagerStateRestore stateRestore;
     debugManager.flags.ReturnRawGpuTimestamps.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MyOSTime::instanceNum = 0;
-    device->setOSTime(new MyOSTime());
-    EXPECT_EQ(1, MyOSTime::instanceNum);
+    MockOsTime2::instanceNum = 0;
+    device->setOSTime(new MockOsTime2());
+    EXPECT_EQ(1, MockOsTime2::instanceNum);
     MockContext context;
     cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
     MockCommandQueue cmdQ(&context, device.get(), props, false);
@@ -717,9 +717,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenS
     DebugManagerStateRestore stateRestore;
     debugManager.flags.ReturnRawGpuTimestamps.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    MyOSTime::instanceNum = 0;
-    device->setOSTime(new MyOSTime());
-    EXPECT_EQ(1, MyOSTime::instanceNum);
+    MockOsTime2::instanceNum = 0;
+    device->setOSTime(new MockOsTime2());
+    EXPECT_EQ(1, MockOsTime2::instanceNum);
     MockContext context(device.get());
     MockCommandQueue cmdQ(&context, device.get(), nullptr, false);
     cmdQ.setProfilingEnabled();
@@ -1412,4 +1412,3 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithZeroElem
 
     EXPECT_FALSE(ev->getDataCalcStatus());
 }
-} // namespace NEO
