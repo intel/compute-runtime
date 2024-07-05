@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 
 using namespace NEO;
-
-HWTEST_EXCLUDE_PRODUCT(GetDeviceInfoMemCapabilitiesTest, GivenEnableUsmConcurrentAccessSupportWhenGetDeviceInfoIsCalledForXE_HP_COREThenClSuccessIsReturned, IGFX_XE_HPC_CORE);
 
 PVCTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledForPVCThenClSuccessIsReturned) {
     std::vector<TestParams> params = {
