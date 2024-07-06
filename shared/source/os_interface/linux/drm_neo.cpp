@@ -930,10 +930,6 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
     gtSysInfo->CsrSizeInMb = sysInfo->getCsrSizeInMb();
     gtSysInfo->SLMSizeInKb = sysInfo->getSlmSizePerDss();
-
-    if (gtSysInfo->SLMSizeInKb) {
-        hwInfo->capabilityTable.slmSize = gtSysInfo->SLMSizeInKb;
-    }
 }
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {

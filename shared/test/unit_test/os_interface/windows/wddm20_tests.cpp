@@ -72,12 +72,6 @@ TEST_F(Wddm20Tests, GivenExisitingContextWhenInitializingWddmThenCreateContextRe
     EXPECT_EQ(1u, wddm->createContextResult.called);
 }
 
-TEST_F(Wddm20Tests, whenInitializingWddmThenSlmSizeInCapabilityTableIsSameAsInGtSystemInfo) {
-    wddm->init();
-    auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-    EXPECT_EQ(hwInfo->gtSystemInfo.SLMSizeInKb, hwInfo->capabilityTable.slmSize);
-}
-
 TEST_F(Wddm20Tests, givenNullPageTableManagerAndCompressedResourceWhenMappingGpuVaThenDontUpdateAuxTable) {
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
