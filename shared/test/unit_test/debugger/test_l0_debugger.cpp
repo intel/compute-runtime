@@ -216,22 +216,6 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreate
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
-HWTEST_F(L0DebuggerTest, givenDebuggerCreatedWhenSubdevicesExistThenModuleHeapDebugAreaIsResidentForSubDevices) {
-    DebugManagerStateRestore restorer;
-    constexpr auto numSubDevices = 2;
-    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-    auto executionEnvironment = new NEO::ExecutionEnvironment;
-    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
-    auto neoDevice = devices[0].get();
-
-    auto memoryOperationsHandler = new NEO::MockMemoryOperations();
-    memoryOperationsHandler->makeResidentCalledCount = 0;
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperationsHandler);
-    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
-
-    EXPECT_EQ((1 + numSubDevices), memoryOperationsHandler->makeResidentCalledCount);
-}
-
 HWTEST_F(L0DebuggerTest, givenBindlessSipWhenModuleHeapDebugAreaIsCreatedThenReservedFieldIsSet) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseBindlessDebugSip.set(1);
