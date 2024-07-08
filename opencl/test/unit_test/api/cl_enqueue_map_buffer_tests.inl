@@ -57,7 +57,7 @@ TEST_F(ClEnqueueMapBufferTests, GivenValidParametersWhenMappingBufferThenSuccess
     unsigned int bufferSize = 16;
     auto pHostMem = new unsigned char[bufferSize];
     memset(pHostMem, 0xaa, bufferSize);
-
+    cl_event eventReturned = nullptr;
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
     auto buffer = clCreateBuffer(
         pContext,
@@ -68,7 +68,6 @@ TEST_F(ClEnqueueMapBufferTests, GivenValidParametersWhenMappingBufferThenSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
-    cl_event eventReturned = nullptr;
     auto ptrResult = clEnqueueMapBuffer(
         pCommandQueue,
         buffer,
@@ -114,6 +113,12 @@ TEST_F(ClEnqueueMapBufferTests, GivenMappedPointerWhenCreatingBufferFromThisPoin
     unsigned int bufferSize = 16;
 
     cl_mem buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
+    auto pBuffer = castToObject<Buffer>(buffer);
+    if (!pBuffer->mappingOnCpuAllowed()) {
+        retVal = clReleaseMemObject(buffer);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        GTEST_SKIP();
+    }
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 

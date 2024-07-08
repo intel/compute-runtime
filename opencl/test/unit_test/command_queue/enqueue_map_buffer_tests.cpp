@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,6 +109,9 @@ TEST_F(EnqueueMapBufferTest, GivenCmdqAndValidArgsWhenMappingBufferThenSuccessIs
 
 TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWhenMappingBufferThenChangesArePropagatedToDeviceMemory) {
     // size not aligned to cacheline size
+    if (!buffer->mappingOnCpuAllowed()) {
+        GTEST_SKIP();
+    }
     int bufferSize = 20;
     void *ptrHost = malloc(bufferSize);
     char *charHostPtr = static_cast<char *>(ptrHost);
@@ -288,7 +291,10 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
-
+    auto pBuffer = castToObject<Buffer>(buffer);
+    if (!pBuffer->isMemObjZeroCopy()) {
+        GTEST_SKIP();
+    }
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
 
     auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
@@ -507,21 +513,26 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     taskCount = commandStreamReceiver.peekTaskCount();
-    EXPECT_EQ(1u, taskCount);
+    auto expectedTaskCount = 1u;
+    auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskCount++;
+    }
+    EXPECT_EQ(expectedTaskCount, taskCount);
 
     auto neoEvent = castToObject<Event>(eventReturned);
     // if task count of csr is higher then event task count with proper dc flushing then we are fine
-    EXPECT_EQ(1u, neoEvent->getCompletionStamp());
+    EXPECT_EQ(expectedTaskCount, neoEvent->getCompletionStamp());
     EXPECT_TRUE(neoEvent->updateStatusAndCheckCompletion());
 
     // flush task was not called
-    EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
 
     // wait for events shouldn't call flush task
     retVal = clWaitForEvents(1, &eventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -576,14 +587,16 @@ HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsC
         nullptr,
         nullptr,
         &retVal);
-
+    clFlush(&mockCmdQueue);
     EXPECT_NE(nullptr, ptrResult);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     commandStreamReceiver.peekTaskCount();
 
-    EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
-    EXPECT_EQ(1u, mockCmdQueue.latestTaskCountWaited);
+    if (pBuffer->mappingOnCpuAllowed()) {
+        EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
+        EXPECT_EQ(1u, mockCmdQueue.latestTaskCountWaited);
+    }
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -641,7 +654,12 @@ HWTEST_F(EnqueueMapBufferTest, GivenPtrToReturnEventWhenMappingBufferThenEventIs
     EXPECT_NE(nullptr, eventReturned);
 
     auto eventObject = castToObject<Event>(eventReturned);
-    EXPECT_EQ(0u, eventObject->peekTaskCount());
+    auto bufferObject = castToObject<Buffer>(buffer);
+    if (bufferObject->mappingOnCpuAllowed()) {
+        EXPECT_EQ(0u, eventObject->peekTaskCount());
+    } else {
+        EXPECT_EQ(101u, eventObject->peekTaskCount());
+    }
     EXPECT_TRUE(eventObject->updateStatusAndCheckCompletion());
 
     retVal = clEnqueueUnmapMemObject(
@@ -666,7 +684,11 @@ TEST_F(EnqueueMapBufferTest, GivenZeroCopyBufferWhenMapBufferWithoutEventsThenCo
         20,
         nullptr,
         &retVal);
-
+    auto pBuffer = castToObject<Buffer>(buffer);
+    if (!pBuffer->isMemObjZeroCopy()) {
+        clReleaseMemObject(buffer);
+        GTEST_SKIP();
+    }
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
@@ -693,7 +715,8 @@ TEST_F(EnqueueMapBufferTest, GivenZeroCopyBufferWhenMapBufferWithoutEventsThenCo
 TEST_F(EnqueueMapBufferTest, givenBufferWithoutUseHostPtrFlagWhenMappedOnCpuThenSetAllMapParams) {
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 10, nullptr, retVal));
     EXPECT_NE(nullptr, buffer);
-    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
+    auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
+    EXPECT_EQ(!productHelper.isNewCoherencyModelSupported(), buffer->mappingOnCpuAllowed());
 
     size_t mapSize = 3;
     size_t mapOffset = 2;
@@ -715,15 +738,17 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithoutUseHostPtrFlagWhenMappedOnCpuThen
     EXPECT_EQ(0u, mappedInfo.size[2]);
 
     auto expectedPtr = ptrOffset(buffer->getCpuAddressForMapping(), mapOffset);
-
-    EXPECT_EQ(mappedPtr, expectedPtr);
+    if (!productHelper.isNewCoherencyModelSupported()) {
+        EXPECT_EQ(mappedPtr, expectedPtr);
+    }
 }
 
 TEST_F(EnqueueMapBufferTest, givenBufferWithUseHostPtrFlagWhenMappedOnCpuThenSetAllMapParams) {
     uint8_t hostPtr[10] = {};
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
     EXPECT_NE(nullptr, buffer);
-    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
+    auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
+    EXPECT_EQ(!productHelper.isNewCoherencyModelSupported(), buffer->mappingOnCpuAllowed());
 
     size_t mapSize = 3;
     size_t mapOffset = 2;
@@ -753,7 +778,12 @@ HWTEST_F(EnqueueMapBufferTest, givenMapBufferOnGpuWhenMappingBufferThenStoreGrap
     uint8_t hostPtr[10] = {};
     std::unique_ptr<Buffer> bufferForCpuMap(Buffer::create(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
     ASSERT_NE(nullptr, bufferForCpuMap);
-    ASSERT_TRUE(bufferForCpuMap->mappingOnCpuAllowed());
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        ASSERT_FALSE(bufferForCpuMap->mappingOnCpuAllowed());
+    } else {
+        ASSERT_TRUE(bufferForCpuMap->mappingOnCpuAllowed());
+    }
 
     std::unique_ptr<Buffer> bufferForGpuMap(Buffer::create(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
     ASSERT_NE(nullptr, bufferForGpuMap);
@@ -768,7 +798,11 @@ HWTEST_F(EnqueueMapBufferTest, givenMapBufferOnGpuWhenMappingBufferThenStoreGrap
 
     MapInfo mapInfo{};
     EXPECT_TRUE(bufferForCpuMap->findMappedPtr(pointerMappedOnCpu, mapInfo));
-    EXPECT_EQ(nullptr, mapInfo.graphicsAllocation);
+    if (productHelper.isNewCoherencyModelSupported()) {
+        EXPECT_NE(nullptr, mapInfo.graphicsAllocation);
+    } else {
+        EXPECT_EQ(nullptr, mapInfo.graphicsAllocation);
+    }
     EXPECT_TRUE(bufferForGpuMap->findMappedPtr(pointerMappedOnGpu, mapInfo));
     EXPECT_NE(nullptr, mapInfo.graphicsAllocation);
 }

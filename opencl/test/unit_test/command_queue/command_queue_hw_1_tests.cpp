@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -393,7 +393,9 @@ HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingWhenMappingBufferThenWi
 
         bool finishWasCalled;
     };
-
+    if (context->getDevice(0)->getProductHelper().isNewCoherencyModelSupported()) {
+        GTEST_SKIP();
+    }
     MockCmdQ cmdQ(context, pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
     auto b1 = clCreateBuffer(context, CL_MEM_READ_WRITE, 20, nullptr, nullptr);
@@ -439,7 +441,9 @@ HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingWhenMappingBufferThenW
         uint32_t updateCount = 0;
         uint32_t updateCountBeforeCompleted;
     };
-
+    if (context->getDevice(0)->getProductHelper().isNewCoherencyModelSupported()) {
+        GTEST_SKIP();
+    }
     MockEvent *me = new MockEvent(context, 1024);
     auto b1 = clCreateBuffer(context, CL_MEM_READ_WRITE, 20, nullptr, nullptr);
     cl_event meAsClEv = me;

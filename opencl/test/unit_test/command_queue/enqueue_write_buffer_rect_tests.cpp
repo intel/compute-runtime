@@ -322,7 +322,12 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWhenWr
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+    auto expectedTaskLevel = 0u;
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
+    EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
 }
 HWTEST_F(EnqueueWriteBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     cl_int retVal = CL_SUCCESS;
@@ -347,7 +352,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWhe
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_SUCCESS, pCmdOOQ->flush());
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
 HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
@@ -388,11 +393,15 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWithEv
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, event);
 
+    auto expectedTaskLevel = 19u;
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
     auto pEvent = (Event *)event;
-    EXPECT_EQ(19u, pEvent->taskLevel);
-    EXPECT_EQ(19u, pCmdQ->taskLevel);
     EXPECT_EQ(CL_COMMAND_WRITE_BUFFER_RECT, (const int)pEvent->getCommandType());
-
+    EXPECT_EQ(expectedTaskLevel, pEvent->taskLevel);
+    EXPECT_EQ(expectedTaskLevel, pCmdQ->taskLevel);
     pEvent->release();
 }
 HWTEST_F(EnqueueWriteBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
@@ -440,11 +449,16 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWit
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, event);
 
+    auto expectedTaskLevel = 19u;
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
     auto pEvent = (Event *)event;
-    EXPECT_EQ(19u, pEvent->taskLevel);
-    EXPECT_EQ(19u, pCmdOOQ->taskLevel);
     EXPECT_EQ(CL_COMMAND_WRITE_BUFFER_RECT, (const int)pEvent->getCommandType());
-
+    EXPECT_EQ(expectedTaskLevel, pEvent->taskLevel);
+    EXPECT_EQ(expectedTaskLevel, pCmdOOQ->taskLevel);
+    pCmdOOQ->flush();
     pEvent->release();
 }
 HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndRowPitchEqualZeroAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
@@ -470,7 +484,12 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndRowPitchEqualZeroAndDst
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+    auto expectedTaskLevel = 0u;
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
+    EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
 }
 HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndSlicePitchEqualZeroAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     cl_int retVal = CL_SUCCESS;
@@ -495,7 +514,12 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndSlicePitchEqualZeroAndD
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    auto expectedTaskLevel = 0u;
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
+    EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
 }
 HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointTheSameStorageWithHostWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     cl_int retVal = CL_SUCCESS;
@@ -521,8 +545,12 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointTh
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+    auto expectedTaskLevel = 0u;
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
+    EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
 }
 HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointDiffrentStorageWithHostWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
     cl_int retVal = CL_SUCCESS;

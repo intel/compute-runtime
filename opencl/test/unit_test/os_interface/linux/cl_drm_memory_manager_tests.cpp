@@ -85,7 +85,6 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationTh
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
     auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
     auto baseAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuBaseAddress();
 
@@ -96,6 +95,10 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationTh
 
 TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHostPtrThen32BitBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
+    auto isNewCoherencyModelSupported = pClDevice->getProductHelper().isNewCoherencyModelSupported();
+    if (isNewCoherencyModelSupported) {
+        GTEST_SKIP();
+    }
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
@@ -152,6 +155,10 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromH
 
 TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64BitHostPtrThen32BitBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
+    auto isNewCoherencyModelSupported = pClDevice->getProductHelper().isNewCoherencyModelSupported();
+    if (isNewCoherencyModelSupported) {
+        GTEST_SKIP();
+    }
     {
         if (is32bit) {
             mock->ioctlExpected.total = -1;
@@ -191,7 +198,6 @@ TEST_F(ClDrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom6
             auto allocationCpuPtr = drmAllocation->getUnderlyingBuffer();
             auto allocationPageOffset = ptrDiff(allocationCpuPtr, alignDown(allocationCpuPtr, MemoryConstants::pageSize));
             auto bufferObject = drmAllocation->getBO();
-
             EXPECT_EQ(allocationPageOffset, ptrOffset);
 
             auto boAddress = bufferObject->peekAddress();

@@ -448,11 +448,13 @@ bool MemObj::mappingOnCpuAllowed() const {
 
 bool MemObj::allowCpuAccess() const {
     auto graphicsAllocation = this->multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    auto allocType = graphicsAllocation->getAllocationType();
+    auto isNonCoherentSystemAllocation = MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool()) && (allocType == AllocationType::buffer);
     if (graphicsAllocation->getDefaultGmm() == nullptr) {
-        return true;
+        return !(isNonCoherentSystemAllocation);
     }
 
-    return !graphicsAllocation->getDefaultGmm()->getPreferNoCpuAccess();
+    return !graphicsAllocation->getDefaultGmm()->getPreferNoCpuAccess() && !(isNonCoherentSystemAllocation);
 }
 
 bool MemObj::allowCpuForMapUnmap() const {

@@ -63,7 +63,6 @@ TEST_F(ClEnqueueUnmapMemObjTests, GivenQueueIncapableWhenUnmappingBufferThenInva
 
 TEST_F(ClEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnCpuThenReturnError) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
-    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
     cl_int retVal = CL_SUCCESS;
 
     auto mappedPtr = clEnqueueMapBuffer(pCommandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
@@ -86,8 +85,9 @@ TEST_F(ClEnqueueUnmapMemObjTests, givenZeroCopyWithoutCoherencyAllowedWhenMapAnd
     VariableBackup<uint32_t> backupWaitCount(&WaitUtils::waitCount, 1);
 
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferAllocHostPtr<>>::create(pContext));
-    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
-    buffer->isMemObjZeroCopy();
+    if (!buffer->isMemObjZeroCopy()) {
+        GTEST_SKIP();
+    }
     cl_int retVal = CL_SUCCESS;
 
     CpuIntrinsicsTests::clFlushCounter.store(0u);

@@ -37,7 +37,8 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenCompressedGmmWhenAskingForCpuOperation
     auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, 1);
     EXPECT_EQ(1u, allocation->storageInfo.getNumBanks());
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(*pDevice));
+    auto isNewCoherencyModel = pDevice->getProductHelper().isNewCoherencyModelSupported();
+    EXPECT_EQ(!isNewCoherencyModel, buffer->isReadWriteOnCpuAllowed(*pDevice));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(unalignedPtr, 1, *pDevice));
 
     gmm->setCompressionEnabled(true);
@@ -48,6 +49,10 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenCompressedGmmWhenAskingForCpuOperation
 }
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedReadPtrWhenReadingBufferThenMemoryIsReadCorrectly) {
+    if (context->getDevice(0)->getProductHelper().isNewCoherencyModelSupported()) {
+        // This test assumes that write buffer will be serviced on cpu
+        GTEST_SKIP();
+    }
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal;
@@ -89,6 +94,10 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedReadPtrWhenReadingBufferThenM
 }
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMemoryIsWrittenCorrectly) {
+    if (context->getDevice(0)->getProductHelper().isNewCoherencyModelSupported()) {
+        // This test assumes that write buffer will be serviced on cpu
+        GTEST_SKIP();
+    }
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal;
@@ -136,7 +145,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMe
     delete[] bufferPtrBase;
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWritingMemoryThenCpuReadWriteIsAllowed) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndOldCoherencyModelWhenReadingWritingMemoryThenCpuReadWriteIsAllowed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal;
@@ -152,13 +161,14 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
     auto mockContext = std::unique_ptr<MockContext>(new MockContext(mockDevice.get()));
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
-
+    auto &productHelper = mockDevice->getProductHelper();
+    auto isZeroCopyAllowed = !productHelper.isNewCoherencyModelSupported();
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, alignedBufferPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isMemObjZeroCopy());
 
     // zeroCopy == true && aligned/unaligned hostPtr
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(alignedHostPtr, MemoryConstants::cacheLineSize + 1, mockDevice->getDevice()));
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isReadWriteOnCpuPreferred(alignedHostPtr, MemoryConstants::cacheLineSize + 1, mockDevice->getDevice()));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(unalignedHostPtr, MemoryConstants::cacheLineSize, mockDevice->getDevice()));
 
     buffer.reset(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, unalignedBufferPtr, retVal));
@@ -172,24 +182,24 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
 
     // platform LP == true && size <= 10 MB
     mockDevice->deviceInfo.platformLP = true;
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(smallBufferPtr, 1 * MemoryConstants::megaByte, mockDevice->getDevice()));
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isReadWriteOnCpuPreferred(smallBufferPtr, 1 * MemoryConstants::megaByte, mockDevice->getDevice()));
 
     // platform LP == false && size <= 10 MB
     mockDevice->deviceInfo.platformLP = false;
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(smallBufferPtr, 1 * MemoryConstants::megaByte, mockDevice->getDevice()));
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isReadWriteOnCpuPreferred(smallBufferPtr, 1 * MemoryConstants::megaByte, mockDevice->getDevice()));
 
     buffer.reset(Buffer::create(mockContext.get(), CL_MEM_ALLOC_HOST_PTR, largeBufferSize, nullptr, retVal));
 
     // platform LP == false && size > 10 MB
     mockDevice->deviceInfo.platformLP = false;
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(buffer->getCpuAddress(), largeBufferSize, mockDevice->getDevice()));
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isReadWriteOnCpuPreferred(buffer->getCpuAddress(), largeBufferSize, mockDevice->getDevice()));
 
     alignedFree(smallBufferPtr);
     alignedFree(alignedHostPtr);
     alignedFree(alignedBufferPtr);
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWritingMemoryThenCpuReadWriteIsNotAllowed) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndOldCoherencyModelWhenReadingWritingMemoryThenCpuReadWriteIsNotAllowed) {
     cl_int retVal;
     size_t size = MemoryConstants::cacheLineSize;
     auto alignedBufferPtr = alignedMalloc(MemoryConstants::cacheLineSize + 1, MemoryConstants::cacheLineSize);
@@ -204,10 +214,11 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
 
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
-
+    auto &productHelper = mockDevice->getProductHelper();
+    auto isZeroCopyAllowed = !productHelper.isNewCoherencyModelSupported();
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, alignedBufferPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(isZeroCopyAllowed, buffer->isMemObjZeroCopy());
 
     // non blocking
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_NDRANGE_KERNEL, false, size, unalignedHostPtr, 0u, nullptr));
@@ -242,14 +253,14 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenDebugVariableToDisableCpuCopiesWhenBuf
 
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_ALLOC_HOST_PTR, MemoryConstants::pageSize, nullptr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    auto mappingAllowed = buffer->mappingOnCpuAllowed();
 
-    EXPECT_TRUE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
-    EXPECT_TRUE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_WRITE_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
+    EXPECT_EQ(mappingAllowed, mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
+    EXPECT_EQ(mappingAllowed, mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_WRITE_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
 
     debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
-    EXPECT_TRUE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_WRITE_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
+    EXPECT_EQ(mappingAllowed, mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_WRITE_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
 
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, reinterpret_cast<void *>(0x1000), 0u, nullptr));
@@ -271,9 +282,9 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
-
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
-    EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));
+    auto isNewCoherencyModelSupported = device->getProductHelper().isNewCoherencyModelSupported();
+    EXPECT_EQ(!isNewCoherencyModelSupported, buffer->isReadWriteOnCpuAllowed(device->getDevice()));
+    EXPECT_EQ(!isNewCoherencyModelSupported, buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
     // read write on CPU is allowed, but not preferred. We can access this memory via Lock.
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
@@ -300,7 +311,9 @@ TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyWhenCpuCopyIsEvaluated
 
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, false, MemoryConstants::pageSize, nullptr, 0u, nullptr));
     memoryManager->cpuCopyRequired = true;
-    EXPECT_TRUE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, false, MemoryConstants::pageSize, nullptr, 0u, nullptr));
+    // cpu copy is never allowed with new coherency model
+    auto isNewCoherencyModelSupported = device->getProductHelper().isNewCoherencyModelSupported();
+    EXPECT_EQ(!isNewCoherencyModelSupported, mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, false, MemoryConstants::pageSize, nullptr, 0u, nullptr));
 }
 
 TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyButItIsNotPossibleWhenCpuCopyIsEvaluatedThenFalseIsReturned) {

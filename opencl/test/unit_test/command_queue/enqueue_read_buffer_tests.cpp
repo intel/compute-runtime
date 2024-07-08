@@ -406,7 +406,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtr
                                         0,
                                         nullptr,
                                         nullptr);
-
+    pCmdOOQ->flush();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
@@ -427,7 +427,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPt
                                         0,
                                         nullptr,
                                         nullptr);
-
+    pCmdOOQ->flush();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
@@ -474,7 +474,12 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesA
                                       nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+    auto expectedTaskLevel = 0u;
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
+    EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
 }
 HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
@@ -493,7 +498,12 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopies
                                       nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+    auto expectedTaskLevel = 0u;
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
+    EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
 }
 HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndNonZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelShouldBeIncreased) {
     DebugManagerStateRestore dbgRestore;

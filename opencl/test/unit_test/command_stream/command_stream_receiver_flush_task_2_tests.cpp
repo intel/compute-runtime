@@ -252,24 +252,26 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenDcFlushWhenFinishingThenTaskC
 
     auto ptr = mockCmdQueue.enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, sizeof(tempBuffer), 0, nullptr, nullptr, retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
+    auto &productHelper = pDevice->getProductHelper();
+    auto expectFlushForMapUnmap = productHelper.isNewCoherencyModelSupported();
+    EXPECT_EQ(1u + expectFlushForMapUnmap, commandStreamReceiver.peekLatestSentTaskCount());
 
     // cmdQ task count = 2, finish again
     mockCmdQueue.finish();
 
-    EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(1u + expectFlushForMapUnmap, commandStreamReceiver.peekLatestSentTaskCount());
 
     // finish again - dont flush task again
     mockCmdQueue.finish();
 
-    EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(1u + expectFlushForMapUnmap, commandStreamReceiver.peekLatestSentTaskCount());
 
     // finish(dcFlush=true) from MapBuffer again - dont call FinishTask n finished queue
     retVal = mockCmdQueue.enqueueUnmapMemObject(buffer, ptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
     ptr = mockCmdQueue.enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, sizeof(tempBuffer), 0, nullptr, nullptr, retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(1u + expectFlushForMapUnmap * 2, commandStreamReceiver.peekLatestSentTaskCount());
 
     // cleanup
     retVal = mockCmdQueue.enqueueUnmapMemObject(buffer, ptr, 0, nullptr, nullptr);

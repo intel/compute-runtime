@@ -338,7 +338,12 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopies
                                        nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+    auto expectedTaskLevel = 0u;
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
+    EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
 }
 HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrZeroCopyBufferEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
@@ -357,7 +362,12 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopie
                                        nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+    auto expectedTaskLevel = 0u;
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (productHelper.isNewCoherencyModelSupported()) {
+        expectedTaskLevel++;
+    }
+    EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
 }
 HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrZeroCopyBufferEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
     DebugManagerStateRestore dbgRestore;

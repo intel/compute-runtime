@@ -376,7 +376,8 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrCompressedBuff
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    if (MemoryPoolHelper::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool())) {
+    auto isNewCoherencyModelSupported = device->getProductHelper().isNewCoherencyModelSupported();
+    if (MemoryPoolHelper::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool()) && !isNewCoherencyModelSupported) {
         EXPECT_EQ(AllocationType::bufferHostMemory, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
     } else {
         EXPECT_EQ(AllocationType::buffer, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
@@ -411,12 +412,16 @@ TEST(Buffer, givenAlignedHostPtrPassedToBufferCreateWhenNoSharedContextOrCompres
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
-    void *hostPtr = reinterpret_cast<void *>(0x3000);
+    unsigned char hostPtr[MemoryConstants::pageSize];
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, hostPtr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    EXPECT_EQ(AllocationType::bufferHostMemory, buffer->getMultiGraphicsAllocation().getAllocationType());
+    if (device->getProductHelper().isNewCoherencyModelSupported()) {
+        EXPECT_EQ(AllocationType::buffer, buffer->getMultiGraphicsAllocation().getAllocationType());
+    } else {
+        EXPECT_EQ(AllocationType::bufferHostMemory, buffer->getMultiGraphicsAllocation().getAllocationType());
+    }
 }
 
 TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
@@ -429,7 +434,11 @@ TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrCompr
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    EXPECT_EQ(AllocationType::bufferHostMemory, buffer->getMultiGraphicsAllocation().getAllocationType());
+    if (device->getProductHelper().isNewCoherencyModelSupported()) {
+        EXPECT_EQ(AllocationType::buffer, buffer->getMultiGraphicsAllocation().getAllocationType());
+    } else {
+        EXPECT_EQ(AllocationType::bufferHostMemory, buffer->getMultiGraphicsAllocation().getAllocationType());
+    }
 }
 
 TEST(Buffer, givenCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturnedIn64Bit) {
@@ -440,7 +449,7 @@ TEST(Buffer, givenCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferC
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
     EXPECT_TRUE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false, false);
     EXPECT_TRUE(compressionEnabled);
     EXPECT_EQ(AllocationType::buffer, type);
 }
@@ -453,7 +462,7 @@ TEST(Buffer, givenCompressedBuffersDisabledLocalMemoryEnabledWhenAllocationTypeI
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
     EXPECT_FALSE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true, false);
     EXPECT_FALSE(compressionEnabled);
     EXPECT_EQ(AllocationType::buffer, type);
 }
@@ -467,7 +476,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledWhenAllocationTypeIsQuerie
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
     EXPECT_FALSE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false, false);
     EXPECT_FALSE(compressionEnabled);
     EXPECT_EQ(AllocationType::bufferHostMemory, type);
 }
@@ -481,7 +490,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledWhenAllocationTypeIsQueried
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
     EXPECT_FALSE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true, false);
     EXPECT_FALSE(compressionEnabled);
     EXPECT_EQ(AllocationType::buffer, type);
 }
@@ -495,7 +504,7 @@ TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferTypeIsRet
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
     EXPECT_FALSE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false, false);
     EXPECT_FALSE(compressionEnabled);
     EXPECT_EQ(AllocationType::buffer, type);
 }
@@ -509,7 +518,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndCompressedBuffersEnable
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
     EXPECT_TRUE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false, false);
     EXPECT_FALSE(compressionEnabled);
     EXPECT_EQ(AllocationType::bufferHostMemory, type);
 }
@@ -523,7 +532,7 @@ TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryEnabledAndCompressedBuffersEnabled
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
     EXPECT_TRUE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true, false);
     EXPECT_TRUE(compressionEnabled);
     EXPECT_EQ(AllocationType::buffer, type);
 }
@@ -537,7 +546,7 @@ TEST(Buffer, givenUseHostPointerFlagAndForceSharedPhysicalStorageWhenLocalMemory
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
     EXPECT_TRUE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, true, false);
     EXPECT_FALSE(compressionEnabled);
     EXPECT_EQ(AllocationType::bufferHostMemory, type);
 }
@@ -551,7 +560,7 @@ TEST(Buffer, givenAllocHostPtrFlagAndCompressedBuffersEnabledWhenAllocationTypeI
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
     EXPECT_TRUE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false, false);
     EXPECT_TRUE(compressionEnabled);
     EXPECT_EQ(AllocationType::buffer, type);
 }
@@ -564,8 +573,21 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndCompressedBuffersDisabledWhenAlloca
     bool compressionEnabled = MemObjHelper::isSuitableForCompression(false, memoryProperties, context, true);
     EXPECT_FALSE(compressionEnabled);
 
-    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false);
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false, false);
     EXPECT_FALSE(compressionEnabled);
+    EXPECT_EQ(AllocationType::buffer, type);
+}
+
+TEST(Buffer, givenUseHostPtrFlagAndLocalMemoryDisabledAndCompressedBuffersEnabledAndNewCoherencyModelEnabledWhenAllocationTypeIsQueriedThenBufferMemoryTypeIsReturned) {
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+    MockContext context;
+    MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice());
+
+    bool compressionEnabled = MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true);
+    EXPECT_TRUE(compressionEnabled);
+
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled, false, true);
+    EXPECT_TRUE(compressionEnabled);
     EXPECT_EQ(AllocationType::buffer, type);
 }
 
@@ -749,11 +771,13 @@ TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhe
 
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     auto allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
-    EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool())) {
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()) && !productHelper.isNewCoherencyModelSupported()) {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::bufferHostMemory);
+        EXPECT_TRUE(buffer->isMemObjZeroCopy());
     } else {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::buffer);
+        EXPECT_FALSE(buffer->isMemObjZeroCopy());
     }
 
     auto memoryManager = static_cast<MockMemoryManager *>(device->getExecutionEnvironment()->memoryManager.get());
@@ -763,11 +787,11 @@ TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhe
     allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     auto &gfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
     if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize)) {
-        EXPECT_FALSE(buffer->isMemObjZeroCopy());
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::buffer);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, allocation->isCompressionEnabled());
+    } else if (productHelper.isNewCoherencyModelSupported()) {
+        EXPECT_EQ(allocation->getAllocationType(), AllocationType::buffer);
     } else {
-        EXPECT_TRUE(buffer->isMemObjZeroCopy());
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::bufferHostMemory);
     }
 }
@@ -783,9 +807,12 @@ TEST_F(CompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelect
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     auto &gfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
+    auto &productHelper = context->getDevice(0)->getProductHelper();
     if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize)) {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::buffer);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, graphicsAllocation->isCompressionEnabled());
+    } else if (productHelper.isNewCoherencyModelSupported()) {
+        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::buffer);
     } else {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::bufferHostMemory);
     }
@@ -842,6 +869,7 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenCopyFromHo
     buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, bufferSize, hostPtr, retVal));
     auto graphicsAllocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     auto &gfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
+    auto &productHelper = context->getDevice(0)->getProductHelper();
     if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize)) {
         EXPECT_TRUE(graphicsAllocation->isCompressionEnabled());
         EXPECT_EQ(1u, mockCmdQ->writeBufferCounter);
@@ -850,7 +878,7 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenCopyFromHo
         EXPECT_EQ(bufferSize, mockCmdQ->writeBufferSize);
         EXPECT_EQ(hostPtr, mockCmdQ->writeBufferPtr);
     } else {
-        EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::bufferHostMemory);
+        EXPECT_EQ(!productHelper.isNewCoherencyModelSupported(), graphicsAllocation->getAllocationType() == AllocationType::bufferHostMemory);
         EXPECT_EQ(0u, mockCmdQ->writeBufferCounter);
         EXPECT_FALSE(mockCmdQ->writeBufferBlocking);
         EXPECT_EQ(0u, mockCmdQ->writeBufferOffset);
@@ -1009,7 +1037,8 @@ TEST_P(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
     ASSERT_NE(nullptr, buffer);
 
     auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool())) {
+    auto &productHelper = context->getDevice(0)->getProductHelper();
+    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()) && !productHelper.isNewCoherencyModelSupported()) {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::bufferHostMemory);
     } else {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::buffer);
@@ -1345,7 +1374,10 @@ TEST(Buffers64on32Tests, given32BitBufferCreatedWithUseHostPtrFlagThatIsZeroCopy
     {
         debugManager.flags.Force32bitAddressing.set(true);
         MockContext context;
-
+        auto isNewCoherencyModelSupported = context.getDevice(0)->getProductHelper().isNewCoherencyModelSupported();
+        if (isNewCoherencyModelSupported) {
+            GTEST_SKIP();
+        }
         auto size = MemoryConstants::pageSize;
         void *ptr = (void *)0x1000;
         auto ptrOffset = MemoryConstants::cacheLineSize;
@@ -1359,10 +1391,15 @@ TEST(Buffers64on32Tests, given32BitBufferCreatedWithUseHostPtrFlagThatIsZeroCopy
             (void *)offsetedPtr,
             retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
-
-        EXPECT_TRUE(buffer->isMemObjZeroCopy());
         EXPECT_EQ((void *)offsetedPtr, buffer->getCpuAddressForMapping());
-        EXPECT_EQ((void *)offsetedPtr, buffer->getCpuAddressForMemoryTransfer());
+
+        auto &productHelper = context.getDevice(0)->getProductHelper();
+        if (productHelper.isNewCoherencyModelSupported()) {
+            EXPECT_FALSE(buffer->isMemObjZeroCopy());
+        } else {
+            EXPECT_TRUE(buffer->isMemObjZeroCopy());
+            EXPECT_EQ((void *)offsetedPtr, buffer->getCpuAddressForMemoryTransfer());
+        }
 
         delete buffer;
         debugManager.flags.Force32bitAddressing.set(false);
@@ -1384,8 +1421,8 @@ TEST(Buffers64on32Tests, given32BitBufferCreatedWithAllocHostPtrFlagThatIsZeroCo
             nullptr,
             retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
-
-        EXPECT_TRUE(buffer->isMemObjZeroCopy());
+        auto &productHelper = context.getDevice(0)->getProductHelper();
+        EXPECT_EQ(!productHelper.isNewCoherencyModelSupported(), buffer->isMemObjZeroCopy());
         EXPECT_EQ(buffer->getCpuAddress(), buffer->getCpuAddressForMapping());
         EXPECT_EQ(buffer->getCpuAddress(), buffer->getCpuAddressForMemoryTransfer());
 
