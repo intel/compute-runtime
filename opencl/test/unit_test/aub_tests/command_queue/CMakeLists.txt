@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -26,9 +26,7 @@ target_sources(igdrcl_aub_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_copy_read_buffer_aub_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_copy_read_buffer_aub_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_image_aub_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/single_tile_products_excludes.cpp
 )
-
 if(TESTS_XEHP_AND_LATER)
   target_sources(igdrcl_aub_tests PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/aub_enqueue_resource_barrier_xehp_and_later.cpp
@@ -39,6 +37,7 @@ if(TESTS_XEHP_AND_LATER)
                  ${CMAKE_CURRENT_SOURCE_DIR}/aub_scratch_space_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/compression_aub_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/multi_tile_buffers_aub_tests_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/single_tile_products_excludes.cpp
   )
 endif()
 
