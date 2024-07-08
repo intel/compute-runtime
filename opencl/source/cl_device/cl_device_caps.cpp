@@ -65,7 +65,6 @@ void ClDevice::setupFp64Flags() {
                     deviceInfo.doubleFpConfig = defaultFpFlags | CL_FP_SOFT_FLOAT;
                     deviceInfo.nativeVectorWidthDouble = 1;
                     deviceInfo.preferredVectorWidthDouble = 1;
-                    deviceExtensions += "cl_khr_fp64 ";
                 }
             } else {
                 deviceInfo.doubleFpConfig = 0;
@@ -431,13 +430,6 @@ void ClDevice::initializeCaps() {
 
     initializeOsSpecificCaps();
     getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures, getDevice().getCompilerProductHelper(), releaseHelper);
-    if (hwInfo.capabilityTable.ftrSupportsFP64Emulation &&
-        getDevice().getExecutionEnvironment()->isFP64EmulationEnabled()) {
-        cl_name_version openClCFeature;
-        openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_fp64");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-    }
 }
 
 void ClDevice::initializeExtensionsWithVersion() {

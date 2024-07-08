@@ -126,11 +126,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
             EXPECT_STREQ("__opencl_c_integer_dot_product_input_4x8bit_packed", (++openclCFeatureIterator)->name);
         }
         verifyAnyRemainingOpenclCFeatures(releaseHelper, openclCFeatureIterator);
-        if (hwInfo.capabilityTable.ftrSupportsFP64Emulation &&
-            clDevice.getDevice().getExecutionEnvironment()->isFP64EmulationEnabled()) {
-            EXPECT_STREQ("__opencl_c_fp64", (++openclCFeatureIterator)->name);
-        }
-
         EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
     }
 
@@ -348,38 +343,6 @@ TEST_F(DeviceGetCapsTest, givenForceOclVersion12WhenCapsAreCreatedThenDeviceRepo
     EXPECT_FALSE(device->ocl21FeaturesEnabled);
     verifyOpenclCAllVersions(*device);
     verifyOpenclCFeatures(*device);
-}
-
-TEST_F(DeviceGetCapsTest, givenForceOclVersion30AndFp64EmulationSupportedAndEnabledWhenCapsAreCreatedThenClKhrFp64AndOpenClCFp64ExtensionsAreReported) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.ForceOCLVersion.set(30);
-
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.ftrSupportsFP64 = false;
-    hwInfo.capabilityTable.ftrSupportsFP64Emulation = true;
-
-    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
-    executionEnvironment->setFP64EmulationEnabled();
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0u));
-    const auto &caps = device->getDeviceInfo();
-
-    EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-    EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), caps.numericClVersion);
-    EXPECT_FALSE(device->ocl21FeaturesEnabled);
-    verifyOpenclCFeatures(*device);
-
-    bool openclCFp64Found = false;
-    for (auto &openclCFeature : device->getDeviceInfo().openclCFeatures) {
-        if (0 == strcmp("__opencl_c_fp64", openclCFeature.name)) {
-            openclCFp64Found = true;
-            break;
-        }
-    }
-
-    EXPECT_TRUE(openclCFp64Found);
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_fp64")));
 }
 
 TEST_F(DeviceGetCapsTest, givenForceOCL21FeaturesSupportEnabledWhenCapsAreCreatedThenDeviceReportsSupportOfOcl21Features) {
@@ -1204,7 +1167,7 @@ TEST_F(DeviceGetCapsTest, givenFp64EmulationSupportWithFp64EmulationEnvVarSetWhe
     auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = pClDevice->getDeviceInfo().deviceExtensions;
 
-    EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+    EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
     EXPECT_TRUE(isValueSet(caps.doubleFpConfig, CL_FP_SOFT_FLOAT));
 
     cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_config>(CL_FP_ROUND_TO_NEAREST |
