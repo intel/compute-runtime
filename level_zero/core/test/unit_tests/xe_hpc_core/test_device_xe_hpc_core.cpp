@@ -24,8 +24,6 @@
 namespace L0 {
 namespace ult {
 
-HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, IGFX_XE_HPC_CORE);
-
 using DeviceTestXeHpc = Test<DeviceFixture>;
 
 HWTEST2_F(DeviceTestXeHpc, WhenGettingImagePropertiesThenPropertiesAreNotSet, IsXeHpcCore) {
