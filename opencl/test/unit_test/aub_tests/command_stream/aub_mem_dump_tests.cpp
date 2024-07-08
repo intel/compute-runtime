@@ -74,31 +74,6 @@ HWTEST_F(AubMemDumpTests, GivenHeaderThenExpectationsAreMet) {
     aubFile.fileHandle.close();
 }
 
-HWTEST_F(AubMemDumpTests, DISABLED_GivenReserveMaxAddressThenExpectationsAreMet) {
-    typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
-    std::string filePath(folderAUB);
-    std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
-    filePath.append(Os::fileSeparator);
-    filePath.append(getAubFileName(pDevice, filenameWithPrefix.append("reserveMaxAddress.aub")));
-    AUBCommandStreamReceiver::AubFileStream aubFile;
-    aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
-
-    // Header
-    auto hwInfo = pDevice->getHardwareInfo();
-    auto deviceId = hwInfo.capabilityTable.aubDeviceId;
-    aubFile.init(AubMemDump::SteppingValues::A, deviceId);
-
-    auto gAddress = static_cast<uintptr_t>(-1) - 4096;
-    auto pAddress = static_cast<uint64_t>(gAddress) & 0xFFFFFFFF;
-
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto enableLocalMemory = gfxCoreHelper.getEnableLocalMemory(hwInfo);
-    NEO::AubHelperHw<FamilyType> aubHelperHw(enableLocalMemory);
-    AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7, aubHelperHw);
-
-    aubFile.fileHandle.close();
-}
-
 HWTEST_F(AubMemDumpTests, GivenWriteVerifyOneBytePpgttThenExpectationsAreMet) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
