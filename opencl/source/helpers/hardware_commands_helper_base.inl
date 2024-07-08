@@ -76,7 +76,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kerne
     if (pImplicitArgs) {
         size += ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, rootDeviceEnvironment);
     }
-    return alignUp(size, GfxFamily::indirectDataAlignment);
+    return alignUp(size, rootDeviceEnvironment.getHelper<GfxCoreHelper>().getIOHAlignment());
 }
 
 template <typename GfxFamily>

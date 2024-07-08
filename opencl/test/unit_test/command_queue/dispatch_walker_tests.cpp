@@ -1385,7 +1385,7 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
                     HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numGrf, numChannels, Math::computeTotalElementsCount(workGroupSize), false, rootDeviceEnvironment) +
                     ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernelWithImplicitArgs.getImplicitArgs(), kernelWithImplicitArgs.getDescriptor(), false, rootDeviceEnvironment);
 
-        size = alignUp(size, MemoryConstants::cacheLineSize);
+        size = alignUp(size, pClDevice->getGfxCoreHelper().getIOHAlignment());
         EXPECT_EQ(size, iohSizeWithImplicitArgs);
     }
 }
