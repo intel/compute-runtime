@@ -574,8 +574,14 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, mem.memoryClass == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
+
+    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
+                     create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
+
     auto ret = IoctlHelper::ioctl(DrmIoctl::gemCreate, &create);
     handle = create.handle;
+
+    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "DRM_IOCTL_XE_GEM_CREATE has returned: %d BO-%u with size: %lu\n", ret, handle, create.size);
 
     xeLog(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
           mem.memoryClass, mem.memoryInstance,
@@ -607,7 +613,13 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, create.placement == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
+
+    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
+                     create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
+
     [[maybe_unused]] auto ret = ioctl(DrmIoctl::gemCreate, &create);
+
+    printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "DRM_IOCTL_XE_GEM_CREATE has returned: %d BO-%u with size: %lu\n", ret, create.handle, create.size);
 
     xeLog(" -> IoctlHelperXe::%s vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
           create.vm_id, create.size, create.flags, create.placement, create.handle, create.cpu_caching, ret);
