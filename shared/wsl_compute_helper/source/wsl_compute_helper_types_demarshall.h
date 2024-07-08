@@ -999,6 +999,9 @@ struct Demarshaller<TOK_S_GT_SYSTEM_INFO> {
                 case TOK_FBD_GT_SYSTEM_INFO__MAX_VECS: {
                     dst.MaxVECS = readTokValue<decltype(dst.MaxVECS)>(*tok);
                 } break;
+                case TOK_FBD_GT_SYSTEM_INFO__SLMSIZE_IN_KB: {
+                    dst.SystemInfo.SLMSizeInKb = readTokValue<decltype(dst.SystemInfo.SLMSizeInKb)>(*tok);
+                } break;
                 };
                 tok = tok + 1 + tok->valueDwordCount;
             } else {
