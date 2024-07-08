@@ -1650,7 +1650,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndFailedGemCreateE
     EXPECT_EQ(allocation, nullptr);
 }
 
-HWTEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferAndBufferCompressedThenCreateGmmWithCorrectAuxFlags) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferAndBufferCompressedThenCreateGmmWithCorrectAuxFlags, IsAtMostXeHpgCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     DeviceBitfield deviceBitfield{0x0};
@@ -1680,7 +1680,7 @@ HWTEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenNotSetUseSystemMemoryWhenGr
     memoryManager->freeGraphicsMemory(bufferCompressed);
 }
 
-HWTEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenEnableStatelessCompressionWhenGraphicsAllocationCanBeAccessedStatelesslyThenPreferCompressed) {
+HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenEnableStatelessCompressionWhenGraphicsAllocationCanBeAccessedStatelesslyThenPreferCompressed, IsAtMostXeHpgCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
     debugManager.flags.EnableStatelessCompression.set(1);

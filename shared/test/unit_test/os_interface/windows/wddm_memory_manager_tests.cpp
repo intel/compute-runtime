@@ -2430,7 +2430,7 @@ HWTEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenCopyNotDebugSurf
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-HWTEST_F(WddmMemoryManagerSimpleTest, givenPreferCompressionFlagWhenAllocating64kbAllocationThenCreateGmmWithAuxFlags) {
+HWTEST2_F(WddmMemoryManagerSimpleTest, givenPreferCompressionFlagWhenAllocating64kbAllocationThenCreateGmmWithAuxFlags, IsAtMostXeHpgCore) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
 
