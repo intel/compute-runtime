@@ -424,17 +424,17 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
     if (this->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED && affinitySet) {
         return parseAffinityMaskCombined(pCount, phDevices);
     }
-
-    if (*pCount == 0) {
-        if (exposeSubDevices) {
-            for (auto &device : this->devices) {
-                auto deviceImpl = static_cast<DeviceImp *>(device);
-                *pCount += (deviceImpl->numSubDevices > 0 ? deviceImpl->numSubDevices : 1u);
-            }
-        } else {
-            *pCount = this->numDevices;
+    uint32_t numDevices = 0;
+    if (exposeSubDevices) {
+        for (auto &device : this->devices) {
+            auto deviceImpl = static_cast<DeviceImp *>(device);
+            numDevices += (deviceImpl->numSubDevices > 0 ? deviceImpl->numSubDevices : 1u);
         }
-
+    } else {
+        numDevices = this->numDevices;
+    }
+    if (*pCount == 0) {
+        *pCount = numDevices;
         return ZE_RESULT_SUCCESS;
     }
 
@@ -460,6 +460,7 @@ ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phD
         }
     }
 
+    *pCount = numDevices;
     return ZE_RESULT_SUCCESS;
 }
 

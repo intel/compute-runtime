@@ -1139,6 +1139,40 @@ TEST_F(DriverHandleTest, givenInitializedDriverWhenGetDeviceIsCalledThenOneDevic
     EXPECT_NE(nullptr, &device);
 }
 
+TEST_F(DriverHandleTest, givenInitializedDriverWithTwoDevicesWhenGetDeviceIsCalledWithLessCountThenOnlySpecifiedNumberOfDevicesAreObtainedAndCountIsNotUpdated) {
+    auto hwInfo = *NEO::defaultHwInfo;
+    NEO::MockDevice *testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    L0::DriverHandleImp *driverHandleImp = static_cast<L0::DriverHandleImp *>(driverHandle);
+    auto newNeoDevice = L0::Device::create(driverHandleImp, std::move(testNeoDevice), false, &result);
+    driverHandleImp->devices.push_back(newNeoDevice);
+    driverHandleImp->numDevices++;
+
+    uint32_t count = 0U;
+    result = driverHandle->getDevice(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2U, count);
+
+    count = 1U;
+    std::vector<ze_device_handle_t> devices(2, nullptr);
+    result = driverHandle->getDevice(&count, devices.data());
+    EXPECT_EQ(1U, count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, devices[0]);
+    EXPECT_EQ(nullptr, devices[1]);
+}
+
+TEST_F(DriverHandleTest, givenInitializedDriverWhenGetDeviceIsCalledThenOneDeviceIsObtainedAndCountIsUpdated) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    uint32_t count = 3;
+
+    ze_device_handle_t device;
+    result = driverHandle->getDevice(&count, &device);
+    EXPECT_EQ(1U, count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, &device);
+}
+
 TEST_F(DriverHandleTest, whenQueryingForApiVersionThenExpectedVersionIsReturned) {
     ze_api_version_t version = {};
     ze_result_t result = driverHandle->getApiVersion(&version);
