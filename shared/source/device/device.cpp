@@ -394,6 +394,7 @@ bool Device::createEngines() {
                 secondaryEnginesForType.highPriorityEnginesTotal = highPriorityContextCount;
                 secondaryEnginesForType.regularCounter = 0;
                 secondaryEnginesForType.highPriorityCounter = 0;
+                secondaryEnginesForType.assignedContextsCounter = 1;
 
                 NEO::EngineTypeUsage engineTypeUsage;
                 engineTypeUsage.first = primaryEngine.getEngineType();
@@ -591,24 +592,20 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bo
 
     auto &secondaryEnginesForType = secondaryEngines[engineTypeUsage.first];
 
-    auto secondaryEngineIndex = 0;
-    if (engineTypeUsage.second == EngineUsage::highPriority) {
-        secondaryEngineIndex = (secondaryEnginesForType.highPriorityCounter.fetch_add(1)) % (secondaryEnginesForType.highPriorityEnginesTotal);
-        secondaryEngineIndex += secondaryEnginesForType.regularEnginesTotal;
-    } else if (engineTypeUsage.second == EngineUsage::regular) {
-        secondaryEngineIndex = (secondaryEnginesForType.regularCounter.fetch_add(1)) % (secondaryEnginesForType.regularEnginesTotal);
+    auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second);
 
-        if (secondaryEngineIndex == 0 && allocateInterrupt) {
-            // Context 0 is already pre-initialized. We need non-initialized context, to pass context creation flag.
-            // If all contexts are already initialized, just take next available. Interrupt request is only a hint.
-            secondaryEngineIndex = (secondaryEnginesForType.regularCounter.fetch_add(1)) % (secondaryEnginesForType.regularEnginesTotal);
-        }
-    } else {
-        DEBUG_BREAK_IF(true);
+    bool isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
+
+    if (isPrimaryContextInGroup && allocateInterrupt) {
+        // Context 0 is already pre-initialized. We need non-initialized context, to pass context creation flag.
+        // If all contexts are already initialized, just take next available. Interrupt request is only a hint.
+        engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second);
     }
 
-    if (secondaryEngineIndex > 0) {
-        auto commandStreamReceiver = secondaryEnginesForType.engines[secondaryEngineIndex].commandStreamReceiver;
+    isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
+
+    if (!isPrimaryContextInGroup) {
+        auto commandStreamReceiver = engineControl->commandStreamReceiver;
 
         auto lock = commandStreamReceiver->obtainUniqueOwnership();
 
@@ -633,7 +630,7 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bo
             }
         }
     }
-    return &secondaryEnginesForType.engines[secondaryEngineIndex];
+    return engineControl;
 }
 
 const HardwareInfo &Device::getHardwareInfo() const { return *getRootDeviceEnvironment().getHardwareInfo(); }
@@ -1200,4 +1197,57 @@ const EngineGroupT *Device::tryGetRegularEngineGroup(EngineGroupType engineGroup
     }
     return nullptr;
 }
+
+EngineControl *SecondaryContexts::getEngine(EngineUsage usage) {
+    auto secondaryEngineIndex = 0;
+
+    std::lock_guard<std::mutex> guard(mutex);
+
+    if (usage == EngineUsage::highPriority) {
+
+        // Use index from  reserved HP pool
+        if (hpIndices.size() < highPriorityEnginesTotal) {
+            secondaryEngineIndex = (highPriorityCounter.fetch_add(1)) % (highPriorityEnginesTotal);
+            secondaryEngineIndex += regularEnginesTotal;
+            hpIndices.push_back(secondaryEngineIndex);
+        }
+        // Check if there is free index
+        else if (assignedContextsCounter < regularEnginesTotal) {
+            secondaryEngineIndex = assignedContextsCounter.fetch_add(1);
+            highPriorityCounter.fetch_add(1);
+            hpIndices.push_back(secondaryEngineIndex);
+        }
+        // Assign from existing indices
+        else {
+            auto index = (highPriorityCounter.fetch_add(1)) % (hpIndices.size());
+            secondaryEngineIndex = hpIndices[index];
+        }
+
+        if (engines[secondaryEngineIndex].osContext->getEngineUsage() != EngineUsage::highPriority) {
+            engines[secondaryEngineIndex].osContext->overrideEngineUsage(EngineUsage::highPriority);
+        }
+
+    } else if (usage == EngineUsage::regular) {
+        if (npIndices.size() == 0) {
+            regularCounter.fetch_add(1);
+            npIndices.push_back(secondaryEngineIndex);
+        }
+        // Check if there is free index
+        else if (assignedContextsCounter < regularEnginesTotal) {
+            secondaryEngineIndex = assignedContextsCounter.fetch_add(1);
+            regularCounter.fetch_add(1);
+            npIndices.push_back(secondaryEngineIndex);
+        }
+        // Assign from existing indices
+        else {
+            auto index = (regularCounter.fetch_add(1)) % (npIndices.size());
+            secondaryEngineIndex = npIndices[index];
+        }
+    } else {
+        DEBUG_BREAK_IF(true);
+    }
+
+    return &engines[secondaryEngineIndex];
+}
+
 } // namespace NEO

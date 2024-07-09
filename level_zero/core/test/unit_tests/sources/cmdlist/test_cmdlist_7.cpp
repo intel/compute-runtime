@@ -2031,6 +2031,9 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithIn
             mockOsContexts.push_back(newOsContext);
             newOsContext->incRefInternal();
 
+            newOsContext->setIsPrimaryEngine(engine.osContext->getIsPrimaryEngine());
+            newOsContext->setContextGroup(engine.osContext->isPartOfContextGroup());
+
             engine.osContext = newOsContext;
             engine.commandStreamReceiver->setupContext(*newOsContext);
         }
@@ -2059,9 +2062,7 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithIn
         auto commandList3 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle3));
 
         EXPECT_TRUE(static_cast<MockOsContext &>(commandList1->getCsr(false)->getOsContext()).allocateInterruptPassed);
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandList1->getCsr(false)->getOsContext()).isPartOfContextGroup());
         EXPECT_TRUE(static_cast<MockOsContext &>(commandList2->getCsr(false)->getOsContext()).allocateInterruptPassed);
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandList2->getCsr(false)->getOsContext()).isPartOfContextGroup());
         EXPECT_FALSE(static_cast<MockOsContext &>(commandList3->getCsr(false)->getOsContext()).allocateInterruptPassed);
 
         commandList1->destroy();

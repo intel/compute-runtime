@@ -1404,6 +1404,9 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesWithInterrup
             mockOsContexts.push_back(newOsContext);
             newOsContext->incRefInternal();
 
+            newOsContext->setIsPrimaryEngine(engine.osContext->getIsPrimaryEngine());
+            newOsContext->setContextGroup(engine.osContext->isPartOfContextGroup());
+
             engine.osContext = newOsContext;
             engine.commandStreamReceiver->setupContext(*newOsContext);
         }
@@ -1432,9 +1435,7 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesWithInterrup
         auto commandQueue3 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle3));
 
         EXPECT_TRUE(static_cast<MockOsContext &>(commandQueue1->getCsr()->getOsContext()).allocateInterruptPassed);
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandQueue1->getCsr()->getOsContext()).isPartOfContextGroup());
         EXPECT_TRUE(static_cast<MockOsContext &>(commandQueue2->getCsr()->getOsContext()).allocateInterruptPassed);
-        EXPECT_FALSE(static_cast<MockOsContext &>(commandQueue2->getCsr()->getOsContext()).isPartOfContextGroup());
         EXPECT_FALSE(static_cast<MockOsContext &>(commandQueue3->getCsr()->getOsContext()).allocateInterruptPassed);
 
         commandQueue1->destroy();

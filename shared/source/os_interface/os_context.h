@@ -34,6 +34,8 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     const aub_stream::EngineType &getEngineType() const { return engineType; }
     EngineUsage getEngineUsage() { return engineUsage; }
+    void overrideEngineUsage(EngineUsage usage) { engineUsage = usage; }
+
     bool isRegular() const { return engineUsage == EngineUsage::regular; }
     bool isLowPriority() const { return engineUsage == EngineUsage::lowPriority; }
     bool isHighPriority() const { return engineUsage == EngineUsage::highPriority; }
@@ -110,7 +112,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const PreemptionMode preemptionMode;
     const uint32_t numSupportedDevices;
     aub_stream::EngineType engineType = aub_stream::ENGINE_RCS;
-    const EngineUsage engineUsage;
+    EngineUsage engineUsage;
     const bool rootDevice = false;
     bool defaultContext = false;
     bool directSubmissionActive = false;

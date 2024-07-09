@@ -18,6 +18,7 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <array>
+#include <mutex>
 
 namespace NEO {
 class BindlessHeapsHelper;
@@ -63,11 +64,18 @@ struct SecondaryContexts {
     SecondaryContexts(const SecondaryContexts &in) = delete;
     SecondaryContexts &operator=(const SecondaryContexts &) = delete;
 
-    EnginesT engines;                             // vector of secondary EngineControls
-    std::atomic<uint8_t> regularCounter = 0;      // Counter used to assign next regular EngineControl
-    std::atomic<uint8_t> highPriorityCounter = 0; // Counter used to assign next highPriority EngineControl
+    EngineControl *getEngine(const EngineUsage usage);
+
+    EnginesT engines;                                 // vector of secondary EngineControls
+    std::atomic<uint8_t> regularCounter = 0;          // Counter used to assign next regular EngineControl
+    std::atomic<uint8_t> highPriorityCounter = 0;     // Counter used to assign next highPriority EngineControl
+    std::atomic<uint8_t> assignedContextsCounter = 0; // Counter of assigned contexts in group
     uint32_t regularEnginesTotal;
     uint32_t highPriorityEnginesTotal;
+
+    std::vector<int32_t> npIndices;
+    std::vector<int32_t> hpIndices;
+    std::mutex mutex;
 };
 
 struct RTDispatchGlobalsInfo {
