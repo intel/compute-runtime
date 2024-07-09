@@ -103,16 +103,6 @@ bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
     return false;
 }
