@@ -551,7 +551,6 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
     dispatchWalkerArgs.commandType = commandType;
     dispatchWalkerArgs.event = event;
     dispatchWalkerArgs.relaxedOrderingEnabled = relaxedOrderingEnabled;
-    dispatchWalkerArgs.heaplessStateInitEnabled = getHeaplessStateInitEnabled();
 
     getGpgpuCommandStreamReceiver().setRequiredScratchSizes(multiDispatchInfo.getRequiredScratchSize(0u), multiDispatchInfo.getRequiredScratchSize(1u));
 

@@ -100,8 +100,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         nullptr,
         kernelUsesLocalIds,
         0,
-        commandQueue.getDevice(),
-        false);
+        commandQueue.getDevice());
 
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), false, kernel.getKernelInfo().kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0, 0};
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);

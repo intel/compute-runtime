@@ -138,8 +138,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     PreemptionMode preemptionMode,
     const Device &device,
     WalkerType *walkerCmd,
-    InterfaceDescriptorType *inlineInterfaceDescriptor,
-    bool heaplessStateInitEnabled) {
+    InterfaceDescriptorType *inlineInterfaceDescriptor) {
 
     constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
@@ -193,15 +192,11 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
 
-    if constexpr (heaplessModeEnabled) {
-        if (heaplessStateInitEnabled) {
-            auto defaultPipelinedThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
-            if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-                defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
-            }
-            EncodeDispatchKernel<GfxFamily>::encodeEuSchedulingPolicy(&interfaceDescriptor, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
-        }
+    auto defaultPipelinedThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+    if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+        defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
+    EncodeDispatchKernel<GfxFamily>::encodeEuSchedulingPolicy(&interfaceDescriptor, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
 
     EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, device, hardwareInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, *walkerCmd);
 
@@ -247,8 +242,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     InterfaceDescriptorType *inlineInterfaceDescriptor,
     bool localIdsGenerationByRuntime,
     uint64_t scratchAddress,
-    const Device &device,
-    bool heaplessStateInitEnabled) {
+    const Device &device) {
 
     DEBUG_BREAK_IF(simd != 1 && simd != 8 && simd != 16 && simd != 32);
     // Copy the kernel over to the ISH
@@ -333,8 +327,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         preemptionMode,
         device,
         walkerCmd,
-        inlineInterfaceDescriptor,
-        heaplessStateInitEnabled);
+        inlineInterfaceDescriptor);
 
     if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         PatchInfoData patchInfoData(kernelStartOffset, 0, PatchInfoAllocationType::instructionHeap, dsh.getGraphicsAllocation()->getGpuAddress(), offsetInterfaceDescriptor, PatchInfoAllocationType::dynamicStateHeap);

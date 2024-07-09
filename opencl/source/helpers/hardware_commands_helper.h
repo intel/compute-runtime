@@ -54,8 +54,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         PreemptionMode preemptionMode,
         const Device &device,
         WalkerType *walkerCmd,
-        InterfaceDescriptorType *inlineInterfaceDescriptor,
-        bool heaplessStateInitEnabled);
+        InterfaceDescriptorType *inlineInterfaceDescriptor);
 
     static void sendMediaStateFlush(
         LinearStream &commandStream,
@@ -94,8 +93,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         InterfaceDescriptorType *inlineInterfaceDescriptor,
         bool localIdsGenerationByRuntime,
         uint64_t scratchAddress,
-        const Device &device,
-        bool heaplessStateInitEnabled);
+        const Device &device);
 
     template <typename WalkerType>
     static void programInlineData(Kernel &kernel, WalkerType *walkerCmd, uint64_t indirectDataAddress, uint64_t scratchAddress);
