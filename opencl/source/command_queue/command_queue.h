@@ -389,6 +389,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool isBcs() const { return isCopyOnly; };
 
     cl_int enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size, cl_event *event);
+    bool isValidForStagingBufferCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies);
 
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);

@@ -32,7 +32,7 @@ class StagingBufferManager {
     StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields);
     ~StagingBufferManager();
 
-    bool isValidForCopy(Device &device, void *dstPtr, const void *srcPtr, bool hasDependencies) const;
+    bool isValidForCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const;
     int32_t performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction chunkCopyFunc, CommandStreamReceiver *csr);
 
   private:

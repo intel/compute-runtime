@@ -1568,4 +1568,20 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
     return ret;
 }
 
+bool CommandQueue::isValidForStagingBufferCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies) {
+    GraphicsAllocation *allocation = nullptr;
+    context->tryGetExistingMapAllocation(srcPtr, size, allocation);
+    if (allocation != nullptr) {
+        // Direct transfer from mapped allocation is faster than staging buffer
+        return false;
+    }
+    CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, nullptr};
+    csrSelectionArgs.direction = TransferDirection::hostToLocal;
+    auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
+    auto osContextId = csr->getOsContext().getContextId();
+    auto stagingBufferManager = context->getStagingBufferManager();
+    UNRECOVERABLE_IF(stagingBufferManager == nullptr);
+    return stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, size, hasDependencies, osContextId);
+}
+
 } // namespace NEO

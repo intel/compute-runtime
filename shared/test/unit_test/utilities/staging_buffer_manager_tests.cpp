@@ -83,30 +83,40 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForCopyThenRe
     constexpr size_t bufferSize = 1024;
     auto usmBuffer = allocateDeviceBuffer(bufferSize);
     unsigned char nonUsmBuffer[bufferSize];
-
+    auto svmData = svmAllocsManager->getSVMAlloc(usmBuffer);
+    auto alloc = svmData->gpuAllocations.getDefaultGraphicsAllocation();
     struct {
         void *dstPtr;
         void *srcPtr;
+        size_t size;
         bool hasDependencies;
+        bool usedByOsContext;
         bool expectValid;
-    } copyParamsStruct[5]{
-        {usmBuffer, nonUsmBuffer, false, true},     // nonUsm -> usm without dependencies
-        {usmBuffer, nonUsmBuffer, true, false},     // nonUsm -> usm with dependencies
-        {nonUsmBuffer, nonUsmBuffer, false, false}, // nonUsm -> nonUsm without dependencies
-        {usmBuffer, usmBuffer, false, false},       // usm -> usm without dependencies
-        {nonUsmBuffer, usmBuffer, false, false}     // usm -> nonUsm without dependencies
+    } copyParamsStruct[7]{
+        {usmBuffer, nonUsmBuffer, bufferSize, false, true, true},             // nonUsm -> usm without dependencies
+        {usmBuffer, nonUsmBuffer, bufferSize, true, true, false},             // nonUsm -> usm with dependencies
+        {nonUsmBuffer, nonUsmBuffer, bufferSize, false, true, false},         // nonUsm -> nonUsm without dependencies
+        {usmBuffer, usmBuffer, bufferSize, false, true, false},               // usm -> usm without dependencies
+        {nonUsmBuffer, usmBuffer, bufferSize, false, true, false},            // usm -> nonUsm without dependencies
+        {usmBuffer, nonUsmBuffer, bufferSize, false, false, true},            // nonUsm -> usm unused by os context, small transfer
+        {usmBuffer, nonUsmBuffer, stagingBufferSize * 2, false, false, false} // nonUsm -> usm unused by os context, large transfer
     };
-    for (auto i = 0; i < 5; i++) {
-        auto actualValid = stagingBufferManager->isValidForCopy(*pDevice, copyParamsStruct[i].dstPtr, copyParamsStruct[i].srcPtr, copyParamsStruct[i].hasDependencies);
+    for (auto i = 0; i < 7; i++) {
+        if (copyParamsStruct[i].usedByOsContext) {
+            alloc->updateTaskCount(1, 0);
+        } else {
+            alloc->releaseUsageInOsContext(0);
+        }
+        auto actualValid = stagingBufferManager->isValidForCopy(*pDevice, copyParamsStruct[i].dstPtr, copyParamsStruct[i].srcPtr, copyParamsStruct[i].size, copyParamsStruct[i].hasDependencies, 0u);
         EXPECT_EQ(actualValid, copyParamsStruct[i].expectValid);
     }
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
-    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, false));
+    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
     auto isStaingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
-    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, false));
+    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
     svmAllocsManager->freeSVMAlloc(usmBuffer);
 }
 

@@ -2593,3 +2593,18 @@ HWTEST_F(StagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagingBufferMe
     EXPECT_GE(end, start);
     clReleaseEvent(event);
 }
+
+HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenSrcIsUnMappedThenReturnTrue) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    EXPECT_TRUE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), dstPtr, srcPtr, stagingBufferSize, false));
+}
+
+HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenSrcIsMappedThenReturnFalse) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    auto [buffer, mappedPtr] = createBufferAndMapItOnGpu();
+    EXPECT_FALSE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), dstPtr, mappedPtr, buffer->getSize(), false));
+}

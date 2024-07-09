@@ -109,15 +109,19 @@ void StagingBufferManager::storeBuffer(void *stagingBuffer, uint64_t taskCount) 
     stagingBuffers.push_back({svmData, taskCount});
 }
 
-bool StagingBufferManager::isValidForCopy(Device &device, void *dstPtr, const void *srcPtr, bool hasDependencies) const {
+bool StagingBufferManager::isValidForCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const {
     auto stagingCopyEnabled = device.getProductHelper().isStagingBuffersEnabled();
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
     }
     auto usmDstData = svmAllocsManager->getSVMAlloc(dstPtr);
     auto usmSrcData = svmAllocsManager->getSVMAlloc(srcPtr);
-    bool hostToUsmDeviceCopy = usmSrcData == nullptr && usmDstData != nullptr;
-    return stagingCopyEnabled && hostToUsmDeviceCopy && !hasDependencies;
+    bool hostToUsmCopy = usmSrcData == nullptr && usmDstData != nullptr;
+    bool isUsedByOsContext = false;
+    if (usmDstData) {
+        isUsedByOsContext = usmDstData->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex())->isUsedByOsContext(osContextId);
+    }
+    return stagingCopyEnabled && hostToUsmCopy && !hasDependencies && (isUsedByOsContext || size <= chunkSize);
 }
 
 } // namespace NEO

@@ -4914,8 +4914,7 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
     }
 
     if (size != 0) {
-        auto stagingBufferManager = pCommandQueue->getContext().getStagingBufferManager();
-        if (stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, numEventsInWaitList)) {
+        if (pCommandQueue->isValidForStagingBufferCopy(device, dstPtr, srcPtr, size, numEventsInWaitList > 0)) {
             retVal = pCommandQueue->enqueueStagingBufferMemcpy(blockingCopy, dstPtr, srcPtr, size, event);
         } else {
             retVal = pCommandQueue->enqueueSVMMemcpy(
