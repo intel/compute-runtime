@@ -151,7 +151,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
         0,                              // reserved0
         4740,                           // sr_magic_offset
         0,                              // fifo_offset;
-        0,                              // fifo_size;
+        100,                            // fifo_size;
         0,                              // fifo_head;
         0,                              // fifo_tail;
         0,                              // fifo_version;

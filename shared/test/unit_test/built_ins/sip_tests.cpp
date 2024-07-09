@@ -402,7 +402,9 @@ TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveArea
     EXPECT_EQ(0x1800u * numSlices * 8 * 7 + alignUp(sizeof(SIP::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
-    EXPECT_EQ(0x1800u * numSlices * 8 * 7 + alignUp(sizeof(NEO::StateSaveAreaHeader), MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
+    auto fifoSize = 100 * sizeof(SIP::fifo_node);
+    auto stateSaveSize = 0x1800u * numSlices * 8 * 7 + sizeof(NEO::StateSaveAreaHeader);
+    EXPECT_EQ(alignUp(fifoSize + stateSaveSize, MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
 TEST(DebugBindlessSip, givenDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {

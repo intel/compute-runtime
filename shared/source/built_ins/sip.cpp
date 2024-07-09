@@ -105,6 +105,7 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
                                 hdr->regHeaderV3.num_threads_per_eu *
                                 hdr->regHeaderV3.state_save_size +
                             hdr->versionHeader.size * 8 + hdr->regHeaderV3.state_area_offset;
+        stateSaveAreaSize += hdr->regHeaderV3.fifo_size * sizeof(SIP::fifo_node);
 
     } else {
         stateSaveAreaSize = numSlices *
