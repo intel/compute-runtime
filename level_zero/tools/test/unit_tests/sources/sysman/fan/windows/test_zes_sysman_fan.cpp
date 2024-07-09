@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -157,17 +157,95 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanPropertiesAllowS
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenSuccessIsReturnedDefaultFanTable) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenSuccessIsReturnedWithoutDefaultFanTable) {
     // Setting allow set calls or not
     init(true, true);
 
     auto handles = getFanHandles();
+
+    pKmdSysManager->isStockFanTableAvailable = false;
 
     for (auto handle : handles) {
         zes_fan_config_t fanConfig;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanSetDefaultMode(handle));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanGetConfig(handle, &fanConfig));
         EXPECT_EQ(fanConfig.mode, ZES_FAN_SPEED_MODE_DEFAULT);
+        EXPECT_EQ(fanConfig.speedTable.numPoints, 0);
+    }
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWithStockTableWhenGettingFanConfigThenSuccessIsReturnedWithDefaultFanTable) {
+    // Setting allow set calls or not
+    init(true, true);
+
+    auto handles = getFanHandles();
+
+    pKmdSysManager->isStockFanTableAvailable = true;
+
+    for (auto handle : handles) {
+        zes_fan_config_t fanConfig;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanSetDefaultMode(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanGetConfig(handle, &fanConfig));
+        EXPECT_EQ(fanConfig.mode, ZES_FAN_SPEED_MODE_DEFAULT);
+        EXPECT_EQ(fanConfig.speedTable.numPoints, 10);
+        EXPECT_EQ(fanConfig.speedTable.table[0].speed.units, ZES_FAN_SPEED_UNITS_PERCENT);
+        EXPECT_EQ(fanConfig.speedTable.table[1].speed.units, ZES_FAN_SPEED_UNITS_PERCENT);
+        EXPECT_EQ(fanConfig.speedTable.table[2].speed.units, ZES_FAN_SPEED_UNITS_PERCENT);
+        EXPECT_EQ(fanConfig.speedTable.table[3].speed.units, ZES_FAN_SPEED_UNITS_PERCENT);
+    }
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWithMaxPointEscapeFailureWhenGettingFanConfigThenSuccessIsReturnedWithoutDefaultFanTable) {
+    // Setting allow set calls or not
+    init(true, true);
+
+    auto handles = getFanHandles();
+
+    pKmdSysManager->isStockFanTableAvailable = true;
+    pKmdSysManager->failMaxPointsGet = true;
+
+    for (auto handle : handles) {
+        zes_fan_config_t fanConfig;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanSetDefaultMode(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanGetConfig(handle, &fanConfig));
+        EXPECT_EQ(fanConfig.mode, ZES_FAN_SPEED_MODE_DEFAULT);
+        EXPECT_EQ(fanConfig.speedTable.numPoints, 0);
+    }
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWithZeroMaxPointsTableWhenGettingFanConfigThenSuccessIsReturnedWithoutDefaultFanTable) {
+    // Setting allow set calls or not
+    init(true, true);
+
+    auto handles = getFanHandles();
+
+    pKmdSysManager->isStockFanTableAvailable = true;
+    pKmdSysManager->retZeroMaxPoints = true;
+
+    for (auto handle : handles) {
+        zes_fan_config_t fanConfig;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanSetDefaultMode(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanGetConfig(handle, &fanConfig));
+        EXPECT_EQ(fanConfig.mode, ZES_FAN_SPEED_MODE_DEFAULT);
+        EXPECT_EQ(fanConfig.speedTable.numPoints, 0);
+    }
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWithSmallStockTableAvailableWhenGettingFanConfigThenSuccessIsReturnedWithDefaultFanTable) {
+    // Setting allow set calls or not
+    init(true, true);
+
+    auto handles = getFanHandles();
+
+    pKmdSysManager->isStockFanTableAvailable = true;
+    pKmdSysManager->smallStockTable = true;
+
+    for (auto handle : handles) {
+        zes_fan_config_t fanConfig;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanSetDefaultMode(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanGetConfig(handle, &fanConfig));
+        EXPECT_EQ(fanConfig.mode, ZES_FAN_SPEED_MODE_DEFAULT);
+        EXPECT_EQ(fanConfig.speedTable.numPoints, 5);
     }
 }
 

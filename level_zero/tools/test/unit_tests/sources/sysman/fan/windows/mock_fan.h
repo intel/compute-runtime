@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,10 +24,17 @@ struct Mock<FanKmdSysManager> : public FanKmdSysManager {
             uint32_t FanSpeedPercent : 16;
         };
         uint32_t Data;
-    } mockFanTempSpeed;
+    } mockFanTempSpeed[10], mockStockFanTable[10];
     uint32_t mockFanMaxPoints = 10;
     uint32_t mockFanCurrentPulses = 523436;
     uint32_t mockFanCurrentFanPoints = 0;
+    uint32_t mockCurrentReadIndex = 0;
+    uint32_t mockCurrentWriteIndex = 0;
+    bool isFanTableSet = false;
+    bool isStockFanTableAvailable = false;
+    bool failMaxPointsGet = false;
+    bool retZeroMaxPoints = false;
+    bool smallStockTable = false;
 
     void getFanProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) override {
         uint8_t *pBuffer = reinterpret_cast<uint8_t *>(pResponse);
@@ -37,8 +44,17 @@ struct Mock<FanKmdSysManager> : public FanKmdSysManager {
         case KmdSysman::Requests::Fans::MaxFanControlPointsSupported: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockFanMaxPoints;
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
-            pResponse->outDataSize = sizeof(uint32_t);
+            if (retZeroMaxPoints) {
+                *pValue = 0;
+            }
+            if (!failMaxPointsGet) {
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = sizeof(uint32_t);
+            } else {
+                pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+                pResponse->outDataSize = 0;
+            }
+
         } break;
         case KmdSysman::Requests::Fans::CurrentFanSpeed: {
             if (fanSupported) {
@@ -54,16 +70,37 @@ struct Mock<FanKmdSysManager> : public FanKmdSysManager {
         case KmdSysman::Requests::Fans::CurrentNumOfControlPoints: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
             *pValue = mockFanCurrentFanPoints;
+            mockCurrentReadIndex = 0;
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);
         } break;
         case KmdSysman::Requests::Fans::CurrentFanPoint: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
-            mockFanTempSpeed.FanSpeedPercent = 25;
-            mockFanTempSpeed.TemperatureDegreesCelsius = 50;
-            *pValue = mockFanTempSpeed.Data;
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
-            pResponse->outDataSize = sizeof(uint32_t);
+            if (isFanTableSet) {
+                mockFanTempSpeed[mockCurrentReadIndex].FanSpeedPercent = mockCurrentReadIndex * 10;
+                mockFanTempSpeed[mockCurrentReadIndex].TemperatureDegreesCelsius = mockCurrentReadIndex * 10 + 20;
+                *pValue = mockFanTempSpeed[mockCurrentReadIndex].Data;
+                mockCurrentReadIndex++;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                pResponse->outDataSize = sizeof(uint32_t);
+            } else if (isStockFanTableAvailable) {
+                mockStockFanTable[mockCurrentReadIndex].FanSpeedPercent = mockCurrentReadIndex * 10 - 5;
+                mockStockFanTable[mockCurrentReadIndex].TemperatureDegreesCelsius = mockCurrentReadIndex * 10 + 15;
+                *pValue = mockStockFanTable[mockCurrentReadIndex].Data;
+                mockCurrentReadIndex++;
+                if (smallStockTable && mockCurrentReadIndex == 6) {
+                    // only return 5 points for smallStockTable
+                    *pValue = 0;
+                    pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+                    pResponse->outDataSize = 0;
+                } else {
+                    pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+                    pResponse->outDataSize = sizeof(uint32_t);
+                }
+            } else {
+                pResponse->outDataSize = 0;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+            }
         } break;
         default: {
             pResponse->outDataSize = 0;
@@ -82,8 +119,12 @@ struct Mock<FanKmdSysManager> : public FanKmdSysManager {
             mockFanCurrentFanPoints = *pValue;
             pResponse->outDataSize = 0;
             if ((mockFanCurrentFanPoints % 2 == 0) && (mockFanCurrentFanPoints > 0) && (mockFanCurrentFanPoints <= mockFanMaxPoints)) {
+                mockCurrentWriteIndex = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             } else if (mockFanCurrentFanPoints == 0) {
+                isFanTableSet = false;
+                mockCurrentReadIndex = 0;
+                mockCurrentWriteIndex = 0;
                 pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             } else {
                 pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
@@ -91,7 +132,8 @@ struct Mock<FanKmdSysManager> : public FanKmdSysManager {
         } break;
         case KmdSysman::Requests::Fans::CurrentFanPoint: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
-            mockFanTempSpeed.Data = *pValue;
+            mockFanTempSpeed[mockCurrentWriteIndex++].Data = *pValue;
+            isFanTableSet = true;
             pResponse->outDataSize = 0;
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
         } break;

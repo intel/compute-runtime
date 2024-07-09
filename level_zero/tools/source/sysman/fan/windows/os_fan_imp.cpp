@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,6 +82,39 @@ ze_result_t WddmFanImp::getConfig(zes_fan_config_t *pConfig) {
         memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
         if (value == 0) {
             pConfig->mode = ZES_FAN_SPEED_MODE_DEFAULT;
+            pConfig->speedTable.numPoints = 0;
+
+            request.commandId = KmdSysman::Command::Get;
+            request.componentId = KmdSysman::Component::FanComponent;
+            request.requestId = KmdSysman::Requests::Fans::MaxFanControlPointsSupported;
+
+            status = pKmdSysManager->requestSingle(request, response);
+            if (status == ZE_RESULT_SUCCESS) {
+                uint32_t maxFanPoints = 0;
+                memcpy_s(&maxFanPoints, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+                pConfig->speedTable.numPoints = static_cast<int32_t>(maxFanPoints);
+
+                if (maxFanPoints != 0) {
+                    request.requestId = KmdSysman::Requests::Fans::CurrentFanPoint;
+                    // Try reading Default Fan table if the platform supports
+                    // If platform doesn't support reading default fan table we still return valid FanConfig.Mode
+                    // but not the table filled with default fan table entries
+                    for (int32_t i = 0; i < pConfig->speedTable.numPoints; i++) {
+                        if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
+
+                            FanPoint point = {};
+                            memcpy_s(&point.data, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+
+                            pConfig->speedTable.table[i].speed.speed = point.fanSpeedPercent;
+                            pConfig->speedTable.table[i].speed.units = ZES_FAN_SPEED_UNITS_PERCENT;
+                            pConfig->speedTable.table[i].temperature = point.temperatureDegreesCelsius;
+                        } else {
+                            pConfig->speedTable.numPoints = i;
+                            break;
+                        }
+                    }
+                }
+            } // else, return Success. We still return valid FanConfig.mode
         } else {
             pConfig->mode = ZES_FAN_SPEED_MODE_TABLE;
             pConfig->speedTable.numPoints = value;
