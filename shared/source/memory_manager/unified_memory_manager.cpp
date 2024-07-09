@@ -744,6 +744,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
     std::unique_lock<std::shared_mutex> lock(mtx);
     bool parseAllAllocations = false;
     auto entry = indirectAllocationsResidency.find(&commandStreamReceiver);
+    TaskCountType previousCounter = 0;
     if (entry == indirectAllocationsResidency.end()) {
         parseAllAllocations = true;
 
@@ -755,13 +756,14 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
     } else {
         if (this->allocationsCounter > entry->second.latestResidentObjectId) {
             parseAllAllocations = true;
+            previousCounter = entry->second.latestResidentObjectId;
             entry->second.latestResidentObjectId = this->allocationsCounter;
         }
         entry->second.latestSentTaskCount = taskCount;
     }
     if (parseAllAllocations) {
         auto currentCounter = this->allocationsCounter.load();
-        for (auto allocationId = 1u; allocationId <= currentCounter; allocationId++) {
+        for (auto allocationId = static_cast<uint32_t>(previousCounter + 1); allocationId <= currentCounter; allocationId++) {
             makeResidentForAllocationsWithId(allocationId, commandStreamReceiver);
         }
     }
@@ -887,6 +889,7 @@ std::unique_lock<std::mutex> SVMAllocsManager::obtainOwnership() {
 void SVMAllocsManager::insertSVMAlloc(void *svmPtr, const SvmAllocationData &allocData) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     this->svmAllocs.insert(svmPtr, allocData);
+    UNRECOVERABLE_IF(internalAllocationsMap.count(allocData.getAllocId()) > 0);
     for (auto alloc : allocData.gpuAllocations.getGraphicsAllocations()) {
         if (alloc != nullptr) {
             internalAllocationsMap.insert({allocData.getAllocId(), alloc});

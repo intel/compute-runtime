@@ -1194,7 +1194,7 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
         allocData.device = allocationNode->device;
         allocData.size = size;
         allocData.pageSizeForAlignment = MemoryConstants::pageSize64k;
-        allocData.setAllocId(this->driverHandle->svmAllocsManager->allocationsCounter++);
+        allocData.setAllocId(++this->driverHandle->svmAllocsManager->allocationsCounter);
         allocData.memoryType = InternalMemoryType::reservedDeviceMemory;
         allocData.virtualReservationData = virtualMemoryReservation;
         NEO::MemoryMappedRange *mappedRange = new NEO::MemoryMappedRange;

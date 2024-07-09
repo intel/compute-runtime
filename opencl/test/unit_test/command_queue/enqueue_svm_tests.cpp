@@ -1963,6 +1963,7 @@ HWTEST_P(UpdateResidencyContainerMultipleDevicesTest,
     allocData.gpuAllocations.addAllocation(&gfxAllocation);
     allocData.memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocData.device = &device->getDevice();
+    allocData.setAllocId(1u);
 
     uint32_t pCmdBufferPeer[1024];
     MockGraphicsAllocation gfxAllocationPeer(peerDevice->getDevice().getRootDeviceIndex(),
@@ -1971,7 +1972,7 @@ HWTEST_P(UpdateResidencyContainerMultipleDevicesTest,
     allocDataPeer.gpuAllocations.addAllocation(&gfxAllocationPeer);
     allocDataPeer.memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocDataPeer.device = &peerDevice->getDevice();
-
+    allocDataPeer.setAllocId(2u);
     svmManager->insertSVMAlloc(allocData);
     svmManager->insertSVMAlloc(allocDataPeer);
     EXPECT_EQ(2u, svmManager->getNumAllocs());
@@ -2007,6 +2008,7 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     allocData.gpuAllocations.addAllocation(&gfxAllocation);
     allocData.memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocData.device = &device->getDevice();
+    allocData.setAllocId(1u);
 
     uint32_t pCmdBufferPeer[1024];
     MockGraphicsAllocation gfxAllocationPeer(peerDevice->getDevice().getRootDeviceIndex(),
@@ -2015,6 +2017,7 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     allocDataPeer.gpuAllocations.addAllocation(&gfxAllocationPeer);
     allocDataPeer.memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocDataPeer.device = &peerDevice->getDevice();
+    allocDataPeer.setAllocId(2u);
 
     svmManager->insertSVMAlloc(allocData);
     svmManager->insertSVMAlloc(allocDataPeer);
@@ -2083,6 +2086,7 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     allocData0.gpuAllocations.addAllocation(&gfxAllocation);
     allocData0.memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocData0.device = &subDevice0->getDevice();
+    allocData0.setAllocId(1u);
 
     uint32_t pCmdBufferPeer[1024];
     MockGraphicsAllocation gfxAllocationPeer(device->getDevice().getRootDeviceIndex(),
@@ -2091,6 +2095,7 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     allocData1.gpuAllocations.addAllocation(&gfxAllocationPeer);
     allocData1.memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocData1.device = &subDevice1->getDevice();
+    allocData1.setAllocId(2u);
 
     svmManager->insertSVMAlloc(allocData0);
     svmManager->insertSVMAlloc(allocData1);
@@ -2114,6 +2119,7 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     allocData0.gpuAllocations.addAllocation(&gfxAllocation);
     allocData0.memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocData0.device = &subDevice0->getDevice();
+    allocData0.setAllocId(1u);
 
     uint32_t pCmdBufferPeer[1024];
     MockGraphicsAllocation gfxAllocationPeer(device->getDevice().getRootDeviceIndex(),
@@ -2122,6 +2128,7 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
     allocData1.gpuAllocations.addAllocation(&gfxAllocationPeer);
     allocData1.memoryType = InternalMemoryType::deviceUnifiedMemory;
     allocData1.device = &subDevice1->getDevice();
+    allocData1.setAllocId(2u);
 
     svmManager->insertSVMAlloc(allocData0);
     svmManager->insertSVMAlloc(allocData1);

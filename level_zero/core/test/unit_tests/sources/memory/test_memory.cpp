@@ -215,7 +215,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
 
     auto newAllocationCount = usmManager->allocationsCounter.load();
     EXPECT_GT(newAllocationCount, currentAllocationCount);
-    EXPECT_EQ(usmManager->getSVMAlloc(ipcPtr)->getAllocId(), currentAllocationCount);
+    EXPECT_EQ(usmManager->getSVMAlloc(ipcPtr)->getAllocId(), newAllocationCount);
 
     result = context->closeIpcMemHandle(ipcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -258,7 +258,7 @@ TEST_F(MemoryExportImportImplicitScalingTest,
 
     auto newAllocationCount = usmManager->allocationsCounter.load();
     EXPECT_GT(newAllocationCount, currentAllocationCount);
-    EXPECT_EQ(usmManager->getSVMAlloc(ipcPtr)->getAllocId(), currentAllocationCount);
+    EXPECT_EQ(usmManager->getSVMAlloc(ipcPtr)->getAllocId(), newAllocationCount);
 
     result = context->closeIpcMemHandle(ipcPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

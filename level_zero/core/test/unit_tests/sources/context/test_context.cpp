@@ -172,6 +172,7 @@ TEST_F(MultiDeviceContextTests,
     uintptr_t peerGpuAddress = 0u;
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(allocData, nullptr);
+    EXPECT_EQ(driverHandle->getSvmAllocsManager()->allocationsCounter.load(), allocData->getAllocId());
     auto peerAlloc = driverHandle->getPeerAllocation(driverHandle->devices[1], allocData, ptr, &peerGpuAddress, nullptr);
     EXPECT_NE(peerAlloc, nullptr);
 
