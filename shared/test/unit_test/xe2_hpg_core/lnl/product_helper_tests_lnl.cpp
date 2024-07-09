@@ -161,3 +161,7 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckBlitEnqueueAllowedThenRet
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmAllocationReuseSupportedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
 }
+
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
+    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
+}
