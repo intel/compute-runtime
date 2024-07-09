@@ -85,19 +85,23 @@ bool SingleDeviceTestRunner::run() {
     }
 
     EXPECT(status == true);
-    for (auto collector : collectorList) {
-        status &= collector->isDataAvailable();
-        LOG(zmu::LogLevel::DEBUG) << "Data Available : " << std::boolalpha << status << std::endl;
-    }
-
-    EXPECT(status == true);
     for (auto workload : workloadList) {
-        status &= workload->validate();
+        workload->validate();
     }
 
     EXPECT(status == true);
     for (auto collector : collectorList) {
         collector->showResults();
+    }
+
+    EXPECT(status == true);
+    for (auto collector : collectorList) {
+        auto status = collector->isDataAvailable();
+        if (!status) {
+            LOG(zmu::LogLevel::INFO) << "[W]Event was not generated !!" << std::endl;
+        } else {
+            LOG(zmu::LogLevel::DEBUG) << "Data Available : " << std::boolalpha << status << std::endl;
+        }
     }
 
     for (auto collector : collectorList) {

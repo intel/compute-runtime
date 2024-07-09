@@ -90,6 +90,10 @@ bool SingleDeviceSingleQueueExecutionCtxt::finalize() {
     return true;
 }
 
+void SingleDeviceSingleQueueExecutionCtxt::reset() {
+    VALIDATECALL(zeCommandListReset(commandList));
+}
+
 bool SingleDeviceSingleQueueExecutionCtxt::run() {
 
     // Close command list.

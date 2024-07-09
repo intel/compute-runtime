@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,8 @@ void AppendMemoryCopyFromHeapToDeviceAndBackToHost::initialize() {
     deviceDesc.flags = 0;
     deviceDesc.pNext = nullptr;
 
-    VALIDATECALL(zeMemAllocDevice(executionCtxt->getContextHandle(0), &deviceDesc, allocSize, allocSize, executionCtxt->getDeviceHandle(0), &zeBuffer));
+    VALIDATECALL(zeMemAllocDevice(executionCtxt->getContextHandle(0), &deviceDesc, allocSize, 1, executionCtxt->getDeviceHandle(0), &zeBuffer));
+    VALIDATECALL(zeContextMakeMemoryResident(executionCtxt->getContextHandle(0), executionCtxt->getDeviceHandle(0), zeBuffer, allocSize));
 }
 
 bool AppendMemoryCopyFromHeapToDeviceAndBackToHost::appendCommands() {
@@ -42,11 +43,13 @@ bool AppendMemoryCopyFromHeapToDeviceAndBackToHost::appendCommands() {
         // Copy from heap to device-allocated memory
         VALIDATECALL(zeCommandListAppendMemoryCopy(executionCtxt->getCommandList(0), zeBuffer, heapBuffer1, allocSize,
                                                    nullptr, 0, nullptr));
+
         VALIDATECALL(zeCommandListAppendBarrier(executionCtxt->getCommandList(0), nullptr, 0, nullptr));
         // Copy from device-allocated memory to heap2
         VALIDATECALL(zeCommandListAppendMemoryCopy(executionCtxt->getCommandList(0), heapBuffer2, zeBuffer, allocSize,
                                                    nullptr, 0, nullptr));
     }
+
     return true;
 }
 
@@ -57,6 +60,7 @@ bool AppendMemoryCopyFromHeapToDeviceAndBackToHost::validate() {
 
 void AppendMemoryCopyFromHeapToDeviceAndBackToHost::finalize() {
 
+    VALIDATECALL(zeContextEvictMemory(executionCtxt->getContextHandle(0), executionCtxt->getDeviceHandle(0), zeBuffer, allocSize));
     VALIDATECALL(zeMemFree(executionCtxt->getContextHandle(0), zeBuffer));
     delete[] heapBuffer1;
     delete[] heapBuffer2;
@@ -156,7 +160,6 @@ bool CopyBufferToBuffer::appendCommands() {
 }
 
 bool CopyBufferToBuffer::validate() {
-
     // Validate.
     const bool outputValidationSuccessful = (memcmp(destinationBuffer, sourceBuffer, allocationSize) == 0);
 

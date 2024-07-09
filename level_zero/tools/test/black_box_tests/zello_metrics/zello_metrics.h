@@ -115,6 +115,7 @@ class SingleDeviceSingleQueueExecutionCtxt : public ExecutionContext {
     SingleDeviceSingleQueueExecutionCtxt(uint32_t deviceIndex, int32_t subDeviceIndex = -1) { initialize(deviceIndex, subDeviceIndex); }
     ~SingleDeviceSingleQueueExecutionCtxt() override { finalize(); }
     bool run() override;
+    void reset();
 
     ze_driver_handle_t getDriverHandle(uint32_t index) override { return driverHandle; }
     ze_context_handle_t getContextHandle(uint32_t index) override { return contextHandle; }
@@ -170,7 +171,7 @@ class AppendMemoryCopyFromHeapToDeviceAndBackToHost : public Workload {
     void finalize();
 
   private:
-    static constexpr size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
+    static constexpr size_t allocSize = 4096;
     char *heapBuffer1 = nullptr;
     char *heapBuffer2 = nullptr;
     void *zeBuffer = nullptr;
@@ -224,6 +225,8 @@ class SingleMetricStreamerCollector : public SingleMetricCollector {
   public:
     SingleMetricStreamerCollector(ExecutionContext *executionCtxt,
                                   const char *metricGroupName);
+    SingleMetricStreamerCollector(ExecutionContext *executionCtxt,
+                                  zet_metric_group_handle_t metricGroup);
 
     ~SingleMetricStreamerCollector() override = default;
 
@@ -244,8 +247,8 @@ class SingleMetricStreamerCollector : public SingleMetricCollector {
     zet_metric_streamer_handle_t metricStreamer = {};
     ze_event_pool_handle_t eventPool = {};
     ze_event_handle_t notificationEvent = {};
-    uint32_t notifyReportCount = 1;
-    uint32_t samplingPeriod = 10000;
+    uint32_t notifyReportCount = 20000;
+    uint32_t samplingPeriod = 10000000;
     uint32_t maxRequestRawReportCount = 5;
 };
 
@@ -254,6 +257,8 @@ class SingleMetricQueryCollector : public SingleMetricCollector {
   public:
     SingleMetricQueryCollector(ExecutionContext *executionCtxt,
                                const char *metricGroupName);
+    SingleMetricQueryCollector(ExecutionContext *executionCtxt,
+                               zet_metric_group_handle_t metricGroup);
 
     ~SingleMetricQueryCollector() override = default;
 

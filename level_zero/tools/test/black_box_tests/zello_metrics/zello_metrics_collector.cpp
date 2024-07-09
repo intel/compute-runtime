@@ -44,6 +44,13 @@ SingleMetricStreamerCollector::SingleMetricStreamerCollector(ExecutionContext *e
     executionCtxt->addActiveMetricGroup(metricGroup);
 }
 
+SingleMetricStreamerCollector::SingleMetricStreamerCollector(ExecutionContext *executionCtxt,
+                                                             zet_metric_group_handle_t metricGroup) : SingleMetricCollector(executionCtxt, metricGroup,
+                                                                                                                            ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) {
+
+    executionCtxt->addActiveMetricGroup(metricGroup);
+}
+
 bool SingleMetricStreamerCollector::start() {
 
     eventPool = zmu::createHostVisibleEventPool(executionCtxt->getContextHandle(0), executionCtxt->getDeviceHandle(0));
@@ -59,7 +66,7 @@ bool SingleMetricStreamerCollector::start() {
                                        notificationEvent,
                                        &metricStreamer));
     // Initial pause
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     return true;
 }
 
@@ -80,6 +87,7 @@ bool SingleMetricStreamerCollector::suffixCommands() {
 }
 
 bool SingleMetricStreamerCollector::isDataAvailable() {
+
     auto eventStatus = zeEventQueryStatus(notificationEvent);
     zeEventHostReset(notificationEvent);
     return eventStatus == ZE_RESULT_SUCCESS;
@@ -100,6 +108,11 @@ void SingleMetricStreamerCollector::showResults() {
     VALIDATECALL(zetMetricStreamerReadData(metricStreamer, maxRawReportCount, &rawDataSize, rawData.data()));
     LOG(zmu::LogLevel::DEBUG) << "Streamer read raw bytes: " << rawDataSize << std::endl;
 
+    if (rawDataSize == 0) {
+        rawDataSize = (uint32_t)rawData.size();
+        VALIDATECALL(zetMetricStreamerReadData(metricStreamer, maxRawReportCount, &rawDataSize, rawData.data()));
+        LOG(zmu::LogLevel::DEBUG) << "Streamer read raw bytes: " << rawDataSize << std::endl;
+    }
     zmu::obtainCalculatedMetrics(metricGroup, rawData.data(), static_cast<uint32_t>(rawDataSize));
 }
 
@@ -110,6 +123,12 @@ SingleMetricQueryCollector::SingleMetricQueryCollector(ExecutionContext *executi
                                                        const char *metricGroupName) : SingleMetricCollector(executionCtxt, metricGroupName,
                                                                                                             ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED) {
 
+    executionCtxt->addActiveMetricGroup(metricGroup);
+}
+
+SingleMetricQueryCollector::SingleMetricQueryCollector(ExecutionContext *executionCtxt,
+                                                       zet_metric_group_handle_t metricGroup) : SingleMetricCollector(executionCtxt, metricGroup,
+                                                                                                                      ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED) {
     executionCtxt->addActiveMetricGroup(metricGroup);
 }
 
