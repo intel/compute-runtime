@@ -60,10 +60,10 @@ bool OsContextLinux::initializeContext(bool allocateInterrupt) {
                 [[maybe_unused]] auto ret = drm.createDrmVirtualMemory(drmVmId);
                 DEBUG_BREAK_IF(drmVmId == 0);
                 DEBUG_BREAK_IF(ret != 0);
-                if (ret != 0) {
-                    return false;
-                }
 
+                if (ret != 0) {
+                    drmVmId = 0;
+                }
                 UNRECOVERABLE_IF(this->drmVmIds.size() <= deviceIndex);
                 this->drmVmIds[deviceIndex] = drmVmId;
             }
@@ -71,6 +71,15 @@ bool OsContextLinux::initializeContext(bool allocateInterrupt) {
             auto drmContextId = drm.getIoctlHelper()->createDrmContext(drm, *this, drmVmId, deviceIndex, allocateInterrupt);
             if (drmContextId < 0) {
                 return false;
+            }
+
+            if (drm.isPerContextVMRequired() && this->drmVmIds[deviceIndex] == 0) {
+                drmVmId = 0;
+                [[maybe_unused]] auto ret = drm.queryVmId(drmContextId, drmVmId);
+                DEBUG_BREAK_IF(drmVmId == 0);
+                DEBUG_BREAK_IF(ret != 0);
+
+                this->drmVmIds[deviceIndex] = drmVmId;
             }
 
             this->drmContextIds.push_back(drmContextId);

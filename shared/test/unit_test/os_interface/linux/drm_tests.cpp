@@ -26,12 +26,12 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
+#include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/mocks/linux/mock_os_context_linux.h"
 
 #include "gtest/gtest.h"
 
@@ -728,9 +728,11 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenExplicitVmIsCre
     EXPECT_EQ(0u, drmMock.receivedGemVmControl.vmId);
     EXPECT_EQ(drmMock.latestCreatedVmId, drmVmIds[0]);
     EXPECT_EQ(1, drmMock.createDrmVmCalled);
+
+    EXPECT_EQ(0, drmMock.ioctlCount.contextGetParam);
 }
 
-TEST(DrmTest, givenPerContextVMRequiredWhenVmIdCreationFailsThenContextInitializationReturnsFalse) {
+TEST(DrmTest, givenPerContextVMRequiredWhenVmIdCreationFailsThenQueryVmIsCalled) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
 
@@ -739,12 +741,16 @@ TEST(DrmTest, givenPerContextVMRequiredWhenVmIdCreationFailsThenContextInitializ
 
     drmMock.storedRetValForVmCreate = -1;
 
-    OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    MockOsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     drmMock.createDrmVmCalled = 0;
+    auto vmId = static_cast<uint32_t>(drmMock.storedRetValForVmId);
+
     auto status = osContext.ensureContextInitialized(false);
     EXPECT_EQ(1, drmMock.createDrmVmCalled);
+    EXPECT_EQ(1, drmMock.ioctlCount.contextGetParam);
+    EXPECT_EQ(osContext.drmVmIds[0], vmId);
 
-    EXPECT_FALSE(status);
+    EXPECT_TRUE(status);
 }
 
 TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenVmIdPerContextIsCreateddAndStoredAtSubDeviceIndex) {

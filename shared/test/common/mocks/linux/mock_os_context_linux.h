@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@ namespace NEO {
 class MockOsContextLinux : public OsContextLinux {
   public:
     using OsContextLinux::drmContextIds;
+    using OsContextLinux::drmVmIds;
     using OsContextLinux::fenceVal;
     using OsContextLinux::pagingFence;
 
