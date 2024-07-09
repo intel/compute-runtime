@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,7 @@
 namespace NEO {
 
 UserEvent::UserEvent(Context *ctx)
-    : Event(ctx, nullptr, CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady) {
-    transitionExecutionStatus(CL_QUEUED);
-}
+    : Event(ctx, nullptr, CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady) {}
 
 void UserEvent::updateExecutionStatus() {
     return;
