@@ -37,7 +37,6 @@ if(TESTS_XEHP_AND_LATER)
                  ${CMAKE_CURRENT_SOURCE_DIR}/aub_scratch_space_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/compression_aub_tests_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/multi_tile_buffers_aub_tests_xehp_and_later.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/single_tile_products_excludes.cpp
   )
 endif()
 

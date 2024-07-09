@@ -14,6 +14,8 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "multitile_matchers.h"
+
 using namespace NEO;
 
 struct OneVAFourPhysicalStoragesTest : public MulticontextOclAubFixture, public ::testing::Test {
@@ -26,7 +28,7 @@ struct OneVAFourPhysicalStoragesTest : public MulticontextOclAubFixture, public 
     }
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenBufferWithFourPhysicalStoragesWhenEnqueueReadBufferThenReadFromCorrectBank) {
+HWTEST2_F(OneVAFourPhysicalStoragesTest, givenBufferWithFourPhysicalStoragesWhenEnqueueReadBufferThenReadFromCorrectBank, SupportsMultiTile) {
     if (is32bit) {
         return;
     }
@@ -68,7 +70,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenBufferWithFourP
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenBufferWithFourPhysicalStoragesWhenEnqueueWriteBufferThenCorrectMemoryIsWrittenToSpecificBank) {
+HWTEST2_F(OneVAFourPhysicalStoragesTest, whenEnqueueWriteBufferThenCorrectMemoryIsWrittenToSpecificBank, SupportsMultiTile) {
     if (is32bit) {
         return;
     }
@@ -99,7 +101,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenBufferWithFourP
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, OneVAFourPhysicalStoragesTest, givenColouredBufferWhenEnqueueWriteBufferThenCorrectMemoryIsWrittenToSpecificBank) {
+HWTEST2_F(OneVAFourPhysicalStoragesTest, givenColouredBufferWhenEnqueueWriteBufferThenCorrectMemoryIsWrittenToSpecificBank, SupportsMultiTile) {
     if (is32bit) {
         return;
     }

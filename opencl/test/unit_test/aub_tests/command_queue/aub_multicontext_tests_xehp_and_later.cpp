@@ -27,6 +27,8 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
+#include "multitile_matchers.h"
+
 using namespace NEO;
 
 template <uint32_t numberOfTiles, MulticontextOclAubFixture::EnabledCommandStreamers enabledCommandStreamers>
@@ -211,17 +213,17 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
 
 // 4 Tiles
 using FourTilesAllContextsTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenSubmittingThenDataIsValid) {
+HWTEST2_F(FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenSubmittingThenDataIsValid, SupportsMultiTile) {
     runAubTest<FamilyType>();
 }
 
 using FourTilesDualContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesDualContextTest, HEAVY_givenFourTilesAndDualContextWhenSubmittingThenDataIsValid) {
+HWTEST2_F(FourTilesDualContextTest, HEAVY_givenFourTilesAndDualContextWhenSubmittingThenDataIsValid, SupportsMultiTile) {
     runAubTest<FamilyType>();
 }
 
 using FourTilesSingleContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::single>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesSingleContextTest, givenFourTilesAndSingleContextWhenSubmittingThenDataIsValid) {
+HWTEST2_F(FourTilesSingleContextTest, givenFourTilesAndSingleContextWhenSubmittingThenDataIsValid, SupportsMultiTile) {
     runAubTest<FamilyType>();
 }
 
@@ -273,7 +275,7 @@ struct DynamicWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTile
     DebugManagerStateRestore restore{};
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithAtomicThenOutputDataIsValid) {
+HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithAtomicThenOutputDataIsValid, SupportsMultiTile) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
@@ -332,7 +334,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DynamicWalkerPartitionFourTilesTests, whenWalkerPar
     expectMemory<FamilyType>(groupSpecificWorkCounts, &workgroupCounts[0], workgroupCounts.size() * sizeof(uint32_t), 0, 0);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithoutAtomicThenOutputDataIsValid) {
+HWTEST2_F(DynamicWalkerPartitionFourTilesTests, whenWalkerPartitionIsEnabledForKernelWithoutAtomicThenOutputDataIsValid, SupportsMultiTile) {
 
     auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
 
@@ -403,7 +405,7 @@ struct StaticWalkerPartitionFourTilesTests : EnqueueWithWalkerPartitionFourTiles
     DebugManagerStateRestore restore{};
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenFourTilesWhenStaticWalkerPartitionIsEnabledForKernelThenOutputDataIsValid) {
+HWTEST2_F(StaticWalkerPartitionFourTilesTests, givenFourTilesWhenStaticWalkerPartitionIsEnabledForKernelThenOutputDataIsValid, SupportsMultiTile) {
 
     auto mockCommandQueue = new MockCommandQueueHw<FamilyType>(multiTileDefaultContext.get(), rootDevice.get(), nullptr);
 
@@ -429,7 +431,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenFourTiles
     expectMemoryOnRootCsr<FamilyType>(getGpuAddress(*buffer), &workgroupCounts[0], workgroupCounts.size() * sizeof(uint32_t));
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenPreWalkerSyncWhenStaticWalkerPartitionIsThenAtomicsAreIncrementedCorrectly) {
+HWTEST2_F(StaticWalkerPartitionFourTilesTests, givenPreWalkerSyncWhenStaticWalkerPartitionIsThenAtomicsAreIncrementedCorrectly, SupportsMultiTile) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto taskStream = createTaskStream();
@@ -475,7 +477,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, givenPreWalker
     destroyTaskStream(*taskStream);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, whenNoPreWalkerSyncThenAtomicsAreIncrementedCorrectly) {
+HWTEST2_F(StaticWalkerPartitionFourTilesTests, whenNoPreWalkerSyncThenAtomicsAreIncrementedCorrectly, SupportsMultiTile) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto taskStream = createTaskStream();
@@ -524,32 +526,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, StaticWalkerPartitionFourTilesTests, whenNoPreWalke
 
 // 2 Tiles
 using TwoTilesAllContextsTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesAllContextsTest, HEAVY_givenTwoTilesAndAllContextsWhenSubmittingThenDataIsValid) {
+HWTEST2_F(TwoTilesAllContextsTest, HEAVY_givenTwoTilesAndAllContextsWhenSubmittingThenDataIsValid, SupportsMultiTile) {
     runAubTest<FamilyType>();
 }
 
 using TwoTilesDualContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenSubmittingThenDataIsValid) {
+HWTEST2_F(TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenSubmittingThenDataIsValid, SupportsMultiTile) {
     runAubTest<FamilyType>();
 }
 
 using TwoTilesSingleContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::single>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesSingleContextTest, givenTwoTilesAndSingleContextWhenSubmittingThenDataIsValid) {
+HWTEST2_F(TwoTilesSingleContextTest, givenTwoTilesAndSingleContextWhenSubmittingThenDataIsValid, SupportsMultiTile) {
     runAubTest<FamilyType>();
 }
 
 // 1 Tile
 using SingleTileAllContextsTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileAllContextsTest, GENERATEONLY_givenSingleTileAndAllContextsWhenSubmittingThenDataIsValid) {
+HWTEST2_F(SingleTileAllContextsTest, GENERATEONLY_givenSingleTileAndAllContextsWhenSubmittingThenDataIsValid, SupportsMultiTile) {
     runAubTest<FamilyType>();
 }
 
 using SingleTileDualContextTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleTileAndDualContextWhenSubmittingThenDataIsValid) {
+HWTEST2_F(SingleTileDualContextTest, givenSingleTileAndDualContextWhenSubmittingThenDataIsValid, SupportsMultiTile) {
     runAubTest<FamilyType>();
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDifferentContextThenDataIsValid) {
+HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDifferentContextThenDataIsValid, SupportsMultiTile) {
     cl_int retVal = CL_SUCCESS;
     const uint32_t bufferSize = 256;
     const uint32_t halfBufferSize = bufferSize / 2;
@@ -581,43 +583,43 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleAllocationWhe
 
 // 1 Tile
 using SingleTileDualContextTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileDualContextTest, givenSingleTileAndDualContextWhenWritingImageThenDataIsValid) {
+HWTEST2_F(SingleTileDualContextTest, givenSingleTileAndDualContextWhenWritingImageThenDataIsValid, SupportsMultiTile) {
     runAubWriteImageTest<FamilyType>();
 }
 
 using SingleTileAllContextsTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileAllContextsTest, HEAVY_givenSingleTileAndAllContextsWhenWritingImageThenDataIsValid) {
+HWTEST2_F(SingleTileAllContextsTest, HEAVY_givenSingleTileAndAllContextsWhenWritingImageThenDataIsValid, SupportsMultiTile) {
     runAubWriteImageTest<FamilyType>();
 }
 
 // 2 Tiles
 using TwoTilesSingleContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::single>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesSingleContextTest, givenTwoTilesAndSingleContextWhenWritingImageThenDataIsValid) {
+HWTEST2_F(TwoTilesSingleContextTest, givenTwoTilesAndSingleContextWhenWritingImageThenDataIsValid, SupportsMultiTile) {
     runAubWriteImageTest<FamilyType>();
 }
 
 using TwoTilesDualContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenWritingImageThenDataIsValid) {
+HWTEST2_F(TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenWritingImageThenDataIsValid, SupportsMultiTile) {
     runAubWriteImageTest<FamilyType>();
 }
 
 using TwoTilesAllContextsTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, TwoTilesAllContextsTest, GENERATEONLY_givenTwoTilesAndAllContextsWhenWritingImageThenDataIsValid) {
+HWTEST2_F(TwoTilesAllContextsTest, GENERATEONLY_givenTwoTilesAndAllContextsWhenWritingImageThenDataIsValid, SupportsMultiTile) {
     runAubWriteImageTest<FamilyType>();
 }
 
 // 4 Tiles
 using FourTilesSingleContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::single>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesSingleContextTest, givenFourTilesAndSingleContextWhenWritingImageThenDataIsValid) {
+HWTEST2_F(FourTilesSingleContextTest, givenFourTilesAndSingleContextWhenWritingImageThenDataIsValid, SupportsMultiTile) {
     runAubWriteImageTest<FamilyType>();
 }
 
 using FourTilesDualContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesDualContextTest, GENERATEONLY_givenFourTilesAndDualContextWhenWritingImageThenDataIsValid) {
+HWTEST2_F(FourTilesDualContextTest, GENERATEONLY_givenFourTilesAndDualContextWhenWritingImageThenDataIsValid, SupportsMultiTile) {
     runAubWriteImageTest<FamilyType>();
 }
 
 using FourTilesAllContextsTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWCMDTEST_F(IGFX_XE_HP_CORE, FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenWritingImageThenDataIsValid) {
+HWTEST2_F(FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhenWritingImageThenDataIsValid, SupportsMultiTile) {
     runAubWriteImageTest<FamilyType>();
 }

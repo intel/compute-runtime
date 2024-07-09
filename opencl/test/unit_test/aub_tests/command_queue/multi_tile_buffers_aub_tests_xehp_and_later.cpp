@@ -13,6 +13,8 @@
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 
+#include "multitile_matchers.h"
+
 #include <array>
 
 struct MultiTileBuffersXeHPAndLater : public MulticontextOclAubFixture, public ::testing::Test {
@@ -26,7 +28,7 @@ struct MultiTileBuffersXeHPAndLater : public MulticontextOclAubFixture, public :
     }
 };
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileBuffersXeHPAndLater, givenTwoBuffersAllocatedOnDifferentTilesWhenCopiedThenDataValidates) {
+HWTEST2_F(MultiTileBuffersXeHPAndLater, givenTwoBuffersAllocatedOnDifferentTilesWhenCopiedThenDataValidates, SupportsMultiTile) {
     if constexpr (is64bit) {
 
         constexpr size_t bufferSize = 64 * 1024u;
