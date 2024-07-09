@@ -72,6 +72,32 @@ TEST_F(Wddm20Tests, GivenExisitingContextWhenInitializingWddmThenCreateContextRe
     EXPECT_EQ(1u, wddm->createContextResult.called);
 }
 
+TEST_F(Wddm20Tests, whenInitializingWddmAndSlmSizeInCapabilityTableIsNotSetThenSetupBasedOnGtSystemInfo) {
+    auto inputHwInfo = *defaultHwInfo;
+    inputHwInfo.capabilityTable.slmSize = 0u;
+    EXPECT_NE(0u, inputHwInfo.gtSystemInfo.SLMSizeInKb);
+    VariableBackup<HardwareInfo> hwInfoBackup(const_cast<HardwareInfo *>(hardwareInfoTable[productFamily]), inputHwInfo);
+
+    wddm->init();
+    auto &outputHwInfo = *rootDeviceEnvironment->getHardwareInfo();
+
+    EXPECT_EQ(outputHwInfo.gtSystemInfo.SLMSizeInKb, outputHwInfo.capabilityTable.slmSize);
+    EXPECT_EQ(outputHwInfo.gtSystemInfo.SLMSizeInKb, inputHwInfo.gtSystemInfo.SLMSizeInKb);
+}
+
+TEST_F(Wddm20Tests, whenInitializingWddmAndSlmSizeInCapabilityTableIsSetThenItStaysTheSame) {
+    auto inputHwInfo = *defaultHwInfo;
+    inputHwInfo.capabilityTable.slmSize = 0x54321u;
+    EXPECT_NE(0u, inputHwInfo.gtSystemInfo.SLMSizeInKb);
+    VariableBackup<HardwareInfo> hwInfoBackup(const_cast<HardwareInfo *>(hardwareInfoTable[productFamily]), inputHwInfo);
+
+    wddm->init();
+    auto &outputHwInfo = *rootDeviceEnvironment->getHardwareInfo();
+
+    EXPECT_NE(outputHwInfo.gtSystemInfo.SLMSizeInKb, outputHwInfo.capabilityTable.slmSize);
+    EXPECT_EQ(outputHwInfo.capabilityTable.slmSize, inputHwInfo.capabilityTable.slmSize);
+}
+
 TEST_F(Wddm20Tests, givenNullPageTableManagerAndCompressedResourceWhenMappingGpuVaThenDontUpdateAuxTable) {
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
