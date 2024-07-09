@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,11 @@
 #define GEN12LPTEST_F(test_fixture, test_name) GENTEST_F(IGFX_GEN12LP_CORE, test_fixture, test_name)
 #define GEN12LPTEST_P(test_fixture, test_name) GENTEST_P(IGFX_GEN12LP_CORE, test_fixture, test_name)
 #endif
+#ifdef TESTS_XE2_HPG_CORE
+#define XE2_HPG_CORETEST_F(test_fixture, test_name) GENTEST_F(IGFX_XE2_HPG_CORE, test_fixture, test_name)
+#define XE2_HPG_CORETEST_P(test_fixture, test_name) GENTEST_P(IGFX_XE2_HPG_CORE, test_fixture, test_name)
+#endif
+
 #ifdef TESTS_GEN8
 #define BDWTEST_F(test_fixture, test_name)                           \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
@@ -233,4 +238,24 @@
     FAMILYTEST_TEST_P(test_suite_name, test_name, \
                       IGFX_XE_HPC_CORE,           \
                       IGFX_PVC)
+#endif
+#ifdef TESTS_BMG
+#define BMGTEST_F(test_fixture, test_name)                           \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_XE2_HPG_CORE, IGFX_BMG)
+#define BMGTEST_P(test_suite_name, test_name)     \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_XE2_HPG_CORE,          \
+                      IGFX_BMG)
+#endif
+#ifdef TESTS_LNL
+#define LNLTEST_F(test_fixture, test_name)                           \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_XE2_HPG_CORE, IGFX_LUNARLAKE)
+#define LNLTEST_P(test_suite_name, test_name)     \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_XE2_HPG_CORE,          \
+                      IGFX_LUNARLAKE)
 #endif

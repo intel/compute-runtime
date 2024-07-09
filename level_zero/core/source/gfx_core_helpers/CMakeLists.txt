@@ -67,3 +67,9 @@ if(SUPPORT_XE_HP_CORE OR SUPPORT_XE_HPG_CORE OR SUPPORT_XE2_HPG_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe_hpg_to_xe2_hpg.inl
   )
 endif()
+
+if(SUPPORT_XE2_AND_LATER)
+  target_sources(${L0_STATIC_LIB_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe2_hpg_and_later.inl
+  )
+endif()

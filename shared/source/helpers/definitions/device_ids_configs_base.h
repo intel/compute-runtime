@@ -7,6 +7,15 @@
 
 #pragma once
 
+#if SUPPORT_XE2_HPG_CORE
+#ifdef SUPPORT_BMG
+#include "device_ids_configs_bmg.h"
+#endif
+#ifdef SUPPORT_LNL
+#include "shared/source/xe2_hpg_core/lnl/device_ids_configs_lnl.h"
+#endif
+#endif
+
 #ifdef SUPPORT_XE_HPG_CORE
 #ifdef SUPPORT_MTL
 #include "shared/source/xe_hpg_core/xe_lpg/device_ids_configs_xe_lpg.h"

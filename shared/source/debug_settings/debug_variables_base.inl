@@ -87,6 +87,7 @@ DECLARE_DEBUG_VARIABLE(bool, WaitForMemoryRelease, false, "Wait for memory relea
 DECLARE_DEBUG_VARIABLE(bool, RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup, 0, "0 - default disabled, 1- remove restrictions on NumberOfThreadsInGpgpuThreadGroup in INTERFACE_DESCRIPTOR_DATA")
 DECLARE_DEBUG_VARIABLE(bool, DisableGemCreateExtSetPat, false, "Do not use I915_GEM_CREATE_EXT_SET_PAT extension when gem create ext is called")
 DECLARE_DEBUG_VARIABLE(bool, SkipInOrderNonWalkerSignalingAllowed, false, "Allows for skipping non walker signalling in InOrder command lists, default: false")
+DECLARE_DEBUG_VARIABLE(bool, PipelinedPipelineSelect, false, "Restore usage of default pipeline select command")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened; ignored when unk")
@@ -287,6 +288,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdListUpdateCapability, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSynchronizedDispatchMode, -1, "-1: default, 0: disabled, 1: enable full synchronization mode")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSipClass, -1, "-1: default, otherwise based on values from enum class SipClassType (init, builtins, rawBinaryFromFile, hexadecimalHeaderFile)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceScratchAndMTPBufferSizeMode, -1, "-1: default, 0: Full, 1: Min. BMG+: Reduce required memory for Scrach and MTP buffers on CCS context")
+DECLARE_DEBUG_VARIABLE(int32_t, CFEStackIDControl, -1, "Set Stack ID Control in CFE_STATE on Xe2+, -1 - do not set")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
@@ -524,6 +526,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableBcsSwControlWa, -1, "Enable BCS WA via BCS
 DECLARE_DEBUG_VARIABLE(bool, EnableHostAllocationMemPolicy, false, "Enables Memory Policy for host allocation")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideHostAllocationMemPolicyMode, -1, "Override Memory Policy mode for host allocation -1: default (use the system configuration), 0: MPOL_DEFAULT, 1: MPOL_PREFERRED, 2: MPOL_BIND, 3: MPOL_INTERLEAVED, 4: MPOL_LOCAL, 5: MPOL_PREFERRED_MANY")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableFtrTile64Optimization, 0, "Control feature Tile64 Optimization flag passed to gmmlib. -1: pass as-is, 0: disable flag(default due to NEO-10623), 1: enable flag");
+DECLARE_DEBUG_VARIABLE(int32_t, ForceTheMaximumNumberOfOutstandingRayqueriesPerSs, -1, "Set the maximum number of outstanding RayQueries per SS, -1: default, 0: 128, 1: 256, 2: 512, 3: 1024")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceDispatchTimeoutCounter, -1, "Set timeout for Synchronous Ray Tracing, -1: default, 0: 64, 1: 128, 2: 192, 3: 256, 4: 512, 5: 1024, 6: 2048, 7: 4096")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")

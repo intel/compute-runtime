@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,6 +108,8 @@ struct CmdServicesMemTraceVersion {
             Dg2 = 36,
             Pvc = 39,
             Mtl = 42,
+            Bmg = 43,
+            Lnl = 45,
             Arl = 46,
         };
     };

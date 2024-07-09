@@ -27,9 +27,7 @@ class MetricIpSamplingLinuxTest : public DeviceFixture,
     std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = nullptr;
 };
 
-using IsNotGen9ThruPVC = IsNotWithinProducts<IGFX_SKYLAKE, IGFX_PVC>;
-
-HWTEST2_F(MetricIpSamplingLinuxTest, GivenUnsupportedProductFamilyIsUsedWhenIsDependencyAvailableIsCalledThenReturnFailure, IsNotGen9ThruPVC) {
+HWTEST2_F(MetricIpSamplingLinuxTest, GivenUnsupportedProductFamilyIsUsedWhenIsDependencyAvailableIsCalledThenReturnFailure, IsXeHpgCore) {
 
     EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
 }

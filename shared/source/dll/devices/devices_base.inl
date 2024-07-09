@@ -5,6 +5,21 @@
  *
  */
 
+#if SUPPORT_XE2_HPG_CORE
+#ifdef SUPPORT_BMG
+DEVICE(0xE202, BmgHwConfig)
+DEVICE(0xE20B, BmgHwConfig)
+DEVICE(0xE20C, BmgHwConfig)
+DEVICE(0xE20D, BmgHwConfig)
+DEVICE(0xE212, BmgHwConfig)
+#endif
+#ifdef SUPPORT_LNL
+DEVICE(0x6420, LnlHwConfig)
+DEVICE(0x64A0, LnlHwConfig)
+DEVICE(0x64B0, LnlHwConfig)
+#endif
+#endif
+
 #if SUPPORT_XE_HPC_CORE
 #ifdef SUPPORT_PVC
 DEVICE(0x0BD0, PvcHwConfig)

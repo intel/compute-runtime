@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,9 @@
     case IGFX_XE_HPC_CORE:                                 \
         XEHPC_TYPED_TEST(methodName)                       \
         break;                                             \
+    case IGFX_XE2_HPG_CORE:                                \
+        XE2HPG_TYPED_TEST(methodName)                      \
+        break;                                             \
     default:                                               \
         ASSERT_TRUE((false && "Unknown hardware family")); \
         break;                                             \
@@ -55,6 +58,9 @@
             break;                                             \
         case IGFX_XE_HPC_CORE:                                 \
             supported = XEHPC_SUPPORTED_TEST(cmdSetBase);      \
+            break;                                             \
+        case IGFX_XE2_HPG_CORE:                                \
+            supported = XE2HPG_SUPPORTED_TEST(cmdSetBase);     \
             break;                                             \
         default:                                               \
             ASSERT_TRUE((false && "Unknown hardware family")); \

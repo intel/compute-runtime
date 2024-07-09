@@ -921,7 +921,10 @@ include_directories(${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUF
 
 macro(macro_for_each_platform)
   string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-  foreach(PLATFORM_DIRECTORY ${NEO_SHARED_DIRECTORY}/${CORE_TYPE_LOWER}/${PLATFORM_IT_LOWER}/definitions${BRANCH_DIR_SUFFIX})
+  foreach(PLATFORM_DIRECTORY
+            ${NEO_SHARED_DIRECTORY}/${CORE_TYPE_LOWER}/${PLATFORM_IT_LOWER}/definitions${BRANCH_DIR_SUFFIX}
+            ${NEO_SHARED_DIRECTORY}/ail/${CORE_TYPE_LOWER}/${PLATFORM_IT_LOWER}/definitions${BRANCH_DIR_SUFFIX}
+    )
     if(EXISTS ${PLATFORM_DIRECTORY})
       include_directories(${PLATFORM_DIRECTORY})
     endif()

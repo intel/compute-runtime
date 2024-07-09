@@ -92,5 +92,11 @@ if(NOT SUPPORTED_HEAPLESS)
   )
 endif()
 
+if(SUPPORT_XE2_AND_LATER)
+  list(APPEND NEO_CORE_COMMAND_STREAM
+       ${CMAKE_CURRENT_SOURCE_DIR}/preemption_xe2_and_later.inl
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_COMMAND_STREAM ${NEO_CORE_COMMAND_STREAM})
 add_subdirectories()
