@@ -52,7 +52,7 @@ struct ClDrmMemoryManagerTest : public DrmMemoryManagerTest {
         MemoryManagementFixture::setUp();
 
         executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
-        DrmMemoryManagerFixture::setUp(new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]), false);
+        DrmMemoryManagerFixture::setUp(DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release(), false);
         pClDevice = new MockClDevice{device}; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         device->incRefInternal();
     }

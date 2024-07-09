@@ -43,7 +43,7 @@ class DrmMemoryManagerFixtureImpl : public DrmMemoryManagerFixture {
 
         MemoryManagementFixture::setUp();
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
-        mockExp = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
+        mockExp = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release();
         DrmMemoryManagerFixture::setUp(mockExp, true);
     }
 
@@ -92,7 +92,7 @@ class DrmMemoryManagerLocalMemoryWithCustomMockTest : public ::testing::Test {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-        mock = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
+        mock = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
 

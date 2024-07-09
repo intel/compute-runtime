@@ -77,93 +77,13 @@ inline constexpr int testValueVmId = 0x5764;
 inline constexpr int testValueMapOff = 0x7788;
 inline constexpr int testValuePrime = 0x4321;
 inline constexpr uint32_t testValueGemCreate = 0x8273;
-class DrmMockXe : public DrmMockCustom {
-  public:
-    DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
+struct DrmMockXe : public DrmMockCustom {
 
-        auto xeQueryConfig = reinterpret_cast<drm_xe_query_config *>(queryConfig);
-        xeQueryConfig->num_params = 6;
-        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] = (revId << 16) | devId;
-        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_VA_BITS] = 48;
-        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] = mockMaxExecQueuePriority;
+    static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto drm = std::unique_ptr<DrmMockXe>(new DrmMockXe{rootDeviceEnvironment});
+        drm->initInstance();
 
-        auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(queryEngines);
-        xeQueryEngines->num_engines = 11;
-        xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_RENDER, 0, 0}, {}};
-        xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, 0}, {}};
-        xeQueryEngines->engines[2] = {{DRM_XE_ENGINE_CLASS_COPY, 2, 0}, {}};
-        xeQueryEngines->engines[3] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0}, {}};
-        xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0}, {}};
-        xeQueryEngines->engines[5] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1}, {}};
-        xeQueryEngines->engines[6] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1}, {}};
-        xeQueryEngines->engines[7] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1}, {}};
-        xeQueryEngines->engines[8] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1}, {}};
-        xeQueryEngines->engines[9] = {{DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1}, {}};
-        xeQueryEngines->engines[10] = {{DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}, {}};
-
-        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(queryMemUsage);
-        xeQueryMemUsage->num_mem_regions = 3;
-        xeQueryMemUsage->mem_regions[0] = {
-            DRM_XE_MEM_REGION_CLASS_VRAM,  // class
-            1,                             // instance
-            MemoryConstants::pageSize,     // min page size
-            2 * MemoryConstants::gigaByte, // total size
-            MemoryConstants::megaByte      // used size
-        };
-        xeQueryMemUsage->mem_regions[1] = {
-            DRM_XE_MEM_REGION_CLASS_SYSMEM, // class
-            0,                              // instance
-            MemoryConstants::pageSize,      // min page size
-            MemoryConstants::gigaByte,      // total size
-            MemoryConstants::kiloByte       // used size
-        };
-        xeQueryMemUsage->mem_regions[2] = {
-            DRM_XE_MEM_REGION_CLASS_VRAM,  // class
-            2,                             // instance
-            MemoryConstants::pageSize,     // min page size
-            4 * MemoryConstants::gigaByte, // total size
-            MemoryConstants::gigaByte      // used size
-        };
-
-        queryGtList.resize(49); // 1 qword for num gts and 12 qwords per gt
-        auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(queryGtList.begin());
-        xeQueryGtList->num_gt = 4;
-        xeQueryGtList->gt_list[0] = {
-            DRM_XE_QUERY_GT_TYPE_MAIN, // type
-            0,                         // tile_id
-            0,                         // gt_id
-            {0},                       // padding
-            mockTimestampFrequency,    // reference_clock
-            0b100,                     // native mem regions
-            0x011,                     // slow mem regions
-        };
-        xeQueryGtList->gt_list[1] = {
-            DRM_XE_QUERY_GT_TYPE_MEDIA, // type
-            1,                          // tile_id
-            1,                          // gt_id
-            {0},                        // padding
-            mockTimestampFrequency,     // reference_clock
-            0b001,                      // native mem regions
-            0x110,                      // slow mem regions
-        };
-        xeQueryGtList->gt_list[2] = {
-            DRM_XE_QUERY_GT_TYPE_MAIN, // type
-            1,                         // tile_id
-            2,                         // gt_id
-            {0},                       // padding
-            mockTimestampFrequency,    // reference_clock
-            0b010,                     // native mem regions
-            0x101,                     // slow mem regions
-        };
-        xeQueryGtList->gt_list[3] = {
-            DRM_XE_QUERY_GT_TYPE_MAIN, // type
-            2,                         // tile_id
-            3,                         // gt_id
-            {0},                       // padding
-            mockTimestampFrequency,    // reference_clock
-            0b100,                     // native mem regions
-            0x011,                     // slow mem regions
-        };
+        return drm;
     }
 
     void testMode(int f, int a = 0) {
@@ -393,4 +313,106 @@ class DrmMockXe : public DrmMockCustom {
     uint16_t createParamsCpuCaching = 0u;
     uint32_t createParamsPlacement = 0u;
     bool ioctlCalled = false;
+
+  protected:
+    // Don't call directly, use the create() function
+    DrmMockXe(RootDeviceEnvironment &rootDeviceEnvironment)
+        : DrmMockCustom(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {}
+
+    virtual void initInstance() {
+        this->reset();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+        this->ioctlExpected.contextCreate = static_cast<int>(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment).size());
+        this->ioctlExpected.contextDestroy = this->ioctlExpected.contextCreate.load();
+
+        this->ioctlHelper = std::make_unique<MockIoctlHelperXe>(*this);
+
+        this->createVirtualMemoryAddressSpace(NEO::GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+        this->isVmBindAvailable();
+
+        auto xeQueryConfig = reinterpret_cast<drm_xe_query_config *>(this->queryConfig);
+        xeQueryConfig->num_params = 6;
+        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] = (this->revId << 16) | this->devId;
+        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_VA_BITS] = 48;
+        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] = mockMaxExecQueuePriority;
+
+        auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(this->queryEngines);
+        xeQueryEngines->num_engines = 11;
+        xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_RENDER, 0, 0}, {}};
+        xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, 0}, {}};
+        xeQueryEngines->engines[2] = {{DRM_XE_ENGINE_CLASS_COPY, 2, 0}, {}};
+        xeQueryEngines->engines[3] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0}, {}};
+        xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0}, {}};
+        xeQueryEngines->engines[5] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1}, {}};
+        xeQueryEngines->engines[6] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1}, {}};
+        xeQueryEngines->engines[7] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1}, {}};
+        xeQueryEngines->engines[8] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1}, {}};
+        xeQueryEngines->engines[9] = {{DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1}, {}};
+        xeQueryEngines->engines[10] = {{DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}, {}};
+
+        auto xeQueryMemUsage = reinterpret_cast<drm_xe_query_mem_regions *>(this->queryMemUsage);
+        xeQueryMemUsage->num_mem_regions = 3;
+        xeQueryMemUsage->mem_regions[0] = {
+            DRM_XE_MEM_REGION_CLASS_VRAM,  // class
+            1,                             // instance
+            MemoryConstants::pageSize,     // min page size
+            2 * MemoryConstants::gigaByte, // total size
+            MemoryConstants::megaByte      // used size
+        };
+        xeQueryMemUsage->mem_regions[1] = {
+            DRM_XE_MEM_REGION_CLASS_SYSMEM, // class
+            0,                              // instance
+            MemoryConstants::pageSize,      // min page size
+            MemoryConstants::gigaByte,      // total size
+            MemoryConstants::kiloByte       // used size
+        };
+        xeQueryMemUsage->mem_regions[2] = {
+            DRM_XE_MEM_REGION_CLASS_VRAM,  // class
+            2,                             // instance
+            MemoryConstants::pageSize,     // min page size
+            4 * MemoryConstants::gigaByte, // total size
+            MemoryConstants::gigaByte      // used size
+        };
+
+        this->queryGtList.resize(49); // 1 qword for num gts and 12 qwords per gt
+        auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(this->queryGtList.begin());
+        xeQueryGtList->num_gt = 4;
+        xeQueryGtList->gt_list[0] = {
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // tile_id
+            0,                         // gt_id
+            {0},                       // padding
+            mockTimestampFrequency,    // reference_clock
+            0b100,                     // native mem regions
+            0x011,                     // slow mem regions
+        };
+        xeQueryGtList->gt_list[1] = {
+            DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+            1,                          // tile_id
+            1,                          // gt_id
+            {0},                        // padding
+            mockTimestampFrequency,     // reference_clock
+            0b001,                      // native mem regions
+            0x110,                      // slow mem regions
+        };
+        xeQueryGtList->gt_list[2] = {
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            1,                         // tile_id
+            2,                         // gt_id
+            {0},                       // padding
+            mockTimestampFrequency,    // reference_clock
+            0b010,                     // native mem regions
+            0x101,                     // slow mem regions
+        };
+        xeQueryGtList->gt_list[3] = {
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            2,                         // tile_id
+            3,                         // gt_id
+            {0},                       // padding
+            mockTimestampFrequency,    // reference_clock
+            0b100,                     // native mem regions
+            0x011,                     // slow mem regions
+        };
+        this->reset();
+    }
 };

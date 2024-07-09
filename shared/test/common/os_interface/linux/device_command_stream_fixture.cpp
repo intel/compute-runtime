@@ -226,17 +226,27 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     return ioctlRes.load();
 }
 
-DrmMockCustom::DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment)
-    : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
-    reset();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-    ioctlExpected.contextCreate = static_cast<int>(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment).size());
-    ioctlExpected.contextDestroy = ioctlExpected.contextCreate.load();
-    setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
-    createVirtualMemoryAddressSpace(NEO::GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
-    isVmBindAvailable(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
-    reset();
+std::unique_ptr<DrmMockCustom> DrmMockCustom::create(RootDeviceEnvironment &rootDeviceEnvironment) {
+    return DrmMockCustom::create(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment);
 }
+
+std::unique_ptr<DrmMockCustom> DrmMockCustom::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto drm{new DrmMockCustom{std::move(hwDeviceId), rootDeviceEnvironment}};
+
+    drm->reset();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+    drm->ioctlExpected.contextCreate = static_cast<int>(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment).size());
+    drm->ioctlExpected.contextDestroy = drm->ioctlExpected.contextCreate.load();
+    drm->setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
+    drm->createVirtualMemoryAddressSpace(NEO::GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+    drm->isVmBindAvailable();
+    drm->reset();
+
+    return std::unique_ptr<DrmMockCustom>{drm};
+}
+
+DrmMockCustom::DrmMockCustom(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment)
+    : Drm(std::move(hwDeviceId), rootDeviceEnvironment) {}
 
 int DrmMockCustom::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId, NEO::GraphicsAllocation *allocForInterruptWait) {
     waitUserFenceCall.called++;

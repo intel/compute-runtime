@@ -22,7 +22,7 @@ using namespace NEO;
 
 TEST(OSContextLinux, givenReinitializeContextWhenContextIsInitThenContextIsStillIinitializedAfter) {
     MockExecutionEnvironment executionEnvironment;
-    std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
+    auto mock = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u, false);
     OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_NO_THROW(osContext.reInitializeContext());
@@ -42,7 +42,7 @@ TEST(OSContextLinux, givenInitializeContextWhenContextCreateIoctlFailsThenContex
 
 TEST(OSContextLinux, givenOsContextLinuxWhenQueryingForOfflineDumpContextIdThenCorrectValueIsReturned) {
     MockExecutionEnvironment executionEnvironment;
-    std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
+    auto mock = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u, false);
     MockOsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
 

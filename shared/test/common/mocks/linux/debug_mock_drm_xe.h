@@ -40,12 +40,22 @@ inline constexpr int testValueMapOff = 0x7788;
 inline constexpr int testValuePrime = 0x4321;
 inline constexpr uint32_t testValueGemCreate = 0x8273;
 
-class DrmMockXeDebug : public DrmMockCustom {
-  public:
+struct DrmMockXeDebug : public DrmMockCustom {
     using Drm::engineInfo;
-    DrmMockXeDebug(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockCustom(rootDeviceEnvironment) {
-        this->ioctlHelper = std::make_unique<IoctlHelperXe>(*this);
-        auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(queryEngines);
+
+    static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto drm = std::unique_ptr<DrmMockXeDebug>(new DrmMockXeDebug{rootDeviceEnvironment});
+
+        drm->reset();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+        drm->ioctlExpected.contextCreate = static_cast<int>(gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment).size());
+        drm->ioctlExpected.contextDestroy = drm->ioctlExpected.contextCreate.load();
+        drm->ioctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drm);
+        drm->isVmBindAvailable();
+        drm->reset();
+
+        drm->ioctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+        auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(drm->queryEngines);
         xeQueryEngines->num_engines = 11;
         xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_RENDER, 0, 0}, {}};
         xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, 0}, {}};
@@ -58,7 +68,9 @@ class DrmMockXeDebug : public DrmMockCustom {
         xeQueryEngines->engines[8] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1}, {}};
         xeQueryEngines->engines[9] = {{DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1}, {}};
         xeQueryEngines->engines[10] = {{DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE, 10, 0}, {}};
-    };
+
+        return drm;
+    }
 
     int getErrno() override {
         if (baseErrno) {
@@ -195,4 +207,9 @@ class DrmMockXeDebug : public DrmMockCustom {
     // Debugger ioctls
     int debuggerOpenRetval = 10; // debugFd
     uint32_t debuggerOpenVersion = 0;
+
+  protected:
+    // Don't call directly, use the create() function
+    DrmMockXeDebug(RootDeviceEnvironment &rootDeviceEnvironment)
+        : DrmMockCustom(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {}
 };

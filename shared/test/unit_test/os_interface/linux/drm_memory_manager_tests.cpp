@@ -1308,9 +1308,8 @@ TEST(DrmMemoryManagerTest2, givenDrmMemoryManagerWhengetSystemSharedMemoryIsCall
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(4u);
     for (auto i = 0u; i < 4u; i++) {
-        auto mock = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]));
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
@@ -1345,9 +1344,8 @@ TEST(DrmMemoryManagerTest2, WhenGetMinimumSystemSharedMemoryThenCorrectValueIsRe
     executionEnvironment->prepareRootDeviceEnvironments(4u);
     for (auto i = 0u; i < 4u; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-        auto mock = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]));
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
@@ -2465,8 +2463,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenUnlockResourceIsCalledOnAl
 
     DrmMemoryManagerToTestUnlockResource drmMemoryManager(*executionEnvironment, true, MemoryConstants::pageSize);
 
-    DrmMockCustom drmMock(*executionEnvironment->rootDeviceEnvironments[1]);
-    auto bo = new BufferObject(rootDeviceIndex, &drmMock, 3, 1, 0, 1);
+    auto drmMock = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[1]);
+    auto bo = new BufferObject(rootDeviceIndex, drmMock.get(), 3, 1, 0, 1);
     auto drmAllocation = new DrmAllocation(rootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::localMemory);
 
     drmMemoryManager.unlockResourceImpl(*drmAllocation);
@@ -2489,8 +2487,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledButFai
     this->ioctlResExt = {mock->ioctlCnt.total, -1};
     mock->ioctlResExt = &ioctlResExt;
 
-    DrmMockCustom drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    BufferObject bo(0u, &drmMock, 3, 1, 0, 1);
+    auto drmMock = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    BufferObject bo(0u, drmMock.get(), 3, 1, 0, 1);
     DrmAllocation drmAllocation(rootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
@@ -2502,8 +2500,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledButFai
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationThenReturnSetWriteDomain) {
     mock->ioctlExpected.gemSetDomain = 1;
 
-    DrmMockCustom drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    BufferObject bo(rootDeviceIndex, &drmMock, 3, 1, 0, 1);
+    auto drmMock = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    BufferObject bo(rootDeviceIndex, drmMock.get(), 3, 1, 0, 1);
     DrmAllocation drmAllocation(rootDeviceIndex, 1u /*num gmms*/, AllocationType::unknown, &bo, nullptr, 0u, static_cast<osHandle>(0u), MemoryPool::memoryNull);
     EXPECT_NE(nullptr, drmAllocation.getBO());
 
@@ -3698,9 +3696,8 @@ TEST(DrmMemoryManagerWithExplicitExpectationsTest2, whenObtainFdFromHandleIsCall
     executionEnvironment->prepareRootDeviceEnvironments(4u);
     for (auto i = 0u; i < 4u; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-        auto mock = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]));
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
@@ -3722,9 +3719,8 @@ TEST(DrmMemoryManagerWithExplicitExpectationsTest2, whenFailingToObtainFdFromHan
     executionEnvironment->prepareRootDeviceEnvironments(4u);
     for (auto i = 0u; i < 4u; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-        auto mock = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+        executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]));
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);

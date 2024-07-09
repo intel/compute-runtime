@@ -898,7 +898,7 @@ TEST_F(IoctlPrelimHelperTests, givenInvalidDrmWhenGettingGpuTimeThenFails) {
 
 TEST_F(IoctlPrelimHelperTests, whenGettingTimeThenTimeIsCorrect) {
     MockExecutionEnvironment executionEnvironment{};
-    auto drm = std::make_unique<DrmMockCustom>(*executionEnvironment.rootDeviceEnvironments[0]);
+    auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
     MockIoctlHelperPrelim ioctlHelper{*drm};
@@ -930,7 +930,7 @@ TEST_F(IoctlPrelimHelperTests, givenInitializeGetGpuTimeFunctionNotCalledWhenSet
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
     rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
-    auto drm = std::make_unique<DrmMockCustom>(rootDeviceEnvironment);
+    auto drm = DrmMockCustom::create(rootDeviceEnvironment);
     IoctlHelperPrelim20 ioctlHelper{*drm};
 
     drm->ioctlRes = -1;

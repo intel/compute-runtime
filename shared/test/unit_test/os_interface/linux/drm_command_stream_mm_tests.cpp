@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ HWTEST_F(DrmCommandStreamMMTest, GivenForcePinThenMemoryManagerCreatesPinBb) {
     debugManager.flags.EnableForcePin.set(true);
 
     MockExecutionEnvironment executionEnvironment;
-    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
+    auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -62,7 +62,7 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
     debugManager.flags.EnableForcePin.set(false);
 
     MockExecutionEnvironment executionEnvironment;
-    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
+    auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -85,7 +85,7 @@ HWTEST_F(DrmCommandStreamMMTest, givenExecutionEnvironmentWithMoreThanOneRootDev
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initGmm();
-        auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
+        auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     }

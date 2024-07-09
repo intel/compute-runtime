@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         executionEnvironment->incRefInternal();
         executionEnvironment->initGmm();
 
-        mock = new DrmMockCustom(*executionEnvironment->rootDeviceEnvironments[0]);
+        mock = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0, false);

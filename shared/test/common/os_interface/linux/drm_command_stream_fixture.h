@@ -126,7 +126,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         // make sure this is disabled, we don't want to test this now
         debugManager.flags.EnableForcePin.set(false);
 
-        mock = new DrmType(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+        mock = DrmType::create(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]).release();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);
@@ -207,7 +207,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
         // make sure this is disabled, we don't want to test this now
         debugManager.flags.EnableForcePin.set(false);
 
-        mock = new T(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+        mock = T::create(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]).release();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);

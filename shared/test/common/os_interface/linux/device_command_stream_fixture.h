@@ -96,9 +96,11 @@ class DrmMockTime : public DrmMockSuccess {
     }
 };
 
-class DrmMockCustom : public Drm {
-  public:
+struct DrmMockCustom : public Drm {
     static constexpr NEO::DriverModelType driverModelType = NEO::DriverModelType::drm;
+
+    static std::unique_ptr<DrmMockCustom> create(RootDeviceEnvironment &rootDeviceEnvironment);
+    static std::unique_ptr<DrmMockCustom> create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
 
     using Drm::bindAvailable;
     using Drm::cacheInfo;
@@ -149,8 +151,6 @@ class DrmMockCustom : public Drm {
         uint32_t returnValue = 0x00;
         uint32_t called = 0u;
     };
-
-    DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment);
 
     int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags, bool userInterrupt, uint32_t externalInterruptId, NEO::GraphicsAllocation *allocForInterruptWait) override;
 
@@ -280,4 +280,8 @@ class DrmMockCustom : public Drm {
 
     bool returnIoctlExtraErrorValue = false;
     bool callBaseQueryGttSize = false;
+
+  protected:
+    // Don't call directly, use the create() function
+    DrmMockCustom(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
 };

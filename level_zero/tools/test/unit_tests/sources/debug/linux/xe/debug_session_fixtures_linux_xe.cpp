@@ -23,7 +23,7 @@ void DebugApiLinuxXeFixture::setUp(NEO::HardwareInfo *hwInfo) {
         DeviceFixture::setUp();
     }
 
-    mockDrm = new DrmMockXeDebug(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
+    mockDrm = DrmMockXeDebug::create(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]).release();
     mockDrm->allowDebugAttach = true;
     mockDrm->queryEngineInfo();
 

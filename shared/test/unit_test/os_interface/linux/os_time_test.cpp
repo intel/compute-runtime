@@ -200,7 +200,7 @@ TEST_F(DrmTimeTest, GivenInvalidFuncTimeWhenGettingGpuCpuTimeCpuThenFails) {
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultResolutionIsReturned) {
     auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
 
-    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
+    auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
     osTime->updateDrm(drm);
 
     drm->getParamRetValue = 0;
@@ -213,7 +213,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultRes
 TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlFailsThenDefaultClockIsReturned) {
     auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
 
-    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
+    auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
     osTime->updateDrm(drm);
 
     drm->getParamRetValue = 0;
@@ -225,7 +225,7 @@ TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlFailsThenDefaultCloc
 }
 
 TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlSucceedsThenNonDefaultClockIsReturned) {
-    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
+    auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
     osTime->updateDrm(drm);
 
     uint64_t frequency = 1500;
@@ -236,7 +236,7 @@ TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlSucceedsThenNonDefau
 }
 
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectResolutionIsReturned) {
-    auto drm = new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]);
+    auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
     osTime->updateDrm(drm);
 
     // 19200000 is frequency yelding 52.083ns resolution
