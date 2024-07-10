@@ -722,9 +722,16 @@ TEST(UnifiedMemoryTest, givenInternalAllocationsWhenTheyArePreparedForFreeingThe
 
     auto allocationData = unifiedMemoryManager->getSVMAlloc(ptr);
 
-    unifiedMemoryManager->prepareIndirectAllocationForDestruction(allocationData);
+    unifiedMemoryManager->prepareIndirectAllocationForDestruction(allocationData, false);
     EXPECT_EQ(124u, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getTaskCount(commandStreamReceiver.getOsContext().getContextId()));
     EXPECT_EQ(124u, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getResidencyTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+
+    graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->updateTaskCount(1u, commandStreamReceiver.getOsContext().getContextId());
+    graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, commandStreamReceiver.getOsContext().getContextId());
+    unifiedMemoryManager->prepareIndirectAllocationForDestruction(allocationData, true);
+    EXPECT_EQ(GraphicsAllocation::objectNotUsed, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+    EXPECT_EQ(GraphicsAllocation::objectNotResident, graphicsAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getResidencyTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+
     unifiedMemoryManager->freeSVMAlloc(ptr);
 }
 

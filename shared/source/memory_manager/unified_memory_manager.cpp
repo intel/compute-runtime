@@ -496,7 +496,8 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
 }
 
 void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) {
-    this->prepareIndirectAllocationForDestruction(svmData);
+    auto allowNonBlockingFree = policy == FreePolicyType::none;
+    this->prepareIndirectAllocationForDestruction(svmData, allowNonBlockingFree);
 
     if (policy == FreePolicyType::blocking) {
         if (svmData->cpuAllocation) {
@@ -769,7 +770,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
     }
 }
 
-void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData) {
+void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData, bool isNonBlockingFree) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     if (this->indirectAllocationsResidency.size() > 0u) {
         for (auto &internalAllocationsHandling : this->indirectAllocationsResidency) {
@@ -778,7 +779,13 @@ void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData
             if (gpuAllocation == nullptr) {
                 continue;
             }
-            auto desiredTaskCount = std::max(internalAllocationsHandling.second.latestSentTaskCount, gpuAllocation->getTaskCount(commandStreamReceiver->getOsContext().getContextId()));
+
+            // Marking gpuAllocation task count as objectNotUsed means we will not wait for GPU completion.
+            // However, if this is blocking free, we must select "safest" task count to wait for.
+            TaskCountType desiredTaskCount = std::max(internalAllocationsHandling.second.latestSentTaskCount, gpuAllocation->getTaskCount(commandStreamReceiver->getOsContext().getContextId()));
+            if (isNonBlockingFree) {
+                desiredTaskCount = GraphicsAllocation::objectNotUsed;
+            }
             if (gpuAllocation->isAlwaysResident(commandStreamReceiver->getOsContext().getContextId())) {
                 gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, commandStreamReceiver->getOsContext().getContextId());
                 gpuAllocation->updateResidencyTaskCount(desiredTaskCount, commandStreamReceiver->getOsContext().getContextId());
