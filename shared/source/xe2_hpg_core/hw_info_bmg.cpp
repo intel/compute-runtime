@@ -15,6 +15,8 @@
 #include "shared/source/xe2_hpg_core/hw_cmds_bmg.h"
 
 #include "aubstream/engine_node.h"
+#include "wmtp_setup_bmg.inl"
+
 namespace NEO {
 
 const char *HwMapper<IGFX_BMG>::abbreviation = "bmg";
@@ -93,7 +95,7 @@ void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrFlatPhysCCS = true;
     featureTable->flags.ftrE2ECompression = true;
     featureTable->flags.ftrTile64Optimization = true;
-    featureTable->flags.ftrWalkerMTP = true;
+    featureTable->flags.ftrWalkerMTP = wmtpSupported;
     featureTable->flags.ftrXe2Compression = true;
     featureTable->flags.ftrXe2PlusTiling = true;
     featureTable->flags.ftrL3TransientDataFlush = true;
