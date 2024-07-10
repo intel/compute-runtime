@@ -11,10 +11,22 @@
 #include "shared/test/common/test_macros/test_base.h"
 #include "shared/test/common/test_macros/test_excludes.h"
 
+#ifdef NEO_IGNORE_INVALID_TEST_EXCLUDES
+constexpr bool ignoreInvalidTestExcludes = true;
+#else
+constexpr bool ignoreInvalidTestExcludes = false;
+#endif
+
+#define TEST_EXCLUDE_VARIABLE(test_suite_name, test_name) Test_##test_suite_name##_##test_name##_NotFound_PleaseConsiderRemovingExclude
+
 #define HWTEST_EXCLUDE_PRODUCT(test_suite_name, test_name, family)                  \
+    extern bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                  \
     struct test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family {        \
         test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family() {         \
             NEO::TestExcludes::addTestExclude(#test_suite_name #test_name, family); \
+            if constexpr (!ignoreInvalidTestExcludes) {                             \
+                TEST_EXCLUDE_VARIABLE(test_suite_name, test_name) = true;           \
+            }                                                                       \
         }                                                                           \
     } test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family##_init;
 
@@ -40,6 +52,7 @@
 #define FAMILYTEST_TEST_(test_suite_name, test_name, parent_class, parent_id, match_core, match_product)                                    \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \
                                                                                                                                             \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public parent_class {                                                        \
       public:                                                                                                                               \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
@@ -90,6 +103,7 @@
 
 #define FAMILYTEST_TEST_P(test_suite_name, test_name, match_core, match_product)                                                                          \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                                    \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                               \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public test_suite_name {                                                                   \
       public:                                                                                                                                             \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                                \

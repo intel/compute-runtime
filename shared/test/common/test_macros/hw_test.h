@@ -21,6 +21,7 @@
 #define HWTEST_TEST_(test_suite_name, test_name, parent_class, parent_id, SetUpT_name, TearDownT_name)                                      \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \
                                                                                                                                             \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public parent_class {                                                        \
                                                                                                                                             \
       public:                                                                                                                               \
@@ -82,6 +83,7 @@
 #define HWTEST2_TEST_(test_suite_name, test_name, parent_class, parent_id, test_matcher)                                                    \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \
                                                                                                                                             \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public parent_class {                                                        \
                                                                                                                                             \
       public:                                                                                                                               \
@@ -232,6 +234,7 @@
 #define HWCMDTEST_TEST_(cmdset_gen_base, test_suite_name, test_name, parent_class, parent_id)                                               \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                      \
                                                                                                                                             \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public parent_class {                                                        \
       public:                                                                                                                               \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                  \
@@ -297,6 +300,7 @@
 // Test can use FamilyType in the test -- equivalent to Gen9Family
 #define HWTEST_P(test_suite_name, test_name)                                                                                                              \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                                    \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                               \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public test_suite_name {                                                                   \
       public:                                                                                                                                             \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                                \
@@ -350,6 +354,7 @@
 #define HWCMDTEST_P(cmdset_gen_base, test_suite_name, test_name)                                                                                          \
     CHECK_TEST_NAME_LENGTH(test_suite_name, test_name)                                                                                                    \
                                                                                                                                                           \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                               \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public test_suite_name {                                                                   \
       public:                                                                                                                                             \
         GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)                                                                                                \
@@ -414,6 +419,7 @@
 // Macros to provide template based testing.
 // Test can use productFamily, gfxCoreFamily and FamilyType in the test
 #define HWTEST2_P(test_suite_name, test_name, test_matcher)                                                                                 \
+    bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                                                                                 \
     class GTEST_TEST_CLASS_NAME_(test_suite_name, test_name) : public test_suite_name {                                                     \
                                                                                                                                             \
       public:                                                                                                                               \
