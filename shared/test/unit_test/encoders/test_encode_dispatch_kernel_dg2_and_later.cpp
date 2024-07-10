@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,33 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCA
     ASSERT_NE(itor, commands.end());
     auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(true, cmd->getPostSync().getDataportSubsliceCacheFlush());
+}
+
+HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenDebugVariableToForceL1FlushWhenWalkerIsProgramedThenCacheFlushIsDisabled, IsAtLeastXeHpgCore) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.eventAddress = eventAddress;
+    dispatchArgs.isTimestampEvent = true;
+
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(itor, commands.end());
+    auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
+    EXPECT_EQ(false, cmd->getPostSync().getDataportPipelineFlush());
+    EXPECT_EQ(false, cmd->getPostSync().getDataportSubsliceCacheFlush());
 }
 
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeThenMocsIndex2IsSet, IsXeHpgCore) {

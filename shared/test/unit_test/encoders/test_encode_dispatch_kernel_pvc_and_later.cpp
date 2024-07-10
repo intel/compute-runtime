@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
@@ -96,4 +98,29 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
 
     auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*itorCmd);
     EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), cmd->getLargeGrfMode());
+}
+
+HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenDebugVariableWhenPostSyncIsProgrammedThenL1IsNotFlushed, IsAtLeastXeHpcCore) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
+    uint32_t dims[] = {2, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
+
+    MockTagAllocator<DeviceAllocNodeType<true>> deviceTagAllocator(0, pDevice->getMemoryManager());
+
+    auto inOrderExecInfo = InOrderExecInfo::create(deviceTagAllocator.getTag(), nullptr, *pDevice, 1, false);
+
+    dispatchArgs.inOrderExecInfo = inOrderExecInfo.get();
+
+    EncodeDispatchKernel<FamilyType>::template setupPostSyncForInOrderExec<DefaultWalkerType>(walkerCmd, dispatchArgs);
+
+    auto &postSyncData = walkerCmd.getPostSync();
+    EXPECT_FALSE(postSyncData.getDataportPipelineFlush());
+    EXPECT_FALSE(postSyncData.getDataportSubsliceCacheFlush());
 }

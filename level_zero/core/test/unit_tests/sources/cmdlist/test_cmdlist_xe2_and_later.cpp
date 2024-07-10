@@ -15,6 +15,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
@@ -383,5 +384,32 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
     auto result = commandListCore->obtainKernelPreemptionMode(kernel.get());
     EXPECT_EQ(NEO::PreemptionMode::MidThread, result);
 }
+
+using InOrderCmdListTests = InOrderCmdListFixture;
+
+HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCreateThenL1IsNotFlushed, Platforms) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
+    auto &postSync = walkerCmd->getPostSync();
+
+    EXPECT_FALSE(postSync.getDataportPipelineFlush());
+    EXPECT_FALSE(postSync.getDataportSubsliceCacheFlush());
+}
+
 } // namespace ult
 } // namespace L0

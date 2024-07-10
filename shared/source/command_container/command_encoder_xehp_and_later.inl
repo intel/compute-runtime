@@ -438,6 +438,11 @@ void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walk
     postSync.setDataportPipelineFlush(true);
     postSync.setDataportSubsliceCacheFlush(true);
 
+    if (NEO::debugManager.flags.ForcePostSyncL1Flush.get() != -1) {
+        postSync.setDataportPipelineFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+        postSync.setDataportSubsliceCacheFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+    }
+
     auto operationType = POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA;
     uint64_t gpuVa = args.eventAddress;
     uint64_t immData = args.postSyncImmValue;
@@ -468,6 +473,10 @@ void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walke
 
     postSync.setDataportPipelineFlush(true);
     postSync.setDataportSubsliceCacheFlush(true);
+    if (NEO::debugManager.flags.ForcePostSyncL1Flush.get() != -1) {
+        postSync.setDataportPipelineFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+        postSync.setDataportSubsliceCacheFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+    }
 
     uint64_t gpuVa = args.inOrderExecInfo->getBaseDeviceAddress() + args.inOrderExecInfo->getAllocationOffset();
 

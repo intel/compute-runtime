@@ -145,6 +145,42 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchin
     EXPECT_EQ(contextStartAddress, secondWalker->getPostSync().getDestinationAddress());
 }
 
+HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenDebugFlagToDisableL1FlushInPostSyncWhenKernelIsProgrammedThenL1FlushIsNotEnabled, matcherDG2AndLater) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
+
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    MockKernelWithInternals kernel1(*device);
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    TimestampPacketContainer timestampPacketContainer;
+    timestampPacketContainer.add(device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
+    timestampPacketContainer.add(device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
+
+    MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel1.mockKernel}));
+
+    MockCommandQueue cmdQ(context.get(), device.get(), nullptr, false);
+    auto &cmdStream = cmdQ.getCS(0);
+
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestampPacketContainer;
+    HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
+        cmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        walkerArgs);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
+
+    EXPECT_FALSE(walker->getPostSync().getDataportPipelineFlush());
+    EXPECT_FALSE(walker->getPostSync().getDataportSubsliceCacheFlush());
+}
+
 HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWriteWalkerStamp, matcherDG2AndLater) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restore;

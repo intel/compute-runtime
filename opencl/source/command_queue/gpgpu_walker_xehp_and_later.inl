@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,11 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
     auto &postSyncData = walkerCmd->getPostSync();
     postSyncData.setDataportPipelineFlush(true);
     postSyncData.setDataportSubsliceCacheFlush(true);
+
+    if (NEO::debugManager.flags.ForcePostSyncL1Flush.get() != -1) {
+        postSyncData.setDataportPipelineFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+        postSyncData.setDataportSubsliceCacheFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+    }
 
     EncodeDispatchKernel<GfxFamily>::template setupPostSyncMocs<WalkerType>(*walkerCmd, rootDeviceEnvironment,
                                                                             MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment));

@@ -393,6 +393,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableHostUsmAllocationPool, -1, "-1: default (e
 DECLARE_DEBUG_VARIABLE(int32_t, UseLocalPreferredForCacheableBuffers, -1, "Use localPreferred for cacheable buffers")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableCopyWithStagingBuffers, -1, "Enable copy with non-usm memory through staging buffers. -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, StagingBufferSize, -1, "Size of single staging buffer. -1: default (2MB), >0: size in KB")
+DECLARE_DEBUG_VARIABLE(int32_t, ForcePostSyncL1Flush, -1, "-1: default (do nothing), 0: L1 flush disabled in post sync, 1: L1 flush enabled in post sync")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
