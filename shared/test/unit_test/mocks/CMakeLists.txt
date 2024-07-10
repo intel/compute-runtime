@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -20,6 +20,4 @@ target_sources(neo_shared_tests PRIVATE
 
 if(WIN32)
   target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_direct_submission.h)
-else()
-  target_sources(neo_shared_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_os_context_linux.h)
 endif()
