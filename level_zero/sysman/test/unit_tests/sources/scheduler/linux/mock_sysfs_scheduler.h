@@ -369,45 +369,45 @@ struct MockSchedulerNeoDrm : public Drm {
 
     bool sysmanQueryEngineInfo() override {
 
-        StackVec<std::vector<EngineClassInstance>, 2> engineClassInstancePerTile;
+        StackVec<std::vector<EngineCapabilities>, 2> engineInfosPerTile;
 
         for (uint32_t tileId = 0; tileId < 2; tileId++) {
-            std::vector<EngineClassInstance> engineClassInstance;
+            std::vector<EngineCapabilities> engineInfo;
             EngineClassInstance instance{};
             instance.engineClass = DRM_XE_ENGINE_CLASS_RENDER;
             instance.engineInstance = 0;
-            engineClassInstance.push_back(instance);
+            engineInfo.push_back({instance, {}});
             instance.engineClass = DRM_XE_ENGINE_CLASS_RENDER;
             instance.engineInstance = 1;
-            engineClassInstance.push_back(instance);
+            engineInfo.push_back({instance, {}});
             instance.engineClass = DRM_XE_ENGINE_CLASS_COMPUTE;
             instance.engineInstance = 0;
-            engineClassInstance.push_back(instance);
+            engineInfo.push_back({instance, {}});
             instance.engineClass = DRM_XE_ENGINE_CLASS_COMPUTE;
             instance.engineInstance = 1;
-            engineClassInstance.push_back(instance);
+            engineInfo.push_back({instance, {}});
             instance.engineClass = DRM_XE_ENGINE_CLASS_COPY;
             instance.engineInstance = 0;
-            engineClassInstance.push_back(instance);
+            engineInfo.push_back({instance, {}});
             instance.engineClass = DRM_XE_ENGINE_CLASS_COPY;
             instance.engineInstance = 1;
-            engineClassInstance.push_back(instance);
+            engineInfo.push_back({instance, {}});
             instance.engineClass = DRM_XE_ENGINE_CLASS_VIDEO_DECODE;
             instance.engineInstance = 0;
-            engineClassInstance.push_back(instance);
+            engineInfo.push_back({instance, {}});
             instance.engineClass = DRM_XE_ENGINE_CLASS_VIDEO_DECODE;
             instance.engineInstance = 1;
-            engineClassInstance.push_back(instance);
+            engineInfo.push_back({instance, {}});
             instance.engineClass = DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE;
             instance.engineInstance = 0;
-            engineClassInstance.push_back(instance);
+            engineInfo.push_back({instance, {}});
             instance.engineClass = DRM_XE_ENGINE_CLASS_VIDEO_ENHANCE;
             instance.engineInstance = 1;
-            engineClassInstance.push_back(instance);
-            engineClassInstancePerTile.push_back(engineClassInstance);
+            engineInfo.push_back({instance, {}});
+            engineInfosPerTile.push_back(engineInfo);
         }
 
-        this->engineInfo.reset(new EngineInfo(this, engineClassInstancePerTile));
+        this->engineInfo.reset(new EngineInfo(this, engineInfosPerTile));
         return true;
     }
 

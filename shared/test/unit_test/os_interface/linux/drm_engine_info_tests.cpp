@@ -220,13 +220,13 @@ HWTEST2_F(DisabledBCSEngineInfoTest, whenBCS0IsNotEnabledThenSkipMappingItAndSet
 
     RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(rootDeviceEnvironment);
     raii.mockProductHelper->mockDefaultCopyEngine = aub_stream::EngineType::ENGINE_BCS1;
-    auto emplaceCopyEngine = [&ioctlHelper](std::vector<EngineClassInstance> &vec) {
+    auto emplaceCopyEngine = [&ioctlHelper](std::vector<EngineCapabilities> &vec) {
         auto &emplaced = vec.emplace_back();
-        emplaced.engineClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
-        emplaced.engineInstance = 0u;
+        emplaced.engine.engineClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
+        emplaced.engine.engineInstance = 0u;
     };
 
-    StackVec<std::vector<EngineClassInstance>, 2> enginesPerTile{};
+    StackVec<std::vector<EngineCapabilities>, 2> enginesPerTile{};
     enginesPerTile.resize(2u);
     for (int tileIdx = 0; tileIdx < 2; tileIdx++) {
         emplaceCopyEngine(enginesPerTile[tileIdx]);

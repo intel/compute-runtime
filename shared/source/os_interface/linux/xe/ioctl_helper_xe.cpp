@@ -228,7 +228,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
 
     xeLog("numberHwEngines=%d\n", numberHwEngines);
 
-    StackVec<std::vector<EngineClassInstance>, 2> enginesPerTile{};
+    StackVec<std::vector<EngineCapabilities>, 2> enginesPerTile{};
     std::bitset<8> multiTileMask{};
 
     auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -254,7 +254,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
             if (enginesPerTile.size() <= tile) {
                 enginesPerTile.resize(tile + 1);
             }
-            enginesPerTile[tile].push_back(engineClassInstance);
+            enginesPerTile[tile].push_back({engineClassInstance, {}});
             if (!defaultEngine && engineClassInstance.engineClass == defaultEngineClass) {
                 defaultEngine = std::make_unique<drm_xe_engine_class_instance>();
                 *defaultEngine = engine;

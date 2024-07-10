@@ -25,7 +25,7 @@ struct EngineInfo {
   public:
     using EngineToInstanceMap = std::map<aub_stream::EngineType, EngineClassInstance>;
 
-    EngineInfo(Drm *drm, const StackVec<std::vector<EngineClassInstance>, 2> &engineClassInstancePerTile);
+    EngineInfo(Drm *drm, const StackVec<std::vector<EngineCapabilities>, 2> &engineInfosPerTile);
     EngineInfo(Drm *drm, const std::vector<EngineCapabilities> &engineInfos);
     EngineInfo(Drm *drm, uint32_t tileCount, const std::vector<DistanceInfo> &distanceInfos, const std::vector<QueryItem> &queryItems, const std::vector<EngineCapabilities> &engineInfos);
 

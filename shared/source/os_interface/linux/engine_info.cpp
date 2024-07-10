@@ -104,18 +104,18 @@ EngineInfo::EngineInfo(Drm *drm, const std::vector<EngineCapabilities> &engineIn
     setSupportedEnginesInfo(rootDeviceEnvironment, computeEngines, bcsInfoMask);
 }
 
-EngineInfo::EngineInfo(Drm *drm, const StackVec<std::vector<EngineClassInstance>, 2> &engineClassInstancePerTile) : tileToEngineToInstanceMap(engineClassInstancePerTile.size()) {
+EngineInfo::EngineInfo(Drm *drm, const StackVec<std::vector<EngineCapabilities>, 2> &engineInfosPerTile) : tileToEngineToInstanceMap(engineInfosPerTile.size()) {
     auto ioctlHelper = drm->getIoctlHelper();
     auto &rootDeviceEnvironment = drm->getRootDeviceEnvironment();
     auto computeEnginesPerTile = 0u;
     BcsInfoMask bcsInfoMask = {};
 
-    for (auto tile = 0u; tile < engineClassInstancePerTile.size(); tile++) {
+    for (auto tile = 0u; tile < engineInfosPerTile.size(); tile++) {
         computeEnginesPerTile = 0u;
         auto copyEnginesMappingIt = getCopyEnginesMappingIterator(rootDeviceEnvironment);
 
-        for (const auto &engine : engineClassInstancePerTile[tile]) {
-            mapEngine(ioctlHelper, engine, bcsInfoMask, rootDeviceEnvironment, copyEnginesMappingIt, computeEnginesPerTile, tile);
+        for (const auto &engineCapabilities : engineInfosPerTile[tile]) {
+            mapEngine(ioctlHelper, engineCapabilities.engine, bcsInfoMask, rootDeviceEnvironment, copyEnginesMappingIt, computeEnginesPerTile, tile);
         }
     }
     setSupportedEnginesInfo(rootDeviceEnvironment, computeEnginesPerTile, bcsInfoMask);
