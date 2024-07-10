@@ -342,7 +342,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
                 }
             }
         }
-        this->programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(ctx.isDebugEnabled, child);
+        this->programCommandQueueDebugCmdsForDebuggerIfEnabled(ctx.isDebugEnabled, child);
         if (!this->stateBaseAddressTracking) {
             this->programStateBaseAddressWithGsbaIfDirty(ctx, ctx.firstCommandList, child);
         }
@@ -1029,7 +1029,7 @@ void CommandQueueHw<gfxCoreFamily>::makeSbaTrackingBufferResidentIfL0DebuggerEna
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(bool isDebugEnabled, NEO::LinearStream &cmdStream) {
+void CommandQueueHw<gfxCoreFamily>::programCommandQueueDebugCmdsForDebuggerIfEnabled(bool isDebugEnabled, NEO::LinearStream &cmdStream) {
     if (isDebugEnabled && !this->commandQueueDebugCmdsProgrammed) {
         if (this->device->getL0Debugger()) {
             this->device->getL0Debugger()->programSbaAddressLoad(cmdStream,

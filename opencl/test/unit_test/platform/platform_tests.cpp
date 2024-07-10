@@ -149,7 +149,7 @@ TEST_F(PlatformTest, givenMidThreadPreemptionWhenInitializingPlatformThenCallGet
     EXPECT_TRUE(MockSipData::called);
 }
 
-TEST_F(PlatformTest, givenDisabledPreemptionAndNoSourceLevelDebuggerWhenInitializingPlatformThenDoNotCallGetSipKernel) {
+TEST_F(PlatformTest, givenDisabledPreemptionAndNoDebuggerWhenInitializingPlatformThenDoNotCallGetSipKernel) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
 

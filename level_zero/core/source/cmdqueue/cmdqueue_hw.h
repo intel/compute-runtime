@@ -165,7 +165,7 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void getGlobalStatelessHeapAndMakeItResident(CommandListExecutionContext &ctx);
     inline void getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(NEO::LinearStream &commandStream);
     inline void makeSbaTrackingBufferResidentIfL0DebuggerEnabled(bool isDebugEnabled);
-    inline void programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(bool isDebugEnabled, NEO::LinearStream &commandStream);
+    inline void programCommandQueueDebugCmdsForDebuggerIfEnabled(bool isDebugEnabled, NEO::LinearStream &commandStream);
     inline void programStateBaseAddressWithGsbaIfDirty(CommandListExecutionContext &ctx,
                                                        ze_command_list_handle_t hCommandList,
                                                        NEO::LinearStream &commandStream);
