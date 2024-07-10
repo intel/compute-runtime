@@ -21,6 +21,10 @@
 
 class OclocArgHelper;
 
+namespace Ocloc {
+enum class SupportedDevicesMode;
+};
+
 namespace NEO {
 
 class CompilerCache;
@@ -47,6 +51,7 @@ class OfflineCompiler {
     static std::vector<NameVersionPair> getOpenCLCFeatures(ConstStringRef product, OclocArgHelper *helper);
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
     static int queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
+    static int querySupportedDevices(Ocloc::SupportedDevicesMode mode, OclocArgHelper *helper);
 
     static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper);
 
@@ -74,6 +79,23 @@ Supported query options:
   CL_DEVICE_PROFILE                 ; OpenCL device profile supported by device_filter
   CL_DEVICE_OPENCL_C_ALL_VERSIONS   ; OpenCL C versions supported by device_filter
   CL_DEVICE_OPENCL_C_FEATURES       ; OpenCL C features supported by device_filter
+  SUPPORTED_DEVICES                 ; Generates a YAML file with information about supported devices
+
+SUPPORTED_DEVICES option:
+  Linux:
+    Description: Generates a YAML file containing information about supported devices
+                 for the current and previous versions of ocloc.
+    Usage: ocloc query SUPPORTED_DEVICES [<mode>]
+    Supported Modes:
+      -merge   - Combines supported devices from all ocloc versions into a single list (default if not specified)
+      -concat  - Lists supported devices for each ocloc version separately
+    Output file: <ocloc_version>_supported_devices_<mode>.yaml
+
+  Windows:
+    Description: Generates a YAML file containing information about supported devices
+                 for the current version of ocloc.
+    Usage: ocloc query SUPPORTED_DEVICES
+    Output file: <ocloc_version>_supported_devices.yaml
 
 Examples:
   ocloc query OCL_DRIVER_VERSION

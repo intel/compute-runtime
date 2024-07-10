@@ -13,7 +13,19 @@ set(IGDRCL_SRCS_cloc
     ${OCLOC_DIRECTORY}/source/offline_linker.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_concat.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
+    ${OCLOC_DIRECTORY}/source/ocloc_supported_devices_helper.h
+    ${OCLOC_DIRECTORY}/source/ocloc_supported_devices_helper.cpp
 )
+
+if(WIN32)
+  list(APPEND IGDRCL_SRCS_cloc
+       ${OCLOC_DIRECTORY}/source/windows/ocloc_supported_devices_helper_windows.cpp
+  )
+else()
+  list(APPEND IGDRCL_SRCS_cloc
+       ${OCLOC_DIRECTORY}/source/linux/ocloc_supported_devices_helper_linux.cpp
+  )
+endif()
 
 set(IGDRCL_SRCS_offline_compiler_mock
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_decoder.h
@@ -66,6 +78,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_igc_facade_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_product_config_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_product_config_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_supported_devices_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_tests_configuration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_validator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
@@ -103,6 +116,7 @@ if(WIN32)
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_thread_win.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/ocloc_supported_devices_helper_windows_tests.cpp
   )
   list(REMOVE_ITEM IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/utilities/windows/directory.cpp
@@ -113,6 +127,7 @@ else()
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/ocloc_supported_devices_helper_linux_tests.cpp
   )
   list(REMOVE_ITEM IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp

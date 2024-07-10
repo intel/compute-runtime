@@ -12,6 +12,7 @@
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/offline_compiler/source/ocloc_fcl_facade.h"
 #include "shared/offline_compiler/source/ocloc_igc_facade.h"
+#include "shared/offline_compiler/source/ocloc_supported_devices_helper.h"
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 #include "shared/source/compiler_interface/compiler_options.h"
@@ -273,6 +274,8 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
         return OCLOC_INVALID_COMMAND_LINE;
     }
 
+    Ocloc::SupportedDevicesMode supportedDevicesMode = Ocloc::SupportedDevicesMode::concat;
+
     std::vector<ConstStringRef> targetProducts;
     std::vector<Queries::QueryType> queries;
     auto argIt = allArgs.begin() + 2;
@@ -300,6 +303,15 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
             queries.push_back(Queries::QueryType::oclDeviceOpenCLCAllVersions);
         } else if (Queries::queryOCLDeviceOpenCLCFeatures == *argIt) {
             queries.push_back(Queries::QueryType::oclDeviceOpenCLCFeatures);
+        } else if (Queries::querySupportedDevices == *argIt) {
+            queries.push_back(Queries::QueryType::supportedDevices);
+            if (argIt + 1 != allArgs.end()) {
+                auto newMode = Ocloc::parseSupportedDevicesMode(*(argIt + 1));
+                if (newMode != Ocloc::SupportedDevicesMode::unknown) {
+                    supportedDevicesMode = newMode;
+                    ++argIt;
+                }
+            }
         } else if ("--help" == *argIt) {
             printQueryHelp(helper);
             return 0;
@@ -370,6 +382,9 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
             auto commonFeaturesString = formatNameVersionString(commonFeaturesVec, true);
             helper->saveOutput(Queries::queryOCLDeviceOpenCLCFeatures.str(), commonFeaturesVec.data(), commonFeaturesVec.size() * sizeof(NameVersionPair));
             helper->printf("%s\n", commonFeaturesString.c_str());
+        } break;
+        case Queries::QueryType::supportedDevices: {
+            querySupportedDevices(supportedDevicesMode, helper);
         } break;
         }
     }
@@ -446,6 +461,25 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
     helper->printf("Matched ids:\n%s\n", os.str().c_str());
 
     return retVal;
+}
+
+int OfflineCompiler::querySupportedDevices(Ocloc::SupportedDevicesMode mode, OclocArgHelper *helper) {
+    auto enabledDevices = helper->productConfigHelper->getDeviceAotInfo();
+
+    Ocloc::SupportedDevicesHelper supportedDevicesHelper(mode, helper->productConfigHelper.get());
+    auto supportedDevicesData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);
+
+    std::string output;
+
+    if (mode == Ocloc::SupportedDevicesMode::merge) {
+        output = supportedDevicesHelper.mergeAndSerializeWithFormerVersionData(supportedDevicesData);
+    } else {
+        output = supportedDevicesHelper.concatAndSerializeWithFormerVersionData(supportedDevicesData);
+    }
+
+    helper->saveOutput(supportedDevicesHelper.getOclocCurrentVersionOutputFilename(), output.data(), output.size());
+
+    return 0;
 }
 
 struct OfflineCompiler::buildInfo {

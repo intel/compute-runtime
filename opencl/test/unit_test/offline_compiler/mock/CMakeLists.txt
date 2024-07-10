@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 Intel Corporation
+# Copyright (C) 2023-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,6 +13,7 @@ target_sources(ocloc_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_ocloc_fcl_facade.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_ocloc_igc_facade.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_ocloc_igc_facade.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mock_ocloc_supported_devices_helper.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_offline_compiler.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_offline_compiler.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_offline_linker.h

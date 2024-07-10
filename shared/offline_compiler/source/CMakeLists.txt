@@ -111,6 +111,8 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/ocloc_igc_facade.h
     ${OCLOC_DIRECTORY}/source/ocloc_interface.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_interface.h
+    ${OCLOC_DIRECTORY}/source/ocloc_supported_devices_helper.cpp
+    ${OCLOC_DIRECTORY}/source/ocloc_supported_devices_helper.h
     ${OCLOC_DIRECTORY}/source/ocloc_validator.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_validator.h
     ${OCLOC_DIRECTORY}/source/offline_compiler.cpp
@@ -147,6 +149,7 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/windows/directory.cpp
+       ${OCLOC_DIRECTORY}/source/windows/ocloc_supported_devices_helper_windows.cpp
   )
 else()
   list(APPEND CLOC_LIB_SRCS_LIB
@@ -160,6 +163,7 @@ else()
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
+       ${OCLOC_DIRECTORY}/source/linux/ocloc_supported_devices_helper_linux.cpp
   )
 endif()
 
@@ -453,6 +457,9 @@ elseif(UNIX)
 endif()
 set_target_properties(${OCLOC_NAME} PROPERTIES OUTPUT_NAME ${OCLOC_NAME}${OCLOC_OUTPUT_NAME_SUFFIX})
 set_target_properties(${OCLOC_NAME}_lib PROPERTIES OUTPUT_NAME ${OCLOC_NAME}${LIBOCLOC_OUTPUT_NAME_SUFFIX})
+
+add_definitions(-DNEO_OCLOC_CURRENT_LIB_NAME="${NEO_OCLOC_CURRENT_LIB_NAME}")
+add_definitions(-DNEO_OCLOC_FORMER_LIB_NAME="${NEO_OCLOC_FORMER_LIB_NAME}")
 
 add_custom_target(copy_compiler_files DEPENDS ${NEO__IGC_TARGETS})
 set_target_properties(copy_compiler_files PROPERTIES FOLDER ${OCLOC_FOLDER_NAME})

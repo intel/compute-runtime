@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
+#include "shared/offline_compiler/source/ocloc_supported_devices_helper.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
@@ -1023,6 +1024,31 @@ TEST_F(OfflineCompilerTests, givenProductAcronymWhenIdsCommandIsInvokeThenSucces
             expectedOutput << prefix << "\n";
         }
         EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
+        EXPECT_EQ(OCLOC_SUCCESS, retVal);
+    }
+}
+
+TEST_F(OfflineCompilerTests, WhenQueryingSupportedDevicesThenNonEmptyOutputFileIsGenerated) {
+    std::vector<Ocloc::SupportedDevicesMode> modes = {Ocloc::SupportedDevicesMode::concat, Ocloc::SupportedDevicesMode::merge};
+
+    for (const auto &mode : modes) {
+        std::vector<std::string> argv = {
+            "ocloc",
+            "query",
+            "SUPPORTED_DEVICES",
+            "-" + toStr(mode)};
+
+        int retVal = OfflineCompiler::query(argv.size(), argv, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+        Ocloc::SupportedDevicesHelper supportedDevicesHelper(mode, oclocArgHelperWithoutInput->productConfigHelper.get());
+        std::string expectedFileName = supportedDevicesHelper.getOclocCurrentVersionOutputFilename();
+
+        EXPECT_NE(oclocArgHelperWithoutInput->filesMap.find(expectedFileName), oclocArgHelperWithoutInput->filesMap.end());
+
+        std::string generatedContent = oclocArgHelperWithoutInput->filesMap[expectedFileName];
+        EXPECT_FALSE(generatedContent.empty());
+
         EXPECT_EQ(OCLOC_SUCCESS, retVal);
     }
 }
