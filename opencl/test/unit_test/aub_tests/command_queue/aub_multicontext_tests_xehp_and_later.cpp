@@ -218,7 +218,7 @@ HWTEST2_F(FourTilesAllContextsTest, GENERATEONLY_givenFourTilesAndAllContextsWhe
 }
 
 using FourTilesDualContextTest = MultitileMulticontextTests<4, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWTEST2_F(FourTilesDualContextTest, HEAVY_givenFourTilesAndDualContextWhenSubmittingThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(FourTilesDualContextTest, HEAVY_givenFourTilesAndDualContextWhenSubmittingThenDataIsValid, IsPVC) {
     runAubTest<FamilyType>();
 }
 
@@ -526,12 +526,12 @@ HWTEST2_F(StaticWalkerPartitionFourTilesTests, whenNoPreWalkerSyncThenAtomicsAre
 
 // 2 Tiles
 using TwoTilesAllContextsTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::all>;
-HWTEST2_F(TwoTilesAllContextsTest, HEAVY_givenTwoTilesAndAllContextsWhenSubmittingThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(TwoTilesAllContextsTest, HEAVY_givenTwoTilesAndAllContextsWhenSubmittingThenDataIsValid, IsPVC) {
     runAubTest<FamilyType>();
 }
 
 using TwoTilesDualContextTest = MultitileMulticontextTests<2, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWTEST2_F(TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenSubmittingThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(TwoTilesDualContextTest, givenTwoTilesAndDualContextWhenSubmittingThenDataIsValid, IsPVC) {
     runAubTest<FamilyType>();
 }
 
@@ -547,11 +547,11 @@ HWTEST2_F(SingleTileAllContextsTest, GENERATEONLY_givenSingleTileAndAllContextsW
 }
 
 using SingleTileDualContextTest = MultitileMulticontextTests<1, MulticontextOclAubFixture::EnabledCommandStreamers::dual>;
-HWTEST2_F(SingleTileDualContextTest, givenSingleTileAndDualContextWhenSubmittingThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(SingleTileDualContextTest, givenSingleTileAndDualContextWhenSubmittingThenDataIsValid, IsPVC) {
     runAubTest<FamilyType>();
 }
 
-HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDifferentContextThenDataIsValid, SupportsMultiTile) {
+HWTEST2_F(SingleTileDualContextTest, givenSingleAllocationWhenUpdatedFromDifferentContextThenDataIsValid, IsPVC) {
     cl_int retVal = CL_SUCCESS;
     const uint32_t bufferSize = 256;
     const uint32_t halfBufferSize = bufferSize / 2;
