@@ -62,6 +62,7 @@ struct CmdListKernelLaunchParams {
     bool isBuiltInKernel = false;
     bool isDestinationAllocationInSystemMemory = false;
     bool isHostSignalScopeEvent = false;
+    bool isExpLaunchKernel = false;
     bool skipInOrderNonWalkerSignaling = false;
     bool pipeControlSignalling = false;
     bool omitAddingKernelResidency = false;
