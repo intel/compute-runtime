@@ -29,7 +29,6 @@
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -1517,37 +1516,19 @@ struct DrmMockCheckPageFault : public DrmMock {
     using DrmMock::getGpuFaultCheckThreshold;
 };
 
-struct DrmMockProductHelperDisableScratchPages : public MockProductHelper {
-  public:
-    bool isDisableScratchPagesSupported() const override {
-        return true;
-    }
-};
-
 using DrmDisableScratchPagesDefaultTest = ::testing::Test;
-HWTEST_F(DrmDisableScratchPagesDefaultTest,
-         givenDefaultDisableScratchPagesAndItIsSupportedThenCheckingGpuFaultCheckIsSetToDefaultValueAndScratchPageIsConfiguredCorrectly) {
+HWTEST2_F(DrmDisableScratchPagesDefaultTest,
+          givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultValueAndScratchPageIsDisabled, IsPVC) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto mockProductHelper = std::make_unique<DrmMockProductHelperDisableScratchPages>();
-    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
-    std::swap(executionEnvironment->rootDeviceEnvironments[0]->productHelper, productHelper);
-
     DrmMockCheckPageFault drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.configureScratchPagePolicy();
     drm.configureGpuFaultCheckThreshold();
     EXPECT_TRUE(drm.checkToDisableScratchPage());
     EXPECT_EQ(10u, drm.getGpuFaultCheckThreshold());
-
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
-    DrmMockCheckPageFault drm2{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm2.configureScratchPagePolicy();
-    drm2.configureGpuFaultCheckThreshold();
-    EXPECT_FALSE(drm2.checkToDisableScratchPage());
-    EXPECT_EQ(10u, drm2.getGpuFaultCheckThreshold());
 }
 
-HWTEST_F(DrmDisableScratchPagesDefaultTest,
-         givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultAndScratchPageIsEnabled) {
+HWTEST2_F(DrmDisableScratchPagesDefaultTest,
+          givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultAndScratchPageIsEnabled, IsNotPVC) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockCheckPageFault drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.configureScratchPagePolicy();

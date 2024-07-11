@@ -83,7 +83,7 @@ bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
-    return false;
+    return true;
 }
 
 } // namespace NEO
