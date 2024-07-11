@@ -82,6 +82,7 @@ class IoctlHelperXe : public IoctlHelper {
     int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
     bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate, uint64_t pollPeriod,
                               uint64_t engineInstance, uint64_t notifyNReports) override;
+    bool isEuStallSupported() override;
     uint32_t getEuStallFdParameter() override;
     bool perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) override;
     bool perfDisableEuStallStream(int32_t *stream) override;

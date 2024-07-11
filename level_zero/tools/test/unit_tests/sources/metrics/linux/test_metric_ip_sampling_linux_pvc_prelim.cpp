@@ -189,6 +189,15 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenI915PerfIoctlEnableFailsWhenStar
     EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_ERROR_UNKNOWN);
 }
 
+HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenGetEuStallPropertiesWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
+
+    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
+    drm->setIoctlHelperPrelim20Mock();
+    uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;
+    EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_ERROR_UNKNOWN);
+    drm->restoreIoctlHelperPrelim20();
+}
+
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenCloseSucceedsWhenStopMeasurementIsCalledThenReturnSuccess, IsPVC) {
 
     VariableBackup<int> backupCloseFuncRetval(&NEO::SysCalls::closeFuncRetVal, 0);
@@ -288,32 +297,6 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndSupport
         hwInfo->platform.usDeviceID = deviceId;
         EXPECT_TRUE(metricIpSamplingOsInterface->isDependencyAvailable());
     }
-}
-
-HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenDriverOpenFailsWhenIsDependencyAvailableIsCalledThenReturnFailure, IsPVC) {
-
-    auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.eProductFamily = productFamily;
-    hwInfo->platform.usDeviceID = NEO::pvcXtDeviceIds.front();
-
-    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
-    VariableBackup<int> backupCsTimeStampFrequency(&drm->storedCsTimestampFrequency, 0);
-    VariableBackup<int> backupStoredRetVal(&drm->storedRetVal, -1);
-
-    EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
-}
-
-HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenIoctlHelperFailsWhenIsDependencyAvailableIsCalledThenReturnFailure, IsPVC) {
-
-    auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.eProductFamily = productFamily;
-    hwInfo->platform.usDeviceID = NEO::pvcXtDeviceIds.front();
-
-    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
-
-    drm->setIoctlHelperPrelim20Mock();
-    EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
-    drm->restoreIoctlHelperPrelim20();
 }
 
 struct MetricIpSamplingLinuxMultiDeviceTest : public ::testing::Test {

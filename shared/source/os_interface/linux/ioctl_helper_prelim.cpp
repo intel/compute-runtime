@@ -561,6 +561,10 @@ std::optional<DrmParam> IoctlHelperPrelim20::getHasPageFaultParamId() {
     return DrmParam::paramHasPageFault;
 };
 
+bool IoctlHelperPrelim20::isEuStallSupported() {
+    return true;
+}
+
 bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
                                                uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) {
     properties[0] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ;
@@ -590,7 +594,7 @@ bool IoctlHelperPrelim20::perfOpenEuStallStream(uint32_t euStallFdParameter, std
                   I915_PERF_FLAG_FD_NONBLOCK;
     param.num_properties = sizeof(properties) / 16;
     param.properties_ptr = reinterpret_cast<uintptr_t>(properties.data());
-    *stream = ioctl(this->drm.getFileDescriptor(), DrmIoctl::perfOpen, &param);
+    *stream = ioctl(DrmIoctl::perfOpen, &param);
     if (*stream < 0) {
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (*stream < 0), stderr,
                            "%s failed errno = %d | ret = %d \n", "DRM_IOCTL_I915_PERF_OPEN", errno, *stream);

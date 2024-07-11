@@ -371,6 +371,10 @@ TEST_F(IoctlPrelimHelperTests, givenValidInputWhenFillVmBindUserFenceThenProperV
     EXPECT_EQ(expectedSize, sizeof(prelimVmBindExtUserFence));
 }
 
+TEST_F(IoctlPrelimHelperTests, givenPrelimWhenCallingIsEuStallSupportedThenTrueIsReturned) {
+    EXPECT_TRUE(ioctlHelper.isEuStallSupported());
+}
+
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrectPropertiesAreReturned) {
     std::array<uint64_t, 12u> properties = {};
     EXPECT_TRUE(ioctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 20u));
@@ -385,6 +389,14 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallPropertiesThenCorrec
     EXPECT_EQ(properties[8], prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE);
 
     EXPECT_EQ(properties[11], 20u);
+}
+
+TEST_F(IoctlPrelimHelperTests, givenPrelimWhenCallingPerfOpenEuStallStreamWithInvalidArgumentsThenFailureReturned) {
+    std::array<uint64_t, 12u> properties = {};
+    int32_t invalidStream = -1;
+    DrmMock *mockDrm = reinterpret_cast<DrmMock *>(drm.get());
+    mockDrm->failPerfOpen = true;
+    EXPECT_FALSE(ioctlHelper.perfOpenEuStallStream(0u, properties, &invalidStream));
 }
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorrectIoctlValueIsReturned) {
@@ -433,11 +445,6 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
         }
         if (request == DrmIoctl::perfEnable) {
             if (failPerfEnable) {
-                return -1;
-            }
-        }
-        if (request == DrmIoctl::perfOpen) {
-            if (failPerfOpen) {
                 return -1;
             }
         }
@@ -561,18 +568,6 @@ TEST(IoctlPrelimHelperPerfTests, givenCalltoPerfDisableEuStallStreamWithInvalidS
     int32_t invalidFd = -1;
     mockIoctlHelper.failPerfDisable = true;
     EXPECT_FALSE(mockIoctlHelper.perfDisableEuStallStream(&invalidFd));
-}
-
-TEST(IoctlPrelimHelperPerfTests, givenPrelimWhenCallingPerfOpenEuStallStreamWithInvalidArgumentsThenFailureReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    MockIoctlHelperPrelim20 mockIoctlHelper{*drm};
-
-    mockIoctlHelper.initialize();
-    int32_t invalidFd = -1;
-    mockIoctlHelper.failPerfOpen = true;
-    std::array<uint64_t, 12u> properties = {};
-    EXPECT_FALSE(mockIoctlHelper.perfOpenEuStallStream(0u, properties, &invalidFd));
 }
 
 TEST(IoctlPrelimHelperPerfTests, givenCalltoPerfOpenEuStallStreamWithInvalidStreamWithEnableSetToFailThenFailureReturned) {

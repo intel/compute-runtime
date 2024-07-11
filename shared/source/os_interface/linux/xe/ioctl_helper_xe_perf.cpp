@@ -32,4 +32,8 @@ int IoctlHelperXe::perfOpenIoctl(DrmIoctl request, void *arg) {
     return 0;
 }
 
+bool IoctlHelperXe::isEuStallSupported() {
+    return false;
+}
+
 } // namespace NEO

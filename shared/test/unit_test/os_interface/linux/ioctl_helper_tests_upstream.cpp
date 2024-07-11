@@ -520,6 +520,13 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenSetVmPrefetchThenReturnTrue) {
     EXPECT_TRUE(ioctlHelper->setVmPrefetch(0, 0, 0, 0));
 }
 
+TEST(IoctlHelperTestsUpstream, whenCallingIsEuStallSupportedThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = drm->getIoctlHelper();
+    EXPECT_FALSE(ioctlHelper->isEuStallSupported());
+}
+
 TEST(IoctlHelperTestsUpstream, whenCallingGetEuStallPropertiesThenFailueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);

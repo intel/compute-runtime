@@ -172,14 +172,9 @@ bool MetricIpSamplingLinuxImp::isDependencyAvailable() {
         return false;
     }
 
-    uint32_t notifyEveryNReports = 1u;
-    uint32_t samplingPeriod = 100;
-
-    ze_result_t status = startMeasurement(notifyEveryNReports, samplingPeriod);
-    if (stream != -1) {
-        stopMeasurement();
-    }
-    return status == ZE_RESULT_SUCCESS ? true : false;
+    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto ioctlHelper = drm->getIoctlHelper();
+    return ioctlHelper->isEuStallSupported();
 }
 
 ze_result_t MetricIpSamplingLinuxImp::getMetricsTimerResolution(uint64_t &timerResolution) {

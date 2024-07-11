@@ -97,3 +97,11 @@ TEST(IoctlHelperXeTest, whenCallingPerfDisableIoctlThenProperValueIsReturned) {
     int32_t invalidFd = -1;
     EXPECT_EQ(0, xeIoctlHelper.get()->ioctl(invalidFd, DrmIoctl::perfDisable, nullptr));
 }
+
+TEST(IoctlHelperXeTest, whenCallingIsEuStallSupportedThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+    EXPECT_NE(nullptr, xeIoctlHelper);
+    EXPECT_FALSE(xeIoctlHelper.get()->isEuStallSupported());
+}
