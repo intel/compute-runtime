@@ -1462,15 +1462,11 @@ TEST(IoctlHelperXeTest, givenDisabledFtrMultiTileArchWhenCreatingEngineInfoThenM
     }
 }
 
-struct IoctlHelperXeFenceWaitTest : public ::testing::TestWithParam<bool> {};
+using IoctlHelperXeFenceWaitTest = ::testing::Test;
 
-TEST_P(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
+TEST_F(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
     DebugManagerStateRestore restorer;
-    auto debuggingEnabled = GetParam();
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    if (debuggingEnabled) {
-        executionEnvironment->setDebuggingMode(DebuggingMode::online);
-    }
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
 
@@ -1501,7 +1497,7 @@ TEST_P(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
     EXPECT_EQ(1u, drm->syncInputs.size());
     EXPECT_EQ(1u, drm->waitUserFenceInputs.size());
     auto expectedMask = std::numeric_limits<uint64_t>::max();
-    auto expectedTimeout = debuggingEnabled ? -1 : 1000000000ll;
+    auto expectedTimeout = 1000000000ll;
     {
         auto &sync = drm->syncInputs[0];
 
@@ -1546,10 +1542,6 @@ TEST_P(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         EXPECT_EQ(expectedFlags, drm->vmBindInputs[0].bind.flags);
     }
 }
-
-INSTANTIATE_TEST_SUITE_P(,
-                         IoctlHelperXeFenceWaitTest,
-                         ::testing::Bool());
 
 TEST(IoctlHelperXeTest, givenVmBindWaitUserFenceTimeoutWhenCallingVmBindThenWaitUserFenceIsCalledWithSpecificTimeout) {
     DebugManagerStateRestore restorer;
