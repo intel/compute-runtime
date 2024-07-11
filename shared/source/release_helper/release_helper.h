@@ -48,6 +48,7 @@ class ReleaseHelper {
     virtual bool isRcsExposureDisabled() const = 0;
     virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
     virtual bool isBindlessAddressingDisabled() const = 0;
+    virtual bool isGlobalBindlessAllocatorEnabled() const = 0;
     virtual uint32_t getNumThreadsPerEu() const = 0;
     virtual uint64_t getTotalMemBankSize() const = 0;
     virtual const ThreadsPerEUConfigs getThreadsPerEUConfigs() const = 0;
@@ -88,6 +89,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isRcsExposureDisabled() const override;
     std::vector<uint32_t> getSupportedNumGrfs() const override;
     bool isBindlessAddressingDisabled() const override;
+    bool isGlobalBindlessAllocatorEnabled() const override;
     uint32_t getNumThreadsPerEu() const override;
     uint64_t getTotalMemBankSize() const override;
     const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const override;

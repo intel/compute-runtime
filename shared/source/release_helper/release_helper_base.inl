@@ -95,6 +95,11 @@ bool ReleaseHelperHw<releaseType>::isBindlessAddressingDisabled() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isGlobalBindlessAllocatorEnabled() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::getNumThreadsPerEu() const {
     return 8u;
 }

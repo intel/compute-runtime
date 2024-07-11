@@ -25,7 +25,7 @@ bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
         return debugManager.flags.UseExternalAllocatorForSshAndDsh.get();
     }
-    return false;
+    return releaseHelper ? releaseHelper->isGlobalBindlessAllocatorEnabled() : false;
 }
 
 bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *releaseHelper) {
