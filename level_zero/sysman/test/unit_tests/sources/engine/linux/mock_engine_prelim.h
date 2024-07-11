@@ -84,7 +84,9 @@ struct MockEngineNeoDrmPrelim : public Drm {
         i915QueryEngineInfo[6].engine.engineClass = invalidEngineClass;
         i915QueryEngineInfo[6].engine.engineInstance = 0;
 
-        this->engineInfo.reset(new EngineInfo(this, i915QueryEngineInfo));
+        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915QueryEngineInfo};
+
+        this->engineInfo.reset(new EngineInfo(this, engineInfosPerTile));
         return true;
     }
 

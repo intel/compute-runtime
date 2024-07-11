@@ -98,8 +98,9 @@ class MockIoctlHelperEngineInfoDetection : public IoctlHelperPrelim20 {
 
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override {
         std::vector<NEO::EngineCapabilities> engineInfo(0);
+        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{engineInfo};
 
-        return std::make_unique<EngineInfo>(&drm, engineInfo);
+        return std::make_unique<EngineInfo>(&drm, engineInfosPerTile);
     }
 };
 
@@ -245,7 +246,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenBcsEngineWhenBindingDrmCo
     EXPECT_EQ(ftrBcsInfoVal, hwInfo->featureTable.ftrBcsInfo.to_ulong());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingSingleTileDrmContextThenContextParamEngineIsSet) {
+HWTEST2_F(DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingSingleTileDrmContextThenContextParamEngineIsSet, IsXeHpcCore) {
     HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = false;
     localHwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 0;
@@ -324,7 +325,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainC
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, giveNotAllLinkBcsEnginesWhenBindingSingleTileDrmContextThenContextParamEngineIsSet) {
+HWTEST2_F(DrmTestXeHPAndLater, givenNotAllLinkBcsEnginesWhenBindingSingleTileDrmContextThenContextParamEngineIsSet, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
     HardwareInfo localHwInfo = *defaultHwInfo;
@@ -415,7 +416,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWhenBindingM
     }
 }
 
-HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalancing, IsAtLeastXeHpcCore) {
+HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalancing, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
     HardwareInfo localHwInfo = *defaultHwInfo;
@@ -444,7 +445,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContext
     }
 }
 
-HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalancingLimitedToMaxCount, IsAtLeastXeHpcCore) {
+HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalancingLimitedToMaxCount, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseDrmVirtualEnginesForBcs.set(1);
     debugManager.flags.LimitEngineCountForVirtualBcs.set(3);
@@ -474,7 +475,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesEnabledWhenCreatingContext
     }
 }
 
-HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContextThenDisableLoadBalancing, IsAtLeastXeHpcCore) {
+HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContextThenDisableLoadBalancing, IsXeHpcCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.UseDrmVirtualEnginesForBcs.set(0);
 
@@ -838,8 +839,8 @@ TEST(DrmTest, givenNewMemoryInfoQuerySupportedWhenQueryingEngineInfoThenEngineIn
     EXPECT_NE(nullptr, drm->engineInfo);
 }
 struct MockEngineInfo : EngineInfo {
+    using EngineInfo::EngineInfo;
     using EngineInfo::getBaseCopyEngineType;
-    MockEngineInfo(Drm *drm, const std::vector<EngineCapabilities> &engineInfos) : EngineInfo(drm, engineInfos){};
 };
 
 TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsIntegratedGpuThenBcs0AlwaysIsReturned) {
@@ -847,8 +848,9 @@ TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsIntegratedGpuThenBcs0Al
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
     std::vector<NEO::EngineCapabilities> i915engineInfo(1);
+    StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915engineInfo};
 
-    auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), i915engineInfo);
+    auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), engineInfosPerTile);
     bool isIntegratedGpu = true;
     auto caps = drm->ioctlHelper->getCopyClassSaturatePCIECapability();
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
@@ -866,7 +868,9 @@ TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsNotIntegratedGpuThenPro
     drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
     std::vector<NEO::EngineCapabilities> i915engineInfo(1);
 
-    auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), i915engineInfo);
+    StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915engineInfo};
+
+    auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), engineInfosPerTile);
     bool isIntegratedGpu = false;
     auto caps = drm->ioctlHelper->getCopyClassSaturatePCIECapability();
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));

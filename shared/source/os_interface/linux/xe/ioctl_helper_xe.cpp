@@ -861,12 +861,12 @@ void IoctlHelperXe::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT
     return;
 }
 
-std::optional<uint64_t> IoctlHelperXe::getCopyClassSaturatePCIECapability() {
+std::optional<uint64_t> IoctlHelperXe::getCopyClassSaturatePCIECapability() const {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return {};
 }
 
-std::optional<uint64_t> IoctlHelperXe::getCopyClassSaturateLinkCapability() {
+std::optional<uint64_t> IoctlHelperXe::getCopyClassSaturateLinkCapability() const {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return {};
 }

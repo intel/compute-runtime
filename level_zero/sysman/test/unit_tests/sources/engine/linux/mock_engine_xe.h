@@ -47,7 +47,8 @@ class MockNeoDrm : public NEO::Drm {
         mockEngineInfo[5].engine.engineClass = UINT16_MAX;
         mockEngineInfo[5].engine.engineInstance = 0;
 
-        this->engineInfo.reset(new NEO::EngineInfo(this, mockEngineInfo));
+        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{mockEngineInfo};
+        this->engineInfo.reset(new NEO::EngineInfo(this, engineInfosPerTile));
         return true;
     }
 };

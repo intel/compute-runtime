@@ -66,13 +66,21 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithRcsThenCorrectHwInfoSet) {
     engines[0].capabilities = 0;
     engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 0};
     engines[1].capabilities = 0;
-    auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engines);
+    StackVec<std::vector<EngineCapabilities>, 2> engineInfosPerTile{engines};
+    auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engineInfosPerTile);
 
     auto ccsInfo = hwInfo.gtSystemInfo.CCSInfo;
     EXPECT_FALSE(ccsInfo.IsValid);
     EXPECT_EQ(0u, ccsInfo.NumberOfCCSEnabled);
     EXPECT_EQ(0u, ccsInfo.Instances.CCSEnableMask);
-    EXPECT_EQ(1u, hwInfo.featureTable.ftrBcsInfo.to_ulong());
+
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
+    auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+    if (defaultCopyEngine == aub_stream::EngineType::ENGINE_BCS) {
+        EXPECT_EQ(1u, hwInfo.featureTable.ftrBcsInfo.to_ulong());
+    } else {
+        EXPECT_TRUE(hwInfo.featureTable.ftrBcsInfo.test(static_cast<uint32_t>(defaultCopyEngine) - static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS1) + 1));
+    }
 }
 
 TEST(EngineInfoTest, whenCallingGetEngineTileInfoCorrectValuesAreReturned) {
@@ -83,7 +91,8 @@ TEST(EngineInfoTest, whenCallingGetEngineTileInfoCorrectValuesAreReturned) {
     std::vector<EngineCapabilities> engines(1);
     engines[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassRender)), 0};
     engines[0].capabilities = 0;
-    auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engines);
+    StackVec<std::vector<EngineCapabilities>, 2> engineInfosPerTile{engines};
+    auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engineInfosPerTile);
 
     auto engineTileMap = engineInfo->getEngineTileInfo();
     auto it = engineTileMap.begin();
@@ -103,13 +112,21 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithCcsThenCorrectHwInfoSet) {
     engines[0].capabilities = 0;
     engines[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy)), 0};
     engines[1].capabilities = 0;
-    auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engines);
+    StackVec<std::vector<EngineCapabilities>, 2> engineInfosPerTile{engines};
+    auto engineInfo = std::make_unique<EngineInfo>(drm.get(), engineInfosPerTile);
 
     auto ccsInfo = hwInfo.gtSystemInfo.CCSInfo;
     EXPECT_TRUE(ccsInfo.IsValid);
     EXPECT_EQ(1u, ccsInfo.NumberOfCCSEnabled);
     EXPECT_EQ(1u, ccsInfo.Instances.CCSEnableMask);
-    EXPECT_EQ(1u, hwInfo.featureTable.ftrBcsInfo.to_ulong());
+
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
+    auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
+    if (defaultCopyEngine == aub_stream::EngineType::ENGINE_BCS) {
+        EXPECT_EQ(1u, hwInfo.featureTable.ftrBcsInfo.to_ulong());
+    } else {
+        EXPECT_TRUE(hwInfo.featureTable.ftrBcsInfo.test(static_cast<uint32_t>(defaultCopyEngine) - static_cast<uint32_t>(aub_stream::EngineType::ENGINE_BCS1) + 1));
+    }
 }
 
 TEST(EngineInfoTest, whenGetEngineInstanceAndTileThenCorrectValuesReturned) {

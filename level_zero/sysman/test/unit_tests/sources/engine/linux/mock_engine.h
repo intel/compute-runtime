@@ -65,7 +65,9 @@ struct MockEngineNeoDrm : public Drm {
         i915engineInfo[5].engine.engineClass = UINT16_MAX;
         i915engineInfo[5].engine.engineInstance = 0;
 
-        this->engineInfo.reset(new EngineInfo(this, i915engineInfo));
+        StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915engineInfo};
+
+        this->engineInfo.reset(new EngineInfo(this, engineInfosPerTile));
         return true;
     }
 };

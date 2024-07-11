@@ -131,8 +131,8 @@ class IoctlHelper {
     virtual void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) = 0;
     virtual void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
     virtual void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) = 0;
-    virtual std::optional<uint64_t> getCopyClassSaturatePCIECapability() = 0;
-    virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() = 0;
+    virtual std::optional<uint64_t> getCopyClassSaturatePCIECapability() const = 0;
+    virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() const = 0;
     virtual uint32_t getVmAdviseAtomicAttribute() = 0;
     virtual int vmBind(const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(const VmBindParams &vmBindParams) = 0;
@@ -284,8 +284,8 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) override;
-    std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
-    std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
+    std::optional<uint64_t> getCopyClassSaturatePCIECapability() const override;
+    std::optional<uint64_t> getCopyClassSaturateLinkCapability() const override;
     uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
@@ -362,8 +362,8 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) override;
-    std::optional<uint64_t> getCopyClassSaturatePCIECapability() override;
-    std::optional<uint64_t> getCopyClassSaturateLinkCapability() override;
+    std::optional<uint64_t> getCopyClassSaturatePCIECapability() const override;
+    std::optional<uint64_t> getCopyClassSaturateLinkCapability() const override;
     uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;

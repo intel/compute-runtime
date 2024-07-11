@@ -197,12 +197,13 @@ std::unique_ptr<EngineInfo> IoctlHelperI915::createEngineInfo(bool isSysmanEnabl
         return {};
     }
     auto engines = translateToEngineCaps(enginesQuery);
+    StackVec<std::vector<EngineCapabilities>, 2> engineInfosPerTile{engines};
     auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
 
     auto memInfo = drm.getMemoryInfo();
 
     if (!memInfo) {
-        return std::make_unique<EngineInfo>(&drm, engines);
+        return std::make_unique<EngineInfo>(&drm, engineInfosPerTile);
     }
 
     auto &memoryRegions = memInfo->getDrmRegionInfos();
@@ -234,7 +235,7 @@ std::unique_ptr<EngineInfo> IoctlHelperI915::createEngineInfo(bool isSysmanEnabl
     }
 
     if (tileCount == 0u) {
-        return std::make_unique<EngineInfo>(&drm, engines);
+        return std::make_unique<EngineInfo>(&drm, engineInfosPerTile);
     }
 
     std::vector<QueryItem> queryItems{distanceInfos.size()};
@@ -247,7 +248,7 @@ std::unique_ptr<EngineInfo> IoctlHelperI915::createEngineInfo(bool isSysmanEnabl
                                               [](const QueryItem &item) { return item.length == -EINVAL; });
     if (queryUnsupported) {
         DEBUG_BREAK_IF(tileCount != 1);
-        return std::make_unique<EngineInfo>(&drm, engines);
+        return std::make_unique<EngineInfo>(&drm, engineInfosPerTile);
     }
 
     memInfo->assignRegionsFromDistances(distanceInfos);

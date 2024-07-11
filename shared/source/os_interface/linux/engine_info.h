@@ -26,7 +26,6 @@ struct EngineInfo {
     using EngineToInstanceMap = std::map<aub_stream::EngineType, EngineClassInstance>;
 
     EngineInfo(Drm *drm, const StackVec<std::vector<EngineCapabilities>, 2> &engineInfosPerTile);
-    EngineInfo(Drm *drm, const std::vector<EngineCapabilities> &engineInfos);
     EngineInfo(Drm *drm, uint32_t tileCount, const std::vector<DistanceInfo> &distanceInfos, const std::vector<QueryItem> &queryItems, const std::vector<EngineCapabilities> &engineInfos);
 
     ~EngineInfo() = default;
@@ -39,13 +38,19 @@ struct EngineInfo {
     const std::vector<EngineCapabilities> &getEngineInfos() const;
 
   protected:
-    static aub_stream::EngineType getBaseCopyEngineType(IoctlHelper *ioctlHelper, uint64_t capabilities, bool isIntegratedDevice);
-    static void setSupportedEnginesInfo(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numComputeEngines, const BcsInfoMask &bcsInfoMask);
+    struct EngineCounters {
+        uint32_t numHostLinkCopyEngines = 0;
+        uint32_t numScaleUpLinkCopyEngines = 0;
+        uint32_t numComputeEngines = 0;
+    };
+
+    static aub_stream::EngineType getBaseCopyEngineType(const IoctlHelper *ioctlHelper, uint64_t capabilities, bool isIntegratedDevice);
+    static void setSupportedEnginesInfo(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numComputeEngines);
 
     void assignCopyEngine(aub_stream::EngineType baseEngineType, uint32_t tileId, const EngineClassInstance &engine,
-                          BcsInfoMask &bcsInfoMask, uint32_t &numHostLinkCopyEngines, uint32_t &numScaleUpLinkCopyEngines);
-    void mapEngine(const NEO::IoctlHelper *ioctlHelper, const EngineClassInstance &engine, BcsInfoMask &bcsInfoMask, const NEO::RootDeviceEnvironment &rootDeviceEnvironment,
-                   const aub_stream::EngineType *&mappingCopyEngineIt, uint32_t &computeEnginesCounter, uint32_t tileId = 0u);
+                          BcsInfoMask &bcsInfoMask, EngineCounters &engineCounters, const aub_stream::EngineType *&mappingCopyEngineIt);
+    void mapEngine(const NEO::IoctlHelper *ioctlHelper, const EngineCapabilities &engineInfo, const NEO::RootDeviceEnvironment &rootDeviceEnvironment,
+                   const aub_stream::EngineType *&mappingCopyEngineIt, EngineCounters &engineCounters, uint32_t tileId);
 
     std::vector<EngineCapabilities> engines;
     std::vector<EngineToInstanceMap> tileToEngineToInstanceMap;

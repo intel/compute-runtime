@@ -723,11 +723,11 @@ void IoctlHelperPrelim20::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUser
     return;
 }
 
-std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturatePCIECapability() {
+std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturatePCIECapability() const {
     return PRELIM_I915_COPY_CLASS_CAP_SATURATE_PCIE;
 }
 
-std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturateLinkCapability() {
+std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturateLinkCapability() const {
     return PRELIM_I915_COPY_CLASS_CAP_SATURATE_LINK;
 }
 
