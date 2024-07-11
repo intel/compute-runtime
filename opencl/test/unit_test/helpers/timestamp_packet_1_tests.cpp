@@ -1786,6 +1786,31 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedT
     EXPECT_TRUE(csr.isMadeResident(firstNode->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation(), csr.taskCount));
 }
 
+HWTEST_F(TimestampPacketTests, givenNonHwCsrWhenGettingNewTagThenSetupPageTables) {
+    auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1);
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketAllocator.reset(mockTagAllocator);
+    csr.timestampPacketWriteEnabled = true;
+
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+
+    auto allocation = mockTagAllocator->freeTags.peekHead()->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
+    EXPECT_TRUE(allocation->isTbxWritable(allBanks));
+    EXPECT_EQ(0u, csr.writeMemoryParams.totalCallCount);
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+    TimestampPacketContainer previousNodes;
+    cmdQ->obtainNewTimestampPacketNodes(1, previousNodes, false, cmdQ->getGpgpuCommandStreamReceiver());
+    EXPECT_GT(cmdQ->timestampPacketContainer->peekNodes().size(), 0u);
+
+    EXPECT_EQ(1u, csr.writeMemoryParams.totalCallCount);
+    EXPECT_EQ(0u, csr.writeMemoryParams.chunkWriteCallCount);
+    EXPECT_EQ(allocation, csr.writeMemoryParams.latestGfxAllocation);
+}
+
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThenMakeItResident) {
     auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1);
 

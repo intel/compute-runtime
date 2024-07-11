@@ -988,7 +988,16 @@ void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, Timestamp
     DEBUG_BREAK_IF(timestampPacketContainer->peekNodes().size() > 0);
 
     for (size_t i = 0; i < numberOfNodes; i++) {
-        timestampPacketContainer->add(allocator->getTag());
+        auto newTag = allocator->getTag();
+
+        if (csr.getType() != CommandStreamReceiverType::hardware) {
+            auto tagAlloc = newTag->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex());
+
+            // initialize full page tables for the first time
+            csr.writeMemory(*tagAlloc, false, 0, 0);
+        }
+
+        timestampPacketContainer->add(newTag);
     }
 }
 
