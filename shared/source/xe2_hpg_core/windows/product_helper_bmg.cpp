@@ -41,5 +41,14 @@ bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
     return true;
 }
 
+template <>
+uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const {
+    if (allocationType == AllocationType::sharedImage && patIndex == 8u) { // L3: UC
+        return 13;                                                         // L3, L4: WB, Non coh
+    }
+
+    return patIndex;
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO
