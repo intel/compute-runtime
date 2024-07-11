@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -219,6 +219,17 @@ TEST_F(GlArbSyncEventTest, whenGlArbSyncEventGetsUnblockedByQueuedBaseEventThenS
     auto *syncEv = createArbEventMock<DummyArbEvent<false>>();
     syncEv->unblockEventBy(*this->baseEvent, 0, CL_QUEUED);
     EXPECT_FALSE(syncEv->getSyncInfo()->waitCalled);
+    syncEv->release();
+}
+
+TEST_F(GlArbSyncEventTest, whenUnblockCompletedEventThenStopDirectSubmission) {
+    auto *syncEv = new DummyArbEvent<false>(*ctx);
+    syncEv->useBaseSetEvent = true;
+    bool ret = syncEv->setBaseEvent(*getBaseEvent());
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(static_cast<MockCommandStreamReceiver *>(&syncEv->getCommandQueue()->getGpgpuCommandStreamReceiver())->blockingStopDirectSubmissionCalled);
+    syncEv->unblockEventBy(*this->baseEvent, 0, CL_COMPLETE);
+    EXPECT_TRUE(static_cast<MockCommandStreamReceiver *>(&syncEv->getCommandQueue()->getGpgpuCommandStreamReceiver())->blockingStopDirectSubmissionCalled);
     syncEv->release();
 }
 
