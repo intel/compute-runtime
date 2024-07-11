@@ -209,10 +209,22 @@ bool CommandQueueHw<Family>::isGpgpuSubmissionForBcsRequired(bool queueBlocked, 
     if (queueBlocked || timestampPacketDependencies.barrierNodes.peekNodes().size() > 0u) {
         return true;
     }
-
-    bool required = (latestSentEnqueueType != EnqueueProperties::Operation::blit) &&
-                    (latestSentEnqueueType != EnqueueProperties::Operation::none) &&
-                    (isCacheFlushForBcsRequired() || !(getGpgpuCommandStreamReceiver().getDispatchMode() == DispatchMode::immediateDispatch || getGpgpuCommandStreamReceiver().isLatestTaskCountFlushed()));
+    bool required = false;
+    switch (latestSentEnqueueType) {
+    case NEO::EnqueueProperties::Operation::explicitCacheFlush:
+    case NEO::EnqueueProperties::Operation::enqueueWithoutSubmission:
+    case NEO::EnqueueProperties::Operation::gpuKernel:
+    case NEO::EnqueueProperties::Operation::profilingOnly:
+        required = isCacheFlushForBcsRequired() || !(getGpgpuCommandStreamReceiver().getDispatchMode() == DispatchMode::immediateDispatch || getGpgpuCommandStreamReceiver().isLatestTaskCountFlushed());
+        break;
+    case NEO::EnqueueProperties::Operation::dependencyResolveOnGpu:
+        return true;
+        break;
+    case NEO::EnqueueProperties::Operation::none:
+    case NEO::EnqueueProperties::Operation::blit:
+    default:
+        break;
+    }
 
     if (debugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.get() == 1) {
         required = true;

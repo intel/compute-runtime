@@ -8,6 +8,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -71,6 +72,90 @@ struct MockBuilder : BuiltinDispatchInfoBuilder {
     mutable Params paramsReceived;
     Params paramsToUse;
 };
+
+using MultiIoqCmdQSynchronizationTest = CommandQueueHwBlitTest<false>;
+
+HWTEST_F(MultiIoqCmdQSynchronizationTest, givenTwoIoqCmdQsWhenEnqueuesSynchronizedWithMarkersThenCorrectSynchronizationIsApplied) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    if (pCmdQ->getTimestampPacketContainer() == nullptr) {
+        GTEST_SKIP();
+    }
+
+    auto buffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+    char ptr[1] = {};
+
+    auto pCmdQ2 = createCommandQueue(pClDevice);
+    cl_event outEvent;
+    size_t offset = 0;
+    cl_int status;
+    status = pCmdQ->enqueueWriteBuffer(buffer.get(), CL_FALSE, offset, 1u, ptr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    status = pCmdQ->enqueueMarkerWithWaitList(0, nullptr, &outEvent);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    auto node = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes().at(0);
+    const auto nodeGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*node);
+
+    auto cmdQ2Start = pCmdQ2->getCS(0).getUsed();
+    status = pCmdQ2->enqueueMarkerWithWaitList(1, &outEvent, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    auto bcsStart = pCmdQ2->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->getCS(0).getUsed();
+    status = pCmdQ2->enqueueReadBuffer(buffer.get(), CL_FALSE, offset, 1u, ptr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    uint64_t bcsSemaphoreAddress = 0x0;
+
+    {
+        LinearStream &bcsStream = pCmdQ2->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->getCS(0);
+        HardwareParse bcsHwParser;
+        bcsHwParser.parseCommands<FamilyType>(bcsStream, bcsStart);
+        auto semaphoreCmdBcs = genCmdCast<MI_SEMAPHORE_WAIT *>(*bcsHwParser.cmdList.begin());
+        EXPECT_NE(nullptr, semaphoreCmdBcs);
+        EXPECT_EQ(1u, semaphoreCmdBcs->getSemaphoreDataDword());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmdBcs->getCompareOperation());
+        bcsSemaphoreAddress = semaphoreCmdBcs->getSemaphoreGraphicsAddress();
+    }
+
+    {
+        LinearStream &cmdQ2Stream = pCmdQ2->getCS(0);
+        HardwareParse ccsHwParser;
+        ccsHwParser.parseCommands<FamilyType>(cmdQ2Stream, cmdQ2Start);
+        const auto semaphoreCcsItor = find<MI_SEMAPHORE_WAIT *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreCcsItor);
+        ASSERT_NE(nullptr, semaphoreCmd);
+        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(nodeGpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+
+        bool pipeControlForBcsSemaphoreFound = false;
+        auto pipeControlsAfterSemaphore = findAll<PIPE_CONTROL *>(semaphoreCcsItor, ccsHwParser.cmdList.end());
+        for (auto pipeControlIter : pipeControlsAfterSemaphore) {
+            auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControlIter);
+            if (0u == pipeControlCmd->getImmediateData() &&
+                PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA == pipeControlCmd->getPostSyncOperation() &&
+                NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd) == bcsSemaphoreAddress) {
+                pipeControlForBcsSemaphoreFound = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(pipeControlForBcsSemaphoreFound);
+    }
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    EXPECT_EQ(CL_SUCCESS, pCmdQ2->finish());
+
+    clReleaseEvent(outEvent);
+    // tearDown
+    if (pCmdQ2) {
+        auto blocked = pCmdQ2->isQueueBlocked();
+        UNRECOVERABLE_IF(blocked);
+        pCmdQ2->release();
+    }
+}
 
 struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
