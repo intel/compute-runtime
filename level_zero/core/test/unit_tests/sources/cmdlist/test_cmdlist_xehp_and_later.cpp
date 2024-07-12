@@ -2349,6 +2349,8 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
           IsAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
+    auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csrImmediate.storeMakeResidentAllocations = true;
     auto &csrStream = csrImmediate.commandStream;
@@ -2385,7 +2387,11 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
     EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
 
     EXPECT_EQ(dshRequired, sbaCmd->getDynamicStateBaseAddressModifyEnable());
-    EXPECT_EQ(dsBaseAddress, sbaCmd->getDynamicStateBaseAddress());
+    if (bindlessHeapsHelper) {
+        EXPECT_EQ(bindlessHeapsHelper->getGlobalHeapsBase(), sbaCmd->getDynamicStateBaseAddress());
+    } else {
+        EXPECT_EQ(dsBaseAddress, sbaCmd->getDynamicStateBaseAddress());
+    }
 
     EXPECT_EQ(ioBaseAddress, sbaCmd->getGeneralStateBaseAddress());
 

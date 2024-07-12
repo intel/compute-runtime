@@ -102,6 +102,8 @@ void MultiDeviceFixture::setUp() {
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     auto executionEnvironment = new NEO::ExecutionEnvironment;
+    executionEnvironment->prepareRootDeviceEnvironments(1u);
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
     auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     ze_result_t res = driverHandle->initialize(std::move(devices));

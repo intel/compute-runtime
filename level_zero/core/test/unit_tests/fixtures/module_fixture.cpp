@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
@@ -163,6 +164,9 @@ void ModuleFixture::createKernel() {
     kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
     kernel->module = module.get();
     kernel->initialize(&desc);
+    if (NEO::ApiSpecificConfig::getBindlessMode(device->getNEODevice()->getReleaseHelper())) {
+        const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindless;
+    }
 }
 
 std::unique_ptr<WhiteBox<::L0::KernelImp>> ModuleFixture::createKernelWithName(std::string name) {
