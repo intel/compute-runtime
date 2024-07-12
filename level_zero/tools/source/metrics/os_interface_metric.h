@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/constants.h"
 
 #include <level_zero/zet_api.h>
 
@@ -32,6 +34,10 @@ class MetricIpSamplingOsInterface : public MetricOsInterface {
     virtual bool isNReportsAvailable() = 0;
     virtual bool isDependencyAvailable() = 0;
     static std::unique_ptr<MetricIpSamplingOsInterface> create(Device &device);
+
+    uint32_t maxDssBufferSize = 512 * MemoryConstants::kiloByte;
+    uint32_t defaultPollPeriodNs = 10000000u;
+    uint32_t unitReportSize = 64u;
 };
 
 class MetricOAOsInterface : public MetricOsInterface {

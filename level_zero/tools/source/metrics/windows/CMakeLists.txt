@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,5 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_metric_oa_streamer_imp_windows.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_metric_oa_query_imp_windows.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_metric_oa_enumeration_imp_windows.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/os_metric_ip_sampling_imp_windows.cpp
   )
 endif()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -201,7 +201,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenCloseFailsWhenStopMeasurementIsC
     EXPECT_EQ(metricIpSamplingOsInterface->stopMeasurement(), ZE_RESULT_ERROR_UNKNOWN);
 }
 
-HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenI915PerfIoctlDisableFailsWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
+HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenI915PerfIoctlDisableFailsWhenStopMeasurementIsCalledThenReturnFailure, IsPVC) {
 
     VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
         if (request == I915_PERF_IOCTL_DISABLE) {
@@ -279,7 +279,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndUnsuppo
     EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
 }
 
-HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndSupportedDeviceIdIsUsedWhenIsDependencyAvailableIsCalledThenReturnFailure, IsPVC) {
+HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndSupportedDeviceIdIsUsedWhenIsDependencyAvailableIsCalledThenReturnSucess, IsPVC) {
 
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;

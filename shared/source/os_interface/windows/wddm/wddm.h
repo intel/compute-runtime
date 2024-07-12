@@ -190,6 +190,10 @@ class Wddm : public DriverModel {
 
     uint32_t getTimestampFrequency() const { return timestampFrequency; }
 
+    MOCKABLE_VIRTUAL bool perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize);
+    MOCKABLE_VIRTUAL bool perfDisableEuStallStream();
+    MOCKABLE_VIRTUAL bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize);
+
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
 
     size_t getMaxMemAllocSize() const override;

@@ -24,10 +24,6 @@
 
 namespace L0 {
 
-constexpr uint32_t maxDssBufferSize = 512 * MemoryConstants::kiloByte;
-constexpr uint32_t defaultPollPeriodNs = 10000000u;
-constexpr uint32_t unitReportSize = 64u;
-
 class MetricIpSamplingLinuxImp : public MetricIpSamplingOsInterface {
   public:
     MetricIpSamplingLinuxImp(Device &device);
