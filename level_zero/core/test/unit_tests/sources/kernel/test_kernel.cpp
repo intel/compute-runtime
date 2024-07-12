@@ -2875,6 +2875,7 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgIma
 
     mockMemManager->failInDevicePool = true;
     mockMemManager->failAllocateSystemMemory = true;
+    mockMemManager->failAllocate32Bit = true;
     bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
 
     ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
@@ -3009,6 +3010,7 @@ HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperImageViewAndNoAvailableSpaceOnS
 
     mockMemManager->failInDevicePool = true;
     mockMemManager->failAllocateSystemMemory = true;
+    mockMemManager->failAllocate32Bit = true;
     bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
 
     ze_image_handle_t imageViewHandle;
@@ -3028,6 +3030,9 @@ HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperImageViewAndNoAvailableSpaceOnS
 
 HWTEST2_F(SetKernelArg, givenNoGlobalBindlessHelperAndImageViewWhenAllocatingBindlessSlotThenSlotIsNotAllocated, ImageSupport) {
     createKernel();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
+    ASSERT_EQ(nullptr, neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get());
 
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
     auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
@@ -3122,6 +3127,7 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgRed
 
     mockMemManager->failInDevicePool = true;
     mockMemManager->failAllocateSystemMemory = true;
+    mockMemManager->failAllocate32Bit = true;
     bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
 
     ret = kernel->setArgRedescribedImage(3, handle);
@@ -3156,6 +3162,7 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgBuf
 
     mockMemManager->failInDevicePool = true;
     mockMemManager->failAllocateSystemMemory = true;
+    mockMemManager->failAllocate32Bit = true;
     auto ret = mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
 

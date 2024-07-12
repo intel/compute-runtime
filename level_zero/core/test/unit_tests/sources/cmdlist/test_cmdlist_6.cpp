@@ -1277,6 +1277,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
 
+    auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
     auto &cmdContainer = commandListImmediate->commandContainer;
 
     EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
@@ -1325,7 +1326,11 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     auto &sbaCmd = *genCmdCast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
     if (this->dshRequired) {
         EXPECT_TRUE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
-        EXPECT_EQ(csrDshHeap->getHeapGpuBase(), sbaCmd.getDynamicStateBaseAddress());
+        if (bindlessHeapsHelper) {
+            EXPECT_EQ(bindlessHeapsHelper->getGlobalHeapsBase(), sbaCmd.getDynamicStateBaseAddress());
+        } else {
+            EXPECT_EQ(csrDshHeap->getHeapGpuBase(), sbaCmd.getDynamicStateBaseAddress());
+        }
     } else {
         EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
         EXPECT_EQ(0u, sbaCmd.getDynamicStateBaseAddress());

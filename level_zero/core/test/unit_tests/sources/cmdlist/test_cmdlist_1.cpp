@@ -115,6 +115,9 @@ TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
+    auto neoDevice = device->getNEODevice();
+    auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
@@ -135,6 +138,8 @@ TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
     for (uint32_t i = 0; i < NEO::HeapType::numTypes; i++) {
         auto heapType = static_cast<NEO::HeapType>(i);
         if (NEO::HeapType::dynamicState == heapType && !device->getHwInfo().capabilityTable.supportsImages) {
+            ASSERT_EQ(commandList->getCmdContainer().getIndirectHeap(heapType), nullptr);
+        } else if (NEO::HeapType::surfaceState == heapType && bindlessHeapsHelper) {
             ASSERT_EQ(commandList->getCmdContainer().getIndirectHeap(heapType), nullptr);
         } else {
             ASSERT_NE(commandList->getCmdContainer().getIndirectHeap(heapType), nullptr);
