@@ -2,18 +2,10 @@
 /*
  * Copyright © 2023 Intel Corporation
  */
-#ifndef _UAPI_XE_DRM_TMP_H_
-#define _UAPI_XE_DRM_TMP_H_
 
-#include "xe_drm.h"
-
-#if defined(__cplusplus)
-extern "C" {
+#if !defined(_UAPI_XE_DRM_H_)
+	error "Do not include this directly"
 #endif
-
-#define DRM_XE_EUDEBUG_CONNECT			0x5f
-
-#define DRM_IOCTL_XE_EUDEBUG_CONNECT		DRM_IOWR(DRM_COMMAND_BASE + DRM_XE_EUDEBUG_CONNECT, struct drm_xe_eudebug_connect)
 
 /**
  * Do a eudebug event read for a debugger connection.
@@ -22,30 +14,27 @@ extern "C" {
  */
 #define DRM_XE_EUDEBUG_IOCTL_READ_EVENT		_IO('j', 0x0)
 #define DRM_XE_EUDEBUG_IOCTL_EU_CONTROL		_IOWR('j', 0x2, struct drm_xe_eudebug_eu_control)
+#define DRM_XE_EUDEBUG_IOCTL_ACK_EVENT		_IOW('j', 0x4, struct drm_xe_eudebug_ack_event)
 #define DRM_XE_EUDEBUG_IOCTL_VM_OPEN		_IOW('j', 0x1, struct drm_xe_eudebug_vm_open)
 #define DRM_XE_EUDEBUG_IOCTL_READ_METADATA	_IOWR('j', 0x3, struct drm_xe_eudebug_read_metadata)
-#define DRM_XE_EUDEBUG_IOCTL_ACK_EVENT		_IOW('j', 0x4, struct drm_xe_eudebug_ack_event)
 
 /* XXX: Document events to match their internal counterparts when moved to xe_drm.h */
 struct drm_xe_eudebug_event {
 	__u32 len;
 
 	__u16 type;
-#define DRM_XE_EUDEBUG_EVENT_NONE 0
-#define DRM_XE_EUDEBUG_EVENT_READ 1
-#define DRM_XE_EUDEBUG_EVENT_OPEN 2
-#define DRM_XE_EUDEBUG_EVENT_VM 3
-#define DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE 4
-#define DRM_XE_EUDEBUG_EVENT_EU_ATTENTION 5
-#define DRM_XE_EUDEBUG_EVENT_VM_BIND 6
-#define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP 7
-#define DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE 8
-#define DRM_XE_EUDEBUG_EVENT_METADATA 9
+#define DRM_XE_EUDEBUG_EVENT_NONE		0
+#define DRM_XE_EUDEBUG_EVENT_READ		1
+#define DRM_XE_EUDEBUG_EVENT_OPEN		2
+#define DRM_XE_EUDEBUG_EVENT_VM			3
+#define DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE		4
+#define DRM_XE_EUDEBUG_EVENT_EU_ATTENTION	5
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND		6
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP		7
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE	8
+#define DRM_XE_EUDEBUG_EVENT_METADATA		9
 #define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA 10
-#define DRM_XE_EUDEBUG_EVENT_VM_SET_METADATA 11
-#define DRM_XE_EUDEBUG_EVENT_PAGEFAULT 12
-#define DRM_XE_EUDEBUG_EVENT_SYNC_HOST 13
-#define DRM_XE_EUDEBUG_EVENT_MAX_EVENT DRM_XE_EUDEBUG_EVENT_SYNC_HOST
+#define DRM_XE_EUDEBUG_EVENT_MAX_EVENT		DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA
 
 	__u16 flags;
 #define DRM_XE_EUDEBUG_EVENT_CREATE		(1 << 0)
@@ -55,20 +44,20 @@ struct drm_xe_eudebug_event {
 
 	__u64 seqno;
 	__u64 reserved;
-} __attribute__((packed));
+};
 
 struct drm_xe_eudebug_event_client {
 	struct drm_xe_eudebug_event base;
 
 	__u64 client_handle; /* This is unique per debug connection */
-} __attribute__((packed));
+};
 
 struct drm_xe_eudebug_event_vm {
 	struct drm_xe_eudebug_event base;
 
 	__u64 client_handle;
 	__u64 vm_handle;
-} __attribute__((packed));
+};
 
 struct drm_xe_eudebug_event_exec_queue {
 	struct drm_xe_eudebug_event base;
@@ -78,8 +67,8 @@ struct drm_xe_eudebug_event_exec_queue {
 	__u64 exec_queue_handle;
 	__u32 engine_class;
 	__u32 width;
-	__u64 lrc_handle[0];
-} __attribute__((packed));
+	__u64 lrc_handle[];
+};
 
 struct drm_xe_eudebug_event_eu_attention {
 	struct drm_xe_eudebug_event base;
@@ -89,8 +78,26 @@ struct drm_xe_eudebug_event_eu_attention {
 	__u64 lrc_handle;
 	__u32 flags;
 	__u32 bitmask_size;
-	__u8 bitmask[0];
-} __attribute__((packed));
+	__u8 bitmask[];
+};
+
+struct drm_xe_eudebug_eu_control {
+	__u64 client_handle;
+
+#define DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL	0
+#define DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED		1
+#define DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME		2
+	__u32 cmd;
+	__u32 flags;
+
+	__u64 seqno;
+
+	__u64 exec_queue_handle;
+	__u64 lrc_handle;
+	__u32 reserved;
+	__u32 bitmask_size;
+	__u64 bitmask_ptr;
+};
 
 /*
  *  When client (debuggee) does vm_bind_ioctl() following event
@@ -126,7 +133,7 @@ struct drm_xe_eudebug_event_eu_attention {
  *
  * Client's UFENCE sync will be held by the driver: client's
  * drm_xe_wait_ufence will not complete and the value of the ufence
- * wont appear until ufence is acked by the debugger process calling
+ * won't appear until ufence is acked by the debugger process calling
  * DRM_XE_EUDEBUG_IOCTL_ACK_EVENT with the event_ufence.base.seqno.
  * This will signal the fence, .value will update and the wait will
  * complete allowing the client to continue.
@@ -138,11 +145,12 @@ struct drm_xe_eudebug_event_vm_bind {
 
 	__u64 client_handle;
 	__u64 vm_handle;
+
 	__u32 flags;
 #define DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE (1 << 0)
 
 	__u32 num_binds;
-} __attribute__((packed));
+};
 
 struct drm_xe_eudebug_event_vm_bind_op {
 	struct drm_xe_eudebug_event base;
@@ -151,102 +159,19 @@ struct drm_xe_eudebug_event_vm_bind_op {
 
 	__u64 addr; /* XXX: Zero for unmap all? */
 	__u64 range; /* XXX: Zero for unmap all? */
-} __attribute__((packed));
+};
 
 struct drm_xe_eudebug_event_vm_bind_ufence {
 	struct drm_xe_eudebug_event base;
 	__u64 vm_bind_ref_seqno; /* *_event_vm_bind.base.seqno */
-} __attribute__((packed));
+};
 
-struct drm_xe_eudebug_event_metadata {
-	struct drm_xe_eudebug_event base;
-
-	__u64 client_handle;
-	__u64 metadata_handle;
-	/* XXX: Refer to xe_drm.h for fields */
-	__u64 type;
-	__u64 len;
-} __attribute__((packed));
-
-struct drm_xe_eudebug_event_vm_bind_op_metadata {
-	struct drm_xe_eudebug_event base;
-	__u64 vm_bind_op_ref_seqno; /* *_event_vm_bind_op.base.seqno */
-
-	__u64 metadata_handle;
-	__u64 metadata_cookie;
-} __attribute__((packed));
-
-struct drm_xe_eudebug_event_vm_set_metadata {
-	struct drm_xe_eudebug_event base;
-
-	__u64 client_handle;
-	__u64 vm_handle;
-
-	/* XXX: Refer to xe_drm.h for fields */
-	__u64 type;
-	union {
-		__u64 cookie;
-		__u64 offset;
-	};
-	__u64 len;
-} __attribute__((packed));
-
-struct drm_xe_eudebug_event_pagefault {
-	struct drm_xe_eudebug_event base;
-
-	__u64 client_handle;
-	__u64 exec_queue_handle;
-	__u64 lrc_handle;
-	__u64 pagefault_address;
-
-	__u32 fault_flags;
-
-	__u32 bitmask_size;
-	__u8 bitmask[0];
-} __attribute__((packed));
-
-struct drm_xe_eudebug_event_sync_host {
-	struct drm_xe_eudebug_event base;
-	__u64 client_handle;
-	__u64 exec_queue_handle;
-	__u64 lrc_handle;
-} __attribute__((packed));
-
-/*
- * Debugger ABI (ioctl and events) Version History:
- * 0 - No debugger available
- * 1 - Initial version
- */
-#define DRM_XE_EUDEBUG_VERSION 1
-
-struct drm_xe_eudebug_connect {
-	/** @extensions: Pointer to the first extension struct, if any */
-	__u64 extensions;
-
-	__u64 pid; /* input: Target process ID */
+struct drm_xe_eudebug_ack_event {
+	__u32 type;
 	__u32 flags; /* MBZ */
-
-	__u32 version; /* output: current ABI (ioctl / events) version */
-};
-
-struct drm_xe_eudebug_eu_control {
-	__u64 client_handle;
-
-#define DRM_XE_EUDEBUG_EU_CONTROL_CMD_INTERRUPT_ALL	0
-#define DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED		1
-#define DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME		2
-#define DRM_XE_EUDEBUG_EU_CONTROL_CMD_UNLOCK		3
-	__u32 cmd;
-
-	__u32 flags;
 	__u64 seqno;
-
-	__u64 exec_queue_handle;
-	__u64 lrc_handle;
-	__u32 bitmask_size;
-	__u64 bitmask_ptr;
 };
-
+	
 struct drm_xe_eudebug_vm_open {
 	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
@@ -268,19 +193,25 @@ struct drm_xe_eudebug_read_metadata {
 	__u64 client_handle;
 	__u64 metadata_handle;
 	__u32 flags;
-
+	__u32 reserved;
 	__u64 ptr;
 	__u64 size;
 };
 
-struct drm_xe_eudebug_ack_event {
-	__u32 type;
-	__u32 flags; /* MBZ */
-	__u64 seqno;
+struct drm_xe_eudebug_event_metadata {
+	struct drm_xe_eudebug_event base;
+
+	__u64 client_handle;
+	__u64 metadata_handle;
+	/* XXX: Refer to xe_drm.h for fields */
+	__u64 type;
+	__u64 len;
 };
 
-#if defined(__cplusplus)
-}
-#endif
+struct drm_xe_eudebug_event_vm_bind_op_metadata {
+	struct drm_xe_eudebug_event base;
+	__u64 vm_bind_op_ref_seqno; /* *_event_vm_bind_op.base.seqno */
 
-#endif /* _UAPI_XE_DRM_TMP_H_ */
+	__u64 metadata_handle;
+	__u64 metadata_cookie;
+};

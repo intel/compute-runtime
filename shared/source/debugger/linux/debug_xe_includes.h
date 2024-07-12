@@ -8,4 +8,3 @@
 #pragma once
 
 #include "third_party/uapi-eudebug/drm/xe_drm.h"
-#include "third_party/uapi-eudebug/drm/xe_drm_tmp.h"

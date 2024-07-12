@@ -124,7 +124,6 @@ class IoctlHelperXe : public IoctlHelper {
     bool setDomainCpu(uint32_t handle, bool writeEnable) override;
     uint16_t getCpuCachingMode(std::optional<bool> isCoherent, bool allocationInSystemMemory) const;
     void addDebugMetadata(DrmResourceClass type, uint64_t *offset, uint64_t size);
-    void addDebugMetadataCookie(uint64_t cookie);
     uint32_t registerResource(DrmResourceClass classType, const void *data, size_t size) override;
     void unregisterResource(uint32_t handle) override;
     void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) override;
@@ -147,11 +146,9 @@ class IoctlHelperXe : public IoctlHelper {
     int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
     void xeShowBindTable();
     void updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size);
-    void *allocateDebugMetadata();
     int debuggerOpenIoctl(DrmIoctl request, void *arg);
     int debuggerMetadataCreateIoctl(DrmIoctl request, void *arg);
     int debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg);
-    void *freeDebugMetadata(void *metadata);
     int getRunaloneExtProperty();
     virtual bool isExtraEngineClassAllowed(uint16_t engineClass) const { return false; }
     virtual uint32_t getCxlType(struct drm_xe_query_config *config) { return 0u; }
@@ -194,7 +191,6 @@ class IoctlHelperXe : public IoctlHelper {
         uint64_t size;
         bool isCookie;
     };
-    std::vector<DebugMetadata> debugMetadata;
 
     template <typename... XeLogArgs>
     void xeLog(XeLogArgs &&...args) const;

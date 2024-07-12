@@ -29,22 +29,6 @@ int IoctlHelperXe::debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg) {
     return 0;
 }
 
-void *IoctlHelperXe::allocateDebugMetadata() {
-    UNRECOVERABLE_IF(true);
-    return nullptr;
-}
-
-void *IoctlHelperXe::freeDebugMetadata(void *metadata) {
-    UNRECOVERABLE_IF(true);
-    return nullptr;
-}
-
-void IoctlHelperXe::addDebugMetadataCookie(uint64_t cookie) {
-}
-
-void IoctlHelperXe::addDebugMetadata(DrmResourceClass type, uint64_t *offset, uint64_t size) {
-}
-
 int IoctlHelperXe::getRunaloneExtProperty() {
     UNRECOVERABLE_IF(true);
     return 0;

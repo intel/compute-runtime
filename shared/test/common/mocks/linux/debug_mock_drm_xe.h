@@ -29,8 +29,6 @@ using namespace NEO;
 
 struct MockIoctlHelperXeDebug : IoctlHelperXe {
     using IoctlHelperXe::bindInfo;
-    using IoctlHelperXe::debugMetadata;
-    using IoctlHelperXe::freeDebugMetadata;
     using IoctlHelperXe::getRunaloneExtProperty;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::tileIdToGtId;
@@ -121,12 +119,6 @@ struct DrmMockXeDebug : public DrmMockCustom {
             ret = 0;
         } break;
         case DrmIoctl::gemVmCreate: {
-            struct drm_xe_vm_create *v = static_cast<struct drm_xe_vm_create *>(arg);
-            drm_xe_ext_vm_set_debug_metadata *metadata = reinterpret_cast<drm_xe_ext_vm_set_debug_metadata *>(v->extensions);
-            while (metadata) {
-                vmCreateMetadata.push_back(*metadata);
-                metadata = reinterpret_cast<drm_xe_ext_vm_set_debug_metadata *>(metadata->base.next_extension);
-            }
             ret = 0;
         } break;
         case DrmIoctl::debuggerOpen: {
@@ -209,7 +201,6 @@ struct DrmMockXeDebug : public DrmMockCustom {
     uint64_t metadataType = 9999;
 
     alignas(64) std::vector<uint8_t> queryTopology;
-    std::vector<drm_xe_ext_vm_set_debug_metadata> vmCreateMetadata;
     std::vector<drm_xe_engine_class_instance> execQueueEngineInstances;
     drm_xe_exec_queue_create execQueueCreateParams = {};
     StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;

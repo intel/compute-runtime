@@ -1074,15 +1074,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         GemVmControl *vmControl = static_cast<GemVmControl *>(arg);
         struct drm_xe_vm_create args = {};
         args.flags = vmControl->flags;
-
-        if (drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() != DebuggingMode::disabled) {
-            args.extensions = reinterpret_cast<unsigned long long>(allocateDebugMetadata());
-        }
         ret = IoctlHelper::ioctl(request, &args);
-        if (drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() != DebuggingMode::disabled) {
-            args.extensions = reinterpret_cast<unsigned long long>(freeDebugMetadata(reinterpret_cast<void *>(args.extensions)));
-        }
-
         vmControl->vmId = args.vm_id;
         xeLog(" -> IoctlHelperXe::ioctl gemVmCreate f=0x%x vmid=0x%x r=%d\n", vmControl->flags, vmControl->vmId, ret);
 
