@@ -175,7 +175,7 @@ typedef struct _zex_intel_queue_copy_operations_offload_hint_exp_desc_t {
 #define ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME "ZEX_intel_experimental_queue_copy_operations_offload_hint"
 #endif // ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME
 
-#define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES (ze_structure_type_t)0x00030019
+#define ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES (ze_structure_type_t)0x0003001B
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Queue copy operations offload hint extension version(s)
