@@ -1177,6 +1177,23 @@ TEST(IoctlHelperXeTest, givenMissingSupportedTopologiesWhenGetTopologyDataAndMap
     EXPECT_FALSE(result);
 }
 
+TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenWmtpInfoMaskIsProperlySet) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    EXPECT_EQ(0u, hwInfo.featureTable.wmtpInfoMask.to_ulong());
+    auto engineInfo = xeIoctlHelper->createEngineInfo(false);
+    EXPECT_FALSE(hwInfo.featureTable.wmtpInfoMask.test(static_cast<uint32_t>(aub_stream::EngineType::ENGINE_CCS)));
+    EXPECT_TRUE(hwInfo.featureTable.wmtpInfoMask.test(static_cast<uint32_t>(aub_stream::EngineType::ENGINE_CCS1)));
+    EXPECT_FALSE(hwInfo.featureTable.wmtpInfoMask.test(static_cast<uint32_t>(aub_stream::EngineType::ENGINE_CCS2)));
+    EXPECT_FALSE(hwInfo.featureTable.wmtpInfoMask.test(static_cast<uint32_t>(aub_stream::EngineType::ENGINE_CCS3)));
+    EXPECT_FALSE(hwInfo.featureTable.wmtpInfoMask.test(static_cast<uint32_t>(aub_stream::EngineType::ENGINE_RCS)));
+    EXPECT_FALSE(hwInfo.featureTable.wmtpInfoMask.test(static_cast<uint32_t>(aub_stream::EngineType::ENGINE_CCCS)));
+}
+
 TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

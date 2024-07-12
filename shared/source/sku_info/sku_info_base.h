@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "aubstream/engine_node.h"
+
 #include <array>
 #include <bitset>
 #include <cstdint>
@@ -14,6 +16,7 @@
 namespace NEO {
 constexpr size_t bcsInfoMaskSize = 9u;
 using BcsInfoMask = std::bitset<bcsInfoMaskSize>;
+using WmtpInfoMask = std::bitset<aub_stream::EngineType::NUM_ENGINES>;
 
 struct FeatureTableBase {
   public:
@@ -75,6 +78,7 @@ struct FeatureTableBase {
     };
 
     BcsInfoMask ftrBcsInfo = 1;
+    WmtpInfoMask wmtpInfoMask{};
 
     union {
         Flags flags;
