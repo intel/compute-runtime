@@ -676,6 +676,13 @@ TEST_F(WddmCommandStreamTest, WhenMakingNonResidentThenAllocationIsPlacedInEvict
 
     EXPECT_EQ(1u, csr->getEvictionAllocations().size());
 
+    csr->getEvictionAllocations().clear();
+
+    commandBuffer->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, csr->getOsContext().getContextId());
+    csr->makeNonResident(*commandBuffer);
+
+    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 

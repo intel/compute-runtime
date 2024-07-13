@@ -179,7 +179,7 @@ void CommandStreamReceiver::processEviction() {
 
 void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(osContext->getContextId())) {
-        if (gfxAllocation.peekEvictable()) {
+        if (gfxAllocation.peekEvictable() && !gfxAllocation.isAlwaysResident(osContext->getContextId())) {
             this->getEvictionAllocations().push_back(&gfxAllocation);
         } else {
             gfxAllocation.setEvictable(true);
