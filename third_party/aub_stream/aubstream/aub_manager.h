@@ -69,6 +69,8 @@ class AubManager {
     virtual uint32_t readPCICFG(uint32_t offset) { return 0; }
 
     virtual void blockMemWritesViaTbx(bool onoff) {}
+
+    virtual bool releaseHardwareContext(HardwareContext *context) { return false; };
 };
 
 } // namespace aub_stream
