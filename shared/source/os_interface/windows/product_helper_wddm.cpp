@@ -34,11 +34,7 @@ int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInf
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuThreadGroupLevelPreempt),
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuMidBatchPreempt));
 
-    if (debugManager.flags.OverridePreemptionSurfaceSizeInMb.get() >= 0) {
-        outHwInfo->gtSystemInfo.CsrSizeInMb = static_cast<uint32_t>(debugManager.flags.OverridePreemptionSurfaceSizeInMb.get());
-    }
-    outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
-    gfxCoreHelper.adjustPreemptionSurfaceSize(outHwInfo->capabilityTable.requiredPreemptionSurfaceSize, rootDeviceEnvironment);
+    setupPreemptionSurfaceSize(*outHwInfo, rootDeviceEnvironment);
 
     auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
     KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);

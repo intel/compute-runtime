@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
@@ -957,4 +958,16 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
     for (auto patIndex : listOfCoherentPatIndexes) {
         EXPECT_EQ(std::nullopt, productHelper->isCoherentAllocation(patIndex));
     }
+}
+
+TEST(ProductHelperPreemptionSettingTest, whenSipClassIsForcedToBuiltinThenRequiredPreemptionSizeIsNotAdjusted) {
+    MockExecutionEnvironment executionEnvironment{};
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::builtins));
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.CsrSizeInMb = 1;
+    constexpr uint32_t initialPreemptionSurfaceSize = 0xdeadbeef;
+    hwInfo.capabilityTable.requiredPreemptionSurfaceSize = initialPreemptionSurfaceSize;
+    MockProductHelper::setupPreemptionSurfaceSize(hwInfo, *executionEnvironment.rootDeviceEnvironments[0]);
+    EXPECT_EQ(initialPreemptionSurfaceSize, hwInfo.capabilityTable.requiredPreemptionSurfaceSize);
 }

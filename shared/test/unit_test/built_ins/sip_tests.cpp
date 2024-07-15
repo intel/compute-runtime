@@ -783,3 +783,24 @@ TEST_F(DebugBuiltinSipTest, givenDumpSipHeaderFileWhenGettingSipKernelThenSipHea
     EXPECT_EQ(1u, NEO::virtualFileList.size());
     EXPECT_TRUE(NEO::virtualFileList.find("sip_header.bin") != NEO::virtualFileList.end());
 }
+
+TEST(SipTest, whenForcingBuiltinSipClassThenPreemptionSurfaceSizeIsSetBasedOnStateSaveAreaHeader) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::builtins));
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    constexpr uint32_t initialPreemptionSurfaceSize = 0xdeadbeef;
+    rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = initialPreemptionSurfaceSize;
+    auto builtIns = new NEO::MockBuiltins();
+    builtIns->callBaseGetSipKernel = true;
+    MockRootDeviceEnvironment::resetBuiltins(&rootDeviceEnvironment, builtIns);
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &sipKernel = rootDeviceEnvironment.builtins->getSipKernel(NEO::SipKernelType::csr, *mockDevice);
+
+    auto preemptionSurfaceSize = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize;
+    EXPECT_NE(initialPreemptionSurfaceSize, preemptionSurfaceSize);
+    EXPECT_EQ(sipKernel.getStateSaveAreaSize(mockDevice.get()), preemptionSurfaceSize);
+}

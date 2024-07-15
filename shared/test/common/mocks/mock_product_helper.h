@@ -13,6 +13,7 @@
 namespace NEO {
 
 struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
+    using ProductHelper::setupPreemptionSurfaceSize;
     MockProductHelper() = default;
 
     ADDMETHOD_CONST_NOBASE(is48bResourceNeededForRayTracing, bool, true, ());
