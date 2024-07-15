@@ -453,9 +453,8 @@ TEST_F(WddmTests, GivenOnlySubsliceEnabledWhenQueryingTopologyThenExpectTrue) {
     EXPECT_EQ(topologyMap.at(0).sliceIndices.size(), 1u);
     EXPECT_EQ(topologyMap.at(0).sliceIndices[0], 0);
     EXPECT_EQ(topologyMap.at(0).subsliceIndices.size(), 2u);
-    const auto base = 2 * GT_MAX_DUALSUBSLICE_PER_SLICE;
-    EXPECT_EQ(topologyMap.at(0).subsliceIndices[0], base + 1);
-    EXPECT_EQ(topologyMap.at(0).subsliceIndices[1], base + 3);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[0], 1);
+    EXPECT_EQ(topologyMap.at(0).subsliceIndices[1], 3);
 }
 
 TEST_F(WddmTests, GivenBothSublicesAndDualSubslicesEnabledWhenQueryingTopologyThenOnlyDSSInfoCounted) {

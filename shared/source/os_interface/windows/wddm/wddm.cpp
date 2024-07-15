@@ -206,6 +206,7 @@ bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
 
         // subSliceIndex is used to track the index number of subslices from all SS or DSS in this slice
         int subSliceIndex = -1;
+        bool dssEnabled = false;
         for (uint32_t dss = 0; dss < GT_MAX_DUALSUBSLICE_PER_SLICE; dss++) {
             if (!gtSystemInfo.SliceInfo[x].DSSInfo[dss].Enabled) {
                 subSliceIndex += 2;
@@ -217,6 +218,7 @@ bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
                 if (!gtSystemInfo.SliceInfo[x].DSSInfo[dss].SubSlice[y].Enabled) {
                     continue;
                 }
+                dssEnabled = true;
                 subSliceCount++;
                 subSliceIndices.push_back(subSliceIndex);
 
@@ -224,7 +226,8 @@ bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
             }
         }
 
-        if (subSliceCount == 0) {
+        if (!dssEnabled) {
+            subSliceIndex = -1;
             for (uint32_t sss = 0; sss < GT_MAX_SUBSLICE_PER_SLICE; sss++) {
                 subSliceIndex++;
                 if (!gtSystemInfo.SliceInfo[x].SubSliceInfo[sss].Enabled) {
