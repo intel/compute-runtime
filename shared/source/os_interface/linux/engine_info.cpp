@@ -124,7 +124,7 @@ EngineInfo::EngineInfo(Drm *drm, uint32_t tileCount, const std::vector<DistanceI
         if (queryItems[i].length < 0 || distanceInfos[i].distance != 0) {
             continue;
         }
-        EngineCapabilities engineInfo = {distanceInfos[i].engine, 0};
+        EngineCapabilities engineInfo = {distanceInfos[i].engine, {}};
         mapEngine(ioctlHelper, engineInfo, rootDeviceEnvironment, copyEnginesMappingIt, engineCounters, tile);
     }
     setSupportedEnginesInfo(rootDeviceEnvironment, engineCounters.numComputeEngines);
@@ -217,13 +217,13 @@ const std::vector<EngineCapabilities> &EngineInfo::getEngineInfos() const {
 }
 
 // EngineIndex = (Base + EngineCounter - 1)
-aub_stream::EngineType EngineInfo::getBaseCopyEngineType(const IoctlHelper *ioctlHelper, uint64_t capabilities, bool isIntegratedDevice) {
+aub_stream::EngineType EngineInfo::getBaseCopyEngineType(const IoctlHelper *ioctlHelper, EngineCapabilities::Flags capabilities, bool isIntegratedDevice) {
     if (!isIntegratedDevice) {
-        if (const auto capa = ioctlHelper->getCopyClassSaturatePCIECapability(); capa && isValueSet(capabilities, *capa)) {
+        if (capabilities.copyClassSaturatePCIE) {
             return DrmEngineMappingHelper::baseForHostLinkCopyEngine;
         }
 
-        if (const auto capa = ioctlHelper->getCopyClassSaturateLinkCapability(); capa && isValueSet(capabilities, *capa)) {
+        if (capabilities.copyClassSaturateLink) {
             return DrmEngineMappingHelper::baseForScaleUpLinkCopyEngine;
         }
     }

@@ -319,8 +319,8 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenGetDirectSubmissionFlagThenCorrec
 
 TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToEngineCapsThenReturnSameData) {
     std::vector<EngineCapabilities> expectedEngines(2);
-    expectedEngines[0] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::engineClassRender)), 0}, 0};
-    expectedEngines[1] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::engineClassCopy)), 1}, 0};
+    expectedEngines[0] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::engineClassRender)), 0}, {true, false}};
+    expectedEngines[1] = {{static_cast<uint16_t>(ioctlHelper.getDrmParamValue(DrmParam::engineClassCopy)), 1}, {false, true}};
 
     auto engineInfo = getEngineInfo(expectedEngines);
 
@@ -329,7 +329,8 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimsWhenTranslateToEngineCapsThenReturnSa
     for (uint32_t i = 0; i < engines.size(); i++) {
         EXPECT_EQ(expectedEngines[i].engine.engineClass, engines[i].engine.engineClass);
         EXPECT_EQ(expectedEngines[i].engine.engineInstance, engines[i].engine.engineInstance);
-        EXPECT_EQ(expectedEngines[i].capabilities, engines[i].capabilities);
+        EXPECT_EQ(expectedEngines[i].capabilities.copyClassSaturateLink, engines[i].capabilities.copyClassSaturateLink);
+        EXPECT_EQ(expectedEngines[i].capabilities.copyClassSaturatePCIE, engines[i].capabilities.copyClassSaturatePCIE);
     }
 }
 

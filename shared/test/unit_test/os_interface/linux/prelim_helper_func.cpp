@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,7 +123,8 @@ std::vector<uint64_t> getEngineInfo(const std::vector<EngineCapabilities> &input
     for (uint32_t i = 0; i < inputSize; i++) {
         memoryRegions->engines[i].engine.engine_class = inputEngines[i].engine.engineClass;
         memoryRegions->engines[i].engine.engine_instance = inputEngines[i].engine.engineInstance;
-        memoryRegions->engines[i].capabilities = inputEngines[i].capabilities;
+        memoryRegions->engines[i].capabilities |= inputEngines[i].capabilities.copyClassSaturateLink ? PRELIM_I915_COPY_CLASS_CAP_SATURATE_LINK : 0;
+        memoryRegions->engines[i].capabilities |= inputEngines[i].capabilities.copyClassSaturatePCIE ? PRELIM_I915_COPY_CLASS_CAP_SATURATE_PCIE : 0;
     }
     return data;
 }

@@ -164,13 +164,17 @@ int IoctlHelperI915::getDrmParamValueBase(DrmParam drmParam) const {
     }
 }
 
+EngineCapabilities::Flags IoctlHelperI915::getEngineCapabilitiesFlags(uint64_t capabilities) const {
+    return {};
+}
+
 std::vector<EngineCapabilities> IoctlHelperI915::translateToEngineCaps(const std::vector<uint64_t> &data) {
     auto engineInfo = reinterpret_cast<const drm_i915_query_engine_info *>(data.data());
     std::vector<EngineCapabilities> engines;
     engines.reserve(engineInfo->num_engines);
     for (uint32_t i = 0; i < engineInfo->num_engines; i++) {
         EngineCapabilities engine{};
-        engine.capabilities = engineInfo->engines[i].capabilities;
+        engine.capabilities = getEngineCapabilitiesFlags(engineInfo->engines[i].capabilities);
         engine.engine.engineClass = engineInfo->engines[i].engine.engine_class;
         engine.engine.engineInstance = engineInfo->engines[i].engine.engine_instance;
         engines.push_back(engine);

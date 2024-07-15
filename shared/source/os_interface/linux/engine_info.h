@@ -44,7 +44,7 @@ struct EngineInfo {
         uint32_t numComputeEngines = 0;
     };
 
-    static aub_stream::EngineType getBaseCopyEngineType(const IoctlHelper *ioctlHelper, uint64_t capabilities, bool isIntegratedDevice);
+    static aub_stream::EngineType getBaseCopyEngineType(const IoctlHelper *ioctlHelper, EngineCapabilities::Flags capabilities, bool isIntegratedDevice);
     static void setSupportedEnginesInfo(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numComputeEngines);
 
     void assignCopyEngine(aub_stream::EngineType baseEngineType, uint32_t tileId, const EngineClassInstance &engine,

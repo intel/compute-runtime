@@ -852,14 +852,18 @@ TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsIntegratedGpuThenBcs0Al
 
     auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), engineInfosPerTile);
     bool isIntegratedGpu = true;
-    auto caps = drm->ioctlHelper->getCopyClassSaturatePCIECapability();
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+    EngineCapabilities::Flags capabilities{};
+    capabilities.copyClassSaturateLink = true;
+    capabilities.copyClassSaturatePCIE = false;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
 
-    caps = drm->ioctlHelper->getCopyClassSaturateLinkCapability();
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+    capabilities.copyClassSaturateLink = false;
+    capabilities.copyClassSaturatePCIE = true;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
 
-    caps = 0;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+    capabilities.copyClassSaturateLink = false;
+    capabilities.copyClassSaturatePCIE = false;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
 }
 
 TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsNotIntegratedGpuThenProperBcsIsReturned) {
@@ -872,14 +876,19 @@ TEST(DrmTest, givenCapsWhenCallGetBaseCopyEngineTypeAndIsNotIntegratedGpuThenPro
 
     auto engineInfo = std::make_unique<MockEngineInfo>(drm.get(), engineInfosPerTile);
     bool isIntegratedGpu = false;
-    auto caps = drm->ioctlHelper->getCopyClassSaturatePCIECapability();
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
 
-    caps = drm->ioctlHelper->getCopyClassSaturateLinkCapability();
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+    EngineCapabilities::Flags capabilities{};
+    capabilities.copyClassSaturateLink = false;
+    capabilities.copyClassSaturatePCIE = true;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
 
-    caps = 0;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), *caps, isIntegratedGpu));
+    capabilities.copyClassSaturateLink = true;
+    capabilities.copyClassSaturatePCIE = false;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
+
+    capabilities.copyClassSaturateLink = false;
+    capabilities.copyClassSaturatePCIE = false;
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineInfo->getBaseCopyEngineType(drm->ioctlHelper.get(), capabilities, isIntegratedGpu));
 }
 
 struct DistanceQueryDrmTests : ::testing::Test {

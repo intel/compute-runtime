@@ -58,13 +58,13 @@ class DrmPrelimMock : public DrmMock {
         uint16_t computeEngineClass = getIoctlHelper()->getDrmParamValue(DrmParam::engineClassCompute);
         std::vector<EngineCapabilities> engines(4);
         engines[0].engine = {computeEngineClass, 0};
-        engines[0].capabilities = 0;
+        engines[0].capabilities = {};
         engines[1].engine = {computeEngineClass, 1};
-        engines[1].capabilities = 0;
+        engines[1].capabilities = {};
         engines[2].engine = {computeEngineClass, 2};
-        engines[2].capabilities = 0;
+        engines[2].capabilities = {};
         engines[3].engine = {computeEngineClass, 3};
-        engines[3].capabilities = 0;
+        engines[3].capabilities = {};
 
         std::vector<DistanceInfo> distances(4);
         distances[0].engine = engines[0].engine;
@@ -89,7 +89,7 @@ class DrmPrelimMock : public DrmMock {
         uint16_t computeEngineClass = getIoctlHelper()->getDrmParamValue(DrmParam::engineClassCompute);
         std::vector<EngineCapabilities> engines(1);
         engines[0].engine = {computeEngineClass, 0};
-        engines[0].capabilities = 0;
+        engines[0].capabilities = {};
 
         std::vector<DistanceInfo> distances(1);
         distances[0].engine = engines[0].engine;

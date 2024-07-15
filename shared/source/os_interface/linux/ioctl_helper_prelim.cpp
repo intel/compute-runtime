@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -727,12 +728,12 @@ void IoctlHelperPrelim20::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUser
     return;
 }
 
-std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturatePCIECapability() const {
-    return PRELIM_I915_COPY_CLASS_CAP_SATURATE_PCIE;
-}
+EngineCapabilities::Flags IoctlHelperPrelim20::getEngineCapabilitiesFlags(uint64_t capabilities) const {
+    EngineCapabilities::Flags flags{};
+    flags.copyClassSaturateLink = isValueSet(capabilities, PRELIM_I915_COPY_CLASS_CAP_SATURATE_LINK);
+    flags.copyClassSaturatePCIE = isValueSet(capabilities, PRELIM_I915_COPY_CLASS_CAP_SATURATE_PCIE);
 
-std::optional<uint64_t> IoctlHelperPrelim20::getCopyClassSaturateLinkCapability() const {
-    return PRELIM_I915_COPY_CLASS_CAP_SATURATE_LINK;
+    return flags;
 }
 
 uint32_t IoctlHelperPrelim20::getVmAdviseAtomicAttribute() {

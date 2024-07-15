@@ -295,10 +295,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     VmBindExtUserFenceT vmBindExtUserFence{};
     EXPECT_NO_THROW(xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, 0, 0, 0));
 
-    EXPECT_EQ(std::nullopt, xeIoctlHelper->getCopyClassSaturatePCIECapability());
-
-    EXPECT_EQ(std::nullopt, xeIoctlHelper->getCopyClassSaturateLinkCapability());
-
     EXPECT_EQ(0u, xeIoctlHelper->getVmAdviseAtomicAttribute());
 
     VmBindParams vmBindParams{};

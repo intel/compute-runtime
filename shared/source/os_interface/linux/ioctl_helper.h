@@ -48,7 +48,11 @@ struct MemoryRegion {
 
 struct EngineCapabilities {
     EngineClassInstance engine;
-    uint64_t capabilities;
+    struct Flags {
+        bool copyClassSaturatePCIE;
+        bool copyClassSaturateLink;
+    };
+    Flags capabilities;
 };
 
 struct DistanceInfo {
@@ -131,8 +135,6 @@ class IoctlHelper {
     virtual void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) = 0;
     virtual void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) = 0;
     virtual void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) = 0;
-    virtual std::optional<uint64_t> getCopyClassSaturatePCIECapability() const = 0;
-    virtual std::optional<uint64_t> getCopyClassSaturateLinkCapability() const = 0;
     virtual uint32_t getVmAdviseAtomicAttribute() = 0;
     virtual int vmBind(const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(const VmBindParams &vmBindParams) = 0;
@@ -246,6 +248,7 @@ class IoctlHelperI915 : public IoctlHelper {
     MOCKABLE_VIRTUAL void initializeGetGpuTimeFunction();
     bool (*getGpuTime)(::NEO::Drm &, uint64_t *) = nullptr;
     bool isPreemptionSupported() override;
+    virtual EngineCapabilities::Flags getEngineCapabilitiesFlags(uint64_t capabilities) const;
 };
 
 class IoctlHelperUpstream : public IoctlHelperI915 {
@@ -285,8 +288,6 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) override;
-    std::optional<uint64_t> getCopyClassSaturatePCIECapability() const override;
-    std::optional<uint64_t> getCopyClassSaturateLinkCapability() const override;
     uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
@@ -364,8 +365,6 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) override;
-    std::optional<uint64_t> getCopyClassSaturatePCIECapability() const override;
-    std::optional<uint64_t> getCopyClassSaturateLinkCapability() const override;
     uint32_t getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
@@ -407,6 +406,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     bool validPageFault(uint16_t flags) override;
     uint32_t getStatusForResetStats(bool banned) override;
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
+    EngineCapabilities::Flags getEngineCapabilitiesFlags(uint64_t capabilities) const override;
 
   protected:
     bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);

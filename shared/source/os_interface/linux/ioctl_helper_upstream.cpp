@@ -239,14 +239,6 @@ void IoctlHelperUpstream::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtU
 
 void IoctlHelperUpstream::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence){};
 
-std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturatePCIECapability() const {
-    return std::nullopt;
-}
-
-std::optional<uint64_t> IoctlHelperUpstream::getCopyClassSaturateLinkCapability() const {
-    return std::nullopt;
-}
-
 uint32_t IoctlHelperUpstream::getVmAdviseAtomicAttribute() {
     return 0;
 }
