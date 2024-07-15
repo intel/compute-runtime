@@ -22,7 +22,7 @@ enum class ProductFamily : uint32_t;
 }
 
 namespace NEO {
-
+struct KmdNotifyProperties;
 struct AllocationData;
 class CommandStreamReceiver;
 class Device;
@@ -248,5 +248,6 @@ class ProductHelper {
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const = 0;
     static void setupPreemptionSurfaceSize(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void setupKmdNotifyProperties(KmdNotifyProperties &kmdNotifyProperties);
 };
 } // namespace NEO

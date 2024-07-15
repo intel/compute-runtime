@@ -13,6 +13,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/kmd_notify_properties.h"
 
 namespace NEO {
 
@@ -32,4 +33,14 @@ void ProductHelper::setupPreemptionSurfaceSize(HardwareInfo &hwInfo, const RootD
     gfxCoreHelper.adjustPreemptionSurfaceSize(hwInfo.capabilityTable.requiredPreemptionSurfaceSize, rootDeviceEnvironment);
 }
 
+void ProductHelper::setupKmdNotifyProperties(KmdNotifyProperties &kmdNotifyProperties) {
+    KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);
+    KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideKmdNotifyDelayMicroseconds.get(), kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideEnableQuickKmdSleep.get(), kmdNotifyProperties.enableQuickKmdSleep);
+    KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
+    KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.get(), kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
+    KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
+    KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideEnableQuickKmdSleepForDirectSubmission.get(), kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
+    KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideDelayQuickKmdSleepForDirectSubmissionMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
+}
 } // namespace NEO
