@@ -89,7 +89,6 @@ LNLTEST_F(LnlProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionT
 
 LNLTEST_F(LnlProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.AllowDcFlush.set(1);
     for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
         auto allocationType = static_cast<AllocationType>(i);
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
@@ -127,13 +126,11 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckOverrideAllocationCacheab
 }
 
 LNLTEST_F(LnlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideCacheable) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowDcFlush.set(1);
-
     AllocationData allocationData{};
     allocationData.type = AllocationType::externalHostPtr;
     EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
 
+    DebugManagerStateRestore restorer;
     debugManager.flags.AllowDcFlush.set(0);
 
     for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {

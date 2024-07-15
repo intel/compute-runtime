@@ -29,5 +29,5 @@ LNLTEST_F(GfxCoreHelperTestsLnl, givenCommandBufferAllocationTypeWhenGetAllocati
 }
 
 LNLTEST_F(GfxCoreHelperTestsLnl, WhenAskingForDcFlushThenReturnTrue) {
-    EXPECT_NE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, this->pDevice->getRootDeviceEnvironment()), this->pDevice->getRootDeviceEnvironment().getProductHelper().isDcFlushMitigated());
+    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, this->pDevice->getRootDeviceEnvironment()));
 }

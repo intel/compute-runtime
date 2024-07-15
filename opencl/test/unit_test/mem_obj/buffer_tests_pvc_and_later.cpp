@@ -115,10 +115,6 @@ HWTEST2_F(PvcAndLaterBufferTests, givenCompressedBufferInSystemAndBlitterSupport
     auto pDevice = deviceFactory.rootDevices[0];
     auto pMockContext = std::make_unique<MockContext>(pDevice);
 
-    if (pDevice->getProductHelper().isDcFlushMitigated()) {
-        debugManager.flags.AllowDcFlush.set(1);
-    }
-
     static_cast<MockMemoryManager *>(pDevice->getExecutionEnvironment()->memoryManager.get())->enable64kbpages[0] = true;
     static_cast<MockMemoryManager *>(pDevice->getExecutionEnvironment()->memoryManager.get())->localMemorySupported[0] = false;
 
