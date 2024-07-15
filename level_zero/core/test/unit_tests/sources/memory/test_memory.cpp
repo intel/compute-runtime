@@ -3154,7 +3154,10 @@ TEST_F(MemoryExportImportTest,
                                                  size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
-
+    auto allocData = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    auto allocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    EXPECT_FALSE(allocation->isCompressionEnabled());
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

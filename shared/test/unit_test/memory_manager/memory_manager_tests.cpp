@@ -3205,3 +3205,9 @@ TEST(AllocationListTest, givenAllocationInListWhenFreeAllGraphicsAllocationsCall
     EXPECT_EQ(nullptr, allocList.peekTail());
     EXPECT_TRUE(allocList.peekIsEmpty());
 }
+
+TEST(MemoryManagerTest, givenIsCompressionSupportedForShareableThenReturnTrue) {
+    MockMemoryManager memoryManager;
+    EXPECT_TRUE(memoryManager.isCompressionSupportedForShareable(true));
+    EXPECT_TRUE(memoryManager.isCompressionSupportedForShareable(false));
+}

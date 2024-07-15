@@ -7929,3 +7929,8 @@ TEST_F(DrmMemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingRe
         memoryManager->freeGraphicsMemory(allocation);
     }
 }
+
+TEST_F(DrmMemoryManagerTest, givenIsCompressionSupportedForShareableThenReturnCorrectValue) {
+    EXPECT_FALSE(memoryManager->isCompressionSupportedForShareable(true));
+    EXPECT_TRUE(memoryManager->isCompressionSupportedForShareable(false));
+}

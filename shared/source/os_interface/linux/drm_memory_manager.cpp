@@ -2740,4 +2740,9 @@ bool DrmMemoryManager::releaseMediaContext(uint32_t rootDeviceIndex, uint64_t do
     return getDrm(rootDeviceIndex).getIoctlHelper()->releaseMediaContext(doorbellHandle);
 }
 
+bool DrmMemoryManager::isCompressionSupportedForShareable(bool isShareable) {
+    // Currently KMD does not support compression with allocation sharing
+    return !isShareable;
+}
+
 } // namespace NEO
