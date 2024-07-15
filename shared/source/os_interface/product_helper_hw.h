@@ -59,7 +59,7 @@ class ProductHelperHw : public ProductHelper {
     TimeoutParams getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const override;
     std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const override;
     bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
-    void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) override;
+    void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const override;
     bool isAdditionalMediaSamplerProgrammingRequired() const override;
     bool isInitialFlagsProgrammingRequired() const override;
     bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const override;

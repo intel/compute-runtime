@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,17 +80,16 @@ TEST_F(ProductHelperTestWindows, givenInstrumentationForHardwareIsEnabledOrDisab
 }
 
 HWTEST_F(ProductHelperTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoThenSetCoherencySupportCorrectly) {
-    HardwareInfo initialHwInfo = *defaultHwInfo;
 
     bool initialCoherencyStatus = false;
     productHelper->setCapabilityCoherencyFlag(outHwInfo, initialCoherencyStatus);
 
-    initialHwInfo.featureTable.flags.ftrL3IACoherency = false;
-    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    outHwInfo.featureTable.flags.ftrL3IACoherency = false;
+    productHelper->configureHwInfoWddm(&outHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 
-    initialHwInfo.featureTable.flags.ftrL3IACoherency = true;
-    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    outHwInfo.featureTable.flags.ftrL3IACoherency = true;
+    productHelper->configureHwInfoWddm(&outHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 } // namespace NEO
