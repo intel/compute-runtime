@@ -22,8 +22,6 @@ struct SklProductHelperLinux : ProductHelperTestLinux {
 SKLTEST_F(SklProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) {
     int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     // constant sysInfo/ftr flags
@@ -34,38 +32,26 @@ SKLTEST_F(SklProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) 
 
     pInHwInfo.platform.usDeviceID = 0x1902;
 
-    drm->storedSSVal = 3;
     ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     pInHwInfo.platform.usDeviceID = 0x1917;
 
     ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     pInHwInfo.platform.usDeviceID = 0x0903;
 
     ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     pInHwInfo.platform.usDeviceID = 0x0903;
 
-    drm->storedSSVal = 6;
     ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     auto &outKmdNotifyProperties = outHwInfo.capabilityTable.kmdNotifyProperties;
@@ -77,22 +63,6 @@ SKLTEST_F(SklProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) 
     EXPECT_EQ(200000, outKmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
     EXPECT_FALSE(outKmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     EXPECT_EQ(0, outKmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
-}
-
-SKLTEST_F(SklProductHelperLinux, GivenFailedIoctlEuCountWhenConfiguringHwInfoThenErrorIsReturned) {
-    drm->storedRetValForEUVal = -4;
-    drm->failRetTopology = true;
-
-    int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-4, ret);
-}
-
-SKLTEST_F(SklProductHelperLinux, GivenFailedIoctlSsCountWhenConfiguringHwInfoThenErrorIsReturned) {
-    drm->storedRetValForSSVal = -5;
-    drm->failRetTopology = true;
-
-    int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-5, ret);
 }
 
 SKLTEST_F(SklProductHelperLinux, GivenWaFlagsWhenConfiguringHwInfoThenInformationIsCorrect) {

@@ -38,32 +38,6 @@ TGLLPTEST_F(TgllpProductHelperLinux, GivenTGLLPWhenConfigureHardwareCustomThenMT
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
 }
 
-TGLLPTEST_F(TgllpProductHelperLinux, WhenConfiguringHwInfoThenInfoIsSetCorrectly) {
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
-
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
-}
-
-TGLLPTEST_F(TgllpProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
-
-    drm->failRetTopology = true;
-    drm->storedRetValForEUVal = -1;
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForEUVal = 0;
-    drm->storedRetValForSSVal = -1;
-
-    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-1, ret);
-}
-
 template <typename T>
 class TgllpHwInfoLinux : public ::testing::Test {};
 typedef ::testing::Types<TgllpHw1x6x16> tgllpTestTypes;

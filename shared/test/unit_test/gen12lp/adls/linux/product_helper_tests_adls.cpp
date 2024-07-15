@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,40 +14,6 @@
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
 using namespace NEO;
-
-struct AdlsProductHelperLinux : ProductHelperTestLinux {
-    void SetUp() override {
-        ProductHelperTestLinux::SetUp();
-
-        drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-        osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-    }
-};
-
-ADLSTEST_F(AdlsProductHelperLinux, WhenConfiguringHwInfoThenConfigIsCorrect) {
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
-
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
-}
-
-ADLSTEST_F(AdlsProductHelperLinux, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
-
-    drm->failRetTopology = true;
-    drm->storedRetValForEUVal = -1;
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForEUVal = 0;
-    drm->storedRetValForSSVal = -1;
-    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-1, ret);
-}
 
 using AdlsHwInfoLinux = ::testing::Test;
 

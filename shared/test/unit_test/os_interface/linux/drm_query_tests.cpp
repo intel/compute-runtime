@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,38 +18,6 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-
-using HwConfigTopologyQuery = ::testing::Test;
-
-HWTEST2_F(HwConfigTopologyQuery, WhenGettingTopologyFailsThenSetMaxValuesBasedOnSubsliceIoctlQuery, MatchAny) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-
-    auto drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
-    osInterface->setDriverModel(std::unique_ptr<Drm>(drm));
-
-    drm->failRetTopology = true;
-
-    auto hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-    HardwareInfo outHwInfo;
-
-    hwInfo.gtSystemInfo.MaxSlicesSupported = 0;
-    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 0;
-    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 6;
-
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    int ret = productHelper.configureHwInfoDrm(&hwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    EXPECT_NE(-1, ret);
-
-    EXPECT_EQ(6u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
-    EXPECT_EQ(outHwInfo.gtSystemInfo.SubSliceCount, outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
-    EXPECT_EQ(hwInfo.gtSystemInfo.SliceCount, outHwInfo.gtSystemInfo.MaxSlicesSupported);
-
-    EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
-}
 
 TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsFalse) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

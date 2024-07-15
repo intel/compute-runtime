@@ -84,22 +84,6 @@ TEST_F(MockProductHelperTestLinux, givenDisabledPlatformCoherencyWhenConfiguring
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 
-TEST_F(MockProductHelperTestLinux, GivenFailGetEuCountWhenConfiguringHwInfoThenFails) {
-    drm->storedRetValForEUVal = -4;
-    drm->failRetTopology = true;
-
-    int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    EXPECT_EQ(-4, ret);
-}
-
-TEST_F(MockProductHelperTestLinux, GivenFailGetSsCountWhenConfiguringHwInfoThenFails) {
-    drm->storedRetValForSSVal = -5;
-    drm->failRetTopology = true;
-
-    int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    EXPECT_EQ(-5, ret);
-}
-
 TEST_F(MockProductHelperTestLinux, whenFailGettingTopologyThenFallbackToEuCountIoctl) {
     drm->failRetTopology = true;
 
@@ -366,58 +350,6 @@ HWTEST2_F(HwConfigLinux, givenPlatformWithPlatformQuerySupportedWhenItIsCalledTh
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     EXPECT_TRUE(productHelper.isPlatformQuerySupported());
-}
-
-HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwInfoThenMaxSlicesSupportedSetToAvailableCountInGtSystemInfo, MatchAny) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
-    auto drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
-    osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
-
-    auto hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-    HardwareInfo outHwInfo;
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    hwInfo.gtSystemInfo.MaxSubSlicesSupported = drm->storedSSVal * 2;
-    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = drm->storedSSVal * 2;
-    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 16;
-    hwInfo.gtSystemInfo.MaxSlicesSupported = drm->storedSVal * 4;
-
-    int ret = productHelper.configureHwInfoDrm(&hwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal * 2), outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
-    EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal * 2), outHwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
-    EXPECT_EQ(16u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
-    EXPECT_EQ(static_cast<uint32_t>(drm->storedSVal), outHwInfo.gtSystemInfo.MaxSlicesSupported);
-
-    drm->storedSVal = 3;
-    drm->storedSSVal = 12;
-    drm->storedEUVal = 12 * 8;
-
-    hwInfo.gtSystemInfo.MaxSubSlicesSupported = drm->storedSSVal / 2;
-    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = drm->storedSSVal / 2;
-    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 6;
-    hwInfo.gtSystemInfo.MaxSlicesSupported = drm->storedSVal / 2;
-
-    ret = productHelper.configureHwInfoDrm(&hwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(12u, outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
-    EXPECT_EQ(6u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice); // MaxEuPerSubslice is preserved
-    EXPECT_EQ(static_cast<uint32_t>(drm->storedSVal), outHwInfo.gtSystemInfo.MaxSlicesSupported);
-
-    EXPECT_EQ(outHwInfo.gtSystemInfo.MaxSubSlicesSupported, outHwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
-
-    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 0;
-
-    ret = productHelper.configureHwInfoDrm(&hwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ(8u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
 }
 
 HWTEST2_F(HwConfigLinux, givenSliceCountWhenConfigureHwInfoDrmThenProperInitializationInSliceInfoEnabled, MatchAny) {

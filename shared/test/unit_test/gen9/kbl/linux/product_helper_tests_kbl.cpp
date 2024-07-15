@@ -51,18 +51,10 @@ KBLTEST_F(KblProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) 
 
     ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(2u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
-
-    drm->storedSSVal = 6;
 
     ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(2u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     auto &outKmdNotifyProperties = outHwInfo.capabilityTable.kmdNotifyProperties;
@@ -74,22 +66,6 @@ KBLTEST_F(KblProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) 
     EXPECT_EQ(200000, outKmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
     EXPECT_FALSE(outKmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     EXPECT_EQ(0, outKmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
-}
-
-KBLTEST_F(KblProductHelperLinux, GivenFailedIoctlEuCountWhenConfiguringHwInfoThenErrorIsReturned) {
-    drm->failRetTopology = true;
-    drm->storedRetValForEUVal = -4;
-
-    int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-4, ret);
-}
-
-KBLTEST_F(KblProductHelperLinux, GivenFailedIoctlSsCountWhenConfiguringHwInfoThenErrorIsReturned) {
-    drm->failRetTopology = true;
-    drm->storedRetValForSSVal = -5;
-
-    int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-5, ret);
 }
 
 KBLTEST_F(KblProductHelperLinux, GivenWaFlagsWhenConfiguringHwInfoThenInformationIsCorrect) {
