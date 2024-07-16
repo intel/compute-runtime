@@ -1324,6 +1324,9 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPoin
 
 HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCreatedThenPlatformSurfaceHeapSizeUsed, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
+
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
     ze_result_t returnValue;

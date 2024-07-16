@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/state_base_address.h"
@@ -34,6 +35,9 @@ HWTEST2_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAdd
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.EnableStateBaseAddressTracking.set(0);
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));

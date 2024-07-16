@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen_common/reg_configs_common.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -285,6 +286,8 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
     debugManager.flags.EnableStateBaseAddressTracking.set(0);
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
 
     size_t usedSpaceBefore = 0;
     ze_result_t returnValue;

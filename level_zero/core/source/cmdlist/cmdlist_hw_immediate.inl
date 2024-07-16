@@ -199,10 +199,12 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
             }
         }
         ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
-        csr->makeResident(*ssh->getGraphicsAllocation());
-        if constexpr (streamStatesSupported) {
-            this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
-                                                                                             ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
+        if (ssh) {
+            csr->makeResident(*ssh->getGraphicsAllocation());
+            if constexpr (streamStatesSupported) {
+                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
+                                                                                                 ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
+            }
         }
     }
 
@@ -214,9 +216,10 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
         }
     }
 
-    UNRECOVERABLE_IF(ssh == nullptr);
-    sshCpuBaseAddress = ssh->getCpuBase();
-    handleDebugSurfaceStateUpdate(ssh);
+    if (ssh) {
+        sshCpuBaseAddress = ssh->getCpuBase();
+        handleDebugSurfaceStateUpdate(ssh);
+    }
 
     csr->setRequiredScratchSizes(this->getCommandListPerThreadScratchSize(0u), this->getCommandListPerThreadScratchSize(1u));
 }

@@ -384,6 +384,10 @@ struct ContextHostAllocTests : public ::testing::Test {
 
         debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (size_t i = 0; i < numRootDevices; ++i) {
+            executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+        }
         auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
         driverHandle = std::make_unique<DriverHandleImp>();
         ze_result_t res = driverHandle->initialize(std::move(devices));

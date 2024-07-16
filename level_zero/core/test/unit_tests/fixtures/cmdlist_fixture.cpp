@@ -220,6 +220,10 @@ void CommandListGlobalHeapsFixtureInit::setUp() {
 }
 
 void CommandListGlobalHeapsFixtureInit::setUpParams(int32_t globalHeapMode) {
+    if (globalHeapMode == static_cast<int32_t>(NEO::HeapAddressModel::globalStateless)) {
+        debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
+    }
+
     debugManager.flags.SelectCmdListHeapAddressModel.set(globalHeapMode);
     debugManager.flags.UseImmediateFlushTask.set(0);
     CommandListStateBaseAddressFixture::setUp();

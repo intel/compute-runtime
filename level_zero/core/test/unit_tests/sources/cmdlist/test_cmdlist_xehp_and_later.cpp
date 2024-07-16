@@ -45,6 +45,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
+    auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     auto &commandContainer = commandList->getCmdContainer();
@@ -80,16 +82,26 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListTests, whenCommandListIsCreatedThenPCAnd
         auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::dynamicState);
         EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
         EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
-        EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
-        EXPECT_EQ(dsh->getHeapSizeInPages(), cmdSba->getDynamicStateBufferSize());
+        if (bindlessHeapsHelper) {
+            EXPECT_EQ(bindlessHeapsHelper->getGlobalHeapsBase(), cmdSba->getDynamicStateBaseAddress());
+            EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmdSba->getDynamicStateBufferSize());
+        } else {
+            EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
+            EXPECT_EQ(dsh->getHeapSizeInPages(), cmdSba->getDynamicStateBufferSize());
+        }
     } else {
         EXPECT_FALSE(cmdSba->getDynamicStateBaseAddressModifyEnable());
         EXPECT_FALSE(cmdSba->getDynamicStateBufferSizeModifyEnable());
     }
 
-    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
-    EXPECT_TRUE(cmdSba->getSurfaceStateBaseAddressModifyEnable());
-    EXPECT_EQ(ssh->getHeapGpuBase(), cmdSba->getSurfaceStateBaseAddress());
+    if (bindlessHeapsHelper) {
+        EXPECT_TRUE(cmdSba->getBindlessSurfaceStateBaseAddressModifyEnable());
+        EXPECT_EQ(bindlessHeapsHelper->getGlobalHeapsBase(), cmdSba->getBindlessSurfaceStateBaseAddress());
+    } else {
+        auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
+        EXPECT_TRUE(cmdSba->getSurfaceStateBaseAddressModifyEnable());
+        EXPECT_EQ(ssh->getHeapGpuBase(), cmdSba->getSurfaceStateBaseAddress());
+    }
 
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST), cmdSba->getStatelessDataPortAccessMemoryObjectControlState());
 
@@ -106,6 +118,8 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
     debugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
+    auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
@@ -152,15 +166,26 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
         auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::dynamicState);
         EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
         EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
-        EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
-        EXPECT_EQ(dsh->getHeapSizeInPages(), cmdSba->getDynamicStateBufferSize());
+        if (bindlessHeapsHelper) {
+            EXPECT_EQ(bindlessHeapsHelper->getGlobalHeapsBase(), cmdSba->getDynamicStateBaseAddress());
+            EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmdSba->getDynamicStateBufferSize());
+        } else {
+            EXPECT_EQ(dsh->getHeapGpuBase(), cmdSba->getDynamicStateBaseAddress());
+            EXPECT_EQ(dsh->getHeapSizeInPages(), cmdSba->getDynamicStateBufferSize());
+        }
     } else {
         EXPECT_FALSE(cmdSba->getDynamicStateBaseAddressModifyEnable());
         EXPECT_FALSE(cmdSba->getDynamicStateBufferSizeModifyEnable());
     }
-    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
-    EXPECT_TRUE(cmdSba->getSurfaceStateBaseAddressModifyEnable());
-    EXPECT_EQ(ssh->getHeapGpuBase(), cmdSba->getSurfaceStateBaseAddress());
+
+    if (bindlessHeapsHelper) {
+        EXPECT_TRUE(cmdSba->getBindlessSurfaceStateBaseAddressModifyEnable());
+        EXPECT_EQ(bindlessHeapsHelper->getGlobalHeapsBase(), cmdSba->getBindlessSurfaceStateBaseAddress());
+    } else {
+        auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
+        EXPECT_TRUE(cmdSba->getSurfaceStateBaseAddressModifyEnable());
+        EXPECT_EQ(ssh->getHeapGpuBase(), cmdSba->getSurfaceStateBaseAddress());
+    }
 
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST), cmdSba->getStatelessDataPortAccessMemoryObjectControlState());
 
