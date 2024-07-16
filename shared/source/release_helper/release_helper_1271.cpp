@@ -43,6 +43,11 @@ inline bool ReleaseHelperHw<release>::isDotProductAccumulateSystolicSupported() 
     return false;
 }
 
+template <>
+inline bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
+    return false;
+}
+
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe_lpg.inl"

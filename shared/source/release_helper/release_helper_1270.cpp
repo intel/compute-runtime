@@ -43,6 +43,11 @@ int ReleaseHelperHw<release>::getProductMaxPreferredSlmSize(int preferredEnumVal
     return std::min(preferredEnumValue, static_cast<int>(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K));
 }
 
+template <>
+inline bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
+    return false;
+}
+
 } // namespace NEO
 #include "shared/source/release_helper/release_helper_common_xe_lpg.inl"
 
