@@ -640,6 +640,11 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
         if (this->getDevice().getProductHelper().isDcFlushMitigated() || isDisplayableReleased) {
             this->getGpgpuCommandStreamReceiver().registerDcFlushForDcMitigation();
             this->getGpgpuCommandStreamReceiver().sendRenderStateCacheFlush();
+            {
+                TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
+                this->taskCount = this->getGpgpuCommandStreamReceiver().peekTaskCount();
+            }
+            this->finish();
         } else if (isImageReleased) {
             this->getGpgpuCommandStreamReceiver().sendRenderStateCacheFlush();
         }

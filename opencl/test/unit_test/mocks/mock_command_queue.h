@@ -230,7 +230,10 @@ class MockCommandQueue : public CommandQueue {
     cl_int enqueueResourceBarrier(BarrierCommand *resourceBarrier, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
                                   cl_event *event) override { return CL_SUCCESS; }
 
-    cl_int finish() override { return CL_SUCCESS; }
+    cl_int finish() override {
+        ++finishCalledCount;
+        return CL_SUCCESS;
+    }
 
     cl_int flush() override { return CL_SUCCESS; }
 
@@ -253,6 +256,7 @@ class MockCommandQueue : public CommandQueue {
     bool releaseIndirectHeapCalled = false;
     bool waitForTimestampsCalled = false;
     cl_int writeBufferRetValue = CL_SUCCESS;
+    uint32_t finishCalledCount = 0;
     uint32_t isCompletedCalled = 0;
     uint32_t writeBufferCounter = 0;
     bool writeBufferBlocking = false;

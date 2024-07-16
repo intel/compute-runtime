@@ -25,7 +25,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-
+#include "opencl/test/unit_test/mocks/mock_sharing_handler.h"
 using namespace NEO;
 
 HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoWaitAndTagIsNotUpdated) {
@@ -1432,4 +1432,40 @@ HWTEST_F(CommandQueueHwTest, givenNotBlockedIOQWhenCpuTransferIsBlockedOutEventP
     commandQueue->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     EXPECT_EQ(1, commandQueue->enqueueMarkerWithWaitListCalledCount);
     clReleaseEvent(returnEvent);
+}
+
+HWTEST_F(CommandQueueHwTest, givenDirectSubmissionAndSharedDisplayableImageWhenReleasingSharedObjectThenFlushRenderStateCacheAndForceDcFlush) {
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
+
+    auto &ultCsr = mockCmdQueueHw.getUltCommandStreamReceiver();
+    ultCsr.heapStorageRequiresRecyclingTag = false;
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
+    ultCsr.directSubmission.reset(directSubmission);
+
+    auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context));
+    image->setSharingHandler(mockSharingHandler);
+    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage);
+
+    cl_mem memObject = image.get();
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = &memObject;
+
+    cl_int result = mockCmdQueueHw.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+    image->setIsDisplayable(true);
+
+    ultCsr.directSubmissionAvailable = true;
+    ultCsr.callBaseSendRenderStateCacheFlush = true;
+    EXPECT_FALSE(ultCsr.renderStateCacheFlushed);
+
+    const auto taskCountBefore = mockCmdQueueHw.taskCount;
+    const auto finishCalledBefore = mockCmdQueueHw.finishCalledCount;
+    result = mockCmdQueueHw.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+    EXPECT_TRUE(ultCsr.renderStateCacheFlushed);
+    EXPECT_TRUE(ultCsr.renderStateCacheDcFlushForced);
+    EXPECT_EQ(finishCalledBefore + 1u, mockCmdQueueHw.finishCalledCount);
+    EXPECT_EQ(taskCountBefore + 1u, mockCmdQueueHw.taskCount);
 }

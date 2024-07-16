@@ -55,6 +55,7 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/mocks/mock_sharing_handler.h"
 
 #include "gtest/gtest.h"
 
@@ -1311,13 +1312,6 @@ TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenNoObjectsThenReturnSucces
     EXPECT_EQ(result, CL_SUCCESS);
 }
 
-class MockSharingHandler : public SharingHandler {
-  public:
-    void synchronizeObject(UpdateData &updateData) override {
-        updateData.synchronizationStatus = ACQUIRE_SUCCESFUL;
-    }
-};
-
 using CommandQueueTests = ::testing::Test;
 HWTEST_F(CommandQueueTests, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandlerThenReturnSuccess) {
     MockContext context;
@@ -1369,35 +1363,6 @@ HWTEST_F(CommandQueueTests, givenDirectSubmissionAndSharedImageWhenReleasingShar
     EXPECT_EQ(result, CL_SUCCESS);
     EXPECT_TRUE(ultCsr->renderStateCacheFlushed);
     EXPECT_EQ(ultCsr->renderStateCacheDcFlushForced, context.getDevice(0)->getProductHelper().isDcFlushMitigated());
-}
-
-HWTEST_F(CommandQueueTests, givenDirectSubmissionAndSharedDisplayableImageWhenReleasingSharedObjectThenFlushRenderStateCacheAndForceDcFlush) {
-    MockContext context;
-    MockCommandQueue cmdQ(&context, context.getDevice(0), 0, false);
-    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
-
-    auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
-    image->setSharingHandler(mockSharingHandler);
-    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage);
-
-    cl_mem memObject = image.get();
-    cl_uint numObjects = 1;
-    cl_mem *memObjects = &memObject;
-
-    cl_int result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
-    EXPECT_EQ(result, CL_SUCCESS);
-    image->setIsDisplayable(true);
-
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ.getGpgpuCommandStreamReceiver());
-    ultCsr->directSubmissionAvailable = true;
-    ultCsr->callBaseSendRenderStateCacheFlush = false;
-    ultCsr->flushReturnValue = SubmissionStatus::success;
-    EXPECT_FALSE(ultCsr->renderStateCacheFlushed);
-
-    result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
-    EXPECT_EQ(result, CL_SUCCESS);
-    EXPECT_TRUE(ultCsr->renderStateCacheFlushed);
-    EXPECT_TRUE(ultCsr->renderStateCacheDcFlushForced);
 }
 
 HWTEST_F(CommandQueueTests, givenDcFlushMitigationAndDirectSubmissionAndBufferWhenReleasingSharedObjectThenFlushRenderStateCacheAndForceDcFlush) {
