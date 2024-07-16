@@ -23,8 +23,6 @@
 extern int (*openFunc)(const char *pathname, int flags, ...);
 extern int (*openFull)(const char *pathname, int flags, ...);
 
-extern int drmOtherRequests(unsigned long int request, ...);
-
 extern int fakeFd;
 extern int haveDri;  // index of dri to serve, -1 - none
 extern int deviceId; // known DeviceID
@@ -52,3 +50,14 @@ extern int readLinkCalledTimes;
 extern int fstatCalledTimes;
 extern bool forceExtraIoctlDuration;
 extern std::vector<NEO::GemVmControl> capturedVmCreate;
+extern int drmQuery(NEO::Query *param);
+
+namespace NEO {
+struct Query;
+}
+
+namespace DrmQueryConfig {
+extern int failOnQueryEngineInfo;
+extern int failOnQueryMemoryInfo;
+extern unsigned int retrieveQueryMemoryInfoRegionCount;
+} // namespace DrmQueryConfig

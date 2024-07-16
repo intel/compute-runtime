@@ -31,7 +31,6 @@ add_executable(igdrcl_${target_name}
                ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
                ${NEO_SOURCE_DIR}/opencl/source/dll/command_queue_dll.cpp
                ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
-               ${NEO_SOURCE_DIR}/opencl/test/unit_test/linux${BRANCH_DIR_SUFFIX}drm_other_requests.cpp
 )
 if(NEO__LIBVA_FOUND)
   target_sources(igdrcl_${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/va_tests.cpp)

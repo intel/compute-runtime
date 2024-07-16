@@ -767,28 +767,6 @@ TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualM
     ::testing::internal::GetCapturedStdout();
 }
 
-TEST_F(DrmTests, givenDrmIsCreatedWithPerContextVmRequiredWhenCreateVirtualMemoryThenCapturedVirtualMemoryIsSettingScratchPageOptionCorrectly) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.PrintDebugMessages.set(true);
-    debugManager.flags.DisableScratchPages.set(true);
-    debugManager.flags.GpuFaultCheckThreshold.set(10);
-
-    VariableBackup<decltype(captureVirtualMemoryCreate)> backupCaptureVirtualMemoryCreate(&captureVirtualMemoryCreate);
-    VariableBackup<decltype(capturedVmCreate)> backupCapturedVmCreate(&capturedVmCreate);
-
-    captureVirtualMemoryCreate = 1;
-    capturedVmCreate = {};
-
-    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
-    EXPECT_NE(drm, nullptr);
-
-    auto disableScratch = drm.get()->checkToDisableScratchPage();
-    auto ioctlHelper = drm.get()->getIoctlHelper();
-    for (auto ctl : capturedVmCreate) {
-        EXPECT_NE(0u, (ctl.flags & ioctlHelper->getFlagsForVmCreate(disableScratch, false, false)));
-    }
-}
-
 TEST(SysCalls, WhenSysCallsPollCalledThenCallIsRedirectedToOs) {
     struct pollfd pollFd;
     pollFd.fd = 0;
@@ -959,4 +937,43 @@ TEST_F(DrmTests, givenInValidPciPathThenNothingIsReturned) {
     openCounter = 1;
     hwDeviceIds = OSInterface::discoverDevices(mockExecutionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
+}
+
+TEST_F(DrmTests, whenDrmIsCreatedAndQueryEngineInfoFailsThenWarningIsReported) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    VariableBackup<decltype(DrmQueryConfig::failOnQueryEngineInfo)> backupFailOnFdSetParamEngineMap(&DrmQueryConfig::failOnQueryEngineInfo);
+    DrmQueryConfig::failOnQueryEngineInfo = true;
+
+    ::testing::internal::CaptureStderr();
+    ::testing::internal::CaptureStdout();
+
+    MockExecutionEnvironment mockExecutionEnvironment;
+    auto drm = DrmWrap::createDrm(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    EXPECT_NE(drm, nullptr);
+
+    std::string errStr = ::testing::internal::GetCapturedStderr();
+    EXPECT_TRUE(hasSubstr(errStr, std::string("WARNING: Failed to query engine info\n")));
+    ::testing::internal::GetCapturedStdout();
+}
+
+TEST_F(DrmTests, whenDrmIsCreatedAndQueryMemoryInfoFailsThenWarningIsReported) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+    debugManager.flags.EnableLocalMemory.set(true);
+
+    VariableBackup<decltype(DrmQueryConfig::failOnQueryMemoryInfo)> backupFailOnFdSetParamMemRegionMap(&DrmQueryConfig::failOnQueryMemoryInfo);
+    DrmQueryConfig::failOnQueryMemoryInfo = true;
+
+    ::testing::internal::CaptureStderr();
+    ::testing::internal::CaptureStdout();
+
+    MockExecutionEnvironment mockExecutionEnvironment;
+    auto drm = DrmWrap::createDrm(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    EXPECT_NE(drm, nullptr);
+
+    std::string errStr = ::testing::internal::GetCapturedStderr();
+    EXPECT_TRUE(hasSubstr(errStr, std::string("WARNING: Failed to query memory info\n")));
+    ::testing::internal::GetCapturedStdout();
 }

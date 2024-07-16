@@ -7,10 +7,11 @@
 
 #include "mock_os_layer.h"
 
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
-#include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include <cassert>
 #include <dirent.h>
@@ -272,7 +273,8 @@ int drmQueryItem(NEO::Query *query) {
             return failOnEuTotal || failOnSubsliceTotal;
         }
     }
-    return drmOtherRequests(DRM_IOCTL_I915_QUERY, query);
+
+    return drmQuery(query);
 }
 
 int ioctl(int fd, unsigned long int request, ...) throw() {
@@ -323,9 +325,6 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
             case DRM_IOCTL_I915_QUERY:
                 res = drmQueryItem(va_arg(vl, NEO::Query *));
                 break;
-            default:
-                res = drmOtherRequests(request, vl);
-                break;
             }
         }
         va_end(vl);
@@ -334,4 +333,93 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
 
     va_end(vl);
     return -1;
+}
+
+namespace DrmQueryConfig {
+int failOnQueryEngineInfo = 0;
+int failOnQueryMemoryInfo = 0;
+unsigned int retrieveQueryMemoryInfoRegionCount = 3;
+} // namespace DrmQueryConfig
+
+uint32_t getTileFromEngineOrMemoryInstance(uint16_t instanceValue) {
+    uint8_t tileMask = (instanceValue >> 8);
+
+    return Math::log2(static_cast<uint64_t>(tileMask));
+}
+
+uint16_t getEngineOrMemoryInstanceValue(uint16_t tile) {
+    return ((1 << tile) << 8);
+}
+
+int drmQuery(NEO::Query *param) {
+    auto expectedQueryEngineLength = static_cast<int32_t>(sizeof(drm_i915_query_engine_info) + (sizeof(drm_i915_engine_info) * DrmQueryConfig::retrieveQueryMemoryInfoRegionCount));
+    assert(param);
+    int ret = -1;
+    int32_t requiredLength = 0u;
+
+    for (uint32_t i = 0; i < param->numItems; i++) {
+        auto itemArray = reinterpret_cast<NEO::QueryItem *>(param->itemsPtr);
+        auto item = &itemArray[i];
+        switch (item->queryId) {
+        case DRM_I915_QUERY_ENGINE_INFO:
+
+            if (0 == item->length) {
+                item->length = expectedQueryEngineLength;
+            } else {
+                assert(expectedQueryEngineLength == item->length);
+                auto queryEngineInfo = reinterpret_cast<drm_i915_query_engine_info *>(item->dataPtr);
+                auto engineInfo = queryEngineInfo->engines;
+
+                for (uint32_t i = 0; i < DrmQueryConfig::retrieveQueryMemoryInfoRegionCount; i++) {
+                    engineInfo++->engine = {I915_ENGINE_CLASS_RENDER, getEngineOrMemoryInstanceValue(i)};
+                }
+
+                queryEngineInfo->num_engines = DrmQueryConfig::retrieveQueryMemoryInfoRegionCount;
+            }
+            ret = DrmQueryConfig::failOnQueryEngineInfo ? -1 : 0;
+            break;
+        case DRM_I915_QUERY_MEMORY_REGIONS:
+            requiredLength = static_cast<int32_t>(sizeof(drm_i915_query_memory_regions) +
+                                                  DrmQueryConfig::retrieveQueryMemoryInfoRegionCount * sizeof(drm_i915_memory_region_info));
+
+            if (0 == item->length) {
+                item->length = requiredLength;
+            } else {
+                assert(requiredLength == item->length);
+                auto region = reinterpret_cast<drm_i915_query_memory_regions *>(item->dataPtr);
+                region->num_regions = DrmQueryConfig::retrieveQueryMemoryInfoRegionCount;
+                for (uint32_t i = 0; i < DrmQueryConfig::retrieveQueryMemoryInfoRegionCount; i++) {
+                    drm_i915_memory_region_info regionInfo = {};
+                    regionInfo.region.memory_class = (i == 0) ? I915_MEMORY_CLASS_SYSTEM : I915_MEMORY_CLASS_DEVICE;
+                    if (i >= 1) {
+                        regionInfo.region.memory_instance = getEngineOrMemoryInstanceValue(i - 1);
+                    }
+                    region->regions[i] = regionInfo;
+                }
+            }
+            ret = DrmQueryConfig::failOnQueryMemoryInfo ? -1 : 0;
+            break;
+        case PRELIM_DRM_I915_QUERY_DISTANCE_INFO:
+            auto queryDistanceInfo = reinterpret_cast<prelim_drm_i915_query_distance_info *>(item->dataPtr);
+            switch (queryDistanceInfo->region.memory_class) {
+            case I915_MEMORY_CLASS_SYSTEM:
+                queryDistanceInfo->distance = -1;
+                break;
+            case I915_MEMORY_CLASS_DEVICE: {
+                auto engineTile = getTileFromEngineOrMemoryInstance(queryDistanceInfo->engine.engine_instance);
+                auto memoryTile = getTileFromEngineOrMemoryInstance(queryDistanceInfo->region.memory_instance);
+
+                queryDistanceInfo->distance = (memoryTile == engineTile) ? 0 : 100;
+                break;
+            }
+            default:
+                item->length = -EINVAL;
+                break;
+            }
+            ret = 0;
+            break;
+        }
+    }
+
+    return ret;
 }
