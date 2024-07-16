@@ -307,6 +307,7 @@ class MemoryManager {
     virtual bool releaseMediaContext(uint32_t rootDeviceIndex, uint64_t doorbellHandle) { return false; }
 
     virtual bool isCompressionSupportedForShareable(bool isShareable) { return true; }
+    virtual bool usmCompressionSupported(Device *device);
 
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);

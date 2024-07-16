@@ -7934,3 +7934,11 @@ TEST_F(DrmMemoryManagerTest, givenIsCompressionSupportedForShareableThenReturnCo
     EXPECT_FALSE(memoryManager->isCompressionSupportedForShareable(true));
     EXPECT_TRUE(memoryManager->isCompressionSupportedForShareable(false));
 }
+
+TEST_F(DrmMemoryManagerTest, givenUsmCompressionSupportedThenReturnFalse) {
+    DebugManagerStateRestore dbgState;
+    EXPECT_FALSE(memoryManager->usmCompressionSupported(device));
+
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    EXPECT_TRUE(memoryManager->usmCompressionSupported(device));
+}

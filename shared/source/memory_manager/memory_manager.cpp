@@ -1162,4 +1162,10 @@ uint64_t MemoryManager::adjustToggleBitFlagForGpuVa(AllocationType inputAllocati
     return gpuAddress;
 }
 
+bool MemoryManager::usmCompressionSupported(Device *device) {
+    auto &hwInfo = device->getHardwareInfo();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    return gfxCoreHelper.usmCompressionSupported(hwInfo);
+}
+
 } // namespace NEO

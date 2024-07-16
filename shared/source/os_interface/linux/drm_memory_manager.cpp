@@ -2745,4 +2745,11 @@ bool DrmMemoryManager::isCompressionSupportedForShareable(bool isShareable) {
     return !isShareable;
 }
 
+bool DrmMemoryManager::usmCompressionSupported(Device *device) {
+    if (NEO::debugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
+        return !!NEO::debugManager.flags.RenderCompressedBuffersEnabled.get();
+    }
+    return false;
+}
+
 } // namespace NEO

@@ -826,9 +826,7 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             allocationType = AllocationType::writeCombined;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
-            auto &gfxCoreHelper = unifiedMemoryProperties.device->getGfxCoreHelper();
-            auto &hwInfo = unifiedMemoryProperties.device->getHardwareInfo();
-            if (CompressionSelector::allowStatelessCompression() || gfxCoreHelper.usmCompressionSupported(hwInfo)) {
+            if (CompressionSelector::allowStatelessCompression() || memoryManager->usmCompressionSupported(unifiedMemoryProperties.device)) {
                 compressionEnabled = true;
             }
             if (unifiedMemoryProperties.requestedAllocationType != AllocationType::unknown) {
