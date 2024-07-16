@@ -28,6 +28,7 @@
 using namespace NEO;
 
 struct MockIoctlHelperXeDebug : IoctlHelperXe {
+    using IoctlHelperXe::bindInfo;
     using IoctlHelperXe::debugMetadata;
     using IoctlHelperXe::freeDebugMetadata;
     using IoctlHelperXe::getRunaloneExtProperty;
@@ -92,6 +93,9 @@ struct DrmMockXeDebug : public DrmMockCustom {
             return setIoctlAnswer;
         }
         switch (request) {
+        case DrmIoctl::gemVmBind: {
+            return 0;
+        } break;
         case DrmIoctl::query: {
             struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
             switch (deviceQuery->query) {
@@ -149,6 +153,11 @@ struct DrmMockXeDebug : public DrmMockCustom {
             metadataID = metadata->metadata_id;
             return 0;
         } break;
+        case DrmIoctl::gemWaitUserFence: {
+            auto waitUserFenceInput = static_cast<drm_xe_wait_user_fence *>(arg);
+            waitUserFenceInputs.push_back(*waitUserFenceInput);
+            return 0;
+        } break;
 
         default:
             break;
@@ -203,6 +212,7 @@ struct DrmMockXeDebug : public DrmMockCustom {
     std::vector<drm_xe_ext_vm_set_debug_metadata> vmCreateMetadata;
     std::vector<drm_xe_engine_class_instance> execQueueEngineInstances;
     drm_xe_exec_queue_create execQueueCreateParams = {};
+    StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
 
     // Debugger ioctls
     int debuggerOpenRetval = 10; // debugFd
