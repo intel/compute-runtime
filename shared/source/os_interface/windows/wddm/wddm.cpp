@@ -663,6 +663,14 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     createAllocation.pAllocationInfo2 = &allocationInfo;
     createAllocation.hDevice = device;
 
+    bool allowNotZeroForCompressed = false;
+    if (NEO::debugManager.flags.AllowNotZeroForCompressedOnWddm.get() != -1) {
+        allowNotZeroForCompressed = !!NEO::debugManager.flags.AllowNotZeroForCompressedOnWddm.get();
+    }
+    if (allowNotZeroForCompressed && gmm->isCompressionEnabled()) {
+        createAllocation.Flags.AllowNotZeroed = 1;
+    }
+
     status = getGdi()->createAllocation2(&createAllocation);
     if (status != STATUS_SUCCESS) {
         if (isReadOnlyMemory(alignedCpuPtr)) {

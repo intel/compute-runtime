@@ -479,6 +479,48 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenCreateResou
     wddm->destroyAllocation(&allocation, nullptr);
 }
 
+TEST_F(WddmTestWithMockGdiDll, givenCompressedResourceWhenItIsCreatedThenItMayContainNonZeroContent) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.AllowNotZeroForCompressedOnWddm.set(1);
+    init();
+    WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, true, 1u);
+    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
+    gmm->setCompressionEnabled(true);
+    allocation.setDefaultGmm(gmm.get());
+    auto status = wddm->createAllocation(&allocation);
+    EXPECT_EQ(STATUS_SUCCESS, status);
+    auto passedCreateAllocation = getMockAllocationFcn();
+    EXPECT_EQ(1u, passedCreateAllocation->Flags.AllowNotZeroed);
+    wddm->destroyAllocation(&allocation, nullptr);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenNonCompressedResourceWhenItIsCreatedThenItCannotContainNonZeroContent) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.AllowNotZeroForCompressedOnWddm.set(1);
+    init();
+    WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, true, 1u);
+    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
+    allocation.setDefaultGmm(gmm.get());
+    auto status = wddm->createAllocation(&allocation);
+    EXPECT_EQ(STATUS_SUCCESS, status);
+    auto passedCreateAllocation = getMockAllocationFcn();
+    EXPECT_EQ(0u, passedCreateAllocation->Flags.AllowNotZeroed);
+    wddm->destroyAllocation(&allocation, nullptr);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenCompressedResourceWhenItIsCreatedThenItCannotContainNonZeroContent) {
+    init();
+    WddmAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::memoryNull, true, 1u);
+    auto gmm = std::unique_ptr<Gmm>(GmmHelperFunctions::getGmm(nullptr, MemoryConstants::pageSize, getGmmHelper()));
+    gmm->setCompressionEnabled(true);
+    allocation.setDefaultGmm(gmm.get());
+    auto status = wddm->createAllocation(&allocation);
+    EXPECT_EQ(STATUS_SUCCESS, status);
+    auto passedCreateAllocation = getMockAllocationFcn();
+    EXPECT_EQ(0u, passedCreateAllocation->Flags.AllowNotZeroed);
+    wddm->destroyAllocation(&allocation, nullptr);
+}
+
 TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandleAndResourceHandleAreSet) {
     init();
     struct MockWddmMemoryManager : public WddmMemoryManager {
