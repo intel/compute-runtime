@@ -95,14 +95,16 @@ inline void PageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultData
     pageFaultData.domain = AllocationDomain::gpu;
 }
 
-bool PageFaultManager::verifyPageFault(void *ptr) {
+bool PageFaultManager::verifyAndHandlePageFault(void *ptr, bool handlePageFault) {
     std::unique_lock<SpinLock> lock{mtx};
     for (auto &alloc : this->memoryData) {
         auto allocPtr = alloc.first;
         auto &pageFaultData = alloc.second;
         if (ptr >= allocPtr && ptr < ptrOffset(allocPtr, pageFaultData.size)) {
-            this->setAubWritable(true, allocPtr, pageFaultData.unifiedMemoryManager);
-            gpuDomainHandler(this, allocPtr, pageFaultData);
+            if (handlePageFault) {
+                this->setAubWritable(true, allocPtr, pageFaultData.unifiedMemoryManager);
+                gpuDomainHandler(this, allocPtr, pageFaultData);
+            }
             return true;
         }
     }

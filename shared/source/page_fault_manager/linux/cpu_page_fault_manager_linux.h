@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 
 #include <csignal>
 #include <functional>
+#include <vector>
 
 namespace NEO {
 class PageFaultManagerLinux : public PageFaultManager {
@@ -35,8 +36,9 @@ class PageFaultManagerLinux : public PageFaultManager {
 
     static std::function<void(int signal, siginfo_t *info, void *context)> pageFaultHandler;
 
-    struct sigaction previousPageFaultHandler = {};
+    std::vector<struct sigaction> previousPageFaultHandlers;
 
     bool evictMemoryAfterCopy = false;
+    int handlerIndex = 0;
 };
 } // namespace NEO
