@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/core/source/cache/linux/cache_reservation_impl.h"
+#include "level_zero/core/source/cache/linux/cache_reservation_impl_upstream.h"
 
 namespace L0 {
 

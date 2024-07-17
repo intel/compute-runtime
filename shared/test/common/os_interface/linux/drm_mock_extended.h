@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ class DrmMockExtended : public DrmMock {
   public:
     using Drm::cacheInfo;
     using Drm::engineInfo;
+    using Drm::ioctlHelper;
     using Drm::memoryInfo;
     using Drm::pageFaultSupported;
     using Drm::rootDeviceEnvironment;
