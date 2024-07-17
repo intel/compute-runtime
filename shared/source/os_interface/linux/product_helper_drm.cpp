@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -132,26 +135,42 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     int maxGpuFreq = 0;
     drm->getMaxGpuFrequency(*outHwInfo, maxGpuFreq);
 
-    ret = setupProductSpecificConfig(*outHwInfo, rootDeviceEnvironment);
-
+    ret = configureHardwareCustom(outHwInfo, osInterface);
+    if (ret != 0) {
+        *outHwInfo = {};
+        return ret;
+    }
     configureCacheInfo(outHwInfo);
     featureTable->flags.ftrEDram = (gtSystemInfo->EdramSizeInKb != 0) ? 1 : 0;
 
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
     outHwInfo->capabilityTable.ftrSvm = featureTable->flags.ftrSVM;
 
-    setupCoherencySupport(*outHwInfo, rootDeviceEnvironment);
-    setupDefaultEngineType(*outHwInfo, rootDeviceEnvironment);
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    outHwInfo->capabilityTable.ftrSupportsCoherency = false;
+
+    gfxCoreHelper.adjustDefaultEngineType(outHwInfo, *this, rootDeviceEnvironment.ailConfiguration.get());
+    outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     drm->checkQueueSliceSupport();
     drm->checkNonPersistentContextsSupport();
     drm->checkPreemptionSupport();
-    setupPreemptionMode(*outHwInfo, rootDeviceEnvironment, drm->isPreemptionSupported());
+    bool preemption = drm->isPreemptionSupported();
+
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
+                                                  compilerProductHelper.isMidThreadPreemptionSupported(*outHwInfo) && preemption,
+                                                  static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuThreadGroupLevelPreempt) && preemption,
+                                                  static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuMidBatchPreempt) && preemption);
+
     setupPreemptionSurfaceSize(*outHwInfo, rootDeviceEnvironment);
     setupKmdNotifyProperties(outHwInfo->capabilityTable.kmdNotifyProperties);
-    setupImageSupport(*outHwInfo);
 
-    return ret;
+    if (debugManager.flags.ForceImagesSupport.get() != -1) {
+        outHwInfo->capabilityTable.supportsImages = debugManager.flags.ForceImagesSupport.get();
+    }
+
+    return 0;
 }
 
 } // namespace NEO

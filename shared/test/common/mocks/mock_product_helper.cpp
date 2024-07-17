@@ -213,7 +213,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::heapInLocalMem(const HardwareInfo &hwInfo) c
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const {
+void ProductHelperHw<IGFX_UNKNOWN>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
 }
 
 template <>

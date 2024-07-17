@@ -61,7 +61,7 @@ bool ProductHelperHw<gfxProduct>::useGemCreateExtInAllocateMemoryByKMD() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const {
+void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
     coherencyFlag = true;
 }
 

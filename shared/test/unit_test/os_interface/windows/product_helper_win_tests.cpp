@@ -80,16 +80,17 @@ TEST_F(ProductHelperTestWindows, givenInstrumentationForHardwareIsEnabledOrDisab
 }
 
 HWTEST_F(ProductHelperTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoThenSetCoherencySupportCorrectly) {
+    HardwareInfo initialHwInfo = *defaultHwInfo;
 
     bool initialCoherencyStatus = false;
     productHelper->setCapabilityCoherencyFlag(outHwInfo, initialCoherencyStatus);
 
-    outHwInfo.featureTable.flags.ftrL3IACoherency = false;
-    productHelper->configureHwInfoWddm(&outHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    initialHwInfo.featureTable.flags.ftrL3IACoherency = false;
+    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 
-    outHwInfo.featureTable.flags.ftrL3IACoherency = true;
-    productHelper->configureHwInfoWddm(&outHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    initialHwInfo.featureTable.flags.ftrL3IACoherency = true;
+    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 } // namespace NEO
