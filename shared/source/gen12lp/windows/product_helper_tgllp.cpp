@@ -20,7 +20,7 @@ constexpr static auto gfxProduct = IGFX_TIGERLAKE_LP;
 namespace NEO {
 
 template <>
-void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const {
     coherencyFlag = true;
 
     if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {

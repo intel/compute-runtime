@@ -115,7 +115,7 @@ class ProductHelper {
     virtual TimeoutParams getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const = 0;
     virtual std::pair<bool, bool> isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const = 0;
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
-    virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) = 0;
+    virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const = 0;
     virtual bool isAdditionalMediaSamplerProgrammingRequired() const = 0;
     virtual bool isInitialFlagsProgrammingRequired() const = 0;
     virtual bool isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const = 0;
@@ -247,7 +247,11 @@ class ProductHelper {
 
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const = 0;
+    void setupDefaultEngineType(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const;
+    int setupProductSpecificConfig(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const;
     static void setupPreemptionSurfaceSize(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setupKmdNotifyProperties(KmdNotifyProperties &kmdNotifyProperties);
+    static void setupPreemptionMode(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment, bool kmdPreemptionSupport);
+    static void setupImageSupport(HardwareInfo &hwInfo);
 };
 } // namespace NEO

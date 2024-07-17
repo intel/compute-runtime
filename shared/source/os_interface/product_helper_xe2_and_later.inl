@@ -97,7 +97,7 @@ uint32_t ProductHelperHw<gfxProduct>::getInternalHeapsPreallocated() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const {
     coherencyFlag = false;
 }
 

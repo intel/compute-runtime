@@ -8,8 +8,10 @@
 #include "shared/source/os_interface/product_helper.h"
 
 #include "shared/source/built_ins/sip_kernel_type.h"
+#include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -42,5 +44,33 @@ void ProductHelper::setupKmdNotifyProperties(KmdNotifyProperties &kmdNotifyPrope
     KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
     KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideEnableQuickKmdSleepForDirectSubmission.get(), kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     KmdNotifyHelper::overrideFromDebugVariable(debugManager.flags.OverrideDelayQuickKmdSleepForDirectSubmissionMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
+}
+
+int ProductHelper::setupProductSpecificConfig(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto osInterface = rootDeviceEnvironment.osInterface.get();
+    int ret = configureHardwareCustom(&hwInfo, osInterface);
+    if (ret != 0) {
+        hwInfo = {};
+    }
+    return ret;
+}
+void ProductHelper::setupPreemptionMode(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment, bool kmdPreemptionSupport) {
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    PreemptionHelper::adjustDefaultPreemptionMode(hwInfo.capabilityTable,
+                                                  compilerProductHelper.isMidThreadPreemptionSupported(hwInfo) && kmdPreemptionSupport,
+                                                  static_cast<bool>(hwInfo.featureTable.flags.ftrGpGpuThreadGroupLevelPreempt) && kmdPreemptionSupport,
+                                                  static_cast<bool>(hwInfo.featureTable.flags.ftrGpGpuMidBatchPreempt) && kmdPreemptionSupport);
+}
+
+void ProductHelper::setupImageSupport(HardwareInfo &hwInfo) {
+    if (debugManager.flags.ForceImagesSupport.get() != -1) {
+        hwInfo.capabilityTable.supportsImages = debugManager.flags.ForceImagesSupport.get();
+    }
+}
+
+void ProductHelper::setupDefaultEngineType(HardwareInfo &hwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    gfxCoreHelper.adjustDefaultEngineType(&hwInfo, *this, rootDeviceEnvironment.ailConfiguration.get());
+    hwInfo.capabilityTable.defaultEngineType = getChosenEngineType(hwInfo);
 }
 } // namespace NEO

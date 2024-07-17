@@ -20,7 +20,7 @@ constexpr static auto gfxProduct = IGFX_DG1;
 namespace NEO {
 
 template <>
-void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) {
+void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const {
     coherencyFlag = false;
 }
 
