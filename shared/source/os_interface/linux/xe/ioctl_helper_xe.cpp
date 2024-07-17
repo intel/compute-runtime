@@ -464,6 +464,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     StackVec<std::vector<std::bitset<8>>, 2> geomDss;
     StackVec<std::vector<std::bitset<8>>, 2> computeDss;
     StackVec<std::vector<std::bitset<8>>, 2> euDss;
+    StackVec<std::vector<std::bitset<8>>, 2> simd16EuDss;
 
     auto topologySize = queryGtTopology.size();
     auto dataPtr = queryGtTopology.data();
@@ -472,8 +473,10 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     geomDss.resize(numTiles);
     computeDss.resize(numTiles);
     euDss.resize(numTiles);
+    simd16EuDss.resize(numTiles);
     bool receivedDssInfo = false;
     bool receivedEuPerDssInfo = false;
+    bool receivedSimd16EuPerDssInfo = false;
     while (topologySize >= sizeof(drm_xe_query_topology_mask)) {
         drm_xe_query_topology_mask *topo = reinterpret_cast<drm_xe_query_topology_mask *>(dataPtr);
         UNRECOVERABLE_IF(topo == nullptr);
@@ -495,6 +498,10 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
                 fillMask(euDss[tileId], topo);
                 receivedEuPerDssInfo = true;
                 break;
+            case DRM_XE_TOPO_SIMD16_EU_PER_DSS:
+                fillMask(simd16EuDss[tileId], topo);
+                receivedSimd16EuPerDssInfo = true;
+                break;
             default:
                 xeLog("Unhandle GT Topo type: %d\n", topo->type);
             }
@@ -504,9 +511,10 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
         topologySize -= itemSize;
         dataPtr = ptrOffset(dataPtr, itemSize);
     }
-
+    receivedEuPerDssInfo |= receivedSimd16EuPerDssInfo;
     bool isComputeDssEmpty = false;
-    getTopologyData(numTiles, geomDss.begin(), computeDss.begin(), euDss.begin(), topologyData, isComputeDssEmpty);
+    std::vector<std::bitset<8>> *euDssVector = receivedSimd16EuPerDssInfo ? simd16EuDss.begin() : euDss.begin();
+    getTopologyData(numTiles, geomDss.begin(), computeDss.begin(), euDssVector, topologyData, isComputeDssEmpty);
 
     auto &dssInfo = isComputeDssEmpty ? geomDss : computeDss;
     getTopologyMap(numTiles, dssInfo.begin(), topologyMap);
