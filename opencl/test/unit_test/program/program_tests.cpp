@@ -3496,14 +3496,14 @@ TEST(ProgramInternalOptionsTests, givenProgramWhenPossibleInternalOptionsChecked
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
     auto &optsToExtract = program.internalOptionsToExtract;
-    EXPECT_EQ(1U, std::count(optsToExtract.begin(), optsToExtract.end(), CompilerOptions::largeGrf));
+    EXPECT_EQ(1, std::count(optsToExtract.begin(), optsToExtract.end(), CompilerOptions::largeGrf));
 }
 
 TEST(ProgramInternalOptionsTests, givenProgramWhenPossibleInternalOptionsCheckedThenDefaultGRFOptionIsPresent) {
     MockClDevice device{new MockDevice()};
     MockProgram program(toClDeviceVector(device));
     auto &optsToExtract = program.internalOptionsToExtract;
-    EXPECT_EQ(1U, std::count(optsToExtract.begin(), optsToExtract.end(), CompilerOptions::defaultGrf));
+    EXPECT_EQ(1, std::count(optsToExtract.begin(), optsToExtract.end(), CompilerOptions::defaultGrf));
 }
 
 TEST(ProgramInternalOptionsTests, givenProgramWhenPossibleInternalOptionsCheckedThenNumThreadsPerUsIsPresent) {

@@ -63,7 +63,7 @@ class CpuInfoOverrideVirtualAddressSizeAndFlags {
 
 using namespace NEO;
 
-constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * MemoryConstants::gigaByte) : 0;
+constexpr size_t reservedCpuAddressRangeSize = static_cast<size_t>(is64bit ? (6 * 4 * MemoryConstants::gigaByte) : 0);
 constexpr uint64_t sizeHeap32 = 4 * MemoryConstants::gigaByte;
 
 void testGfxPartition(MockGfxPartition &gfxPartition, uint64_t gfxBase, uint64_t gfxTop, uint64_t svmTop) {

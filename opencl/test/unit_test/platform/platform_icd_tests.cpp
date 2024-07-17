@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ class IcdRestore : public SharingFactory {
     std::vector<std::unique_ptr<SharingBuilderFactory>> sharings;
 };
 
-void fakeGlF() {
+void CL_API_CALL fakeGlF() {
 }
 
 class PlatformTestedSharingBuilderFactory : public SharingBuilderFactory {
