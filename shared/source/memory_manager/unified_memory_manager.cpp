@@ -686,7 +686,7 @@ void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
 void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
     this->usmDeviceAllocationsCache.allocations.reserve(128u);
     const auto totalDeviceMemory = device.getGlobalMemorySize(static_cast<uint32_t>(device.getDeviceBitfield().to_ulong()));
-    auto fractionOfTotalMemoryForRecycling = 0.02;
+    auto fractionOfTotalMemoryForRecycling = 0.08;
     if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
         fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableDeviceAllocationCache.get());
     }
