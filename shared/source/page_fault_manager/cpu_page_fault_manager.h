@@ -59,7 +59,7 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     virtual void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) = 0;
     virtual void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) = 0;
 
-    MOCKABLE_VIRTUAL bool verifyPageFault(void *ptr);
+    MOCKABLE_VIRTUAL bool verifyAndHandlePageFault(void *ptr, bool handlePageFault);
     MOCKABLE_VIRTUAL void transferToGpu(void *ptr, void *cmdQ);
     MOCKABLE_VIRTUAL void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager);
     MOCKABLE_VIRTUAL void setCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager);
