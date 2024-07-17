@@ -543,7 +543,9 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
         hwInfo->gtSystemInfo.L3CacheSizeInKb = systemInfo->getL3BankSizeInKb() * bankCount;
     }
-
+    if (!hwInfo->gtSystemInfo.EUCount) {
+        return -1;
+    }
     setupCacheInfo(*hwInfo);
     hwInfo->capabilityTable.deviceName = device->devName;
 
@@ -927,9 +929,14 @@ bool Drm::useVMBindImmediate() const {
 
 void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
+    gtSysInfo->MaxEuPerSubSlice = sysInfo->getMaxEuPerDualSubSlice();
+
+    if (!gtSysInfo->EUCount) {
+        gtSysInfo->EUCount = gtSysInfo->SubSliceCount * gtSysInfo->MaxEuPerSubSlice;
+    }
+
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * sysInfo->getNumThreadsPerEu();
     gtSysInfo->MemoryType = sysInfo->getMemoryType();
-    gtSysInfo->MaxEuPerSubSlice = sysInfo->getMaxEuPerDualSubSlice();
     gtSysInfo->MaxSlicesSupported = sysInfo->getMaxSlicesSupported();
     gtSysInfo->MaxSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
     gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();

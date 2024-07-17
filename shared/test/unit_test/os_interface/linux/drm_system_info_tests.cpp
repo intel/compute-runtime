@@ -421,3 +421,53 @@ TEST(DrmSystemInfoTest, givenNumL3BanksSetInTopoologyDataWhenCreatingSystemInfoT
 
     EXPECT_EQ(expectedL3Size, calculatedL3Size);
 }
+
+TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoSucceedsThenEuCountIsSetBasedOnMaxEuPerSubSlice) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.EUCount = 0u;
+    hwInfo.gtSystemInfo.SubSliceCount = 2u;
+    hwInfo.gtSystemInfo.DualSubSliceCount = 2u;
+
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    drm.storedEUVal = 0;
+    drm.failRetTopology = true;
+
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    int ret = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(ret, 0);
+    EXPECT_NE(nullptr, drm.getSystemInfo());
+    const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    const auto &gtSystemInfo = newHwInfo.gtSystemInfo;
+
+    EXPECT_NE(0u, gtSystemInfo.EUCount);
+    EXPECT_EQ(hwInfo.gtSystemInfo.SubSliceCount * drm.getSystemInfo()->getMaxEuPerDualSubSlice(), gtSystemInfo.EUCount);
+}
+
+TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoFailsThenFailureIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.EUCount = 0u;
+    hwInfo.gtSystemInfo.SubSliceCount = 2u;
+    hwInfo.gtSystemInfo.DualSubSliceCount = 2u;
+
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    drm.storedEUVal = 0;
+    drm.failRetTopology = true;
+    drm.failQueryDeviceBlob = true;
+
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    int ret = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(ret, -1);
+    EXPECT_EQ(nullptr, drm.getSystemInfo());
+}

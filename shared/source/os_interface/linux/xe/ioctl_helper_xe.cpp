@@ -473,7 +473,6 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     computeDss.resize(numTiles);
     euDss.resize(numTiles);
     bool receivedDssInfo = false;
-    bool receivedEuPerDssInfo = false;
     while (topologySize >= sizeof(drm_xe_query_topology_mask)) {
         drm_xe_query_topology_mask *topo = reinterpret_cast<drm_xe_query_topology_mask *>(dataPtr);
         UNRECOVERABLE_IF(topo == nullptr);
@@ -493,7 +492,6 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
                 break;
             case DRM_XE_TOPO_EU_PER_DSS:
                 fillMask(euDss[tileId], topo);
-                receivedEuPerDssInfo = true;
                 break;
             default:
                 xeLog("Unhandle GT Topo type: %d\n", topo->type);
@@ -511,7 +509,7 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     auto &dssInfo = isComputeDssEmpty ? geomDss : computeDss;
     getTopologyMap(numTiles, dssInfo.begin(), topologyMap);
 
-    return receivedDssInfo && receivedEuPerDssInfo;
+    return receivedDssInfo;
 }
 
 void IoctlHelperXe::updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size) {

@@ -40,6 +40,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::queryGtListData;
     using IoctlHelperXe::setContextProperties;
     using IoctlHelperXe::supportedFeatures;
+    using IoctlHelperXe::tileIdToGtId;
     using IoctlHelperXe::UserFenceExtension;
     using IoctlHelperXe::xeGetBindFlagsName;
     using IoctlHelperXe::xeGetBindOperationName;
@@ -258,7 +259,7 @@ struct DrmMockXe : public DrmMockCustom {
     virtual void handleUserFenceWaitExtensions(drm_xe_wait_user_fence *userFenceWait) {}
     virtual void handleContextCreateExtensions(drm_xe_user_extension *extension) {}
 
-    void addMockedQueryTopologyData(uint16_t tileId, uint16_t maskType, uint32_t nBytes, const std::vector<uint8_t> &mask) {
+    void addMockedQueryTopologyData(uint16_t gtId, uint16_t maskType, uint32_t nBytes, const std::vector<uint8_t> &mask) {
 
         ASSERT_EQ(nBytes, mask.size());
 
@@ -270,7 +271,7 @@ struct DrmMockXe : public DrmMockCustom {
         uint8_t *dataPtr = queryTopology.data() + oldSize;
 
         drm_xe_query_topology_mask *topo = reinterpret_cast<drm_xe_query_topology_mask *>(dataPtr);
-        topo->gt_id = tileId;
+        topo->gt_id = gtId;
         topo->type = maskType;
         topo->num_bytes = nBytes;
 
