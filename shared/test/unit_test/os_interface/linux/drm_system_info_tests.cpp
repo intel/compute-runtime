@@ -471,3 +471,27 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoFailsT
     EXPECT_EQ(ret, -1);
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 }
+
+TEST(DrmSystemInfoTest, givenTopologyWithMoreEuPerDssThanInDeviceBlobWhenSetupHardwareInfoThenDeviceBlobValueLimitsEuPerDssCount) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    drm.storedSSVal = 2;
+    drm.storedEUVal = 200;
+
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    int ret = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(ret, 0);
+    EXPECT_NE(nullptr, drm.getSystemInfo());
+    const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    const auto &gtSystemInfo = newHwInfo.gtSystemInfo;
+
+    EXPECT_NE(static_cast<uint32_t>(drm.storedEUVal), gtSystemInfo.EUCount);
+    EXPECT_EQ(hwInfo.gtSystemInfo.SubSliceCount * drm.getSystemInfo()->getMaxEuPerDualSubSlice(), gtSystemInfo.EUCount);
+    EXPECT_EQ(hwInfo.gtSystemInfo.EUCount * drm.getSystemInfo()->getNumThreadsPerEu(), gtSystemInfo.ThreadCount);
+}

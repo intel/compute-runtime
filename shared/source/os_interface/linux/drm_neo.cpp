@@ -931,7 +931,7 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->MaxEuPerSubSlice = sysInfo->getMaxEuPerDualSubSlice();
 
-    if (!gtSysInfo->EUCount) {
+    if (!gtSysInfo->EUCount || gtSysInfo->EUCount > gtSysInfo->SubSliceCount * gtSysInfo->MaxEuPerSubSlice) {
         gtSysInfo->EUCount = gtSysInfo->SubSliceCount * gtSysInfo->MaxEuPerSubSlice;
     }
 
