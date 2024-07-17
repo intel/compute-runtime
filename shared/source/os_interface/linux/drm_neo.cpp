@@ -929,12 +929,17 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     if (!gtSysInfo->EUCount || gtSysInfo->EUCount > gtSysInfo->SubSliceCount * gtSysInfo->MaxEuPerSubSlice) {
         gtSysInfo->EUCount = gtSysInfo->SubSliceCount * gtSysInfo->MaxEuPerSubSlice;
     }
-
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * sysInfo->getNumThreadsPerEu();
-    gtSysInfo->MemoryType = sysInfo->getMemoryType();
+
     gtSysInfo->MaxSlicesSupported = sysInfo->getMaxSlicesSupported();
     gtSysInfo->MaxSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
     gtSysInfo->MaxDualSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();
+
+    UNRECOVERABLE_IF(gtSysInfo->MaxSlicesSupported == 0);
+    auto maxDssPerSlice = gtSysInfo->MaxDualSubSlicesSupported / gtSysInfo->MaxSlicesSupported;
+    gtSysInfo->SliceCount = static_cast<uint32_t>(Math::divideAndRoundUp(gtSysInfo->DualSubSliceCount, maxDssPerSlice));
+
+    gtSysInfo->MemoryType = sysInfo->getMemoryType();
     gtSysInfo->CsrSizeInMb = sysInfo->getCsrSizeInMb();
     gtSysInfo->SLMSizeInKb = sysInfo->getSlmSizePerDss();
 

@@ -160,7 +160,7 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
     EXPECT_EQ(0x0Au, systemInfo.getMaxMemoryChannels());
     EXPECT_EQ(0x0Bu, systemInfo.getMemoryType());
     EXPECT_EQ(0x03u, systemInfo.getMaxEuPerDualSubSlice());
-    EXPECT_EQ(0x01u, systemInfo.getMaxSlicesSupported());
+    EXPECT_EQ(0x02u, systemInfo.getMaxSlicesSupported());
     EXPECT_EQ(0x04u, systemInfo.getMaxDualSubSlicesSupported());
     EXPECT_EQ(0x17u, systemInfo.getMaxRCS());
     EXPECT_EQ(0x18u, systemInfo.getMaxCCS());
@@ -494,4 +494,31 @@ TEST(DrmSystemInfoTest, givenTopologyWithMoreEuPerDssThanInDeviceBlobWhenSetupHa
     EXPECT_NE(static_cast<uint32_t>(drm.storedEUVal), gtSystemInfo.EUCount);
     EXPECT_EQ(hwInfo.gtSystemInfo.SubSliceCount * drm.getSystemInfo()->getMaxEuPerDualSubSlice(), gtSystemInfo.EUCount);
     EXPECT_EQ(hwInfo.gtSystemInfo.EUCount * drm.getSystemInfo()->getNumThreadsPerEu(), gtSystemInfo.ThreadCount);
+}
+
+TEST(DrmSystemInfoTest, givenFlatSubsliceInfoRepresentationWhenSetupHardwareInfoThenCorrectTopologyBasedOnMaxSubslicePerSliceCount) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    const auto &gtSystemInfo = hwInfo.gtSystemInfo;
+
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm.querySystemInfo();
+
+    auto systemInfo = drm.getSystemInfo();
+    EXPECT_NE(nullptr, systemInfo);
+
+    drm.storedSSVal = systemInfo->getMaxDualSubSlicesSupported() - 1;
+    drm.storedEUVal = drm.storedSSVal * systemInfo->getMaxEuPerDualSubSlice();
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    int ret = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(ret, 0);
+    systemInfo = drm.getSystemInfo();
+    EXPECT_NE(nullptr, systemInfo);
+
+    EXPECT_EQ(gtSystemInfo.SliceCount, systemInfo->getMaxSlicesSupported());
+    EXPECT_EQ(gtSystemInfo.SubSliceCount, systemInfo->getMaxDualSubSlicesSupported() - 1);
+    EXPECT_EQ(gtSystemInfo.DualSubSliceCount, systemInfo->getMaxDualSubSlicesSupported() - 1);
 }
