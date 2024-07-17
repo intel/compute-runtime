@@ -540,8 +540,10 @@ uint16_t IoctlHelperXe::getDefaultEngineClass(const aub_stream::EngineType &defa
  */
 uint16_t IoctlHelperXe::getCpuCachingMode(std::optional<bool> isCoherent, bool allocationInSystemMemory) const {
     uint16_t cpuCachingMode = DRM_XE_GEM_CPU_CACHING_WC;
-    if ((isCoherent.value_or(false) == true) || (isCoherent == std::nullopt && allocationInSystemMemory)) {
-        cpuCachingMode = DRM_XE_GEM_CPU_CACHING_WB;
+    if (allocationInSystemMemory) {
+        if ((isCoherent.value_or(true) == true)) {
+            cpuCachingMode = DRM_XE_GEM_CPU_CACHING_WB;
+        }
     }
 
     if (debugManager.flags.OverrideCpuCaching.get() != -1) {

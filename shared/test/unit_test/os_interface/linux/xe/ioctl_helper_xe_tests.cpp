@@ -1816,7 +1816,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenGetCpuCachingModeCalledThenCorrect
     EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false, false), DRM_XE_GEM_CPU_CACHING_WC);
     EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(false, true), DRM_XE_GEM_CPU_CACHING_WC);
     EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(true, true), DRM_XE_GEM_CPU_CACHING_WB);
-    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(true, false), DRM_XE_GEM_CPU_CACHING_WB);
+    EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(true, false), DRM_XE_GEM_CPU_CACHING_WC);
 
     EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(std::nullopt, false), DRM_XE_GEM_CPU_CACHING_WC);
     EXPECT_EQ(xeIoctlHelper->getCpuCachingMode(std::nullopt, true), DRM_XE_GEM_CPU_CACHING_WB);
