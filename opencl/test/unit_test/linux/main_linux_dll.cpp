@@ -24,7 +24,9 @@
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/signal_utils.h"
+#include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -742,6 +744,20 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
     std::string errStr = ::testing::internal::GetCapturedStderr();
 
     EXPECT_TRUE(hasSubstr(errStr, std::string("WARNING: Debugging not supported\n")));
+}
+
+TEST_F(DrmTests, givenEnabledDebuggingAndHeaplessModeWhenDrmIsCreatedThenPerContextVMIsFalse) {
+
+    mockRootDeviceEnvironment->executionEnvironment.setDebuggingMode(NEO::DebuggingMode::online);
+    auto compilerHelper = std::unique_ptr<MockCompilerProductHelper>(new MockCompilerProductHelper());
+    auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
+    compilerHelper->isHeaplessModeEnabledResult = true;
+    mockRootDeviceEnvironment->compilerProductHelper.reset(compilerHelper.release());
+    mockRootDeviceEnvironment->releaseHelper.reset(releaseHelper.release());
+
+    auto drm = DrmWrap::createDrm(*mockRootDeviceEnvironment);
+    EXPECT_NE(drm, nullptr);
+    EXPECT_FALSE(drm->isPerContextVMRequired());
 }
 
 TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualMemoryIdZeroAndPrintDebugMessage) {
