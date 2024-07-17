@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -19,7 +20,6 @@
 
 class MockPageFaultManager;
 namespace NEO {
-class MockDevice;
 struct UltDeviceFactory;
 class MockMemoryManager;
 class OsAgnosticMemoryManager;
@@ -56,6 +56,20 @@ struct DeviceFixture {
     HelperType &getHelper() const;
     VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&globalDriverHandle};
     VariableBackup<uint32_t> driverCountBackup{&driverCount};
+};
+
+template <typename T>
+struct DeviceFixtureWithCustomMemoryManager : public DeviceFixture {
+    void setUp() {
+        auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+        auto memoryManager = new T(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+        DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);
+    }
+
+    void tearDown() {
+        DeviceFixture::tearDown();
+    }
 };
 
 struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {

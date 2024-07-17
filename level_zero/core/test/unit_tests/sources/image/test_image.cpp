@@ -500,10 +500,10 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
     }
 };
 
-class ImageCreateExternalMemory : public DeviceFixture, public testing::Test {
+class ImageCreateExternalMemory : public DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock> {
   public:
-    void SetUp() override {
-        DeviceFixture::setUp();
+    void setUp() {
+        DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>::setUp();
 
         desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
         desc.type = ZE_IMAGE_TYPE_3D;
@@ -519,15 +519,17 @@ class ImageCreateExternalMemory : public DeviceFixture, public testing::Test {
         desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
     }
 
-    void TearDown() override {
-        DeviceFixture::tearDown();
+    void tearDown() {
+        DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>::tearDown();
     }
 
     ze_image_desc_t desc = {};
     uint64_t imageHandle = 0x1;
 };
 
-HWTEST2_F(ImageCreateExternalMemory, givenNTHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
+using ImageCreateExternalMemoryTest = Test<ImageCreateExternalMemory>;
+
+HWTEST2_F(ImageCreateExternalMemoryTest, givenNTHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_external_memory_import_win32_handle_t importNTHandle = {};
@@ -537,7 +539,6 @@ HWTEST2_F(ImageCreateExternalMemory, givenNTHandleWhenCreatingImageThenSuccessIs
     desc.pNext = &importNTHandle;
 
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
@@ -549,7 +550,7 @@ HWTEST2_F(ImageCreateExternalMemory, givenNTHandleWhenCreatingImageThenSuccessIs
     imageHW.reset(nullptr);
 }
 
-HWTEST2_F(ImageCreateExternalMemory, givenD3D12HeapHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(ImageCreateExternalMemoryTest, givenD3D12HeapHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_external_memory_import_win32_handle_t importNTHandle = {};
@@ -559,7 +560,6 @@ HWTEST2_F(ImageCreateExternalMemory, givenD3D12HeapHandleWhenCreatingImageThenSu
     desc.pNext = &importNTHandle;
 
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
@@ -571,7 +571,7 @@ HWTEST2_F(ImageCreateExternalMemory, givenD3D12HeapHandleWhenCreatingImageThenSu
     imageHW.reset(nullptr);
 }
 
-HWTEST2_F(ImageCreateExternalMemory, givenD3D12ResourceHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(ImageCreateExternalMemoryTest, givenD3D12ResourceHandleWhenCreatingImageThenSuccessIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_external_memory_import_win32_handle_t importNTHandle = {};
@@ -581,7 +581,6 @@ HWTEST2_F(ImageCreateExternalMemory, givenD3D12ResourceHandleWhenCreatingImageTh
     desc.pNext = &importNTHandle;
 
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
@@ -593,7 +592,9 @@ HWTEST2_F(ImageCreateExternalMemory, givenD3D12ResourceHandleWhenCreatingImageTh
     imageHW.reset(nullptr);
 }
 
-HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingNV12ImageThenSuccessIsReturnedAndUVOffsetIsSet, IsAtLeastSkl) {
+using ImageCreateWithMemoryManagerNTHandleMock = Test<DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>>;
+
+HWTEST2_F(ImageCreateWithMemoryManagerNTHandleMock, givenNTHandleWhenCreatingNV12ImageThenSuccessIsReturnedAndUVOffsetIsSet, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     constexpr uint32_t yOffsetForUVPlane = 8u; // mock sets reqOffsetInfo.Lock.Offset to 16 and reqOffsetInfo.Lock.Pitch to 2
 
@@ -620,7 +621,6 @@ HWTEST2_F(ImageCreate, givenNTHandleWhenCreatingNV12ImageThenSuccessIsReturnedAn
     desc.pNext = &importNTHandle;
 
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
@@ -644,7 +644,9 @@ class FailMemoryManagerMock : public NEO::OsAgnosticMemoryManager {
     bool fail = false;
 };
 
-HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsReturned, IsAtLeastSkl) {
+using ImageCreateWithFailMemoryManagerMock = Test<DeviceFixtureWithCustomMemoryManager<FailMemoryManagerMock>>;
+
+HWTEST2_F(ImageCreateWithFailMemoryManagerMock, givenImageDescWhenFailImageAllocationThenProperErrorIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
 
@@ -670,7 +672,6 @@ HWTEST2_F(ImageCreate, givenImageDescWhenFailImageAllocationThenProperErrorIsRet
     }
 
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new FailMemoryManagerMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 

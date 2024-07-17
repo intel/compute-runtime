@@ -295,9 +295,10 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
     }
 };
 
-HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithHostBufferMemoryAllocationTypeThenHostUnifiedMemoryIsSet) {
+using ImportNTHandleWithMockMemoryManager = Test<DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>>;
+
+HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithHostBufferMemoryAllocationTypeThenHostUnifiedMemoryIsSet) {
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
@@ -314,9 +315,8 @@ HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithHostBufferMemoryAllocation
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithBufferMemoryAllocationTypeThenDeviceUnifiedMemoryIsSet) {
+HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithBufferMemoryAllocationTypeThenDeviceUnifiedMemoryIsSet) {
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
@@ -333,7 +333,7 @@ HWTEST_F(ImportNTHandle, givenCallToImportNTHandleWithBufferMemoryAllocationType
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsReturned) {
+HWTEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsReturned) {
     ze_device_mem_alloc_desc_t devDesc = {};
     devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
 
@@ -345,7 +345,6 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsRetur
     devDesc.pNext = &importNTHandle;
 
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
@@ -358,7 +357,7 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingDeviceMemoryThenSuccessIsRetur
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingHostMemoryThenSuccessIsReturned) {
+HWTEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWhenCreatingHostMemoryThenSuccessIsReturned) {
     ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
 
@@ -370,7 +369,6 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingHostMemoryThenSuccessIsReturne
     hostDesc.pNext = &importNTHandle;
 
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
@@ -383,11 +381,10 @@ HWTEST_F(ImportNTHandle, givenNTHandleWhenCreatingHostMemoryThenSuccessIsReturne
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST_F(ImportNTHandle, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesFromOsAgnosticMemoryManagerThenNullptrIsReturned) {
+HWTEST_F(ImportNTHandleWithMockMemoryManager, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesFromOsAgnosticMemoryManagerThenNullptrIsReturned) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     delete driverHandle->svmAllocsManager;
-    execEnv->memoryManager.reset(new MemoryManagerNTHandleMock(*execEnv));
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
 
