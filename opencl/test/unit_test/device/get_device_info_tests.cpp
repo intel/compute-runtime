@@ -1142,8 +1142,7 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
         }
         case CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL: {
             auto pNumSubslicesPerSlice = reinterpret_cast<cl_uint *>(object.get());
-            const auto &gtSysInfo = device.getHardwareInfo().gtSystemInfo;
-            EXPECT_EQ(gtSysInfo.SubSliceCount / gtSysInfo.SliceCount, *pNumSubslicesPerSlice);
+            EXPECT_EQ(4u, *pNumSubslicesPerSlice);
             EXPECT_EQ(sizeof(cl_uint), sizeReturned);
             break;
         }
@@ -1182,7 +1181,12 @@ TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedO
     debugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
-    auto pRootClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.gtSystemInfo.SliceCount = 2;
+    hwInfo.gtSystemInfo.DualSubSliceCount = 7;
+    hwInfo.gtSystemInfo.SubSliceCount = 7;
+
+    auto pRootClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     ASSERT_EQ(2u, pRootClDevice->subDevices.size());
 
     verifyDeviceAttribute(*pRootClDevice);
