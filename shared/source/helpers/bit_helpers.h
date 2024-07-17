@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,14 @@ constexpr uint64_t setBits(uint64_t field, bool newValue, uint64_t bitsToModify)
 
 constexpr uint64_t shiftLeftBy(uint64_t bitPosition) {
     return (1ull << bitPosition);
+}
+
+constexpr uint32_t getMostSignificantSetBitIndex(uint64_t field) {
+    uint32_t index = 0;
+    while (field >>= 1) {
+        index++;
+    }
+    return index;
 }
 
 } // namespace NEO

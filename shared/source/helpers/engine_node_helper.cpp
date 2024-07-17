@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -97,6 +97,7 @@ bool isBcsVirtualEngineEnabled(aub_stream::EngineType engineType) {
 aub_stream::EngineType getBcsEngineType(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, SelectorCopyEngine &selectorCopyEngine, bool internalUsage) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     if (debugManager.flags.ForceBcsEngineIndex.get() != -1) {
         auto index = debugManager.flags.ForceBcsEngineIndex.get();
         UNRECOVERABLE_IF(index > 8);
@@ -110,11 +111,7 @@ aub_stream::EngineType getBcsEngineType(const RootDeviceEnvironment &rootDeviceE
     }
 
     if (internalUsage) {
-        if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
-            return debugManager.flags.ForceBCSForInternalCopyEngine.get() == 0 ? aub_stream::EngineType::ENGINE_BCS
-                                                                               : static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_BCS1 + debugManager.flags.ForceBCSForInternalCopyEngine.get() - 1);
-        }
-        return aub_stream::ENGINE_BCS3;
+        return EngineHelpers::mapBcsIndexToEngineType(gfxCoreHelper.getInternalCopyEngineIndex(hwInfo), true);
     }
 
     auto enableSelector = productHelper.isCopyEngineSelectorEnabled(hwInfo);

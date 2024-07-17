@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,68 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenForceBCSForInternalCopyEngineW
         debugManager.flags.ForceBCSForInternalCopyEngine.set(3u);
         auto engineType = EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, true);
         EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, engineType);
+    }
+}
+
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenLessThanFourCopyEnginesWhenGetBcsEngineTypeForInternalEngineThenReturnLastAvailableEngine, IsAtLeastXeHpcCore) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
+    DeviceBitfield deviceBitfield = 0xff;
+
+    {
+        hwInfo.featureTable.ftrBcsInfo = 0b1;
+        auto engineType = EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, true);
+        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engineType);
+    }
+    {
+        hwInfo.featureTable.ftrBcsInfo = 0b11;
+        auto engineType = EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, true);
+        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engineType);
+    }
+    {
+        hwInfo.featureTable.ftrBcsInfo = 0b111;
+        auto engineType = EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, true);
+        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS2, engineType);
+    }
+}
+
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenLessThanFourCopyEnginesWhenGetGpgpuEngineInstancesThenUseLastCopyEngineAsInternal, IsAtLeastXeHpcCore) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
+
+    auto hasInternalEngine = [](const EngineInstancesContainer &engines, aub_stream::EngineType expectedEngineType) {
+        for (auto &[engineType, engineUsage] : engines) {
+            if (engineType == expectedEngineType && engineUsage == EngineUsage::internal) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    {
+        if (aub_stream::EngineType::ENGINE_BCS == productHelper.getDefaultCopyEngine()) {
+            hwInfo.featureTable.ftrBcsInfo = 0b1;
+            auto &engines = gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment);
+            EXPECT_TRUE(hasInternalEngine(engines, aub_stream::EngineType::ENGINE_BCS));
+            EXPECT_FALSE(hasInternalEngine(engines, aub_stream::EngineType::ENGINE_BCS3));
+        }
+    }
+    {
+        hwInfo.featureTable.ftrBcsInfo = 0b11;
+        auto &engines = gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment);
+        EXPECT_TRUE(hasInternalEngine(engines, aub_stream::EngineType::ENGINE_BCS1));
+        EXPECT_FALSE(hasInternalEngine(engines, aub_stream::EngineType::ENGINE_BCS3));
+    }
+    {
+        hwInfo.featureTable.ftrBcsInfo = 0b111;
+        auto &engines = gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment);
+        EXPECT_TRUE(hasInternalEngine(engines, aub_stream::EngineType::ENGINE_BCS2));
+        EXPECT_FALSE(hasInternalEngine(engines, aub_stream::EngineType::ENGINE_BCS3));
     }
 }
 

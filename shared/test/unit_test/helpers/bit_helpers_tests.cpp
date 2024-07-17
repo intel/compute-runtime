@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/constants.h"
 
 #include "gtest/gtest.h"
 
@@ -196,4 +197,24 @@ TEST(SetBitsTests, givenDifferentValuesWhenTestingSetBitsThenCorrectValueIsRetur
 
     EXPECT_EQ(0b0u, setBits(0b1010, false, 0b1010));
     EXPECT_EQ(0b1010u, setBits(0b1010, true, 0b1010));
+}
+
+TEST(GetMsbIndexTests, givenDifferentValuesWhenTestingGetMostSignificantSetBitIndexThenCorrectValueIsReturned) {
+    EXPECT_EQ(0u, getMostSignificantSetBitIndex(0b0));
+    EXPECT_EQ(0u, getMostSignificantSetBitIndex(0b1));
+    EXPECT_EQ(1u, getMostSignificantSetBitIndex(0b10));
+    EXPECT_EQ(2u, getMostSignificantSetBitIndex(0b100));
+    EXPECT_EQ(3u, getMostSignificantSetBitIndex(0b1000));
+
+    EXPECT_EQ(3u, getMostSignificantSetBitIndex(0b1001));
+    EXPECT_EQ(3u, getMostSignificantSetBitIndex(0b1010));
+    EXPECT_EQ(3u, getMostSignificantSetBitIndex(0b1100));
+    EXPECT_EQ(3u, getMostSignificantSetBitIndex(0b1101));
+
+    EXPECT_EQ(6u, getMostSignificantSetBitIndex(maxNBitValue(7)));
+    EXPECT_EQ(7u, getMostSignificantSetBitIndex(maxNBitValue(8)));
+    EXPECT_EQ(8u, getMostSignificantSetBitIndex(maxNBitValue(9)));
+    EXPECT_EQ(16u, getMostSignificantSetBitIndex(maxNBitValue(17)));
+    EXPECT_EQ(32u, getMostSignificantSetBitIndex(maxNBitValue(33)));
+    EXPECT_EQ(63u, getMostSignificantSetBitIndex(maxNBitValue(64)));
 }

@@ -13,6 +13,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -812,6 +813,17 @@ void MemorySynchronizationCommands<GfxFamily>::encodeAdditionalTimestampOffsets(
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
     return false;
+}
+
+template <typename Family>
+uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo &hwInfo) const {
+    if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
+        return debugManager.flags.ForceBCSForInternalCopyEngine.get();
+    }
+
+    constexpr uint32_t defaultInternalCopyEngineIndex = 3u;
+    auto highestAvailableIndex = getMostSignificantSetBitIndex(hwInfo.featureTable.ftrBcsInfo.to_ullong());
+    return std::min(defaultInternalCopyEngineIndex, highestAvailableIndex);
 }
 
 } // namespace NEO

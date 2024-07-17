@@ -68,16 +68,13 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
             engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal}); // Internal usage
         }
 
+        uint32_t internalIndex = getInternalCopyEngineIndex(hwInfo);
         for (uint32_t i = 1; i < hwInfo.featureTable.ftrBcsInfo.size(); i++) {
             if (hwInfo.featureTable.ftrBcsInfo.test(i)) {
                 auto engineType = static_cast<aub_stream::EngineType>((i - 1) + aub_stream::ENGINE_BCS1); // Link copy engine
                 engines.push_back({engineType, EngineUsage::regular});
-                uint32_t internalIndex = 3;
-                if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
-                    internalIndex = debugManager.flags.ForceBCSForInternalCopyEngine.get();
-                }
                 if (i == internalIndex) {
-                    engines.push_back({engineType, EngineUsage::internal}); // BCS3 for internal usage
+                    engines.push_back({engineType, EngineUsage::internal});
                 }
             }
         }
