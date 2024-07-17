@@ -243,13 +243,21 @@ struct drm_xe_engine_class_instance {
 
 /**
  * struct drm_xe_engine - describe hardware engine
- */
+ *
+ * The @capabilities can be:
+ *  - DRM_XE_ENGINE_CAPABILITY_WMTP - represents a engine's mid-thread
+ *  preemption capability.
+*/
 struct drm_xe_engine {
 	/** @instance: The @drm_xe_engine_class_instance */
 	struct drm_xe_engine_class_instance instance;
-
+#define DRM_XE_ENGINE_CAPABILITY_WMTP		1
+	/** @capabilities: Capabilities of this engine. */
+	__u32 capabilities;
+	/** @pad: MBZ */
+	__u32 pad;
 	/** @reserved: Reserved */
-	__u64 reserved[3];
+	__u64 reserved[2];
 };
 
 /**

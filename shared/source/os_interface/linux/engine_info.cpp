@@ -84,6 +84,10 @@ void EngineInfo::mapEngine(const NEO::IoctlHelper *ioctlHelper, const EngineCapa
         engineCounters.numComputeEngines++;
     }
     if (engineType != aub_stream::EngineType::NUM_ENGINES) {
+        if (engineInfo.capabilities.wmtpSupport) {
+            auto &wmtpInfoMask = rootDeviceEnvironment.getMutableHardwareInfo()->featureTable.wmtpInfoMask;
+            wmtpInfoMask.set(static_cast<uint32_t>(engineType));
+        }
         tileToEngineToInstanceMap[tileId][engineType] = engine;
     }
 }

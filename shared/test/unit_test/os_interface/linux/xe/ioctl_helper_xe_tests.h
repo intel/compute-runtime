@@ -342,9 +342,9 @@ struct DrmMockXe : public DrmMockCustom {
         xeQueryEngines->engines[1] = {{DRM_XE_ENGINE_CLASS_COPY, 1, 0}, {}};
         xeQueryEngines->engines[2] = {{DRM_XE_ENGINE_CLASS_COPY, 2, 0}, {}};
         xeQueryEngines->engines[3] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 3, 0}, {}};
-        xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0}, {}};
+        xeQueryEngines->engines[4] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 4, 0}, DRM_XE_ENGINE_CAPABILITY_WMTP};
         xeQueryEngines->engines[5] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 5, 1}, {}};
-        xeQueryEngines->engines[6] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1}, {}};
+        xeQueryEngines->engines[6] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 6, 1}, DRM_XE_ENGINE_CAPABILITY_WMTP};
         xeQueryEngines->engines[7] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 7, 1}, {}};
         xeQueryEngines->engines[8] = {{DRM_XE_ENGINE_CLASS_COMPUTE, 8, 1}, {}};
         xeQueryEngines->engines[9] = {{DRM_XE_ENGINE_CLASS_VIDEO_DECODE, 9, 1}, {}};

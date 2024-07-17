@@ -51,6 +51,7 @@ struct EngineCapabilities {
     struct Flags {
         bool copyClassSaturatePCIE;
         bool copyClassSaturateLink;
+        bool wmtpSupport;
     };
     Flags capabilities;
 };

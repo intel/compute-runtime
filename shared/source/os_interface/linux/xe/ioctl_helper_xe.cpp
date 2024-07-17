@@ -254,7 +254,9 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
             if (enginesPerTile.size() <= tile) {
                 enginesPerTile.resize(tile + 1);
             }
-            enginesPerTile[tile].push_back({engineClassInstance, {}});
+            EngineCapabilities::Flags engineFlags{};
+            engineFlags.wmtpSupport = isValueSet(queryEngines->engines[i].capabilities, DRM_XE_ENGINE_CAPABILITY_WMTP);
+            enginesPerTile[tile].push_back({engineClassInstance, engineFlags});
             if (!defaultEngine && engineClassInstance.engineClass == defaultEngineClass) {
                 defaultEngine = std::make_unique<drm_xe_engine_class_instance>();
                 *defaultEngine = engine;
