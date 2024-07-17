@@ -42,7 +42,7 @@ TEST(ApiSpecificConfigOclTests, WhenGettingRegistryPathThenOclRegistryPathIsRetu
 }
 
 TEST(ApiSpecificConfigOclTests, WhenCheckingIfHostOrDeviceAllocationCacheIsEnabledThenReturnCorrectValue) {
-    EXPECT_FALSE(ApiSpecificConfig::isHostAllocationCacheEnabled());
+    EXPECT_TRUE(ApiSpecificConfig::isHostAllocationCacheEnabled());
     EXPECT_TRUE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
 }
 

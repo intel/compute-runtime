@@ -77,6 +77,7 @@ Context::~Context() {
     if (svmAllocsManager) {
         this->stagingBufferManager.reset();
         svmAllocsManager->trimUSMDeviceAllocCache();
+        svmAllocsManager->trimUSMHostAllocCache();
         delete svmAllocsManager;
     }
     if (driverDiagnostics) {
