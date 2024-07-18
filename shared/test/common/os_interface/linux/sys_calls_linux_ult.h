@@ -50,6 +50,7 @@ extern int (*sysCallsClosedir)(DIR *dir);
 extern int (*sysCallsGetDevicePath)(int deviceFd, char *buf, size_t &bufSize);
 extern int (*sysCallsClose)(int fileDescriptor);
 
+extern bool allowFakeDevicePath;
 extern int flockRetVal;
 extern int openFuncRetVal;
 extern uint32_t openFuncCalled;

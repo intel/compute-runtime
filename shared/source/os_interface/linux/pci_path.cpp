@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,13 @@ std::optional<std::string> getPciPath(int deviceFd) {
         return std::nullopt;
     }
 
-    return deviceLinkPath->substr(deviceLinkPath->find("/drm/render") - 12u, 12u);
+    auto pciPathPos = deviceLinkPath->find("/drm/render");
+
+    if (pciPathPos == std::string::npos || pciPathPos < 12) {
+        return std::nullopt;
+    }
+
+    return deviceLinkPath->substr(pciPathPos - 12u, 12u);
 }
 
 std::optional<std::string> getPciRootPath(int deviceFd) {
