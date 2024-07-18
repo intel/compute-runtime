@@ -55,7 +55,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
         memset(usmBuffer, 0, copySize);
         memset(nonUsmBuffer, 0xFF, copySize);
 
-        auto chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) {
+        ChunkCopyFunction chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) {
             chunkCounter++;
             memcpy(stagingBuffer, chunkSrc, chunkSize);
             memcpy(chunkDst, stagingBuffer, chunkSize);
@@ -181,7 +181,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkCopyThenEarlyR
     memset(usmBuffer, 0, totalCopySize);
     memset(nonUsmBuffer, 0xFF, totalCopySize);
 
-    auto chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) {
+    ChunkCopyFunction chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) {
         chunkCounter++;
         memcpy(stagingBuffer, chunkSrc, chunkSize);
         memcpy(chunkDst, stagingBuffer, chunkSize);
@@ -211,7 +211,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedRemainderCopyThenRe
     memset(usmBuffer, 0, totalCopySize);
     memset(nonUsmBuffer, 0xFF, totalCopySize);
 
-    auto chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) {
+    ChunkCopyFunction chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) {
         chunkCounter++;
         memcpy(stagingBuffer, chunkSrc, chunkSize);
         memcpy(chunkDst, stagingBuffer, chunkSize);
@@ -256,7 +256,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabled
     auto nonUsmBuffer = new unsigned char[totalCopySize];
 
     size_t flushTagsCalled = 0;
-    auto chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) {
+    ChunkCopyFunction chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) {
         if (ultCsr->flushTagUpdateCalled) {
             flushTagsCalled++;
             ultCsr->flushTagUpdateCalled = false;

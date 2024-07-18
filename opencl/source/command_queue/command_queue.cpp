@@ -1096,11 +1096,15 @@ bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
     case CL_COMMAND_SVM_UNMAP:
         return true;
     case CL_COMMAND_READ_IMAGE:
+        UNRECOVERABLE_IF(args.srcResource.image == nullptr);
         return blitEnqueueImageAllowed(args.srcResource.imageOrigin, args.size, *args.srcResource.image);
     case CL_COMMAND_WRITE_IMAGE:
+        UNRECOVERABLE_IF(args.dstResource.image == nullptr);
         return blitEnqueueImageAllowed(args.dstResource.imageOrigin, args.size, *args.dstResource.image);
 
     case CL_COMMAND_COPY_IMAGE:
+        UNRECOVERABLE_IF(args.srcResource.image == nullptr);
+        UNRECOVERABLE_IF(args.dstResource.image == nullptr);
         return blitEnqueueImageAllowed(args.srcResource.imageOrigin, args.size, *args.srcResource.image) &&
                blitEnqueueImageAllowed(args.dstResource.imageOrigin, args.size, *args.dstResource.image);
 
@@ -1534,7 +1538,7 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
 
     // If there was only one chunk copy, no barrier for OOQ is needed
     bool isSingleTransfer = false;
-    auto chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) -> int32_t {
+    ChunkCopyFunction chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) -> int32_t {
         auto isFirstTransfer = (chunkDst == dstPtr);
         auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(dstPtr, size);
         isSingleTransfer = isFirstTransfer && isLastTransfer;

@@ -42,7 +42,7 @@ StagingBufferManager::~StagingBufferManager() {
  * 3. Store used buffer to tracking container (with current task count)
  * 4. Update tag if required to reuse this buffer in next chunk copies
  */
-int32_t StagingBufferManager::performChunkCopy(void *chunkDst, const void *chunkSrc, size_t size, ChunkCopyFunction chunkCopyFunc, CommandStreamReceiver *csr) {
+int32_t StagingBufferManager::performChunkCopy(void *chunkDst, const void *chunkSrc, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr) {
     auto allocatedSize = size;
     auto [allocator, chunkBuffer] = requestStagingBuffer(allocatedSize, csr);
     auto ret = chunkCopyFunc(chunkDst, addrToPtr(chunkBuffer), chunkSrc, size);
@@ -61,7 +61,7 @@ int32_t StagingBufferManager::performChunkCopy(void *chunkDst, const void *chunk
  * Each chunk copy contains staging buffer which should be used instead of non-usm memory during transfers on GPU.
  * Caller provides actual function to transfer data for single chunk.
  */
-int32_t StagingBufferManager::performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction chunkCopyFunc, CommandStreamReceiver *csr) {
+int32_t StagingBufferManager::performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr) {
     auto copiesNum = size / chunkSize;
     auto remainder = size % chunkSize;
 

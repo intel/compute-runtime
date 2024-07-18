@@ -126,6 +126,7 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
 
         if (onlySpirV) {
             int deviceArgIndex = NEO::getDeviceArgValueIdx(args);
+            UNRECOVERABLE_IF(deviceArgIndex < 0);
             std::vector<ConstStringRef> targetProducts = NEO::getTargetProductsForFatbinary(ConstStringRef(args[deviceArgIndex]), argHelper);
             ConstStringRef firstDevice = targetProducts.front();
             argsCopy[deviceArgIndex] = firstDevice.str();

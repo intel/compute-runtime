@@ -51,9 +51,13 @@ class StagingBufferManager {
   public:
     StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields);
     ~StagingBufferManager();
+    StagingBufferManager(StagingBufferManager &&other) noexcept = delete;
+    StagingBufferManager(const StagingBufferManager &other) = delete;
+    StagingBufferManager &operator=(StagingBufferManager &&other) noexcept = delete;
+    StagingBufferManager &operator=(const StagingBufferManager &other) = delete;
 
     bool isValidForCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const;
-    int32_t performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction chunkCopyFunc, CommandStreamReceiver *csr);
+    int32_t performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
 
   private:
     std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size, CommandStreamReceiver *csr);
@@ -61,7 +65,7 @@ class StagingBufferManager {
     void *allocateStagingBuffer();
     void clearTrackedChunks(CommandStreamReceiver *csr);
 
-    int32_t performChunkCopy(void *chunkDst, const void *chunkSrc, size_t size, ChunkCopyFunction chunkCopyFunc, CommandStreamReceiver *csr);
+    int32_t performChunkCopy(void *chunkDst, const void *chunkSrc, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
 
     size_t chunkSize = MemoryConstants::pageSize2M;
     std::mutex mtx;
