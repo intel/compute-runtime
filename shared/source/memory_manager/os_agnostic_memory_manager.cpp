@@ -636,6 +636,21 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
         allocation = new MemoryAllocation(allocationData.rootDeviceIndex, numHandles, allocationData.type, storage, storage, canonizedGpuAddress,
                                           allocationData.size, counter, MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
         counter++;
+        if (allocationData.flags.preferCompressed) {
+            auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+            GmmRequirements gmmRequirements{};
+            gmmRequirements.allowLargePages = true;
+            gmmRequirements.preferCompressed = true;
+
+            auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
+                                             allocationData.hostPtr,
+                                             allocationData.size,
+                                             MemoryConstants::pageSize2M,
+                                             CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
+                                             allocationData.storageInfo,
+                                             gmmRequirements);
+            allocation->setDefaultGmm(gmm.release());
+        }
     } else {
         std::unique_ptr<Gmm> gmm;
         size_t sizeAligned64k = 0;

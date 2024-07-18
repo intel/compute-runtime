@@ -648,6 +648,13 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
                                        subDevices};
 
     gpuProperties.alignment = alignment;
+    auto compressionSupported = false;
+    if (unifiedMemoryProperties.device) {
+        compressionSupported = memoryManager->usmCompressionSupported(unifiedMemoryProperties.device);
+        compressionSupported &= memoryManager->isCompressionSupportedForShareable(unifiedMemoryProperties.allocationFlags.flags.shareable);
+    }
+    gpuProperties.flags.preferCompressed = compressionSupported;
+
     MemoryPropertiesHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false, cacheRegion);
     GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties, svmPtr);
     if (!allocationGpu) {

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -586,4 +587,27 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenInternalAllocationWhenNewAllocationIsCr
 
     svmManager->freeSVMAlloc(ptr);
     svmManager->freeSVMAlloc(ptr2);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenLocalMemoryEnabledAndCompressionEnabledThenDeviceSideSharedUsmIsCompressed) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+
+    auto &hwInfo = device->getHardwareInfo();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (!gfxCoreHelper.usmCompressionSupported(hwInfo)) {
+        GTEST_SKIP();
+    }
+
+    void *cmdQ = reinterpret_cast<void *>(0x12345);
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096, unifiedMemoryProperties, &cmdQ);
+    EXPECT_NE(nullptr, ptr);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    EXPECT_TRUE(svmData->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled());
+
+    svmManager->freeSVMAlloc(ptr);
 }
