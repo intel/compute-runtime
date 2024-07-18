@@ -63,6 +63,8 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
         this->setAllocationToFail(failMainStorageAllocation);
         cl_device_id devices[] = {device};
         this->context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));
+        this->context->usmPoolInitialized = false;
+        this->context->initializeUsmAllocationPools();
         EXPECT_EQ(retVal, CL_SUCCESS);
         this->setAllocationToFail(false);
         this->poolAllocator = static_cast<MockBufferPoolAllocator *>(&context->smallBufferPoolAllocator);

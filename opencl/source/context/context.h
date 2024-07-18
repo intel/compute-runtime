@@ -119,7 +119,6 @@ class Context : public BaseObject<_cl_context> {
             if (bufferPoolAllocator.isAggregatedSmallBuffersEnabled(pContext)) {
                 bufferPoolAllocator.initAggregatedSmallBuffers(pContext);
             }
-            pContext->initializeUsmAllocationPools();
         }
         gtpinNotifyContextCreate(pContext);
         return pContext;
@@ -308,5 +307,6 @@ class Context : public BaseObject<_cl_context> {
     bool interopUserSync = false;
     bool resolvesRequiredInKernels = false;
     bool nonZebinContext = false;
+    bool usmPoolInitialized = false;
 };
 } // namespace NEO

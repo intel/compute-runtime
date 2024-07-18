@@ -498,10 +498,19 @@ bool Context::isSingleDeviceContext() {
 }
 
 void Context::initializeUsmAllocationPools() {
+    if (this->usmPoolInitialized) {
+        return;
+    }
     auto svmMemoryManager = getSVMAllocsManager();
     if (!(svmMemoryManager && this->isSingleDeviceContext())) {
         return;
     }
+
+    TakeOwnershipWrapper<Context> lock(*this);
+    if (this->usmPoolInitialized) {
+        return;
+    }
+
     auto &productHelper = getDevices()[0]->getProductHelper();
     bool enabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() && productHelper.isUsmPoolAllocatorSupported();
 
@@ -534,6 +543,7 @@ void Context::initializeUsmAllocationPools() {
                                                                    getRootDeviceIndices(), subDeviceBitfields);
         usmHostMemAllocPool.initialize(svmMemoryManager, memoryProperties, poolSize);
     }
+    this->usmPoolInitialized = true;
 }
 
 void Context::cleanupUsmAllocationPools() {

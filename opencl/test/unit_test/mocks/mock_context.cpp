@@ -71,6 +71,7 @@ MockContext::MockContext() {
     cl_device_id deviceId = pDevice;
     initializeWithDevices(ClDeviceVector{&deviceId, 1}, false);
     pDevice->decRefInternal();
+    this->usmPoolInitialized = true;
 }
 
 void MockContext::setSharingFunctions(SharingFunctions *sharingFunctions) {
@@ -202,6 +203,7 @@ BcsMockContext::BcsMockContext(ClDevice *device) : MockContext(device) {
         return BlitOperationResult::success;
     };
     blitMemoryToAllocationFuncBackup = mockBlitMemoryToAllocation;
+    this->usmPoolInitialized = true;
 }
 BcsMockContext::~BcsMockContext() = default;
 } // namespace NEO

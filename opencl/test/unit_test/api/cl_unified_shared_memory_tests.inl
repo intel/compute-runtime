@@ -716,6 +716,7 @@ TEST(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoINTE
     debugManager.flags.EnableHostUsmAllocationPool.set(2);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
     MockContext mockContext;
+    mockContext.usmPoolInitialized = false;
     auto device = mockContext.getDevice(0u);
     REQUIRE_SVM_OR_SKIP(device);
 
@@ -725,7 +726,6 @@ TEST(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoINTE
     size_t paramValueSizeRet = 0;
     const size_t allocationSize = 4u;
 
-    mockContext.initializeUsmAllocationPools();
     {
         auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, allocationSize, 0, &retVal);
         auto allocationsManager = mockContext.getSVMAllocsManager();
@@ -778,6 +778,7 @@ TEST(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoINTE
     debugManager.flags.EnableHostUsmAllocationPool.set(2);
     debugManager.flags.EnableDeviceUsmAllocationPool.set(2);
     MockContext mockContext;
+    mockContext.usmPoolInitialized = false;
     auto device = mockContext.getDevice(0u);
     REQUIRE_SVM_OR_SKIP(device);
 
@@ -786,7 +787,6 @@ TEST(clUnifiedSharedMemoryTests, givenSVMAllocationPoolWhenClGetMemAllocInfoINTE
     uint64_t paramValue = 0;
     size_t paramValueSizeRet = 0;
 
-    mockContext.initializeUsmAllocationPools();
     {
         auto unifiedMemoryHostAllocation = clHostMemAllocINTEL(&mockContext, nullptr, 4, 0, &retVal);
         auto allocationsManager = mockContext.getSVMAllocsManager();
