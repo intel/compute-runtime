@@ -364,6 +364,33 @@ bool Device::createEngines() {
     }
 
     if (gfxCoreHelper.areSecondaryContextsSupported()) {
+
+        auto createSecondaryContext = [this](const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t regularPriorityCount, uint32_t highPriorityContextCount) {
+            secondaryEnginesForType.regularEnginesTotal = contextCount - highPriorityContextCount;
+            secondaryEnginesForType.highPriorityEnginesTotal = highPriorityContextCount;
+            secondaryEnginesForType.regularCounter = 0;
+            secondaryEnginesForType.highPriorityCounter = 0;
+            secondaryEnginesForType.assignedContextsCounter = 1;
+
+            NEO::EngineTypeUsage engineTypeUsage;
+            engineTypeUsage.first = primaryEngine.getEngineType();
+            engineTypeUsage.second = primaryEngine.getEngineUsage();
+
+            UNRECOVERABLE_IF(engineTypeUsage.second != EngineUsage::regular && engineTypeUsage.second != EngineUsage::highPriority);
+
+            secondaryEnginesForType.engines.push_back(primaryEngine);
+
+            for (uint32_t i = 1; i < contextCount; i++) {
+
+                if (i >= contextCount - highPriorityContextCount) {
+                    engineTypeUsage.second = EngineUsage::highPriority;
+                }
+                this->createSecondaryEngine(primaryEngine.commandStreamReceiver, engineTypeUsage);
+            }
+
+            primaryEngine.osContext->setContextGroup(true);
+        };
+
         for (auto engineGroupType : {EngineGroupType::compute, EngineGroupType::copy, EngineGroupType::linkedCopy}) {
             auto engineGroup = tryGetRegularEngineGroup(engineGroupType);
 
@@ -372,7 +399,7 @@ bool Device::createEngines() {
             }
 
             auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
-            auto highPriorityContextCount = std::min(contextCount / 2, 4u);
+            auto highPriorityContextCount = gfxCoreHelper.getContextGroupHpContextsCount(engineGroupType);
 
             if (debugManager.flags.OverrideNumHighPriorityContexts.get() != -1) {
                 highPriorityContextCount = static_cast<uint32_t>(debugManager.flags.OverrideNumHighPriorityContexts.get());
@@ -390,27 +417,23 @@ bool Device::createEngines() {
 
                 auto primaryEngine = engineGroup->engines[engineIndex];
 
-                secondaryEnginesForType.regularEnginesTotal = contextCount - highPriorityContextCount;
-                secondaryEnginesForType.highPriorityEnginesTotal = highPriorityContextCount;
-                secondaryEnginesForType.regularCounter = 0;
-                secondaryEnginesForType.highPriorityCounter = 0;
-                secondaryEnginesForType.assignedContextsCounter = 1;
+                createSecondaryContext(primaryEngine, secondaryEnginesForType, contextCount, contextCount - highPriorityContextCount, highPriorityContextCount);
+            }
+        }
 
-                NEO::EngineTypeUsage engineTypeUsage;
-                engineTypeUsage.first = primaryEngine.getEngineType();
+        auto hpCopyEngine = getHpCopyEngine();
+        if (hpCopyEngine) {
+            auto engineType = hpCopyEngine->getEngineType();
+            if ((static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0) {
 
-                secondaryEnginesForType.engines.push_back(primaryEngine);
+                UNRECOVERABLE_IF(secondaryEngines.find(engineType) != secondaryEngines.end());
+                auto &secondaryEnginesForType = secondaryEngines[engineType];
 
-                for (uint32_t i = 1; i < contextCount; i++) {
-                    engineTypeUsage.second = EngineUsage::regular;
+                auto primaryEngine = *hpCopyEngine;
 
-                    if (i >= contextCount - highPriorityContextCount) {
-                        engineTypeUsage.second = EngineUsage::highPriority;
-                    }
-                    createSecondaryEngine(primaryEngine.commandStreamReceiver, engineTypeUsage);
-                }
+                auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
 
-                primaryEngine.osContext->setContextGroup(true);
+                createSecondaryContext(primaryEngine, secondaryEnginesForType, contextCount, 0, contextCount);
             }
         }
     }
@@ -468,7 +491,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
         primaryEngineTypeAllowed &= (static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0;
     }
 
-    const bool isPrimaryEngine = primaryEngineTypeAllowed && (engineUsage == EngineUsage::regular);
+    const bool isPrimaryEngine = primaryEngineTypeAllowed && (engineUsage == EngineUsage::regular || engineUsage == EngineUsage::highPriority);
     const bool useContextGroup = isPrimaryEngine && gfxCoreHelper.areSecondaryContextsSupported();
 
     UNRECOVERABLE_IF(EngineHelpers::isBcs(engineType) && !hwInfo.capabilityTable.blitterOperationsSupported);
@@ -881,6 +904,19 @@ EngineControl *Device::getInternalCopyEngine() {
     return nullptr;
 }
 
+EngineControl *Device::getHpCopyEngine() {
+    if (!getHardwareInfo().capabilityTable.blitterOperationsSupported) {
+        return nullptr;
+    }
+    for (auto &engine : allEngines) {
+        if (NEO::EngineHelpers::isBcs(engine.osContext->getEngineType()) &&
+            engine.osContext->isHighPriority()) {
+            return &engine;
+        }
+    }
+    return nullptr;
+}
+
 RTDispatchGlobalsInfo *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
     if (rtDispatchGlobalsInfos.size() == 0) {
         return nullptr;
@@ -1204,7 +1240,9 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage) {
     std::lock_guard<std::mutex> guard(mutex);
 
     if (usage == EngineUsage::highPriority) {
-
+        if (highPriorityEnginesTotal == 0) {
+            return nullptr;
+        }
         // Use index from  reserved HP pool
         if (hpIndices.size() < highPriorityEnginesTotal) {
             secondaryEngineIndex = (highPriorityCounter.fetch_add(1)) % (highPriorityEnginesTotal);
@@ -1228,6 +1266,9 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage) {
         }
 
     } else if (usage == EngineUsage::regular) {
+        if (regularEnginesTotal == 0) {
+            return nullptr;
+        }
         if (npIndices.size() == 0) {
             regularCounter.fetch_add(1);
             npIndices.push_back(secondaryEngineIndex);

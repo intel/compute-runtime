@@ -321,3 +321,88 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenEnableCmdQRoundRobindBcsEngine
         }
     }
 }
+
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineWhenSelectLinkCopyEngineThenHpEngineIsNotSelected, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ContextGroupSize.set(8);
+    DeviceBitfield deviceBitfield = 0b1;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.featureTable.ftrBcsInfo = 0b10010;
+
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(hwInfo);
+    if (hpEngine == aub_stream::EngineType::NUM_ENGINES) {
+        GTEST_SKIP();
+    }
+
+    auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
+
+    auto engineType = EngineHelpers::selectLinkCopyEngine(pDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine.selector);
+    EXPECT_NE(hpEngine, engineType);
+
+    auto engineType2 = EngineHelpers::selectLinkCopyEngine(pDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine.selector);
+    EXPECT_NE(hpEngine, engineType2);
+}
+
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenHpCopyEngineAndBcs0And1And2RegularEnginesWhenDefaultCopyIsNotBcs1ThenHpEngineIsNotSelectedAndDifferentEnginesAreReturned, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ContextGroupSize.set(8);
+    DeviceBitfield deviceBitfield = 0b1;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.featureTable.ftrBcsInfo = 0b10111;
+
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(hwInfo);
+    if (hpEngine == aub_stream::EngineType::NUM_ENGINES) {
+        GTEST_SKIP();
+    }
+
+    auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
+
+    auto engineType = EngineHelpers::selectLinkCopyEngine(pDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine.selector);
+    EXPECT_NE(hpEngine, engineType);
+
+    auto engineType2 = EngineHelpers::selectLinkCopyEngine(pDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine.selector);
+    EXPECT_NE(hpEngine, engineType2);
+
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
+
+    if (aub_stream::ENGINE_BCS1 != productHelper.getDefaultCopyEngine()) {
+        EXPECT_NE(engineType, engineType2);
+        EXPECT_EQ(aub_stream::ENGINE_BCS2, engineType);
+        EXPECT_EQ(aub_stream::ENGINE_BCS1, engineType2);
+    } else {
+        EXPECT_EQ(engineType, engineType2);
+    }
+}
+
+HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenBcs2HpCopyEngineAndBcs0And1RegularEnginesWhenSelectingLinkCopyEngineThenBcs1IsSelected, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ContextGroupSize.set(8);
+    DeviceBitfield deviceBitfield = 0b1;
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo.featureTable.ftrBcsInfo = 0b00111;
+
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(hwInfo);
+    if (hpEngine == aub_stream::EngineType::NUM_ENGINES) {
+        GTEST_SKIP();
+    }
+
+    auto &selectorCopyEngine = pDevice->getNearestGenericSubDevice(0)->getSelectorCopyEngine();
+
+    auto engineType = EngineHelpers::selectLinkCopyEngine(pDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine.selector);
+    EXPECT_NE(hpEngine, engineType);
+
+    auto engineType2 = EngineHelpers::selectLinkCopyEngine(pDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine.selector);
+    EXPECT_NE(hpEngine, engineType2);
+
+    EXPECT_EQ(engineType, engineType2);
+    EXPECT_EQ(aub_stream::ENGINE_BCS1, engineType2);
+}

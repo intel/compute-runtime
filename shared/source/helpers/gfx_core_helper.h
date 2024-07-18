@@ -182,6 +182,8 @@ class GfxCoreHelper {
 
     virtual bool areSecondaryContextsSupported() const = 0;
     virtual uint32_t getContextGroupContextsCount() const = 0;
+    virtual uint32_t getContextGroupHpContextsCount(EngineGroupType type) const = 0;
+    virtual aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const = 0;
 
     virtual bool is48ResourceNeededForCmdBuffer() const = 0;
     virtual uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const = 0;
@@ -418,6 +420,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool areSecondaryContextsSupported() const override;
     uint32_t getContextGroupContextsCount() const override;
+    uint32_t getContextGroupHpContextsCount(EngineGroupType type) const override;
+    aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const override;
 
     bool is48ResourceNeededForCmdBuffer() const override;
 

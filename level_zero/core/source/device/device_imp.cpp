@@ -1684,7 +1684,7 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     auto engineGroupType = getEngineGroupTypeForOrdinal(ordinal);
     bool copyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
-    if (secondaryContextsEnabled && priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
+    if (priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH) {
         contextPriority = NEO::EngineUsage::highPriority;
     } else if (isSuitableForLowPriority(priority, copyOnly)) {
         contextPriority = NEO::EngineUsage::lowPriority;
@@ -1707,6 +1707,10 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         *csr = this->subDeviceCopyEngineGroups[subDeviceOrdinal].engines[index].commandStreamReceiver;
+    }
+
+    if (copyOnly && contextPriority == NEO::EngineUsage::highPriority) {
+        getCsrForHighPriority(csr, copyOnly);
     }
 
     auto &osContext = (*csr)->getOsContext();
@@ -1745,6 +1749,18 @@ ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bo
     // if the code falls through, we have no low priority context created by neoDevice.
 
     UNRECOVERABLE_IF(true);
+    return ZE_RESULT_ERROR_UNKNOWN;
+}
+ze_result_t DeviceImp::getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool copyOnly) {
+    for (auto &it : getActiveDevice()->getAllEngines()) {
+        bool engineTypeMatch = NEO::EngineHelpers::isBcs(it.osContext->getEngineType()) == copyOnly;
+        if (it.osContext->isHighPriority() && engineTypeMatch) {
+            *csr = it.commandStreamReceiver;
+            return ZE_RESULT_SUCCESS;
+        }
+    }
+
+    // if the code falls through, we have no high priority context created by neoDevice.
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
