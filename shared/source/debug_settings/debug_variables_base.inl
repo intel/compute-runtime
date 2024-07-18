@@ -83,6 +83,7 @@ DECLARE_DEBUG_VARIABLE(bool, DontDisableZebinIfVmeUsed, false, "When enabled, dr
 DECLARE_DEBUG_VARIABLE(bool, AppendMemoryPrefetchForKmdMigratedSharedAllocations, true, "Allow prefetching shared memory to the device associated with the specified command list")
 DECLARE_DEBUG_VARIABLE(bool, ForceMemoryPrefetchForKmdMigratedSharedAllocations, false, "Force prefetch of shared memory in command queue execute command lists")
 DECLARE_DEBUG_VARIABLE(bool, ClKhrExternalMemoryExtension, true, "Enable cl_khr_external_memory extension")
+DECLARE_DEBUG_VARIABLE(bool, OverrideUncachedSharedImages, true, "Overrides uncached PAT index for shared images")
 DECLARE_DEBUG_VARIABLE(bool, WaitForMemoryRelease, false, "Wait for memory release when out of memory")
 DECLARE_DEBUG_VARIABLE(bool, RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup, 0, "0 - default disabled, 1- remove restrictions on NumberOfThreadsInGpgpuThreadGroup in INTERFACE_DESCRIPTOR_DATA")
 DECLARE_DEBUG_VARIABLE(bool, DisableGemCreateExtSetPat, false, "Do not use I915_GEM_CREATE_EXT_SET_PAT extension when gem create ext is called")
