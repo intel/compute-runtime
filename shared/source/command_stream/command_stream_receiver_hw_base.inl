@@ -270,6 +270,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
                             dispatchBcsFlags.hasRelaxedOrderingDependencies, dispatchBcsFlags.flushTaskCount};
 
     updateStreamTaskCount(streamToSubmit, taskCount + 1);
+    this->latestSentTaskCount = taskCount + 1;
 
     auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
     if (submissionStatus != SubmissionStatus::success) {
