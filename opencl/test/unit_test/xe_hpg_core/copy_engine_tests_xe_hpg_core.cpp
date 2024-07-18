@@ -398,7 +398,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenProgrammingBltCom
 
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver);
     MockContext context(clDevice.get());
-
+    debugManager.flags.OverrideBufferSuitableForRenderCompression.set(true);
     cl_int retVal = CL_SUCCESS;
     auto bufferCompressed = clUniquePtr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_COMPRESSED_HINT_INTEL, 2048, nullptr, retVal));
     bufferCompressed->getGraphicsAllocation(clDevice->getRootDeviceIndex())->getDefaultGmm()->setCompressionEnabled(true);
@@ -460,7 +460,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenDebugFlagSetWhenCompressionEnabledThe
 
     uint32_t compressionFormat = 3;
     debugManager.flags.ForceBufferCompressionFormat.set(compressionFormat);
-
+    debugManager.flags.OverrideBufferSuitableForRenderCompression.set(true);
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(clDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver);
     MockContext context(clDevice.get());
 

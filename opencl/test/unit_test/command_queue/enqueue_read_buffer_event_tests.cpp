@@ -105,7 +105,7 @@ struct EnqueueReadBufferOnCpuTest : public EnqueueReadBuffer {
     void SetUp() override {
         EnqueueReadBuffer::setUp();
         auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
-        if (productHelper.isNewCoherencyModelSupported()) {
+        if (!productHelper.isZeroCopyCpuAccessPreferred()) {
             // These tests verify cpu transfer logic
             GTEST_SKIP();
         }

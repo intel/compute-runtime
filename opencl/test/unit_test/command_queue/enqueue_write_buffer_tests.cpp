@@ -340,7 +340,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopies
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto expectedTaskLevel = 0u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
@@ -364,7 +364,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopie
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto expectedTaskLevel = 0u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);

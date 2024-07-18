@@ -515,7 +515,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     taskCount = commandStreamReceiver.peekTaskCount();
     auto expectedTaskCount = 1u;
     auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskCount++;
     }
     EXPECT_EQ(expectedTaskCount, taskCount);
@@ -716,7 +716,7 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithoutUseHostPtrFlagWhenMappedOnCpuThen
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 10, nullptr, retVal));
     EXPECT_NE(nullptr, buffer);
     auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
-    EXPECT_EQ(!productHelper.isNewCoherencyModelSupported(), buffer->mappingOnCpuAllowed());
+    EXPECT_EQ(productHelper.isZeroCopyCpuAccessPreferred(), buffer->mappingOnCpuAllowed());
 
     size_t mapSize = 3;
     size_t mapOffset = 2;
@@ -738,7 +738,7 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithoutUseHostPtrFlagWhenMappedOnCpuThen
     EXPECT_EQ(0u, mappedInfo.size[2]);
 
     auto expectedPtr = ptrOffset(buffer->getCpuAddressForMapping(), mapOffset);
-    if (!productHelper.isNewCoherencyModelSupported()) {
+    if (productHelper.isZeroCopyCpuAccessPreferred()) {
         EXPECT_EQ(mappedPtr, expectedPtr);
     }
 }
@@ -748,7 +748,7 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithUseHostPtrFlagWhenMappedOnCpuThenSet
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
     EXPECT_NE(nullptr, buffer);
     auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
-    EXPECT_EQ(!productHelper.isNewCoherencyModelSupported(), buffer->mappingOnCpuAllowed());
+    EXPECT_EQ(productHelper.isZeroCopyCpuAccessPreferred(), buffer->mappingOnCpuAllowed());
 
     size_t mapSize = 3;
     size_t mapOffset = 2;
@@ -779,7 +779,7 @@ HWTEST_F(EnqueueMapBufferTest, givenMapBufferOnGpuWhenMappingBufferThenStoreGrap
     std::unique_ptr<Buffer> bufferForCpuMap(Buffer::create(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
     ASSERT_NE(nullptr, bufferForCpuMap);
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         ASSERT_FALSE(bufferForCpuMap->mappingOnCpuAllowed());
     } else {
         ASSERT_TRUE(bufferForCpuMap->mappingOnCpuAllowed());
@@ -798,7 +798,7 @@ HWTEST_F(EnqueueMapBufferTest, givenMapBufferOnGpuWhenMappingBufferThenStoreGrap
 
     MapInfo mapInfo{};
     EXPECT_TRUE(bufferForCpuMap->findMappedPtr(pointerMappedOnCpu, mapInfo));
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         EXPECT_NE(nullptr, mapInfo.graphicsAllocation);
     } else {
         EXPECT_EQ(nullptr, mapInfo.graphicsAllocation);

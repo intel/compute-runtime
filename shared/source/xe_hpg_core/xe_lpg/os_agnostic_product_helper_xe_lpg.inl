@@ -109,6 +109,11 @@ bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isZeroCopyCpuAccessPreferred() const {
+    return false;
+}
+
+template <>
 std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t patIndex) const {
     std::array<uint64_t, 2> listOfCoherentPatIndexes = {3, 4};
     if (std::find(listOfCoherentPatIndexes.begin(), listOfCoherentPatIndexes.end(), patIndex) != listOfCoherentPatIndexes.end()) {

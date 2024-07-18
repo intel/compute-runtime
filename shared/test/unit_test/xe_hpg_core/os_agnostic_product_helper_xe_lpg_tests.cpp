@@ -354,6 +354,10 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallIsNewCoherencyModel
     EXPECT_TRUE(productHelper->isNewCoherencyModelSupported());
 }
 
+HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenIsZeroCopyCpuAccessPreferredCalledThenReturnFalse, IsXeLpg) {
+    EXPECT_FALSE(productHelper->isZeroCopyCpuAccessPreferred());
+}
+
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallDeferMOCSToPatThenFalseIsReturned, IsXeLpg) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_FALSE(productHelper.deferMOCSToPatIndex());

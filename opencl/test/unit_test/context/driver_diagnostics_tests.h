@@ -142,7 +142,7 @@ struct PerformanceHintEnqueueBufferTest : public PerformanceHintEnqueueTest {
             address,
             retVal);
         auto &productHelper = context->getDevice(0)->getProductHelper();
-        isZeroCopyAllowed = !productHelper.isNewCoherencyModelSupported();
+        isZeroCopyAllowed = productHelper.isZeroCopyCpuAccessPreferred();
     }
 
     void TearDown() override {

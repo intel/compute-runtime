@@ -497,7 +497,7 @@ TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsAndOld
     Buffer *bufferObj = NEO::castToObject<Buffer>(buffer);
 
     auto &productHelper = device->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         EXPECT_FALSE(bufferObj->isMemObjZeroCopy());
     } else {
         EXPECT_TRUE(bufferObj->isMemObjZeroCopy());

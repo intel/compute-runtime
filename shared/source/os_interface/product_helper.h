@@ -231,6 +231,7 @@ class ProductHelper {
     virtual std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const = 0;
     virtual bool isCachingOnCpuAvailable() const = 0;
     virtual bool isNewCoherencyModelSupported() const = 0;
+    virtual bool isZeroCopyCpuAccessPreferred() const = 0;
     virtual bool deferMOCSToPatIndex() const = 0;
     virtual const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const = 0;
     virtual bool supportReadOnlyAllocations() const = 0;

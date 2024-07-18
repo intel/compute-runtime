@@ -105,7 +105,7 @@ struct EnqueueWriteBufferOnCpuTypeTest : public EnqueueWriteBufferTypeTest {
     void SetUp() override {
         EnqueueWriteBufferTypeTest::SetUp();
         auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
-        if (productHelper.isNewCoherencyModelSupported()) {
+        if (!productHelper.isZeroCopyCpuAccessPreferred()) {
             // These tests verify cpu transfer logic
             GTEST_SKIP();
         }
@@ -113,7 +113,7 @@ struct EnqueueWriteBufferOnCpuTypeTest : public EnqueueWriteBufferTypeTest {
 
     void TearDown() override {
         auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
-        if (productHelper.isNewCoherencyModelSupported()) {
+        if (!productHelper.isZeroCopyCpuAccessPreferred()) {
             // These tests verify cpu transfer logic
             GTEST_SKIP();
         }

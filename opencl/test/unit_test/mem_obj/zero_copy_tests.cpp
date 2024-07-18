@@ -85,7 +85,7 @@ TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCop
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto &productHelper = pClDevice->getProductHelper();
-    shouldBeZeroCopy = shouldBeZeroCopy && !productHelper.isNewCoherencyModelSupported();
+    shouldBeZeroCopy = shouldBeZeroCopy && productHelper.isZeroCopyCpuAccessPreferred();
     EXPECT_EQ(shouldBeZeroCopy, buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
     if (!shouldBeZeroCopy && flags & CL_MEM_USE_HOST_PTR) {
         EXPECT_NE(buffer->getCpuAddress(), hostPtr);
@@ -162,7 +162,7 @@ TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingAndO
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto &productHelper = context.getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         EXPECT_FALSE(buffer->isMemObjZeroCopy());
     } else {
         EXPECT_TRUE(buffer->isMemObjZeroCopy());

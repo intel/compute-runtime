@@ -874,6 +874,11 @@ bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isZeroCopyCpuAccessPreferred() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
     return false;
 }

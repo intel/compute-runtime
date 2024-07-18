@@ -37,8 +37,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenCompressedGmmWhenAskingForCpuOperation
     auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, 1);
     EXPECT_EQ(1u, allocation->storageInfo.getNumBanks());
-    auto isNewCoherencyModel = pDevice->getProductHelper().isNewCoherencyModelSupported();
-    EXPECT_EQ(!isNewCoherencyModel, buffer->isReadWriteOnCpuAllowed(*pDevice));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(*pDevice));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(unalignedPtr, 1, *pDevice));
 
     gmm->setCompressionEnabled(true);
@@ -145,7 +144,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMe
     delete[] bufferPtrBase;
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndOldCoherencyModelWhenReadingWritingMemoryThenCpuReadWriteIsAllowed) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndCpuCachingAvailableWhenReadingWritingMemoryThenCpuReadWriteIsAllowed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal;
@@ -162,7 +161,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndOldCoherenc
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
     auto &productHelper = mockDevice->getProductHelper();
-    auto isZeroCopyAllowed = !productHelper.isNewCoherencyModelSupported();
+    auto isZeroCopyAllowed = productHelper.isZeroCopyCpuAccessPreferred();
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, alignedBufferPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(isZeroCopyAllowed, buffer->isMemObjZeroCopy());
@@ -199,7 +198,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndOldCoherenc
     alignedFree(alignedBufferPtr);
 }
 
-HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndOldCoherencyModelWhenReadingWritingMemoryThenCpuReadWriteIsNotAllowed) {
+HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndIsZeroCopyCpuAccessPreferredWhenReadingWritingMemoryThenCpuReadWriteIsNotAllowed) {
     cl_int retVal;
     size_t size = MemoryConstants::cacheLineSize;
     auto alignedBufferPtr = alignedMalloc(MemoryConstants::cacheLineSize + 1, MemoryConstants::cacheLineSize);
@@ -215,7 +214,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresAndOldCoherenc
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
     auto &productHelper = mockDevice->getProductHelper();
-    auto isZeroCopyAllowed = !productHelper.isNewCoherencyModelSupported();
+    auto isZeroCopyAllowed = productHelper.isZeroCopyCpuAccessPreferred();
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, alignedBufferPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(isZeroCopyAllowed, buffer->isMemObjZeroCopy());
@@ -282,9 +281,9 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
-    auto isNewCoherencyModelSupported = device->getProductHelper().isNewCoherencyModelSupported();
-    EXPECT_EQ(!isNewCoherencyModelSupported, buffer->isReadWriteOnCpuAllowed(device->getDevice()));
-    EXPECT_EQ(!isNewCoherencyModelSupported, buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));
+    auto isZeroCopyCpuAccessPreferred = device->getProductHelper().isZeroCopyCpuAccessPreferred();
+    EXPECT_EQ(isZeroCopyCpuAccessPreferred, buffer->isReadWriteOnCpuAllowed(device->getDevice()));
+    EXPECT_EQ(isZeroCopyCpuAccessPreferred, buffer->isReadWriteOnCpuPreferred(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, device->getDevice()));
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::systemCpuInaccessible);
     // read write on CPU is allowed, but not preferred. We can access this memory via Lock.
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getDevice()));
@@ -312,8 +311,8 @@ TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyWhenCpuCopyIsEvaluated
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, false, MemoryConstants::pageSize, nullptr, 0u, nullptr));
     memoryManager->cpuCopyRequired = true;
     // cpu copy is never allowed with new coherency model
-    auto isNewCoherencyModelSupported = device->getProductHelper().isNewCoherencyModelSupported();
-    EXPECT_EQ(!isNewCoherencyModelSupported, mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, false, MemoryConstants::pageSize, nullptr, 0u, nullptr));
+    auto isZeroCopyCpuAccessPreferred = device->getProductHelper().isZeroCopyCpuAccessPreferred();
+    EXPECT_EQ(isZeroCopyCpuAccessPreferred, mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, false, MemoryConstants::pageSize, nullptr, 0u, nullptr));
 }
 
 TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyButItIsNotPossibleWhenCpuCopyIsEvaluatedThenFalseIsReturned) {

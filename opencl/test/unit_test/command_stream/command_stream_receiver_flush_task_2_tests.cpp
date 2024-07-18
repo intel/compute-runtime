@@ -253,7 +253,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenDcFlushWhenFinishingThenTaskC
     auto ptr = mockCmdQueue.enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, sizeof(tempBuffer), 0, nullptr, nullptr, retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
     auto &productHelper = pDevice->getProductHelper();
-    auto expectFlushForMapUnmap = productHelper.isNewCoherencyModelSupported();
+    auto expectFlushForMapUnmap = !productHelper.isZeroCopyCpuAccessPreferred();
     EXPECT_EQ(1u + expectFlushForMapUnmap, commandStreamReceiver.peekLatestSentTaskCount());
 
     // cmdQ task count = 2, finish again

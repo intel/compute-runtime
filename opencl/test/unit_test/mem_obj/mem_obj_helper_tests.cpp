@@ -170,22 +170,22 @@ TEST(MemObjHelper, givenContextWithMultipleRootDevicesWhenIsSuitableForCompressi
     EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, true));
 }
 
-TEST(MemObjHelper, givenCompressionEnabledButNotPreferredWhenCompressionHintIsPassedThenCompressionIsUsed) {
+TEST(MemObjHelper, givenCompressionEnabledButNotPreferredWhenCompressionHintIsPassedThenCompressionIsNotUsed) {
     cl_mem_flags_intel flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
     cl_mem_flags flags = CL_MEM_COMPRESSED_HINT_INTEL;
     MockContext context;
     MemoryProperties memoryProperties =
         ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
     context.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
     flags = CL_MEM_COMPRESSED_HINT_INTEL;
     flagsIntel = 0;
     memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
     flagsIntel = CL_MEM_COMPRESSED_HINT_INTEL;
     flags = 0;
     memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, &context.getDevice(0)->getDevice());
-    EXPECT_TRUE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
+    EXPECT_FALSE(MemObjHelper::isSuitableForCompression(true, memoryProperties, context, false));
 }
 
 TEST(MemObjHelper, givenCompressionEnabledAndPreferredWhenCompressionHintIsPassedThenCompressionIsUsed) {
@@ -431,7 +431,7 @@ TEST(MemObjHelper, givenDifferentCapabilityAndDebugFlagValuesWhenCheckingBufferC
             bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
 
             MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
-                memoryProperties, compressionEnabled, false, false);
+                memoryProperties, compressionEnabled, false, true);
 
             bool expectBufferCompressed = ftrRenderCompressedBuffers && (enableMultiTileCompressionValue == 1);
             if (expectBufferCompressed) {
@@ -483,7 +483,7 @@ TEST(MemObjHelper, givenDifferentValuesWhenCheckingBufferCompressionSupportThenC
 
                     bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*defaultHwInfo), memoryProperties, context, true);
                     MockPublicAccessBuffer::getGraphicsAllocationTypeAndCompressionPreference(
-                        memoryProperties, compressionEnabled, false, false);
+                        memoryProperties, compressionEnabled, false, true);
 
                     bool isCompressionDisabled = isValueSet(flags, CL_MEM_UNCOMPRESSED_HINT_INTEL) ||
                                                  isValueSet(flagsIntel, CL_MEM_UNCOMPRESSED_HINT_INTEL);

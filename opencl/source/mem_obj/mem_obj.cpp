@@ -454,7 +454,7 @@ bool MemObj::allowCpuAccess() const {
         return !(isNonCoherentSystemAllocation);
     }
 
-    return !graphicsAllocation->getDefaultGmm()->getPreferNoCpuAccess() && !(isNonCoherentSystemAllocation);
+    return !graphicsAllocation->getDefaultGmm()->getPreferNoCpuAccess();
 }
 
 bool MemObj::allowCpuForMapUnmap() const {

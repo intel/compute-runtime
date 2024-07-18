@@ -183,7 +183,7 @@ TEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenWaitEventIsUpdated) 
 
     Event *rEvent = castToObject<Event>(retEvent);
     auto &productHelper = pCmdQ->getClDevice().getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         // In new coherency model wait event is not immediately updated as unmap is sent to GPU
         // Instead, verify that timestamp packets were correctly assigned from waitEvent to retEvent
         auto waitNodes = wEvent->getTimestampPacketNodes()->peekNodes();

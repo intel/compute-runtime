@@ -209,7 +209,7 @@ class Buffer : public MemObj {
                             bool forceCopyHostPtr);
     static AllocationType getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties,
                                                                             bool &compressionEnabled, bool localMemoryEnabled,
-                                                                            bool isNewCoherencyModelSupported);
+                                                                            bool isZeroCopyCpuAccessPreferred);
     static bool isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties);
 
     void transferData(void *dst, void *src, size_t copySize, size_t copyOffset);

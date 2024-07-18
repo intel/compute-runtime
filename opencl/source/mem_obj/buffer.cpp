@@ -342,10 +342,10 @@ Buffer *Buffer::create(Context *context,
 
         bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
                                                                          gfxCoreHelper.isBufferSizeSuitableForCompression(size));
-        auto isNewCoherencyModelSupported = productHelper.isNewCoherencyModelSupported();
+        auto isZeroCopyCpuAccessPreferred = productHelper.isZeroCopyCpuAccessPreferred();
         allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled,
                                                                                           memoryManager->isLocalMemorySupported(rootDeviceIndex),
-                                                                                          isNewCoherencyModelSupported);
+                                                                                          isZeroCopyCpuAccessPreferred);
 
         if (allocationCpuPtr) {
             forceCopyHostPtr = !useHostPtr && !copyHostPtr;
@@ -373,7 +373,7 @@ Buffer *Buffer::create(Context *context,
                     allocationInfo.zeroCopyAllowed = false;
                     allocationInfo.allocateMemory = true;
                 }
-            } else if (isNewCoherencyModelSupported) {
+            } else if (!isZeroCopyCpuAccessPreferred) {
                 allocationInfo.zeroCopyAllowed = false;
                 allocationInfo.allocateMemory = true;
             }
@@ -470,7 +470,7 @@ Buffer *Buffer::create(Context *context,
             return nullptr;
         }
 
-        if (!isSystemMemory || (isNewCoherencyModelSupported && !memoryProperties.flags.forceHostMemory)) {
+        if (!isSystemMemory || (!isZeroCopyCpuAccessPreferred && !memoryProperties.flags.forceHostMemory)) {
             allocationInfo.zeroCopyAllowed = false;
             if (hostPtr) {
                 if (!allocationInfo.isHostPtrSVM) {
@@ -643,13 +643,13 @@ void Buffer::checkMemory(const MemoryProperties &memoryProperties,
 
 AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties,
                                                                          bool &compressionEnabled, bool isLocalMemoryEnabled,
-                                                                         bool isNewCoherencyModelSupported) {
+                                                                         bool isZeroCopyCpuAccessPreferred) {
     if (properties.flags.forceHostMemory) {
         compressionEnabled = false;
         return AllocationType::bufferHostMemory;
     }
 
-    if (properties.flags.useHostPtr && (!isLocalMemoryEnabled && !isNewCoherencyModelSupported)) {
+    if (properties.flags.useHostPtr && (!isLocalMemoryEnabled && isZeroCopyCpuAccessPreferred)) {
         compressionEnabled = false;
         return AllocationType::bufferHostMemory;
     }

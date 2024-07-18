@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -145,7 +145,7 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
         return true;
     }
 
-    return properties.flags.compressedHint;
+    return false;
 }
 
 bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const Context &context) {

@@ -391,7 +391,7 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWithEve
 
     auto expectedTaskLevel = 19u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     auto pEvent = (Event *)event;
@@ -446,7 +446,7 @@ HWTEST_F(EnqueueReadBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWith
     ASSERT_NE(nullptr, event);
     auto expectedTaskLevel = 19u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     auto pEvent = (Event *)event;
@@ -480,7 +480,7 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndRowPitchEqualZeroAndDstP
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto expectedTaskLevel = 0u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
@@ -510,7 +510,7 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndSlicePitchEqualZeroAndDs
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto expectedTaskLevel = 0u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
@@ -542,7 +542,7 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointThe
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto expectedTaskLevel = 0u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);

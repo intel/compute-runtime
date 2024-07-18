@@ -324,7 +324,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWhenWr
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto expectedTaskLevel = 0u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
@@ -395,7 +395,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWithEv
 
     auto expectedTaskLevel = 19u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     auto pEvent = (Event *)event;
@@ -451,7 +451,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWit
 
     auto expectedTaskLevel = 19u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     auto pEvent = (Event *)event;
@@ -486,7 +486,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndRowPitchEqualZeroAndDst
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto expectedTaskLevel = 0u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
@@ -516,7 +516,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndSlicePitchEqualZeroAndD
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto &productHelper = context->getDevice(0)->getProductHelper();
     auto expectedTaskLevel = 0u;
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
@@ -547,7 +547,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointTh
 
     auto expectedTaskLevel = 0u;
     auto &productHelper = context->getDevice(0)->getProductHelper();
-    if (productHelper.isNewCoherencyModelSupported()) {
+    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
         expectedTaskLevel++;
     }
     EXPECT_EQ(pCmdQ->taskLevel, expectedTaskLevel);
