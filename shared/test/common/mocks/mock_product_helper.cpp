@@ -483,6 +483,11 @@ struct HwMapper<IGFX_UNKNOWN> {
     using GfxProduct = UnknownProduct;
 };
 
+template <>
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getCacheLineSize() const {
+    return 0x40;
+}
+
 } // namespace NEO
 
 #include "shared/source/os_interface/product_helper.inl"

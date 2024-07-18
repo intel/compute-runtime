@@ -63,6 +63,7 @@ struct PVC : public XeHpcCoreFamily {
     }
     static constexpr uint32_t pvcSteppingBits = 0b111;
 
+    static constexpr uint32_t cacheLineSize = 0x40;
     static constexpr bool isDcFlushAllowed = false;
 };
 

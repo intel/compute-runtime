@@ -93,6 +93,7 @@ struct Xe2HpgCore {
         }
     };
 
+    static constexpr uint32_t cacheLineSize = 0x100;
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 

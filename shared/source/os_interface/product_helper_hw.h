@@ -183,6 +183,7 @@ class ProductHelperHw : public ProductHelper {
     bool isAvailableExtendedScratch() const override;
     std::optional<bool> isCoherentAllocation(uint64_t patIndex) const override;
     bool isStagingBuffersEnabled() const override;
+    uint32_t getCacheLineSize() const override;
 
     ~ProductHelperHw() override = default;
 

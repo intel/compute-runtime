@@ -971,3 +971,11 @@ TEST(ProductHelperPreemptionSettingTest, whenSipClassIsForcedToBuiltinThenRequir
     MockProductHelper::setupPreemptionSurfaceSize(hwInfo, *executionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(initialPreemptionSurfaceSize, hwInfo.capabilityTable.requiredPreemptionSurfaceSize);
 }
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenItsPreXe2ThenCacheLineSizeIs64Bytes, IsAtMostPVC) {
+    EXPECT_EQ(productHelper->getCacheLineSize(), 64u);
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenItsXe2PlusThenCacheLineSizeIs256Bytes, IsAtLeastBmg) {
+    EXPECT_EQ(productHelper->getCacheLineSize(), 256u);
+}

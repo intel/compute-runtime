@@ -87,6 +87,7 @@ struct Gen9 {
         }
     };
 
+    static constexpr uint32_t cacheLineSize = 0x40;
     static constexpr bool isDcFlushAllowed = true;
 
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");

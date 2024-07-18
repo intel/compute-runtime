@@ -903,4 +903,10 @@ bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getCacheLineSize() const {
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+    return GfxProduct::cacheLineSize;
+}
+
 } // namespace NEO

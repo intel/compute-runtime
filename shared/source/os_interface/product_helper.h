@@ -239,6 +239,7 @@ class ProductHelper {
     virtual bool isAvailableExtendedScratch() const = 0;
     virtual std::optional<bool> isCoherentAllocation(uint64_t patIndex) const = 0;
     virtual bool isStagingBuffersEnabled() const = 0;
+    virtual uint32_t getCacheLineSize() const = 0;
 
     virtual ~ProductHelper() = default;
 

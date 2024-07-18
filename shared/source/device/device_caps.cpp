@@ -62,7 +62,7 @@ void Device::initializeCaps() {
     // copy system info to prevent misaligned reads
     const auto systemInfo = hwInfo.gtSystemInfo;
 
-    deviceInfo.globalMemCachelineSize = 64;
+    deviceInfo.globalMemCachelineSize = productHelper.getCacheLineSize();
 
     uint32_t allSubDevicesMask = static_cast<uint32_t>(getDeviceBitfield().to_ulong());
     constexpr uint32_t singleSubDeviceMask = 1;
