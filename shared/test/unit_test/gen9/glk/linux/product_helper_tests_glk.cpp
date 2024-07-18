@@ -70,6 +70,20 @@ GLKTEST_F(GlkProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) 
     EXPECT_EQ(0, outKmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
 
+GLKTEST_F(GlkProductHelperLinux, GivenInvalidInputWhenConfiguringHwInfoThenErrorIsReturned) {
+
+    drm->failRetTopology = true;
+    drm->storedRetValForEUVal = -1;
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(-1, ret);
+
+    drm->storedRetValForEUVal = 0;
+    drm->storedRetValForSSVal = -1;
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(-1, ret);
+}
+
 GLKTEST_F(GlkProductHelperLinux, GivenFailingEnabledPoolWhenConfiguringHwInfoThenZeroIsSet) {
     drm->storedRetValForPooledEU = -1;
 
@@ -90,6 +104,52 @@ GLKTEST_F(GlkProductHelperLinux, GivenDisabledEnabledPoolWhenConfiguringHwInfoTh
     EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
     EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
     EXPECT_EQ(0u, outHwInfo.gtSystemInfo.EuCountPerPoolMax);
+}
+
+GLKTEST_F(GlkProductHelperLinux, GivenFailingMinEuInPoolWhenConfiguringHwInfoThenCorrectValueSet) {
+    drm->storedRetValForMinEUinPool = -1;
+    drm->storedSSVal = 3;
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
+    EXPECT_EQ(9u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
+
+    drm->storedSSVal = 2;
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
+    EXPECT_EQ(3u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
+}
+
+GLKTEST_F(GlkProductHelperLinux, GivenInvalidMinEuInPoolWhenConfiguringHwInfoThenCorrectValueSet) {
+    drm->storedMinEUinPool = 4;
+    drm->storedSSVal = 3;
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
+    EXPECT_EQ(9u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
+
+    drm->storedSSVal = 2;
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(0, ret);
+
+    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrPooledEuEnabled);
+    EXPECT_EQ(3u, outHwInfo.gtSystemInfo.EuCountPerPoolMin);
+    EXPECT_EQ((outHwInfo.gtSystemInfo.EUCount - outHwInfo.gtSystemInfo.EuCountPerPoolMin), outHwInfo.gtSystemInfo.EuCountPerPoolMax);
+}
+
+GLKTEST_F(GlkProductHelperLinux, GivenWaFlagsWhenConfiguringHwInfoThenInformationIsCorrect) {
+    pInHwInfo.platform.usRevId = 0;
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(0, ret);
 }
 
 template <typename T>

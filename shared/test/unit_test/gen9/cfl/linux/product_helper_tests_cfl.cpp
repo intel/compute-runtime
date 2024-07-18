@@ -24,6 +24,8 @@ CFLTEST_F(CflProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) 
 
     auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
+    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     // constant sysInfo/ftr flags
@@ -31,15 +33,23 @@ CFLTEST_F(CflProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) 
     EXPECT_TRUE(outHwInfo.gtSystemInfo.VEBoxInfo.IsValid);
 
     pInHwInfo.platform.usDeviceID = 0x3E90;
+    drm->storedSSVal = 3;
 
     ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
+    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     pInHwInfo.platform.usDeviceID = 0x3EA5;
+    drm->storedSSVal = 6;
 
     ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
+    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(2u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     auto &outKmdNotifyProperties = outHwInfo.capabilityTable.kmdNotifyProperties;
@@ -51,6 +61,22 @@ CFLTEST_F(CflProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) 
     EXPECT_EQ(200000, outKmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
     EXPECT_FALSE(outKmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     EXPECT_EQ(0, outKmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
+}
+
+CFLTEST_F(CflProductHelperLinux, GivenFailedIoctlEuCountWhenConfiguringHwInfoThenErrorIsReturned) {
+    drm->storedRetValForEUVal = -4;
+    drm->failRetTopology = true;
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(-4, ret);
+}
+
+CFLTEST_F(CflProductHelperLinux, GivenFailedIoctlSsCountWhenConfiguringHwInfoThenErrorIsReturned) {
+    drm->storedRetValForSSVal = -5;
+    drm->failRetTopology = true;
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(-5, ret);
 }
 
 CFLTEST_F(CflProductHelperLinux, WhenConfiguringHwInfoThenEdramInformationIsCorrect) {
