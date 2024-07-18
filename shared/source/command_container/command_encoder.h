@@ -208,6 +208,8 @@ struct EncodeDispatchKernel {
     static void patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 
     static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);
+    static void *getImplicitArgsAddress(EncodeDispatchKernelArgs &args, const KernelDescriptor &kernelDescriptor);
+    static size_t getScratchPtrOffsetOfImplicitArgs();
 };
 
 template <typename GfxFamily>

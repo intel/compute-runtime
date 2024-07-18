@@ -126,6 +126,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             ", Group count: ", threadGroupDimensions.groupCountX, ", ", threadGroupDimensions.groupCountY, ", ", threadGroupDimensions.groupCountZ,
             ", SIMD: ", kernelInfo->getMaxSimdSize());
 
+    bool kernelNeedsImplicitArgs = kernel->getImplicitArgs() != nullptr;
     bool needScratchSpace = false;
     bool kernelNeedsScratchSpace = false;
     for (uint32_t slotId = 0u; slotId < 2; slotId++) {
@@ -373,6 +374,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             scratchInlineData.baseAddress = ssh->getGpuBase();
         }
         commandsToPatch.push_back(scratchInlineData);
+
+        addPatchScratchAddressInImplicitArgs(commandsToPatch, dispatchKernelArgs, kernelDescriptor, kernelNeedsImplicitArgs);
     }
 
     if (!this->isFlushTaskSubmissionEnabled) {

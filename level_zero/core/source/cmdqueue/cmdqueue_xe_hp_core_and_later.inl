@@ -173,11 +173,11 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-    bool patchNewInlineScratchAddress = false;
+    bool patchNewScratchAddress = false;
     if (this->heaplessModeEnabled &&
         (commandList.getCommandListPatchedPerThreadScratchSize(0) < perThreadScratchSpaceSlot0Size ||
          commandList.getCommandListPatchedPerThreadScratchSize(1) < perThreadScratchSpaceSlot1Size)) {
-        patchNewInlineScratchAddress = true;
+        patchNewScratchAddress = true;
     }
 
     auto &commandsToPatch = commandList.getCommandsToPatch();
@@ -241,7 +241,16 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             break;
         }
         case CommandToPatch::ComputeWalkerInlineDataScratch: {
-            if (!patchNewInlineScratchAddress) {
+            if (!patchNewScratchAddress) {
+                continue;
+            }
+            uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
+            void *scratchAddressPatch = ptrOffset(commandToPatch.pDestination, commandToPatch.offset);
+            std::memcpy(scratchAddressPatch, &fullScratchAddress, commandToPatch.patchSize);
+            break;
+        }
+        case CommandToPatch::ComputeWalkerImplicitArgsScratch: {
+            if (!patchNewScratchAddress) {
                 continue;
             }
             uint64_t fullScratchAddress = scratchAddress + commandToPatch.baseAddress;
@@ -254,7 +263,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
         }
     }
 
-    if (patchNewInlineScratchAddress) {
+    if (patchNewScratchAddress) {
         commandList.setCommandListPatchedPerThreadScratchSize(0, perThreadScratchSpaceSlot0Size);
         commandList.setCommandListPatchedPerThreadScratchSize(1, perThreadScratchSpaceSlot1Size);
     }

@@ -906,6 +906,16 @@ size_t EncodeDispatchKernel<Family>::getDefaultDshAlignment() {
     return EncodeStates<Family>::alignIndirectStatePointer;
 }
 
+template <typename GfxFamily>
+void *EncodeDispatchKernel<GfxFamily>::getImplicitArgsAddress(EncodeDispatchKernelArgs &args, const KernelDescriptor &kernelDescriptor) {
+    return nullptr;
+}
+
+template <typename GfxFamily>
+size_t EncodeDispatchKernel<GfxFamily>::getScratchPtrOffsetOfImplicitArgs() {
+    return 0;
+}
+
 template <typename Family>
 template <bool isHeapless>
 void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr) {

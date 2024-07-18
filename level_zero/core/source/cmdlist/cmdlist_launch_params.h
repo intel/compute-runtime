@@ -31,6 +31,7 @@ struct CommandToPatch {
         CbWaitEventSemaphoreWait,
         CbWaitEventLoadRegisterImm,
         ComputeWalkerInlineDataScratch,
+        ComputeWalkerImplicitArgsScratch,
         Invalid
     };
     void *pDestination = nullptr;

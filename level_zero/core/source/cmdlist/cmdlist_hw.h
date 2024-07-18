@@ -20,6 +20,9 @@
 namespace NEO {
 enum class MemoryPool;
 enum class ImageType;
+struct EncodeDispatchKernelArgs;
+struct KernelDescriptor;
+
 } // namespace NEO
 
 namespace L0 {
@@ -359,7 +362,7 @@ struct CommandListCoreFamily : public CommandListImp {
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
     bool hasInOrderDependencies() const;
     void appendFullSynchronizedDispatchInit();
-
+    void addPatchScratchAddressInImplicitArgs(CommandsToPatch &commandsToPatch, NEO::EncodeDispatchKernelArgs &args, const NEO::KernelDescriptor &kernelDescriptor, bool kernelNeedsImplicitArgs);
     size_t addCmdForPatching(std::shared_ptr<NEO::InOrderExecInfo> *externalInOrderExecInfo, void *cmd1, void *cmd2, uint64_t counterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType patchCmdType);
     uint64_t getInOrderIncrementValue() const;
     bool isSkippingInOrderBarrierAllowed(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) const;

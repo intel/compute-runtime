@@ -698,3 +698,17 @@ HWTEST_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPoli
         EXPECT_EQ(expectedIdd.getRawData(i), idd.getRawData(i));
     }
 }
+
+HWTEST_F(CommandEncoderTests, whenGetImplicitArgsAddressIsCalledThenNullptrIsReturned) {
+
+    KernelDescriptor kernelDescriptor{};
+    EncodeDispatchKernelArgs args{};
+    auto implicitArgsPtr = EncodeDispatchKernel<FamilyType>::getImplicitArgsAddress(args, kernelDescriptor);
+    EXPECT_EQ(nullptr, implicitArgsPtr);
+}
+
+HWTEST_F(CommandEncoderTests, whenGetScratchPtrOffsetOfImplicitArgsIsCalledThenZeroIsReturned) {
+
+    auto scratchOffset = EncodeDispatchKernel<FamilyType>::getScratchPtrOffsetOfImplicitArgs();
+    EXPECT_EQ(0u, scratchOffset);
+}
