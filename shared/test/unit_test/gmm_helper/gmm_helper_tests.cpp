@@ -901,6 +901,31 @@ TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncac
               CacheSettingsHelper::getGmmUsageType(AllocationType::bufferHostMemory, false, productHelper));
 }
 
+TEST(GmmTest, givenFlagForceGmmSystemMemoryBufferForAllocationsWhenCallGetGmmUsageTypeThenReturnSystemMemoryBuffer) {
+    DebugManagerStateRestore restore;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
+    constexpr int64_t bufferMask = 1ll << static_cast<int64_t>(AllocationType::buffer);
+    constexpr int64_t globalFence = 1ll << static_cast<int64_t>(AllocationType::globalFence);
+
+    auto defaultGmmUsageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
+
+    EXPECT_EQ(defaultGmmUsageType,
+              CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper));
+    EXPECT_EQ(defaultGmmUsageType,
+              CacheSettingsHelper::getGmmUsageType(AllocationType::globalFence, false, productHelper));
+
+    debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.set(bufferMask | globalFence);
+    auto expectedGmmUsageTypeAfterForcingFlag = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+
+    EXPECT_EQ(expectedGmmUsageTypeAfterForcingFlag,
+              CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper));
+    EXPECT_EQ(expectedGmmUsageTypeAfterForcingFlag,
+              CacheSettingsHelper::getGmmUsageType(AllocationType::globalFence, false, productHelper));
+}
+
 TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
     debugManager.flags.DisableCachingForStatefulBufferAccess.set(true);

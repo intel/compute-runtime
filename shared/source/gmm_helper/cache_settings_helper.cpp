@@ -51,6 +51,13 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
         return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
     }
 
+    if (debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.get()) {
+        UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
+        if ((1llu << (static_cast<int64_t>(allocationType))) & debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.get()) {
+            return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+        }
+    }
+
     switch (allocationType) {
     case AllocationType::image:
         return GMM_RESOURCE_USAGE_OCL_IMAGE;

@@ -396,6 +396,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableCopyWithStagingBuffers, -1, "Enable copy w
 DECLARE_DEBUG_VARIABLE(int32_t, StagingBufferSize, -1, "Size of single staging buffer. -1: default (2MB), >0: size in KB")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePostSyncL1Flush, -1, "-1: default (do nothing), 0: L1 flush disabled in post sync, 1: L1 flush enabled in post sync")
 DECLARE_DEBUG_VARIABLE(int32_t, AllowNotZeroForCompressedOnWddm, -1, "-1: default (do nothing), 0: do not set AllowNotZeroed for compressed resources, 1: set AllowNotZeroed for compressed resources");
+DECLARE_DEBUG_VARIABLE(int64_t, ForceGmmSystemMemoryBufferForAllocations, 0, "0: default, >0: (bitmask) for given Allocation Types, force GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER gmm resource type");
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
