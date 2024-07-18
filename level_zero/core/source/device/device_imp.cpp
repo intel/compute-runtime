@@ -21,6 +21,7 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -1146,6 +1147,10 @@ ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_prop
 }
 
 ze_result_t DeviceImp::reserveCache(size_t cacheLevel, size_t cacheReservationSize) {
+    if (getOsInterface().getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     if (cacheReservation->getMaxCacheReservationSize() == 0) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
@@ -1163,6 +1168,10 @@ ze_result_t DeviceImp::reserveCache(size_t cacheLevel, size_t cacheReservationSi
 }
 
 ze_result_t DeviceImp::setCacheAdvice(void *ptr, size_t regionSize, ze_cache_ext_region_t cacheRegion) {
+    if (getOsInterface().getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     if (cacheReservation->getMaxCacheReservationSize() == 0) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

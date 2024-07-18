@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ class DriverModel : public NonCopyableClass {
 
     virtual uint32_t getDeviceHandle() const = 0;
 
-    DriverModelType getDriverModelType() const {
+    MOCKABLE_VIRTUAL DriverModelType getDriverModelType() const {
         return driverModelType;
     }
 

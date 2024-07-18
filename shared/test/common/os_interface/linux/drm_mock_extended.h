@@ -17,6 +17,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/drm_mock_device_blob.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <array>
 
@@ -26,15 +27,19 @@ class DrmMockExtended : public DrmMock {
   public:
     using Drm::cacheInfo;
     using Drm::engineInfo;
+    using Drm::ioctlHelper;
     using Drm::memoryInfo;
     using Drm::pageFaultSupported;
     using Drm::rootDeviceEnvironment;
     using DrmMock::DrmMock;
+    using BaseClass = DriverModel;
 
     DrmMockExtended(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockExtended(rootDeviceEnvironment, defaultHwInfo.get()) {}
     DrmMockExtended(RootDeviceEnvironment &rootDeviceEnvironmentIn, const HardwareInfo *inputHwInfo);
 
     int handleRemainingRequests(DrmIoctl request, void *arg) override;
+
+    ADDMETHOD_CONST(getDriverModelType, DriverModelType, true, DriverModelType::unknown, (), ())
 
     static constexpr uint32_t maxEngineCount = 9u;
     ContextEnginesLoadBalance<maxEngineCount> receivedContextEnginesLoadBalance{};

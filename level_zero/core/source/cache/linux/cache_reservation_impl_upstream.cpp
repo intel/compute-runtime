@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/cache/linux/cache_reservation_impl.h"
+#include "level_zero/core/source/cache/linux/cache_reservation_impl_upstream.h"
 
 namespace L0 {
 
