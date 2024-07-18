@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -62,7 +63,7 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
     return 0;
 }
 
-int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) {
+int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     int ret = 0;
     auto osInterface = rootDeviceEnvironment.osInterface.get();
     Drm *drm = osInterface->getDriverModel()->as<Drm>();
@@ -111,8 +112,12 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
 
     gtSystemInfo->MaxEuPerSubSlice = gtSystemInfo->MaxEuPerSubSlice != 0 ? gtSystemInfo->MaxEuPerSubSlice : topologyData.maxEuPerSubSlice;
     gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSliceCount * topologyData.maxSliceCount), gtSystemInfo->MaxSubSlicesSupported);
-    gtSystemInfo->MaxSlicesSupported = topologyData.maxSliceCount;
+    gtSystemInfo->MaxSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSliceCount), gtSystemInfo->MaxSlicesSupported);
     gtSystemInfo->MaxDualSubSlicesSupported = gtSystemInfo->MaxSubSlicesSupported;
+
+    UNRECOVERABLE_IF(gtSystemInfo->MaxSlicesSupported == 0);
+    auto maxDssPerSlice = gtSystemInfo->MaxDualSubSlicesSupported / gtSystemInfo->MaxSlicesSupported;
+    gtSystemInfo->SliceCount = static_cast<uint32_t>(Math::divideAndRoundUp(gtSystemInfo->DualSubSliceCount, maxDssPerSlice));
 
     gtSystemInfo->IsDynamicallyPopulated = true;
     for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
