@@ -118,7 +118,6 @@ class Device : public ReferenceTrackedObject<Device> {
     EngineControl &getNextEngineForCommandQueue();
     EngineControl &getInternalEngine();
     EngineControl *getInternalCopyEngine();
-    EngineControl *getHpCopyEngine();
     SelectorCopyEngine &getSelectorCopyEngine();
     MemoryManager *getMemoryManager() const;
     GmmHelper *getGmmHelper() const;

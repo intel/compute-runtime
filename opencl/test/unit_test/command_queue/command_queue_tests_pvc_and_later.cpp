@@ -894,67 +894,6 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
     }
 }
 
-HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenContextGroupAndHpQueueWhenSelectingCsrThenHpBcsCsrIsReturned, IsAtLeastXe2HpgCore) {
-    context.reset(nullptr);
-    clDevice.reset(nullptr);
-
-    DebugManagerStateRestore restore{};
-    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
-    debugManager.flags.ContextGroupSize.set(8);
-
-    HardwareInfo hwInfo = *::defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(3);
-
-    device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
-    clDevice = std::make_unique<MockClDevice>(device);
-    context = std::make_unique<MockContext>(clDevice.get());
-
-    const auto &gfxCoreHelper = *device->getRootDeviceEnvironment().gfxCoreHelper.get();
-    auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(hwInfo);
-    if (hpEngine == aub_stream::EngineType::NUM_ENGINES) {
-        GTEST_SKIP();
-    }
-
-    BuiltinOpParams builtinOpParams{};
-    MockGraphicsAllocation srcGraphicsAllocation{};
-    MockGraphicsAllocation dstGraphicsAllocation{};
-    MockBuffer srcMemObj{srcGraphicsAllocation};
-    MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
-    srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
-    dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
-    CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
-
-    {
-        auto queue = createQueue(nullptr);
-
-        queue->bcsInitialized = false;
-        queue->priority = QueuePriority::high;
-
-        auto &hpCsr1 = queue->selectCsrForBuiltinOperation(args);
-
-        EXPECT_EQ(queue->getBcsCommandStreamReceiver(hpEngine), &hpCsr1);
-
-        EXPECT_TRUE(hpCsr1.getOsContext().getIsPrimaryEngine());
-        EXPECT_TRUE(hpCsr1.getOsContext().isHighPriority());
-
-        auto queue2 = createQueue(nullptr);
-
-        queue2->bcsInitialized = false;
-        queue2->priority = QueuePriority::high;
-
-        auto &hpCsr2 = queue2->selectCsrForBuiltinOperation(args);
-
-        EXPECT_FALSE(hpCsr2.getOsContext().getIsPrimaryEngine());
-        EXPECT_TRUE(hpCsr2.getOsContext().isHighPriority());
-
-        ASSERT_NE(nullptr, hpCsr2.getOsContext().getPrimaryContext());
-        EXPECT_EQ(&hpCsr1.getOsContext(), hpCsr2.getOsContext().getPrimaryContext());
-    }
-}
-
 HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDRangeThenProgramBarrierBeforeGlobalAllocation, IsPVC) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
