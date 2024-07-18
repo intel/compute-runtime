@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -236,6 +236,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
                             dispatchBcsFlags.hasRelaxedOrderingDependencies, dispatchBcsFlags.flushTaskCount};
 
     updateStreamTaskCount(streamToSubmit, taskCount + 1);
+    this->latestSentTaskCount = taskCount + 1;
 
     auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
     if (submissionStatus != SubmissionStatus::SUCCESS) {

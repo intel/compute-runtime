@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2782,6 +2782,24 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThen
     EXPECT_EQ(CompletionStamp::outOfDeviceMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
     commandStreamReceiver.flushReturnValue = SubmissionStatus::FAILED;
     EXPECT_EQ(CompletionStamp::failed, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenFlushBcsTaskVerifyLatestSentTaskCountUpdated) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), true, 2u);
+    auto devices = DeviceFactory::createDevices(*executionEnvironment.release());
+
+    char commandBuffer[MemoryConstants::pageSize];
+    memset(commandBuffer, 0, sizeof(commandBuffer));
+    MockGraphicsAllocation mockCmdBufferAllocation(commandBuffer, 0x4000, MemoryConstants::pageSize);
+    LinearStream commandStream(&mockCmdBufferAllocation);
+
+    auto csr = devices[0]->getDefaultEngine().commandStreamReceiver;
+    DispatchBcsFlags dispatchFlags = {false, false, false};
+    TaskCountType taskCount = csr->peekTaskCount();
+    csr->flushBcsTask(commandStream, commandStream.getUsed(), dispatchFlags, devices[0]->getHardwareInfo());
+    TaskCountType latestSentTaskCount = csr->peekLatestSentTaskCount();
+    EXPECT_EQ(latestSentTaskCount, taskCount + 1);
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfHostMemoryFailureOnFlushWhenFlushingTaskThenErrorIsPropagated) {
