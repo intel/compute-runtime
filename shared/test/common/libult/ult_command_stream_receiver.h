@@ -229,6 +229,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return BaseClass::flushImmediateTask(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
     }
 
+    CompletionStamp flushImmediateTaskStateless(LinearStream &immediateCommandStream,
+                                                size_t immediateCommandStreamStart,
+                                                ImmediateDispatchFlags &dispatchFlags,
+                                                Device &device) override {
+        recordedImmediateDispatchFlags = dispatchFlags;
+        this->lastFlushedCommandStream = &commandStream;
+        return BaseClass::flushImmediateTaskStateless(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
+    }
+
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
         writeMemoryParams.totalCallCount++;
         if (isChunkCopy) {
