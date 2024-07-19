@@ -11,6 +11,8 @@ constexpr auto gfxProduct = IGFX_ARROWLAKE;
 
 #include "shared/source/xe_hpg_core/xe_lpg/compiler_product_helper_xe_lpg.inl"
 
+#include "additional_product_config_arl.inl"
+
 namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<gfxProduct>::getDefaultHwIpVersion() const {
@@ -46,7 +48,7 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const H
         break;
     }
     }
-    return getDefaultHwIpVersion();
+    return getProductConfigFromHwInfoAdditionalArl(*this, hwInfo);
 }
 
 } // namespace NEO

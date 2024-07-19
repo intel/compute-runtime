@@ -9,6 +9,10 @@
 
 #include <vector>
 
+//
+
+#include "device_ids_configs_xe_lpg_additional.inl"
+
 namespace NEO {
 const std::vector<unsigned short> mtlmDeviceIds{
     0x7D40,
@@ -18,7 +22,4 @@ const std::vector<unsigned short> mtlmDeviceIds{
 const std::vector<unsigned short> mtlpDeviceIds{
     0x7D55,
     0x7DD5};
-const std::vector<unsigned short> arlDeviceIds{
-    0x7D51,
-    0x7DD1};
 } // namespace NEO
