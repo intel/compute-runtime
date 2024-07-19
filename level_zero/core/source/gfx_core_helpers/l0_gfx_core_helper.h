@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/api_gfx_core_helper.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 
 #include "level_zero/include/zet_intel_gpu_debug.h"
@@ -28,7 +29,11 @@ struct EngineGroupT;
 struct RootDeviceEnvironment;
 class Debugger;
 class ProductHelper;
+class TagAllocatorBase;
+class MemoryManager;
 } // namespace NEO
+
+class RootDeviceIndicesContainer;
 
 namespace L0 {
 
@@ -109,6 +114,8 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual uint32_t getIpSamplingMetricCount() = 0;
     virtual bool synchronizedDispatchSupported() const = 0;
     virtual bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const = 0;
+    virtual std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, size_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
+                                                                                NEO::DeviceBitfield deviceBitfield) const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -158,6 +165,8 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint32_t getIpSamplingMetricCount() override;
     bool synchronizedDispatchSupported() const override;
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed() const override;
+    std::unique_ptr<NEO::TagAllocatorBase> getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, size_t initialTagCount, size_t packetsCountPerElement, size_t tagAlignment,
+                                                                        NEO::DeviceBitfield deviceBitfield) const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

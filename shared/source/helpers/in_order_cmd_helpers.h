@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace NEO {
@@ -90,11 +91,18 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     NEO::GraphicsAllocation *getExternalHostAllocation() const { return externalHostAllocation; }
 
+    void pushTempTimestampNode(TagNodeBase *node, uint64_t value);
+    void releaseNotUsedTempTimestampNodes(bool forceReturn);
+
   protected:
     NEO::MemoryManager &memoryManager;
     NEO::TagNodeBase *deviceCounterNode = nullptr;
     NEO::TagNodeBase *hostCounterNode = nullptr;
     NEO::GraphicsAllocation *externalHostAllocation = nullptr;
+    std::vector<std::pair<NEO::TagNodeBase *, uint64_t>> tempTimestampNodes;
+
+    std::mutex mutex;
+
     uint64_t counterValue = 0;
     uint64_t lastWaitedCounterValue = 0;
 

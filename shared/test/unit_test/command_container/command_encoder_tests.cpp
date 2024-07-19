@@ -74,6 +74,72 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingStandaloneInO
     EXPECT_EQ(0u, inOrderExecInfo->getCounterValue());
 }
 
+HWTEST_F(CommandEncoderTests, givenTsNodesWhenStoringOnTempListThenHandleOwnershipCorrectly) {
+    class MyMockInOrderExecInfo : public NEO::InOrderExecInfo {
+      public:
+        using InOrderExecInfo::InOrderExecInfo;
+        using InOrderExecInfo::lastWaitedCounterValue;
+        using InOrderExecInfo::tempTimestampNodes;
+    };
+
+    MockDevice mockDevice;
+
+    using AllocatorT = MockTagAllocator<NEO::TimestampPackets<uint64_t, 1>>;
+
+    AllocatorT tsAllocator(0, mockDevice.getMemoryManager());
+
+    auto &memoryManager = *mockDevice.getMemoryManager();
+    auto node0 = static_cast<AllocatorT::NodeType *>(tsAllocator.getTag());
+    auto node1 = static_cast<AllocatorT::NodeType *>(tsAllocator.getTag());
+
+    EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node0));
+    EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node1));
+
+    {
+        MyMockInOrderExecInfo inOrderExecInfo(nullptr, nullptr, memoryManager, 1, 0, false, false);
+
+        inOrderExecInfo.lastWaitedCounterValue = 0;
+
+        inOrderExecInfo.pushTempTimestampNode(node0, 1);
+        inOrderExecInfo.pushTempTimestampNode(node1, 2);
+
+        EXPECT_EQ(2u, inOrderExecInfo.tempTimestampNodes.size());
+
+        inOrderExecInfo.releaseNotUsedTempTimestampNodes(false);
+        EXPECT_EQ(2u, inOrderExecInfo.tempTimestampNodes.size());
+
+        EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node0));
+        EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node1));
+
+        inOrderExecInfo.lastWaitedCounterValue = 1;
+        inOrderExecInfo.releaseNotUsedTempTimestampNodes(false);
+        EXPECT_EQ(1u, inOrderExecInfo.tempTimestampNodes.size());
+        EXPECT_EQ(node1, inOrderExecInfo.tempTimestampNodes[0].first);
+
+        EXPECT_TRUE(tsAllocator.freeTags.peekContains(*node0));
+        EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node1));
+
+        inOrderExecInfo.lastWaitedCounterValue = 2;
+        inOrderExecInfo.releaseNotUsedTempTimestampNodes(false);
+        EXPECT_EQ(0u, inOrderExecInfo.tempTimestampNodes.size());
+        EXPECT_TRUE(tsAllocator.freeTags.peekContains(*node0));
+        EXPECT_TRUE(tsAllocator.freeTags.peekContains(*node1));
+
+        node0 = static_cast<AllocatorT::NodeType *>(tsAllocator.getTag());
+        node1 = static_cast<AllocatorT::NodeType *>(tsAllocator.getTag());
+
+        EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node0));
+        EXPECT_FALSE(tsAllocator.freeTags.peekContains(*node1));
+
+        inOrderExecInfo.pushTempTimestampNode(node0, 3);
+        inOrderExecInfo.pushTempTimestampNode(node1, 4);
+    }
+
+    // forced release on destruction
+    EXPECT_TRUE(tsAllocator.freeTags.peekContains(*node0));
+    EXPECT_TRUE(tsAllocator.freeTags.peekContains(*node1));
+}
+
 HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecInfoThenSetupCorrectly) {
     MockDevice mockDevice;
 

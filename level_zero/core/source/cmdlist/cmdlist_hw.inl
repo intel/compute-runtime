@@ -3968,6 +3968,10 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
                 this->interruptEvents.push_back(signalEvent);
             }
         }
+
+        if (signalEvent->isUsingContextEndOffset() && NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.get() == 1) {
+            signalEvent->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
+        }
     }
 
     return true;

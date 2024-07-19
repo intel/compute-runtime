@@ -46,6 +46,9 @@ InOrderExecInfo::~InOrderExecInfo() {
     if (hostCounterNode) {
         hostCounterNode->returnTag();
     }
+
+    // forced return - All related objects (CmdList and Events) already destroyed
+    releaseNotUsedTempTimestampNodes(true);
 }
 
 InOrderExecInfo::InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::MemoryManager &memoryManager, uint32_t partitionCount, uint32_t rootDeviceIndex,
@@ -100,6 +103,28 @@ NEO::GraphicsAllocation *InOrderExecInfo::getHostCounterAllocation() const {
 
 uint64_t InOrderExecInfo::getBaseHostGpuAddress() const {
     return hostCounterNode->getGpuAddress();
+}
+
+void InOrderExecInfo::pushTempTimestampNode(TagNodeBase *node, uint64_t value) {
+    std::unique_lock<std::mutex> lock(mutex);
+
+    tempTimestampNodes.emplace_back(node, value);
+}
+
+void InOrderExecInfo::releaseNotUsedTempTimestampNodes(bool forceReturn) {
+    std::unique_lock<std::mutex> lock(mutex);
+
+    std::vector<std::pair<TagNodeBase *, uint64_t>> tempVector;
+
+    for (auto &node : tempTimestampNodes) {
+        if (forceReturn || lastWaitedCounterValue >= node.second) {
+            node.first->returnTag();
+        } else {
+            tempVector.push_back(node);
+        }
+    }
+
+    tempTimestampNodes.swap(tempVector);
 }
 
 } // namespace NEO

@@ -9,6 +9,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -51,6 +52,23 @@ NEO::TagAllocatorBase *Device::getDeviceInOrderCounterAllocator() {
 
 NEO::TagAllocatorBase *Device::getHostInOrderCounterAllocator() {
     return getInOrderCounterAllocator<NEO::DeviceAllocNodeType<false>>(hostInOrderCounterAllocator, inOrderAllocatorMutex, *getNEODevice(), getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+}
+
+NEO::TagAllocatorBase *Device::getInOrderTimestampAllocator() {
+    if (!inOrderTimestampAllocator.get()) {
+        std::unique_lock<std::mutex> lock(inOrderAllocatorMutex);
+
+        if (!inOrderTimestampAllocator.get()) {
+            RootDeviceIndicesContainer rootDeviceIndices = {getNEODevice()->getRootDeviceIndex()};
+
+            size_t packetsCountPerElement = getEventMaxPacketCount();
+            size_t alignment = getGfxCoreHelper().getTimestampPacketAllocatorAlignment();
+
+            inOrderTimestampAllocator = getL0GfxCoreHelper().getInOrderTimestampAllocator(rootDeviceIndices, getNEODevice()->getMemoryManager(), 64, packetsCountPerElement, alignment, getNEODevice()->getDeviceBitfield());
+        }
+    }
+
+    return inOrderTimestampAllocator.get();
 }
 
 uint32_t Device::getNextSyncDispatchQueueId() {

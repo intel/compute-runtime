@@ -290,6 +290,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceSynchronizedDispatchMode, -1, "-1: default,
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSipClass, -1, "-1: default, otherwise based on values from enum class SipClassType (init, builtins, rawBinaryFromFile, hexadecimalHeaderFile)")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceScratchAndMTPBufferSizeMode, -1, "-1: default, 0: Full, 1: Min. BMG+: Reduce required memory for Scrach and MTP buffers on CCS context")
 DECLARE_DEBUG_VARIABLE(int32_t, CFEStackIDControl, -1, "Set Stack ID Control in CFE_STATE on Xe2+, -1 - do not set")
+DECLARE_DEBUG_VARIABLE(int32_t, StandaloneInOrderTimestampAllocationEnabled, -1, "-1: default, 0: disabled, 1: enabled. If enabled, use internal allocations, instead of Event pool for timestamps")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

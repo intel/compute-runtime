@@ -6184,6 +6184,69 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderI
     EXPECT_EQ(5u, semaphoreCmd.getSemaphoreDataDword());
 }
 
+struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListTests {
+    void SetUp() override {
+        NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.set(1);
+        InOrderCmdListTests::SetUp();
+    }
+};
+
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDispatchingThenAssignNewNode, IsAtLeastSkl) {
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+
+    auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+    EXPECT_EQ(nullptr, events[0]->inOrderTimestampNode);
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode);
+
+    // keep node0 ownership for testing
+    auto node0 = events[0]->inOrderTimestampNode;
+    events[0]->inOrderTimestampNode = nullptr;
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode);
+    EXPECT_NE(node0, events[0]->inOrderTimestampNode);
+
+    auto node1 = events[0]->inOrderTimestampNode;
+
+    // node1 moved to reusable list
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode);
+    EXPECT_NE(node1->getGpuAddress(), events[0]->inOrderTimestampNode->getGpuAddress());
+
+    auto node2 = events[0]->inOrderTimestampNode;
+
+    auto hostAddress = cmdList->inOrderExecInfo->getBaseHostAddress();
+    *hostAddress = 3;
+
+    // return node1 to pool
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    // node1 reused
+    EXPECT_EQ(node1->getGpuAddress(), events[0]->inOrderTimestampNode->getGpuAddress());
+
+    // reuse node2 - counter already waited
+    *hostAddress = 2;
+
+    cmdList->inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(node2->getGpuAddress(), events[0]->inOrderTimestampNode->getGpuAddress());
+
+    events[0]->unsetInOrderExecInfo();
+    EXPECT_EQ(nullptr, events[0]->inOrderTimestampNode);
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    // mark as not ready, to make sure that destructor will release everything anyway
+    *hostAddress = 0;
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeAndNoopWaitEventsAllowedWhenEventBoundToCmdListThenNoopSpaceForWaitCommands, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;

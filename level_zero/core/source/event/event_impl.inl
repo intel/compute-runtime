@@ -268,6 +268,10 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
     for (auto &csr : csrs) {
         csr->getInternalAllocationStorage()->cleanAllocationList(csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
+
+    if (inOrderExecInfo) {
+        inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
+    }
 }
 
 template <typename TagSizeT>

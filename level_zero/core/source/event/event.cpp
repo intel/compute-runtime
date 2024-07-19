@@ -41,6 +41,10 @@ template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, De
 template Event *Event::create<uint64_t>(const EventDescriptor &, const ze_event_desc_t *, Device *);
 template Event *Event::create<uint32_t>(const EventDescriptor &, const ze_event_desc_t *, Device *);
 
+Event::~Event() {
+    resetInOrderTimestampNode(nullptr);
+}
+
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
     this->context = static_cast<ContextImp *>(context);
 
@@ -494,9 +498,17 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
 }
 
 void Event::unsetInOrderExecInfo() {
+    resetInOrderTimestampNode(nullptr);
     inOrderExecInfo.reset();
     inOrderAllocationOffset = 0;
     inOrderExecSignalValue = 0;
+}
+
+void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode) {
+    if (inOrderTimestampNode) {
+        inOrderExecInfo->pushTempTimestampNode(inOrderTimestampNode, inOrderExecSignalValue);
+    }
+    inOrderTimestampNode = newNode;
 }
 
 } // namespace L0

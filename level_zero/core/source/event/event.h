@@ -78,7 +78,7 @@ struct EventDescriptor {
 };
 
 struct Event : _ze_event_handle_t {
-    virtual ~Event() = default;
+    virtual ~Event();
     virtual ze_result_t destroy();
     virtual ze_result_t hostSignal(bool allowCounterBased) = 0;
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
@@ -292,6 +292,8 @@ struct Event : _ze_event_handle_t {
 
     void setExternalInterruptId(uint32_t interruptId) { externalInterruptId = interruptId; }
 
+    void resetInOrderTimestampNode(NEO::TagNodeBase *newNode);
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
@@ -333,6 +335,7 @@ struct Event : _ze_event_handle_t {
     std::mutex *kernelWithPrintfDeviceMutex = nullptr;
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
     CommandQueue *latestUsedCmdQueue = nullptr;
+    NEO::TagNodeBase *inOrderTimestampNode = nullptr;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;

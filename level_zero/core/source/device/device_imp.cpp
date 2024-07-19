@@ -1501,6 +1501,7 @@ void DeviceImp::releaseResources() {
     cacheReservation.reset();
     deviceInOrderCounterAllocator.reset();
     hostInOrderCounterAllocator.reset();
+    inOrderTimestampAllocator.reset();
 
     if (allocationsForReuse.get()) {
         allocationsForReuse->freeAllGraphicsAllocations(neoDevice);
