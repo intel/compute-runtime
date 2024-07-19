@@ -8,19 +8,7 @@ if(UNIX)
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cache_reservation_impl.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cache_reservation_impl.h
   )
-
-  if(NEO_ENABLE_i915_PRELIM_DETECTION)
-    target_sources(${L0_STATIC_LIB_NAME}
-                   PRIVATE
-                   ${CMAKE_CURRENT_SOURCE_DIR}/cache_reservation_impl_prelim.cpp
-                   ${CMAKE_CURRENT_SOURCE_DIR}/cache_reservation_impl_prelim.h
-    )
-  else()
-    target_sources(${L0_STATIC_LIB_NAME}
-                   PRIVATE
-                   ${CMAKE_CURRENT_SOURCE_DIR}/cache_reservation_impl_upstream.cpp
-                   ${CMAKE_CURRENT_SOURCE_DIR}/cache_reservation_impl_upstream.h
-    )
-  endif()
 endif()
