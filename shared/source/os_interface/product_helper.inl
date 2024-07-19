@@ -377,7 +377,7 @@ bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::blitEnqueueAllowed(bool isWriteToImageFromBuffer) const {
+bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBuffer) const {
     return true;
 }
 

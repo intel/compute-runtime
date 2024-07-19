@@ -52,7 +52,7 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::blitEnqueueAllowed(bool isWriteToImageFromBuffer) const {
+bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBuffer) const {
     return isWriteToImageFromBuffer;
 }
 

@@ -70,7 +70,7 @@ class ProductHelperHw : public ProductHelper {
     bool isStorageInfoAdjustmentRequired() const override;
     bool isBlitterForImagesSupported() const override;
     bool isPageFaultSupported() const override;
-    bool blitEnqueueAllowed(bool isWriteToImageFromBuffer) const override;
+    bool blitEnqueuePreferred(bool isWriteToImageFromBuffer) const override;
     bool isKmdMigrationSupported() const override;
     bool isDisableScratchPagesSupported() const override;
     bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;

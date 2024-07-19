@@ -1658,8 +1658,7 @@ TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue
     CsrSelectionArgs selectionArgs{CL_COMMAND_READ_BUFFER, &multiAlloc, &multiAlloc, 0u, nullptr};
 
     queue.isCopyOnly = false;
-    EXPECT_EQ(queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && context.getDevice(0)->getProductHelper().blitEnqueueAllowed(false),
-              queue.blitEnqueueAllowed(selectionArgs));
+    EXPECT_EQ(queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled(), queue.blitEnqueueAllowed(selectionArgs));
 
     queue.isCopyOnly = true;
     EXPECT_TRUE(queue.blitEnqueueAllowed(selectionArgs));
@@ -1685,7 +1684,7 @@ TEST(CommandQueue, givenSimpleClCommandWhenCallingBlitEnqueueAllowedThenReturnCo
                                     CL_COMMAND_SVM_MEMCPY}) {
         CsrSelectionArgs args{cmdType, &multiAlloc, &multiAlloc, 0u, nullptr};
 
-        bool expectedValue = queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && context.getDevice(0)->getProductHelper().blitEnqueueAllowed(false);
+        bool expectedValue = queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled();
         if (cmdType == CL_COMMAND_COPY_IMAGE_TO_BUFFER) {
             expectedValue = false;
         }
@@ -1765,7 +1764,7 @@ TEST(CommandQueue, givenWriteToImageFromBufferWhenCallingBlitEnqueueAllowedThenR
 
     CsrSelectionArgs args{CL_COMMAND_WRITE_IMAGE, nullptr, &dstImage, 0u, region, nullptr, origin};
 
-    bool expectedValue = queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && context.getDevice(0)->getProductHelper().blitEnqueueAllowed(true) && context.getDevice(0)->getProductHelper().isBlitterForImagesSupported();
+    bool expectedValue = queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && context.getDevice(0)->getProductHelper().isBlitterForImagesSupported();
     EXPECT_EQ(queue.blitEnqueueAllowed(args), expectedValue);
 }
 
@@ -3219,4 +3218,107 @@ TEST_F(MultiTileFixture, givenNotDefaultContextWithRootDeviceAndTileIdMaskWhenQu
     ASSERT_NE(nullptr, &queue.getGpgpuEngine());
     EXPECT_EQ(rootCsr->isMultiOsContextCapable(), queue.getGpgpuCommandStreamReceiver().isMultiOsContextCapable());
     EXPECT_EQ(rootCsr, queue.gpgpuEngine->commandStreamReceiver);
+}
+
+HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndBcsEnqueueNotPreferredThenOverrideIfConditionsMet) {
+    auto ccsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&queue->getGpgpuCommandStreamReceiver());
+    auto bcsCsr = queue->getBcsCommandStreamReceiver(*queue->bcsQueueEngineType);
+
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    CsrSelectionArgs args{CL_COMMAND_SVM_MEMCPY, &srcMemObj, &dstMemObj, 0u, nullptr};
+    args.direction = TransferDirection::hostToLocal;
+    cl_command_queue_properties queueProperties[5] = {};
+
+    struct {
+        bool isOOQ;
+        bool isIdle;
+        CommandStreamReceiver *csr;
+    } queueState[4]{
+        {false, false, ccsCsr}, // IOQ -> use CCS
+        {false, true, ccsCsr},  // IOQ -> use CCS
+        {true, false, bcsCsr},  // OOQ & CCS busy -> BCS
+        {true, true, ccsCsr}    // OOQ & CCS idle -> CCS
+    };
+
+    for (auto &state : queueState) {
+        auto queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);
+        if (state.isOOQ) {
+            queue->setOoqEnabled();
+        }
+
+        *ccsCsr->tagAddress = 0u;
+        ccsCsr->taskCount = 1u;
+        if (state.isIdle) {
+            ccsCsr->taskCount = 0u;
+        }
+
+        if (device->getProductHelper().blitEnqueuePreferred(false)) {
+            // if BCS is preferred, it will be always selected
+            EXPECT_EQ(bcsCsr, &queue->selectCsrForBuiltinOperation(args));
+        } else {
+            EXPECT_EQ(state.csr, &queue->selectCsrForBuiltinOperation(args));
+        }
+    }
+}
+
+HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenDebugFlagSetThenBcsAlwaysPreferred) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    CsrSelectionArgs args{CL_COMMAND_SVM_MEMCPY, &srcMemObj, &dstMemObj, 0u, nullptr};
+    args.direction = TransferDirection::hostToLocal;
+
+    cl_command_queue_properties queueProperties[5] = {};
+    auto queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);
+
+    auto bcsCsr = queue->getBcsCommandStreamReceiver(*queue->bcsQueueEngineType);
+    EXPECT_EQ(bcsCsr, &queue->selectCsrForBuiltinOperation(args));
+}
+
+HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenWddmOnLinuxThenBcsAlwaysPreferred) {
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    CsrSelectionArgs args{CL_COMMAND_SVM_MEMCPY, &srcMemObj, &dstMemObj, 0u, nullptr};
+
+    cl_command_queue_properties queueProperties[5] = {};
+    auto queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);
+
+    reinterpret_cast<MockRootDeviceEnvironment *>(&device->getRootDeviceEnvironmentRef())->isWddmOnLinuxEnable = true;
+
+    auto bcsCsr = queue->getBcsCommandStreamReceiver(*queue->bcsQueueEngineType);
+    EXPECT_EQ(bcsCsr, &queue->selectCsrForBuiltinOperation(args));
+}
+
+HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenImageFromBufferThenBcsAlwaysPreferred) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {1, 1, 1};
+    MockImageBase dstImage{};
+    dstImage.associatedMemObject = buffer.get();
+
+    cl_command_queue_properties queueProperties[5] = {};
+    auto queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);
+
+    CsrSelectionArgs args{CL_COMMAND_WRITE_IMAGE, nullptr, &dstImage, 0u, region, nullptr, origin};
+    EXPECT_TRUE(args.dstResource.image && args.dstResource.image->isImageFromBuffer());
+
+    auto ccsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&queue->getGpgpuCommandStreamReceiver());
+    auto bcsCsr = queue->getBcsCommandStreamReceiver(*queue->bcsQueueEngineType);
+    if (device->getProductHelper().blitEnqueuePreferred(true)) {
+        EXPECT_EQ(bcsCsr, &queue->selectCsrForBuiltinOperation(args));
+    } else {
+        EXPECT_EQ(ccsCsr, &queue->selectCsrForBuiltinOperation(args));
+    }
 }

@@ -166,7 +166,7 @@ class ProductHelper {
     virtual uint32_t getL1CachePolicy(bool isDebuggerActive) const = 0;
     virtual bool isEvictionIfNecessaryFlagSupported() const = 0;
     virtual void adjustNumberOfCcs(HardwareInfo &hwInfo) const = 0;
-    virtual bool blitEnqueueAllowed(bool isWriteToImageFromBuffer) const = 0;
+    virtual bool blitEnqueuePreferred(bool isWriteToImageFromBuffer) const = 0;
     virtual bool isPrefetcherDisablingInDirectSubmissionRequired() const = 0;
     virtual bool isStatefulAddressingModeSupported() const = 0;
     virtual bool isPlatformQuerySupported() const = 0;

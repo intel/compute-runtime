@@ -153,9 +153,9 @@ LNLTEST_F(LnlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideC
     }
 }
 
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckBlitEnqueueAllowedThenReturnCorrectValue) {
-    EXPECT_TRUE(productHelper->blitEnqueueAllowed(true));
-    EXPECT_FALSE(productHelper->blitEnqueueAllowed(false));
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckBlitEnqueuePreferredThenReturnCorrectValue) {
+    EXPECT_TRUE(productHelper->blitEnqueuePreferred(true));
+    EXPECT_FALSE(productHelper->blitEnqueuePreferred(false));
 }
 
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmAllocationReuseSupportedThenCorrectValueIsReturned) {

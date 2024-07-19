@@ -536,6 +536,10 @@ class CommandStreamReceiver {
     uint32_t getRequiredScratchSlot1Size() { return requiredScratchSlot1Size; }
     virtual bool submitDependencyUpdate(TagNodeBase *tag) = 0;
 
+    bool isBusy() {
+        return !testTaskCountReady(getTagAddress(), this->taskCount);
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

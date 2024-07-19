@@ -302,8 +302,12 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
     case TransferDirection::hostToHost:
     case TransferDirection::hostToLocal:
     case TransferDirection::localToHost: {
-        preferBcs = true;
-
+        auto isWriteToImageFromBuffer = args.dstResource.image && args.dstResource.image->isImageFromBuffer();
+        auto &productHelper = device->getProductHelper();
+        preferBcs = device->getRootDeviceEnvironment().isWddmOnLinux() || productHelper.blitEnqueuePreferred(isWriteToImageFromBuffer);
+        if (debugManager.flags.EnableBlitterForEnqueueOperations.get() == 1) {
+            preferBcs = true;
+        }
         auto preferredBCSType = true;
 
         if (debugManager.flags.AssignBCSAtEnqueue.get() != -1) {
@@ -321,6 +325,11 @@ CommandStreamReceiver &CommandQueue::selectCsrForBuiltinOperation(const CsrSelec
                 preferredBcsEngineType = EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(),
                                                                          device->getSelectorCopyEngine(), false);
             }
+        }
+
+        if (!preferBcs && isOOQEnabled() && getGpgpuCommandStreamReceiver().isBusy()) {
+            // If CCS is preferred but it's OOQ and compute engine is busy, select BCS instead
+            preferBcs = true;
         }
         break;
     }
@@ -1093,8 +1102,7 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(const CsrSelectionArgs &args) const {
-    auto isWriteToImageFromBuffer = args.dstResource.image && args.dstResource.image->isImageFromBuffer();
-    bool blitEnqueueAllowed = ((device->getRootDeviceEnvironment().isWddmOnLinux() || device->getRootDeviceEnvironment().getProductHelper().blitEnqueueAllowed(isWriteToImageFromBuffer)) && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) || this->isCopyOnly;
+    bool blitEnqueueAllowed = getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() || this->isCopyOnly;
     if (debugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
         blitEnqueueAllowed = debugManager.flags.EnableBlitterForEnqueueOperations.get();
     }
@@ -1609,6 +1617,13 @@ bool CommandQueue::isValidForStagingBufferCopy(Device &device, void *dstPtr, con
     context->tryGetExistingMapAllocation(srcPtr, size, allocation);
     if (allocation != nullptr) {
         // Direct transfer from mapped allocation is faster than staging buffer
+        return false;
+    }
+    auto rootDeviceIndex = device.getRootDeviceIndex();
+    auto isLocalMem = device.getMemoryManager()->isLocalMemorySupported(rootDeviceIndex);
+    if (isOOQEnabled() && getGpgpuCommandStreamReceiver().isBusy() && !isLocalMem) {
+        // It's not beneficial to make copy through staging buffers if it's OOQ,
+        // compute engine is busy and device is iGPU.
         return false;
     }
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, nullptr};

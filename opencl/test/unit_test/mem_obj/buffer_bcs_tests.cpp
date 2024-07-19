@@ -173,7 +173,7 @@ HWTEST_F(NoBcsBufferTests, givenProductWithNoFullyBlitterSupportWhenCreatingBuff
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIsCalledThenUseBcsCsr) {
-    if (!device->getRootDeviceEnvironment().getProductHelper().blitEnqueueAllowed(false)) {
+    if (!device->getRootDeviceEnvironment().getProductHelper().blitEnqueuePreferred(false)) {
         GTEST_SKIP();
     }
 

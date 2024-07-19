@@ -192,8 +192,8 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGettingEvictIfNecessary
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckBlitEnqueueAllowedThenReturnFalse, IsXeLpg) {
-    EXPECT_FALSE(productHelper->blitEnqueueAllowed(false));
+HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckBlitEnqueuePreferredThenReturnFalse, IsXeLpg) {
+    EXPECT_FALSE(productHelper->blitEnqueuePreferred(false));
 }
 
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallGetInternalHeapsPreallocatedThenReturnCorrectValue, IsXeLpg) {

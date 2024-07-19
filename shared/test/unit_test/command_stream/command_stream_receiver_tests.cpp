@@ -782,6 +782,19 @@ TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmittingBatchBufferAndFlushF
     executionEnvironment.memoryManager->freeGraphicsMemoryImpl(commandBuffer);
 }
 
+TEST(CommandStreamReceiverSimpleTest, givenCsrWhenTaskCountGreaterThanTagAddressThenIsBusyReturnsTrue) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    csr.taskCount = 0u;
+    *csr.tagAddress = 0u;
+    EXPECT_FALSE(csr.isBusy());
+    csr.taskCount = 1u;
+    EXPECT_TRUE(csr.isBusy());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenUpdateTaskCountFromWaitWhenSubmitiingBatchBufferThenTaskCountIsIncrementedAndLatestsValuesSetCorrectly) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UpdateTaskCountFromWait.set(3);

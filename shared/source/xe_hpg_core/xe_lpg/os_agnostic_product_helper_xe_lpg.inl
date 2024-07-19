@@ -44,7 +44,7 @@ bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::blitEnqueueAllowed(bool isWriteToImageFromBuffer) const {
+bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBuffer) const {
     return false;
 }
 
