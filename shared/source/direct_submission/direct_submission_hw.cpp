@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ DirectSubmissionInputParams::DirectSubmissionInputParams(const CommandStreamRece
     globalFenceAllocation = commandStreamReceiver.getGlobalFenceAllocation();
     workPartitionAllocation = commandStreamReceiver.getWorkPartitionAllocation();
     completionFenceAllocation = commandStreamReceiver.getTagAllocation();
+    initialCompletionFenceValue = commandStreamReceiver.peekLatestSentTaskCount();
 }
 
 } // namespace NEO

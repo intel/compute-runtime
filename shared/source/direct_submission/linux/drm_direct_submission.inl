@@ -28,6 +28,7 @@ template <typename GfxFamily, typename Dispatcher>
 DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubmissionInputParams &inputParams)
     : DirectSubmissionHw<GfxFamily, Dispatcher>(inputParams) {
 
+    this->completionFenceValue = inputParams.initialCompletionFenceValue;
     if (debugManager.flags.OverrideUserFenceStartValue.get() != -1) {
         this->completionFenceValue = static_cast<decltype(completionFenceValue)>(debugManager.flags.OverrideUserFenceStartValue.get());
     }

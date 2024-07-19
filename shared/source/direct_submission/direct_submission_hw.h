@@ -68,6 +68,7 @@ struct DirectSubmissionInputParams : NonCopyableClass {
     const GraphicsAllocation *globalFenceAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
     GraphicsAllocation *completionFenceAllocation = nullptr;
+    TaskCountType initialCompletionFenceValue = 0;
     const uint32_t rootDeviceIndex;
 };
 

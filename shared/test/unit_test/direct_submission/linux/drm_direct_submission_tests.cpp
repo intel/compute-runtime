@@ -204,6 +204,24 @@ HWTEST_F(DrmDirectSubmissionTest, givenDebugFlagSetWhenInitializingThenOverrideF
     EXPECT_EQ(fenceStartValue, directSubmission.completionFenceValue);
 }
 
+HWTEST_F(DrmDirectSubmissionTest, givenLatestSentTaskCountWhenInitializingThenSetStartValue) {
+    DebugManagerStateRestore restorer;
+
+    TaskCountType fenceStartValue = 1234;
+
+    debugManager.flags.EnableDrmCompletionFence.set(1);
+    auto &commandStreamReceiver = device->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.latestSentTaskCount = fenceStartValue;
+
+    auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
+
+    ASSERT_TRUE(drm->completionFenceSupport());
+
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(commandStreamReceiver);
+    EXPECT_EQ(fenceStartValue, directSubmission.completionFenceValue);
+}
+
 HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenGettingCompletionFencePointerThenNullptrIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDrmCompletionFence.set(0);
