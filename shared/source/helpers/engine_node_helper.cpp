@@ -256,12 +256,21 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
                                                : aub_stream::ENGINE_BCS4;
     const aub_stream::EngineType engine2 = aub_stream::ENGINE_BCS2;
 
-    if (isBcsEnabled(hwInfo, engine1) && isBcsEnabled(hwInfo, engine2)) {
+    auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(hwInfo);
+
+    if (isBcsEnabled(hwInfo, engine1) && engine1 != hpEngine &&
+        isBcsEnabled(hwInfo, engine2) && engine2 != hpEngine) {
         // both BCS enabled, round robin
         return selectorCopyEngine.fetch_xor(1u) ? engine1 : engine2;
     } else {
         // one BCS enabled
-        return isBcsEnabled(hwInfo, engine1) ? engine1 : engine2;
+        if (isBcsEnabled(hwInfo, engine1) && (engine1 != hpEngine)) {
+            return engine1;
+        } else if (isBcsEnabled(hwInfo, engine2) && (engine2 != hpEngine)) {
+            return engine2;
+        } else {
+            return productHelper.getDefaultCopyEngine();
+        }
     }
 }
 aub_stream::EngineType mapCcsIndexToEngineType(uint32_t index) {

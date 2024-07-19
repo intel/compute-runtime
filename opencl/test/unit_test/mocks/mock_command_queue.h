@@ -45,6 +45,7 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::migrateMultiGraphicsAllocationsIfRequired;
     using CommandQueue::obtainNewTimestampPacketNodes;
     using CommandQueue::overrideEngine;
+    using CommandQueue::priority;
     using CommandQueue::queueCapabilities;
     using CommandQueue::queueFamilyIndex;
     using CommandQueue::queueFamilySelected;
@@ -69,7 +70,7 @@ class MockCommandQueue : public CommandQueue {
 
     size_t countBcsEngines() const {
         return std::count_if(bcsEngines.begin(), bcsEngines.end(), [](const EngineControl *engine) {
-            return engine != nullptr;
+            return engine != nullptr && engine->getEngineUsage() == EngineUsage::regular;
         });
     }
 

@@ -749,6 +749,17 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getContextGroupContextsCount() const {
 }
 
 template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getContextGroupHpContextsCount(EngineGroupType type) const {
+    return std::min(getContextGroupContextsCount() / 2, 4u);
+}
+
+template <typename GfxFamily>
+aub_stream::EngineType GfxCoreHelperHw<GfxFamily>::getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const {
+
+    return aub_stream::EngineType::NUM_ENGINES;
+}
+
+template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::is48ResourceNeededForCmdBuffer() const {
     return true;
 }

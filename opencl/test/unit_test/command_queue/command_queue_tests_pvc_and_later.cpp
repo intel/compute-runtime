@@ -894,6 +894,119 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
     }
 }
 
+HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenHighPriorityQueueAndNoHpCopyEngineWhenSelectingCsrForNonLocalToLocalOperationThenRegularBcsIsUsed, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    builtinOpParams.srcMemObj = &srcMemObj;
+    builtinOpParams.dstMemObj = &dstMemObj;
+    srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+    dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+    CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+
+    device->getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.ftrBcsInfo = maxNBitValue(5);
+
+    const auto &productHelper = device->getRootDeviceEnvironment().getProductHelper();
+    auto isBCS0Enabled = (aub_stream::ENGINE_BCS == productHelper.getDefaultCopyEngine());
+    {
+        auto queue = isBCS0Enabled ? createQueueWithEngines({aub_stream::ENGINE_BCS,
+                                                             aub_stream::ENGINE_BCS1,
+                                                             aub_stream::ENGINE_BCS2,
+                                                             aub_stream::ENGINE_BCS3,
+                                                             aub_stream::ENGINE_BCS4})
+                                   : createQueueWithEngines({aub_stream::ENGINE_BCS1,
+                                                             aub_stream::ENGINE_BCS2,
+                                                             aub_stream::ENGINE_BCS3,
+                                                             aub_stream::ENGINE_BCS4});
+        queue->bcsInitialized = false;
+        queue->priority = QueuePriority::high;
+
+        const auto &gfxCoreHelper = *device->getRootDeviceEnvironment().gfxCoreHelper.get();
+        auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(*device->getRootDeviceEnvironment().getMutableHardwareInfo());
+        EXPECT_EQ(hpEngine, aub_stream::EngineType::NUM_ENGINES);
+
+        const auto nextCopyEngine = isBCS0Enabled ? aub_stream::ENGINE_BCS1 : aub_stream::ENGINE_BCS4;
+        auto bcs2 = &queue->selectCsrForBuiltinOperation(args);
+        auto bcsNext = &queue->selectCsrForBuiltinOperation(args);
+
+        EXPECT_FALSE(bcs2->getOsContext().isHighPriority());
+        EXPECT_FALSE(bcs2->getOsContext().isLowPriority());
+        EXPECT_FALSE(bcsNext->getOsContext().isHighPriority());
+        EXPECT_FALSE(bcsNext->getOsContext().isLowPriority());
+
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS2), bcs2);
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(nextCopyEngine), bcsNext);
+        EXPECT_EQ(bcs2, &queue->selectCsrForBuiltinOperation(args));
+        EXPECT_EQ(bcsNext, &queue->selectCsrForBuiltinOperation(args));
+    }
+}
+
+HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenContextGroupAndHpQueueWhenSelectingCsrThenHpBcsCsrIsReturned, IsAtLeastXe2HpgCore) {
+    context.reset(nullptr);
+    clDevice.reset(nullptr);
+
+    DebugManagerStateRestore restore{};
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.ContextGroupSize.set(8);
+
+    HardwareInfo hwInfo = *::defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(3);
+
+    device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
+    clDevice = std::make_unique<MockClDevice>(device);
+    context = std::make_unique<MockContext>(clDevice.get());
+
+    const auto &gfxCoreHelper = *device->getRootDeviceEnvironment().gfxCoreHelper.get();
+    auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(hwInfo);
+    if (hpEngine == aub_stream::EngineType::NUM_ENGINES) {
+        GTEST_SKIP();
+    }
+
+    BuiltinOpParams builtinOpParams{};
+    MockGraphicsAllocation srcGraphicsAllocation{};
+    MockGraphicsAllocation dstGraphicsAllocation{};
+    MockBuffer srcMemObj{srcGraphicsAllocation};
+    MockBuffer dstMemObj{dstGraphicsAllocation};
+    builtinOpParams.srcMemObj = &srcMemObj;
+    builtinOpParams.dstMemObj = &dstMemObj;
+    srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
+    dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
+    CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
+
+    {
+        auto queue = createQueue(nullptr);
+
+        queue->bcsInitialized = false;
+        queue->priority = QueuePriority::high;
+
+        auto &hpCsr1 = queue->selectCsrForBuiltinOperation(args);
+
+        EXPECT_EQ(queue->getBcsCommandStreamReceiver(hpEngine), &hpCsr1);
+
+        EXPECT_TRUE(hpCsr1.getOsContext().getIsPrimaryEngine());
+        EXPECT_TRUE(hpCsr1.getOsContext().isHighPriority());
+
+        auto queue2 = createQueue(nullptr);
+
+        queue2->bcsInitialized = false;
+        queue2->priority = QueuePriority::high;
+
+        auto &hpCsr2 = queue2->selectCsrForBuiltinOperation(args);
+
+        EXPECT_FALSE(hpCsr2.getOsContext().getIsPrimaryEngine());
+        EXPECT_TRUE(hpCsr2.getOsContext().isHighPriority());
+
+        ASSERT_NE(nullptr, hpCsr2.getOsContext().getPrimaryContext());
+        EXPECT_EQ(&hpCsr1.getOsContext(), hpCsr2.getOsContext().getPrimaryContext());
+    }
+}
+
 HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDRangeThenProgramBarrierBeforeGlobalAllocation, IsPVC) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
