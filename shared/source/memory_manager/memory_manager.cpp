@@ -601,7 +601,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::buffer:
     case AllocationType::svmGpu:
     case AllocationType::image:
-        if (false == allocationData.flags.uncacheable && useLocalPreferredForCacheableBuffers) {
+        if (false == allocationData.flags.uncacheable &&
+            useLocalPreferredForCacheableBuffers &&
+            false == allocationData.flags.isUSMDeviceMemory) {
             if (!allocationData.flags.preferCompressed) {
                 allocationData.storageInfo.localOnlyRequired = false;
             }

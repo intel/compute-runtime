@@ -76,6 +76,17 @@ HWTEST_F(MemoryManagerGetAlloctionDataTests, givenCommandBufferAllocationTypeWhe
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
+HWTEST_F(MemoryManagerGetAlloctionDataTests, givenUsmDeviceAllocationWhenGetAllocationDataIsCalledThenLocalOnlyRequiredIsSet) {
+    AllocationData allocData;
+    AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::buffer, false, mockDeviceBitfield);
+    properties.flags.isUSMDeviceAllocation = true;
+
+    MockMemoryManager mockMemoryManager;
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+
+    EXPECT_TRUE(allocData.storageInfo.localOnlyRequired);
+}
+
 TEST_F(MemoryManagerGetAlloctionDataTests, givenAllocateMemoryFlagTrueWhenHostPtrIsNotNullThenAllocationDataHasHostPtrNulled) {
     AllocationData allocData;
     char memory = 0;
