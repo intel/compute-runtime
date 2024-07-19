@@ -12,8 +12,6 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/event/event.h"
-#include "opencl/source/event/event_builder.h"
 
 #include <optional>
 
@@ -183,15 +181,7 @@ class MockCommandQueue : public CommandQueue {
 
     cl_int enqueueReadBuffer(Buffer *buffer, cl_bool blockingRead, size_t offset, size_t size, void *ptr,
                              GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
-                             const cl_event *eventWaitList, cl_event *event) override {
-        if (event != nullptr) {
-            EventBuilder eventBuilder;
-            eventBuilder.create<Event>(this, CL_COMMAND_READ_BUFFER, CompletionStamp::notReady, 0);
-            *event = eventBuilder.getEvent();
-        }
-
-        return CL_SUCCESS;
-    }
+                             const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
 
     cl_int enqueueReadImage(Image *srcImage, cl_bool blockingRead, const size_t *origin, const size_t *region,
                             size_t rowPitch, size_t slicePitch, void *ptr,

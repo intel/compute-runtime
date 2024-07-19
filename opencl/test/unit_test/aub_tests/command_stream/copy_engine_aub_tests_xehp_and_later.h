@@ -178,7 +178,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenNotCompressedBuffer
     if (!compressionSupported()) {
         GTEST_SKIP();
     }
-    debugManager.flags.OverrideBufferSuitableForRenderCompression.set(true);
+
     auto srcNotCompressedBuffer = createBuffer(false, testLocalMemory, compressiblePattern.get());
     auto dstNotCompressedBuffer = createBuffer(false, testLocalMemory, nullptr);
     auto dstCompressedBuffer = createBuffer(true, testLocalMemory, nullptr);
@@ -219,7 +219,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenHostPtrWhenBlitComm
     if (!compressionSupported()) {
         GTEST_SKIP();
     }
-    debugManager.flags.OverrideBufferSuitableForRenderCompression.set(true);
+
     auto dstCompressedBuffer = createBuffer(true, testLocalMemory, nullptr);
 
     // HostPtr to Buffer - System -> compressed HBM
@@ -248,7 +248,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenDstHostPtrWhenBlitC
     if (!compressionSupported()) {
         GTEST_SKIP();
     }
-    debugManager.flags.OverrideBufferSuitableForRenderCompression.set(true);
+
     auto srcCompressedBuffer = createBuffer(true, testLocalMemory, nullptr);
     auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           *bcsCsr, srcCompressedBuffer->getGraphicsAllocation(rootDeviceIndex),
@@ -372,7 +372,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenSrcCompressedBuffer
     if (!compressionSupported()) {
         GTEST_SKIP();
     }
-    debugManager.flags.OverrideBufferSuitableForRenderCompression.set(true);
+
     auto srcBuffer = createBuffer(true, testLocalMemory, nullptr);
     auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           *bcsCsr, srcBuffer->getGraphicsAllocation(rootDeviceIndex),
@@ -407,7 +407,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCompressedBufferWhe
         // no support for scenarios where stateless is mixed with blitter compression
         GTEST_SKIP();
     }
-    debugManager.flags.OverrideBufferSuitableForRenderCompression.set(true);
+
     auto buffer = createBuffer(true, testLocalMemory, compressiblePattern.get());
 
     {

@@ -145,7 +145,7 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
         return true;
     }
 
-    return false;
+    return properties.flags.compressedHint;
 }
 
 bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const Context &context) {

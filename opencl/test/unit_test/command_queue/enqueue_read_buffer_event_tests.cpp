@@ -101,23 +101,8 @@ TEST_F(EnqueueReadBuffer, WhenReadingBufferThenEventReturnedShouldBeMaxOfInputEv
 
     delete pEvent;
 }
-struct EnqueueReadBufferOnCpuTest : public EnqueueReadBuffer {
-    void SetUp() override {
-        EnqueueReadBuffer::setUp();
-        auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
-        if (!productHelper.isZeroCopyCpuAccessPreferred()) {
-            // These tests verify cpu transfer logic
-            GTEST_SKIP();
-        }
-    }
-
-    void TearDown() override {
-        EnqueueReadBuffer::tearDown();
-    }
+TEST_F(EnqueueReadBuffer, givenInOrderQueueAndForcedCpuCopyOnReadBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-};
-
-TEST_F(EnqueueReadBufferOnCpuTest, givenInOrderQueueAndForcedCpuCopyOnReadBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     debugManager.flags.DoCpuCopyOnReadBuffer.set(1);
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal = CL_SUCCESS;
@@ -159,7 +144,8 @@ TEST_F(EnqueueReadBufferOnCpuTest, givenInOrderQueueAndForcedCpuCopyOnReadBuffer
     pEvent->release();
 }
 
-TEST_F(EnqueueReadBufferOnCpuTest, givenInOrderQueueAndForcedCpuCopyOnReadBufferAndDstPtrEqualSrcPtrWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueReadBuffer, givenInOrderQueueAndForcedCpuCopyOnReadBufferAndDstPtrEqualSrcPtrWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnReadBuffer.set(1);
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal = CL_SUCCESS;
@@ -192,7 +178,8 @@ TEST_F(EnqueueReadBufferOnCpuTest, givenInOrderQueueAndForcedCpuCopyOnReadBuffer
     pEvent->release();
 }
 
-TEST_F(EnqueueReadBufferOnCpuTest, givenOutOfOrderQueueAndForcedCpuCopyOnReadBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueReadBuffer, givenOutOfOrderQueueAndForcedCpuCopyOnReadBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnReadBuffer.set(1);
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
@@ -275,7 +262,8 @@ TEST_F(EnqueueReadBuffer, givenInOrderQueueAndForcedCpuCopyOnReadBufferAndEventN
     pEvent->release();
 }
 
-TEST_F(EnqueueReadBufferOnCpuTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueReadBuffer, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
     cl_int retVal = CL_SUCCESS;
     uint32_t taskLevelCmdQ = 17;
@@ -315,7 +303,8 @@ TEST_F(EnqueueReadBufferOnCpuTest, givenInOrderQueueAndDisabledSupportCpuCopiesA
 
     pEvent->release();
 }
-TEST_F(EnqueueReadBufferOnCpuTest, givenOutOfOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueReadBuffer, givenOutOfOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnReadBuffer.set(0);
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     cl_int retVal = CL_SUCCESS;

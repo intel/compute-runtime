@@ -13,7 +13,6 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -63,6 +62,7 @@ std::tuple<uint64_t, size_t, size_t, int, bool, bool> inputs[] = {std::make_tupl
                                                                   std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), cacheLinedAlignedSize, MemoryConstants::preferredAlignment, cacheLinedAlignedSize, true, false),
                                                                   std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), cacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, cacheLinedMisAlignedSize, false, false),
                                                                   std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), pageAlignSize, MemoryConstants::preferredAlignment, pageAlignSize, true, false),
+                                                                  std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), cacheLinedMisAlignedSize, MemoryConstants::cacheLineSize, cacheLinedAlignedSize, true, false),
                                                                   std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_COPY_HOST_PTR), cacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, cacheLinedMisAlignedSize, true, true),
                                                                   std::make_tuple(static_cast<cl_mem_flags>(CL_MEM_COPY_HOST_PTR), cacheLinedMisAlignedSize, MemoryConstants::preferredAlignment, cacheLinedMisAlignedSize, true, false),
                                                                   std::make_tuple(0, 0, 0, cacheLinedMisAlignedSize, true, false),
@@ -74,7 +74,6 @@ TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCop
     // misalign the pointer
     if (misalignPointer && passedPtr) {
         passedPtr += 1;
-        size -= 1;
     }
 
     auto buffer = Buffer::create(
@@ -84,8 +83,6 @@ TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCop
         passedPtr,
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto &productHelper = pClDevice->getProductHelper();
-    shouldBeZeroCopy = shouldBeZeroCopy && productHelper.isZeroCopyCpuAccessPreferred();
     EXPECT_EQ(shouldBeZeroCopy, buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
     if (!shouldBeZeroCopy && flags & CL_MEM_USE_HOST_PTR) {
         EXPECT_NE(buffer->getCpuAddress(), hostPtr);
@@ -151,7 +148,7 @@ TEST(ZeroCopyWithDebugFlag, GivenBufferInputsThatWouldResultInZeroCopyAndDisable
     EXPECT_NE(mapAllocation, bufferAllocation);
 }
 
-TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingAndOldCoherencyModelWhenAskedForBufferCreationFromHostPtrThenNonZeroCopyBufferIsReturned) {
+TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhenAskedForBufferCreationFromHostPtrThenNonZeroCopyBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.Force32bitAddressing.set(true);
     MockContext context;
@@ -161,13 +158,8 @@ TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingAndO
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, size, hostPtr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto &productHelper = context.getDevice(0)->getProductHelper();
-    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
-        EXPECT_FALSE(buffer->isMemObjZeroCopy());
-    } else {
-        EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    }
 
+    EXPECT_TRUE(buffer->isMemObjZeroCopy());
     if constexpr (is64bit) {
         EXPECT_TRUE(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation());
     }

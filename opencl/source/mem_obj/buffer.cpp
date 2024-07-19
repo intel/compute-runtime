@@ -338,14 +338,12 @@ Buffer *Buffer::create(Context *context,
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
         auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
         bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
                                                                          gfxCoreHelper.isBufferSizeSuitableForCompression(size));
-        auto isZeroCopyCpuAccessPreferred = productHelper.isZeroCopyCpuAccessPreferred();
+
         allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled,
-                                                                                          memoryManager->isLocalMemorySupported(rootDeviceIndex),
-                                                                                          isZeroCopyCpuAccessPreferred);
+                                                                                          memoryManager->isLocalMemorySupported(rootDeviceIndex));
 
         if (allocationCpuPtr) {
             forceCopyHostPtr = !useHostPtr && !copyHostPtr;
@@ -373,9 +371,6 @@ Buffer *Buffer::create(Context *context,
                     allocationInfo.zeroCopyAllowed = false;
                     allocationInfo.allocateMemory = true;
                 }
-            } else if (!isZeroCopyCpuAccessPreferred) {
-                allocationInfo.zeroCopyAllowed = false;
-                allocationInfo.allocateMemory = true;
             }
 
             if (debugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
@@ -470,7 +465,7 @@ Buffer *Buffer::create(Context *context,
             return nullptr;
         }
 
-        if (!isSystemMemory || (!isZeroCopyCpuAccessPreferred && !memoryProperties.flags.forceHostMemory)) {
+        if (!isSystemMemory) {
             allocationInfo.zeroCopyAllowed = false;
             if (hostPtr) {
                 if (!allocationInfo.isHostPtrSVM) {
@@ -642,14 +637,13 @@ void Buffer::checkMemory(const MemoryProperties &memoryProperties,
 }
 
 AllocationType Buffer::getGraphicsAllocationTypeAndCompressionPreference(const MemoryProperties &properties,
-                                                                         bool &compressionEnabled, bool isLocalMemoryEnabled,
-                                                                         bool isZeroCopyCpuAccessPreferred) {
+                                                                         bool &compressionEnabled, bool isLocalMemoryEnabled) {
     if (properties.flags.forceHostMemory) {
         compressionEnabled = false;
         return AllocationType::bufferHostMemory;
     }
 
-    if (properties.flags.useHostPtr && (!isLocalMemoryEnabled && isZeroCopyCpuAccessPreferred)) {
+    if (properties.flags.useHostPtr && !isLocalMemoryEnabled) {
         compressionEnabled = false;
         return AllocationType::bufferHostMemory;
     }

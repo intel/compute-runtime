@@ -1032,9 +1032,7 @@ TEST(UnifiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTra
     if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
         GTEST_SKIP();
     }
-    if (mockContext.getDevice(0u)->getProductHelper().isNewCoherencyModelSupported()) {
-        GTEST_SKIP();
-    }
+
     auto status = CL_INVALID_PLATFORM;
     cl_device_id clDevice = mockContext.getDevice(0u);
 

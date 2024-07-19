@@ -1133,6 +1133,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenNonBlockingMapFollowsNdrCa
     mockCsr->overrideDispatchPolicy(DispatchMode::batchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
+    EXPECT_TRUE(this->destBuffer->isMemObjZeroCopy());
     MockKernelWithInternals mockKernel(*pClDevice);
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);

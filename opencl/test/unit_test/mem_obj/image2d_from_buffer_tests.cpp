@@ -327,9 +327,7 @@ TEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBuffe
 
     EXPECT_TRUE(imageFromBuffer->isImageFromBuffer());
     auto graphicsAllocation = imageFromBuffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    auto isHostMemory = AllocationType::bufferHostMemory == graphicsAllocation->getAllocationType();
-    auto isDevMemory = AllocationType::buffer == graphicsAllocation->getAllocationType();
-    EXPECT_TRUE(isHostMemory || isDevMemory);
+    EXPECT_TRUE(AllocationType::bufferHostMemory == graphicsAllocation->getAllocationType());
 
     buffer->release();
     imageDesc.mem_object = memObj;

@@ -470,7 +470,7 @@ TEST_F(ClCreateBufferTests, WhenCreatingBufferWithPropertiesThenPropertiesAreCor
 
 using clCreateBufferTestsWithRestrictions = api_test_using_aligned_memory_manager;
 
-TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsAndOldCoherencyModelWhenMinIsLessThanHostPtrThenUseZeroCopy) {
+TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsWhenMinIsLessThanHostPtrThenUseZeroCopy) {
     std::unique_ptr<unsigned char[]> hostMem(nullptr);
     unsigned char *destMem = nullptr;
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
@@ -495,13 +495,7 @@ TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsAndOld
     EXPECT_NE(nullptr, buffer);
 
     Buffer *bufferObj = NEO::castToObject<Buffer>(buffer);
-
-    auto &productHelper = device->getProductHelper();
-    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
-        EXPECT_FALSE(bufferObj->isMemObjZeroCopy());
-    } else {
-        EXPECT_TRUE(bufferObj->isMemObjZeroCopy());
-    }
+    EXPECT_TRUE(bufferObj->isMemObjZeroCopy());
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);

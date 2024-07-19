@@ -175,7 +175,6 @@ class ProductHelperHw : public ProductHelper {
     std::optional<GfxMemoryAllocationMethod> getPreferredAllocationMethod(AllocationType allocationType) const override;
     bool isCachingOnCpuAvailable() const override;
     bool isNewCoherencyModelSupported() const override;
-    bool isZeroCopyCpuAccessPreferred() const override;
     bool deferMOCSToPatIndex() const override;
     bool supportReadOnlyAllocations() const override;
     const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const override;

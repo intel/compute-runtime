@@ -101,28 +101,8 @@ TEST_F(EnqueueWriteBufferTypeTest, WhenWritingBufferThenReturnedEventShouldBeMax
     delete pEvent;
 }
 
-struct EnqueueWriteBufferOnCpuTypeTest : public EnqueueWriteBufferTypeTest {
-    void SetUp() override {
-        EnqueueWriteBufferTypeTest::SetUp();
-        auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
-        if (!productHelper.isZeroCopyCpuAccessPreferred()) {
-            // These tests verify cpu transfer logic
-            GTEST_SKIP();
-        }
-    }
-
-    void TearDown() override {
-        auto &productHelper = BufferDefaults::context->getDevice(0)->getProductHelper();
-        if (!productHelper.isZeroCopyCpuAccessPreferred()) {
-            // These tests verify cpu transfer logic
-            GTEST_SKIP();
-        }
-        EnqueueWriteBufferTypeTest::TearDown();
-    }
+TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-};
-
-TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWithEventsNotBlockedWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal = CL_SUCCESS;
@@ -164,7 +144,8 @@ TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenInOrderQueueAndForcedCpuCopyOnWrite
     pEvent->release();
 }
 
-TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndEventNotReadyWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndEventNotReadyWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
     cl_int retVal = CL_SUCCESS;
     uint32_t taskLevelCmdQ = 17;
@@ -203,7 +184,8 @@ TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenInOrderQueueAndForcedCpuCopyOnWrite
     pEvent->release();
 }
 
-TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
     cl_int retVal = CL_SUCCESS;
     uint32_t taskLevelCmdQ = 17;
@@ -234,7 +216,8 @@ TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenInOrderQueueAndForcedCpuCopyOnWrite
     pEvent->release();
 }
 
-TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenOutOfOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndForcedCpuCopyOnWriteBufferAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
@@ -276,7 +259,8 @@ TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenOutOfOrderQueueAndForcedCpuCopyOnWr
 
     pEvent->release();
 }
-TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
     cl_int retVal = CL_SUCCESS;
     uint32_t taskLevelCmdQ = 17;
@@ -316,7 +300,8 @@ TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenInOrderQueueAndDisabledSupportCpuCo
 
     pEvent->release();
 }
-TEST_F(EnqueueWriteBufferOnCpuTypeTest, givenOutOfOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(0);
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pClDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     cl_int retVal = CL_SUCCESS;

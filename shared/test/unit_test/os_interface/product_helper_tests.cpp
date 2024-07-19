@@ -953,10 +953,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForDeviceToHostCopySigna
     EXPECT_FALSE(productHelper->isDeviceToHostCopySignalingFenceRequired());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsZeroCopyCpuAccessPreferredCalledThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isZeroCopyCpuAccessPreferred());
-}
-
 HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnNullopt, IsAtMostPVC) {
     std::array<uint64_t, 5> listOfCoherentPatIndexes = {0, 1, 2, 3, 4};
     for (auto patIndex : listOfCoherentPatIndexes) {

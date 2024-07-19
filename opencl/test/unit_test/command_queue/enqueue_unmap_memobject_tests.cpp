@@ -135,6 +135,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenEventIsUpdated) {
     EXPECT_NE(nullptr, eventReturned);
 
     auto eventObject = castToObject<Event>(eventReturned);
+    EXPECT_EQ(0u, eventObject->peekTaskCount());
     EXPECT_TRUE(eventObject->updateStatusAndCheckCompletion());
 
     clReleaseEvent(eventReturned);
@@ -181,20 +182,11 @@ TEST_F(EnqueueUnmapMemObjTest, WhenUnmappingMemoryObjectThenWaitEventIsUpdated) 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, retEvent);
 
+    EXPECT_EQ(CL_COMPLETE, wEvent->peekExecutionStatus());
+
     Event *rEvent = castToObject<Event>(retEvent);
-    auto &productHelper = pCmdQ->getClDevice().getProductHelper();
-    if (!productHelper.isZeroCopyCpuAccessPreferred()) {
-        // In new coherency model wait event is not immediately updated as unmap is sent to GPU
-        // Instead, verify that timestamp packets were correctly assigned from waitEvent to retEvent
-        auto waitNodes = wEvent->getTimestampPacketNodes()->peekNodes();
-        auto &retNodes = rEvent->getTimestampPacketNodes()->peekNodes();
-        EXPECT_EQ(1u, waitNodes.size());
-        EXPECT_EQ(2u, retNodes.size());
-        EXPECT_EQ(waitNodes[0], retNodes[1]);
-    } else {
-        EXPECT_EQ(CL_COMPLETE, wEvent->peekExecutionStatus());
-    }
     EXPECT_EQ(CL_QUEUED, rEvent->peekExecutionStatus());
+
     retVal = clWaitForEvents(1, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -224,20 +216,12 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBuf
         nullptr,
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-    if (buffer->mappingOnCpuAllowed()) {
-        EXPECT_TRUE(graphicsAllocation->isAubWritable(GraphicsAllocation::defaultBank));
-        EXPECT_TRUE(graphicsAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
-    } else {
-        EXPECT_FALSE(graphicsAllocation->isAubWritable(GraphicsAllocation::defaultBank));
-        EXPECT_FALSE(graphicsAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
-    }
+
+    EXPECT_TRUE(graphicsAllocation->isAubWritable(GraphicsAllocation::defaultBank));
+    EXPECT_TRUE(graphicsAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
 }
 
 HWTEST_F(EnqueueUnmapMemObjTest, givenWriteBufferIsServicedOnCPUWhenBufferIsNonAubTbxWriteableThenFlagsChange) {
-    if (pClDevice->getProductHelper().isNewCoherencyModelSupported()) {
-        // This test assumes that write buffer will be serviced on cpu
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore restorer;
     debugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));

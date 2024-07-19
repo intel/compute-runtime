@@ -30,6 +30,7 @@ struct ApiFixture {
 
     void setUp() {
         debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        debugManager.flags.EnableCpuCacheForResources.set(true);
         executionEnvironment = new ClExecutionEnvironment();
         prepareDeviceEnvironments(*executionEnvironment);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
