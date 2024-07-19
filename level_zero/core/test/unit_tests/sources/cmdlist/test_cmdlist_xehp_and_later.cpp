@@ -2062,6 +2062,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           IsAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
+    auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csrImmediate.storeMakeResidentAllocations = true;
     auto &csrStream = csrImmediate.commandStream;
@@ -2077,9 +2078,14 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     auto ssBaseAddress = ssHeap->getHeapGpuBase();
 
     uint64_t dsBaseAddress = 0;
+
     if (dshRequired) {
-        auto dsHeap = commandListImmediate->getCmdContainer().getDynamicStateHeapReserve().indirectHeapReservation;
-        dsBaseAddress = dsHeap->getHeapGpuBase();
+        if (bindlessHeapsHelper) {
+            dsBaseAddress = bindlessHeapsHelper->getGlobalHeapsBase();
+        } else {
+            auto dsHeap = commandListImmediate->getCmdContainer().getDynamicStateHeapReserve().indirectHeapReservation;
+            dsBaseAddress = dsHeap->getHeapGpuBase();
+        }
     }
 
     auto ioHeap = commandListImmediate->getCmdContainer().getIndirectHeap(NEO::HeapType::indirectObject);
@@ -2132,6 +2138,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
         GTEST_SKIP();
     }
 
+    auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csrImmediate.commandStream;
 
@@ -2147,8 +2154,12 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
 
     uint64_t dsBaseAddress = 0;
     if (dshRequired) {
-        auto dsHeap = commandListImmediate->getCmdContainer().getDynamicStateHeapReserve().indirectHeapReservation;
-        dsBaseAddress = dsHeap->getHeapGpuBase();
+        if (bindlessHeapsHelper) {
+            dsBaseAddress = bindlessHeapsHelper->getGlobalHeapsBase();
+        } else {
+            auto dsHeap = commandListImmediate->getCmdContainer().getDynamicStateHeapReserve().indirectHeapReservation;
+            dsBaseAddress = dsHeap->getHeapGpuBase();
+        }
     }
 
     GenCmdList cmdList;
@@ -2285,6 +2296,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           IsAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
+    auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csrImmediate.commandStream;
 
@@ -2303,7 +2315,11 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     uint64_t dsShareBaseAddress = 0;
     if (this->dshRequired) {
         EXPECT_NE(nullptr, dsSharedHeap->getGraphicsAllocation());
-        dsShareBaseAddress = dsSharedHeap->getHeapGpuBase();
+        if (bindlessHeapsHelper) {
+            dsShareBaseAddress = bindlessHeapsHelper->getGlobalHeapsBase();
+        } else {
+            dsShareBaseAddress = dsSharedHeap->getHeapGpuBase();
+        }
     } else {
         EXPECT_EQ(nullptr, dsSharedHeap->getGraphicsAllocation());
     }

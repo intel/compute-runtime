@@ -2339,6 +2339,8 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSur
 }
 
 HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessImplicitArgAndNoBindlessHeapsHelperWhenGetSurfaceStateHeapDataSizeThenReturnSurfaceStateHeapDataSize, MatchAny) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
+
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
 
@@ -2830,6 +2832,8 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfac
 }
 
 HWTEST2_F(SetKernelArg, givenNoGlobalAllocatorAndBindlessKernelWhenSetArgImageThenBindlessOffsetIsNotSetAndSshIsUsed, ImageSupport) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
+
     createKernel();
 
     auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
@@ -3064,6 +3068,8 @@ HWTEST2_F(SetKernelArg, givenNoGlobalBindlessHelperAndImageViewWhenAllocatingBin
 }
 
 HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCalledThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
+    auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+
     Mock<Module> mockModule(this->device, nullptr);
     Mock<KernelImp> mockKernel;
     mockKernel.module = &mockModule;
@@ -3098,10 +3104,21 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCal
     ret = mockKernel.setArgRedescribedImage(0, handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto expectedSsInHeap = ptrOffset(mockKernel.surfaceStateHeapData.get(), mockKernel.kernelImmData->getDescriptor().getBindlessOffsetToSurfaceState().find(0x0)->second * surfaceStateSize);
+    void *expectedSsInHeap = nullptr;
+    if (bindlessHeapsHelper) {
+        expectedSsInHeap = ptrOffset(imageHW->getBindlessSlot()->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage);
+    } else {
+        expectedSsInHeap = ptrOffset(mockKernel.surfaceStateHeapData.get(), mockKernel.kernelImmData->getDescriptor().getBindlessOffsetToSurfaceState().find(0x0)->second * surfaceStateSize);
+    }
+
     EXPECT_EQ(imageHW->passedRedescribedSurfaceStateHeap, expectedSsInHeap);
     EXPECT_EQ(imageHW->passedRedescribedSurfaceStateOffset, 0u);
-    EXPECT_TRUE(mockKernel.usingSurfaceStateHeap[0]);
+
+    if (bindlessHeapsHelper) {
+        EXPECT_TRUE(mockKernel.isBindlessOffsetSet[0]);
+    } else {
+        EXPECT_TRUE(mockKernel.usingSurfaceStateHeap[0]);
+    }
 }
 
 HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgRedescribedImageCalledThenOutOfMemoryErrorReturned, ImageSupport) {

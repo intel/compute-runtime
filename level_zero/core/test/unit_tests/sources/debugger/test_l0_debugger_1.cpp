@@ -215,6 +215,8 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
+    auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+
     Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
@@ -225,7 +227,12 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
 
     commandList->close();
 
-    auto *ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
+    NEO::IndirectHeap *ssh;
+    if (bindlessHeapsHelper) {
+        ssh = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh);
+    } else {
+        ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
+    }
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
     auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
@@ -250,6 +257,8 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
+    auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+
     Mock<::L0::KernelImp> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
@@ -260,7 +269,13 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
 
     commandList->close();
 
-    auto *ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
+    NEO::IndirectHeap *ssh;
+    if (bindlessHeapsHelper) {
+        ssh = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh);
+    } else {
+        ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
+    }
+
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
 
     const auto mocsNoCache = device->getNEODevice()->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
@@ -613,6 +628,8 @@ HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThe
     DebugManagerStateRestore restore;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
+    auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     raii.mockProductHelper->returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
     raii.mockProductHelper->returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
@@ -626,7 +643,13 @@ HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThe
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
     commandList->close();
 
-    auto *ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
+    NEO::IndirectHeap *ssh;
+    if (bindlessHeapsHelper) {
+        ssh = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh);
+    } else {
+        ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
+    }
+
     ASSERT_NE(ssh, nullptr);
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
     ASSERT_NE(debugSurfaceState, nullptr);
@@ -664,6 +687,8 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
     NEO::debugManager.flags.UseImmediateFlushTask.set(0);
     NEO::debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
+    auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
@@ -688,7 +713,13 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
     returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto csrHeap = &commandList->getCsr(false)->getIndirectHeap(NEO::HeapType::surfaceState, 0);
+    NEO::IndirectHeap *csrHeap;
+    if (bindlessHeapsHelper) {
+        csrHeap = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh);
+    } else {
+        csrHeap = &commandList->getCsr(false)->getIndirectHeap(NEO::HeapType::surfaceState, 0);
+    }
+
     ASSERT_NE(nullptr, csrHeap);
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());
@@ -716,6 +747,8 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     NEO::debugManager.flags.UseImmediateFlushTask.set(1);
     NEO::debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
 
+    auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
@@ -737,7 +770,13 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     returnValue = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto csrHeap = &commandList->getCsr(false)->getIndirectHeap(NEO::HeapType::surfaceState, 0);
+    NEO::IndirectHeap *csrHeap;
+    if (bindlessHeapsHelper) {
+        csrHeap = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh);
+    } else {
+        csrHeap = &commandList->getCsr(false)->getIndirectHeap(NEO::HeapType::surfaceState, 0);
+    }
+
     ASSERT_NE(nullptr, csrHeap);
 
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(csrHeap->getCpuBase());

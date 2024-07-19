@@ -1633,6 +1633,8 @@ HWTEST2_F(ImageCreate, GivenNonBindlessImageWhenGettingDeviceOffsetThenErrorIsRe
 }
 
 HWTEST2_F(ImageCreate, GivenNoBindlessHelperAndBindlessImageFlagWhenCreatingImageThenErrorIsReturned, ImageSupport) {
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
+
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;

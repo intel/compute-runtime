@@ -75,7 +75,9 @@ TEST_P(PciBusOrderingTest, givenMultipleDevicesAndZePcieIdOrderingSetThenDevices
     debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     debugManager.flags.EnableChipsetUniqueUUID.set(0);
 
-    auto executionEnvironment = new NEO::ExecutionEnvironment;
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    auto memoryManager = new MockMemoryManagerOsAgnosticContext(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     EXPECT_EQ(numRootDevices, neoDevices.size());
     EXPECT_EQ(numRootDevices, executionEnvironment->rootDeviceEnvironments.size());
@@ -88,7 +90,6 @@ TEST_P(PciBusOrderingTest, givenMultipleDevicesAndZePcieIdOrderingSetThenDevices
             executionEnvironment->rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
         }
     }
-    executionEnvironment->memoryManager.reset(new MockMemoryManagerOsAgnosticContext(*executionEnvironment));
     executionEnvironment->sortNeoDevices();
 
     auto deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);

@@ -516,6 +516,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
 
     static EncodeSurfaceStateArgs savedSurfaceStateArgs{};
     static size_t encodeBufferSurfaceStateCalled{};
@@ -584,6 +585,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
 
     static EncodeSurfaceStateArgs savedSurfaceStateArgs{};
     static size_t encodeBufferSurfaceStateCalled{};
