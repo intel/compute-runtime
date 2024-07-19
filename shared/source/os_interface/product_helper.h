@@ -74,7 +74,7 @@ class ProductHelper {
     static constexpr uint32_t uuidSize = 16u;
     static constexpr uint32_t luidSize = 8u;
     MOCKABLE_VIRTUAL int configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
-    int configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const;
+    int configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const = 0;
     virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
     virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const = 0;

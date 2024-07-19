@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/i915.h"
-#include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -394,7 +393,7 @@ HWTEST2_F(HwConfigLinux, GivenDifferentValuesFromTopologyQueryWhenConfiguringHwI
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal * 2), outHwInfo.gtSystemInfo.MaxSubSlicesSupported);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal * 2), outHwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
     EXPECT_EQ(16u, outHwInfo.gtSystemInfo.MaxEuPerSubSlice);
-    EXPECT_EQ(static_cast<uint32_t>(drm->storedSVal * 4), outHwInfo.gtSystemInfo.MaxSlicesSupported);
+    EXPECT_EQ(static_cast<uint32_t>(drm->storedSVal), outHwInfo.gtSystemInfo.MaxSlicesSupported);
 
     drm->storedSVal = 3;
     drm->storedSSVal = 12;
@@ -435,14 +434,9 @@ HWTEST2_F(HwConfigLinux, givenSliceCountWhenConfigureHwInfoDrmThenProperInitiali
     auto hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     HardwareInfo outHwInfo;
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
-    uint32_t subslicePerSlicePerSliceCount = 2;
     uint32_t sliceCount = 4;
     drm->storedSVal = sliceCount;
-    drm->storedSSVal = sliceCount * subslicePerSlicePerSliceCount;
-
-    hwInfo.gtSystemInfo.MaxSubSlicesSupported = drm->storedSSVal;
-    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = drm->storedSSVal;
+    hwInfo.gtSystemInfo.SliceCount = sliceCount;
 
     int ret = productHelper.configureHwInfoDrm(&hwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);
@@ -455,42 +449,4 @@ HWTEST2_F(HwConfigLinux, givenSliceCountWhenConfigureHwInfoDrmThenProperInitiali
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsPlatformQueryNotSupportedThenReturnFalse, IsAtLeastMtl) {
 
     EXPECT_TRUE(productHelper->isPlatformQuerySupported());
-}
-
-TEST(ConfigureHwInfoDrmTest, givenFlatSubsliceInfoRepresentationWhenConfigureHwInfoDrmThenCorrectTopologyBasedOnMaxSubslicePerSliceCount) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
-    HardwareInfo &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    const auto &gtSystemInfo = hwInfo.gtSystemInfo;
-
-    auto drm = std::make_unique<DrmMockEngine>(rootDeviceEnvironment);
-    drm->querySystemInfo();
-
-    auto systemInfo = drm->getSystemInfo();
-    EXPECT_NE(nullptr, systemInfo);
-
-    drm->storedSSVal = systemInfo->getMaxDualSubSlicesSupported() - 1;
-    drm->storedEUVal = drm->storedSSVal * systemInfo->getMaxEuPerDualSubSlice();
-    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
-    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
-
-    int ret = drm->setupHardwareInfo(&device, false);
-    EXPECT_EQ(ret, 0);
-    systemInfo = drm->getSystemInfo();
-    EXPECT_NE(nullptr, systemInfo);
-
-    rootDeviceEnvironment.osInterface.reset(new OSInterface());
-    auto osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
-    osInterface->setDriverModel(std::move(drm));
-
-    rootDeviceEnvironment.productHelper = std::make_unique<MockProductHelperHw<IGFX_UNKNOWN>>();
-
-    auto &productHelper = rootDeviceEnvironment.getProductHelper();
-    productHelper.configureHwInfoDrm(&hwInfo, &hwInfo, rootDeviceEnvironment);
-
-    EXPECT_EQ(gtSystemInfo.MaxSlicesSupported, systemInfo->getMaxSlicesSupported());
-    EXPECT_EQ(gtSystemInfo.SliceCount, systemInfo->getMaxSlicesSupported());
-    EXPECT_EQ(gtSystemInfo.SubSliceCount, systemInfo->getMaxDualSubSlicesSupported() - 1);
-    EXPECT_EQ(gtSystemInfo.DualSubSliceCount, systemInfo->getMaxDualSubSlicesSupported() - 1);
 }
