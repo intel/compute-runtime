@@ -1418,13 +1418,10 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         if (ioctlHelper->isWaitBeforeBindRequired(bind)) {
             if (drm->useVMBindImmediate()) {
                 lock = drm->lockBindFenceMutex();
-
-                if (!drm->hasPageFaultSupport() || bo->isExplicitResidencyRequired()) {
-                    auto nextExtension = vmBind.extensions;
-                    incrementFenceValue = true;
-                    programUserFence(drm, osContext, bo, vmBindExtUserFence, vmHandleId, nextExtension);
-                    ioctlHelper->setVmBindUserFence(vmBind, vmBindExtUserFence);
-                }
+                auto nextExtension = vmBind.extensions;
+                incrementFenceValue = true;
+                programUserFence(drm, osContext, bo, vmBindExtUserFence, vmHandleId, nextExtension);
+                ioctlHelper->setVmBindUserFence(vmBind, vmBindExtUserFence);
             }
         }
         if (bind) {

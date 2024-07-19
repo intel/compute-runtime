@@ -119,7 +119,7 @@ TEST(DrmVmBindTest, givenPerContextVmsAndBoRequiringExplicitResidencyWhenBinding
     }
 }
 
-TEST(DrmVmBindTest, givenBoNotRequiringExplicitResidencyWhenCallingWaitForBindThenDontWaitOnUserFence) {
+TEST(DrmVmBindTest, whenCallingWaitForBindThenWaitUserFenceIsCalled) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     executionEnvironment->initializeMemoryManager();
@@ -148,11 +148,7 @@ TEST(DrmVmBindTest, givenBoNotRequiringExplicitResidencyWhenCallingWaitForBindTh
 
         drm.waitForBind(vmHandleId);
 
-        if (requireResidency) {
-            EXPECT_TRUE(drm.waitUserFenceCalled);
-        } else {
-            EXPECT_FALSE(drm.waitUserFenceCalled);
-        }
+        EXPECT_TRUE(drm.waitUserFenceCalled);
     }
 }
 
