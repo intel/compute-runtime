@@ -1060,6 +1060,12 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
                 auto deviceMediaProperties = reinterpret_cast<ze_intel_device_media_exp_properties_t *>(extendedProperties);
                 deviceMediaProperties->numDecoderCores = 0;
                 deviceMediaProperties->numEncoderCores = 0;
+            } else if (extendedProperties->stype == ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES) {
+                ze_intel_device_block_array_exp_flags_t supportMatrix{0};
+                supportMatrix |= getProductHelper().supports2DBlockStore() ? ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_STORE : 0;
+                supportMatrix |= getProductHelper().supports2DBlockLoad() ? ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_LOAD : 0;
+                auto blockTransposeProps = reinterpret_cast<ze_intel_device_block_array_exp_properties_t *>(extendedProperties);
+                blockTransposeProps->flags = supportMatrix;
             }
             getAdditionalExtProperties(extendedProperties);
             extendedProperties = static_cast<ze_base_properties_t *>(extendedProperties->pNext);

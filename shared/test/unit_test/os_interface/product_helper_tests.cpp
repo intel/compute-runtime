@@ -1011,3 +1011,13 @@ TEST_F(ProductHelperTest, whenGettingMaxSubSliceSpaceThenValueIsNotSmallerThanMa
     }
     EXPECT_EQ(maxSupportedSubSlices, productHelper->computeMaxNeededSubSliceSpace(hwInfo));
 }
+
+HWTEST_F(ProductHelperTest, givenDefaultProductHelperWhenQuery2DBlockLoadThenReturnFalse) {
+
+    EXPECT_FALSE(productHelper->supports2DBlockLoad());
+}
+
+HWTEST_F(ProductHelperTest, givenDefaultProductHelperWhenQuery2DBlockStoreThenReturnFalse) {
+
+    EXPECT_FALSE(productHelper->supports2DBlockStore());
+}

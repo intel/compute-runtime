@@ -909,4 +909,14 @@ uint32_t ProductHelperHw<gfxProduct>::getCacheLineSize() const {
     return GfxProduct::cacheLineSize;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::supports2DBlockLoad() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::supports2DBlockStore() const {
+    return false;
+}
+
 } // namespace NEO

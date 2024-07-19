@@ -6117,5 +6117,91 @@ TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZeIntelGetDriverVersionStri
     EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeIntelGetDriverVersionString"));
 }
 
+template <bool BlockLoad, bool BlockStore>
+class Mock2DTransposeProductHelper : public MockProductHelperHw<IGFX_UNKNOWN> {
+  public:
+    bool supports2DBlockLoad() const override {
+        return BlockLoad;
+    }
+    bool supports2DBlockStore() const override {
+        return BlockStore;
+    }
+};
+
+template <bool BlockLoad, bool BlockStore>
+class Mock2DTransposeDevice : public MockDeviceImp {
+  public:
+    using mockProductHelperType = Mock2DTransposeProductHelper<BlockLoad, BlockStore>;
+
+    using MockDeviceImp::MockDeviceImp;
+
+    const ProductHelper &getProductHelper() override {
+        return *mockProductHelper;
+    }
+
+  private:
+    std::unique_ptr<mockProductHelperType> mockProductHelper = std::make_unique<mockProductHelperType>();
+};
+
+TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreFalseThenFlagsIndicateSupportsNeither) {
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
+    Mock2DTransposeDevice<false, false> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
+    deviceProps.pNext = &blockArrayProps;
+
+    auto success = L0::Device::fromHandle(static_cast<ze_device_handle_t>(&deviceImp))->getProperties(&deviceProps);
+    ASSERT_EQ(success, ZE_RESULT_SUCCESS);
+
+    ASSERT_FALSE(static_cast<bool>(blockArrayProps.flags & ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_LOAD));
+    ASSERT_FALSE(static_cast<bool>(blockArrayProps.flags & ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_STORE));
+}
+
+TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreFalseThenFlagsIndicateSupportLoad) {
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
+    Mock2DTransposeDevice<true, false> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
+    deviceProps.pNext = &blockArrayProps;
+
+    auto success = L0::Device::fromHandle(static_cast<ze_device_handle_t>(&deviceImp))->getProperties(&deviceProps);
+    ASSERT_EQ(success, ZE_RESULT_SUCCESS);
+
+    ASSERT_TRUE(static_cast<bool>(blockArrayProps.flags & ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_LOAD));
+    ASSERT_FALSE(static_cast<bool>(blockArrayProps.flags & ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_STORE));
+}
+
+TEST(ExtensionLookupTest, given2DBlockLoadFalseAnd2DBlockStoreTrueThenFlagsIndicateSupportStore) {
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
+    Mock2DTransposeDevice<false, true> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
+    deviceProps.pNext = &blockArrayProps;
+
+    auto success = L0::Device::fromHandle(static_cast<ze_device_handle_t>(&deviceImp))->getProperties(&deviceProps);
+    ASSERT_EQ(success, ZE_RESULT_SUCCESS);
+
+    ASSERT_FALSE(static_cast<bool>(blockArrayProps.flags & ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_LOAD));
+    ASSERT_TRUE(static_cast<bool>(blockArrayProps.flags & ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_STORE));
+}
+
+TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreTrueThenFlagsIndicateSupportBoth) {
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0);
+    Mock2DTransposeDevice<true, true> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_intel_device_block_array_exp_properties_t blockArrayProps = {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES};
+    deviceProps.pNext = &blockArrayProps;
+
+    auto success = L0::Device::fromHandle(static_cast<ze_device_handle_t>(&deviceImp))->getProperties(&deviceProps);
+    ASSERT_EQ(success, ZE_RESULT_SUCCESS);
+
+    ASSERT_TRUE(static_cast<bool>(blockArrayProps.flags & ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_LOAD));
+    ASSERT_TRUE(static_cast<bool>(blockArrayProps.flags & ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_STORE));
+}
+
 } // namespace ult
 } // namespace L0

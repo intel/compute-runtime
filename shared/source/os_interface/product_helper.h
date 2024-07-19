@@ -241,6 +241,8 @@ class ProductHelper {
     virtual std::optional<bool> isCoherentAllocation(uint64_t patIndex) const = 0;
     virtual bool isStagingBuffersEnabled() const = 0;
     virtual uint32_t getCacheLineSize() const = 0;
+    virtual bool supports2DBlockStore() const = 0;
+    virtual bool supports2DBlockLoad() const = 0;
 
     virtual ~ProductHelper() = default;
 
