@@ -1619,13 +1619,6 @@ bool CommandQueue::isValidForStagingBufferCopy(Device &device, void *dstPtr, con
         // Direct transfer from mapped allocation is faster than staging buffer
         return false;
     }
-    auto rootDeviceIndex = device.getRootDeviceIndex();
-    auto isLocalMem = device.getMemoryManager()->isLocalMemorySupported(rootDeviceIndex);
-    if (isOOQEnabled() && getGpgpuCommandStreamReceiver().isBusy() && !isLocalMem) {
-        // It's not beneficial to make copy through staging buffers if it's OOQ,
-        // compute engine is busy and device is iGPU.
-        return false;
-    }
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, nullptr};
     csrSelectionArgs.direction = TransferDirection::hostToLocal;
     auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
