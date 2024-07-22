@@ -2221,7 +2221,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledTh
 
     EXPECT_EQ(ssPtr, expectedSsInHeap.ssPtr);
     EXPECT_TRUE(memcmp(const_cast<uint8_t *>(patchLocation), &patchValue, sizeof(patchValue)) == 0);
-    EXPECT_TRUE(std::find(kernel.getResidencyContainer().begin(), kernel.getResidencyContainer().end(), expectedSsInHeap.heapAllocation) != kernel.getResidencyContainer().end());
+    EXPECT_FALSE(std::find(kernel.getResidencyContainer().begin(), kernel.getResidencyContainer().end(), expectedSsInHeap.heapAllocation) != kernel.getResidencyContainer().end());
     neoDevice->decRefInternal();
 }
 
@@ -2829,6 +2829,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfac
     EXPECT_EQ(imageHW->passedSurfaceStateOffset, 0u);
     EXPECT_TRUE(kernel->isBindlessOffsetSet[3]);
     EXPECT_FALSE(kernel->usingSurfaceStateHeap[3]);
+    EXPECT_EQ(0, std::count(kernel->residencyContainer.begin(), kernel->residencyContainer.end(), expectedSsInHeap.heapAllocation));
 }
 
 HWTEST2_F(SetKernelArg, givenNoGlobalAllocatorAndBindlessKernelWhenSetArgImageThenBindlessOffsetIsNotSetAndSshIsUsed, ImageSupport) {
@@ -2950,6 +2951,7 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
     EXPECT_EQ(imageHW->passedRedescribedSurfaceStateOffset, 0u);
     EXPECT_TRUE(kernel->isBindlessOffsetSet[3]);
     EXPECT_FALSE(kernel->usingSurfaceStateHeap[3]);
+    EXPECT_EQ(0, std::count(kernel->residencyContainer.begin(), kernel->residencyContainer.end(), expectedSsInHeap.heapAllocation));
 }
 
 HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperAndImageViewWhenAllocatingBindlessSlotThenViewHasDifferentSlotThanParentImage, ImageSupport) {

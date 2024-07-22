@@ -710,9 +710,9 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
 
         auto &residencyContainer = kernelImmutableData->getResidencyContainer();
-        EXPECT_EQ(2u, residencyContainer.size());
+        EXPECT_EQ(1u, residencyContainer.size());
         EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalConstBuffer));
-        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), globalConstBuffer.getBindlessInfo().heapAllocation));
+        EXPECT_EQ(0, std::count(residencyContainer.begin(), residencyContainer.end(), globalConstBuffer.getBindlessInfo().heapAllocation));
 
         auto crossThreadData = kernelImmutableData->getCrossThreadDataTemplate();
         auto patchLocation = reinterpret_cast<const uint32_t *>(ptrOffset(crossThreadData, globalConstSurfaceAddressBindlessOffset));
@@ -789,9 +789,9 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         EXPECT_EQ(surfaceStateSize * kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful, kernelImmutableData->getSurfaceStateHeapSize());
 
         auto &residencyContainer = kernelImmutableData->getResidencyContainer();
-        EXPECT_EQ(2u, residencyContainer.size());
+        EXPECT_EQ(1u, residencyContainer.size());
         EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), &globalVarBuffer));
-        EXPECT_EQ(1, std::count(residencyContainer.begin(), residencyContainer.end(), globalVarBuffer.getBindlessInfo().heapAllocation));
+        EXPECT_EQ(0, std::count(residencyContainer.begin(), residencyContainer.end(), globalVarBuffer.getBindlessInfo().heapAllocation));
 
         auto crossThreadData = kernelImmutableData->getCrossThreadDataTemplate();
         auto patchLocation = reinterpret_cast<const uint32_t *>(ptrOffset(crossThreadData, globalVariablesSurfaceAddressBindlessOffset));

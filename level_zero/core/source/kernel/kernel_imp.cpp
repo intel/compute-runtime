@@ -145,10 +145,6 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         }
         auto ssInHeap = globalConstBuffer->getBindlessInfo();
 
-        if (ssInHeap.heapAllocation) {
-            this->residencyContainer.push_back(ssInHeap.heapAllocation);
-        }
-
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                                          globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
                                                          *neoDevice, deviceImp->isImplicitScalingCapable(), ssInHeap, kernelInfo->kernelDescriptor);
@@ -171,10 +167,6 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
         auto ssInHeap = globalVarBuffer->getBindlessInfo();
-
-        if (ssInHeap.heapAllocation) {
-            this->residencyContainer.push_back(ssInHeap.heapAllocation);
-        }
 
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                                          globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
@@ -620,7 +612,6 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
 
             image->copyRedescribedSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage), 0u);
             isBindlessOffsetSet[argIndex] = true;
-            this->residencyContainer.push_back(ssInHeap->heapAllocation);
         } else {
             usingSurfaceStateHeap[argIndex] = true;
             auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
@@ -824,7 +815,6 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
             image->copyImplicitArgsSurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u);
 
             isBindlessOffsetSet[argIndex] = true;
-            this->residencyContainer.push_back(ssInHeap->heapAllocation);
         } else {
             usingSurfaceStateHeap[argIndex] = true;
             auto ssPtr = ptrOffset(surfaceStateHeapData.get(), getSurfaceStateIndexForBindlessOffset(arg.bindless) * surfaceStateSize);
@@ -1240,7 +1230,6 @@ void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint3
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
     auto ssInHeap = alloc->getBindlessInfo();
 
-    this->residencyContainer.push_back(ssInHeap.heapAllocation);
     auto patchLocation = ptrOffset(getCrossThreadData(), bindless);
     auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
     patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
