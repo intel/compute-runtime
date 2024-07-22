@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,10 +15,6 @@ namespace NEO {
 
 bool isShutdownInProgress() {
     return false;
-}
-
-unsigned int getPid() {
-    return static_cast<uint32_t>(getpid());
 }
 
 unsigned int readEnablePreemptionRegKey() {

@@ -433,10 +433,6 @@ bool isShutdownInProgress() {
     return false;
 }
 
-unsigned int getPid() {
-    return 0xABCEDF;
-}
-
 unsigned int readEnablePreemptionRegKey() {
     return 1;
 }

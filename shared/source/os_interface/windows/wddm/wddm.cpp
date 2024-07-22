@@ -1002,7 +1002,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
 
     CREATECONTEXT_PVTDATA privateData = initPrivateData(osContext);
 
-    privateData.ProcessID = NEO::getPid();
+    privateData.ProcessID = NEO::SysCalls::getProcessId();
     privateData.pHwContextId = &hwContextId;
     privateData.NoRingFlushes = debugManager.flags.UseNoRingFlushesKmdMode.get();
 

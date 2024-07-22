@@ -46,7 +46,6 @@ struct WorkaroundTable;
 enum class HeapIndex : uint32_t;
 
 unsigned int readEnablePreemptionRegKey();
-unsigned int getPid();
 bool isShutdownInProgress();
 CREATECONTEXT_PVTDATA initPrivateData(OsContextWin &osContext);
 

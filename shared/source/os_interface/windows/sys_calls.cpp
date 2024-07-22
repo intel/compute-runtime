@@ -12,10 +12,6 @@
 
 namespace NEO {
 
-unsigned int getPid() {
-    return GetCurrentProcessId();
-}
-
 bool isShutdownInProgress() {
     auto handle = GetModuleHandleA("ntdll.dll");
 
