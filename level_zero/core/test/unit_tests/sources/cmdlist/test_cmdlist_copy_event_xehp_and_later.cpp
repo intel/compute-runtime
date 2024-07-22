@@ -128,7 +128,7 @@ void testSingleTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpect
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList.commandContainer.getCommandStream()->getUsed()));
 
-    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(3u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
     auto secondWalker = itorWalkers[1];
@@ -214,7 +214,8 @@ void testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, 
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList.commandContainer.getCommandStream()->getUsed()));
 
-    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
+
     ASSERT_EQ(3u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
     auto secondWalker = itorWalkers[1];
@@ -318,7 +319,7 @@ void testSingleTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpect
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList.commandContainer.getCommandStream()->getUsed()));
 
-    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
 
@@ -392,7 +393,8 @@ void testSingleTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, 
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList.commandContainer.getCommandStream()->getUsed()));
 
-    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
+
     ASSERT_EQ(1u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
 
@@ -548,7 +550,7 @@ void testMultiTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpecte
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList.commandContainer.getCommandStream()->getUsed()));
 
-    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(3u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
     auto secondWalker = itorWalkers[1];
@@ -645,7 +647,7 @@ void testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, T
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(3u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
     auto secondWalker = itorWalkers[1];
@@ -762,7 +764,7 @@ void testMultiTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpecte
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0),
         commandList.commandContainer.getCommandStream()->getUsed()));
 
-    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
 
@@ -844,7 +846,7 @@ void testMultiTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, T
         ptrOffset(commandContainer.getCommandStream()->getCpuBase(), usedBefore),
         usedAfter - usedBefore));
 
-    auto itorWalkers = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itorWalkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, itorWalkers.size());
     auto firstWalker = itorWalkers[0];
 

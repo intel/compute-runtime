@@ -158,5 +158,9 @@ template <typename GfxFamily>
 GenCmdList::iterator UnitTestHelper<GfxFamily>::findWalkerTypeCmd(GenCmdList::iterator begin, GenCmdList::iterator end) {
     return find<typename GfxFamily::GPGPU_WALKER *>(begin, end);
 }
+template <typename GfxFamily>
+std::vector<GenCmdList::iterator> UnitTestHelper<GfxFamily>::findAllWalkerTypeCmds(GenCmdList::iterator begin, GenCmdList::iterator end) {
+    return findAll<typename GfxFamily::GPGPU_WALKER *>(begin, end);
+}
 
 } // namespace NEO
