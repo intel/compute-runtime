@@ -23,11 +23,6 @@ static auto gfxCore = IGFX_XE_HPC_CORE;
 #include "level_zero/core/source/helpers/l0_gfx_core_helper_factory_init.inl"
 
 template <>
-bool L0GfxCoreHelperHw<Family>::multiTileCapablePlatform() const {
-    return true;
-}
-
-template <>
 bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
     return true;
 }

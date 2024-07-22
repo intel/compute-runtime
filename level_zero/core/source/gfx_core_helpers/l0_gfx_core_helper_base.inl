@@ -40,11 +40,6 @@ bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::multiTileCapablePlatform() const {
-    return false;
-}
-
-template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getCmdListWaitOnMemoryDataSize() const {
     if constexpr (Family::isQwordInOrderCounter) {
         return sizeof(uint64_t);
