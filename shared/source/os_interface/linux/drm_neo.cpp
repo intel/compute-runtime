@@ -1055,11 +1055,7 @@ void Drm::queryPageFaultSupport() {
         return;
     }
 
-    if (const auto paramId = ioctlHelper->getHasPageFaultParamId(); paramId) {
-        int support = 0;
-        const auto ret = getParamIoctl(*paramId, &support);
-        pageFaultSupported = (0 == ret) && (support > 0);
-    }
+    pageFaultSupported = this->ioctlHelper->isPageFaultSupported();
 }
 
 bool Drm::hasPageFaultSupport() const {

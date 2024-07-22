@@ -2426,7 +2426,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto ioctlHelper = drm.getIoctlHelper();
 
     const auto vmAdviseAttribute = ioctlHelper->getVmAdviseAtomicAttribute();
-    if (vmAdviseAttribute == 0) {
+    if (vmAdviseAttribute.has_value() && vmAdviseAttribute.value() == 0) {
         return nullptr;
     }
 
@@ -2509,7 +2509,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, currentSize, maxOsContextCount));
 
-        if (!ioctlHelper->setVmBoAdvise(bo->peekHandle(), vmAdviseAttribute, nullptr)) {
+        if (vmAdviseAttribute.has_value() && !ioctlHelper->setVmBoAdvise(bo->peekHandle(), vmAdviseAttribute.value(), nullptr)) {
             this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
             releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
             return nullptr;
