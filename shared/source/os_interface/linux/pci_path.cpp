@@ -48,6 +48,10 @@ std::optional<std::string> getPciPath(int deviceFd) {
 
     auto pciPathPos = deviceLinkPath->find("/drm/render");
 
+    if (pciPathPos == std::string::npos) {
+        pciPathPos = deviceLinkPath->find("/drm/card");
+    }
+
     if (pciPathPos == std::string::npos || pciPathPos < 12) {
         return std::nullopt;
     }

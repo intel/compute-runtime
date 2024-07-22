@@ -81,3 +81,39 @@ TEST(DrmTest, whenGettingPciPathThenProperPathIsReturned) {
     EXPECT_TRUE(pciPath.has_value());
     EXPECT_EQ(outPciPath, *pciPath);
 }
+
+TEST(DrmTest, whenGettingPciPathContainsCard0ThenProperPathIsReturned) {
+    static const int fileDescriptorCard = 0x127;
+
+    static const char devicePathCard[] = "devicePathCard";
+
+    static const char linkPathCard[] = "../../devices/pci0000:4a/0000:4b:00.0/0000:4c:01.0/0001:02:03.4/drm/card0";
+
+    static const char outPciPath[] = "0001:02:03.4";
+
+    VariableBackup<bool> allowFakeDevicePathBackup{&SysCalls::allowFakeDevicePath, true};
+    VariableBackup<decltype(SysCalls::sysCallsGetDevicePath)> getDevicePathBackup(&SysCalls::sysCallsGetDevicePath);
+    VariableBackup<decltype(SysCalls::sysCallsReadlink)> readlinkBackup(&SysCalls::sysCallsReadlink);
+
+    SysCalls::sysCallsGetDevicePath = [](int deviceFd, char *buf, size_t &bufSize) -> int {
+        if (deviceFd == fileDescriptorCard) {
+            bufSize = sizeof(devicePathCard);
+            strcpy_s(buf, bufSize, devicePathCard);
+            return 0;
+        }
+        return -1;
+    };
+
+    SysCalls::sysCallsReadlink = [](const char *path, char *buf, size_t bufSize) -> int {
+        if (strcmp(path, devicePathCard) == 0) {
+            bufSize = sizeof(linkPathCard);
+            strcpy_s(buf, bufSize, linkPathCard);
+            return static_cast<int>(bufSize);
+        }
+        return -1;
+    };
+
+    auto pciPath = getPciPath(fileDescriptorCard);
+    EXPECT_TRUE(pciPath.has_value());
+    EXPECT_EQ(outPciPath, *pciPath);
+}
