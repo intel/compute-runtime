@@ -1473,6 +1473,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     uintptr_t rightSize = 0;
     uintptr_t middleSizeBytes = 0;
     bool isStateless = this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless;
+    if (neoDevice->getCompilerProductHelper().isForceToStatelessRequired()) {
+        isStateless = true;
+    }
     const bool isHeapless = this->isHeaplessModeEnabled();
 
     if (!isCopyOnlyEnabled) {
