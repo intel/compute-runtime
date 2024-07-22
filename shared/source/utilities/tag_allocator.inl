@@ -13,8 +13,8 @@
 namespace NEO {
 template <typename TagType>
 TagAllocator<TagType>::TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount, size_t tagAlignment,
-                                    size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
-    : TagAllocatorBase(rootDeviceIndices, memMngr, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield) {
+                                    size_t tagSize, bool doNotReleaseNodes, bool initializeTags, DeviceBitfield deviceBitfield)
+    : TagAllocatorBase(rootDeviceIndices, memMngr, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield), initializeTags(initializeTags) {
 
     populateFreeTags();
 }
@@ -32,10 +32,13 @@ TagNodeBase *TagAllocator<TagType>::getTag() {
     }
     usedTags.pushFrontOne(*node);
     node->incRefCount();
-    node->initialize();
+
+    if (initializeTags) {
+        node->initialize();
+    }
 
     if (debugManager.flags.PrintTimestampPacketUsage.get() == 1) {
-        printf("\nPID: %u, TSP taken from pool and initialized: 0x%" PRIX64, SysCalls::getProcessId(), node->getGpuAddress());
+        printf("\nPID: %u, TSP taken from pool and initialized(%d): 0x%" PRIX64, SysCalls::getProcessId(), initializeTags, node->getGpuAddress());
     }
 
     return node;

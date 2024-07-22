@@ -39,7 +39,7 @@ NEO::TagAllocatorBase *getInOrderCounterAllocator(std::unique_ptr<NEO::TagAlloca
             DEBUG_BREAK_IF(alignUp(nodeSize, MemoryConstants::cacheLineSize) * NodeT::defaultAllocatorTagCount > MemoryConstants::pageSize64k);
 
             allocator = std::make_unique<NEO::TagAllocator<NodeT>>(rootDeviceIndices, neoDevice.getMemoryManager(), NodeT::defaultAllocatorTagCount,
-                                                                   MemoryConstants::cacheLineSize, nodeSize, false, neoDevice.getDeviceBitfield());
+                                                                   MemoryConstants::cacheLineSize, nodeSize, false, true, neoDevice.getDeviceBitfield());
         }
     }
 

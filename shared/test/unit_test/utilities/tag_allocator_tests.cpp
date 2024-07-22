@@ -37,6 +37,7 @@ struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
 
 struct TimeStamps {
     void initialize() {
+        initializeCount++;
         start = 1;
         end = 2;
     }
@@ -69,6 +70,8 @@ struct TimeStamps {
 
     uint64_t contextCompleteTS;
     uint64_t globalEndTS;
+
+    uint32_t initializeCount = 0;
 };
 
 template <typename TagType>
@@ -91,7 +94,7 @@ class MockTagAllocator : public TagAllocator<TagType> {
 
     MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount,
                      size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
-        : BaseClass(RootDeviceIndicesContainer{rootDeviceIndex}, memoryManager, tagCount, tagAlignment, tagSize, doNotReleaseNodes, deviceBitfield) {
+        : BaseClass(RootDeviceIndicesContainer{rootDeviceIndex}, memoryManager, tagCount, tagAlignment, tagSize, doNotReleaseNodes, true, deviceBitfield) {
     }
 
     MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, bool disableCompletionCheck, DeviceBitfield deviceBitfield)
@@ -353,6 +356,27 @@ TEST_F(TagAllocatorTest, whenNewTagIsTakenThenItIsInitialized) {
     EXPECT_TRUE(node->isProfilingCapable());
 }
 
+TEST_F(TagAllocatorTest, givenReinitializationDisabledWhenGettingNewTagThenDontInitialize) {
+    MockTagAllocator<TimeStamps> tagAllocator1(RootDeviceIndicesContainer{0}, memoryManager, 1, 2, sizeof(TimeStamps), false, true, deviceBitfield);
+    MockTagAllocator<TimeStamps> tagAllocator2(RootDeviceIndicesContainer{0}, memoryManager, 1, 2, sizeof(TimeStamps), false, false, deviceBitfield);
+
+    tagAllocator1.freeTags.peekHead()->tagForCpuAccess->initializeCount = 0;
+    tagAllocator2.freeTags.peekHead()->tagForCpuAccess->initializeCount = 0;
+
+    auto node1 = static_cast<TagNode<TimeStamps> *>(tagAllocator1.getTag());
+    auto node2 = static_cast<TagNode<TimeStamps> *>(tagAllocator2.getTag());
+    EXPECT_EQ(1u, node1->tagForCpuAccess->initializeCount);
+    EXPECT_EQ(0u, node2->tagForCpuAccess->initializeCount);
+
+    node1->returnTag();
+    node2->returnTag();
+
+    node1 = static_cast<TagNode<TimeStamps> *>(tagAllocator1.getTag());
+    node2 = static_cast<TagNode<TimeStamps> *>(tagAllocator2.getTag());
+    EXPECT_EQ(2u, node1->tagForCpuAccess->initializeCount);
+    EXPECT_EQ(0u, node2->tagForCpuAccess->initializeCount);
+}
+
 TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhenAllRefCountsAreReleased) {
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 2, 1, deviceBitfield);
 
@@ -475,7 +499,9 @@ TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMul
 
     const RootDeviceIndicesContainer indices = {0, 2, maxRootDeviceIndex};
 
-    MockTagAllocator<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestampPacketAllocator(indices, testMemoryManager, 1, 1, sizeof(TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>), false, mockDeviceBitfield);
+    MockTagAllocator<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestampPacketAllocator(indices, testMemoryManager, 1, 1,
+                                                                                                                          sizeof(TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>), false,
+                                                                                                                          true, mockDeviceBitfield);
 
     EXPECT_EQ(1u, timestampPacketAllocator.getGraphicsAllocationsCount());
 
@@ -505,7 +531,8 @@ HWTEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenCallingMakeResidentThenUs
 
     const RootDeviceIndicesContainer indicesVector = {0, 1};
 
-    MockTagAllocator<TimestampPackets<uint32_t, FamilyType::timestampPacketCount>> timestampPacketAllocator(indicesVector, testMemoryManager, 1, 1, sizeof(TimestampPackets<uint32_t, FamilyType::timestampPacketCount>), false, mockDeviceBitfield);
+    MockTagAllocator<TimestampPackets<uint32_t, FamilyType::timestampPacketCount>> timestampPacketAllocator(indicesVector, testMemoryManager, 1, 1, sizeof(TimestampPackets<uint32_t, FamilyType::timestampPacketCount>),
+                                                                                                            false, true, mockDeviceBitfield);
 
     EXPECT_EQ(1u, timestampPacketAllocator.getGraphicsAllocationsCount());
 

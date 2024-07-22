@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -177,8 +177,7 @@ class TagAllocator : public TagAllocatorBase {
     using NodeType = TagNode<TagType>;
 
     TagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memMngr, size_t tagCount,
-                 size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes,
-                 DeviceBitfield deviceBitfield);
+                 size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, bool initializeTags, DeviceBitfield deviceBitfield);
 
     TagNodeBase *getTag() override;
 
@@ -200,6 +199,8 @@ class TagAllocator : public TagAllocatorBase {
     IDList<NodeType> deferredTags;
 
     std::vector<std::unique_ptr<NodeType[]>> tagPoolMemory;
+
+    bool initializeTags = true;
 };
 } // namespace NEO
 

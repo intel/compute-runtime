@@ -923,6 +923,40 @@ TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemandAn
     }
 }
 
+HWTEST_F(DeviceTest, givenTsAllocatorWhenGettingNewTagThenDontInitialize) {
+    using TimestampPacketType = typename FamilyType::TimestampPacketType;
+    using TimestampPacketsT = NEO::TimestampPackets<TimestampPacketType, 1>;
+
+    auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+    auto *neoMockDevice = new NEO::MockDevice(executionEnvironment, rootDeviceIndex);
+    neoMockDevice->createDeviceImpl();
+
+    MockDeviceImp deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    auto allocator = deviceImp.getInOrderTimestampAllocator();
+
+    TimestampPacketType data[4] = {123, 456, 789, 987};
+
+    auto tag = static_cast<NEO::TagNode<TimestampPacketsT> *>(allocator->getTag());
+    tag->tagForCpuAccess->assignDataToAllTimestamps(0, data);
+
+    EXPECT_EQ(data[0], tag->tagForCpuAccess->getContextStartValue(0));
+    EXPECT_EQ(data[1], tag->tagForCpuAccess->getGlobalStartValue(0));
+    EXPECT_EQ(data[2], tag->tagForCpuAccess->getContextEndValue(0));
+    EXPECT_EQ(data[3], tag->tagForCpuAccess->getGlobalEndValue(0));
+
+    tag->returnTag();
+
+    auto tag2 = static_cast<NEO::TagNode<TimestampPacketsT> *>(allocator->getTag());
+    EXPECT_EQ(tag, tag2);
+
+    EXPECT_EQ(data[0], tag->tagForCpuAccess->getContextStartValue(0));
+    EXPECT_EQ(data[1], tag->tagForCpuAccess->getGlobalStartValue(0));
+    EXPECT_EQ(data[2], tag->tagForCpuAccess->getContextEndValue(0));
+    EXPECT_EQ(data[3], tag->tagForCpuAccess->getGlobalEndValue(0));
+}
+
 TEST_F(DeviceTest, givenMoreThanOneExtendedPropertiesStructuresWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {
     ze_scheduling_hint_exp_properties_t schedulingHintProperties = {};
     schedulingHintProperties.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES;

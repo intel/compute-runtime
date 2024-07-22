@@ -934,7 +934,7 @@ TagAllocatorBase *CommandStreamReceiver::getEventTsAllocator() {
     if (profilingTimeStampAllocator.get() == nullptr) {
         RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
         profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
-                                                                                   sizeof(HwTimeStamps), false, osContext->getDeviceBitfield());
+                                                                                   sizeof(HwTimeStamps), false, true, osContext->getDeviceBitfield());
     }
     return profilingTimeStampAllocator.get();
 }
@@ -943,7 +943,7 @@ TagAllocatorBase *CommandStreamReceiver::getEventPerfCountAllocator(const uint32
     if (perfCounterAllocator.get() == nullptr) {
         RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex};
         perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(
-            rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize, false, osContext->getDeviceBitfield());
+            rootDeviceIndices, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize, false, true, osContext->getDeviceBitfield());
     }
     return perfCounterAllocator.get();
 }
