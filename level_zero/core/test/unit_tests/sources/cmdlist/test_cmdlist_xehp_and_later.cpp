@@ -1631,7 +1631,6 @@ using RayTracingCmdListTest = Test<RayTracingCmdListFixture>;
 template <typename FamilyType>
 void findStateCacheFlushPipeControlAfterWalker(LinearStream &cmdStream, size_t offset, size_t size) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1639,7 +1638,8 @@ void findStateCacheFlushPipeControlAfterWalker(LinearStream &cmdStream, size_t o
         ptrOffset(cmdStream.getCpuBase(), offset),
         size));
 
-    auto walkerIt = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerIt = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerIt);
 
     auto pcItorList = findAll<PIPE_CONTROL *>(walkerIt, cmdList.end());

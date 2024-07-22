@@ -1516,7 +1516,6 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
 HWTEST2_F(CommandListAppendLaunchKernelMockModule,
           givenOutWalkerPtrDispatchParamWhenAppendingKernelThenSetPtrToWalkerCmd,
           IsAtLeastXeHpCore) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -1532,7 +1531,8 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
         cmdList,
         commandList->getCmdContainer().getCommandStream()->getCpuBase(),
         usedSpaceAfter));
-    auto itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorWalker);
 
     EXPECT_EQ(*itorWalker, launchParams.outWalker);

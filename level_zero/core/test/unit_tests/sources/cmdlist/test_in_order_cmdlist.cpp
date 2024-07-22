@@ -1623,7 +1623,8 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingC
     } else {
         EXPECT_EQ(cmdList.end(), sdiItor);
 
-        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -1664,7 +1665,8 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlAndAllocFlushWhe
 
         EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
 
-        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
         ASSERT_NE(cmdList.end(), walkerItor);
         auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
         auto &postSync = walkerCmd->getPostSync();
@@ -1930,7 +1932,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -1952,7 +1955,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenSignalSy
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -2027,7 +2031,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
     EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
 
-    auto walkerItor = find<DefaultWalkerType *>(sdiItor, cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(sdiItor, cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -2137,7 +2142,8 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         EXPECT_TRUE(sdiOffset >= immCmdList->flushData[0]);
         EXPECT_TRUE(sdiOffset < immCmdList->flushData[1]);
 
-        auto walkerItor = find<DefaultWalkerType *>(sdiItor, cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(sdiItor, cmdList.end());
+
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -2256,7 +2262,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingRegularEventThenCl
     EXPECT_EQ(0u, sdiCmd->getStoreQword());
     EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
 
-    auto walkerItor = find<DefaultWalkerType *>(sdiItor, cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(sdiItor, cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -2812,7 +2819,8 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListT
 
     EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), semaphoreCmd->getSemaphoreGraphicsAddress());
 
-    auto walkerItor = find<DefaultWalkerType *>(semaphoreItor, cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(semaphoreItor, cmdList.end());
+
     EXPECT_NE(cmdList.end(), walkerItor);
 }
 
@@ -2981,7 +2989,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingComputeCopyThenDon
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerItor);
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
 
@@ -3009,7 +3018,8 @@ HWTEST2_F(InOrderCmdListTests, givenAlocFlushRequiredhenProgrammingComputeCopyTh
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -3081,7 +3091,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndOu
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
@@ -3130,7 +3141,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingFillWithSplitAndWi
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto pcItor = find<PIPE_CONTROL *>(walkerItor, cmdList.end());
@@ -3368,7 +3380,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(walkerItor, cmdList.end());
@@ -4938,7 +4951,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
                                                       cmdStream->getCpuBase(),
                                                       cmdStream->getUsed()));
 
-    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto computeWalkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -4990,7 +5004,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
                                                       cmdStream->getCpuBase(),
                                                       cmdStream->getUsed()));
 
-    auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
     ASSERT_NE(cmdList.end(), walkerItor);
 
     auto computeWalkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -5063,12 +5078,13 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto itor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
         ASSERT_NE(cmdList.end(), itor);
 
         walkerFromParser1 = genCmdCast<DefaultWalkerType *>(*itor);
 
-        itor = find<DefaultWalkerType *>(++itor, cmdList.end());
+        itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
 
         walkerFromParser2 = genCmdCast<DefaultWalkerType *>(*itor);
@@ -5789,12 +5805,13 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto itor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
         ASSERT_NE(cmdList.end(), itor);
 
         walkerFromParser1 = genCmdCast<DefaultWalkerType *>(*itor);
 
-        itor = find<DefaultWalkerType *>(++itor, cmdList.end());
+        itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++itor, cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
 
         walkerFromParser2 = genCmdCast<DefaultWalkerType *>(*itor);
@@ -5848,7 +5865,8 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
                                                           ptrOffset(cmdStream->getCpuBase(), offset),
                                                           (cmdStream->getUsed() - offset)));
 
-        auto walkerItor = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -5875,7 +5893,8 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
         auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), semaphoreItor);
 
-        auto walkerItor = find<DefaultWalkerType *>(semaphoreItor, cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(semaphoreItor, cmdList.end());
+
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
@@ -6850,7 +6869,8 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppending
             return false;
         }
 
-        auto itor = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
         EXPECT_NE(cmdList.end(), itor);
         if (::testing::Test::HasFailure()) {
             return false;
@@ -6940,7 +6960,8 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppend
             return false;
         }
 
-        auto itor = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+
         EXPECT_NE(cmdList.end(), itor);
         if (::testing::Test::HasFailure()) {
             return false;
