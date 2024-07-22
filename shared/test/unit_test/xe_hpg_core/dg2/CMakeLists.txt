@@ -1,11 +1,14 @@
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 if(TESTS_DG2)
   set(NEO_CORE_tests_xe_hpg_core_dg2_excludes ${CMAKE_CURRENT_SOURCE_DIR}/excludes_xe_hpg_core_dg2.cpp)
+  if(WIN32 OR(UNIX AND NOT DISABLE_WDDM_LINUX))
+    list(APPEND NEO_CORE_tests_xe_hpg_core_dg2_excludes ${CMAKE_CURRENT_SOURCE_DIR}/excludes_wddm_xe_hpg_core_dg2.cpp)
+  endif()
   set_property(GLOBAL APPEND PROPERTY NEO_CORE_tests_excludes ${NEO_CORE_tests_xe_hpg_core_dg2_excludes})
 
   target_sources(neo_shared_tests PRIVATE
