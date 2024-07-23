@@ -33,17 +33,16 @@ __kernel void kernel_copy(__global char *dst, __global char *src){
         size_t lid = get_local_id(0);
         size_t gid = get_global_id(0);
 
-        TYPE res1 = (TYPE)(src[gid * 3]);
-        TYPE res2 = (TYPE)(src[gid * 3 + 1]);
-        TYPE res3 = (TYPE)(src[gid * 3 + 2]);
+        TYPE res1 = (TYPE)(src[gid]);
+        TYPE res2 = (TYPE)(src[gid] + 1);
+        TYPE res3 = (TYPE)(src[gid] + 2);
 
         locMem[lid] = res1;
         barrier(CLK_LOCAL_MEM_FENCE);
         barrier(CLK_GLOBAL_MEM_FENCE);
     
-        TYPE res = (locMem[src[gid]] * res3) * res2 + res1;
-        src[0] += (char)res[lid];
-        
+        TYPE res = (locMem[src[gid] % 32] * res3) * res2 + res1;
+        src[0] += (char)res[lid % 16];
     }
     barrier(CLK_GLOBAL_MEM_FENCE);
     src[0] = dst[0];
