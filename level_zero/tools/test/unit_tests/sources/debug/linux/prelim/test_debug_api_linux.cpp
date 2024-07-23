@@ -20,7 +20,6 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
@@ -43,8 +42,6 @@
 #include "common/StateSaveAreaHeader.h"
 
 #include <fcntl.h>
-#include <fstream>
-#include <type_traits>
 
 namespace NEO {
 namespace SysCalls {
@@ -7754,7 +7751,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
     EXPECT_EQ(expectedScratchSpaceBaseAddress, sba[8]);
 }
 
-TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceStateWhenGettingScratchBaseRegThenValueIsZero) {
+TEST_F(DebugApiRegistersAccessTest, GivenScratchPointerAndZeroAddressInSurfaceStateWhenGettingScratchBaseRegThenValueIsZero) {
     SIP::version version = {1, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 

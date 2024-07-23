@@ -15,7 +15,6 @@
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -510,9 +509,9 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
-    if (topologyData.maxSubSliceCount > 0) {
-        hwInfo->gtSystemInfo.MaxSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSubSliceCount);
-        hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSubSliceCount);
+    if (topologyData.maxSlices * topologyData.maxSubSlicesPerSlice > 0) {
+        hwInfo->gtSystemInfo.MaxSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSlices * topologyData.maxSubSlicesPerSlice);
+        hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSlices * topologyData.maxSubSlicesPerSlice);
     }
     if (topologyData.numL3Banks > 0) {
         hwInfo->gtSystemInfo.L3BankCount = topologyData.numL3Banks;

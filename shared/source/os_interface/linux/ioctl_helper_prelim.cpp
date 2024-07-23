@@ -7,7 +7,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/common_types.h"
@@ -33,10 +32,7 @@
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
-#include <fstream>
 #include <iostream>
-#include <new>
-#include <sstream>
 #include <sys/ioctl.h>
 
 namespace NEO {
@@ -123,9 +119,9 @@ bool IoctlHelperPrelim20::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQ
             subSliceCount = (subSliceCount == 0) ? tileTopologyData.subSliceCount : std::min(subSliceCount, tileTopologyData.subSliceCount);
             euCount = (euCount == 0) ? tileTopologyData.euCount : std::min(euCount, tileTopologyData.euCount);
 
-            topologyData.maxSliceCount = std::max(topologyData.maxSliceCount, tileTopologyData.maxSliceCount);
-            topologyData.maxSubSliceCount = std::max(topologyData.maxSubSliceCount, tileTopologyData.maxSubSliceCount);
-            topologyData.maxEuPerSubSlice = std::max(topologyData.maxEuPerSubSlice, static_cast<int>(data->maxEusPerSubslice));
+            topologyData.maxSlices = std::max(topologyData.maxSlices, tileTopologyData.maxSlices);
+            topologyData.maxSubSlicesPerSlice = std::max(topologyData.maxSubSlicesPerSlice, tileTopologyData.maxSubSlicesPerSlice);
+            topologyData.maxEusPerSubSlice = std::max(topologyData.maxEusPerSubSlice, static_cast<int>(data->maxEusPerSubslice));
 
             topologyMap[i] = mapping;
         }

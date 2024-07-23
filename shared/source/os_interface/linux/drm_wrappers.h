@@ -91,9 +91,9 @@ struct DrmQueryTopologyData {
     int euCount = 0;
     int numL3Banks = 0;
 
-    int maxSliceCount = 0;
-    int maxSubSliceCount = 0;
-    int maxEuPerSubSlice = 0;
+    int maxSlices = 0;
+    int maxSubSlicesPerSlice = 0;
+    int maxEusPerSubSlice = 0;
 };
 
 struct MemoryClassInstance {

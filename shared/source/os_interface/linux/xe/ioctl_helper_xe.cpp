@@ -7,20 +7,17 @@
 
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
-#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -420,14 +417,14 @@ void IoctlHelperXe::getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *
         euPerDss = (euPerDss == 0) ? euPerDssPerTile : std::min(euPerDss, euPerDssPerTile);
 
         // pick max config
-        topologyData.maxSubSliceCount = std::max(topologyData.maxSubSliceCount, subSliceCountPerTile);
-        topologyData.maxEuPerSubSlice = std::max(topologyData.maxEuPerSubSlice, euPerDssPerTile);
+        topologyData.maxSubSlicesPerSlice = std::max(topologyData.maxSubSlicesPerSlice, subSliceCountPerTile);
+        topologyData.maxEusPerSubSlice = std::max(topologyData.maxEusPerSubSlice, euPerDssPerTile);
     }
 
     topologyData.sliceCount = 1;
     topologyData.subSliceCount = subSliceCount;
     topologyData.euCount = subSliceCount * euPerDss;
-    topologyData.maxSliceCount = 1;
+    topologyData.maxSlices = 1;
 }
 
 void IoctlHelperXe::getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap) {

@@ -704,13 +704,13 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
 
     // verify topology data
     EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
+    EXPECT_EQ(1, topologyData.maxSlices);
 
     EXPECT_EQ(6, topologyData.subSliceCount);
-    EXPECT_EQ(6, topologyData.maxSubSliceCount);
+    EXPECT_EQ(6, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(96, topologyData.euCount);
-    EXPECT_EQ(16, topologyData.maxEuPerSubSlice);
+    EXPECT_EQ(16, topologyData.maxEusPerSubSlice);
 
     // verify topology map
     std::vector<int> expectedSliceIndices{0};
@@ -755,13 +755,13 @@ TEST(IoctlHelperXeTest, givenUnknownTopologyTypeWhenGetTopologyDataAndMapThenNot
 
     // verify topology data
     EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
+    EXPECT_EQ(1, topologyData.maxSlices);
 
     EXPECT_EQ(6, topologyData.subSliceCount);
-    EXPECT_EQ(6, topologyData.maxSubSliceCount);
+    EXPECT_EQ(6, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(96, topologyData.euCount);
-    EXPECT_EQ(16, topologyData.maxEuPerSubSlice);
+    EXPECT_EQ(16, topologyData.maxEusPerSubSlice);
 
     // verify topology map
     std::vector<int> expectedSliceIndices{0};
@@ -804,13 +804,13 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
 
     // verify topology data
     EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
+    EXPECT_EQ(1, topologyData.maxSlices);
 
     EXPECT_EQ(64, topologyData.subSliceCount);
-    EXPECT_EQ(64, topologyData.maxSubSliceCount);
+    EXPECT_EQ(64, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(512, topologyData.euCount);
-    EXPECT_EQ(8, topologyData.maxEuPerSubSlice);
+    EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
 
     // verify topology map
     std::vector<int> expectedSliceIndices = {0};
@@ -869,13 +869,13 @@ TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceI
 
     // verify topology data
     EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
+    EXPECT_EQ(1, topologyData.maxSlices);
 
     EXPECT_EQ(0, topologyData.subSliceCount);
-    EXPECT_EQ(0, topologyData.maxSubSliceCount);
+    EXPECT_EQ(0, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(0, topologyData.euCount);
-    EXPECT_EQ(0, topologyData.maxEuPerSubSlice);
+    EXPECT_EQ(0, topologyData.maxEusPerSubSlice);
 
     // verify topology map
     ASSERT_EQ(0u, topologyMap[tileId].sliceIndices.size());
@@ -944,13 +944,13 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
 
     // verify topology data
     EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
+    EXPECT_EQ(1, topologyData.maxSlices);
 
     EXPECT_EQ(64, topologyData.subSliceCount);
-    EXPECT_EQ(64, topologyData.maxSubSliceCount);
+    EXPECT_EQ(64, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(4096, topologyData.euCount);
-    EXPECT_EQ(64, topologyData.maxEuPerSubSlice);
+    EXPECT_EQ(64, topologyData.maxEusPerSubSlice);
     EXPECT_EQ(2u, topologyMap.size());
     // verify topology map
     for (auto tileId : {0u, 1u}) {
@@ -981,13 +981,13 @@ TEST(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenResu
 
     // verify topology data
     EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
+    EXPECT_EQ(1, topologyData.maxSlices);
 
     EXPECT_EQ(64, topologyData.subSliceCount);
-    EXPECT_EQ(64, topologyData.maxSubSliceCount);
+    EXPECT_EQ(64, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(512, topologyData.euCount);
-    EXPECT_EQ(8, topologyData.maxEuPerSubSlice);
+    EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
 
     // verify topology map
     for (auto tileId : {0u, 1u}) {
@@ -1041,13 +1041,13 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledDssOn1TileAndComputeDssWhenGetTopo
 
     // verify topology data
     EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
+    EXPECT_EQ(1, topologyData.maxSlices);
 
     EXPECT_EQ(32, topologyData.subSliceCount);
-    EXPECT_EQ(64, topologyData.maxSubSliceCount);
+    EXPECT_EQ(64, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(256, topologyData.euCount);
-    EXPECT_EQ(8, topologyData.maxEuPerSubSlice);
+    EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
 
     // verify topology map
     constexpr uint32_t nTiles = 2;
@@ -1106,13 +1106,13 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopolog
 
     // verify topology data
     EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
+    EXPECT_EQ(1, topologyData.maxSlices);
 
     EXPECT_EQ(32, topologyData.subSliceCount);
-    EXPECT_EQ(32, topologyData.maxSubSliceCount);
+    EXPECT_EQ(32, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(256, topologyData.euCount);
-    EXPECT_EQ(8, topologyData.maxEuPerSubSlice);
+    EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
 
     // verify topology map
 
@@ -1194,13 +1194,13 @@ TEST(IoctlHelperXeTest, givenMissingEuPerDssInTopologyWhenGetTopologyDataAndMapT
     EXPECT_TRUE(result);
 
     EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSliceCount);
+    EXPECT_EQ(1, topologyData.maxSlices);
 
     EXPECT_EQ(16, topologyData.subSliceCount);
-    EXPECT_EQ(16, topologyData.maxSubSliceCount);
+    EXPECT_EQ(16, topologyData.maxSubSlicesPerSlice);
 
     EXPECT_EQ(0, topologyData.euCount);
-    EXPECT_EQ(0, topologyData.maxEuPerSubSlice);
+    EXPECT_EQ(0, topologyData.maxEusPerSubSlice);
 }
 
 TEST(IoctlHelperXeTest, whenCreatingEngineInfoThenProperEnginesAreDiscovered) {

@@ -11,31 +11,26 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/directory.h"
-#include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
 #include <fcntl.h>
-#include <fstream>
 #include <memory>
 
 using namespace NEO;
@@ -1048,8 +1043,8 @@ TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopolo
     EXPECT_EQ(6, topologyData.subSliceCount);
     EXPECT_EQ(12, topologyData.euCount);
 
-    EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
-    EXPECT_EQ(7, topologyData.maxSubSliceCount);
+    EXPECT_EQ(drm.storedSVal, topologyData.maxSlices);
+    EXPECT_EQ(7, topologyData.maxSubSlicesPerSlice);
 }
 
 TEST(DrmQueryTest, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
@@ -1088,8 +1083,8 @@ TEST(DrmQueryTest, GivenSingleSliceConfigWhenQueryingTopologyInfoThenSubsliceInd
     EXPECT_EQ(7, topologyData.subSliceCount);
     EXPECT_EQ(28, topologyData.euCount);
 
-    EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
-    EXPECT_EQ(7, topologyData.maxSubSliceCount);
+    EXPECT_EQ(drm.storedSVal, topologyData.maxSlices);
+    EXPECT_EQ(7, topologyData.maxSubSlicesPerSlice);
 
     auto topologyMap = drm.getTopologyMap();
 
@@ -1120,8 +1115,8 @@ TEST(DrmQueryTest, GivenMultiSliceConfigWhenQueryingTopologyInfoThenSubsliceIndi
     EXPECT_EQ(14, topologyData.subSliceCount);
     EXPECT_EQ(56, topologyData.euCount);
 
-    EXPECT_EQ(drm.storedSVal, topologyData.maxSliceCount);
-    EXPECT_EQ(7, topologyData.maxSubSliceCount);
+    EXPECT_EQ(drm.storedSVal, topologyData.maxSlices);
+    EXPECT_EQ(7, topologyData.maxSubSlicesPerSlice);
 
     auto topologyMap = drm.getTopologyMap();
 

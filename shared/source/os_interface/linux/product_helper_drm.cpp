@@ -94,9 +94,9 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
             return ret;
         }
 
-        topologyData.maxEuPerSubSlice = topologyData.subSliceCount > 0 ? topologyData.euCount / topologyData.subSliceCount : 0;
-        topologyData.maxSliceCount = topologyData.sliceCount;
-        topologyData.maxSubSliceCount = topologyData.sliceCount > 0 ? topologyData.subSliceCount / topologyData.sliceCount : 0;
+        topologyData.maxEusPerSubSlice = topologyData.subSliceCount > 0 ? topologyData.euCount / topologyData.subSliceCount : 0;
+        topologyData.maxSlices = topologyData.sliceCount;
+        topologyData.maxSubSlicesPerSlice = topologyData.sliceCount > 0 ? topologyData.subSliceCount / topologyData.sliceCount : 0;
     }
 
     auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
@@ -109,9 +109,9 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     gtSystemInfo->EUCount = static_cast<uint32_t>(topologyData.euCount);
     gtSystemInfo->ThreadCount = numThreadsPerEu * gtSystemInfo->EUCount;
 
-    gtSystemInfo->MaxEuPerSubSlice = gtSystemInfo->MaxEuPerSubSlice != 0 ? gtSystemInfo->MaxEuPerSubSlice : topologyData.maxEuPerSubSlice;
-    gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSliceCount * topologyData.maxSliceCount), gtSystemInfo->MaxSubSlicesSupported);
-    gtSystemInfo->MaxSlicesSupported = topologyData.maxSliceCount;
+    gtSystemInfo->MaxEuPerSubSlice = gtSystemInfo->MaxEuPerSubSlice != 0 ? gtSystemInfo->MaxEuPerSubSlice : topologyData.maxEusPerSubSlice;
+    gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSlicesPerSlice * topologyData.maxSlices), gtSystemInfo->MaxSubSlicesSupported);
+    gtSystemInfo->MaxSlicesSupported = topologyData.maxSlices;
     gtSystemInfo->MaxDualSubSlicesSupported = gtSystemInfo->MaxSubSlicesSupported;
 
     gtSystemInfo->IsDynamicallyPopulated = true;

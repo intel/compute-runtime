@@ -457,6 +457,7 @@ std::string IoctlHelperI915::getFileForMaxGpuFrequencyOfSubDevice(int tileId) co
 std::string IoctlHelperI915::getFileForMaxMemoryFrequencyOfSubDevice(int tileId) const {
     return "/gt/gt" + std::to_string(tileId) + "/mem_RP0_freq_mhz";
 }
+
 bool IoctlHelperI915::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) {
 
     auto request = this->getDrmParamValue(DrmParam::queryTopologyInfo);
@@ -468,7 +469,6 @@ bool IoctlHelperI915::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQuery
 
     TopologyMapping mapping;
     auto retVal = this->translateTopologyInfo(topologyInfo, topologyData, mapping);
-    topologyData.maxEuPerSubSlice = topologyInfo->maxEusPerSubslice;
 
     topologyMap.clear();
     topologyMap[0] = mapping;
@@ -537,8 +537,9 @@ bool IoctlHelperI915::translateTopologyInfo(const QueryTopologyInfo *queryTopolo
     topologyData.sliceCount = sliceCount;
     topologyData.subSliceCount = subSliceCount;
     topologyData.euCount = euCount;
-    topologyData.maxSliceCount = maxSliceCount;
-    topologyData.maxSubSliceCount = maxSubSliceCountPerSlice;
+    topologyData.maxSlices = maxSliceCount;
+    topologyData.maxSubSlicesPerSlice = maxSubSliceCountPerSlice;
+    topologyData.maxEusPerSubSlice = queryTopologyInfo->maxEusPerSubslice;
 
     return (sliceCount && subSliceCount && euCount);
 }
@@ -648,6 +649,7 @@ bool IoctlHelperI915::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime)
 
     return true;
 }
+
 void IoctlHelperI915::insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) {
     auto engines = reinterpret_cast<EngineClassInstance *>(contextParamEngines.enginesData);
     if (!engineClassInstance) {
@@ -661,6 +663,7 @@ void IoctlHelperI915::insertEngineToContextParams(ContextParamEngines<> &context
         engines[index] = *engineClassInstance;
     }
 }
+
 bool IoctlHelperI915::isPreemptionSupported() {
     int schedulerCap{};
     GetParam getParam{};
