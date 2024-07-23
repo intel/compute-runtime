@@ -218,6 +218,10 @@ unsigned int getProcessId() {
     return 0xABCEDF;
 }
 
+unsigned int getCurrentProcessId() {
+    return 0xABCEDF;
+}
+
 unsigned long getNumThreads() {
     getNumThreadsCalled = true;
     return 1;

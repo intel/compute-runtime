@@ -19,8 +19,12 @@ class DriverImp : public Driver {
     ze_result_t driverInit(ze_init_flags_t flags) override;
 
     void initialize(ze_result_t *result) override;
+    unsigned int getPid() const override {
+        return pid;
+    }
 
   protected:
+    uint32_t pid = 0;
     std::once_flag initDriverOnce;
     static ze_result_t initStatus;
 };

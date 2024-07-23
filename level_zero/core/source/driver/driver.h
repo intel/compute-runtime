@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,8 @@ struct Driver {
     virtual void initialize(ze_result_t *result) = 0;
     static Driver *get() { return driver; }
     virtual ~Driver() = default;
+
+    virtual unsigned int getPid() const = 0;
 
   protected:
     static Driver *driver;

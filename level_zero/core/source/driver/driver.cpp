@@ -12,6 +12,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/pin/pin.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -23,6 +24,7 @@
 #include "log_manager.h"
 
 #include <memory>
+#include <mutex>
 #include <thread>
 
 namespace L0 {
@@ -33,6 +35,7 @@ uint32_t driverCount = 0;
 
 void DriverImp::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
+    pid = NEO::SysCalls::getCurrentProcessId();
 
     NEO::EnvironmentVariableReader envReader;
     L0EnvVariables envVariables = {};
@@ -133,13 +136,26 @@ ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandle
 
 static DriverImp driverImp;
 Driver *Driver::driver = &driverImp;
+std::mutex driverInitMutex;
 
 ze_result_t init(ze_init_flags_t flags) {
     if (flags && !(flags & ZE_INIT_FLAG_GPU_ONLY)) {
         L0::levelZeroDriverInitialized = false;
         return ZE_RESULT_ERROR_UNINITIALIZED;
     } else {
+        auto pid = NEO::SysCalls::getCurrentProcessId();
+
         ze_result_t result = Driver::get()->driverInit(flags);
+
+        if (Driver::get()->getPid() != pid) {
+            std::lock_guard<std::mutex> lock(driverInitMutex);
+
+            if (Driver::get()->getPid() != pid) {
+                ze_result_t result;
+                Driver::get()->initialize(&result);
+            }
+        }
+
         if (result == ZE_RESULT_SUCCESS) {
             L0::levelZeroDriverInitialized = true;
         } else {

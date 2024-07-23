@@ -227,6 +227,8 @@ void DriverHandleImp::updateRootDeviceBitFields(std::unique_ptr<NEO::Device> &ne
 
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
     bool multiOsContextDriver = false;
+    this->pid = NEO::SysCalls::getCurrentProcessId();
+
     for (auto &neoDevice : neoDevices) {
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
         if (!neoDevice->getHardwareInfo().capabilityTable.levelZeroSupported) {

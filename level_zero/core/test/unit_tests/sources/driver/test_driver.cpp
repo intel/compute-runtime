@@ -98,6 +98,28 @@ TEST(zeInit, whenCallingZeInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCalle
     EXPECT_EQ(0u, driver.initCalledCount);
 }
 
+TEST(zeInit, givenZeInitCalledWhenCallingZeInitInForkedProcessThenNewDriverIsInitialized) {
+    Mock<Driver> driver;
+
+    driver.pid = NEO::SysCalls::getCurrentProcessId();
+
+    auto result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // change pid in driver
+    driver.pid = NEO::SysCalls::getCurrentProcessId() - 1;
+
+    result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(levelZeroDriverInitialized);
+    EXPECT_EQ(2u, driver.initCalledCount);
+
+    // pid updated to current pid
+    auto expectedPid = NEO::SysCalls::getCurrentProcessId();
+    EXPECT_EQ(expectedPid, driver.pid);
+}
+
 using DriverHandleImpTest = Test<DeviceFixture>;
 TEST_F(DriverHandleImpTest, givenDriverImpWhenCallingupdateRootDeviceBitFieldsThendeviceBitfieldsAreUpdatedInAccordanceWithNeoDevice) {
     auto hwInfo = *NEO::defaultHwInfo;

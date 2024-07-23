@@ -144,6 +144,7 @@ struct DriverHandleImp : public DriverHandle {
     static const std::vector<std::pair<std::string, uint32_t>> extensionsSupported;
 
     uint64_t uuidTimestamp = 0u;
+    unsigned int pid = 0;
 
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;

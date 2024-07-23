@@ -45,6 +45,10 @@ unsigned int getProcessId() {
     return pid;
 }
 
+unsigned int getCurrentProcessId() {
+    return getpid();
+}
+
 unsigned long getNumThreads() {
     struct stat taskStat;
     if (stat("/proc/self/task", &taskStat) == 0) {

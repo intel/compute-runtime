@@ -32,6 +32,10 @@ unsigned int getProcessId() {
     return GetCurrentProcessId();
 }
 
+unsigned int getCurrentProcessId() {
+    return GetCurrentProcessId();
+}
+
 unsigned long getNumThreads() {
     return 1;
 }
