@@ -369,6 +369,10 @@ struct CommandList : _ze_command_list_handle_t {
         return taskCountUpdateFenceRequired;
     }
 
+    bool isStatelessBuiltinsEnabled() const {
+        return statelessBuiltinsEnabled;
+    }
+
     void registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr);
 
   protected:
@@ -458,6 +462,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool scratchAddressPatchingEnabled = false;
     bool taskCountUpdateFenceRequired = false;
     bool requiresDcFlushForDcMitigation = false;
+    bool statelessBuiltinsEnabled = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

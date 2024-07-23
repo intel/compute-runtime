@@ -255,6 +255,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     if (NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         this->defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
+    this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();
 
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
@@ -1472,10 +1473,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     uintptr_t leftSize = 0;
     uintptr_t rightSize = 0;
     uintptr_t middleSizeBytes = 0;
-    bool isStateless = this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless;
-    if (neoDevice->getCompilerProductHelper().isForceToStatelessRequired()) {
-        isStateless = true;
-    }
+    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
+
     const bool isHeapless = this->isHeaplessModeEnabled();
 
     if (!isCopyOnlyEnabled) {

@@ -306,6 +306,7 @@ struct WhiteBox<::L0::CommandListImp> : public ::L0::CommandListImp {
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
+    using BaseClass::statelessBuiltinsEnabled;
     using CommandList::flags;
     using CommandList::internalUsage;
     using CommandList::kernelWithAssertAppended;
