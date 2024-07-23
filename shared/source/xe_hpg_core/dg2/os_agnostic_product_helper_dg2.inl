@@ -169,7 +169,7 @@ uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const Hardwa
     UNRECOVERABLE_IF(highestEnabledSlice == 0);
     UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MaxSlicesSupported == 0);
     auto subSlicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
-    auto maxSubSlice = highestEnabledSlice * subSlicesPerSlice;
+    auto maxSubSlice = std::max(highestEnabledSlice * subSlicesPerSlice, hwInfo.gtSystemInfo.MaxSubSlicesSupported);
 
     return maxSubSlice;
 }

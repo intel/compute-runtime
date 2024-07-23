@@ -676,6 +676,8 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2WhenSetForceNonCoherentThenProperFlagSet
 DG2TEST_F(ProductHelperTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeUnitsUsedForScratchThenProperCalculationIsReturned) {
     HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
+    testSysInfo.MaxSlicesSupported = 2;
+    testSysInfo.SliceCount = 2;
     testSysInfo.IsDynamicallyPopulated = true;
     for (auto &sliceInfo : testSysInfo.SliceInfo) {
         sliceInfo.Enabled = false;

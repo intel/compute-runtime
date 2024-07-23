@@ -991,3 +991,23 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenItsPreXe2ThenCacheLineSizeIs6
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenItsXe2PlusThenCacheLineSizeIs256Bytes, IsAtLeastBmg) {
     EXPECT_EQ(productHelper->getCacheLineSize(), 256u);
 }
+
+TEST_F(ProductHelperTest, whenGettingMaxSubSliceSpaceThenValueIsNotSmallerThanMaxSubSliceCount) {
+    constexpr auto maxSupportedSubSlices = 128u;
+    auto hwInfo = *defaultHwInfo;
+    auto &gtSystemInfo = hwInfo.gtSystemInfo;
+    gtSystemInfo.SliceCount = 1;
+    gtSystemInfo.SubSliceCount = 2;
+    gtSystemInfo.DualSubSliceCount = 2;
+
+    gtSystemInfo.MaxSlicesSupported = 2;
+    gtSystemInfo.MaxSlicesSupported = 2;
+    gtSystemInfo.MaxSubSlicesSupported = maxSupportedSubSlices;
+    gtSystemInfo.MaxDualSubSlicesSupported = maxSupportedSubSlices;
+
+    gtSystemInfo.IsDynamicallyPopulated = true;
+    for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
+        gtSystemInfo.SliceInfo[slice].Enabled = slice < gtSystemInfo.SliceCount;
+    }
+    EXPECT_EQ(maxSupportedSubSlices, productHelper->computeMaxNeededSubSliceSpace(hwInfo));
+}
