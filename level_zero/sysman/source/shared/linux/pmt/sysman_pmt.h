@@ -30,19 +30,21 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
 
     virtual ze_result_t readValue(const std::string key, uint32_t &value);
     virtual ze_result_t readValue(const std::string key, uint64_t &value);
-    std::string getGuid();
     static ze_result_t enumerateRootTelemIndex(FsAccessInterface *pFsAccess, std::string &gpuUpstreamPortPath);
     static void create(LinuxSysmanImp *pLinuxSysmanImp, std::string &gpuUpstreamPortPath,
                        std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject);
     static ze_result_t getKeyOffsetMap(SysmanProductHelper *pSysmanProductHelper, std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
     static bool getTelemOffsetAndTelemDir(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &telemOffset, std::string &telemDir);
+    static bool getTelemOffsetAndTelemDirForTileAggregator(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &telemOffset, std::string &telemDir, uint32_t subdeviceId);
     static bool getTelemOffsetForContainer(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset);
+    static bool getTelemNodes(LinuxSysmanImp *pLinuxSysmanImp, std::map<uint32_t, std::string> &telemNodes);
+    static bool readValue(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset, uint32_t &value);
+    static bool readValue(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset, uint64_t &value);
 
   protected:
     static uint32_t rootDeviceTelemNodeIndex;
     std::string telemetryDeviceEntry{};
     std::map<std::string, uint64_t> keyOffsetMap;
-    std::string guid;
     ze_result_t init(LinuxSysmanImp *pLinuxSysmanImp, const std::string &gpuUpstreamPortPath);
     static void doInitPmtObject(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId, PlatformMonitoringTech *pPmt, const std::string &gpuUpstreamPortPath,
                                 std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject);

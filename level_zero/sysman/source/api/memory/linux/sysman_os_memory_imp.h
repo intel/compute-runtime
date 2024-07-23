@@ -19,7 +19,6 @@ class Drm;
 namespace L0 {
 namespace Sysman {
 
-class PlatformMonitoringTech;
 class LinuxSysmanImp;
 class SysmanKmdInterface;
 struct SysmanDeviceImp;
@@ -38,7 +37,6 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     NEO::Drm *pDrm = nullptr;
     SysmanDeviceImp *pDevice = nullptr;
-    PlatformMonitoringTech *pPmt = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
 
   private:

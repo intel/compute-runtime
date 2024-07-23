@@ -80,6 +80,10 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     std::string gtDevicePath;
     SysmanKmdInterface *getSysmanKmdInterface() { return pSysmanKmdInterface.get(); }
     static ze_result_t getResult(int err);
+    void addTelemNodes(std::map<uint32_t, std::string> telemNodes);
+    bool getTelemNodes(std::map<uint32_t, std::string> &telemNodes);
+    void addTelemOffsetAndDirPair(uint32_t subdeviceId, std::pair<uint64_t, std::string> pairTelemOffsetAndDir);
+    bool getTelemOffsetAndDir(uint32_t subdeviceId, uint64_t &telemOffset, std::string &telemDir);
 
   protected:
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
@@ -94,6 +98,8 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     std::string rootPath;
     void releaseFwUtilInterface();
     uint32_t memType = unknownMemoryType;
+    std::map<uint32_t, std::pair<uint64_t, std::string>> mapOfSubDeviceIdToTelemOffsetAndDirPair;
+    std::map<uint32_t, std::string> telemNodesInPCIPath;
 
   private:
     LinuxSysmanImp() = delete;

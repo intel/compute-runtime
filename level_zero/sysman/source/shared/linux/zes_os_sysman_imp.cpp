@@ -543,6 +543,32 @@ uint32_t LinuxSysmanImp::getMemoryType() {
     return memType;
 }
 
+void LinuxSysmanImp::addTelemOffsetAndDirPair(uint32_t subdeviceId, std::pair<uint64_t, std::string> pairTelemOffsetAndDir) {
+    mapOfSubDeviceIdToTelemOffsetAndDirPair[subdeviceId] = pairTelemOffsetAndDir;
+}
+
+bool LinuxSysmanImp::getTelemOffsetAndDir(uint32_t subdeviceId, uint64_t &telemOffset, std::string &telemDir) {
+
+    if (mapOfSubDeviceIdToTelemOffsetAndDirPair.find(subdeviceId) != mapOfSubDeviceIdToTelemOffsetAndDirPair.end()) {
+        telemOffset = mapOfSubDeviceIdToTelemOffsetAndDirPair[subdeviceId].first;
+        telemDir = mapOfSubDeviceIdToTelemOffsetAndDirPair[subdeviceId].second;
+        return true;
+    }
+    return false;
+}
+
+void LinuxSysmanImp::addTelemNodes(std::map<uint32_t, std::string> telemNodes) {
+    telemNodesInPCIPath = telemNodes;
+}
+
+bool LinuxSysmanImp::getTelemNodes(std::map<uint32_t, std::string> &telemNodes) {
+    if (telemNodesInPCIPath.empty()) {
+        return false;
+    }
+    telemNodes = telemNodesInPCIPath;
+    return true;
+}
+
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {
     LinuxSysmanImp *pLinuxSysmanImp = new LinuxSysmanImp(pParentSysmanDeviceImp);
     return static_cast<OsSysman *>(pLinuxSysmanImp);

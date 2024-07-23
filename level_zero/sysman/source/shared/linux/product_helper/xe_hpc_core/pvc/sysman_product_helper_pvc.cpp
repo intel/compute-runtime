@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/linux/pmt_util.h"
+
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -145,21 +147,19 @@ void getHBMFrequency(SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterfa
     }
 }
 
-ze_result_t getVFIDString(std::string &vfID, PlatformMonitoringTech *pPmt) {
+ze_result_t getVFIDString(SysmanProductHelper *pSysmanProductHelper, std::string &vfID, std::string telemDir, uint64_t telemOffset) {
     uint32_t vf0VfIdVal = 0;
     std::string key = "VF0_VFID";
-    auto result = pPmt->readValue(key, vf0VfIdVal);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF0_VFID is returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, key, telemOffset, vf0VfIdVal)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF0_VFID is returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     uint32_t vf1VfIdVal = 0;
     key = "VF1_VFID";
-    result = pPmt->readValue(key, vf1VfIdVal);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF1_VFID is returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, key, telemOffset, vf1VfIdVal)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for VF1_VFID is returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     if (((vf0VfIdVal == 0) && (vf1VfIdVal == 0)) ||
@@ -174,17 +174,19 @@ ze_result_t getVFIDString(std::string &vfID, PlatformMonitoringTech *pPmt) {
     if (vf1VfIdVal > 0) {
         vfID = "VF1";
     }
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringTech *pPmt, SysmanKmdInterface *pSysmanKmdInterface, SysFsAccessInterface *pSysFsAccess, uint32_t subdeviceId, unsigned short stepping) {
+ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, std::string telemDir, uint64_t telemOffset, uint32_t subdeviceId, unsigned short stepping) {
+
     pBandwidth->readCounter = 0;
     pBandwidth->writeCounter = 0;
     pBandwidth->timestamp = 0;
     pBandwidth->maxBandwidth = 0;
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     std::string vfId = "";
-    result = getVFIDString(vfId, pPmt);
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    result = getVFIDString(pSysmanProductHelper, vfId, telemDir, telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
         return result;
@@ -193,19 +195,17 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringT
     for (auto hbmModuleIndex = 0u; hbmModuleIndex < numHbmModules; hbmModuleIndex++) {
         uint32_t counterValue = 0;
         std::string readCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_READ";
-        result = pPmt->readValue(readCounterKey, counterValue);
-        if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
-            return result;
+        if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, readCounterKey, telemOffset, counterValue)) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         pBandwidth->readCounter += counterValue;
 
         counterValue = 0;
         std::string writeCounterKey = vfId + "_HBM" + std::to_string(hbmModuleIndex) + "_WRITE";
-        result = pPmt->readValue(writeCounterKey, counterValue);
-        if (result != ZE_RESULT_SUCCESS) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterKey returning error:0x%x \n", __FUNCTION__, result);
-            return result;
+        if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, writeCounterKey, telemOffset, counterValue)) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterKey returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         pBandwidth->writeCounter += counterValue;
     }
@@ -216,21 +216,38 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringT
     pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
 
     uint64_t hbmFrequency = 0;
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
     getHBMFrequency(pSysmanKmdInterface, pSysFsAccess, hbmFrequency, subdeviceId, stepping);
-
     pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numHbmModules;
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringTech *pPmt, SysmanDeviceImp *pDevice, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subdeviceId) {
-    auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
+ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
+
+    auto pDevice = pLinuxSysmanImp->getSysmanDeviceImp();
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
     auto stepping = productHelper.getSteppingFromHwRevId(hwInfo);
+    std::string telemDir = "";
+    uint64_t telemOffset = 0;
 
-    std::string guid = pPmt->getGuid();
+    if (!pLinuxSysmanImp->getTelemOffsetAndDir(subdeviceId, telemOffset, telemDir)) {
+        if (!PlatformMonitoringTech::getTelemOffsetAndTelemDirForTileAggregator(pLinuxSysmanImp, telemOffset, telemDir, subdeviceId)) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        pLinuxSysmanImp->addTelemOffsetAndDirPair(subdeviceId, std::make_pair(telemOffset, telemDir));
+    }
+
+    std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+    if (!NEO::PmtUtil::readGuid(telemDir, guidString)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read GUID from %s \n", __FUNCTION__, telemDir.c_str());
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+
+    std::string guid = guidString.data();
     if (guid != guid64BitMemoryCounters) {
-        return getHBMBandwidth(pBandwidth, pPmt, pSysmanKmdInterface, pSysFsAccess, subdeviceId, stepping);
+        return getHBMBandwidth(pBandwidth, pLinuxSysmanImp, telemDir, telemOffset, subdeviceId, stepping);
     }
 
     pBandwidth->readCounter = 0;
@@ -241,7 +258,8 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringT
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     std::string vfId = "";
 
-    result = getVFIDString(vfId, pPmt);
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    result = getVFIDString(pSysmanProductHelper, vfId, telemDir, telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():getVFIDString returning error:0x%x while retriving VFID string \n", __FUNCTION__, result);
         return result;
@@ -249,18 +267,16 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringT
 
     uint32_t readCounterL = 0;
     std::string readCounterKey = vfId + "_HBM_READ_L";
-    result = pPmt->readValue(readCounterKey, readCounterL);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterL returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, readCounterKey, telemOffset, readCounterL)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterL returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     uint32_t readCounterH = 0;
     readCounterKey = vfId + "_HBM_READ_H";
-    result = pPmt->readValue(readCounterKey, readCounterH);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterH returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, readCounterKey, telemOffset, readCounterH)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterH returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     constexpr uint64_t transactionSize = 32;
@@ -270,18 +286,16 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringT
 
     uint32_t writeCounterL = 0;
     std::string writeCounterKey = vfId + "_HBM_WRITE_L";
-    result = pPmt->readValue(writeCounterKey, writeCounterL);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterL returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, writeCounterKey, telemOffset, writeCounterL)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterL returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     uint32_t writeCounterH = 0;
     writeCounterKey = vfId + "_HBM_WRITE_H";
-    result = pPmt->readValue(writeCounterKey, writeCounterH);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterH returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, writeCounterKey, telemOffset, writeCounterH)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for writeCounterH returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     pBandwidth->writeCounter = writeCounterH;
@@ -290,15 +304,16 @@ ze_result_t getHBMBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringT
     pBandwidth->timestamp = SysmanDevice::getSysmanTimestamp();
 
     uint64_t hbmFrequency = 0;
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
     getHBMFrequency(pSysmanKmdInterface, pSysFsAccess, hbmFrequency, subdeviceId, stepping);
-
     pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numHbmModules;
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringTech *pPmt, SysmanDeviceImp *pDevice, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subdeviceId) {
-    return getHBMBandwidth(pBandwidth, pPmt, pDevice, pSysmanKmdInterface, subdeviceId);
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
+    return getHBMBandwidth(pBandwidth, pLinuxSysmanImp, subdeviceId);
 }
 
 template <>

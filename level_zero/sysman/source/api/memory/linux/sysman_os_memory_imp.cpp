@@ -16,7 +16,6 @@
 
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
-#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
@@ -29,19 +28,14 @@ ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
 }
 
 ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
-    if (pPmt == nullptr) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-    return pSysmanProductHelper->getMemoryBandwidth(pBandwidth, pPmt, pDevice, pSysmanKmdInterface, subdeviceId);
+    return pSysmanProductHelper->getMemoryBandwidth(pBandwidth, pLinuxSysmanImp, subdeviceId);
 }
 
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     pState->health = ZES_MEM_HEALTH_UNKNOWN;
     FirmwareUtil *pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
-    // get memory health indicator if supported
     auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     pSysmanProductHelper->getMemoryHealthIndicator(pFwInterface, &pState->health);
 
@@ -70,7 +64,6 @@ LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint3
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = pLinuxSysmanImp->getDrm();
     pDevice = pLinuxSysmanImp->getSysmanDeviceImp();
-    pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
 }
 

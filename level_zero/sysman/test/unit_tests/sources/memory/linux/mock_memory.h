@@ -20,50 +20,74 @@
 
 using namespace NEO;
 
+constexpr uint64_t transactionSize = 32;
 constexpr uint64_t hbmRP0Frequency = 4200;
 constexpr uint64_t mockMaxBwDg2 = 1343616u;
 
-constexpr uint32_t vF0HbmLRead = 16;
-constexpr uint32_t vF0HbmHRead = 2;
-constexpr uint32_t vF0HbmLWrite = 8;
-constexpr uint32_t vF0HbmHWrite = 2;
-constexpr uint32_t vF1HbmLRead = 16;
-constexpr uint32_t vF1HbmHRead = 2;
-constexpr uint32_t vF1HbmLWrite = 8;
-constexpr uint32_t vF1HbmHWrite = 2;
+constexpr uint32_t vFHbmLRead = 16;
+constexpr uint32_t vFHbmHRead = 2;
+constexpr uint32_t vFHbmLWrite = 8;
+constexpr uint32_t vFHbmHWrite = 2;
 
-constexpr uint8_t vF0Hbm0ReadValue = 92;
-constexpr uint8_t vF0Hbm0WriteValue = 96;
-constexpr uint8_t vF0Hbm1ReadValue = 104;
-constexpr uint8_t vF0Hbm1WriteValue = 108;
-constexpr uint8_t vF0TimestampLValue = 168;
-constexpr uint8_t vF0TimestampHValue = 172;
-constexpr uint8_t vF0Hbm2ReadValue = 113;
-constexpr uint8_t vF0Hbm2WriteValue = 125;
-constexpr uint8_t vF0Hbm3ReadValue = 135;
-constexpr uint8_t vF0Hbm3WriteValue = 20;
+constexpr uint32_t vF0Vfid = 88;
+constexpr uint32_t vF1Vfid = 176;
+constexpr uint32_t vF0HbmReadL = 384;
+constexpr uint32_t vF0HbmReadH = 388;
+constexpr uint32_t vF0HbmWriteL = 392;
+constexpr uint32_t vF0HbmWriteH = 396;
 
-constexpr uint8_t vF1Hbm0ReadValue = 92;
-constexpr uint8_t vF1Hbm0WriteValue = 96;
-constexpr uint8_t vF1Hbm1ReadValue = 104;
-constexpr uint8_t vF1Hbm1WriteValue = 108;
-constexpr uint8_t vF1TimestampLValue = 168;
-constexpr uint8_t vF1TimestampHValue = 172;
-constexpr uint8_t vF1Hbm2ReadValue = 113;
-constexpr uint8_t vF1Hbm2WriteValue = 125;
-constexpr uint8_t vF1Hbm3ReadValue = 135;
-constexpr uint8_t vF1Hbm3WriteValue = 20;
+constexpr uint32_t vF1HbmReadL = 400;
+constexpr uint32_t vF1HbmReadH = 404;
+constexpr uint32_t vF1HbmWriteL = 408;
+constexpr uint32_t vF1HbmWriteH = 412;
+
+constexpr uint32_t vF0Hbm0Read = 92;
+constexpr uint32_t vF0Hbm0Write = 96;
+constexpr uint32_t vF0Hbm1Read = 104;
+constexpr uint32_t vF0Hbm1Write = 108;
+constexpr uint32_t vF0Hbm2Read = 312;
+constexpr uint32_t vF0Hbm2Write = 316;
+constexpr uint32_t vF0Hbm3Read = 328;
+constexpr uint32_t vF0Hbm3Write = 332;
+
+constexpr uint32_t vFHbm0ReadValue = 92;
+constexpr uint32_t vFHbm0WriteValue = 96;
+constexpr uint32_t vFHbm1ReadValue = 104;
+constexpr uint32_t vFHbm1WriteValue = 108;
+constexpr uint32_t vFHbm2ReadValue = 113;
+constexpr uint32_t vFHbm2WriteValue = 125;
+constexpr uint32_t vFHbm3ReadValue = 135;
+constexpr uint32_t vFHbm3WriteValue = 20;
+
+constexpr uint32_t minIdiReadOffset = 1096;
+constexpr uint32_t minIdiWriteOffset = 1224;
+constexpr uint32_t minDisplayVc1ReadOffset = 1352;
+
 constexpr uint64_t mockIdiReadVal = 8u;
 constexpr uint64_t mockIdiWriteVal = 9u;
 constexpr uint64_t mockDisplayVc1ReadVal = 10u;
 constexpr uint64_t numberMcChannels = 16;
-constexpr uint64_t transactionSize = 32;
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
 
 const std::string deviceMemoryHealth("device_memory_health");
+const std::string telem1NodeName("/sys/class/intel_pmt/telem1");
+const std::string telem2NodeName("/sys/class/intel_pmt/telem2");
+const std::string telem3NodeName("/sys/class/intel_pmt/telem3");
+const std::string telem1OffsetFileName("/sys/class/intel_pmt/telem1/offset");
+const std::string telem1GuidFileName("/sys/class/intel_pmt/telem1/guid");
+const std::string telem1TelemFileName("/sys/class/intel_pmt/telem1/telem");
+const std::string telem2OffsetFileName("/sys/class/intel_pmt/telem2/offset");
+const std::string telem2GuidFileName("/sys/class/intel_pmt/telem2/guid");
+const std::string telem2TelemFileName("/sys/class/intel_pmt/telem2/telem");
+const std::string telem3OffsetFileName("/sys/class/intel_pmt/telem3/offset");
+const std::string telem3GuidFileName("/sys/class/intel_pmt/telem3/guid");
+const std::string telem3TelemFileName("/sys/class/intel_pmt/telem3/telem");
+const std::string hbmFreqFilePath("gt/gt0/mem_RP0_freq_mhz");
+const std::string hbmFreqFilePath2("gt/gt1/mem_RP0_freq_mhz");
+const std::string maxBwFileName("prelim_lmem_max_bw_Mbps");
 
 struct MockMemoryNeoDrm : public NEO::Drm {
     using Drm::ioctlHelper;
@@ -101,198 +125,6 @@ struct MockMemoryNeoDrm : public NEO::Drm {
         std::vector<uint32_t> inputBlobData(reinterpret_cast<uint32_t *>(hwBlob), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob, sizeof(hwBlob))));
         this->systemInfo.reset(new SystemInfo(inputBlobData));
         return returnValue;
-    }
-};
-
-struct MockMemoryPmt : public L0::Sysman::PlatformMonitoringTech {
-    using L0::Sysman::PlatformMonitoringTech::guid;
-    using L0::Sysman::PlatformMonitoringTech::keyOffsetMap;
-    std::vector<ze_result_t> mockReadValueReturnStatus{};
-    std::vector<uint32_t> mockReadArgumentValue{};
-    ze_result_t mockIdiReadValueFailureReturnStatus = ZE_RESULT_SUCCESS;
-    ze_result_t mockIdiWriteFailureReturnStatus = ZE_RESULT_SUCCESS;
-    ze_result_t mockDisplayVc1ReadFailureReturnStatus = ZE_RESULT_SUCCESS;
-    ze_result_t mockReadTimeStampFailureReturnStatus = ZE_RESULT_SUCCESS;
-    bool mockVfid0Status = false;
-    bool mockVfid1Status = false;
-    bool isRepeated = false;
-
-    void setGuid(std::string guid) {
-        this->guid = guid;
-    }
-
-    MockMemoryPmt() = default;
-    ze_result_t readValue(const std::string key, uint32_t &val) override {
-        ze_result_t result = ZE_RESULT_SUCCESS;
-
-        if (mockVfid0Status == true) {
-            return mockedReadValueWithVfid0True(key, val);
-        }
-
-        if (mockVfid1Status == true) {
-            return mockedReadValueWithVfid1True(key, val);
-        }
-
-        if (!mockReadValueReturnStatus.empty()) {
-            result = mockReadValueReturnStatus.front();
-            if (!mockReadArgumentValue.empty()) {
-                val = mockReadArgumentValue.front();
-            }
-
-            if (isRepeated != true) {
-                mockReadValueReturnStatus.erase(mockReadValueReturnStatus.begin());
-                if (!mockReadArgumentValue.empty()) {
-                    mockReadArgumentValue.erase(mockReadArgumentValue.begin());
-                }
-            }
-        }
-        return result;
-    }
-
-    ze_result_t mockedReadValueWithVfid0True(const std::string key, uint32_t &val) {
-        if (key.compare("VF0_VFID") == 0) {
-            val = 1;
-        } else if (key.compare("VF1_VFID") == 0) {
-            val = 0;
-        } else if (key.compare("VF0_HBM0_READ") == 0) {
-            val = vF0Hbm0ReadValue;
-        } else if (key.compare("VF0_HBM0_WRITE") == 0) {
-            val = vF0Hbm0WriteValue;
-        } else if (key.compare("VF0_HBM1_READ") == 0) {
-            val = vF0Hbm1ReadValue;
-        } else if (key.compare("VF0_HBM1_WRITE") == 0) {
-            val = vF0Hbm1WriteValue;
-        } else if (key.compare("VF0_TIMESTAMP_L") == 0) {
-            val = vF0TimestampLValue;
-        } else if (key.compare("VF0_TIMESTAMP_H") == 0) {
-            val = vF0TimestampHValue;
-        } else if (key.compare("VF0_HBM2_READ") == 0) {
-            val = vF0Hbm2ReadValue;
-        } else if (key.compare("VF0_HBM2_WRITE") == 0) {
-            val = vF0Hbm2WriteValue;
-        } else if (key.compare("VF0_HBM3_READ") == 0) {
-            val = vF0Hbm3ReadValue;
-        } else if (key.compare("VF0_HBM3_WRITE") == 0) {
-            val = vF0Hbm3WriteValue;
-        } else if (key.compare("VF0_HBM_READ_L") == 0) {
-            val = vF0HbmLRead;
-        } else if (key.compare("VF0_HBM_READ_H") == 0) {
-            val = vF0HbmHRead;
-        } else if (key.compare("VF0_HBM_WRITE_L") == 0) {
-            val = vF0HbmLWrite;
-        } else if (key.compare("VF0_HBM_WRITE_H") == 0) {
-            val = vF0HbmHWrite;
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t mockedReadValueWithVfid1True(const std::string key, uint32_t &val) {
-        if (key.compare("VF0_VFID") == 0) {
-            val = 0;
-        } else if (key.compare("VF1_VFID") == 0) {
-            val = 1;
-        } else if (key.compare("VF1_HBM0_READ") == 0) {
-            val = vF1Hbm0ReadValue;
-        } else if (key.compare("VF1_HBM0_WRITE") == 0) {
-            val = vF1Hbm0WriteValue;
-        } else if (key.compare("VF1_HBM1_READ") == 0) {
-            val = vF1Hbm1ReadValue;
-        } else if (key.compare("VF1_HBM1_WRITE") == 0) {
-            val = vF1Hbm1WriteValue;
-        } else if (key.compare("VF1_TIMESTAMP_L") == 0) {
-            val = vF1TimestampLValue;
-        } else if (key.compare("VF1_TIMESTAMP_H") == 0) {
-            val = vF1TimestampHValue;
-        } else if (key.compare("VF1_HBM2_READ") == 0) {
-            val = vF1Hbm2ReadValue;
-        } else if (key.compare("VF1_HBM2_WRITE") == 0) {
-            val = vF1Hbm2WriteValue;
-        } else if (key.compare("VF1_HBM3_READ") == 0) {
-            val = vF1Hbm3ReadValue;
-        } else if (key.compare("VF1_HBM3_WRITE") == 0) {
-            val = vF1Hbm3WriteValue;
-        } else if (key.compare("VF1_HBM_READ_L") == 0) {
-            val = vF1HbmLRead;
-        } else if (key.compare("VF1_HBM_READ_H") == 0) {
-            val = vF1HbmHRead;
-        } else if (key.compare("VF1_HBM_WRITE_L") == 0) {
-            val = vF1HbmLWrite;
-        } else if (key.compare("VF1_HBM_WRITE_H") == 0) {
-            val = vF1HbmHWrite;
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t readValue(const std::string key, uint64_t &val) override {
-        ze_result_t result = ZE_RESULT_SUCCESS;
-
-        if (mockIdiReadValueFailureReturnStatus != ZE_RESULT_SUCCESS) {
-            return mockIdiReadValueFailure(key, val);
-        }
-
-        if (mockIdiWriteFailureReturnStatus != ZE_RESULT_SUCCESS) {
-            return mockIdiWriteFailure(key, val);
-        }
-
-        if (mockDisplayVc1ReadFailureReturnStatus != ZE_RESULT_SUCCESS) {
-            return mockDisplayVc1ReadFailure(key, val);
-        }
-
-        if (mockReadTimeStampFailureReturnStatus != ZE_RESULT_SUCCESS) {
-            return mockReadTimeStampFailure(key, val);
-        }
-
-        if (key.compare("IDI_READS[0]") == 0 || key.compare("IDI_READS[1]") == 0 || key.compare("IDI_READS[2]") == 0 || key.compare("IDI_READS[3]") == 0 || key.compare("IDI_READS[4]") == 0 || key.compare("IDI_READS[5]") == 0 || key.compare("IDI_READS[6]") == 0 || key.compare("IDI_READS[7]") == 0 || key.compare("IDI_READS[8]") == 0 || key.compare("IDI_READS[9]") == 0 || key.compare("IDI_READS[10]") == 0 || key.compare("IDI_READS[11]") == 0 || key.compare("IDI_READS[12]") == 0 || key.compare("IDI_READS[13]") == 0 || key.compare("IDI_READS[14]") == 0 || key.compare("IDI_READS[15]") == 0) {
-            val = mockIdiReadVal;
-        } else if (key.compare("IDI_WRITES[0]") == 0 || key.compare("IDI_WRITES[1]") == 0 || key.compare("IDI_WRITES[2]") == 0 || key.compare("IDI_WRITES[3]") == 0 || key.compare("IDI_WRITES[4]") == 0 || key.compare("IDI_WRITES[5]") == 0 || key.compare("IDI_WRITES[6]") == 0 || key.compare("IDI_WRITES[7]") == 0 || key.compare("IDI_WRITES[8]") == 0 || key.compare("IDI_WRITES[9]") == 0 || key.compare("IDI_WRITES[10]") == 0 || key.compare("IDI_WRITES[11]") == 0 || key.compare("IDI_WRITES[12]") == 0 || key.compare("IDI_WRITES[13]") == 0 || key.compare("IDI_WRITES[14]") == 0 || key.compare("IDI_WRITES[15]") == 0) {
-            val = mockIdiWriteVal;
-        } else if (key.compare("DISPLAY_VC1_READS[0]") == 0 || key.compare("DISPLAY_VC1_READS[1]") == 0 || key.compare("DISPLAY_VC1_READS[2]") == 0 || key.compare("DISPLAY_VC1_READS[3]") == 0 || key.compare("DISPLAY_VC1_READS[4]") == 0 || key.compare("DISPLAY_VC1_READS[5]") == 0 || key.compare("DISPLAY_VC1_READS[6]") == 0 || key.compare("DISPLAY_VC1_READS[7]") == 0 || key.compare("DISPLAY_VC1_READS[8]") == 0 || key.compare("DISPLAY_VC1_READS[9]") == 0 || key.compare("DISPLAY_VC1_READS[10]") == 0 || key.compare("DISPLAY_VC1_READS[11]") == 0 || key.compare("DISPLAY_VC1_READS[12]") == 0 || key.compare("DISPLAY_VC1_READS[13]") == 0 || key.compare("DISPLAY_VC1_READS[14]") == 0 || key.compare("DISPLAY_VC1_READS[15]") == 0) {
-            val = mockDisplayVc1ReadVal;
-        } else {
-            result = ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return result;
-    }
-
-    ze_result_t mockIdiReadValueFailure(const std::string key, uint64_t &val) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    ze_result_t mockIdiWriteFailure(const std::string key, uint64_t &val) {
-        if (key.compare("IDI_READS[0]") == 0 || key.compare("IDI_READS[1]") == 0 || key.compare("IDI_READS[2]") == 0 || key.compare("IDI_READS[3]") == 0 || key.compare("IDI_READS[4]") == 0 || key.compare("IDI_READS[5]") == 0 || key.compare("IDI_READS[6]") == 0 || key.compare("IDI_READS[7]") == 0 || key.compare("IDI_READS[8]") == 0 || key.compare("IDI_READS[9]") == 0 || key.compare("IDI_READS[10]") == 0 || key.compare("IDI_READS[11]") == 0 || key.compare("IDI_READS[12]") == 0 || key.compare("IDI_READS[13]") == 0 || key.compare("IDI_READS[14]") == 0 || key.compare("IDI_READS[15]") == 0) {
-            val = mockIdiReadVal;
-        } else if (key.compare("IDI_WRITES[0]") == 0 || key.compare("IDI_WRITES[1]") == 0 || key.compare("IDI_WRITES[2]") == 0 || key.compare("IDI_WRITES[3]") == 0 || key.compare("IDI_WRITES[4]") == 0 || key.compare("IDI_WRITES[5]") == 0 || key.compare("IDI_WRITES[6]") == 0 || key.compare("IDI_WRITES[7]") == 0 || key.compare("IDI_WRITES[8]") == 0 || key.compare("IDI_WRITES[9]") == 0 || key.compare("IDI_WRITES[10]") == 0 || key.compare("IDI_WRITES[11]") == 0 || key.compare("IDI_WRITES[12]") == 0 || key.compare("IDI_WRITES[13]") == 0 || key.compare("IDI_WRITES[14]") == 0 || key.compare("IDI_WRITES[15]") == 0) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t mockDisplayVc1ReadFailure(const std::string key, uint64_t &val) {
-        if (key.compare("IDI_READS[0]") == 0 || key.compare("IDI_READS[1]") == 0 || key.compare("IDI_READS[2]") == 0 || key.compare("IDI_READS[3]") == 0 || key.compare("IDI_READS[4]") == 0 || key.compare("IDI_READS[5]") == 0 || key.compare("IDI_READS[6]") == 0 || key.compare("IDI_READS[7]") == 0 || key.compare("IDI_READS[8]") == 0 || key.compare("IDI_READS[9]") == 0 || key.compare("IDI_READS[10]") == 0 || key.compare("IDI_READS[11]") == 0 || key.compare("IDI_READS[12]") == 0 || key.compare("IDI_READS[13]") == 0 || key.compare("IDI_READS[14]") == 0 || key.compare("IDI_READS[15]") == 0) {
-            val = mockIdiReadVal;
-        } else if (key.compare("IDI_WRITES[0]") == 0 || key.compare("IDI_WRITES[1]") == 0 || key.compare("IDI_WRITES[2]") == 0 || key.compare("IDI_WRITES[3]") == 0 || key.compare("IDI_WRITES[4]") == 0 || key.compare("IDI_WRITES[5]") == 0 || key.compare("IDI_WRITES[6]") == 0 || key.compare("IDI_WRITES[7]") == 0 || key.compare("IDI_WRITES[8]") == 0 || key.compare("IDI_WRITES[9]") == 0 || key.compare("IDI_WRITES[10]") == 0 || key.compare("IDI_WRITES[11]") == 0 || key.compare("IDI_WRITES[12]") == 0 || key.compare("IDI_WRITES[13]") == 0 || key.compare("IDI_WRITES[14]") == 0 || key.compare("IDI_WRITES[15]") == 0) {
-            val = mockIdiWriteVal;
-        } else if (key.compare("DISPLAY_VC1_READS[0]") == 0 || key.compare("DISPLAY_VC1_READS[1]") == 0 || key.compare("DISPLAY_VC1_READS[2]") == 0 || key.compare("DISPLAY_VC1_READS[3]") == 0 || key.compare("DISPLAY_VC1_READS[4]") == 0 || key.compare("DISPLAY_VC1_READS[5]") == 0 || key.compare("DISPLAY_VC1_READS[6]") == 0 || key.compare("DISPLAY_VC1_READS[7]") == 0 || key.compare("DISPLAY_VC1_READS[8]") == 0 || key.compare("DISPLAY_VC1_READS[9]") == 0 || key.compare("DISPLAY_VC1_READS[10]") == 0 || key.compare("DISPLAY_VC1_READS[11]") == 0 || key.compare("DISPLAY_VC1_READS[12]") == 0 || key.compare("DISPLAY_VC1_READS[13]") == 0 || key.compare("DISPLAY_VC1_READS[14]") == 0 || key.compare("DISPLAY_VC1_READS[15]") == 0) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t mockReadTimeStampFailure(const std::string key, uint64_t &val) {
-        if (key.compare("IDI_READS[0]") == 0 || key.compare("IDI_READS[1]") == 0 || key.compare("IDI_READS[2]") == 0 || key.compare("IDI_READS[3]") == 0 || key.compare("IDI_READS[4]") == 0 || key.compare("IDI_READS[5]") == 0 || key.compare("IDI_READS[6]") == 0 || key.compare("IDI_READS[7]") == 0 || key.compare("IDI_READS[8]") == 0 || key.compare("IDI_READS[9]") == 0 || key.compare("IDI_READS[10]") == 0 || key.compare("IDI_READS[11]") == 0 || key.compare("IDI_READS[12]") == 0 || key.compare("IDI_READS[13]") == 0 || key.compare("IDI_READS[14]") == 0 || key.compare("IDI_READS[15]") == 0) {
-            val = mockIdiReadVal;
-        } else if (key.compare("IDI_WRITES[0]") == 0 || key.compare("IDI_WRITES[1]") == 0 || key.compare("IDI_WRITES[2]") == 0 || key.compare("IDI_WRITES[3]") == 0 || key.compare("IDI_WRITES[4]") == 0 || key.compare("IDI_WRITES[5]") == 0 || key.compare("IDI_WRITES[6]") == 0 || key.compare("IDI_WRITES[7]") == 0 || key.compare("IDI_WRITES[8]") == 0 || key.compare("IDI_WRITES[9]") == 0 || key.compare("IDI_WRITES[10]") == 0 || key.compare("IDI_WRITES[11]") == 0 || key.compare("IDI_WRITES[12]") == 0 || key.compare("IDI_WRITES[13]") == 0 || key.compare("IDI_WRITES[14]") == 0 || key.compare("IDI_WRITES[15]") == 0) {
-            val = mockIdiWriteVal;
-        } else if (key.compare("DISPLAY_VC1_READS[0]") == 0 || key.compare("DISPLAY_VC1_READS[1]") == 0 || key.compare("DISPLAY_VC1_READS[2]") == 0 || key.compare("DISPLAY_VC1_READS[3]") == 0 || key.compare("DISPLAY_VC1_READS[4]") == 0 || key.compare("DISPLAY_VC1_READS[5]") == 0 || key.compare("DISPLAY_VC1_READS[6]") == 0 || key.compare("DISPLAY_VC1_READS[7]") == 0 || key.compare("DISPLAY_VC1_READS[8]") == 0 || key.compare("DISPLAY_VC1_READS[9]") == 0 || key.compare("DISPLAY_VC1_READS[10]") == 0 || key.compare("DISPLAY_VC1_READS[11]") == 0 || key.compare("DISPLAY_VC1_READS[12]") == 0 || key.compare("DISPLAY_VC1_READS[13]") == 0 || key.compare("DISPLAY_VC1_READS[14]") == 0 || key.compare("DISPLAY_VC1_READS[15]") == 0) {
-            val = mockDisplayVc1ReadVal;
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return ZE_RESULT_SUCCESS;
     }
 };
 

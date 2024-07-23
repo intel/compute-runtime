@@ -137,19 +137,18 @@ const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelpe
     return &guidToKeyOffsetMap;
 }
 
-ze_result_t readMcChannelCounters(PlatformMonitoringTech *pPmt, uint64_t &readCounters, uint64_t &writeCounters) {
+ze_result_t readMcChannelCounters(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &readCounters, uint64_t &writeCounters, std::string telemDir, uint64_t telemOffset) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     uint32_t numMcChannels = 16u;
-    ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     std::vector<std::string> nameOfCounters{"IDI_READS", "IDI_WRITES", "DISPLAY_VC1_READS"};
     std::vector<uint64_t> counterValues(3, 0);
     for (uint64_t counterIndex = 0; counterIndex < nameOfCounters.size(); counterIndex++) {
         for (uint32_t mcChannelIndex = 0; mcChannelIndex < numMcChannels; mcChannelIndex++) {
             uint64_t val = 0;
             std::string readCounterKey = nameOfCounters[counterIndex] + "[" + std::to_string(mcChannelIndex) + "]";
-            result = pPmt->readValue(readCounterKey, val);
-            if (result != ZE_RESULT_SUCCESS) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, result);
-                return result;
+            if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, readCounterKey, telemOffset, val)) {
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
             counterValues[counterIndex] += val;
         }
@@ -158,18 +157,30 @@ ze_result_t readMcChannelCounters(PlatformMonitoringTech *pPmt, uint64_t &readCo
     constexpr uint64_t transactionSize = 32;
     readCounters = (counterValues[0] + counterValues[2]) * transactionSize;
     writeCounters = (counterValues[1]) * transactionSize;
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, PlatformMonitoringTech *pPmt, SysmanDeviceImp *pDevice, SysmanKmdInterface *pSysmanKmdInterface, uint32_t subdeviceId) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwidth_t *pBandwidth, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     auto pSysFsAccess = pSysmanKmdInterface->getSysFsAccess();
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
     pBandwidth->readCounter = 0;
     pBandwidth->writeCounter = 0;
     pBandwidth->timestamp = 0;
     pBandwidth->maxBandwidth = 0;
-    result = readMcChannelCounters(pPmt, pBandwidth->readCounter, pBandwidth->writeCounter);
+
+    std::string telemDir = "";
+    uint64_t telemOffset = 0;
+
+    if (!pLinuxSysmanImp->getTelemOffsetAndDir(subdeviceId, telemOffset, telemDir)) {
+        if (!PlatformMonitoringTech::getTelemOffsetAndTelemDir(pLinuxSysmanImp, telemOffset, telemDir)) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        pLinuxSysmanImp->addTelemOffsetAndDirPair(subdeviceId, std::make_pair(telemOffset, telemDir));
+    }
+
+    result = readMcChannelCounters(pLinuxSysmanImp, pBandwidth->readCounter, pBandwidth->writeCounter, telemDir, telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
         return result;

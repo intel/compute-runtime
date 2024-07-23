@@ -27,10 +27,6 @@ const std::string PlatformMonitoringTech::baseTelemSysFS("/sys/class/intel_pmt")
 const std::string PlatformMonitoringTech::telem("telem");
 uint32_t PlatformMonitoringTech::rootDeviceTelemNodeIndex = 0;
 
-std::string PlatformMonitoringTech::getGuid() {
-    return guid;
-}
-
 ze_result_t PlatformMonitoringTech::readValue(const std::string key, uint32_t &value) {
     auto offset = keyOffsetMap.find(key);
     if (offset == keyOffsetMap.end()) {
@@ -148,7 +144,7 @@ ze_result_t PlatformMonitoringTech::init(LinuxSysmanImp *pLinuxSysmanImp, const 
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
-    std::string guid;
+    std::string guid = "";
     std::string guidPath = baseTelemSysFSNode + std::string("/guid");
     ze_result_t result = pFsAccess->read(guidPath, guid);
     if (ZE_RESULT_SUCCESS != result) {
@@ -246,6 +242,68 @@ bool PlatformMonitoringTech::getTelemOffsetForContainer(SysmanProductHelper *pSy
     }
     NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to find keyOffset in keyOffsetMap \n", __FUNCTION__);
     return false;
+}
+
+bool PlatformMonitoringTech::getTelemNodes(LinuxSysmanImp *pLinuxSysmanImp, std::map<uint32_t, std::string> &telemNodes) {
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+
+    if (!pLinuxSysmanImp->getTelemNodes(telemNodes)) {
+        NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
+        pLinuxSysmanImp->addTelemNodes(telemNodes);
+    }
+    uint32_t deviceCount = pLinuxSysmanImp->getSubDeviceCount() + 1;
+    if (telemNodes.size() < deviceCount) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Number of telemetry nodes:%d is less than device count: %d \n", __FUNCTION__, telemNodes.size(), deviceCount);
+        return false;
+    }
+    return true;
+}
+
+bool PlatformMonitoringTech::getTelemOffsetAndTelemDirForTileAggregator(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &telemOffset, std::string &telemDir, uint32_t subdeviceId) {
+
+    std::map<uint32_t, std::string> telemNodesInPciPath;
+    if (!getTelemNodes(pLinuxSysmanImp, telemNodesInPciPath)) {
+        return false;
+    }
+
+    uint32_t rootDeviceTelemIndex = telemNodesInPciPath.begin()->first;
+    std::string telemNode = telem + std::to_string(rootDeviceTelemIndex + subdeviceId + 1);
+    telemDir = baseTelemSysFS + "/" + telemNode;
+    if (!NEO::PmtUtil::readOffset(telemDir, telemOffset)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read offset from %s\n", __FUNCTION__, telemDir.c_str());
+        return false;
+    }
+    return true;
+}
+
+bool PlatformMonitoringTech::readValue(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset, uint32_t &value) {
+
+    uint64_t keyOffset = 0;
+    if (!getTelemOffsetForContainer(pSysmanProductHelper, telemDir, key, keyOffset)) {
+        return false;
+    }
+
+    keyOffset += telemOffset;
+    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint32_t), keyOffset, &value);
+    if (bytesRead != sizeof(uint32_t)) {
+        return false;
+    }
+    return true;
+}
+
+bool PlatformMonitoringTech::readValue(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset, uint64_t &value) {
+
+    uint64_t keyOffset = 0;
+    if (!getTelemOffsetForContainer(pSysmanProductHelper, telemDir, key, keyOffset)) {
+        return false;
+    }
+
+    keyOffset += telemOffset;
+    ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), keyOffset, &value);
+    if (bytesRead != sizeof(uint64_t)) {
+        return false;
+    }
+    return true;
 }
 
 PlatformMonitoringTech::~PlatformMonitoringTech() {
