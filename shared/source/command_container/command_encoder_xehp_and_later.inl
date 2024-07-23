@@ -165,10 +165,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
         } else {
             if constexpr (heaplessModeEnabled == false) {
-                container.prepareBindfulSsh();
                 if (bindingTableStateCount > 0u) {
                     auto ssh = args.surfaceStateHeap;
                     if (ssh == nullptr) {
+                        container.prepareBindfulSsh();
                         ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
                     }
                     auto bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(

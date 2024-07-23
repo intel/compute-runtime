@@ -1165,6 +1165,11 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     commandList->setCommandListPerThreadScratchSize(0u, 100u);
+
+    if (commandList->commandContainer.getIndirectHeap(NEO::HeapType::surfaceState) == nullptr) {
+        commandList->commandContainer.prepareBindfulSsh();
+    }
+
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
@@ -1195,6 +1200,11 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
     auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     commandList->setCommandListPerThreadScratchSize(1u, 100u);
+
+    if (commandList->commandContainer.getIndirectHeap(NEO::HeapType::surfaceState) == nullptr) {
+        commandList->commandContainer.prepareBindfulSsh();
+    }
+
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
@@ -1777,6 +1787,14 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     auto commandList1 = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)));
     commandList0->setCommandListPerThreadScratchSize(1u, 0u);
     commandList1->setCommandListPerThreadScratchSize(1u, 512u);
+
+    if (commandList0->commandContainer.getIndirectHeap(NEO::HeapType::surfaceState) == nullptr) {
+        commandList0->commandContainer.prepareBindfulSsh();
+    }
+    if (commandList1->commandContainer.getIndirectHeap(NEO::HeapType::surfaceState) == nullptr) {
+        commandList1->commandContainer.prepareBindfulSsh();
+    }
+
     auto commandListHandle0 = commandList0->toHandle();
     commandList0->close();
     auto commandListHandle1 = commandList1->toHandle();
