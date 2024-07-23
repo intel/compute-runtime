@@ -19,6 +19,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/fixtures/linear_stream_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -485,7 +486,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     auto contextStartAddress = TimestampPacketHelper::getContextStartGpuAddress(*timestampPacketContainer.peekNodes()[0]);
     EXPECT_EQ(contextStartAddress, walker->getPostSync().getDestinationAddress());
 
-    auto secondWalkerItor = find<DefaultWalkerType *>(++hwParser.itorWalker, hwParser.cmdList.end());
+    auto secondWalkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++hwParser.itorWalker, hwParser.cmdList.end());
     auto secondWalker = genCmdCast<DefaultWalkerType *>(*secondWalkerItor);
 
     EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, secondWalker->getPostSync().getOperation());
@@ -1630,7 +1631,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ->commandStream);
 
-    auto firstComputeWalkerItor = find<DefaultWalkerType *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto firstComputeWalkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(hwParser.cmdList.begin(), hwParser.cmdList.end());
     ASSERT_NE(hwParser.cmdList.end(), firstComputeWalkerItor);
     auto computeWalker = reinterpret_cast<DefaultWalkerType *>(*firstComputeWalkerItor);
     EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
@@ -1639,7 +1640,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     auto nextCmdItor = firstComputeWalkerItor;
     ++nextCmdItor;
 
-    auto secondComputeWalkerItor = find<DefaultWalkerType *>(nextCmdItor, hwParser.cmdList.end());
+    auto secondComputeWalkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(nextCmdItor, hwParser.cmdList.end());
     ASSERT_NE(hwParser.cmdList.end(), secondComputeWalkerItor);
     computeWalker = reinterpret_cast<DefaultWalkerType *>(*secondComputeWalkerItor);
     EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
