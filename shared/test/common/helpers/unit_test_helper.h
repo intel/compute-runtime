@@ -100,7 +100,6 @@ struct UnitTestHelper {
 
     static bool findStateCacheFlushPipeControl(CommandStreamReceiver &csr, LinearStream &csrStream);
     static void verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator);
-    static GenCmdList::iterator findWalkerCmd(GenCmdList::iterator begin, GenCmdList::iterator end, bool heapless);
     static GenCmdList::iterator findWalkerTypeCmd(GenCmdList::iterator begin, GenCmdList::iterator end);
 
     static typename GfxFamily::WalkerVariant getWalkerVariant(void *walkerItor);

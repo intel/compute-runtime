@@ -139,11 +139,6 @@ void UnitTestHelper<GfxFamily>::verifyDummyBlitWa(const RootDeviceEnvironment *r
 }
 
 template <typename GfxFamily>
-GenCmdList::iterator UnitTestHelper<GfxFamily>::findWalkerCmd(GenCmdList::iterator begin, GenCmdList::iterator end, bool heapless) {
-    return find<typename GfxFamily::COMPUTE_WALKER *>(begin, end);
-}
-
-template <typename GfxFamily>
 GenCmdList::iterator UnitTestHelper<GfxFamily>::findWalkerTypeCmd(GenCmdList::iterator begin, GenCmdList::iterator end) {
     return find<typename GfxFamily::COMPUTE_WALKER *>(begin, end);
 }
