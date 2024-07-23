@@ -266,4 +266,9 @@ bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
     return false;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
+    return false;
+}
+
 } // namespace NEO

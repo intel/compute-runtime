@@ -844,6 +844,18 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmAllocation
     EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtMostDg2) {
+    EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
+    EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtLeastMtl) {
+    EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsUnlockingLockedPtrNecessaryThenReturnFalse) {
     EXPECT_FALSE(productHelper->isUnlockingLockedPtrNecessary(pInHwInfo));
 }

@@ -48,7 +48,11 @@ bool ApiSpecificConfig::isDeviceAllocationCacheEnabled() {
 }
 
 bool ApiSpecificConfig::isHostAllocationCacheEnabled() {
-    return false;
+    if (apiTypeForUlts == ApiSpecificConfig::L0) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 bool ApiSpecificConfig::isDeviceUsmPoolingEnabled() {
