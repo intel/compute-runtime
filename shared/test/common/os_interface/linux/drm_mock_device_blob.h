@@ -12,7 +12,7 @@
 static constexpr uint32_t dummyDeviceBlobData[] = {
     NEO::DeviceBlobConstants::maxSlicesSupported,
     1,
-    0x02,
+    0x01,
     NEO::DeviceBlobConstants::maxDualSubSlicesSupported,
     1,
     0x04,
