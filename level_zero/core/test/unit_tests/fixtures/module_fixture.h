@@ -77,10 +77,12 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     class MockKernel : public WhiteBox<L0::KernelImp> {
       public:
+        using KernelImp::argumentsResidencyContainer;
         using KernelImp::crossThreadData;
         using KernelImp::crossThreadDataSize;
         using KernelImp::dynamicStateHeapData;
         using KernelImp::dynamicStateHeapDataSize;
+        using KernelImp::internalResidencyContainer;
         using KernelImp::kernelArgHandlers;
         using KernelImp::kernelHasIndirectAccess;
         using KernelImp::kernelImmData;
@@ -92,7 +94,6 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImp::printfBuffer;
         using KernelImp::privateMemoryGraphicsAllocation;
         using KernelImp::requiredWorkgroupOrder;
-        using KernelImp::residencyContainer;
         using KernelImp::surfaceStateHeapData;
         using KernelImp::surfaceStateHeapDataSize;
         using KernelImp::unifiedMemoryControls;

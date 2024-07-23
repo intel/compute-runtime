@@ -586,7 +586,7 @@ ze_result_t KernelImp::setArgImmediate(uint32_t argIndex, size_t argSize, const 
 ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle_t argVal) {
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescImage>();
     if (argVal == nullptr) {
-        residencyContainer[argIndex] = nullptr;
+        argumentsResidencyContainer[argIndex] = nullptr;
         return ZE_RESULT_SUCCESS;
     }
 
@@ -620,7 +620,7 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
     } else {
         image->copyRedescribedSurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful);
     }
-    residencyContainer[argIndex] = image->getAllocation();
+    argumentsResidencyContainer[argIndex] = image->getAllocation();
 
     return ZE_RESULT_SUCCESS;
 }
@@ -656,7 +656,7 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
         }
         this->setKernelArgUncached(argIndex, argIsUncacheable);
     }
-    residencyContainer[argIndex] = allocation;
+    argumentsResidencyContainer[argIndex] = allocation;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -727,7 +727,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     }
 
     if (nullptr == argVal) {
-        residencyContainer[argIndex] = nullptr;
+        argumentsResidencyContainer[argIndex] = nullptr;
         const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         uintptr_t nullBufferValue = 0;
         NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg, nullBufferValue);
@@ -774,7 +774,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         for (const auto &mappedAllocationData : allocData->virtualReservationData->mappedAllocations) {
             // Add additional allocations to the residency container if the virtual reservation spans multiple allocations.
             if (requestedAddress != mappedAllocationData.second->ptr) {
-                this->residencyContainer.push_back(mappedAllocationData.second->mappedAllocation->allocation);
+                this->argumentsResidencyContainer.push_back(mappedAllocationData.second->mappedAllocation->allocation);
             }
         }
     }
@@ -784,7 +784,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
 
 ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void *argVal) {
     if (argVal == nullptr) {
-        residencyContainer[argIndex] = nullptr;
+        argumentsResidencyContainer[argIndex] = nullptr;
         return ZE_RESULT_SUCCESS;
     }
 
@@ -824,10 +824,10 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
         image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful, isMediaBlockImage);
     }
 
-    residencyContainer[argIndex] = image->getAllocation();
+    argumentsResidencyContainer[argIndex] = image->getAllocation();
 
     if (image->getImplicitArgsAllocation()) {
-        this->residencyContainer.push_back(image->getImplicitArgsAllocation());
+        this->argumentsResidencyContainer.push_back(image->getImplicitArgsAllocation());
     }
 
     auto imageInfo = image->getImageInfo();
@@ -1091,13 +1091,13 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         }
     }
 
-    residencyContainer.resize(this->kernelArgHandlers.size(), nullptr);
+    argumentsResidencyContainer.resize(this->kernelArgHandlers.size(), nullptr);
 
     auto &kernelAttributes = kernelDescriptor.kernelAttributes;
     if ((kernelAttributes.perHwThreadPrivateMemorySize != 0U) && (false == module->shouldAllocatePrivateMemoryPerDispatch())) {
         this->privateMemoryGraphicsAllocation = allocatePrivateMemoryGraphicsAllocation();
         this->patchCrossthreadDataWithPrivateAllocation(this->privateMemoryGraphicsAllocation);
-        this->residencyContainer.push_back(this->privateMemoryGraphicsAllocation);
+        this->internalResidencyContainer.push_back(this->privateMemoryGraphicsAllocation);
     }
 
     this->createPrintfBuffer();
@@ -1106,8 +1106,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     this->setAssertBuffer();
 
-    residencyContainer.insert(residencyContainer.end(), kernelImmData->getResidencyContainer().begin(),
-                              kernelImmData->getResidencyContainer().end());
+    internalResidencyContainer.insert(internalResidencyContainer.end(), kernelImmData->getResidencyContainer().begin(),
+                                      kernelImmData->getResidencyContainer().end());
     ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);
     const auto indirectDetectionVersion = moduleImp->getTranslationUnit()->programInfo.indirectDetectionVersion;
 
@@ -1138,7 +1138,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         }
 
         for (auto rtStack : rtDispatchGlobalsInfo->rtStacks) {
-            this->residencyContainer.push_back(rtStack);
+            this->internalResidencyContainer.push_back(rtStack);
         }
 
         auto address = rtDispatchGlobalsInfo->rtDispatchGlobalsArray->getGpuAddressToPatch();
@@ -1151,7 +1151,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
             pImplicitArgs->rtGlobalBufferPtr = address;
         }
 
-        this->residencyContainer.push_back(rtDispatchGlobalsInfo->rtDispatchGlobalsArray);
+        this->internalResidencyContainer.push_back(rtDispatchGlobalsInfo->rtDispatchGlobalsArray);
     }
     this->midThreadPreemptionDisallowedForRayTracingKernels = productHelper.isMidThreadPreemptionDisallowedForRayTracingKernels();
     return ZE_RESULT_SUCCESS;
@@ -1160,7 +1160,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 void KernelImp::createPrintfBuffer() {
     if (this->kernelImmData->getDescriptor().kernelAttributes.flags.usesPrintf || pImplicitArgs) {
         this->printfBuffer = PrintfHandler::createPrintfBuffer(this->module->getDevice());
-        this->residencyContainer.push_back(printfBuffer);
+        this->internalResidencyContainer.push_back(printfBuffer);
         if (this->kernelImmData->getDescriptor().kernelAttributes.flags.usesPrintf) {
             NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                               this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.printfSurfaceAddress,
@@ -1186,14 +1186,14 @@ bool KernelImp::usesRegionGroupBarrier() const {
 }
 
 void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
-    this->residencyContainer.push_back(gfxAllocation);
+    this->internalResidencyContainer.push_back(gfxAllocation);
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.syncBufferAddress,
                       static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
 }
 
 void KernelImp::patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
-    this->residencyContainer.push_back(gfxAllocation);
+    this->internalResidencyContainer.push_back(gfxAllocation);
 
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.regionGroupBarrierBuffer,
@@ -1335,7 +1335,7 @@ void KernelImp::setAssertBuffer() {
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.assertBufferAddress,
                       static_cast<uintptr_t>(assertHandler->getAssertBuffer()->getGpuAddressToPatch()));
-    this->residencyContainer.push_back(assertHandler->getAssertBuffer());
+    this->internalResidencyContainer.push_back(assertHandler->getAssertBuffer());
 
     if (pImplicitArgs) {
         pImplicitArgs->assertBufferPtr = static_cast<uintptr_t>(assertHandler->getAssertBuffer()->getGpuAddressToPatch());

@@ -102,7 +102,7 @@ TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferI
     auto assertBufferAddress = assertHandler->getAssertBuffer()->getGpuAddressToPatch();
 
     EXPECT_TRUE(memcmp(kernel.crossThreadData.get(), &assertBufferAddress, sizeof(assertBufferAddress)) == 0);
-    EXPECT_TRUE(std::find(kernel.getResidencyContainer().begin(), kernel.getResidencyContainer().end(), assertHandler->getAssertBuffer()) != kernel.getResidencyContainer().end());
+    EXPECT_TRUE(std::find(kernel.getInternalResidencyContainer().begin(), kernel.getInternalResidencyContainer().end(), assertHandler->getAssertBuffer()) != kernel.getInternalResidencyContainer().end());
 }
 
 TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThenImplicitArgsAssertBufferPtrIsSet) {

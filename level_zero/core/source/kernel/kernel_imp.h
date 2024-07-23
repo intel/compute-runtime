@@ -75,8 +75,12 @@ struct KernelImp : Kernel {
     const uint8_t *getCrossThreadData() const override { return crossThreadData.get(); }
     uint32_t getCrossThreadDataSize() const override { return crossThreadDataSize; }
 
-    const std::vector<NEO::GraphicsAllocation *> &getResidencyContainer() const override {
-        return residencyContainer;
+    const std::vector<NEO::GraphicsAllocation *> &getArgumentsResidencyContainer() const override {
+        return argumentsResidencyContainer;
+    }
+
+    const std::vector<NEO::GraphicsAllocation *> &getInternalResidencyContainer() const override {
+        return internalResidencyContainer;
     }
 
     ze_result_t setArgImmediate(uint32_t argIndex, size_t argSize, const void *argVal);
@@ -210,7 +214,8 @@ struct KernelImp : Kernel {
     typedef ze_result_t (KernelImp::*KernelArgHandler)(uint32_t argIndex, size_t argSize, const void *argVal);
     std::vector<KernelArgInfo> kernelArgInfos;
     std::vector<KernelImp::KernelArgHandler> kernelArgHandlers;
-    std::vector<NEO::GraphicsAllocation *> residencyContainer;
+    std::vector<NEO::GraphicsAllocation *> argumentsResidencyContainer;
+    std::vector<NEO::GraphicsAllocation *> internalResidencyContainer;
 
     std::mutex *devicePrintfKernelMutex = nullptr;
     NEO::GraphicsAllocation *printfBuffer = nullptr;

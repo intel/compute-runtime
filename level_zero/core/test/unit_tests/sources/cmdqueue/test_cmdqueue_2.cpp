@@ -790,7 +790,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
                                   size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-    kernel.residencyContainer.push_back(gpuAlloc);
+    kernel.argumentsResidencyContainer.push_back(gpuAlloc);
 
     ze_group_count_t dispatchKernelArguments{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};

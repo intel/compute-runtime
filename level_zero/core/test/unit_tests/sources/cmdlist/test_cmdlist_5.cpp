@@ -83,7 +83,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     bool containsDstPtr = false;
     bool gpuTimeStampAlloc = false;
-    for (auto &residentGfxAlloc : commandList.cmdListHelper.residencyContainer) {
+    for (auto &residentGfxAlloc : commandList.cmdListHelper.argumentsResidencyContainer) {
         if (residentGfxAlloc != nullptr) {
             if (residentGfxAlloc->getGpuAddress() ==
                 reinterpret_cast<uint64_t>(alloc)) {
@@ -148,7 +148,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     bool containsDstPtr = false;
 
-    for (auto &a : commandList.cmdListHelper.residencyContainer) {
+    for (auto &a : commandList.cmdListHelper.argumentsResidencyContainer) {
         if (a != nullptr && a->getGpuAddress() == reinterpret_cast<uint64_t>(alloc)) {
             containsDstPtr = true;
         }
@@ -158,7 +158,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     bool containOffsetPtr = false;
 
-    for (auto &a : commandList.cmdListHelper.residencyContainer) {
+    for (auto &a : commandList.cmdListHelper.argumentsResidencyContainer) {
         if (a != nullptr && a->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAlloc)) {
             containOffsetPtr = true;
         }

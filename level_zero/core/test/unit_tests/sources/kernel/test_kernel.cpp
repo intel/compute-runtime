@@ -58,12 +58,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
     using BaseClass = KernelHw<gfxCoreFamily>;
     using BaseClass::BaseClass;
+    using ::L0::KernelImp::argumentsResidencyContainer;
     using ::L0::KernelImp::createPrintfBuffer;
     using ::L0::KernelImp::crossThreadData;
     using ::L0::KernelImp::crossThreadDataSize;
     using ::L0::KernelImp::dynamicStateHeapData;
     using ::L0::KernelImp::dynamicStateHeapDataSize;
     using ::L0::KernelImp::groupSize;
+    using ::L0::KernelImp::internalResidencyContainer;
     using ::L0::KernelImp::isBindlessOffsetSet;
     using ::L0::KernelImp::kernelImmData;
     using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
@@ -75,7 +77,6 @@ struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
     using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;
     using ::L0::KernelImp::printfBuffer;
     using ::L0::KernelImp::requiredWorkgroupOrder;
-    using ::L0::KernelImp::residencyContainer;
     using ::L0::KernelImp::surfaceStateHeapData;
     using ::L0::KernelImp::surfaceStateHeapDataSize;
     using ::L0::KernelImp::unifiedMemoryControls;
@@ -940,7 +941,7 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenCont
     createKernel(kernelWithPrivateMemory.get());
     EXPECT_NE(nullptr, kernelWithPrivateMemory->privateMemoryGraphicsAllocation);
 
-    size_t sizeContainerWithPrivateMemory = kernelWithPrivateMemory->getResidencyContainer().size();
+    size_t sizeContainerWithPrivateMemory = kernelWithPrivateMemory->getInternalResidencyContainer().size();
 
     perHwThreadPrivateMemorySizeRequested = 0u;
     std::unique_ptr<MockImmutableData> mockKernelImmDataForModuleWithoutPrivateMemory = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
@@ -958,7 +959,7 @@ TEST_F(KernelImmutableDataTests, givenKernelInitializedWithPrivateMemoryThenCont
     createKernel(kernelWithoutPrivateMemory.get());
     EXPECT_EQ(nullptr, kernelWithoutPrivateMemory->privateMemoryGraphicsAllocation);
 
-    size_t sizeContainerWithoutPrivateMemory = kernelWithoutPrivateMemory->getResidencyContainer().size();
+    size_t sizeContainerWithoutPrivateMemory = kernelWithoutPrivateMemory->getInternalResidencyContainer().size();
 
     EXPECT_EQ(sizeContainerWithoutPrivateMemory + 1u, sizeContainerWithPrivateMemory);
 }
@@ -1043,7 +1044,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized
     ASSERT_NE(nullptr, implicitArgs);
     EXPECT_EQ_VAL(implicitArgs->rtGlobalBufferPtr, rtDispatchGlobals->rtDispatchGlobalsArray->getGpuAddressToPatch());
 
-    auto &residencyContainer = kernel->getResidencyContainer();
+    auto &residencyContainer = kernel->getInternalResidencyContainer();
 
     auto found = std::find(residencyContainer.begin(), residencyContainer.end(), rtMemoryBackedBuffer);
     EXPECT_EQ(residencyContainer.end(), found);
@@ -2221,7 +2222,7 @@ TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledTh
 
     EXPECT_EQ(ssPtr, expectedSsInHeap.ssPtr);
     EXPECT_TRUE(memcmp(const_cast<uint8_t *>(patchLocation), &patchValue, sizeof(patchValue)) == 0);
-    EXPECT_FALSE(std::find(kernel.getResidencyContainer().begin(), kernel.getResidencyContainer().end(), expectedSsInHeap.heapAllocation) != kernel.getResidencyContainer().end());
+    EXPECT_FALSE(std::find(kernel.getArgumentsResidencyContainer().begin(), kernel.getArgumentsResidencyContainer().end(), expectedSsInHeap.heapAllocation) != kernel.getArgumentsResidencyContainer().end());
     neoDevice->decRefInternal();
 }
 
@@ -2829,7 +2830,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopySurfac
     EXPECT_EQ(imageHW->passedSurfaceStateOffset, 0u);
     EXPECT_TRUE(kernel->isBindlessOffsetSet[3]);
     EXPECT_FALSE(kernel->usingSurfaceStateHeap[3]);
-    EXPECT_EQ(0, std::count(kernel->residencyContainer.begin(), kernel->residencyContainer.end(), expectedSsInHeap.heapAllocation));
+    EXPECT_EQ(0, std::count(kernel->argumentsResidencyContainer.begin(), kernel->argumentsResidencyContainer.end(), expectedSsInHeap.heapAllocation));
 }
 
 HWTEST2_F(SetKernelArg, givenNoGlobalAllocatorAndBindlessKernelWhenSetArgImageThenBindlessOffsetIsNotSetAndSshIsUsed, ImageSupport) {
@@ -2951,7 +2952,7 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
     EXPECT_EQ(imageHW->passedRedescribedSurfaceStateOffset, 0u);
     EXPECT_TRUE(kernel->isBindlessOffsetSet[3]);
     EXPECT_FALSE(kernel->usingSurfaceStateHeap[3]);
-    EXPECT_EQ(0, std::count(kernel->residencyContainer.begin(), kernel->residencyContainer.end(), expectedSsInHeap.heapAllocation));
+    EXPECT_EQ(0, std::count(kernel->argumentsResidencyContainer.begin(), kernel->argumentsResidencyContainer.end(), expectedSsInHeap.heapAllocation));
 }
 
 HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperAndImageViewWhenAllocatingBindlessSlotThenViewHasDifferentSlotThanParentImage, ImageSupport) {
@@ -3091,7 +3092,7 @@ HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgRedescribedImageCal
 
     mockKernel.surfaceStateHeapData = std::make_unique<uint8_t[]>(surfaceStateSize);
     mockKernel.descriptor.initBindlessOffsetToSurfaceState();
-    mockKernel.residencyContainer.resize(1);
+    mockKernel.argumentsResidencyContainer.resize(1);
     mockKernel.isBindlessOffsetSet.resize(1, 0);
     mockKernel.usingSurfaceStateHeap.resize(1, false);
 
@@ -3456,8 +3457,8 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenAllocationAddedToResidencyContain
     auto printfBufferAllocation = mockKernel.getPrintfBufferAllocation();
     EXPECT_NE(nullptr, printfBufferAllocation);
 
-    EXPECT_NE(0u, mockKernel.residencyContainer.size());
-    EXPECT_EQ(mockKernel.residencyContainer[mockKernel.residencyContainer.size() - 1], printfBufferAllocation);
+    EXPECT_NE(0u, mockKernel.internalResidencyContainer.size());
+    EXPECT_EQ(mockKernel.internalResidencyContainer[mockKernel.internalResidencyContainer.size() - 1], printfBufferAllocation);
 }
 
 TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {

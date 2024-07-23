@@ -738,7 +738,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
 
 struct CmdListHelper {
     NEO::GraphicsAllocation *isaAllocation = nullptr;
-    NEO::ResidencyContainer residencyContainer;
+    NEO::ResidencyContainer argumentsResidencyContainer;
     ze_group_count_t threadGroupDimensions;
     const uint32_t *groupSize = nullptr;
     uint32_t useOnlyGlobalTimestamp = std::numeric_limits<uint32_t>::max();
@@ -760,7 +760,7 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
 
         const auto kernel = Kernel::fromHandle(kernelHandle);
         cmdListHelper.isaAllocation = kernel->getIsaAllocation();
-        cmdListHelper.residencyContainer = kernel->getResidencyContainer();
+        cmdListHelper.argumentsResidencyContainer = kernel->getArgumentsResidencyContainer();
         cmdListHelper.groupSize = kernel->getGroupSize();
         cmdListHelper.threadGroupDimensions = threadGroupDimensions;
 

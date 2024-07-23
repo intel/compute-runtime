@@ -148,7 +148,8 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
 
     virtual const KernelImmutableData *getImmutableData() const = 0;
 
-    virtual const std::vector<NEO::GraphicsAllocation *> &getResidencyContainer() const = 0;
+    virtual const std::vector<NEO::GraphicsAllocation *> &getArgumentsResidencyContainer() const = 0;
+    virtual const std::vector<NEO::GraphicsAllocation *> &getInternalResidencyContainer() const = 0;
 
     virtual UnifiedMemoryControls getUnifiedMemoryControls() const = 0;
     virtual bool hasIndirectAllocationsAllowed() const = 0;

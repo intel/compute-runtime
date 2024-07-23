@@ -254,8 +254,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     appendSignalEventPostWalker(event, nullptr, nullptr, false, false, false);
 
     commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
-    auto &residencyContainer = kernel->getResidencyContainer();
-    for (auto resource : residencyContainer) {
+    auto &argumentsResidencyContainer = kernel->getArgumentsResidencyContainer();
+    for (auto resource : argumentsResidencyContainer) {
+        commandContainer.addToResidencyContainer(resource);
+    }
+    auto &internalResidencyContainer = kernel->getInternalResidencyContainer();
+    for (auto resource : internalResidencyContainer) {
         commandContainer.addToResidencyContainer(resource);
     }
 

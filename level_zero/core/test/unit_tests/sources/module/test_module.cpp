@@ -2597,7 +2597,7 @@ HWTEST_F(DeviceModuleSetArgBufferTest,
     auto argBufferValue = *reinterpret_cast<uint64_t *>(const_cast<uint8_t *>(argBufferPtr));
     EXPECT_EQ(argBufferValue, reinterpret_cast<uint64_t>(validBufferPtr));
 
-    for (auto alloc : kernel->getResidencyContainer()) {
+    for (auto alloc : kernel->getArgumentsResidencyContainer()) {
         if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(validBufferPtr)) {
             EXPECT_EQ(rootDeviceIndex, alloc->getRootDeviceIndex());
         }
@@ -2677,7 +2677,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         bool phys1Resident = false;
         bool phys2Resident = false;
-        for (auto alloc : kernel->getResidencyContainer()) {
+        for (auto alloc : kernel->getArgumentsResidencyContainer()) {
             if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
                 phys1Resident = true;
             }
@@ -2747,7 +2747,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         bool phys1Resident = false;
         bool phys2Resident = false;
-        for (auto alloc : kernel->getResidencyContainer()) {
+        for (auto alloc : kernel->getArgumentsResidencyContainer()) {
             if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
                 phys1Resident = true;
             }
@@ -2810,7 +2810,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         kernel->setArgBuffer(0, sizeof(ptr), &ptr);
 
         bool phys1Resident = false;
-        for (auto alloc : kernel->getResidencyContainer()) {
+        for (auto alloc : kernel->getArgumentsResidencyContainer()) {
             if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
                 phys1Resident = true;
             }
@@ -2884,7 +2884,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         bool phys1Resident = false;
         bool phys2Resident = false;
-        for (auto alloc : kernel->getResidencyContainer()) {
+        for (auto alloc : kernel->getArgumentsResidencyContainer()) {
             if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
                 phys1Resident = true;
             }
@@ -2933,7 +2933,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
         kernel->setArgBuffer(0, sizeof(ptr), &ptr);
 
-        for (auto alloc : kernel->getResidencyContainer()) {
+        for (auto alloc : kernel->getArgumentsResidencyContainer()) {
             if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
                 EXPECT_EQ(rootDeviceIndex, alloc->getRootDeviceIndex());
             }
@@ -3684,11 +3684,9 @@ HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAll
     kernelDesc.pKernelName = "test";
     kernel->initialize(&kernelDesc);
 
-    auto &container = kernel->residencyContainer;
+    auto &container = kernel->internalResidencyContainer;
     auto printfPos = std::find(container.begin(), container.end(), kernel->getPrintfBufferAllocation());
     EXPECT_NE(container.end(), printfPos);
-    bool correctPos = printfPos >= container.begin() + kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs.size();
-    EXPECT_TRUE(correctPos);
 }
 
 TEST(BuildOptions, givenNoSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {

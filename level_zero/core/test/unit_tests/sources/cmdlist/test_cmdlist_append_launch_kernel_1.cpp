@@ -1491,7 +1491,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
           IsAtLeastXeHpCore) {
     NEO::MockGraphicsAllocation mockAllocation;
     NEO::GraphicsAllocation *allocation = &mockAllocation;
-    kernel->residencyContainer.push_back(allocation);
+    kernel->argumentsResidencyContainer.push_back(allocation);
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
