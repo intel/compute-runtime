@@ -654,7 +654,6 @@ void IoctlHelperXe::setupXeWaitUserFenceStruct(void *arg, uint32_t ctxId, uint16
 }
 
 int IoctlHelperXe::xeWaitUserFence(uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) {
-    UNRECOVERABLE_IF(addr == 0x0)
     drm_xe_wait_user_fence waitUserFence = {};
 
     setupXeWaitUserFenceStruct(&waitUserFence, ctxId, op, addr, value, timeout);
@@ -697,14 +696,11 @@ std::optional<MemoryClassInstance> IoctlHelperXe::getPreferredLocationRegion(Pre
 
 bool IoctlHelperXe::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    // There is no vmAdvise attribute in Xe, so return success
-    return true;
+    return false;
 }
 
 bool IoctlHelperXe::setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) {
-    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    // There is no vmAdvise attribute in Xe, so return success
-    return true;
+    return false;
 }
 
 bool IoctlHelperXe::setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) {
@@ -812,10 +808,9 @@ int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vecto
     return 0;
 }
 
-bool IoctlHelperXe::isPageFaultSupported() {
-    xeLog(" -> IoctlHelperXe::%s %d\n", __FUNCTION__, supportedFeatures.flags.pageFault == true);
-
-    return supportedFeatures.flags.pageFault;
+std::optional<DrmParam> IoctlHelperXe::getHasPageFaultParamId() {
+    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    return {};
 };
 
 uint32_t IoctlHelperXe::getEuStallFdParameter() {
@@ -866,10 +861,9 @@ void IoctlHelperXe::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT
     return;
 }
 
-std::optional<uint32_t> IoctlHelperXe::getVmAdviseAtomicAttribute() {
+uint32_t IoctlHelperXe::getVmAdviseAtomicAttribute() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    // There is no vmAdvise attribute in Xe
-    return {};
+    return 0;
 }
 
 int IoctlHelperXe::vmBind(const VmBindParams &vmBindParams) {
@@ -1228,29 +1222,27 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
     }
 
     if (index != invalidIndex) {
+
+        drm_xe_sync sync[1] = {};
+        sync[0].type = DRM_XE_SYNC_TYPE_USER_FENCE;
+        sync[0].flags = DRM_XE_SYNC_FLAG_SIGNAL;
+        auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindParams.userFence);
+        UNRECOVERABLE_IF(!xeBindExtUserFence);
+        UNRECOVERABLE_IF(xeBindExtUserFence->tag != UserFenceExtension::tagValue);
+        sync[0].addr = xeBindExtUserFence->addr;
+        sync[0].timeline_value = xeBindExtUserFence->value;
+
         drm_xe_vm_bind bind = {};
         bind.vm_id = vmBindParams.vmId;
-        bind.num_syncs = 1;
         bind.num_binds = 1;
-
+        bind.num_syncs = 1;
+        bind.syncs = reinterpret_cast<uintptr_t>(&sync);
         bind.bind.range = vmBindParams.length;
         bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
         bind.bind.obj_offset = vmBindParams.offset;
         bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
         bind.bind.extensions = vmBindParams.extensions;
         bind.bind.flags = static_cast<uint32_t>(vmBindParams.flags);
-
-        UNRECOVERABLE_IF(vmBindParams.userFence == 0x0);
-        drm_xe_sync sync[1] = {};
-
-        auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindParams.userFence);
-        UNRECOVERABLE_IF(xeBindExtUserFence->tag != UserFenceExtension::tagValue);
-
-        sync[0].type = DRM_XE_SYNC_TYPE_USER_FENCE;
-        sync[0].flags = DRM_XE_SYNC_FLAG_SIGNAL;
-        sync[0].addr = xeBindExtUserFence->addr;
-        sync[0].timeline_value = xeBindExtUserFence->value;
-        bind.syncs = reinterpret_cast<uintptr_t>(&sync);
 
         if (isBind) {
             bind.bind.op = DRM_XE_VM_BIND_OP_MAP;

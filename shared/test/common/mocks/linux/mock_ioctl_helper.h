@@ -56,12 +56,6 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
             return IoctlHelperPrelim20::isWaitBeforeBindRequired(bind);
     }
 
-    std::optional<uint32_t> getVmAdviseAtomicAttribute() override {
-        if (callBaseVmAdviseAtomicAttribute)
-            return IoctlHelperPrelim20::getVmAdviseAtomicAttribute();
-        return vmAdviseAtomicAttribute;
-    }
-
     bool allocateInterrupt(uint32_t &handle) override {
         allocateInterruptCalled++;
         return IoctlHelperPrelim20::allocateInterrupt(handle);
@@ -108,7 +102,5 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     uint32_t latestReleaseInterruptHandle = InterruptId::notUsed;
     uint32_t createMediaContextCalled = 0;
     uint32_t releaseMediaContextCalled = 0;
-    bool callBaseVmAdviseAtomicAttribute = true;
-    std::optional<uint32_t> vmAdviseAtomicAttribute{};
 };
 } // namespace NEO
