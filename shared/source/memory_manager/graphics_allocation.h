@@ -82,6 +82,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         this->cpuPtr = cpuPtr;
         this->gpuAddress = canonizedGpuAddress;
     }
+    void setGpuPtr(uint64_t canonizedGpuAddress) {
+        this->gpuAddress = canonizedGpuAddress;
+    }
     size_t getUnderlyingBufferSize() const { return size; }
     void setSize(size_t size) { this->size = size; }
 

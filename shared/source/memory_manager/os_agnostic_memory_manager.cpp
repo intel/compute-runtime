@@ -417,12 +417,12 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uin
 }
 
 void OsAgnosticMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
-    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
+    physicalAllocation->setGpuPtr(0u);
     physicalAllocation->setReservedAddressRange(nullptr, 0u);
 }
 
 bool OsAgnosticMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
-    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, gpuRange);
+    physicalAllocation->setGpuPtr(gpuRange);
     physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
     return true;
 }

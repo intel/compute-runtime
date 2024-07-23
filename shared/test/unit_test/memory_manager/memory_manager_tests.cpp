@@ -98,6 +98,23 @@ TEST(MemoryManagerTest, givenAllocationWithNullCpuPtrThenMemoryCopyToAllocationR
     EXPECT_FALSE(memoryManager.copyMemoryToAllocation(&allocation, offset, nullptr, 0));
 }
 
+TEST(MemoryManagerTest, givenGraphicsAllocationWhenMapCalledThenDontResetCpuAddress) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    uint8_t allocationStorage = 0;
+    MockGraphicsAllocation allocation{&allocationStorage, 1};
+    EXPECT_NE(nullptr, allocation.getUnderlyingBuffer());
+
+    EXPECT_TRUE(memoryManager.mapPhysicalToVirtualMemory(&allocation, 0x12300, 0));
+    EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
+    EXPECT_EQ(0x12300u, allocation.getGpuAddress());
+
+    memoryManager.unMapPhysicalToVirtualMemory(&allocation, 1, 1, nullptr, 0);
+    EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
+    EXPECT_EQ(0u, allocation.getGpuAddress());
+}
+
 TEST(MemoryManagerTest, givenDefaultMemoryManagerWhenItIsAskedForBudgetExhaustionThenFalseIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, false, executionEnvironment);

@@ -47,6 +47,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::pageFaultManager;
     using MemoryManager::prefetchManager;
     using MemoryManager::supportsMultiStorageResources;
+    using MemoryManager::unMapPhysicalToVirtualMemory;
     using MemoryManager::useNonSvmHostPtrAlloc;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using MemoryManagerCreate<OsAgnosticMemoryManager>::MemoryManagerCreate;
