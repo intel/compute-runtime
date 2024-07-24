@@ -584,7 +584,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhen4GBytePageFaultCopyCalledThenPa
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 2u);
 }
 
-HWTEST2_F(CommandListAppend, givenCommandListAnd3DWhbufferenMemoryCopyRegionCalledThenCopyKernel3DCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppend, givenCommandListAnd3dBufferWhenMemoryCopyRegionCalledThenCopyKernel3DCalled, IsAtLeastSkl) {
     MockCommandListHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -596,7 +596,7 @@ HWTEST2_F(CommandListAppend, givenCommandListAnd3DWhbufferenMemoryCopyRegionCall
     EXPECT_GT(cmdList.appendMemoryCopyKernel3dCalledTimes, 0u);
 }
 
-HWTEST2_F(CommandListAppend, givenCommandListAnd2DWhbufferenMemoryCopyRegionCalledThenCopyKernel2DCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppend, givenCommandListAnd2dBufferWhenMemoryCopyRegionCalledThenCopyKernel2DCalled, IsAtLeastSkl) {
     MockCommandListHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
