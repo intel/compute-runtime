@@ -55,7 +55,7 @@ template <typename GfxFamily>
 using POST_SYNC_OPERATION = typename PIPE_CONTROL<GfxFamily>::POST_SYNC_OPERATION;
 
 template <typename GfxFamily, typename WalkerType>
-void appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount);
+void appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount, uint32_t workgroupCount);
 
 template <typename Command>
 Command *putCommand(void *&inputAddress, uint32_t &totalBytesProgrammed) {
@@ -509,7 +509,7 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
 
         inputWalker->setWorkloadPartitionEnable(true);
 
-        auto workgroupCount = 0u;
+        uint32_t workgroupCount = 0;
         if (partitionType == WalkerType::PARTITION_TYPE::PARTITION_TYPE_X) {
             workgroupCount = inputWalker->getThreadGroupIdXDimension();
         } else if (partitionType == WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y) {
@@ -523,9 +523,9 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
         } else {
             inputWalker->setPartitionSize(Math::divideAndRoundUp(workgroupCount, partitionCount));
         }
-    }
 
-    appendWalkerFields<GfxFamily, WalkerType>(*inputWalker, tileCount);
+        appendWalkerFields<GfxFamily, WalkerType>(*inputWalker, tileCount, workgroupCount);
+    }
 
     *computeWalker = *inputWalker;
 

@@ -9,6 +9,6 @@
 
 namespace WalkerPartition {
 template <typename GfxFamily, typename WalkerType>
-void appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount) {
+void appendWalkerFields(WalkerType &walkerCmd, uint32_t tileCount, uint32_t workgroupCount) {
 }
 } // namespace WalkerPartition
