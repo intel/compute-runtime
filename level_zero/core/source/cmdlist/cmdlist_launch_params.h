@@ -66,7 +66,8 @@ struct CmdListKernelLaunchParams {
     bool isExpLaunchKernel = false;
     bool skipInOrderNonWalkerSignaling = false;
     bool pipeControlSignalling = false;
-    bool omitAddingKernelResidency = false;
+    bool omitAddingKernelArgumentResidency = false;
+    bool omitAddingKernelInternalResidency = false;
     bool omitAddingEventResidency = false;
     bool omitAddingWaitEventsResidency = false;
 };

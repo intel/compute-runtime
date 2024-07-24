@@ -1528,7 +1528,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenC
 }
 
 HWTEST2_F(CommandListAppendLaunchKernelMockModule,
-          givenFlagOmitKernelResourcePassToCmdlistResidencyWhenAppendingKernelThenExpectNoKernelArgumentsInCmdlistResidency,
+          givenFlagOmitKernelArgumentResourcePassToCmdlistResidencyWhenAppendingKernelThenExpectNoKernelArgumentsInCmdlistResidency,
           IsAtLeastXeHpCore) {
     NEO::MockGraphicsAllocation mockAllocation;
     NEO::GraphicsAllocation *allocation = &mockAllocation;
@@ -1537,7 +1537,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
     CmdListKernelLaunchParams launchParams = {};
-    launchParams.omitAddingKernelResidency = true;
+    launchParams.omitAddingKernelArgumentResidency = true;
     returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -1546,11 +1546,44 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     auto kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), allocation);
     EXPECT_EQ(kernelAllocationIt, cmdlistResidency.end());
 
-    launchParams.omitAddingKernelResidency = false;
+    launchParams.omitAddingKernelArgumentResidency = false;
     returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), allocation);
+    EXPECT_NE(kernelAllocationIt, cmdlistResidency.end());
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelMockModule,
+          givenFlagOmitKernelInternalResourcePassToCmdlistResidencyWhenAppendingKernelThenExpectNoKernelInternalsInCmdlistResidency,
+          IsAtLeastXeHpCore) {
+    NEO::MockGraphicsAllocation mockAllocation;
+    NEO::GraphicsAllocation *allocation = &mockAllocation;
+    kernel->internalResidencyContainer.push_back(allocation);
+
+    auto kernelIsaAllocation = kernel->getImmutableData()->getIsaGraphicsAllocation();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_result_t returnValue;
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.omitAddingKernelInternalResidency = true;
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto &cmdlistResidency = commandList->getCmdContainer().getResidencyContainer();
+
+    auto kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), allocation);
+    EXPECT_EQ(kernelAllocationIt, cmdlistResidency.end());
+    kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), kernelIsaAllocation);
+    EXPECT_EQ(kernelAllocationIt, cmdlistResidency.end());
+
+    launchParams.omitAddingKernelInternalResidency = false;
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), allocation);
+    EXPECT_NE(kernelAllocationIt, cmdlistResidency.end());
+    kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), kernelIsaAllocation);
     EXPECT_NE(kernelAllocationIt, cmdlistResidency.end());
 }
 

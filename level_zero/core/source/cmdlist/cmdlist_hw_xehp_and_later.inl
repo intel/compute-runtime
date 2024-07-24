@@ -441,12 +441,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
     // Attach kernel residency to our CommandList residency
     {
-        commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
-        auto &internalResidencyContainer = kernel->getInternalResidencyContainer();
-        for (auto resource : internalResidencyContainer) {
-            commandContainer.addToResidencyContainer(resource);
+        if (!launchParams.omitAddingKernelInternalResidency) {
+            commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
+            auto &internalResidencyContainer = kernel->getInternalResidencyContainer();
+            for (auto resource : internalResidencyContainer) {
+                commandContainer.addToResidencyContainer(resource);
+            }
         }
-        if (!launchParams.omitAddingKernelResidency) {
+        if (!launchParams.omitAddingKernelArgumentResidency) {
             auto &argumentsResidencyContainer = kernel->getArgumentsResidencyContainer();
             for (auto resource : argumentsResidencyContainer) {
                 commandContainer.addToResidencyContainer(resource);
