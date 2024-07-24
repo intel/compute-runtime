@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,6 +82,11 @@ class MockAubManager : public aub_stream::AubManager {
     HardwareContext *createHardwareContext(uint32_t device, uint32_t engine, uint32_t flags) override {
         contextFlags = flags;
         return new MockHardwareContext(device);
+    }
+
+    bool releaseHardwareContext(HardwareContext *context) override {
+        delete context;
+        return true;
     }
 
     void open(const std::string &aubFileName) override {

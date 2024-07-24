@@ -137,5 +137,13 @@ CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulate
     this->useGpuIdleImplicitFlush = false;
 }
 template <typename GfxFamily>
-CommandStreamReceiverSimulatedCommonHw<GfxFamily>::~CommandStreamReceiverSimulatedCommonHw() = default;
+CommandStreamReceiverSimulatedCommonHw<GfxFamily>::~CommandStreamReceiverSimulatedCommonHw() {
+    if (aubManager) {
+        if (hardwareContextController) {
+            for (auto &hardwareContext : hardwareContextController->hardwareContexts) {
+                aubManager->releaseHardwareContext(hardwareContext.release());
+            }
+        }
+    }
+}
 } // namespace NEO
