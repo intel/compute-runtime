@@ -585,8 +585,8 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationFailsThenFenceValueNotGrow) {
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->failBind = true;
-    ioctlHelper->waitBeforeBindRequired = true;
+    ioctlHelper->vmBindResult = -1;
+    ioctlHelper->isWaitBeforeBindRequiredResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -617,8 +617,7 @@ TEST(DrmBufferObject, givenDrmWhenBindOperationSucceedsThenFenceValueGrow) {
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->failBind = false;
-    ioctlHelper->waitBeforeBindRequired = true;
+    ioctlHelper->isWaitBeforeBindRequiredResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -649,8 +648,8 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationFailsThenFenceValueNotGrow) {
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->failBind = true;
-    ioctlHelper->waitBeforeBindRequired = true;
+    ioctlHelper->vmUnbindResult = -1;
+    ioctlHelper->isWaitBeforeBindRequiredResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -681,8 +680,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsThenFenceValueGrow) {
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->failBind = false;
-    ioctlHelper->waitBeforeBindRequired = true;
+    ioctlHelper->isWaitBeforeBindRequiredResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -717,8 +715,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsAndForceUserFenceUponUn
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->failBind = false;
-    ioctlHelper->waitBeforeBindRequired = true;
+    ioctlHelper->isWaitBeforeBindRequiredResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
@@ -769,8 +766,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsAndForceFenceWaitThenFe
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->failBind = false;
-    ioctlHelper->waitBeforeBindRequired = true;
+    ioctlHelper->isWaitBeforeBindRequiredResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new MockOsContextLinuxUnbind(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -825,8 +821,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsWaitBeforeBindFalseAndF
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->failBind = false;
-    ioctlHelper->waitBeforeBindRequired = false;
+    ioctlHelper->isWaitBeforeBindRequiredResult = false;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new MockOsContextLinuxUnbind(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
@@ -881,8 +876,7 @@ TEST(DrmBufferObject, givenDrmWhenUnBindOperationSucceedsWaitBeforeBindTrueAndFo
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = false;
     auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
-    ioctlHelper->failBind = false;
-    ioctlHelper->waitBeforeBindRequired = true;
+    ioctlHelper->isWaitBeforeBindRequiredResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());
 
     auto osContext = new MockOsContextLinuxUnbind(*drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());

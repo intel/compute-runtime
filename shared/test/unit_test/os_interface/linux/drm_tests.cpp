@@ -11,6 +11,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_inc.h"
@@ -348,36 +349,6 @@ TEST(DrmTest, GivenDrmWhenAskedForGttSizeThenReturnCorrectValue) {
     EXPECT_EQ(0u, queryGttSize);
 }
 
-TEST(DrmTest, GivenDrmWhenAskedForPreemptionThenCorrectValueReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    pDrm->storedRetVal = 0;
-    pDrm->storedPreemptionSupport =
-        I915_SCHEDULER_CAP_ENABLED |
-        I915_SCHEDULER_CAP_PRIORITY |
-        I915_SCHEDULER_CAP_PREEMPTION;
-    pDrm->checkPreemptionSupport();
-    EXPECT_TRUE(pDrm->isPreemptionSupported());
-
-    pDrm->storedPreemptionSupport = 0;
-    pDrm->checkPreemptionSupport();
-    EXPECT_FALSE(pDrm->isPreemptionSupported());
-
-    pDrm->storedRetVal = -1;
-    pDrm->storedPreemptionSupport =
-        I915_SCHEDULER_CAP_ENABLED |
-        I915_SCHEDULER_CAP_PRIORITY |
-        I915_SCHEDULER_CAP_PREEMPTION;
-    pDrm->checkPreemptionSupport();
-    EXPECT_FALSE(pDrm->isPreemptionSupported());
-
-    pDrm->storedPreemptionSupport = 0;
-    pDrm->checkPreemptionSupport();
-    EXPECT_FALSE(pDrm->isPreemptionSupported());
-
-    delete pDrm;
-}
-
 TEST(DrmTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -479,36 +450,6 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
         expectedCount += 3;
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
-}
-
-TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContextThenCallSetContextPriorityIoctl) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-    DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
-    drmMock.preemptionSupported = false;
-
-    OsContextLinux osContext1(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext1.ensureContextInitialized(false);
-    OsContextLinux osContext2(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
-    osContext2.ensureContextInitialized(false);
-
-    EXPECT_EQ(4u, drmMock.receivedContextParamRequestCount);
-
-    drmMock.preemptionSupported = true;
-
-    OsContextLinux osContext3(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext3.ensureContextInitialized(false);
-    EXPECT_EQ(6u, drmMock.receivedContextParamRequestCount);
-
-    OsContextLinux osContext4(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}));
-    osContext4.ensureContextInitialized(false);
-    EXPECT_EQ(9u, drmMock.receivedContextParamRequestCount);
-    EXPECT_EQ(drmMock.storedDrmContextId, drmMock.receivedContextParamRequest.contextId);
-    EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
-    EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
-    EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
 }
 
 TEST(DrmTest, WhenEnablingTurboBoostThenSucceeds) {
@@ -1760,10 +1701,10 @@ TEST(DrmWrapperTest, whenGettingDrmParamOrIoctlRequestValueThenUseIoctlHelperWhe
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockIoctlHelper ioctlHelper{drm};
-    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::getparam, &ioctlHelper), ioctlHelper.ioctlRequestValue);
+    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::getparam, &ioctlHelper), ioctlHelper.getIoctlRequestValueResult);
     EXPECT_NE(getIoctlRequestValue(DrmIoctl::getparam, nullptr), getIoctlRequestValue(DrmIoctl::getparam, &ioctlHelper));
 
-    EXPECT_EQ(getDrmParamValue(DrmParam::paramChipsetId, &ioctlHelper), ioctlHelper.drmParamValue);
+    EXPECT_EQ(getDrmParamValue(DrmParam::paramChipsetId, &ioctlHelper), ioctlHelper.getDrmParamValueResult);
     EXPECT_NE(getDrmParamValue(DrmParam::paramChipsetId, nullptr), getDrmParamValue(DrmParam::paramChipsetId, &ioctlHelper));
 }
 
@@ -1829,20 +1770,6 @@ TEST(DrmWrapperTest, givenErrorWhenCheckingIfReinvokeRequiredThenFalseIsReturned
     EXPECT_FALSE(checkIfIoctlReinvokeRequired(ENOENT, DrmIoctl::getparam, nullptr));
 }
 
-TEST(IoctlHelperTest, whenGettingDrmParamValueThenProperValueIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto ioctlHelper = drm.getIoctlHelper();
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), ioctlHelper->getDrmParamValue(DrmParam::engineClassRender));
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY), ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO), ioctlHelper->getDrmParamValue(DrmParam::engineClassVideo));
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE), ioctlHelper->getDrmParamValue(DrmParam::engineClassVideoEnhance));
-    EXPECT_EQ(static_cast<int>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID), ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalid));
-    EXPECT_EQ(static_cast<int>(I915_ENGINE_CLASS_INVALID_NONE), ioctlHelper->getDrmParamValue(DrmParam::engineClassInvalidNone));
-
-    EXPECT_THROW(ioctlHelper->getDrmParamValueBase(DrmParam::engineClassCompute), std::runtime_error);
-}
-
 TEST(IoctlHelperTest, whenGettingFileNameForFrequencyFilesThenProperStringIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -1878,11 +1805,14 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto ioctlHelper = drm.getIoctlHelper();
 
+    auto memoryClassSystem = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem));
+    auto memoryClassDevice = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
+
     std::vector<MemoryRegion> memRegions(4);
-    memRegions[0] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0};
-    memRegions[1] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0};
-    memRegions[2] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0};
-    memRegions[3] = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0};
+    memRegions[0] = {{memoryClassSystem, 0}, 1024, 0};
+    memRegions[1] = {{memoryClassDevice, 0}, 1024, 0};
+    memRegions[2] = {{memoryClassDevice, 1}, 1024, 0};
+    memRegions[3] = {{memoryClassDevice, 2}, 1024, 0};
     auto memoryInfo = std::make_unique<MemoryInfo>(memRegions, drm);
 
     std::vector<EngineClassInstance> engines(3);
@@ -1892,7 +1822,7 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
 
     auto distances = std::vector<DistanceInfo>();
     for (const auto &region : memRegions) {
-        if (region.region.memoryClass == drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM) {
+        if (region.region.memoryClass == memoryClassSystem) {
             continue;
         }
         for (const auto &engine : engines) {

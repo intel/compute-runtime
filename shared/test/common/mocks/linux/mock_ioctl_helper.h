@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
-#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -24,68 +23,47 @@ constexpr uint64_t unallocatedSizeRegionOne = 12 * MemoryConstants::gigaByte;
 constexpr uint64_t unallocatedSizeRegionFour = 4 * MemoryConstants::gigaByte;
 
 class MockIoctlHelper : public IoctlHelperPrelim20 {
+    static constexpr int memoryClassSystem = 0x123;
+    static constexpr int memoryClassDevice = 0x124;
+
   public:
     using IoctlHelperPrelim20::IoctlHelperPrelim20;
     ADDMETHOD_CONST_NOBASE(isImmediateVmBindRequired, bool, false, ());
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override {
-        return ioctlRequestValue;
-    };
+    ADDMETHOD_CONST_NOBASE(getIoctlRequestValue, unsigned int, 1234u, (DrmIoctl));
+    ADDMETHOD_CONST_NOBASE(isWaitBeforeBindRequired, bool, false, (bool));
+
+    ADDMETHOD_NOBASE(vmBind, int, 0, (const VmBindParams &));
+    ADDMETHOD_NOBASE(vmUnbind, int, 0, (const VmBindParams &));
+    ADDMETHOD_NOBASE(allocateInterrupt, bool, true, (uint32_t &));
+    ADDMETHOD_NOBASE(createMediaContext, bool, true, (void *, uint32_t, void *, uint32_t, uint64_t &));
+    ADDMETHOD_NOBASE(releaseMediaContext, bool, true, (uint64_t));
 
     int getDrmParamValue(DrmParam drmParam) const override {
-        if (drmParam == DrmParam::memoryClassSystem || drmParam == DrmParam::memoryClassDevice) {
-            return IoctlHelperPrelim20::getDrmParamValue(drmParam);
+        if (drmParam == DrmParam::memoryClassSystem) {
+            return memoryClassSystem;
         }
-        return drmParamValue;
-    }
-    int vmBind(const VmBindParams &vmBindParams) override {
-        if (failBind.has_value())
-            return *failBind ? -1 : 0;
-        else
-            return IoctlHelperPrelim20::vmBind(vmBindParams);
-    }
-    int vmUnbind(const VmBindParams &vmBindParams) override {
-        if (failBind.has_value())
-            return *failBind ? -1 : 0;
-        else
-            return IoctlHelperPrelim20::vmUnbind(vmBindParams);
-    }
-    bool isWaitBeforeBindRequired(bool bind) const override {
-        if (waitBeforeBindRequired.has_value())
-            return *waitBeforeBindRequired;
-        else
-            return IoctlHelperPrelim20::isWaitBeforeBindRequired(bind);
-    }
-
-    bool allocateInterrupt(uint32_t &handle) override {
-        allocateInterruptCalled++;
-        return IoctlHelperPrelim20::allocateInterrupt(handle);
+        if (drmParam == DrmParam::memoryClassDevice) {
+            return memoryClassDevice;
+        }
+        return getDrmParamValueResult;
     }
 
     bool releaseInterrupt(uint32_t handle) override {
         releaseInterruptCalled++;
         latestReleaseInterruptHandle = handle;
-        return IoctlHelperPrelim20::releaseInterrupt(handle);
-    }
-
-    bool createMediaContext(void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, uint64_t &outDoorbell) override {
-        createMediaContextCalled++;
-        return IoctlHelperPrelim20::createMediaContext(controlSharedMemoryBuffer, controlSharedMemoryBufferSize, controlBatchBuffer, controlBatchBufferSize, outDoorbell);
-    }
-    bool releaseMediaContext(uint64_t doorbellHandle) override {
-        releaseMediaContextCalled++;
-        return IoctlHelperPrelim20::releaseMediaContext(doorbellHandle);
+        return releaseInterruptResult;
     }
 
     std::unique_ptr<MemoryInfo> createMemoryInfo() override {
 
         std::vector<MemoryRegion> regionInfo(3);
-        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+        regionInfo[0].region = {memoryClassSystem, 0};
         regionInfo[0].probedSize = probedSizeRegionZero;
         regionInfo[0].unallocatedSize = unallocatedSizeRegionZero;
-        regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+        regionInfo[1].region = {memoryClassDevice, 0};
         regionInfo[1].probedSize = probedSizeRegionOne;
         regionInfo[1].unallocatedSize = unallocatedSizeRegionOne;
-        regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
+        regionInfo[2].region = {memoryClassDevice, 1};
         regionInfo[2].probedSize = probedSizeRegionFour;
         regionInfo[2].unallocatedSize = unallocatedSizeRegionFour;
 
@@ -93,14 +71,10 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         return memoryInfo;
     }
 
-    unsigned int ioctlRequestValue = 1234u;
-    int drmParamValue = 1234;
-    std::optional<bool> failBind{};
-    std::optional<bool> waitBeforeBindRequired{};
-    uint32_t allocateInterruptCalled = 0;
+    int getDrmParamValueResult = 1234;
     uint32_t releaseInterruptCalled = 0;
     uint32_t latestReleaseInterruptHandle = InterruptId::notUsed;
-    uint32_t createMediaContextCalled = 0;
-    uint32_t releaseMediaContextCalled = 0;
+
+    bool releaseInterruptResult = true;
 };
 } // namespace NEO
