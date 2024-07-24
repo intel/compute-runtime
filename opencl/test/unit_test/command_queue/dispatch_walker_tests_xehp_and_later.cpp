@@ -497,7 +497,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWriteWalkerStamp) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     debugManager.flags.EnableTimestampPacket.set(true);
 
     auto testDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
@@ -514,20 +514,25 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-
     auto gmmHelper = device->getGmmHelper();
     auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getRootDeviceEnvironment()) ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
-    auto &postSyncData = walker->getPostSync();
-    EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP,
-              postSyncData.getOperation());
-    EXPECT_TRUE(postSyncData.getDataportPipelineFlush());
-    EXPECT_EQ(expectedMocs, postSyncData.getMocs());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([expectedMocs](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+        using PostSyncType = typename WalkerType::PostSyncType;
+
+        auto &postSyncData = walker->getPostSync();
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
+        EXPECT_TRUE(postSyncData.getDataportPipelineFlush());
+        EXPECT_EQ(expectedMocs, postSyncData.getMocs());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenMocsValueIsOverwrittenThenPostSyncContainsProperSetting) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
+
     auto mocsValue = 8u;
     debugManager.flags.EnableTimestampPacket.set(true);
     debugManager.flags.OverridePostSyncMocs.set(mocsValue);
@@ -546,10 +551,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-
-    auto &postSyncData = walker->getPostSync();
-    EXPECT_EQ(mocsValue, postSyncData.getMocs());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([mocsValue](auto &&walker) {
+        auto &postSyncData = walker->getPostSync();
+        EXPECT_EQ(mocsValue, postSyncData.getMocs());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddEnoughSpace) {
@@ -620,6 +627,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocalIdsGenerationEnabledWhenDispatchMeetCriteriaThenExpectNoLocalIdsAndProperIsaAddress) {
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
@@ -657,29 +665,34 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocal
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(DefaultWalkerType::DWORD_LENGTH_FIXED_SIZE, walker->getDwordLength());
-    EXPECT_EQ(0u, walker->getEmitInlineParameter());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([this](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
 
-    EXPECT_EQ(1u, walker->getGenerateLocalId());
-    EXPECT_EQ(1u, walker->getEmitLocalId());
+        EXPECT_EQ(WalkerType::DWORD_LENGTH_FIXED_SIZE, walker->getDwordLength());
+        EXPECT_EQ(0u, walker->getEmitInlineParameter());
 
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        uint32_t expectedIndirectDataLength = alignUp(kernel->mockKernel->getCrossThreadDataSize(), FamilyType::indirectDataAlignment);
-        EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
-    }
+        EXPECT_EQ(1u, walker->getGenerateLocalId());
+        EXPECT_EQ(1u, walker->getEmitLocalId());
 
-    auto &idd = walker->getInterfaceDescriptor();
-    uint64_t expectedKernelStartOffset = kernel->kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad;
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        expectedKernelStartOffset += kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
-        using KernelStartPointerType = uint32_t;
-        EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), static_cast<KernelStartPointerType>(idd.getKernelStartPointer()));
-    } else {
-        expectedKernelStartOffset += kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddress();
-        using KernelStartPointerType = decltype(idd.getKernelStartPointer());
-        EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), idd.getKernelStartPointer());
-    }
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            uint32_t expectedIndirectDataLength = alignUp(this->kernel->mockKernel->getCrossThreadDataSize(), FamilyType::indirectDataAlignment);
+            EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
+        }
+
+        auto &idd = walker->getInterfaceDescriptor();
+        uint64_t expectedKernelStartOffset = this->kernel->kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad;
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            expectedKernelStartOffset += this->kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
+            using KernelStartPointerType = uint32_t;
+            EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), static_cast<KernelStartPointerType>(idd.getKernelStartPointer()));
+        } else {
+            expectedKernelStartOffset += this->kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddress();
+            using KernelStartPointerType = decltype(idd.getKernelStartPointer());
+            EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), idd.getKernelStartPointer());
+        }
+    },
+               walkerVariant);
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, CsrDependencies(), false, false,
                                                                                false, *cmdQ.get(), multiDispatchInfo, false, false, false, nullptr);
@@ -691,7 +704,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocal
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenLocalIdsUsedThenDoNotExpectCrossThreadDataInWalkerEmitLocalFieldSet) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
@@ -728,36 +741,41 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(1u, walker->getEmitInlineParameter());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([this, lws = lws](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
 
-    EXPECT_EQ(0u, walker->getGenerateLocalId());
-    constexpr uint32_t expectedEmit = 0u;
-    EXPECT_EQ(expectedEmit, walker->getEmitLocalId());
-    EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
+        EXPECT_EQ(1u, walker->getEmitInlineParameter());
 
-    uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    // only X is present
-    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf);
-    sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
-    size_t perThreadTotalDataSize = getThreadsPerWG(simd, static_cast<uint32_t>(lws[0])) * sizePerThreadData;
+        EXPECT_EQ(0u, walker->getGenerateLocalId());
+        constexpr uint32_t expectedEmit = 0u;
+        EXPECT_EQ(expectedEmit, walker->getEmitLocalId());
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
 
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        uint32_t expectedIndirectDataLength = alignUp(static_cast<uint32_t>(perThreadTotalDataSize), FamilyType::indirectDataAlignment);
-        EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
-    }
+        uint32_t simd = this->kernel->mockKernel->getKernelInfo().getMaxSimdSize();
+        // only X is present
+        auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf);
+        sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
+        size_t perThreadTotalDataSize = getThreadsPerWG(simd, static_cast<uint32_t>(lws[0])) * sizePerThreadData;
 
-    auto &idd = walker->getInterfaceDescriptor();
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            uint32_t expectedIndirectDataLength = alignUp(static_cast<uint32_t>(perThreadTotalDataSize), FamilyType::indirectDataAlignment);
+            EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
+        }
 
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        auto expectedKernelStartOffset = kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
-        using KernelStartPointerType = uint32_t;
-        EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), static_cast<KernelStartPointerType>(idd.getKernelStartPointer()));
-    } else {
-        auto expectedKernelStartOffset = kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddress();
-        using KernelStartPointerType = decltype(idd.getKernelStartPointer());
-        EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), idd.getKernelStartPointer());
-    }
+        auto &idd = walker->getInterfaceDescriptor();
+
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            auto expectedKernelStartOffset = this->kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
+            using KernelStartPointerType = uint32_t;
+            EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), static_cast<KernelStartPointerType>(idd.getKernelStartPointer()));
+        } else {
+            auto expectedKernelStartOffset = this->kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddress();
+            using KernelStartPointerType = decltype(idd.getKernelStartPointer());
+            EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), idd.getKernelStartPointer());
+        }
+    },
+               walkerVariant);
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, CsrDependencies(), false, false,
                                                                                false, *cmdQ.get(), multiDispatchInfo, false, false, false, nullptr);
@@ -768,7 +786,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenExecutionMaskWithoutReminderWhenProgrammingWalkerThenSetValidNumberOfBitsInMask) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     std::array<uint32_t, 4> testedSimd = {{1, 8, 16, 32}};
@@ -789,12 +807,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenExecution
         hwParser.parseCommands<FamilyType>(cmdQ->getCS(0), streamOffset);
         hwParser.findHardwareCommands<FamilyType>();
 
-        auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-        if (isSimd1(simd)) {
-            EXPECT_EQ(maxNBitValue(32), walker->getExecutionMask());
-        } else {
-            EXPECT_EQ(maxNBitValue(simd), walker->getExecutionMask());
-        }
+        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+        std::visit([simd](auto &&walker) {
+            if (isSimd1(simd)) {
+                EXPECT_EQ(maxNBitValue(32), walker->getExecutionMask());
+            } else {
+                EXPECT_EQ(maxNBitValue(simd), walker->getExecutionMask());
+            }
+        },
+                   walkerVariant);
     }
 }
 
@@ -866,7 +887,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWithoutLocalIdsAndPassInlineDataEnabledWhenNoHWGenerationOfLocalIdsUsedThenExpectCrossThreadDataInWalkerAndNoEmitLocalFieldSet) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
@@ -893,26 +914,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWit
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(1u, walker->getEmitInlineParameter());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([this](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
 
-    EXPECT_EQ(0u, walker->getGenerateLocalId());
-    EXPECT_EQ(0u, walker->getEmitLocalId());
+        EXPECT_EQ(1u, walker->getEmitInlineParameter());
 
-    EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
+        EXPECT_EQ(0u, walker->getGenerateLocalId());
+        EXPECT_EQ(0u, walker->getEmitLocalId());
 
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        size_t perThreadTotalDataSize = 0U;
-        uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize);
-        expectedIndirectDataLength = alignUp(expectedIndirectDataLength, FamilyType::indirectDataAlignment);
-        EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
-    }
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), this->crossThreadDataGrf, sizeof(INLINE_DATA)));
+
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            size_t perThreadTotalDataSize = 0U;
+            uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize);
+            expectedIndirectDataLength = alignUp(expectedIndirectDataLength, FamilyType::indirectDataAlignment);
+            EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
+        }
+    },
+               walkerVariant);
 
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenNoLocalIdsUsedAndCrossThreadIsTwoGrfsThenExpectFirstCrossThreadDataInWalkerSecondInPayload) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
@@ -940,29 +966,33 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(1u, walker->getEmitInlineParameter());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([crossThreadDataTwoGrf = crossThreadDataTwoGrf, &ih](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+        EXPECT_EQ(1u, walker->getEmitInlineParameter());
 
-    EXPECT_EQ(0u, walker->getGenerateLocalId());
-    EXPECT_EQ(0u, walker->getEmitLocalId());
+        EXPECT_EQ(0u, walker->getGenerateLocalId());
+        EXPECT_EQ(0u, walker->getEmitLocalId());
 
-    EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataTwoGrf, sizeof(INLINE_DATA)));
-    void *payloadData = ih.getCpuBase();
-    EXPECT_EQ(0, memcmp(payloadData, &crossThreadDataTwoGrf[sizeof(INLINE_DATA) / sizeof(uint32_t)], sizeof(INLINE_DATA)));
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataTwoGrf, sizeof(INLINE_DATA)));
+        void *payloadData = ih.getCpuBase();
+        EXPECT_EQ(0, memcmp(payloadData, &crossThreadDataTwoGrf[sizeof(INLINE_DATA) / sizeof(uint32_t)], sizeof(INLINE_DATA)));
 
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        size_t perThreadTotalDataSize = 0;
-        // second GRF in indirect
-        uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize + sizeof(INLINE_DATA));
-        expectedIndirectDataLength = alignUp(expectedIndirectDataLength, FamilyType::indirectDataAlignment);
-        EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
-    }
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            size_t perThreadTotalDataSize = 0;
+            // second GRF in indirect
+            uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize + sizeof(INLINE_DATA));
+            expectedIndirectDataLength = alignUp(expectedIndirectDataLength, FamilyType::indirectDataAlignment);
+            EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
+        }
+    },
+               walkerVariant);
 
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAllChannelsActiveWithWorkDimOneDimensionThenHwGenerationIsEnabledWithOverwrittenWalkOrder) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     debugManager.flags.EnableHwGenerationLocalIds.set(true);
 
@@ -989,19 +1019,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAllChanne
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-
-    EXPECT_EQ(1u, walker->getGenerateLocalId());
-    EXPECT_EQ(7u, walker->getEmitLocalId());
-    EXPECT_EQ(4u, walker->getWalkOrder());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([](auto &&walker) {
+        EXPECT_EQ(1u, walker->getGenerateLocalId());
+        EXPECT_EQ(7u, walker->getEmitLocalId());
+        EXPECT_EQ(4u, walker->getWalkOrder());
+    },
+               walkerVariant);
 
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataAndHwLocalIdsGenerationEnabledWhenLocalIdsUsedThenExpectCrossThreadDataInWalkerAndEmitFields) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     debugManager.flags.EnablePassInlineData.set(true);
@@ -1031,37 +1062,42 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(1u, walker->getEmitInlineParameter());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([this](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
 
-    EXPECT_EQ(1u, walker->getGenerateLocalId());
-    constexpr uint32_t expectedEmit = (1 << 0);
-    EXPECT_EQ(expectedEmit, walker->getEmitLocalId());
+        EXPECT_EQ(1u, walker->getEmitInlineParameter());
 
-    EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
+        EXPECT_EQ(1u, walker->getGenerateLocalId());
+        constexpr uint32_t expectedEmit = (1 << 0);
+        EXPECT_EQ(expectedEmit, walker->getEmitLocalId());
 
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        constexpr uint32_t expectedIndirectDataLength = 0;
-        EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
-    }
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), this->crossThreadDataGrf, sizeof(INLINE_DATA)));
 
-    auto &idd = walker->getInterfaceDescriptor();
-    uint64_t expectedKernelStartOffset = kernel->kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad;
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        expectedKernelStartOffset += kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
-        using KernelStartPointerType = uint32_t;
-        EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), static_cast<KernelStartPointerType>(idd.getKernelStartPointer()));
-    } else {
-        expectedKernelStartOffset += kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddress();
-        using KernelStartPointerType = decltype(idd.getKernelStartPointer());
-        EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), idd.getKernelStartPointer());
-    }
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            constexpr uint32_t expectedIndirectDataLength = 0;
+            EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
+        }
+
+        auto &idd = walker->getInterfaceDescriptor();
+        uint64_t expectedKernelStartOffset = this->kernel->kernelInfo.kernelDescriptor.entryPoints.skipPerThreadDataLoad;
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            expectedKernelStartOffset += this->kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
+            using KernelStartPointerType = uint32_t;
+            EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), static_cast<KernelStartPointerType>(idd.getKernelStartPointer()));
+        } else {
+            expectedKernelStartOffset += this->kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddress();
+            using KernelStartPointerType = decltype(idd.getKernelStartPointer());
+            EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), idd.getKernelStartPointer());
+        }
+    },
+               walkerVariant);
 
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataAndHwLocalIdsGenerationEnabledWhenLocalIdsNotUsedThenExpectCrossThreadDataInWalkerAndNoHwLocalIdGeneration) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
@@ -1092,31 +1128,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(1u, walker->getEmitInlineParameter());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([this](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
 
-    EXPECT_EQ(0u, walker->getGenerateLocalId());
-    constexpr uint32_t expectedEmit = 0;
-    EXPECT_EQ(expectedEmit, walker->getEmitLocalId());
+        EXPECT_EQ(1u, walker->getEmitInlineParameter());
 
-    EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
+        EXPECT_EQ(0u, walker->getGenerateLocalId());
+        constexpr uint32_t expectedEmit = 0;
+        EXPECT_EQ(expectedEmit, walker->getEmitLocalId());
 
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        constexpr uint32_t expectedIndirectDataLength = 0;
-        EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
-    }
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), this->crossThreadDataGrf, sizeof(INLINE_DATA)));
 
-    auto &idd = walker->getInterfaceDescriptor();
-    if constexpr (std::is_same_v<DefaultWalkerType, COMPUTE_WALKER>) {
-        auto expectedKernelStartOffset = kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
-        using KernelStartPointerType = uint32_t;
-        EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), static_cast<KernelStartPointerType>(idd.getKernelStartPointer()));
-    } else {
-        auto expectedKernelStartOffset = kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddress();
-        using KernelStartPointerType = decltype(idd.getKernelStartPointer());
-        EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), idd.getKernelStartPointer());
-    }
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            constexpr uint32_t expectedIndirectDataLength = 0;
+            EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
+        }
 
+        auto &idd = walker->getInterfaceDescriptor();
+        if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
+            auto expectedKernelStartOffset = this->kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddressToPatch();
+            using KernelStartPointerType = uint32_t;
+            EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), static_cast<KernelStartPointerType>(idd.getKernelStartPointer()));
+        } else {
+            auto expectedKernelStartOffset = this->kernel->mockKernel->getKernelInfo().getGraphicsAllocation()->getGpuAddress();
+            using KernelStartPointerType = decltype(idd.getKernelStartPointer());
+            EXPECT_EQ(static_cast<KernelStartPointerType>(expectedKernelStartOffset), idd.getKernelStartPointer());
+        }
+    },
+               walkerVariant);
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
