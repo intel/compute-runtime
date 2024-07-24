@@ -961,9 +961,13 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     drm.ioctlHelper.reset();
     drm.setupHardwareInfo(&device, false);
     EXPECT_NE(nullptr, drm.getIoctlHelper());
-    EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxSlicesSupported, hwInfo->gtSystemInfo.MaxSlicesSupported);
+    EXPECT_EQ(2u, hwInfo->gtSystemInfo.MaxSlicesSupported);
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxSubSlicesSupported, hwInfo->gtSystemInfo.MaxSubSlicesSupported);
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxEuPerSubSlice, hwInfo->gtSystemInfo.MaxEuPerSubSlice);
+
+    for (uint32_t i = 0; i < hwInfo->gtSystemInfo.SliceCount; i++) {
+        EXPECT_TRUE(hwInfo->gtSystemInfo.SliceInfo[i].Enabled);
+    }
 }
 
 TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopologyInfoThenCorrectMaxSubSliceCountIsSet) {

@@ -13,40 +13,6 @@
 
 using namespace NEO;
 
-struct LkfProductHelperLinux : ProductHelperTestLinux {
-    void SetUp() override {
-        ProductHelperTestLinux::SetUp();
-
-        drm->storedSSVal = 8;
-    }
-};
-
-LKFTEST_F(LkfProductHelperLinux, GivenLkfThenHwInfoIsCorrect) {
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
-
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
-}
-
-LKFTEST_F(LkfProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenNegativeOneReturned) {
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-
-    drm->failRetTopology = true;
-    drm->storedRetValForEUVal = -1;
-    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-1, ret);
-
-    drm->storedRetValForEUVal = 0;
-    drm->storedRetValForSSVal = -1;
-    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-1, ret);
-}
-
 template <typename T>
 class LkfHwInfoTests : public ::testing::Test {};
 using lkfTestTypes = ::testing::Types<LkfHw1x8x8>;
@@ -73,5 +39,5 @@ TYPED_TEST(LkfHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT_VAL(gtSystemInfo.L3CacheSizeInKb, 0u);
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, 8u);
-    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+    EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
 }

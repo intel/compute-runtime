@@ -82,7 +82,7 @@ ARLTEST_F(ArlHwInfoLinux, whenSetupHardwareInfoThenGtSetupIsCorrect) {
     EXPECT_GT(gtSystemInfo.SubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT_VAL(gtSystemInfo.L3CacheSizeInKb, 0u);
-    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+    EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MaxSlicesSupported, 0u);
     EXPECT_GT(gtSystemInfo.MaxSubSlicesSupported, 0u);

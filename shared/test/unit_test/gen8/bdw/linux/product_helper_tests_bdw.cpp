@@ -13,78 +13,6 @@
 
 using namespace NEO;
 
-struct BdwProductHelperLinux : ProductHelperTestLinux {
-    void SetUp() override {
-        ProductHelperTestLinux::SetUp();
-    }
-};
-
-BDWTEST_F(BdwProductHelperLinux, WhenConfiguringHwInfoThenInformationIsCorrect) {
-    drm->storedSSVal = 3;
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
-
-    pInHwInfo.platform.usDeviceID = 0x1602;
-
-    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
-
-    pInHwInfo.platform.usDeviceID = 0x1626;
-
-    drm->storedSSVal = 6;
-    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
-    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(2u, outHwInfo.gtSystemInfo.SliceCount);
-    EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
-}
-
-BDWTEST_F(BdwProductHelperLinux, GivenFailedIoctlEuCountWhenConfiguringHwInfoThenErrorIsReturned) {
-    drm->failRetTopology = true;
-    drm->storedRetValForEUVal = -4;
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-4, ret);
-}
-
-BDWTEST_F(BdwProductHelperLinux, GivenFailedIoctlSsCountWhenConfiguringHwInfoThenErrorIsReturned) {
-    drm->failRetTopology = true;
-    drm->storedRetValForSSVal = -5;
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(-5, ret);
-}
-
-BDWTEST_F(BdwProductHelperLinux, WhenConfiguringHwInfoThenEdramInformationIsCorrect) {
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ_VAL(0u, outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(0u, outHwInfo.featureTable.flags.ftrEDram);
-
-    pInHwInfo.platform.usDeviceID = 0x1622;
-
-    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
-
-    pInHwInfo.platform.usDeviceID = 0x162A;
-    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(0, ret);
-    EXPECT_EQ_VAL((128u * 1024u), outHwInfo.gtSystemInfo.EdramSizeInKb);
-    EXPECT_EQ(1u, outHwInfo.featureTable.flags.ftrEDram);
-}
-
 template <typename T>
 class BdwHwInfoTests : public ::testing::Test {
 };
@@ -111,5 +39,5 @@ TYPED_TEST(BdwHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT_VAL(gtSystemInfo.L3CacheSizeInKb, 0u);
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, 8u);
-    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+    EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
 }

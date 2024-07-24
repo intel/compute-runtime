@@ -71,56 +71,6 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     auto gtSystemInfo = &outHwInfo->gtSystemInfo;
     auto featureTable = &outHwInfo->featureTable;
 
-    DrmQueryTopologyData topologyData = {};
-
-    bool status = drm->queryTopology(*outHwInfo, topologyData);
-
-    if (!status) {
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
-
-        topologyData.sliceCount = gtSystemInfo->SliceCount;
-
-        ret = drm->getEuTotal(topologyData.euCount);
-        if (ret != 0) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
-            *outHwInfo = {};
-            return ret;
-        }
-
-        ret = drm->getSubsliceTotal(topologyData.subSliceCount);
-        if (ret != 0) {
-            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
-            *outHwInfo = {};
-            return ret;
-        }
-
-        topologyData.maxEusPerSubSlice = topologyData.subSliceCount > 0 ? topologyData.euCount / topologyData.subSliceCount : 0;
-        topologyData.maxSlices = topologyData.sliceCount;
-        topologyData.maxSubSlicesPerSlice = topologyData.sliceCount > 0 ? topologyData.subSliceCount / topologyData.sliceCount : 0;
-    }
-
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-
-    auto numThreadsPerEu = releaseHelper ? releaseHelper->getNumThreadsPerEu() : 7u;
-
-    gtSystemInfo->SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
-    gtSystemInfo->SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
-    gtSystemInfo->DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
-    if (topologyData.euCount) {
-        gtSystemInfo->EUCount = static_cast<uint32_t>(topologyData.euCount);
-    }
-    gtSystemInfo->ThreadCount = numThreadsPerEu * gtSystemInfo->EUCount;
-
-    gtSystemInfo->MaxEuPerSubSlice = gtSystemInfo->MaxEuPerSubSlice != 0 ? gtSystemInfo->MaxEuPerSubSlice : topologyData.maxEusPerSubSlice;
-    gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSlicesPerSlice * topologyData.maxSlices), gtSystemInfo->MaxSubSlicesSupported);
-    gtSystemInfo->MaxSlicesSupported = topologyData.maxSlices;
-    gtSystemInfo->MaxDualSubSlicesSupported = gtSystemInfo->MaxSubSlicesSupported;
-
-    gtSystemInfo->IsDynamicallyPopulated = true;
-    for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
-        gtSystemInfo->SliceInfo[slice].Enabled = slice < gtSystemInfo->SliceCount;
-    }
-
     uint64_t gttSizeQuery = 0;
     featureTable->flags.ftrSVM = true;
 
