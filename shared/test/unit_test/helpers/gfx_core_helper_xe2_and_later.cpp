@@ -25,21 +25,6 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsTimestampSh
     EXPECT_FALSE(gfxCoreHelper.isTimestampShiftRequired());
 }
 
-HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenGetIOHAlignmentThenReturnsCorrectValue, IsAtLeastXe2HpgCore) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    EXPECT_EQ(gfxCoreHelper.getIOHAlignment(), 256u);
-}
-
-HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgAndForceIOHAlignmentFlagWhenGetIOHAlignmentThenReturnsCorrectValue, IsAtLeastXe2HpgCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ForceIOHAlignment.set(1024);
-
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    EXPECT_EQ(gfxCoreHelper.getIOHAlignment(), 1024u);
-}
-
 HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned, IsLNL) {
     DebugManagerStateRestore restorer;
 

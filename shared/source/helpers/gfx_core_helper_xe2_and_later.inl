@@ -23,15 +23,6 @@ void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool 
 }
 
 template <>
-size_t GfxCoreHelperHw<Family>::getIOHAlignment() const {
-    size_t alignment = 256;
-    if (debugManager.flags.ForceIOHAlignment.get() != -1) {
-        alignment = static_cast<size_t>(debugManager.flags.ForceIOHAlignment.get());
-    }
-    return alignment;
-}
-
-template <>
 void GfxCoreHelperHw<Family>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const {}
 
 template <>

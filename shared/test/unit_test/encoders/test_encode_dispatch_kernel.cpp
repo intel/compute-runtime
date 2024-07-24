@@ -1629,3 +1629,17 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenEncodeDispatchKernelWh
 
     EXPECT_EQ(0u, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
 }
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGetIohAlignemntThenOneReturned, IsAtMostArl) {
+    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(), 1u);
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGetIohAlignemntThenCacheLineSizeReturned, IsAtLeastBmg) {
+    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(), FamilyType::cacheLineSize);
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenForcingDifferentIohAlignemntThenExpectedAlignmentReturned, IsAtLeastBmg) {
+    DebugManagerStateRestore restorer;
+    auto expectedAlignemnt = 1024u;
+    debugManager.flags.ForceIOHAlignment.set(expectedAlignemnt);
+    EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(), expectedAlignemnt);
+}

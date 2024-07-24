@@ -200,6 +200,7 @@ struct EncodeDispatchKernel {
         return BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE;
     }
 
+    static size_t getDefaultIOHAlignment();
     template <bool isHeapless>
     static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr);
     template <bool isHeapless>

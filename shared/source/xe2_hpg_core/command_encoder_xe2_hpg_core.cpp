@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_heap_addressing.inl"
+#include "shared/source/command_container/command_encoder_xe2_hpg_core_and_later.inl"
 #include "shared/source/command_container/command_encoder_xehp_and_later.inl"
 #include "shared/source/command_container/encode_compute_mode_tgllp_and_later.inl"
 #include "shared/source/command_stream/stream_properties.h"
@@ -20,7 +21,6 @@
 using Family = NEO::Xe2HpgCoreFamily;
 
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
-#include "shared/source/command_container/command_encoder_xe2_hpg_core_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe_hpc_core_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe_hpg_core_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_xehp_and_later.inl"
@@ -331,6 +331,10 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32
     } else if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::yOrderWalk) {
         walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER);
     }
+}
+
+template <>
+void EncodeSurfaceState<Family>::setCoherencyType(Family::RENDER_SURFACE_STATE *surfaceState, Family::RENDER_SURFACE_STATE::COHERENCY_TYPE coherencyType) {
 }
 
 } // namespace NEO

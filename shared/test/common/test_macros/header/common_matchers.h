@@ -90,6 +90,7 @@ using IsAtMostPVC = IsAtMostProduct<IGFX_PVC>;
 using IsNotPVC = IsNotWithinProducts<IGFX_PVC, IGFX_PVC>;
 using IsNotPvcOrDg2 = IsNotWithinProducts<IGFX_DG2, IGFX_PVC>;
 
+using IsAtMostArl = IsAtMostProduct<IGFX_ARROWLAKE>;
 using IsAtLeastBmg = IsAtLeastProduct<IGFX_BMG>;
 
 using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;

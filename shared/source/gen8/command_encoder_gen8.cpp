@@ -6,13 +6,14 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/command_encoder.inl"
+#include "shared/source/command_container/command_encoder_bdw_and_later.inl"
+#include "shared/source/command_container/command_encoder_pre_xe2_hpg_core.inl"
 #include "shared/source/gen8/hw_cmds_base.h"
 #include "shared/source/gen8/reg_configs.h"
 
 using Family = NEO::Gen8Family;
 
-#include "shared/source/command_container/command_encoder.inl"
-#include "shared/source/command_container/command_encoder_bdw_and_later.inl"
 #include "shared/source/command_container/command_encoder_heap_addressing.inl"
 #include "shared/source/command_container/encode_compute_mode_bdw_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_bdw_and_later.inl"

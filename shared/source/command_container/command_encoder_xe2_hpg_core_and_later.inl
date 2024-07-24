@@ -6,7 +6,13 @@
  */
 
 namespace NEO {
-template <>
-void EncodeSurfaceState<Family>::setCoherencyType(Family::RENDER_SURFACE_STATE *surfaceState, Family::RENDER_SURFACE_STATE::COHERENCY_TYPE coherencyType) {
+template <typename Family>
+size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment() {
+    size_t alignment = Family::cacheLineSize;
+    if (NEO::debugManager.flags.ForceIOHAlignment.get() != -1) {
+        alignment = static_cast<size_t>(debugManager.flags.ForceIOHAlignment.get());
+    }
+    return alignment;
 }
+
 } // namespace NEO

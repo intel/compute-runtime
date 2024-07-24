@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/command_encoder.inl"
+#include "shared/source/command_container/command_encoder_pre_xe2_hpg_core.inl"
 #include "shared/source/command_container/command_encoder_xehp_and_later.inl"
 #include "shared/source/command_container/encode_compute_mode_tgllp_and_later.inl"
 #include "shared/source/command_stream/stream_properties.h"
