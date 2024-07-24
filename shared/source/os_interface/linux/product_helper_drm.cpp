@@ -106,7 +106,9 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     gtSystemInfo->SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
     gtSystemInfo->SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     gtSystemInfo->DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
-    gtSystemInfo->EUCount = static_cast<uint32_t>(topologyData.euCount);
+    if (topologyData.euCount) {
+        gtSystemInfo->EUCount = static_cast<uint32_t>(topologyData.euCount);
+    }
     gtSystemInfo->ThreadCount = numThreadsPerEu * gtSystemInfo->EUCount;
 
     gtSystemInfo->MaxEuPerSubSlice = gtSystemInfo->MaxEuPerSubSlice != 0 ? gtSystemInfo->MaxEuPerSubSlice : topologyData.maxEusPerSubSlice;
