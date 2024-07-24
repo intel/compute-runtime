@@ -206,7 +206,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenStatelessBufferAndIma
     auto ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
     ssh->getSpace(0x20);
     uint32_t sizeUsed = static_cast<uint32_t>(ssh->getUsed());
-    auto expectedOffset = alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    auto expectedOffset = alignUp(sizeUsed, FamilyType::cacheLineSize);
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -245,7 +245,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhe
     auto ssh = cmdContainer->getIndirectHeap(HeapType::surfaceState);
     ssh->getSpace(0x20);
     uint32_t sizeUsed = static_cast<uint32_t>(ssh->getUsed());
-    auto expectedOffset = alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    auto expectedOffset = alignUp(sizeUsed, FamilyType::cacheLineSize);
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

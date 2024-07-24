@@ -81,9 +81,8 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kerne
 
 template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredSSH(const Kernel &kernel) {
-    typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
     auto sizeSSH = kernel.getSurfaceStateHeapSize();
-    sizeSSH += sizeSSH ? BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0;
+    sizeSSH += sizeSSH ? GfxFamily::cacheLineSize : 0;
     return sizeSSH;
 }
 
@@ -255,7 +254,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     if constexpr (heaplessModeEnabled == false) {
 
-        ssh.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+        ssh.align(GfxFamily::cacheLineSize);
         dstBindingTablePointer = HardwareCommandsHelper<GfxFamily>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
 
         const auto &kernelInfo = kernel.getKernelInfo();

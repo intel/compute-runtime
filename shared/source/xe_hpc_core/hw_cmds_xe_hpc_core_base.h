@@ -74,6 +74,7 @@ struct XeHpcCore {
             return bindlessSurfaceOffset << 6;
         }
     };
+    static constexpr uint32_t cacheLineSize = 0x40;
 
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };

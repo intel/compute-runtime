@@ -108,7 +108,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         if (bindingTableStateCount > 0u) {
             auto ssh = args.surfaceStateHeap;
             if (ssh == nullptr) {
-                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, args.dispatchInterface->getSurfaceStateHeapDataSize(), NEO::EncodeDispatchKernel<Family>::getDefaultSshAlignment());
             }
             bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
                 *ssh,
@@ -124,7 +124,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             auto ssh = args.surfaceStateHeap;
             if (ssh == nullptr) {
                 container.prepareBindfulSsh();
-                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sshHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sshHeapSize, NEO::EncodeDispatchKernel<Family>::getDefaultSshAlignment());
             }
             uint64_t bindlessSshBaseOffset = ptrDiff(ssh->getSpace(0), ssh->getCpuBase());
             if (globalBindlessSsh) {
@@ -182,7 +182,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     {
         auto heapIndirect = container.getIndirectHeap(HeapType::indirectObject);
         UNRECOVERABLE_IF(!(heapIndirect));
-        heapIndirect->align(DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+        heapIndirect->align(Family::cacheLineSize);
         void *ptr = nullptr;
         if (args.isKernelDispatchedFromImmediateCmdList) {
             ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, DefaultWalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE)->getSpace(iohRequiredSize);

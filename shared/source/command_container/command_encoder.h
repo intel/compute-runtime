@@ -196,8 +196,7 @@ struct EncodeDispatchKernel {
     static bool isDshNeeded(const DeviceInfo &deviceInfo);
     static size_t getDefaultDshAlignment();
     static constexpr size_t getDefaultSshAlignment() {
-        using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
-        return BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE;
+        return GfxFamily::cacheLineSize;
     }
 
     static size_t getDefaultIOHAlignment();

@@ -145,7 +145,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 auto ssh = args.surfaceStateHeap;
                 if (ssh == nullptr) {
                     container.prepareBindfulSsh();
-                    ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sshHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                    ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, sshHeapSize, NEO::EncodeDispatchKernel<Family>::getDefaultSshAlignment());
                 }
 
                 uint64_t bindlessSshBaseOffset = ptrDiff(ssh->getSpace(0), ssh->getCpuBase());
@@ -169,7 +169,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     auto ssh = args.surfaceStateHeap;
                     if (ssh == nullptr) {
                         container.prepareBindfulSsh();
-                        ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+                        ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::surfaceState, args.dispatchInterface->getSurfaceStateHeapDataSize(), NEO::EncodeDispatchKernel<Family>::getDefaultSshAlignment());
                     }
                     auto bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
                         *ssh,
@@ -196,6 +196,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 auto dsHeap = args.dynamicStateHeap;
                 if (dsHeap == nullptr) {
                     dsHeap = container.getIndirectHeap(HeapType::dynamicState);
+                    auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor, container.getNumIddPerBlock());
+                    if (dsHeap->getAvailableSpace() <= dshSizeRequired) {
+                        dsHeap = container.getHeapWithRequiredSizeAndAlignment(HeapType::dynamicState, dsHeap->getMaxAvailableSpace(), NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
+                    }
                 }
                 UNRECOVERABLE_IF(!dsHeap);
 
@@ -244,7 +248,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     {
         auto heap = container.getIndirectHeap(HeapType::indirectObject);
         UNRECOVERABLE_IF(!heap);
-        heap->align(Family::indirectDataAlignment);
+        heap->align(Family::cacheLineSize);
         void *ptr = nullptr;
         if (args.isKernelDispatchedFromImmediateCmdList) {
             ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, Family::indirectDataAlignment)->getSpace(iohRequiredSize);

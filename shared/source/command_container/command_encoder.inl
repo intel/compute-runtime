@@ -54,7 +54,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
     SAMPLER_STATE *dstSamplerState = nullptr;
     uint32_t samplerStateOffsetInDsh = 0;
 
-    dsh->align(EncodeStates<Family>::alignIndirectStatePointer);
+    dsh->align(NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
     uint32_t borderColorOffsetInDsh = 0;
     if (!bindlessHeapHelper || (!bindlessHeapHelper->isGlobalDshSupported())) {
         borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
@@ -561,10 +561,10 @@ void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &con
         void *heapPointer = nullptr;
         size_t heapSize = sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock();
         if (childDsh != nullptr) {
-            childDsh->align(EncodeStates<Family>::alignInterfaceDescriptorData);
+            childDsh->align(NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
             heapPointer = childDsh->getSpace(heapSize);
         } else {
-            container.getIndirectHeap(HeapType::dynamicState)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
+            container.getIndirectHeap(HeapType::dynamicState)->align(NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
             heapPointer = container.getHeapSpaceAllowGrow(HeapType::dynamicState, heapSize);
         }
         container.setIddBlock(heapPointer);
@@ -903,7 +903,7 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredSsh(const KernelInfo &kernel
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::getDefaultDshAlignment() {
-    return EncodeStates<Family>::alignIndirectStatePointer;
+    return Family::cacheLineSize;
 }
 
 template <typename GfxFamily>

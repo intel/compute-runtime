@@ -3001,7 +3001,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(firstHeapSurfaceBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
 
-    ssh->getSpace(ssh->getAvailableSpace() - 128);
+    ssh->getSpace(ssh->getAvailableSpace() - (2 * FamilyType::cacheLineSize));
 
     result = commandList->reset();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

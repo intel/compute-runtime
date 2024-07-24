@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -840,7 +842,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDe
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
 
-    auto kernelSshSize = kernel->getSurfaceStateHeapDataSize();
+    auto kernelSshSize = alignUp(kernel->getSurfaceStateHeapDataSize(), FamilyType::cacheLineSize);
     auto ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
     auto sshHeapSize = ssh->getMaxAvailableSpace();
     auto initialAllocation = ssh->getGraphicsAllocation();
@@ -853,6 +855,45 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDe
     }
 
     auto reallocatedAllocation = ssh->getGraphicsAllocation();
+    EXPECT_NE(nullptr, reallocatedAllocation);
+    EXPECT_NE(initialAllocation, reallocatedAllocation);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenDshIsNotDepletedButReallocated) {
+    if (!neoDevice->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.UseBindlessMode.set(0);
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
+
+    createKernel();
+    ze_result_t returnValue;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+    ze_group_count_t groupCount{1, 1, 1};
+
+    size_t size = kernel->getKernelDescriptor().payloadMappings.samplerTable.tableOffset -
+                  kernel->getKernelDescriptor().payloadMappings.samplerTable.borderColor;
+
+    constexpr auto samplerStateSize = sizeof(typename FamilyType::SAMPLER_STATE);
+    const auto numSamplers = kernel->getKernelDescriptor().payloadMappings.samplerTable.numSamplers;
+    size += numSamplers * samplerStateSize;
+
+    auto kernelDshSize = alignUp(size, FamilyType::cacheLineSize);
+    auto dsh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::dynamicState);
+    auto dshHeapSize = dsh->getMaxAvailableSpace();
+    auto initialAllocation = dsh->getGraphicsAllocation();
+    EXPECT_NE(nullptr, initialAllocation);
+    const_cast<KernelDescriptor::AddressingMode &>(kernel->getKernelDescriptor().kernelAttributes.bufferAddressingMode) = KernelDescriptor::BindfulAndStateless;
+    CmdListKernelLaunchParams launchParams = {};
+    for (size_t i = 0; i < dshHeapSize / kernelDshSize + 1; i++) {
+        auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+
+    auto reallocatedAllocation = dsh->getGraphicsAllocation();
     EXPECT_NE(nullptr, reallocatedAllocation);
     EXPECT_NE(initialAllocation, reallocatedAllocation);
 }

@@ -1442,7 +1442,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
         0,
         pClDevice->getRootDeviceEnvironment());
 
-    auto expectedOffsetRelativeToIohBase = 128u;
+    auto expectedOffsetRelativeToIohBase = alignUp(128u, FamilyType::cacheLineSize);
     auto iohBaseAddress = is64bit ? 0u : indirectHeap.getHeapGpuBase();
 
     ASSERT_NE(0u, offsetCrossThreadData);

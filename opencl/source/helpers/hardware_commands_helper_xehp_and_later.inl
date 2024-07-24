@@ -62,7 +62,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     [[maybe_unused]] uint64_t scratchAddress,
     const RootDeviceEnvironment &rootDeviceEnvironment) {
 
-    indirectHeap.align(GfxFamily::indirectDataAlignment);
+    indirectHeap.align(GfxFamily::cacheLineSize);
 
     auto offsetCrossThreadData = indirectHeap.getUsed();
     char *dest = nullptr;

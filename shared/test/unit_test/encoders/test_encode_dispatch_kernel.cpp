@@ -1050,6 +1050,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithRequiringSshForMisali
 
     bool requiresUncachedMocs = false;
     cmdContainer->getIndirectHeap(HeapType::surfaceState)->getSpace(sizeof(RENDER_SURFACE_STATE));
+    cmdContainer->getIndirectHeap(HeapType::surfaceState)->align(FamilyType::cacheLineSize);
     auto usedBefore = cmdContainer->getIndirectHeap(HeapType::surfaceState)->getUsed();
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
@@ -1563,7 +1564,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
     kernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset = 32;
 
     // align border color state and samplers
-    alignedSamplers = alignUp(alignUp(32, EncodeStates<FamilyType>::alignIndirectStatePointer) + 3 * sizeof(SAMPLER_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+    alignedSamplers = alignUp(alignUp(32, FamilyType::cacheLineSize) + 3 * sizeof(SAMPLER_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
 
     // additional IDD for requiring platforms
     if (additionalSize > 0) {
@@ -1586,7 +1587,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredSshSpaceThen
 
     // two surface states and BTI indices
     kernelInfo.heapInfo.surfaceStateHeapSize = 2 * sizeof(RENDER_SURFACE_STATE) + 2 * sizeof(uint32_t);
-    size_t expectedSize = alignUp(kernelInfo.heapInfo.surfaceStateHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    size_t expectedSize = alignUp(kernelInfo.heapInfo.surfaceStateHeapSize, FamilyType::cacheLineSize);
 
     size = EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(kernelInfo);
     EXPECT_EQ(expectedSize, size);
@@ -1606,7 +1607,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoOfBindlessKernelWhenGettingRequ
 
     // two surface states
     kernelInfo.kernelDescriptor.kernelAttributes.numArgsStateful = 2;
-    size_t expectedSize = alignUp(2 * sizeof(RENDER_SURFACE_STATE), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    size_t expectedSize = alignUp(2 * sizeof(RENDER_SURFACE_STATE), FamilyType::cacheLineSize);
 
     size = EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(kernelInfo);
     EXPECT_EQ(expectedSize, size);

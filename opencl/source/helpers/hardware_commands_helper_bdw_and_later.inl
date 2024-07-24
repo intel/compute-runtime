@@ -80,7 +80,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     uint32_t &sizeCrossThreadData,
     uint64_t scratchAddress,
     const RootDeviceEnvironment &rootDeviceEnvironment) {
-    indirectHeap.align(WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    indirectHeap.align(GfxFamily::cacheLineSize);
 
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {

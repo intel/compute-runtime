@@ -119,7 +119,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies, walkerArgs.relaxedOrderingEnabled, commandQueue.isBcs());
 
-    dsh->align(EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
+    dsh->align(NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment());
 
     walkerArgs.interfaceDescriptorIndex = 0;
     walkerArgs.offsetInterfaceDescriptorTable = dsh->getUsed();
