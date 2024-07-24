@@ -26,7 +26,7 @@ TEST(DrmQueryTopologyTest, givenDrmWhenQueryTopologyCalledThenPassNoFlags) {
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     DrmQueryTopologyData topologyData = {};
-
+    drm.engineInfoQueried = true;
     EXPECT_TRUE(drm.queryTopology(*drm.context.hwInfo, topologyData));
 
     constexpr uint32_t expectedFlag = 0;

@@ -22,43 +22,6 @@ namespace NEO {
 extern std::map<std::string, std::vector<std::string>> directoryFilesMap;
 };
 
-TEST_F(DeviceFactoryLinuxTest, WhenPreparingDeviceEnvironmentsThenInitializedCorrectly) {
-    const HardwareInfo *refHwinfo = defaultHwInfo.get();
-
-    pDrm->storedEUVal = 16;
-    pDrm->storedSSVal = 8;
-
-    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-
-    EXPECT_TRUE(success);
-    EXPECT_NE(hwInfo, nullptr);
-    EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
-    EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 16);
-    EXPECT_EQ((int)hwInfo->gtSystemInfo.SubSliceCount, 8);
-    EXPECT_EQ((int)hwInfo->gtSystemInfo.DualSubSliceCount, 8);
-}
-
-TEST_F(DeviceFactoryLinuxTest, givenSomeDisabledSSAndEUWhenPrepareDeviceEnvironmentsThenCorrectObtainEUCntSSCnt) {
-    const HardwareInfo *refHwinfo = defaultHwInfo.get();
-
-    pDrm->storedEUVal = 144;
-    pDrm->storedSSVal = 12;
-    pDrm->storedSVal = 2;
-    pDrm->disableSomeTopology = true;
-
-    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-
-    EXPECT_TRUE(success);
-    EXPECT_NE(hwInfo, nullptr);
-    EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
-    EXPECT_EQ((int)hwInfo->gtSystemInfo.SliceCount, 1);
-    EXPECT_EQ((int)hwInfo->gtSystemInfo.SubSliceCount, 2);
-    EXPECT_EQ((int)hwInfo->gtSystemInfo.DualSubSliceCount, 2);
-    EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 12);
-}
-
 TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAllocatedAndItContainDrm) {
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
     EXPECT_TRUE(success);

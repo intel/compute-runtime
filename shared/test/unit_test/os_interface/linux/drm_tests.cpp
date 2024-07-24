@@ -961,9 +961,13 @@ TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSy
     drm.ioctlHelper.reset();
     drm.setupHardwareInfo(&device, false);
     EXPECT_NE(nullptr, drm.getIoctlHelper());
-    EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxSlicesSupported, hwInfo->gtSystemInfo.MaxSlicesSupported);
+    EXPECT_EQ(2u, hwInfo->gtSystemInfo.MaxSlicesSupported);
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxSubSlicesSupported, hwInfo->gtSystemInfo.MaxSubSlicesSupported);
     EXPECT_EQ(NEO::defaultHwInfo->gtSystemInfo.MaxEuPerSubSlice, hwInfo->gtSystemInfo.MaxEuPerSubSlice);
+
+    for (uint32_t i = 0; i < hwInfo->gtSystemInfo.SliceCount; i++) {
+        EXPECT_TRUE(hwInfo->gtSystemInfo.SliceInfo[i].Enabled);
+    }
 }
 
 TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopologyInfoThenCorrectMaxSubSliceCountIsSet) {
@@ -978,6 +982,7 @@ TEST(DrmQueryTest, GivenLessAvailableSubSlicesThanMaxSubSlicesWhenQueryingTopolo
     drm.storedSSVal = drm.storedSVal * 7;
     drm.storedEUVal = drm.storedSSVal * 4;
 
+    drm.engineInfoQueried = true;
     EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
     EXPECT_EQ(2, topologyData.sliceCount);
@@ -996,6 +1001,7 @@ TEST(DrmQueryTest, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturned) {
 
     DrmQueryTopologyData topologyData = {};
 
+    drmMock.engineInfoQueried = true;
     EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
     auto topologyMap = drmMock.getTopologyMap();
@@ -1018,6 +1024,7 @@ TEST(DrmQueryTest, GivenSingleSliceConfigWhenQueryingTopologyInfoThenSubsliceInd
     drm.storedSSVal = drm.storedSVal * 7;
     drm.storedEUVal = drm.storedSSVal * 4;
 
+    drm.engineInfoQueried = true;
     EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
     EXPECT_EQ(1, topologyData.sliceCount);
@@ -1050,6 +1057,7 @@ TEST(DrmQueryTest, GivenMultiSliceConfigWhenQueryingTopologyInfoThenSubsliceIndi
     drm.storedSSVal = drm.storedSVal * 7;
     drm.storedEUVal = drm.storedSSVal * 4;
 
+    drm.engineInfoQueried = true;
     EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
     EXPECT_EQ(2, topologyData.sliceCount);

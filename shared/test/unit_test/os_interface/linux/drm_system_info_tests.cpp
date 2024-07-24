@@ -312,7 +312,6 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     drm.storedSSVal = 1u;
     drm.storedEUVal = 1u;
 
-    auto expectedMaxSlicesSupported = dummyDeviceBlobData[2];
     auto expectedMaxSubslicesSupported = dummyDeviceBlobData[5];
     auto expectedMaxEusPerSubsliceSupported = dummyDeviceBlobData[8];
 
@@ -323,9 +322,6 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     EXPECT_EQ(ret, 0);
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
-
-    EXPECT_EQ(expectedMaxSlicesSupported, gtSystemInfo.MaxSlicesSupported);
-    EXPECT_NE(0u, gtSystemInfo.MaxSlicesSupported);
 
     EXPECT_EQ(expectedMaxSubslicesSupported, gtSystemInfo.MaxSubSlicesSupported);
     EXPECT_NE(0u, gtSystemInfo.MaxSubSlicesSupported);
@@ -452,13 +448,14 @@ TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoSuccee
 TEST(DrmSystemInfoTest, givenHardwareInfoWithoutEuCountWhenQuerySystemInfoFailsThenFailureIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
     HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
     hwInfo.gtSystemInfo.EUCount = 0u;
     hwInfo.gtSystemInfo.SubSliceCount = 2u;
     hwInfo.gtSystemInfo.DualSubSliceCount = 2u;
-
-    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 0u;
 
     drm.storedEUVal = 0;
     drm.failRetTopology = true;

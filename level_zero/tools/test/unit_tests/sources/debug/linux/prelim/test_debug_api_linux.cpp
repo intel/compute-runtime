@@ -145,6 +145,7 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithSingleSliceT
     mockDrm->disableSomeTopology = true;
 
     NEO::DrmQueryTopologyData topologyData = {};
+    mockDrm->engineInfoQueried = true;
     mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
@@ -190,6 +191,7 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithMultipleSlic
     mockDrm->disableSomeTopology = true;
 
     NEO::DrmQueryTopologyData topologyData = {};
+    mockDrm->engineInfoQueried = true;
     mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
 
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
@@ -233,6 +235,7 @@ TEST(DebugSessionLinuxi915Test, GivenDeviceWithSingleSliceWhenCallingAreRequeste
     mockDrm->storedEUVal = hwInfo.gtSystemInfo.EUCount;
 
     NEO::DrmQueryTopologyData topologyData = {};
+    mockDrm->engineInfoQueried = true;
     mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
