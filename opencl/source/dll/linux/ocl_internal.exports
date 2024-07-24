@@ -1,102 +1,124 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-{
-  global:
-      clGetExtensionFunctionAddress;
-      clIcdGetPlatformIDsKHR;
-      clGetPlatformInfo;
-      clGetDeviceIDs;
-      clGetDeviceInfo;
+OPENCL_1.0 {
+    global:
+      clBuildProgram;
+      clCreateBuffer;
+      clCreateCommandQueue;
       clCreateContext;
       clCreateContextFromType;
-      clRetainContext;
-      clReleaseContext;
-      clGetContextInfo;
-      clSetContextDestructorCallback;
-      clCreateCommandQueue;
-      clRetainCommandQueue;
-      clReleaseCommandQueue;
-      clGetCommandQueueInfo;
-      clSetCommandQueueProperty;
-      clCreateBuffer;
+      clCreateFromGLBuffer;
+      clCreateFromGLRenderbuffer;
+      clCreateFromGLTexture2D;
+      clCreateFromGLTexture3D;
       clCreateImage2D;
       clCreateImage3D;
-      clRetainMemObject;
-      clReleaseMemObject;
-      clGetSupportedImageFormats;
-      clGetMemObjectInfo;
-      clGetImageInfo;
-      clCreateSampler;
-      clRetainSampler;
-      clReleaseSampler;
-      clGetSamplerInfo;
-      clCreateProgramWithSource;
-      clCreateProgramWithBinary;
-      clRetainProgram;
-      clReleaseProgram;
-      clBuildProgram;
-      clUnloadCompiler;
-      clGetProgramInfo;
-      clGetProgramBuildInfo;
       clCreateKernel;
       clCreateKernelsInProgram;
-      clRetainKernel;
-      clReleaseKernel;
-      clSetKernelArg;
-      clGetKernelInfo;
-      clGetKernelWorkGroupInfo;
-      clWaitForEvents;
-      clGetEventInfo;
-      clRetainEvent;
-      clReleaseEvent;
-      clGetEventProfilingInfo;
-      clFlush;
-      clFinish;
-      clEnqueueReadBuffer;
-      clEnqueueWriteBuffer;
+      clCreateProgramWithBinary;
+      clCreateProgramWithSource;
+      clCreateSampler;
+      clEnqueueAcquireGLObjects;
+      clEnqueueBarrier;
       clEnqueueCopyBuffer;
-      clEnqueueReadImage;
-      clEnqueueWriteImage;
+      clEnqueueCopyBufferToImage;
       clEnqueueCopyImage;
       clEnqueueCopyImageToBuffer;
-      clEnqueueCopyBufferToImage;
       clEnqueueMapBuffer;
       clEnqueueMapImage;
-      clEnqueueUnmapMemObject;
-      clEnqueueNDRangeKernel;
-      clEnqueueTask;
-      clEnqueueNativeKernel;
       clEnqueueMarker;
+      clEnqueueNDRangeKernel;
+      clEnqueueNativeKernel;
+      clEnqueueReadBuffer;
+      clEnqueueReadImage;
+      clEnqueueReleaseGLObjects;
+      clEnqueueTask;
+      clEnqueueUnmapMemObject;
       clEnqueueWaitForEvents;
-      clEnqueueBarrier;
-      clSetEventCallback;
+      clEnqueueWriteBuffer;
+      clEnqueueWriteImage;
+      clFinish;
+      clFlush;
+      clGetCommandQueueInfo;
+      clGetContextInfo;
+      clGetDeviceIDs;
+      clGetDeviceInfo;
+      clGetEventInfo;
+      clGetEventProfilingInfo;
+      clGetExtensionFunctionAddress;
+      clGetGLObjectInfo;
+      clGetGLTextureInfo;
+      clGetImageInfo;
+      clGetKernelInfo;
+      clGetKernelWorkGroupInfo;
+      clGetMemObjectInfo;
+      clGetPlatformIDs;
+      clGetPlatformInfo;
+      clGetProgramBuildInfo;
+      clGetProgramInfo;
+      clGetSamplerInfo;
+      clGetSupportedImageFormats;
+      clReleaseCommandQueue;
+      clReleaseContext;
+      clReleaseEvent;
+      clReleaseKernel;
+      clReleaseMemObject;
+      clReleaseProgram;
+      clReleaseSampler;
+      clRetainCommandQueue;
+      clRetainContext;
+      clRetainEvent;
+      clRetainKernel;
+      clRetainMemObject;
+      clRetainProgram;
+      clRetainSampler;
+      clSetCommandQueueProperty;
+      clSetKernelArg;
+      clUnloadCompiler;
+      clWaitForEvents;
+      GTPin_Init;
+  local: *;
+};
+
+OPENCL_1.1 {
+    global:
       clCreateSubBuffer;
-      clSetMemObjectDestructorCallback;
       clCreateUserEvent;
-      clSetUserEventStatus;
+      clEnqueueCopyBufferRect;
       clEnqueueReadBufferRect;
       clEnqueueWriteBufferRect;
-      clEnqueueCopyBufferRect;
-      clCreateSubDevices;
-      clRetainDevice;
-      clReleaseDevice;
+      clSetEventCallback;
+      clSetMemObjectDestructorCallback;
+      clSetUserEventStatus;
+} OPENCL_1.0;
+
+OPENCL_1.2 {
+    global:
+      clCompileProgram;
+      clCreateFromGLTexture;
       clCreateImage;
       clCreateProgramWithBuiltInKernels;
-      clCompileProgram;
-      clLinkProgram;
-      clUnloadPlatformCompiler;
-      clGetKernelArgInfo;
+      clCreateSubDevices;
+      clEnqueueBarrierWithWaitList;
       clEnqueueFillBuffer;
       clEnqueueFillImage;
-      clEnqueueMigrateMemObjects;
       clEnqueueMarkerWithWaitList;
-      clEnqueueBarrierWithWaitList;
+      clEnqueueMigrateMemObjects;
       clGetExtensionFunctionAddressForPlatform;
+      clGetKernelArgInfo;
+      clLinkProgram;
+      clReleaseDevice;
+      clRetainDevice;
+      clUnloadPlatformCompiler;
+} OPENCL_1.1;
+
+OPENCL_2.0 {
+    global:
       clCreateCommandQueueWithProperties;
       clCreatePipe;
       clGetPipeInfo;
@@ -110,7 +132,10 @@
       clCreateSamplerWithProperties;
       clSetKernelArgSVMPointer;
       clSetKernelExecInfo;
-      clGetKernelSubGroupInfoKHR;
+} OPENCL_1.2;
+
+OPENCL_2.1 {
+    global:
       clCloneKernel;
       clCreateProgramWithIL;
       clEnqueueSVMMigrateMem;
@@ -118,17 +143,17 @@
       clGetHostTimer;
       clGetKernelSubGroupInfo;
       clSetDefaultDeviceCommandQueue;
+} OPENCL_2.0;
+
+OPENCL_2.2 {
+    global:
       clSetProgramReleaseCallback;
       clSetProgramSpecializationConstant;
+} OPENCL_2.1;
+
+OPENCL_3.0 {
+    global:
       clCreateBufferWithProperties;
       clCreateImageWithProperties;
-      clGetImageParamsINTEL;
-      clCreatePerfCountersCommandQueueINTEL;
-      clCreateAcceleratorINTEL;
-      clGetAcceleratorInfoINTEL;
-      clRetainAcceleratorINTEL;
-      clReleaseAcceleratorINTEL;
-      clSetPerformanceConfigurationINTEL;
-      GTPin_Init;
-  local: *;
-};
+      clSetContextDestructorCallback;
+} OPENCL_2.2;
