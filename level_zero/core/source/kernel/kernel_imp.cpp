@@ -770,15 +770,6 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     const uint32_t allocId = allocData->getAllocId();
     kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
 
-    if (allocData->virtualReservationData) {
-        for (const auto &mappedAllocationData : allocData->virtualReservationData->mappedAllocations) {
-            // Add additional allocations to the residency container if the virtual reservation spans multiple allocations.
-            if (requestedAddress != mappedAllocationData.second->ptr) {
-                this->argumentsResidencyContainer.push_back(mappedAllocationData.second->mappedAllocation->allocation);
-            }
-        }
-    }
-
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc, peerAllocData);
 }
 

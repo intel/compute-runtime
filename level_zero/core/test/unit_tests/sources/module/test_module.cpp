@@ -2640,13 +2640,19 @@ class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, publi
 };
 
 HWTEST_F(MultiDeviceModuleSetArgBufferTest,
-         givenCallsToSetArgBufferWithReservedMemoryThenResidencyContainerHasAllMappedAllocations) {
+         givenCallsToSetArgBufferWithReservedMemoryThenKernelResidencyContainerHasKernelArgMappedAllocationAndMemoryInterfaceHasAllMappedAllocations) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         createModuleFromMockBinary(rootDeviceIndex);
         auto device = driverHandle->devices[rootDeviceIndex];
-        driverHandle->devices[rootDeviceIndex]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
+        auto neoDevice = device->getNEODevice();
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
             std::make_unique<NEO::MockMemoryOperations>();
+
+        NEO::MockMemoryOperations *mockMemoryInterface = static_cast<NEO::MockMemoryOperations *>(
+            neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
+
+        mockMemoryInterface->captureGfxAllocationsForMakeResident = true;
 
         ze_kernel_handle_t kernelHandle;
         void *ptr = nullptr;
@@ -2694,7 +2700,16 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
         EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
         EXPECT_TRUE(phys1Resident);
-        EXPECT_TRUE(phys2Resident);
+        EXPECT_FALSE(phys2Resident);
+
+        auto physicalIt = driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(phPhysicalMemory));
+        auto physical1Allocation = physicalIt->second->allocation;
+        EXPECT_EQ(NEO::MemoryOperationsStatus::success, mockMemoryInterface->isResident(neoDevice, *physical1Allocation));
+
+        physicalIt = driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(phPhysicalMemory2));
+        auto physical2Allocation = physicalIt->second->allocation;
+        EXPECT_EQ(NEO::MemoryOperationsStatus::success, mockMemoryInterface->isResident(neoDevice, *physical2Allocation));
+
         res = context->unMapVirtualMem(ptr, size);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         res = context->unMapVirtualMem(offsetAddress, size);
@@ -2710,13 +2725,19 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 }
 
 HWTEST_F(MultiDeviceModuleSetArgBufferTest,
-         givenCallsToSetArgBufferWithOffsetReservedMemoryThenResidencyContainerHasAllMappedAllocations) {
+         givenCallsToSetArgBufferWithOffsetReservedMemoryThenKernelResidencyHasArgMappedAllocationAndMemoryInterfaceHasAllMappedAllocations) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         createModuleFromMockBinary(rootDeviceIndex);
         auto device = driverHandle->devices[rootDeviceIndex];
-        driverHandle->devices[rootDeviceIndex]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
+        auto neoDevice = device->getNEODevice();
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface =
             std::make_unique<NEO::MockMemoryOperations>();
+
+        NEO::MockMemoryOperations *mockMemoryInterface = static_cast<NEO::MockMemoryOperations *>(
+            neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
+
+        mockMemoryInterface->captureGfxAllocationsForMakeResident = true;
 
         ze_kernel_handle_t kernelHandle;
         void *ptr = nullptr;
@@ -2763,8 +2784,17 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         EXPECT_EQ(surfaceStateAddress->getWidth(), static_cast<uint32_t>(length.surfaceState.width));
         EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
         EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
-        EXPECT_TRUE(phys1Resident);
+        EXPECT_FALSE(phys1Resident);
         EXPECT_TRUE(phys2Resident);
+
+        auto physicalIt = driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(phPhysicalMemory));
+        auto physical1Allocation = physicalIt->second->allocation;
+        EXPECT_EQ(NEO::MemoryOperationsStatus::success, mockMemoryInterface->isResident(neoDevice, *physical1Allocation));
+
+        physicalIt = driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(phPhysicalMemory2));
+        auto physical2Allocation = physicalIt->second->allocation;
+        EXPECT_EQ(NEO::MemoryOperationsStatus::success, mockMemoryInterface->isResident(neoDevice, *physical2Allocation));
+
         res = context->unMapVirtualMem(ptr, size);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         res = context->unMapVirtualMem(offsetAddress, size);
@@ -2901,7 +2931,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         EXPECT_EQ(surfaceStateAddress->getHeight(), static_cast<uint32_t>(length.surfaceState.height + 1));
         EXPECT_EQ(surfaceStateAddress->getDepth(), static_cast<uint32_t>(length.surfaceState.depth + 1));
         EXPECT_TRUE(phys1Resident);
-        EXPECT_TRUE(phys2Resident);
+        EXPECT_FALSE(phys2Resident);
         res = context->unMapVirtualMem(ptr, size);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         res = context->unMapVirtualMem(offsetAddress, size);
