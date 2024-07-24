@@ -1929,7 +1929,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    ze_event_handle_t hSignalEvent,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    bool isStateless = this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless;
+    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
     const bool isHeapless = this->isHeaplessModeEnabled();
 
     NEO::Device *neoDevice = device->getNEODevice();
