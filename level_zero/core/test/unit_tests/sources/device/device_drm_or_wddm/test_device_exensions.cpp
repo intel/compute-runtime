@@ -170,7 +170,7 @@ class MockCacheReservation : public CacheReservation {
 
 size_t MockCacheReservation::maxCacheReservationSize = 1024;
 
-struct zeDeviceCacheReservationTest : public ::testing::Test {
+struct ZeDeviceCacheReservationTest : public ::testing::Test {
     void SetUp() override {
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
         execEnv = neoDevice->getExecutionEnvironment();
@@ -200,7 +200,7 @@ struct zeDeviceCacheReservationTest : public ::testing::Test {
     const uint32_t rootDeviceIndex = 1u;
 };
 
-TEST_F(zeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCachePropertiesCalledWithIncorrectStructureTypeThenReturnErrorUnsupportedEnumeration) {
+TEST_F(ZeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCachePropertiesCalledWithIncorrectStructureTypeThenReturnErrorUnsupportedEnumeration) {
     ze_cache_reservation_ext_desc_t cacheReservationExtDesc = {};
 
     ze_device_cache_properties_t deviceCacheProperties = {};
@@ -211,7 +211,7 @@ TEST_F(zeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCa
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, res);
 }
 
-TEST_F(zeDeviceCacheReservationTest, givenGreaterThanOneCountOfDeviceCachePropertiesWhenGetCachePropertiesIsCalledThenSetCountToOne) {
+TEST_F(ZeDeviceCacheReservationTest, givenGreaterThanOneCountOfDeviceCachePropertiesWhenGetCachePropertiesIsCalledThenSetCountToOne) {
     static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
     ze_device_cache_properties_t deviceCacheProperties = {};
 
@@ -221,7 +221,7 @@ TEST_F(zeDeviceCacheReservationTest, givenGreaterThanOneCountOfDeviceCacheProper
     EXPECT_EQ(count, 1u);
 }
 
-TEST_F(zeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCachePropertiesCalledOnDeviceWithNoSupportForCacheReservationThenReturnZeroMaxCacheReservationSize) {
+TEST_F(ZeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCachePropertiesCalledOnDeviceWithNoSupportForCacheReservationThenReturnZeroMaxCacheReservationSize) {
     VariableBackup<size_t> maxCacheReservationSizeBackup{&MockCacheReservation::maxCacheReservationSize, 0};
     static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
 
@@ -238,7 +238,7 @@ TEST_F(zeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCa
     EXPECT_EQ(0u, cacheReservationExtDesc.maxCacheReservationSize);
 }
 
-TEST_F(zeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCachePropertiesCalledOnDeviceWithSupportForCacheReservationThenReturnNonZeroMaxCacheReservationSize) {
+TEST_F(ZeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCachePropertiesCalledOnDeviceWithSupportForCacheReservationThenReturnNonZeroMaxCacheReservationSize) {
     static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
 
     ze_cache_reservation_ext_desc_t cacheReservationExtDesc = {};
@@ -254,7 +254,7 @@ TEST_F(zeDeviceCacheReservationTest, givenDeviceCacheExtendedDescriptorWhenGetCa
     EXPECT_NE(0u, cacheReservationExtDesc.maxCacheReservationSize);
 }
 
-TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtOnDeviceWithNoSupportForCacheReservationThenReturnErrorUnsupportedFeature) {
+TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtOnDeviceWithNoSupportForCacheReservationThenReturnErrorUnsupportedFeature) {
     VariableBackup<size_t> maxCacheReservationSizeBackup{&MockCacheReservation::maxCacheReservationSize, 0};
     static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
 
@@ -265,7 +265,7 @@ TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtOnDeviceW
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtWithCacheLevel0ThenDriverShouldDefaultToCacheLevel3) {
+TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtWithCacheLevel0ThenDriverShouldDefaultToCacheLevel3) {
     auto mockCacheReservation = new MockCacheReservation(*device, true);
     static_cast<DeviceImp *>(device)->cacheReservation.reset(mockCacheReservation);
 
@@ -278,7 +278,7 @@ TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtWithCache
     EXPECT_EQ(3u, mockCacheReservation->receivedCacheLevel);
 }
 
-TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtFailsToReserveCacheOnDeviceThenReturnErrorUninitialized) {
+TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtFailsToReserveCacheOnDeviceThenReturnErrorUninitialized) {
     size_t cacheLevel = 3;
     size_t cacheReservationSize = 1024;
 
@@ -298,7 +298,7 @@ TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceReserveCacheExtFailsToRe
     }
 }
 
-TEST_F(zeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceReserveCacheExtThenUnsupportedFeatureFlagReturned) {
+TEST_F(ZeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceReserveCacheExtThenUnsupportedFeatureFlagReturned) {
     size_t cacheLevel = 3;
     size_t cacheReservationSize = 1024;
 
@@ -310,7 +310,7 @@ TEST_F(zeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceRe
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtWithDefaultCacheRegionThenDriverShouldDefaultToNonReservedRegion) {
+TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtWithDefaultCacheRegionThenDriverShouldDefaultToNonReservedRegion) {
     auto mockCacheReservation = new MockCacheReservation(*device, true);
     static_cast<DeviceImp *>(device)->cacheReservation.reset(mockCacheReservation);
 
@@ -324,7 +324,7 @@ TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtWithDef
     EXPECT_EQ(ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_NON_RESERVED_REGION, mockCacheReservation->receivedCacheRegion);
 }
 
-TEST_F(zeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceSetCacheAdviceExtThenUnsupportedFeatureFlagReturned) {
+TEST_F(ZeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceSetCacheAdviceExtThenUnsupportedFeatureFlagReturned) {
     auto mockCacheReservation = new MockCacheReservation(*device, true);
     static_cast<DeviceImp *>(device)->cacheReservation.reset(mockCacheReservation);
 
@@ -337,7 +337,7 @@ TEST_F(zeDeviceCacheReservationTest, givenNonDrmDriverModelWhenCallingZeDeviceSe
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtOnDeviceWithNoSupportForCacheReservationThenReturnErrorUnsupportedFeature) {
+TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtOnDeviceWithNoSupportForCacheReservationThenReturnErrorUnsupportedFeature) {
     VariableBackup<size_t> maxCacheReservationSizeBackup{&MockCacheReservation::maxCacheReservationSize, 0};
     static_cast<DeviceImp *>(device)->cacheReservation.reset(new MockCacheReservation(*device, true));
 
@@ -349,7 +349,7 @@ TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtOnDevic
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST_F(zeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtFailsToSetCacheRegionThenReturnErrorUnitialized) {
+TEST_F(ZeDeviceCacheReservationTest, WhenCallingZeDeviceSetCacheAdviceExtFailsToSetCacheRegionThenReturnErrorUnitialized) {
     void *ptr = reinterpret_cast<void *>(0x123456789);
     size_t regionSize = 512;
     ze_cache_ext_region_t cacheRegion = ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_RESERVE_REGION;
