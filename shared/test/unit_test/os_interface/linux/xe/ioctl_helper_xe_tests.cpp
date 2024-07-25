@@ -2178,3 +2178,83 @@ TEST(IoctlHelperXeTest, whenCheckingGpuHangThenBanPropertyIsQueried) {
     EXPECT_TRUE(drm->checkResetStatus(osContext));
     EXPECT_TRUE(osContext.isHangDetected());
 }
+
+TEST(IoctlHelperXeVmBindTest, givenImmediateAndReadOnlyBindFlagsSupportedWhenGettingFlagsForVmBindThenCorrectFlagsAreReturned) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+
+    for (const auto &bindImmediateSupport : ::testing::Bool()) {
+        for (const auto &bindReadOnlySupport : ::testing::Bool()) {
+            xeIoctlHelper->supportedFeatures.flags.vmBindImmediate = bindImmediateSupport;
+            xeIoctlHelper->supportedFeatures.flags.vmBindReadOnly = bindReadOnlySupport;
+
+            uint64_t expectedFlags = DRM_XE_VM_BIND_FLAG_DUMPABLE;
+
+            if (bindImmediateSupport) {
+                expectedFlags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
+            }
+            if (bindReadOnlySupport) {
+                expectedFlags |= DRM_XE_VM_BIND_FLAG_READONLY;
+            }
+
+            auto bindFlags = xeIoctlHelper->getFlagsForVmBind(true, true, false, false, true);
+
+            EXPECT_EQ(expectedFlags, bindFlags);
+        }
+    }
+}
+
+struct DrmMockXeVmBind : public DrmMockXe {
+    static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {
+        auto drm = std::unique_ptr<DrmMockXeVmBind>(new DrmMockXeVmBind{rootDeviceEnvironment});
+        drm->initInstance();
+
+        return drm;
+    }
+
+    int ioctl(DrmIoctl request, void *arg) override {
+        switch (request) {
+        case DrmIoctl::gemVmBind: {
+            auto vmBindInput = static_cast<drm_xe_vm_bind *>(arg);
+
+            if ((vmBindInput->bind.flags & DRM_XE_VM_BIND_FLAG_IMMEDIATE) == DRM_XE_VM_BIND_FLAG_IMMEDIATE && !supportsBindImmediate) {
+                return -EINVAL;
+            }
+            if ((vmBindInput->bind.flags & DRM_XE_VM_BIND_FLAG_READONLY) == DRM_XE_VM_BIND_FLAG_READONLY && !supportsBindReadOnly) {
+                return -EINVAL;
+            }
+            return 0;
+        } break;
+
+        default:
+            return DrmMockXe::ioctl(request, arg);
+        }
+    };
+    bool supportsBindImmediate = true;
+    bool supportsBindReadOnly = true;
+
+  protected:
+    // Don't call directly, use the create() function
+    DrmMockXeVmBind(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {}
+};
+
+TEST(IoctlHelperXeVmBindTest, whenInitializeIoctlHelperThenQueryBindFlagsSupport) {
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeVmBind::create(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (const auto &bindImmediateSupport : ::testing::Bool()) {
+        for (const auto &bindReadOnlySupport : ::testing::Bool()) {
+
+            drm->supportsBindImmediate = bindImmediateSupport;
+            drm->supportsBindReadOnly = bindReadOnlySupport;
+            auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+            xeIoctlHelper->initialize();
+            EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.vmBindImmediate, bindImmediateSupport);
+            EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.vmBindReadOnly, bindReadOnlySupport);
+        }
+    }
+}

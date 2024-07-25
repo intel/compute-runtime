@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
@@ -791,13 +792,19 @@ bool IoctlHelperXe::completionFenceExtensionSupported(const bool isVmBindAvailab
 }
 
 uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, bool bindMakeResident, bool bindLock, bool readOnlyResource) {
-    uint64_t ret = 0;
+    uint64_t flags = 0;
     xeLog(" -> IoctlHelperXe::%s %d %d %d %d %d\n", __FUNCTION__, bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource);
     if (bindCapture) {
-        ret |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
+        flags |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
     }
-    ret |= getAdditionalFlagsForVmBind(bindImmediate, readOnlyResource);
-    return ret;
+    if (bindImmediate && supportedFeatures.flags.vmBindImmediate) {
+        flags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
+    }
+
+    if (readOnlyResource && supportedFeatures.flags.vmBindReadOnly) {
+        flags |= DRM_XE_VM_BIND_FLAG_READONLY;
+    }
+    return flags;
 }
 
 int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
@@ -1592,4 +1599,40 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
         return "???";
     }
 }
+
+void IoctlHelperXe::querySupportedFeatures() {
+
+    struct drm_xe_vm_create vmCreate = {};
+    auto ret = IoctlHelper::ioctl(DrmIoctl::gemVmCreate, &vmCreate);
+    DEBUG_BREAK_IF(ret != 0);
+
+    auto checkVmBindFlagSupport = [&](uint32_t flag) -> bool {
+        uint8_t dummyData[2 * MemoryConstants::pageSize]{};
+        drm_xe_vm_bind bind = {};
+        bind.num_binds = 1;
+        bind.vm_id = vmCreate.vm_id;
+        bind.bind.range = MemoryConstants::pageSize;
+        bind.bind.userptr = alignUp(castToUint64(dummyData), MemoryConstants::pageSize);
+        bind.bind.addr = alignUp(castToUint64(dummyData), MemoryConstants::pageSize);
+        bind.bind.op = DRM_XE_VM_BIND_OP_MAP_USERPTR;
+        bind.bind.flags = flag;
+        bind.bind.pat_index = 1;
+
+        ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
+        if (ret == 0) {
+            bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
+            ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
+            DEBUG_BREAK_IF(ret != 0);
+            return true;
+        }
+        return false;
+    };
+    supportedFeatures.flags.vmBindImmediate = checkVmBindFlagSupport(DRM_XE_VM_BIND_FLAG_IMMEDIATE);
+    supportedFeatures.flags.vmBindReadOnly = checkVmBindFlagSupport(DRM_XE_VM_BIND_FLAG_READONLY);
+
+    struct drm_xe_vm_destroy vmDestroy = {};
+    vmDestroy.vm_id = vmCreate.vm_id;
+    ret = IoctlHelper::ioctl(DrmIoctl::gemVmDestroy, &vmDestroy);
+    DEBUG_BREAK_IF(ret != 0);
+};
 } // namespace NEO

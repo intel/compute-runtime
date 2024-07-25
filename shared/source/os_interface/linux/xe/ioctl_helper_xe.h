@@ -219,7 +219,6 @@ class IoctlHelperXe : public IoctlHelper {
     static_assert(sizeof(SupportedFeatures::flags) == sizeof(SupportedFeatures::allFlags), "");
 
     void querySupportedFeatures();
-    uint64_t getAdditionalFlagsForVmBind(bool bindImmediate, bool readOnlyResource);
 };
 
 template <typename... XeLogArgs>
