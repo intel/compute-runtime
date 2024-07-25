@@ -167,8 +167,6 @@ HWTEST2_F(XeLpgHwInfoTests, GivenEmptyHwInfoForUnitTestsWhenSetupHardwareInfoIsC
     EXPECT_GT_VAL(gtSystemInfo.MaxSlicesSupported, 0u);
     EXPECT_GT_VAL(gtSystemInfo.MaxSubSlicesSupported, 0u);
 
-    EXPECT_GT_VAL(gtSystemInfo.L3BankCount, 0u);
-
     EXPECT_TRUE(gtSystemInfo.CCSInfo.IsValid);
     EXPECT_GT_VAL(gtSystemInfo.CCSInfo.NumberOfCCSEnabled, 0u);
 

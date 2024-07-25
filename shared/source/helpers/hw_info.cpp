@@ -146,7 +146,6 @@ void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHel
         gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
         gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
         gtSysInfo->MaxDualSubSlicesSupported = gtSysInfo->DualSubSliceCount;
-        gtSysInfo->L3BankCount = 1;
     }
 
     if (releaseHelper->getL3BankCount() > 0) {

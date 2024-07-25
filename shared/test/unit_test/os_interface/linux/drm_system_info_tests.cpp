@@ -84,7 +84,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
     EXPECT_EQ(nullptr, drm.getSystemInfo());
 
     EXPECT_TRUE(isEmpty(::testing::internal::GetCapturedStdout()));
-    EXPECT_TRUE(isEmpty(::testing::internal::GetCapturedStderr()));
+    EXPECT_FALSE(isEmpty(::testing::internal::GetCapturedStderr()));
 }
 
 TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpVersion) {
@@ -233,7 +233,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFailsThenSystem
     if (productHelper.isPlatformQuerySupported()) {
         EXPECT_TRUE(hasSubstr(::testing::internal::GetCapturedStderr(), "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size\n"));
     } else {
-        EXPECT_TRUE(::testing::internal::GetCapturedStderr().empty());
+        EXPECT_FALSE(::testing::internal::GetCapturedStderr().empty());
     }
 }
 

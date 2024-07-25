@@ -20,7 +20,7 @@ TEST(HwInfoTest, givenReleaseHelperWithL3BankConfigWhenSetupDefaultHwInfoThenL3C
 
     setupDefaultGtSysInfo(&hwInfo, &releaseHelper);
 
-    EXPECT_EQ_VAL(1u, hwInfo.gtSystemInfo.L3BankCount);
+    EXPECT_EQ_VAL(0u, hwInfo.gtSystemInfo.L3BankCount);
     EXPECT_EQ_VAL(1u, hwInfo.gtSystemInfo.L3CacheSizeInKb);
 
     releaseHelper.getL3BankCountResult = 0;
@@ -28,8 +28,8 @@ TEST(HwInfoTest, givenReleaseHelperWithL3BankConfigWhenSetupDefaultHwInfoThenL3C
 
     setupDefaultGtSysInfo(&hwInfo, &releaseHelper);
 
-    EXPECT_EQ_VAL(1u, hwInfo.gtSystemInfo.L3BankCount);
-    EXPECT_EQ_VAL(4u, hwInfo.gtSystemInfo.L3CacheSizeInKb);
+    EXPECT_EQ_VAL(0u, hwInfo.gtSystemInfo.L3BankCount);
+    EXPECT_EQ_VAL(0u, hwInfo.gtSystemInfo.L3CacheSizeInKb);
 
     releaseHelper.getL3BankCountResult = 2;
     releaseHelper.getL3CacheBankSizeInKbResult = 0;

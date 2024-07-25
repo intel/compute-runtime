@@ -42,6 +42,7 @@
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
@@ -485,6 +486,18 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     ioctlHelper->setupIpVersion();
     rootDeviceEnvironment.initReleaseHelper();
 
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+
+    if (!queryMemoryInfo()) {
+        setPerContextVMRequired(true);
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
+    }
+
+    if (!queryEngineInfo()) {
+        setPerContextVMRequired(true);
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
+    }
     DrmQueryTopologyData topologyData = {};
 
     bool status = queryTopology(*hwInfo, topologyData);
@@ -508,7 +521,12 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
+
     hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
+
+    auto numThreadsPerEu = releaseHelper ? releaseHelper->getNumThreadsPerEu() : 7u;
+
+    hwInfo->gtSystemInfo.ThreadCount = numThreadsPerEu * hwInfo->gtSystemInfo.EUCount;
     if (topologyData.maxSlices * topologyData.maxSubSlicesPerSlice > 0) {
         hwInfo->gtSystemInfo.MaxSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSlices * topologyData.maxSubSlicesPerSlice);
         hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSlices * topologyData.maxSubSlicesPerSlice);
@@ -525,8 +543,6 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     status = querySystemInfo();
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
     rootDeviceEnvironment.setRcsExposure();
 
     if (status) {

@@ -65,16 +65,6 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
-    if (!drm->queryMemoryInfo()) {
-        drm->setPerContextVMRequired(true);
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query memory info\n");
-    }
-
-    if (!drm->queryEngineInfo()) {
-        drm->setPerContextVMRequired(true);
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
-    }
-
     drm->checkContextDebugSupport();
 
     drm->queryPageFaultSupport();
