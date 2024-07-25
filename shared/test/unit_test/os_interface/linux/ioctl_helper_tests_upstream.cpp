@@ -586,6 +586,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithoutDeviceMemo
     std::vector<MemoryRegion> memRegions{
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
+    drm->memoryInfoQueried = true;
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 
@@ -608,6 +609,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryEngineInfoWithDeviceMemoryA
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
         {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
+    drm->memoryInfoQueried = true;
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 

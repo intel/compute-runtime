@@ -1863,6 +1863,7 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithoutVirtualEnginesThenProperEngi
     auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
 
     ioctlHelper->initialize();
+    drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
 
     unsigned int expectedValue = DRM_XE_ENGINE_CLASS_COMPUTE;
@@ -1886,6 +1887,7 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithVirtualEnginesThenProperEngines
     auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
 
     ioctlHelper->initialize();
+    drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
 
@@ -2093,6 +2095,7 @@ TEST(IoctlHelperXeTest, givenLowPriorityContextWhenCreatingDrmContextThenExtProp
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
 
+    drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 

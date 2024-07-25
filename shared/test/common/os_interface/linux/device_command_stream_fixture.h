@@ -97,6 +97,7 @@ class DrmMockTime : public DrmMockSuccess {
 };
 
 struct DrmMockCustom : public Drm {
+    using Drm::memoryInfoQueried;
     static constexpr NEO::DriverModelType driverModelType = NEO::DriverModelType::drm;
 
     static std::unique_ptr<DrmMockCustom> create(RootDeviceEnvironment &rootDeviceEnvironment);

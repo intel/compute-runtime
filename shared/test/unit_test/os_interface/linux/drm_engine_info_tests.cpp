@@ -23,6 +23,7 @@ TEST(DrmTest, whenQueryingEngineInfoThenSingleIoctlIsCalled) {
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, drm);
     auto ioctlCount = drm->ioctlCount.total.load();
+    drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
     EXPECT_EQ(1 + ioctlCount, drm->ioctlCount.total.load());
 }
@@ -35,6 +36,7 @@ TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngi
     std::vector<MemoryRegion> memRegions{
         {{0, 0}, 0, 0}};
     drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
+    drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
     EXPECT_EQ(2u + drm->getBaseIoctlCalls(), drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();
@@ -48,6 +50,7 @@ TEST(EngineInfoTest, whenQueryingEngineInfoWithoutMemoryInfoThenEngineInfoCreate
     auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
+    drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
     EXPECT_EQ(2u + drm->getBaseIoctlCalls(), drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();

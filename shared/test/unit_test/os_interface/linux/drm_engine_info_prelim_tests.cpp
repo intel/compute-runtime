@@ -32,6 +32,7 @@ TEST(DrmTest, givenEngineQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsIni
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto hwInfo = drm->rootDeviceEnvironment.getHardwareInfo();
     ASSERT_NE(nullptr, drm);
+    drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
     auto haveLocalMemory = hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid;
     EXPECT_EQ(haveLocalMemory ? 3u : 2u, drm->ioctlCallsCount);
@@ -817,6 +818,7 @@ TEST(DrmTest, whenQueryingEngineInfoThenMultiTileArchInfoIsUnchanged) {
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
+    drm->memoryInfoQueried = true;
     drm->queryEngineInfo();
     EXPECT_NE(nullptr, drm->engineInfo);
 

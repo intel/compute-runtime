@@ -831,6 +831,7 @@ int Drm::getOaTimestampFrequency(int &frequency) {
 }
 
 bool Drm::queryEngineInfo() {
+    UNRECOVERABLE_IF(!memoryInfoQueried);
     UNRECOVERABLE_IF(engineInfoQueried);
     engineInfoQueried = true;
     return Drm::queryEngineInfo(false);

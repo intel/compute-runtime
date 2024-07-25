@@ -1110,6 +1110,7 @@ TEST_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhichRequiresHostMapThen
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
 
     this->mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    this->mock->memoryInfoQueried = true;
     this->mock->queryEngineInfo();
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::gpuTimestampDeviceBuffer, false, {});
 
@@ -1136,6 +1137,7 @@ TEST_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhenSetCacheRegionFailsT
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
 
     this->mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    this->mock->memoryInfoQueried = true;
     this->mock->queryEngineInfo();
     AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::gpuTimestampDeviceBuffer, false, {});
     properties.cacheRegion = std::numeric_limits<uint32_t>::max();
