@@ -67,6 +67,7 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
                     }
                     csrDeps.csrWithMultiEngineDependencies.insert(dependentCsr);
                 }
+                csrDeps.containsCrossEngineDependency = true;
             }
         }
     }

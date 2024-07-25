@@ -205,10 +205,14 @@ void CommandQueueHw<Family>::setupBlitAuxTranslation(MultiDispatchInfo &multiDis
 }
 
 template <typename Family>
-bool CommandQueueHw<Family>::isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies) const {
+bool CommandQueueHw<Family>::isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies, bool containsCrossEngineDependency) const {
     if (queueBlocked || timestampPacketDependencies.barrierNodes.peekNodes().size() > 0u) {
         return true;
     }
+    if (isOOQEnabled()) {
+        return containsCrossEngineDependency;
+    }
+
     bool required = false;
     switch (latestSentEnqueueType) {
     case NEO::EnqueueProperties::Operation::explicitCacheFlush:

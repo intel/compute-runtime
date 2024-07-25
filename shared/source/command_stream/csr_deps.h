@@ -31,5 +31,6 @@ class CsrDependencies {
     void copyRootDeviceSyncNodesToNewContainer(TimestampPacketContainer &newTimestampPacketContainer);
 
     std::set<CommandStreamReceiver *> csrWithMultiEngineDependencies;
+    bool containsCrossEngineDependency = false;
 };
 } // namespace NEO

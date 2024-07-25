@@ -170,7 +170,7 @@ HWTEST_F(TimestampPacketTests, givenCrossCsrDependenciesWhenFillCsrDepsThendepen
     } else {
         EXPECT_EQ(csrDeps.csrWithMultiEngineDependencies.size(), 0u);
     }
-
+    EXPECT_TRUE(csrDeps.containsCrossEngineDependency);
     mockCmdQHw->getUltCommandStreamReceiver().latestFlushedTaskCount = 1;
     *mockCmdQHw->getUltCommandStreamReceiver().tagAddress = 1;
     mockCmdQ2->getUltCommandStreamReceiver().latestFlushedTaskCount = 1;

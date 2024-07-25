@@ -1460,7 +1460,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         migratedMemory = migrateMultiGraphicsAllocationsIfRequired(multiDispatchInfo.peekBuiltinOpParams(), bcsCsr);
     }
 
-    auto gpgpuSubmission = isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies);
+    auto gpgpuSubmission = isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies, csrDeps.containsCrossEngineDependency);
     if ((isCacheFlushForBcsRequired() || NEO::EnqueueProperties::Operation::dependencyResolveOnGpu == latestSentEnqueueType) && gpgpuSubmission) {
         timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
     }

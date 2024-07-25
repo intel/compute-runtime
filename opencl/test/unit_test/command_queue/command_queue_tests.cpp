@@ -3322,3 +3322,21 @@ HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenImageFromBufferThenBcsAl
         EXPECT_EQ(ccsCsr, &queue->selectCsrForBuiltinOperation(args));
     }
 }
+
+HWTEST_F(CommandQueueTests, GivenOOQCommandQueueWhenIsGpgpuSubmissionForBcsRequiredCalledThenReturnCorrectValue) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockContext context(device.get());
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
+    mockCmdQ->latestSentEnqueueType = EnqueueProperties::Operation::gpuKernel;
+    mockCmdQ->overrideIsCacheFlushForBcsRequired.enabled = true;
+    mockCmdQ->overrideIsCacheFlushForBcsRequired.returnValue = true;
+    TimestampPacketDependencies dependencies{};
+    auto containsCrossEngineDependency = false;
+    EXPECT_TRUE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency));
+
+    mockCmdQ->setOoqEnabled();
+    EXPECT_FALSE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency));
+
+    containsCrossEngineDependency = true;
+    EXPECT_TRUE(mockCmdQ->isGpgpuSubmissionForBcsRequired(false, dependencies, containsCrossEngineDependency));
+}
