@@ -48,6 +48,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithPrelimSup
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -102,6 +103,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
         mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+        mock->engineInfoQueried = false;
         mock->queryEngineInfo();
         mock->ioctlCallsCount = 0;
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
@@ -152,6 +154,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
         mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+        mock->engineInfoQueried = false;
         mock->queryEngineInfo();
         mock->ioctlCallsCount = 0;
         executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
@@ -192,6 +195,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
         mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+        mock->engineInfoQueried = false;
         mock->queryEngineInfo();
         mock->ioctlCallsCount = 0;
         mock->fdToHandleRetVal = -1;
@@ -232,6 +236,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandlePrelimTest, givenMultiRootDeviceEnvironmen
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
     mock->fdToHandleRetVal = -1;
@@ -265,6 +270,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMultiRootDeviceEnvironmentAnd
         auto mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[i]);
 
         mock->memoryInfo.reset(nullptr);
+        mock->engineInfoQueried = false;
         mock->queryEngineInfo();
         mock->ioctlCallsCount = 0;
         mock->fdToHandleRetVal = -1;
@@ -304,6 +310,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationT
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -342,6 +349,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -381,6 +389,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -423,6 +432,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -465,6 +475,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -507,6 +518,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -551,6 +563,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest,
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -594,6 +607,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationW
     hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 3;
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
     DeviceBitfield devices = 0b11;
@@ -641,6 +655,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrati
     hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 3;
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
     DeviceBitfield devices = 0b101;
@@ -686,6 +701,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
     mock->setBindAvailable();
@@ -730,6 +746,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, MmapFailWhenCreateSharedUnifiedMem
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
     mock->setBindAvailable();
@@ -758,6 +775,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
     mock->setBindAvailable();
@@ -805,6 +823,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhe
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
@@ -851,6 +870,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLoc
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
@@ -908,6 +928,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKmdMigratedSharedAllocationWh
     hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 2;
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
@@ -957,6 +978,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
@@ -999,6 +1021,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCounte
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
@@ -1055,6 +1078,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialP
     hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 4;
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
@@ -1098,6 +1122,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrati
     hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 4;
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
@@ -1237,6 +1262,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenVmAdviseIoctlFailsThenCreateSh
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->context.vmAdviseReturn = -1;
 
@@ -1261,6 +1287,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->context.mmapOffsetReturn = -1;
 
@@ -1288,6 +1315,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 2;
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
@@ -1335,6 +1363,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateKmdMigratedSharedAlloca
     hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 2;
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     SVMAllocsManager unifiedMemoryManager(memoryManager, false);
@@ -1380,6 +1409,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMmapFailWhenCreateUnifiedMemo
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->context.mmapOffsetReturn = -1;
 
@@ -1398,6 +1428,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenGemCreateExtFailWhenCreateUni
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->context.gemCreateExtReturn = -1;
 
@@ -1419,6 +1450,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoWhenAllocateWithAli
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -1447,6 +1479,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapRetur
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -1490,6 +1523,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapRetur
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -1532,6 +1566,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenInvalidCacheRegionWhenMmapRet
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
 
@@ -1572,6 +1607,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndFailedMmapOffset
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->context.mmapOffsetReturn = -1;
 
@@ -1592,6 +1628,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndDisabledMmapBOCr
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->context.mmapOffsetReturn = -1;
 
@@ -1615,6 +1652,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndNotUseObjectMmap
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->context.mmapOffsetReturn = -1;
 
@@ -1639,6 +1677,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndFailedGemCreateE
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->context.gemCreateExtReturn = -1;
 
@@ -1981,6 +2020,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
     auto gpuAddress = 0x1234u;
     auto size = MemoryConstants::pageSize64k;
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
 
     testing::internal::CaptureStdout();
@@ -2014,6 +2054,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResultFla
     regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
     mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->engineInfoQueried = false;
     mock->queryEngineInfo();
     mock->ioctlCallsCount = 0;
     mock->setBindAvailable();

@@ -363,6 +363,7 @@ class Drm : public DriverModel {
     std::atomic<uint32_t> gpuFaultCheckCounter{0u};
 
     bool memoryInfoQueried = false;
+    bool engineInfoQueried = false;
 
   private:
     int getParamIoctl(DrmParam param, int *dstValue);

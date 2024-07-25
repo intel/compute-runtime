@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ struct BuffersWithClMemCacheClosTests : public DrmMemoryManagerLocalMemoryPrelim
         multiTileArchInfo.TileCount = (memoryInfo->getDrmRegionInfos().size() - 1);
         multiTileArchInfo.IsValid = (multiTileArchInfo.TileCount > 0);
 
+        mock->engineInfoQueried = false;
         mock->queryEngineInfo();
 
         clDevice = std::make_unique<MockClDevice>(device.get());
