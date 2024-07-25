@@ -48,6 +48,29 @@ DG1TEST_F(Dg1ProductHelperLinux, GivenDG1WhenConfigureHardwareCustomThenKmdNotif
     EXPECT_EQ(300ll, hardwareInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
 }
 
+DG1TEST_F(Dg1ProductHelperLinux, WhenConfiguringHwInfoThenInfoIsSetCorrectly) {
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
+
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
+}
+
+DG1TEST_F(Dg1ProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
+
+    drm->failRetTopology = true;
+    drm->storedRetValForEUVal = -1;
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(-1, ret);
+
+    drm->storedRetValForEUVal = 0;
+    drm->storedRetValForSSVal = -1;
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(-1, ret);
+}
+
 template <typename T>
 class Dg1HwInfoLinux : public ::testing::Test {};
 using dg1TestTypes = ::testing::Types<Dg1HwConfig>;
@@ -71,7 +94,7 @@ TYPED_TEST(Dg1HwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_GT(gtSystemInfo.SubSliceCount, 0u);
     EXPECT_GT_VAL(gtSystemInfo.L3CacheSizeInKb, 0u);
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, 8u);
-    EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
+    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
 }

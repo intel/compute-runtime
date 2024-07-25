@@ -42,7 +42,6 @@
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
@@ -485,19 +484,12 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     setupIoctlHelper(productFamily);
     ioctlHelper->setupIpVersion();
     rootDeviceEnvironment.initReleaseHelper();
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
 
-    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
-    querySystemInfo();
-
-    if (systemInfo) {
-        systemInfo->checkSysInfoMismatch(hwInfo);
-        setupSystemInfo(hwInfo, systemInfo.get());
-    }
     DrmQueryTopologyData topologyData = {};
 
-    if (!queryTopology(*hwInfo, topologyData)) {
-        topologyData.sliceCount = hwInfo->gtSystemInfo.SliceCount;
+    bool status = queryTopology(*hwInfo, topologyData);
+
+    if (!status) {
         PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
         auto ret = getEuTotal(topologyData.euCount);
@@ -514,50 +506,40 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
-
-    hwInfo->gtSystemInfo.IsDynamicallyPopulated = true;
-    for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
-        hwInfo->gtSystemInfo.SliceInfo[slice].Enabled = slice < hwInfo->gtSystemInfo.SliceCount;
-    }
-
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
-    auto maxEuCount = static_cast<uint32_t>(topologyData.subSliceCount) * hwInfo->gtSystemInfo.MaxEuPerSubSlice;
-
-    if (topologyData.euCount == 0 || static_cast<uint32_t>(topologyData.euCount) > maxEuCount) {
-        hwInfo->gtSystemInfo.EUCount = maxEuCount;
-    } else {
-        hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
+    hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(topologyData.euCount);
+    if (topologyData.maxSlices * topologyData.maxSubSlicesPerSlice > 0) {
+        hwInfo->gtSystemInfo.MaxSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSlices * topologyData.maxSubSlicesPerSlice);
+        hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = static_cast<uint32_t>(topologyData.maxSlices * topologyData.maxSubSlicesPerSlice);
     }
-
-    if (!hwInfo->gtSystemInfo.EUCount) {
-        return -1;
-    }
-
-    auto numThreadsPerEu = systemInfo ? systemInfo->getNumThreadsPerEu() : (releaseHelper ? releaseHelper->getNumThreadsPerEu() : 7u);
-
-    hwInfo->gtSystemInfo.ThreadCount = numThreadsPerEu * hwInfo->gtSystemInfo.EUCount;
-
-    hwInfo->gtSystemInfo.MaxSlicesSupported = hwInfo->gtSystemInfo.SliceCount;
-
-    auto calculatedMaxSubSliceCount = topologyData.maxSlices * topologyData.maxSubSlicesPerSlice;
-    auto maxSubSliceCount = std::max(static_cast<uint32_t>(calculatedMaxSubSliceCount), hwInfo->gtSystemInfo.MaxSubSlicesSupported);
-
-    hwInfo->gtSystemInfo.MaxSubSlicesSupported = maxSubSliceCount;
-    hwInfo->gtSystemInfo.MaxDualSubSlicesSupported = maxSubSliceCount;
-
     if (topologyData.numL3Banks > 0) {
         hwInfo->gtSystemInfo.L3BankCount = topologyData.numL3Banks;
     }
 
-    if (systemInfo) {
+    if (hwInfo->gtSystemInfo.MaxSlicesSupported == 0) {
+        hwInfo->gtSystemInfo.MaxSlicesSupported = hwInfo->gtSystemInfo.SliceCount;
+    }
+    if (hwInfo->gtSystemInfo.MaxEuPerSubSlice == 0 && hwInfo->gtSystemInfo.SubSliceCount != 0) {
+        hwInfo->gtSystemInfo.MaxEuPerSubSlice = hwInfo->gtSystemInfo.EUCount / hwInfo->gtSystemInfo.SubSliceCount;
+    }
+
+    status = querySystemInfo();
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, releaseHelper);
+    rootDeviceEnvironment.setRcsExposure();
+
+    if (status) {
+        systemInfo->checkSysInfoMismatch(hwInfo);
+        setupSystemInfo(hwInfo, systemInfo.get());
+
         uint32_t bankCount = (hwInfo->gtSystemInfo.L3BankCount > 0) ? hwInfo->gtSystemInfo.L3BankCount : hwInfo->gtSystemInfo.MaxDualSubSlicesSupported;
 
         hwInfo->gtSystemInfo.L3CacheSizeInKb = systemInfo->getL3BankSizeInKb() * bankCount;
     }
-
-    rootDeviceEnvironment.setRcsExposure();
-
+    if (!hwInfo->gtSystemInfo.EUCount) {
+        return -1;
+    }
     setupCacheInfo(*hwInfo);
     hwInfo->capabilityTable.deviceName = device->devName;
 
@@ -942,6 +924,12 @@ bool Drm::useVMBindImmediate() const {
 void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->MaxEuPerSubSlice = sysInfo->getMaxEuPerDualSubSlice();
+
+    if (!gtSysInfo->EUCount || gtSysInfo->EUCount > gtSysInfo->SubSliceCount * gtSysInfo->MaxEuPerSubSlice) {
+        gtSysInfo->EUCount = gtSysInfo->SubSliceCount * gtSysInfo->MaxEuPerSubSlice;
+    }
+
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * sysInfo->getNumThreadsPerEu();
     gtSysInfo->MemoryType = sysInfo->getMemoryType();
     gtSysInfo->MaxSlicesSupported = sysInfo->getMaxSlicesSupported();
     gtSysInfo->MaxSubSlicesSupported = sysInfo->getMaxDualSubSlicesSupported();

@@ -38,6 +38,32 @@ TGLLPTEST_F(TgllpProductHelperLinux, GivenTGLLPWhenConfigureHardwareCustomThenMT
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
 }
 
+TGLLPTEST_F(TgllpProductHelperLinux, WhenConfiguringHwInfoThenInfoIsSetCorrectly) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ((uint32_t)drm->storedEUVal, outHwInfo.gtSystemInfo.EUCount);
+    EXPECT_EQ((uint32_t)drm->storedSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
+    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
+
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
+}
+
+TGLLPTEST_F(TgllpProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
+
+    drm->failRetTopology = true;
+    drm->storedRetValForEUVal = -1;
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(-1, ret);
+
+    drm->storedRetValForEUVal = 0;
+    drm->storedRetValForSSVal = -1;
+
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+    EXPECT_EQ(-1, ret);
+}
+
 template <typename T>
 class TgllpHwInfoLinux : public ::testing::Test {};
 typedef ::testing::Types<TgllpHw1x6x16> tgllpTestTypes;
@@ -63,7 +89,7 @@ TYPED_TEST(TgllpHwInfoLinux, gtSetupIsCorrect) {
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT_VAL(gtSystemInfo.L3CacheSizeInKb, 0u);
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, 8u);
-    EXPECT_TRUE(gtSystemInfo.IsDynamicallyPopulated);
+    EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
 }
