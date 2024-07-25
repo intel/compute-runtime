@@ -108,7 +108,7 @@ struct QueryTopologyTests : ::testing::Test {
         drmMock->queryComputeSlicesSCount = 4;
         drmMock->queryComputeSlicesSSCount = 16;
         drmMock->queryComputeSlicesEuCount = 256;
-
+        drmMock->memoryInfoQueried = false;
         EXPECT_TRUE(drmMock->queryMemoryInfo());
         EXPECT_TRUE(drmMock->queryEngineInfo());
     }

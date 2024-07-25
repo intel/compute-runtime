@@ -39,6 +39,7 @@ class DrmMock : public Drm {
     using Drm::getQueueSliceCount;
     using Drm::ioctlHelper;
     using Drm::memoryInfo;
+    using Drm::memoryInfoQueried;
     using Drm::minimalChunkingSize;
     using Drm::nonPersistentContextsSupported;
     using Drm::pageFaultSupported;

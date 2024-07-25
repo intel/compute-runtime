@@ -30,6 +30,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoT
 
     drm->memoryInfo.reset();
     drm->i915QuerySuccessCount = 0;
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
 
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
@@ -44,6 +45,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNo
     ASSERT_NE(nullptr, drm);
     drm->memoryInfo.reset();
     drm->context.queryMemoryRegionInfoSuccessCount = 0;
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -52,6 +54,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNo
     ASSERT_NE(nullptr, drm);
     drm->memoryInfo.reset();
     drm->i915QuerySuccessCount = 1;
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);
@@ -60,6 +63,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNo
     ASSERT_NE(nullptr, drm);
     drm->memoryInfo.reset();
     drm->context.queryMemoryRegionInfoSuccessCount = 1;
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);
@@ -72,6 +76,7 @@ TEST(MemoryInfoPrelim, givenNewMemoryInfoQuerySupportedWhenQueryingMemoryInfoThe
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 
@@ -115,6 +120,7 @@ using DrmVmTestTest = Test<DrmVmTestFixture>;
 
 TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryThenVmCreatedUsingNewRegion) {
     debugManager.flags.EnableLocalMemory.set(1);
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
     drm->queryEngineInfo();
     EXPECT_EQ(5u, drm->ioctlCallsCount);
@@ -134,6 +140,7 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryT
 TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedAndDebugKeyDisabledWhenCreatingVirtualMemoryThenVmCreatedNotUsingRegion) {
     debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0);
 
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
     EXPECT_EQ(2u, drm->ioctlCallsCount);
     drm->ioctlCallsCount = 0u;
@@ -155,6 +162,7 @@ TEST_F(DrmVmTestTest, givenNewMemoryInfoQuerySupportedWhenCreatingVirtualMemoryF
     NEO::debugManager.flags.EnableLocalMemory.set(1);
     drm->storedRetValForVmCreate = 1;
 
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
     EXPECT_EQ(2u, drm->ioctlCallsCount);
     drm->ioctlCallsCount = 0u;

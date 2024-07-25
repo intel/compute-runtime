@@ -2889,6 +2889,7 @@ TEST_F(DrmMemoryManagerTestPrelim, givenDrmMemoryManagerWhenGetLocalMemorySizeIs
     TestedDrmMemoryManager memoryManager(executionEnvironment);
     for (auto i = 0u; i < 4u; i++) {
         auto drm = executionEnvironment.rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<DrmQueryMock>();
+        drm->memoryInfoQueried = false;
         drm->queryMemoryInfo();
 
         auto memoryInfo = drm->getMemoryInfo();

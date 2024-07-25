@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ DrmQueryMock::DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMo
 
     this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);
 
+    memoryInfoQueried = false;
     EXPECT_TRUE(queryMemoryInfo());
     EXPECT_EQ(2u + getBaseIoctlCalls(), ioctlCallsCount);
     ioctlCallsCount = 0;

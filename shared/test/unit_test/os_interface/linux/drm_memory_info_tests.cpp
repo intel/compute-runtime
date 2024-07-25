@@ -26,7 +26,7 @@ TEST(MemoryInfo, givenMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemory
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
     drm->ioctlCallsCount = 0;
-
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
 
     EXPECT_EQ(2u, drm->ioctlCallsCount);
@@ -44,6 +44,7 @@ TEST(MemoryInfo, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMem
     drm->ioctlCallsCount = 0;
 
     drm->i915QuerySuccessCount = 0;
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
 
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
@@ -58,6 +59,7 @@ TEST(MemoryInfo, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreat
     ASSERT_NE(nullptr, drm);
     drm->ioctlCallsCount = 0;
 
+    drm->memoryInfoQueried = false;
     drm->queryMemoryRegionInfoSuccessCount = 0;
     drm->queryMemoryInfo();
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
@@ -67,6 +69,7 @@ TEST(MemoryInfo, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreat
     ASSERT_NE(nullptr, drm);
     drm->ioctlCallsCount = 0;
     drm->i915QuerySuccessCount = 1;
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);
@@ -75,6 +78,7 @@ TEST(MemoryInfo, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreat
     ASSERT_NE(nullptr, drm);
     drm->ioctlCallsCount = 0;
     drm->queryMemoryRegionInfoSuccessCount = 1;
+    drm->memoryInfoQueried = false;
     drm->queryMemoryInfo();
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);

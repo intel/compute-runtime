@@ -998,7 +998,9 @@ std::vector<uint64_t> Drm::getMemoryRegions() {
 }
 
 bool Drm::queryMemoryInfo() {
+    UNRECOVERABLE_IF(memoryInfoQueried);
     this->memoryInfo = ioctlHelper->createMemoryInfo();
+    memoryInfoQueried = true;
     return this->memoryInfo != nullptr;
 }
 
