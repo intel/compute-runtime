@@ -1632,6 +1632,8 @@ HWTEST_F(DeviceTests, givenCopyEnginesWhenCreatingSecondaryContextsThenUseCopyTy
     EXPECT_EQ(0u, memoryManager->secondaryEngines[0].size());
     EXPECT_EQ(0u, memoryManager->allRegisteredEngines[0].size());
 
+    EXPECT_GT(memoryManager->maxOsContextCount, memoryManager->latestContextId);
+
     executionEnvironment->decRefInternal();
 }
 

@@ -57,6 +57,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::isaInLocalMemory;
     using MemoryManager::isAllocationTypeToCapture;
     using MemoryManager::isCopyRequired;
+    using MemoryManager::latestContextId;
     using MemoryManager::localMemorySupported;
     using MemoryManager::reservedMemory;
     using MemoryManager::secondaryEngines;

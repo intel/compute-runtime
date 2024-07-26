@@ -99,14 +99,18 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
         bool hasRootCsr = subDevicesCount > 1;
 
         uint32_t numRegularEngines = 0;
+        uint32_t numHpEngines = 0;
         for (const auto &engine : engineInstances) {
             if (engine.second == EngineUsage::regular) {
                 numRegularEngines++;
+            } else if (engine.second == EngineUsage::highPriority) {
+                numHpEngines++;
             }
         }
 
         if (gfxCoreHelper.getContextGroupContextsCount() > 0) {
             MemoryManager::maxOsContextCount += numRegularEngines * gfxCoreHelper.getContextGroupContextsCount();
+            MemoryManager::maxOsContextCount += numHpEngines * gfxCoreHelper.getContextGroupContextsCount();
             MemoryManager::maxOsContextCount += static_cast<uint32_t>(hwInfo->featureTable.ftrBcsInfo.count()); // LP contexts
         }
 

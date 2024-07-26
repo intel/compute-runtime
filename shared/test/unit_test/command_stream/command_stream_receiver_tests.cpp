@@ -5490,14 +5490,21 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenContextGroupWhenCreatingEng
 
     auto &engineInstances = device->getGfxCoreHelper().getGpgpuEngineInstances(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     uint32_t numRegularEngines = 0;
+    uint32_t numHpEngines = 0;
 
     for (const auto &engine : engineInstances) {
         if (engine.second == EngineUsage::regular) {
             numRegularEngines++;
         }
+        if (engine.second == EngineUsage::highPriority) {
+            numHpEngines++;
+        }
     }
 
-    auto osContextCount = static_cast<uint32_t>(engineInstances.size()) + (numRegularEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) + static_cast<uint32_t>(hwInfo.featureTable.ftrBcsInfo.count());
+    auto osContextCount = static_cast<uint32_t>(engineInstances.size()) +
+                          (numRegularEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) +
+                          (numHpEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) +
+                          static_cast<uint32_t>(hwInfo.featureTable.ftrBcsInfo.count());
 
     EXPECT_EQ(osContextCount, MemoryManager::maxOsContextCount);
 }
