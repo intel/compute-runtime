@@ -391,7 +391,7 @@ using InOrderCmdListTests = InOrderCmdListFixture;
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCreateThenL1IsNotFlushed, Platforms) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
@@ -405,11 +405,14 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCr
     auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
-    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*walkerItor);
-    auto &postSync = walkerCmd->getPostSync();
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
+    std::visit([](auto &&walker) {
+        auto &postSync = walker->getPostSync();
 
-    EXPECT_FALSE(postSync.getDataportPipelineFlush());
-    EXPECT_FALSE(postSync.getDataportSubsliceCacheFlush());
+        EXPECT_FALSE(postSync.getDataportPipelineFlush());
+        EXPECT_FALSE(postSync.getDataportSubsliceCacheFlush());
+    },
+               walkerVariant);
 }
 
 } // namespace ult
